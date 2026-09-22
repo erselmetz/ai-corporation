@@ -1,0 +1,24 @@
+from .agent import Agent
+
+
+class AgentRegistry:
+    def __init__(self):
+        self._agents: dict[str, Agent] = {}
+
+    def register(self, agent: Agent) -> None:
+        if agent.id in self._agents:
+            raise ValueError(f"Agent already registered: {agent.id}")
+
+        self._agents[agent.id] = agent
+
+    def get(self, agent_id: str) -> Agent:
+        try:
+            return self._agents[agent_id]
+        except KeyError:
+            raise ValueError(f"Agent not found: {agent_id}")
+
+    def all(self) -> list[Agent]:
+        return list(self._agents.values())
+
+    def exists(self, agent_id: str) -> bool:
+        return agent_id in self._agents
