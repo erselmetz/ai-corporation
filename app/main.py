@@ -1,9 +1,21 @@
 from app.agents import Agent, AgentRegistry
+from app.orchestrator import Orchestrator, TaskRegistry
+from app.providers import OllamaProvider, ProviderRegistry
 
 
 def main():
-    registry = AgentRegistry()
+    agent_registry = AgentRegistry()
+    provider_registry = ProviderRegistry()
+    task_registry = TaskRegistry()
 
+    # Providers
+    ollama = OllamaProvider(
+        model="llama3.2:3b",
+    )
+
+    provider_registry.register("ollama", ollama)
+
+    # Agents
     local_worker = Agent(
         id="local_worker",
         name="Local Worker",
@@ -20,16 +32,46 @@ def main():
         ],
     )
 
-    registry.register(local_worker)
+    agent_registry.register(local_worker)
+
+    # Orchestrator
+    orchestrator = Orchestrator(
+        agents=agent_registry,
+        providers=provider_registry,
+        tasks=task_registry,
+    )
 
     print("🏢 ERSELMETZ AI CORPORATION")
     print("HR Department: ONLINE")
+    print("🧠 Provider Department: ONLINE")
+    print("🎯 Orchestrator: ONLINE")
     print()
 
-    for agent in registry.all():
-        print(f"👤 {agent.describe()}")
-        print(f"   Capabilities: {', '.join(agent.capabilities)}")
-        print(f"   Permissions: {', '.join(agent.permissions)}")
+    # Create Task
+    task = orchestrator.create_task(
+    title="Corporation Introduction",
+    description=(
+        "You are the Local Worker of Erselmetz AI Corporation. "
+        "Introduce yourself in one short sentence."
+    ),
+    agent_id="local_worker",
+)
+
+    print(f"📋 Task: {task.id}")
+    print(f"   Title: {task.title}")
+    print(f"   Status: {task.status.value}")
+    print()
+
+    # Execute Task
+    task = orchestrator.execute_task(task)
+
+    print(f"📋 Task Status: {task.status.value}")
+
+    if task.result:
+        print(f"🤖 Result: {task.result}")
+
+    if task.error:
+        print(f"❌ Error: {task.error}")
 
 
 if __name__ == "__main__":

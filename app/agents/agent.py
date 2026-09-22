@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from app.providers import AIProvider
 
 
 @dataclass
@@ -17,3 +18,6 @@ class Agent:
             f"Provider: {self.provider} | "
             f"Model: {self.model}"
         )
+
+    def resolve_provider(self, providers) -> AIProvider:
+        return providers.get(self.provider)
