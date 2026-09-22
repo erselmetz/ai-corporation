@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ERSELMETZ AI CORPORATION</title>
+
+    <meta name="description"
+        content="ERSELMETZ AI CORPORATION — AI-assisted software engineering orchestration platform.">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family:
+                Inter,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+            background: #0b1020;
+            color: #e5e7eb;
+            line-height: 1.7;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .container {
+            width: min(1100px, calc(100% - 40px));
+            margin: 0 auto;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(11, 16, 32, 0.92);
+            border-bottom: 1px solid #1f2937;
+            backdrop-filter: blur(12px);
+        }
+
+        nav {
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 22px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .nav-links a {
+            color: #9ca3af;
+            font-size: 0.92rem;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+        }
+
+        .hero {
+            padding: 110px 0 90px;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border: 1px solid #374151;
+            border-radius: 999px;
+            color: #9ca3af;
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            max-width: 850px;
+            font-size: clamp(2.6rem, 7vw, 5.5rem);
+            line-height: 1.05;
+            letter-spacing: -0.05em;
+        }
+
+        .hero p {
+            max-width: 760px;
+            margin: 28px 0 0;
+            color: #9ca3af;
+            font-size: 1.15rem;
+        }
+
+        .section {
+            padding: 80px 0;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        h2 {
+            margin: 0 0 15px;
+            font-size: 2rem;
+            letter-spacing: -0.03em;
+        }
+
+        h3 {
+            margin-top: 0;
+        }
+
+        .muted {
+            color: #9ca3af;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-top: 35px;
+        }
+
+        .card {
+            padding: 24px;
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+            background: #111827;
+        }
+
+        .card p {
+            color: #9ca3af;
+            margin-bottom: 0;
+        }
+
+        .architecture {
+            margin-top: 35px;
+            padding: 30px;
+            overflow-x: auto;
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+            background: #080d1a;
+        }
+
+        pre {
+            margin: 0;
+            color: #d1d5db;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 25px;
+            padding: 8px 13px;
+            border: 1px solid #1f2937;
+            border-radius: 999px;
+            color: #d1d5db;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+
+        .roadmap {
+            display: grid;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .roadmap-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            background: #111827;
+        }
+
+        .number {
+            min-width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: #1f2937;
+            font-weight: 700;
+        }
+
+        code {
+            padding: 3px 6px;
+            border-radius: 5px;
+            background: #1f2937;
+            font-family: Consolas, Monaco, monospace;
+        }
+
+        footer {
+            padding: 45px 0;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        @media (max-width: 800px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 16px 0;
+            }
+
+            .hero {
+                padding-top: 75px;
+            }
+
+            .nav-links {
+                gap: 12px;
+            }
+        }
+    </style>
+
+
+</head>
+
+<body>
+
+    <header>
+        <div class="container">
+            <nav>
+                <div class="brand">ERSELMETZ AI CORPORATION</div>
+
+
+                <div class="nav-links">
+                    <a href="#about">About</a>
+                    <a href="#architecture">Architecture</a>
+                    <a href="#status">Status</a>
+                    <a href="#roadmap">Roadmap</a>
+                </div>
+            </nav>
+        </div>
+
+
+    </header>
+
+    <main>
+
+
+        <section class="hero">
+            <div class="container">
+                <span class="badge">AI SOFTWARE ENGINEERING PLATFORM</span>
+
+                <h1>
+                    ERSELMETZ<br>
+                    AI CORPORATION
+                </h1>
+
+                <p>
+                    An AI-assisted software engineering orchestration platform
+                    designed to coordinate specialized AI agents, projects,
+                    tasks, memory, providers, testing, and future development
+                    workflows.
+                </p>
+
+                <div class="status">
+                    <span class="dot"></span>
+                    Core orchestration foundation in development
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="about">
+            <div class="container">
+                <h2>About</h2>
+
+                <p class="muted">
+                    ERSELMETZ AI CORPORATION is being developed as an actual
+                    software system rather than a simulated company.
+                </p>
+
+                <p class="muted">
+                    The long-term goal is to coordinate multiple specialized AI
+                    agents into a structured software engineering organization
+                    while keeping the human as the final decision-maker.
+                </p>
+
+                <div class="grid">
+                    <div class="card">
+                        <h3>Orchestration</h3>
+                        <p>
+                            Coordinate projects, tasks, agents, providers,
+                            and future multi-agent workflows.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Persistent Memory</h3>
+                        <p>
+                            Maintain persistent agent and project context
+                            using a local database.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Human Control</h3>
+                        <p>
+                            Important development decisions remain under
+                            human approval and control.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="architecture">
+            <div class="container">
+                <h2>Architecture</h2>
+
+                <p class="muted">
+                    The system is being built incrementally, starting with
+                    the core orchestration infrastructure.
+                </p>
+
+                <div class="architecture">
+
+
+                    <pre>
+                         YOU
+                  CEO / PRODUCT OWNER
+                           │
+                           ▼
+                  ┌────────────────┐
+                  │  ORCHESTRATOR  │
+                  └───────┬────────┘
+                          │
+          ┌───────────────┼───────────────┐
+          ▼               ▼               ▼
+      PROJECTS          TASKS           AGENTS
+          │               │               │
+          │               │               ▼
+          │               │           PROVIDERS
+          │               │               │
+          └───────────────┴───────────────┤
+                                          ▼
+                                       OLLAMA
+                                          │
+                                          ▼
+                                      AI RESULT
+</pre>
+
+
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="status">
+            <div class="container">
+                <h2>Current Status</h2>
+
+                <div class="grid">
+                    <div class="card">
+                        <h3>Agents</h3>
+                        <p>
+                            Agent abstraction, registry, capabilities,
+                            permissions, and provider association.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Providers</h3>
+                        <p>
+                            Provider abstraction and registry with
+                            Ollama integration.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Tasks</h3>
+                        <p>
+                            Persistent tasks with status, assignment,
+                            execution results, and errors.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Projects</h3>
+                        <p>
+                            Persistent projects with tasks associated
+                            through project IDs.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Memory</h3>
+                        <p>
+                            Persistent agent memory and project-specific
+                            memory.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Audit Logs</h3>
+                        <p>
+                            Task creation and execution events are
+                            recorded for traceability.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="roadmap">
+            <div class="container">
+                <h2>Roadmap</h2>
+
+                <p class="muted">
+                    Planned capabilities. These are not yet considered
+                    implemented.
+                </p>
+
+                <div class="roadmap">
+
+                    <div class="roadmap-item">
+                        <span class="number">1</span>
+                        <span>Project-aware task management</span>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <span class="number">2</span>
+                        <span>Advanced task routing and orchestration</span>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <span class="number">3</span>
+                        <span>Workflow engine</span>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <span class="number">4</span>
+                        <span>Multi-agent collaboration</span>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <span class="number">5</span>
+                        <span>Controlled agent tool system</span>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <span class="number">6</span>
+                        <span>Developer environment integration</span>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <span class="number">7</span>
+                        <span>QA and security agents</span>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <span class="number">8</span>
+                        <span>Automated review and fix loops</span>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <span class="number">9</span>
+                        <span>Git-based development lifecycle</span>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2>Technology</h2>
+
+                <div class="grid">
+                    <div class="card">
+                        <h3>Python</h3>
+                        <p>Core orchestration platform.</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>SQLite</h3>
+                        <p>Persistent local application state.</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Ollama</h3>
+                        <p>Local AI model execution.</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Git / GitHub</h3>
+                        <p>Source control and development history.</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Antigravity</h3>
+                        <p>Primary development environment.</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Multi-Agent Architecture</h3>
+                        <p>Foundation for future AI collaboration.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container">
+            ERSELMETZ AI CORPORATION
+            <br>
+            AI-assisted software engineering infrastructure.
+        </div>
+    </footer>
+
+</body>
+
+</html>
