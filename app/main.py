@@ -1,9 +1,12 @@
 from app.agents import Agent, AgentRegistry
 from app.orchestrator import Orchestrator, TaskRegistry
 from app.providers import OllamaProvider, ProviderRegistry
+from app.database import initialize_database
 
 
 def main():
+    initialize_database()
+
     agent_registry = AgentRegistry()
     provider_registry = ProviderRegistry()
     task_registry = TaskRegistry()
@@ -64,6 +67,16 @@ def main():
 
     # Execute Task
     task = orchestrator.execute_task(task)
+
+    print()
+    print("📦 Stored Tasks:")
+
+    for stored_task in task_registry.all():
+        print(
+            f"   {stored_task.id} | "
+            f"{stored_task.title} | "
+            f"{stored_task.status.value}"
+        )   
 
     print(f"📋 Task Status: {task.status.value}")
 

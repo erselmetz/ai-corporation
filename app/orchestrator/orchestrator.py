@@ -29,9 +29,11 @@ class Orchestrator:
         if not task.assigned_agent:
             task.status = TaskStatus.FAILED
             task.error = "Task has no assigned agent."
+            self.tasks.update(task)
             return task
 
         task.status = TaskStatus.RUNNING
+        self.tasks.update(task)
 
         try:
             result = self.run_agent(
@@ -45,6 +47,8 @@ class Orchestrator:
         except Exception as exc:
             task.status = TaskStatus.FAILED
             task.error = str(exc)
+
+        self.tasks.update(task)
 
         return task
     
