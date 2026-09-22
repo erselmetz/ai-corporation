@@ -90,3 +90,17 @@ class Orchestrator:
         )
 
         return task
+
+    def remember_agent(self, agent_id: str, key: str, value: str) -> None:
+        agent = self.agents.get(agent_id)
+        agent.remember(key, value)
+
+    def recall_agent(self, agent_id: str, key: str) -> str | None:
+        agent = self.agents.get(agent_id)
+
+        return agent.recall(key)
+
+    def forget_agent(self, agent_id: str, key: str) -> None:
+        agent = self.agents.get(agent_id)
+
+        agent.forget(key)
