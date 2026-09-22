@@ -7,6 +7,8 @@ from app.providers import ProviderRegistry
 from .task import Task, TaskStatus
 from .task_registry import TaskRegistry
 
+from .project_registry import ProjectRegistry
+
 
 class Orchestrator:
     def __init__(
@@ -14,11 +16,13 @@ class Orchestrator:
         agents: AgentRegistry,
         providers: ProviderRegistry,
         tasks: TaskRegistry,
+        projects: ProjectRegistry,
     ):
         self.agents = agents
         self.providers = providers
         self.tasks = tasks
         self.logger = TaskLogger()
+        self.projects = projects
 
     def run_agent(self, agent_id: str, prompt: str) -> str:
         agent = self.agents.get(agent_id)
@@ -73,11 +77,21 @@ class Orchestrator:
 
         return task
     
-    def create_task(self, title: str, description: str, agent_id: str | None = None) -> Task:
+    def create_task(
+        self,
+        title: str,
+        description: str,
+        project_id: str,
+        agent_id: str | None = None,
+    ) -> Task:
+        if not self.projects.exists(project_id):
+            raise ValueError(f"Project not found: {project_id}")
+            
         task = Task(
             id=f"TASK-{uuid4().hex[:8].upper()}",
             title=title,
             description=description,
+            project_id=project_id,
             assigned_agent=agent_id,
         )
 

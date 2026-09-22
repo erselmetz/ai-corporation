@@ -2,6 +2,7 @@ from app.agents import Agent, AgentRegistry
 from app.orchestrator import Orchestrator, TaskRegistry
 from app.providers import OllamaProvider, ProviderRegistry
 from app.database import initialize_database
+from app.orchestrator import ProjectRegistry
 
 
 def main():
@@ -10,7 +11,7 @@ def main():
     agent_registry = AgentRegistry()
     provider_registry = ProviderRegistry()
     task_registry = TaskRegistry()
-
+    projects = ProjectRegistry()
     # Providers
     ollama = OllamaProvider(
         model="llama3.2:3b",
@@ -42,6 +43,7 @@ def main():
         agents=agent_registry,
         providers=provider_registry,
         tasks=task_registry,
+        projects=projects,
     )
 
     print("🏢 ERSELMETZ AI CORPORATION")
@@ -52,13 +54,11 @@ def main():
 
     # Create Task
     task = orchestrator.create_task(
-    title="Corporation Introduction",
-    description=(
-        "You are the Local Worker of Erselmetz AI Corporation. "
-        "Introduce yourself in one short sentence."
-    ),
-    agent_id="local_worker",
-)
+        "Corporation Introduction",
+        "Introduce the AI Corporation.",
+        "PROJECT-001",
+        "local_worker",
+    )
 
     print(f"📋 Task: {task.id}")
     print(f"   Title: {task.title}")
@@ -75,8 +75,9 @@ def main():
         print(
             f"   {stored_task.id} | "
             f"{stored_task.title} | "
+            f"Project: {stored_task.project_id} | "
             f"{stored_task.status.value}"
-        )   
+        ) 
 
     print(f"📋 Task Status: {task.status.value}")
 

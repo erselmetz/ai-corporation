@@ -31,7 +31,6 @@ class Agent:
             value,
         )
 
-
     def recall(self, key: str) -> str | None:
         memory = MemoryStore()
 
@@ -40,7 +39,6 @@ class Agent:
             key,
         )
 
-
     def forget(self, key: str) -> None:
         memory = MemoryStore()
 
@@ -48,3 +46,8 @@ class Agent:
             self.id,
             key,
         )
+
+    def memories(self) -> list[dict]:
+        memory = MemoryStore()
+
+        return memory.all(self.id)
