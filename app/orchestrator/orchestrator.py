@@ -1,10 +1,11 @@
+from uuid import uuid4
+
 from app.agents import AgentRegistry
+from app.database import TaskLogger
 from app.providers import ProviderRegistry
 
 from .task import Task, TaskStatus
 from .task_registry import TaskRegistry
-
-from uuid import uuid4
 
 
 class Orchestrator:
@@ -17,6 +18,7 @@ class Orchestrator:
         self.agents = agents
         self.providers = providers
         self.tasks = tasks
+        self.logger = TaskLogger()
 
     def run_agent(self, agent_id: str, prompt: str) -> str:
         agent = self.agents.get(agent_id)
@@ -34,6 +36,12 @@ class Orchestrator:
 
         task.status = TaskStatus.RUNNING
         self.tasks.update(task)
+        
+        self.logger.log(
+            task.id,
+            "TASK_STARTED",
+            "Task execution started.",
+        )
 
         try:
             result = self.run_agent(
@@ -50,6 +58,19 @@ class Orchestrator:
 
         self.tasks.update(task)
 
+        if task.status == TaskStatus.COMPLETED:
+            self.logger.log(
+                task.id,
+                "TASK_COMPLETED",
+                "Task execution completed successfully.",
+            )
+        else:
+            self.logger.log(
+                task.id,
+                "TASK_FAILED",
+                task.error or "Task execution failed.",
+            )
+
         return task
     
     def create_task(self, title: str, description: str, agent_id: str | None = None) -> Task:
@@ -61,5 +82,11 @@ class Orchestrator:
         )
 
         self.tasks.register(task)
+
+        self.logger.log(
+            task.id,
+            "TASK_CREATED",
+            f"Task created: {task.title}",
+        )
 
         return task

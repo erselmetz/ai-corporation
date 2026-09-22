@@ -19,6 +19,19 @@ def initialize_database() -> None:
             """
         )
 
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS task_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id TEXT NOT NULL,
+                event TEXT NOT NULL,
+                message TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (task_id) REFERENCES tasks(id)
+            )
+            """
+        )
+
         connection.commit()
 
     finally:
