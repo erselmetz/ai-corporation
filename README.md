@@ -1,4 +1,4 @@
-# ERSELMETZ AI CORPORATION
+﻿# ERSELMETZ AI CORPORATION
 
 An AI-assisted software engineering orchestration platform designed to coordinate multiple AI agents, providers, projects, tasks, memory, and future development workflows.
 
@@ -142,6 +142,10 @@ ai-corporation/
 ├── .gitignore
 ├── README.md
 └── requirements.txt
+│
+├── Dockerfile
+├── compose.yaml
+└── .dockerignore
 ```
 
 ---
@@ -599,6 +603,8 @@ IDE: Antigravity
 
 ## Running the Application
 
+### Native (default)
+
 From the project root:
 
 ```powershell
@@ -618,6 +624,26 @@ python app\main.py
 ```
 
 to preserve the Python package/module structure.
+
+### Docker (optional)
+
+Docker is an **optional** runtime. The application runs natively and does not require Docker.
+
+Ollama continues to run on the host machine. The container reaches it through `host.docker.internal:11434`.
+
+SQLite data is persisted through a bind mount of the `projects/` directory, so the database survives container recreation.
+
+Build the image:
+
+```powershell
+docker compose build
+```
+
+Run the container:
+
+```powershell
+docker compose up
+```
 
 ---
 

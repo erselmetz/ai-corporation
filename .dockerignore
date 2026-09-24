@@ -1,0 +1,51 @@
+﻿# ERSELMETZ AI CORPORATION — .dockerignore
+# Prevents unnecessary or sensitive files from being sent to the Docker build
+# context, keeping the image lean and avoiding accidental secret exposure.
+
+# Version control
+.git/
+.gitignore
+
+# Python virtual environment — dependencies are installed inside the image
+# via requirements.txt; never copy the host venv.
+.venv/
+
+# Python byte-code and cache artefacts
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environment secrets — never bake .env into the image.
+.env
+
+# SQLite databases — persisted at runtime via the bind mount in compose.yaml.
+*.db
+*.sqlite
+*.sqlite3
+
+# Persistent data directories mounted at runtime
+projects/
+logs/
+
+# Test suite
+tests/
+.pytest_cache/
+
+# Type / lint caches
+.mypy_cache/
+.ruff_cache/
+
+# Documentation (not needed at runtime)
+docs/
+README.md
+
+# Docker files themselves (no need to copy into the image)
+Dockerfile
+compose.yaml
+.dockerignore
+
+# IDE / OS artefacts
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db

@@ -1,13 +1,17 @@
+﻿import os
 import httpx
 
 from .base import AIProvider
+
+
+_DEFAULT_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 
 
 class OllamaProvider(AIProvider):
     def __init__(
         self,
         model: str,
-        base_url: str = "http://localhost:11434",
+        base_url: str = _DEFAULT_BASE_URL,
     ):
         self.model = model
         self.base_url = base_url.rstrip("/")

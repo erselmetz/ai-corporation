@@ -1,0 +1,31 @@
+﻿# ERSELMETZ AI CORPORATION - Docker Compose
+# Local-first: single container, host Ollama, persisted SQLite via bind mount.
+# Designed with future multi-corporation/distributed expansion in mind.
+
+services:
+  ai-corporation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-corporation
+
+    # ------------------------------------------------------------------ #
+    # Ollama host connectivity
+    # ------------------------------------------------------------------ #
+    # On Linux/macOS, host.docker.internal resolves to the Docker host IP.
+    # On Windows (Docker Desktop) it is available automatically.
+    # OLLAMA_BASE_URL is read by OllamaProvider at startup; it overrides the
+    # default http://localhost:11434, which would resolve inside the container.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    environment:
+      OLLAMA_BASE_URL: "http://host.docker.internal:11434"
+
+    # ------------------------------------------------------------------ #
+    # Persistent SQLite data
+    # ------------------------------------------------------------------ #
+    # Bind-mount the host projects/ directory into the container so that
+    # the SQLite database (ai_corporation.db) survives container recreation.
+    volumes:
+      - ./projects:/app/projects
