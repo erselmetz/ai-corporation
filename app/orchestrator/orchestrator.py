@@ -33,14 +33,24 @@ class Orchestrator:
 
     def execute_task(self, task: Task) -> Task:
         if not task.assigned_agent:
+            error = "Task has no assigned agent."
+        elif not self.agents.exists(task.assigned_agent):
+            error = f"Agent not found: {task.assigned_agent}"
+        else:
+            error = None
+
+        if error:
             task.status = TaskStatus.FAILED
-            task.error = "Task has no assigned agent."
+            task.error = error
+            task.result = None
             self.tasks.update(task)
+            self.logger.log(task.id, "TASK_FAILED", error)
             return task
 
         task.status = TaskStatus.RUNNING
+        task.error = None
         self.tasks.update(task)
-        
+
         self.logger.log(
             task.id,
             "TASK_STARTED",
@@ -55,10 +65,12 @@ class Orchestrator:
 
             task.result = result
             task.status = TaskStatus.COMPLETED
+            task.error = None
 
         except Exception as exc:
             task.status = TaskStatus.FAILED
             task.error = str(exc)
+            task.result = None
 
         self.tasks.update(task)
 
