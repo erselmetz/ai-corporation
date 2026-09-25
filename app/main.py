@@ -52,41 +52,6 @@ def main():
     print("🎯 Orchestrator: ONLINE")
     print()
 
-    # Create Task
-    task = orchestrator.create_task(
-        "Corporation Introduction",
-        "Introduce the AI Corporation.",
-        "PROJECT-001",
-        "local_worker",
-    )
-
-    print(f"📋 Task: {task.id}")
-    print(f"   Title: {task.title}")
-    print(f"   Status: {task.status.value}")
-    print()
-
-    # Execute Task
-    task = orchestrator.execute_task(task)
-
-    print()
-    print("📦 Stored Tasks:")
-
-    for stored_task in task_registry.all():
-        print(
-            f"   {stored_task.id} | "
-            f"{stored_task.title} | "
-            f"Project: {stored_task.project_id} | "
-            f"{stored_task.status.value}"
-        ) 
-
-    print(f"📋 Task Status: {task.status.value}")
-
-    if task.result:
-        print(f"🤖 Result: {task.result}")
-
-    if task.error:
-        print(f"❌ Error: {task.error}")
-
 
 if __name__ == "__main__":
     main()
