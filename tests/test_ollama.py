@@ -2,11 +2,10 @@ from app.providers import OllamaProvider
 
 
 def main():
-    provider = OllamaProvider(
-        model="llama3.2:3b",
-    )
+    provider = OllamaProvider()
 
     response = provider.generate(
+        "llama3.2:3b",
         "Say hello to Erselmetz AI Corporation in one sentence."
     )
 

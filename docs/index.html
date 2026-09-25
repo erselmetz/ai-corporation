@@ -5,11 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>ERSELMETZ AI CORPORATION</title>
-
-    <meta name="description"
-        content="ERSELMETZ AI CORPORATION — AI-assisted software engineering orchestration platform.">
+    <title>ERSELMETZ AI CORPORATION — Architecture</title>
 
     <style>
         * {
@@ -24,19 +20,21 @@
             margin: 0;
             font-family:
                 Inter,
+                ui-sans-serif,
                 system-ui,
                 -apple-system,
                 BlinkMacSystemFont,
                 "Segoe UI",
                 sans-serif;
-            background: #0b1020;
-            color: #e5e7eb;
+            background: #f8fafc;
+            color: #1e293b;
             line-height: 1.7;
         }
 
-        a {
-            color: inherit;
-            text-decoration: none;
+        header {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 64px 24px;
         }
 
         .container {
@@ -44,184 +42,142 @@
             margin: 0 auto;
         }
 
-        header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(11, 16, 32, 0.92);
-            border-bottom: 1px solid #1f2937;
-            backdrop-filter: blur(12px);
-        }
-
-        nav {
-            min-height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-        }
-
-        .brand {
-            font-weight: 800;
-            letter-spacing: 0.04em;
-            white-space: nowrap;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 22px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
-
-        .nav-links a {
-            color: #9ca3af;
-            font-size: 0.92rem;
-        }
-
-        .nav-links a:hover {
-            color: #ffffff;
-        }
-
-        .hero {
-            padding: 110px 0 90px;
-            border-bottom: 1px solid #1f2937;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border: 1px solid #374151;
-            border-radius: 999px;
-            color: #9ca3af;
-            font-size: 0.8rem;
-            margin-bottom: 20px;
+        .eyebrow {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 12px;
         }
 
         h1 {
             margin: 0;
-            max-width: 850px;
-            font-size: clamp(2.6rem, 7vw, 5.5rem);
-            line-height: 1.05;
-            letter-spacing: -0.05em;
-        }
-
-        .hero p {
-            max-width: 760px;
-            margin: 28px 0 0;
-            color: #9ca3af;
-            font-size: 1.15rem;
-        }
-
-        .section {
-            padding: 80px 0;
-            border-bottom: 1px solid #1f2937;
+            font-size: clamp(2.2rem, 5vw, 4rem);
+            line-height: 1.1;
+            color: #0f172a;
         }
 
         h2 {
-            margin: 0 0 15px;
+            margin-top: 0;
+            color: #0f172a;
             font-size: 2rem;
-            letter-spacing: -0.03em;
         }
 
         h3 {
-            margin-top: 0;
+            color: #0f172a;
         }
 
-        .muted {
-            color: #9ca3af;
+        p {
+            color: #475569;
+        }
+
+        section {
+            padding: 72px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .lead {
+            max-width: 820px;
+            font-size: 1.15rem;
+            margin-top: 24px;
         }
 
         .grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 18px;
-            margin-top: 35px;
+            gap: 20px;
         }
 
         .card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
             padding: 24px;
-            border: 1px solid #1f2937;
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05);
+        }
+
+        .card h3 {
+            margin-top: 0;
+        }
+
+        .diagram {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 16px;
-            background: #111827;
-        }
-
-        .card p {
-            color: #9ca3af;
-            margin-bottom: 0;
-        }
-
-        .architecture {
-            margin-top: 35px;
-            padding: 30px;
+            padding: 28px;
             overflow-x: auto;
-            border: 1px solid #1f2937;
-            border-radius: 16px;
-            background: #080d1a;
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05);
         }
 
         pre {
             margin: 0;
-            color: #d1d5db;
-            font-family: Consolas, Monaco, monospace;
+            font-family:
+                "Cascadia Code",
+                "JetBrains Mono",
+                Consolas,
+                monospace;
             font-size: 0.9rem;
-            line-height: 1.6;
-        }
-
-        .status {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 25px;
-            padding: 8px 13px;
-            border: 1px solid #1f2937;
-            border-radius: 999px;
-            color: #d1d5db;
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #22c55e;
-        }
-
-        .roadmap {
-            display: grid;
-            gap: 12px;
-            margin-top: 30px;
-        }
-
-        .roadmap-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 18px;
-            border: 1px solid #1f2937;
-            border-radius: 12px;
-            background: #111827;
-        }
-
-        .number {
-            min-width: 34px;
-            height: 34px;
-            display: grid;
-            place-items: center;
-            border-radius: 50%;
-            background: #1f2937;
-            font-weight: 700;
+            line-height: 1.5;
+            color: #334155;
+            white-space: pre;
         }
 
         code {
-            padding: 3px 6px;
-            border-radius: 5px;
-            background: #1f2937;
-            font-family: Consolas, Monaco, monospace;
+            background: #f1f5f9;
+            padding: 3px 7px;
+            border-radius: 6px;
+            font-family:
+                "Cascadia Code",
+                "JetBrains Mono",
+                Consolas,
+                monospace;
+        }
+
+        ul {
+            color: #475569;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+        }
+
+        .node {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 12px 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .arrow {
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .note {
+            margin-top: 24px;
+            padding: 18px 20px;
+            background: #f1f5f9;
+            border-left: 4px solid #64748b;
+            border-radius: 8px;
+            color: #475569;
         }
 
         footer {
-            padding: 45px 0;
-            color: #6b7280;
+            padding: 40px 0;
+            background: #ffffff;
+            color: #64748b;
             text-align: center;
         }
 
@@ -230,18 +186,24 @@
                 grid-template-columns: 1fr;
             }
 
-            nav {
-                align-items: flex-start;
-                flex-direction: column;
-                padding: 16px 0;
+            section {
+                padding: 48px 0;
             }
 
-            .hero {
-                padding-top: 75px;
+            header {
+                padding: 48px 20px;
             }
 
-            .nav-links {
-                gap: 12px;
+            .container {
+                width: min(100% - 28px, 1100px);
+            }
+
+            .diagram {
+                padding: 18px;
+            }
+
+            pre {
+                font-size: 0.75rem;
             }
         }
     </style>
@@ -253,294 +215,511 @@
 
     <header>
         <div class="container">
-            <nav>
-                <div class="brand">ERSELMETZ AI CORPORATION</div>
-
-
-                <div class="nav-links">
-                    <a href="#about">About</a>
-                    <a href="#architecture">Architecture</a>
-                    <a href="#status">Status</a>
-                    <a href="#roadmap">Roadmap</a>
-                </div>
-            </nav>
+            <div class="eyebrow">System Architecture</div>
+            <h1>🏢 ERSELMETZ AI CORPORATION</h1>
+            <p class="lead">
+                An actual software system implementing a virtual/simulated AI
+                organization where multiple AI employees can collaborate under
+                an Orchestrator.
+            </p>
         </div>
-
-
     </header>
-
     <main>
-
-
-        <section class="hero">
+        <section>
             <div class="container">
-                <span class="badge">AI SOFTWARE ENGINEERING PLATFORM</span>
 
-                <h1>
-                    ERSELMETZ<br>
-                    AI CORPORATION
-                </h1>
+                <h2>Corporation Organization</h2>
 
-                <p>
-                    An AI-assisted software engineering orchestration platform
-                    designed to coordinate specialized AI agents, projects,
-                    tasks, memory, providers, testing, and future development
-                    workflows.
-                </p>
+                <div class="diagram">
 
-                <div class="status">
-                    <span class="dot"></span>
-                    Core orchestration foundation in development
+
+                    <pre>
+                         👨‍💻 YOU
+                    CEO / PRODUCT OWNER
+                           │
+                           ▼
+                  🏢 AI CORPORATION
+                           │
+                    ┌──────┴──────┐
+                    │ ORCHESTRATOR│
+                    │   / Manager │
+                    └──────┬──────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+        ▼                  ▼                  ▼
+   🧠 ARCHITECT        🔬 R&D             📋 PM
+    AI Agent          AI Agent          AI Agent
+        │                  │                  │
+        └──────────────────┼──────────────────┘
+                           ▼
+                  💻 ENGINEERING
+                    Developer Agent
+                           │
+                 ┌─────────┴─────────┐
+                 ▼                   ▼
+              🧪 QA              🛡️ SECURITY
+             AI Agent             AI Agent
+                 │                   │
+                 └─────────┬─────────┘
+                           ▼
+                    👀 CODE REVIEW
+                       AI Agent
+                           │
+                           ▼
+                    🔀 Git / GitHub
+                           │
+                           ▼
+                    👨‍💻 HUMAN APPROVAL
+</pre>
+
+
                 </div>
+
+                <div class="note">
+                    The Corporation does not require a fixed number of AI
+                    employees. Employees and departments can grow as the system
+                    evolves.
+                </div>
+
             </div>
         </section>
 
-        <section class="section" id="about">
+        <section>
             <div class="container">
-                <h2>About</h2>
 
-                <p class="muted">
-                    ERSELMETZ AI CORPORATION is being developed as an actual
-                    software system rather than a simulated company.
+                <h2>AI Employee Architecture</h2>
+
+                <div class="diagram">
+
+
+                    <pre>
+                         AI EMPLOYEE
+                              │
+                ┌─────────────┴─────────────┐
+                │                           │
+              ROLE                     ASSIGNMENT
+                │                           │
+        Architect / Developer /        Provider
+        Researcher / QA / etc.            │
+                                          ▼
+                                        Model
+</pre>
+
+
+                </div>
+
+                <p>
+                    An AI employee is separate from the provider and model that
+                    supply its intelligence.
                 </p>
 
-                <p class="muted">
-                    The long-term goal is to coordinate multiple specialized AI
-                    agents into a structured software engineering organization
-                    while keeping the human as the final decision-maker.
-                </p>
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+
+                <h2>Provider → Model Architecture</h2>
+
+                <div class="flow">
+                    <div class="node">AI Employee</div>
+                    <div class="arrow">→</div>
+                    <div class="node">Provider</div>
+                    <div class="arrow">→</div>
+                    <div class="node">Model</div>
+                    <div class="arrow">→</div>
+                    <div class="node">AI Runtime / API</div>
+                </div>
 
                 <div class="grid">
+
                     <div class="card">
-                        <h3>Orchestration</h3>
+                        <h3>🖥️ Local AI</h3>
+
                         <p>
-                            Coordinate projects, tasks, agents, providers,
-                            and future multi-agent workflows.
+                            AI models can run locally on the Corporation's
+                            computer.
+                        </p>
+
+                        <p>
+                            Example:
+                        </p>
+
+                        <code>Ollama → Llama / Gemma</code>
+                    </div>
+
+                    <div class="card">
+                        <h3>☁️ Cloud AI</h3>
+
+                        <p>
+                            Employees can use online AI services through supported
+                            integrations.
+                        </p>
+
+                        <p>
+                            Examples include Gemini, OpenAI, DeepSeek, Anthropic,
+                            Kimi, and future providers.
                         </p>
                     </div>
 
                     <div class="card">
-                        <h3>Persistent Memory</h3>
+                        <h3>🔑 API Access</h3>
+
                         <p>
-                            Maintain persistent agent and project context
-                            using a local database.
+                            Cloud providers may be connected through API keys,
+                            SDKs, HTTP APIs, or other supported authentication
+                            mechanisms.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+
+                <h2>Multiple AI Systems</h2>
+
+                <div class="diagram">
+
+
+                    <pre>
+                    🏢 AI CORPORATION
+                           │
+                    ORCHESTRATOR
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                  ▼
+    ARCHITECT           RESEARCHER         DEVELOPER
+        │                  │                  │
+      OpenAI             Gemini             Ollama
+        │                  │                  │
+       GPT              Gemini Model       Llama/Gemma
+</pre>
+
+
+                </div>
+
+                <p>
+                    Different employees can use different AI providers and
+                    different models at the same time.
+                </p>
+
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+
+                <h2>Add, Remove, or Replace AI</h2>
+
+                <div class="grid">
+
+                    <div class="card">
+                        <h3>➕ Add</h3>
+                        <p>
+                            New AI employees and provider integrations can be
+                            introduced without changing the Corporation's
+                            fundamental architecture.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>➖ Remove</h3>
+                        <p>
+                            An employee or provider can eventually be removed
+                            without rebuilding the entire Corporation.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>🔄 Replace</h3>
+                        <p>
+                            An employee can eventually be reassigned to another
+                            provider or model.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="diagram" style="margin-top: 24px;">
+
+
+                    <pre>
+OLD
+
+Developer
+   │
+   ▼
+Ollama
+   │
+   ▼
+Llama
+
+
+        ↓ REPLACE
+
+
+NEW
+
+Developer
+   │
+   ▼
+Cloud Provider
+   │
+   ▼
+Configured Cloud Model
+</pre>
+
+
+                </div>
+
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+
+                <h2>No Fixed AI Limit</h2>
+
+                <div class="diagram">
+
+
+                    <pre>
+                🏢 AI CORPORATION
+                       │
+                 ORCHESTRATOR
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+        ▼              ▼              ▼
+      Agent          Agent          Agent
+        │              │              │
+        ▼              ▼              ▼
+    Provider       Provider       Provider
+        │              │              │
+        ▼              ▼              ▼
+      Model          Model          Model
+
+        ... more employees ...
+        ... more providers ...
+        ... more models ...
+</pre>
+
+
+                </div>
+
+                <p>
+                    The architecture does not impose an arbitrary limit such as
+                    three, five, or ten AI systems.
+                </p>
+
+                <p>
+                    Practical limits depend on hardware resources, provider
+                    limits, API limits, system performance, configuration, and
+                    available infrastructure.
+                </p>
+
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+
+                <h2>AI Corporation vs AI Provider</h2>
+
+                <div class="diagram">
+
+
+                    <pre>
+AI CORPORATION
+    │
+    ├── Employees
+    ├── Projects
+    ├── Tasks
+    ├── Memory
+    ├── Orchestrator
+    ├── Tools
+    ├── Permissions
+    └── Provider Configuration
+             │
+             ├── Ollama
+             ├── OpenAI
+             ├── Google
+             ├── DeepSeek
+             ├── Anthropic
+             ├── Kimi
+             └── Other Providers
+</pre>
+
+
+                </div>
+
+                <div class="note">
+                    The Corporation is the software organization. AI providers
+                    are resources that the Corporation can use.
+                </div>
+
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+
+                <h2>Tools and Permissions</h2>
+
+                <div class="diagram">
+
+
+                    <pre>
+AI MODEL
+    │
+    ▼
+AI EMPLOYEE
+    │
+    ▼
+TOOL SYSTEM
+    │
+    ├── File System
+    ├── Terminal
+    ├── Browser
+    ├── Git
+    ├── Applications
+    └── Future Tools
+</pre>
+
+
+                </div>
+
+                <p>
+                    Intelligence and computer access are separate systems.
+                    Permissions determine what an employee may do.
+                </p>
+
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+
+                <h2>Human Approval</h2>
+
+                <div class="flow">
+                    <div class="node">AI Employees</div>
+                    <div class="arrow">→</div>
+                    <div class="node">Work</div>
+                    <div class="arrow">→</div>
+                    <div class="node">Review</div>
+                    <div class="arrow">→</div>
+                    <div class="node">Human Approval</div>
+                </div>
+
+                <p>
+                    The human remains the final authority for important or
+                    sensitive actions.
+                </p>
+
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+
+                <h2>One Computer = One AI Corporation</h2>
+
+                <div class="diagram">
+
+                    <pre>
+PC 1
+└── AI Corporation A
+    ├── Employees
+    ├── Projects
+    ├── Tasks
+    └── AI Providers
+
+PC 2
+└── AI Corporation B
+    ├── Employees
+    ├── Projects
+    ├── Tasks
+    └── AI Providers
+
+PC 3
+└── AI Corporation C
+    ├── Employees
+    ├── Projects
+    ├── Tasks
+    └── AI Providers
+</pre>
+
+                </div>
+
+                <p>
+                    The current architecture is local-first. Future versions
+                    may allow independent Corporations to communicate and
+                    collaborate over a network.
+                </p>
+
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+
+                <h2>Core Principles</h2>
+
+                <div class="grid">
+
+                    <div class="card">
+                        <h3>Agent ≠ Provider ≠ Model</h3>
+                        <p>
+                            These are separate architectural concepts.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Local + Cloud</h3>
+                        <p>
+                            Local and cloud AI systems can coexist.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Extensible</h3>
+                        <p>
+                            New AI providers, models, and employees can be added
+                            without redesigning the Corporation.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Replaceable</h3>
+                        <p>
+                            AI assignments can eventually be changed without
+                            rebuilding the Corporation.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Tool Separation</h3>
+                        <p>
+                            AI intelligence is separate from computer-control
+                            tools.
                         </p>
                     </div>
 
                     <div class="card">
                         <h3>Human Control</h3>
                         <p>
-                            Important development decisions remain under
-                            human approval and control.
+                            Sensitive operations can require human approval.
                         </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section" id="architecture">
-            <div class="container">
-                <h2>Architecture</h2>
-
-                <p class="muted">
-                    The system is being built incrementally, starting with
-                    the core orchestration infrastructure.
-                </p>
-
-                <div class="architecture">
-
-
-                    <pre>
-                         YOU
-                  CEO / PRODUCT OWNER
-                           │
-                           ▼
-                  ┌────────────────┐
-                  │  ORCHESTRATOR  │
-                  └───────┬────────┘
-                          │
-          ┌───────────────┼───────────────┐
-          ▼               ▼               ▼
-      PROJECTS          TASKS           AGENTS
-          │               │               │
-          │               │               ▼
-          │               │           PROVIDERS
-          │               │               │
-          └───────────────┴───────────────┤
-                                          ▼
-                                       OLLAMA
-                                          │
-                                          ▼
-                                      AI RESULT
-</pre>
-
-
-                </div>
-            </div>
-        </section>
-
-        <section class="section" id="status">
-            <div class="container">
-                <h2>Current Status</h2>
-
-                <div class="grid">
-                    <div class="card">
-                        <h3>Agents</h3>
-                        <p>
-                            Agent abstraction, registry, capabilities,
-                            permissions, and provider association.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Providers</h3>
-                        <p>
-                            Provider abstraction and registry with
-                            Ollama integration.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Tasks</h3>
-                        <p>
-                            Persistent tasks with status, assignment,
-                            execution results, and errors.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Projects</h3>
-                        <p>
-                            Persistent projects with tasks associated
-                            through project IDs.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Memory</h3>
-                        <p>
-                            Persistent agent memory and project-specific
-                            memory.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Audit Logs</h3>
-                        <p>
-                            Task creation and execution events are
-                            recorded for traceability.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section" id="roadmap">
-            <div class="container">
-                <h2>Roadmap</h2>
-
-                <p class="muted">
-                    Planned capabilities. These are not yet considered
-                    implemented.
-                </p>
-
-                <div class="roadmap">
-
-                    <div class="roadmap-item">
-                        <span class="number">1</span>
-                        <span>Project-aware task management</span>
-                    </div>
-
-                    <div class="roadmap-item">
-                        <span class="number">2</span>
-                        <span>Advanced task routing and orchestration</span>
-                    </div>
-
-                    <div class="roadmap-item">
-                        <span class="number">3</span>
-                        <span>Workflow engine</span>
-                    </div>
-
-                    <div class="roadmap-item">
-                        <span class="number">4</span>
-                        <span>Multi-agent collaboration</span>
-                    </div>
-
-                    <div class="roadmap-item">
-                        <span class="number">5</span>
-                        <span>Controlled agent tool system</span>
-                    </div>
-
-                    <div class="roadmap-item">
-                        <span class="number">6</span>
-                        <span>Developer environment integration</span>
-                    </div>
-
-                    <div class="roadmap-item">
-                        <span class="number">7</span>
-                        <span>QA and security agents</span>
-                    </div>
-
-                    <div class="roadmap-item">
-                        <span class="number">8</span>
-                        <span>Automated review and fix loops</span>
-                    </div>
-
-                    <div class="roadmap-item">
-                        <span class="number">9</span>
-                        <span>Git-based development lifecycle</span>
                     </div>
 
                 </div>
-            </div>
-        </section>
 
-        <section class="section">
-            <div class="container">
-                <h2>Technology</h2>
-
-                <div class="grid">
-                    <div class="card">
-                        <h3>Python</h3>
-                        <p>Core orchestration platform.</p>
-                    </div>
-
-                    <div class="card">
-                        <h3>SQLite</h3>
-                        <p>Persistent local application state.</p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Ollama</h3>
-                        <p>Local AI model execution.</p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Git / GitHub</h3>
-                        <p>Source control and development history.</p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Antigravity</h3>
-                        <p>Primary development environment.</p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Multi-Agent Architecture</h3>
-                        <p>Foundation for future AI collaboration.</p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Docker</h3>
-                        <p>
-                            Optional container runtime. The application runs
-                            natively with Python. When containerised, Ollama
-                            remains on the host machine and SQLite data is
-                            persisted through the <code>projects/</code> bind
-                            mount.
-                        </p>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -548,9 +727,7 @@
 
     <footer>
         <div class="container">
-            ERSELMETZ AI CORPORATION
-            <br>
-            AI-assisted software engineering infrastructure.
+            ERSELMETZ AI CORPORATION — Architecture Documentation
         </div>
     </footer>
 

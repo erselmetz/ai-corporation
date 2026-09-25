@@ -10,17 +10,15 @@ _DEFAULT_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 class OllamaProvider(AIProvider):
     def __init__(
         self,
-        model: str,
         base_url: str = _DEFAULT_BASE_URL,
     ):
-        self.model = model
         self.base_url = base_url.rstrip("/")
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, model: str, prompt: str) -> str:
         response = httpx.post(
             f"{self.base_url}/api/generate",
             json={
-                "model": self.model,
+                "model": model,
                 "prompt": prompt,
                 "stream": False,
             },

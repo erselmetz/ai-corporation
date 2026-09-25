@@ -1,0 +1,1 @@
+from app.interface.command import CommandInterface

@@ -22,3 +22,9 @@ class ProviderRegistry:
 
     def exists(self, provider_id: str) -> bool:
         return provider_id in self._providers
+
+    def remove(self, provider_id: str) -> None:
+        """Removes a provider from the registry."""
+        if not self.exists(provider_id):
+            raise ValueError(f"Provider not found: {provider_id}")
+        del self._providers[provider_id]
