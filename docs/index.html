@@ -1,736 +1,109 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERSELMETZ AI CORPORATION — Architecture</title>
-
+    <title>ERSELMETZ AI CORPORATION — Current Architecture</title>
     <style>
-        * {
-            box-sizing: border-box;
+        :root {
+            color-scheme: light;
+            font-family: system-ui, "Segoe UI", sans-serif;
+            color: #172033;
+            background: #f4f6fa;
         }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            margin: 0;
-            font-family:
-                Inter,
-                ui-sans-serif,
-                system-ui,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
-            line-height: 1.7;
-        }
-
-        header {
-            background: #ffffff;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 64px 24px;
-        }
-
-        .container {
-            width: min(1100px, calc(100% - 40px));
-            margin: 0 auto;
-        }
-
-        .eyebrow {
-            font-size: 0.85rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: #64748b;
-            margin-bottom: 12px;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: clamp(2.2rem, 5vw, 4rem);
-            line-height: 1.1;
-            color: #0f172a;
-        }
-
-        h2 {
-            margin-top: 0;
-            color: #0f172a;
-            font-size: 2rem;
-        }
-
-        h3 {
-            color: #0f172a;
-        }
-
-        p {
-            color: #475569;
-        }
-
-        section {
-            padding: 72px 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .lead {
-            max-width: 820px;
-            font-size: 1.15rem;
-            margin-top: 24px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-
-        .card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05);
-        }
-
-        .card h3 {
-            margin-top: 0;
-        }
-
-        .diagram {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 28px;
-            overflow-x: auto;
-            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05);
-        }
-
-        pre {
-            margin: 0;
-            font-family:
-                "Cascadia Code",
-                "JetBrains Mono",
-                Consolas,
-                monospace;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            color: #334155;
-            white-space: pre;
-        }
-
-        code {
-            background: #f1f5f9;
-            padding: 3px 7px;
-            border-radius: 6px;
-            font-family:
-                "Cascadia Code",
-                "JetBrains Mono",
-                Consolas,
-                monospace;
-        }
-
-        ul {
-            color: #475569;
-        }
-
-        li {
-            margin-bottom: 8px;
-        }
-
-        .flow {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin: 30px 0;
-        }
-
-        .node {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 12px;
-            padding: 12px 18px;
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .arrow {
-            color: #64748b;
-            font-weight: 700;
-        }
-
-        .note {
-            margin-top: 24px;
-            padding: 18px 20px;
-            background: #f1f5f9;
-            border-left: 4px solid #64748b;
-            border-radius: 8px;
-            color: #475569;
-        }
-
-        footer {
-            padding: 40px 0;
-            background: #ffffff;
-            color: #64748b;
-            text-align: center;
-        }
-
-        @media (max-width: 800px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-
-            section {
-                padding: 48px 0;
-            }
-
-            header {
-                padding: 48px 20px;
-            }
-
-            .container {
-                width: min(100% - 28px, 1100px);
-            }
-
-            .diagram {
-                padding: 18px;
-            }
-
-            pre {
-                font-size: 0.75rem;
-            }
-        }
+        body { margin: 0; line-height: 1.6; }
+        header, main, footer { max-width: 980px; margin: auto; padding: 1.5rem; }
+        header { padding-top: 3rem; }
+        h1, h2, h3 { line-height: 1.25; }
+        .panel { background: white; border: 1px solid #dce2ec; border-radius: 12px; padding: 1.25rem; margin: 1rem 0; }
+        pre { overflow-x: auto; padding: 1rem; background: #f0f3f8; border-radius: 8px; }
+        code { background: #f0f3f8; padding: .1rem .3rem; border-radius: 4px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { text-align: left; border-bottom: 1px solid #dce2ec; padding: .55rem; }
+        .note { border-left: 4px solid #3157a4; padding: .5rem 1rem; background: #eef3ff; }
+        a { color: #244d9a; }
     </style>
-
-
 </head>
-
 <body>
-
     <header>
-        <div class="container">
-            <div class="eyebrow">System Architecture</div>
-            <h1>🏢 ERSELMETZ AI CORPORATION</h1>
-            <p class="lead">
-                An actual software system implementing a virtual/simulated AI
-                organization where multiple AI employees can collaborate under
-                an Orchestrator.
-            </p>
-        </div>
+        <p>Current implementation · Tasks 1–27</p>
+        <h1>ERSELMETZ AI CORPORATION</h1>
+        <p><strong>ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.</strong>
+            The organization is the domain model; the software implements its current capabilities.</p>
+        <p>This page summarizes the implemented local Python command-line system. Planned capabilities are marked as future work.</p>
     </header>
     <main>
-        <section>
-            <div class="container">
+        <section class="panel">
+            <h2>Implemented architecture</h2>
+            <pre>Corporation identity
+└── Node / installation
+    └── Runtime Context (validated Corporation + Node IDs)
 
-                <h2>Corporation Organization</h2>
+Command interface
+└── Orchestrator
+    ├── Task lifecycle, SQLite persistence, and logs
+    └── Deterministic Task Router
+        ├── Explicit Agent assignment
+        ├── Required Employee role
+        └── Required Agent capability
+            └── Agent → Provider (currently Ollama) → Model
 
-                <div class="diagram">
-
-
-                    <pre>
-                         👨‍💻 YOU
-                    CEO / PRODUCT OWNER
-                           │
-                           ▼
-                  🏢 AI CORPORATION
-                           │
-                    ┌──────┴──────┐
-                    │ ORCHESTRATOR│
-                    │   / Manager │
-                    └──────┬──────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
-        ▼                  ▼                  ▼
-   🧠 ARCHITECT        🔬 R&D             📋 PM
-    AI Agent          AI Agent          AI Agent
-        │                  │                  │
-        └──────────────────┼──────────────────┘
-                           ▼
-                  💻 ENGINEERING
-                    Developer Agent
-                           │
-                 ┌─────────┴─────────┐
-                 ▼                   ▼
-              🧪 QA              🛡️ SECURITY
-             AI Agent             AI Agent
-                 │                   │
-                 └─────────┬─────────┘
-                           ▼
-                    👀 CODE REVIEW
-                       AI Agent
-                           │
-                           ▼
-                    🔀 Git / GitHub
-                           │
-                           ▼
-                    👨‍💻 HUMAN APPROVAL
-</pre>
-
-
-                </div>
-
-                <div class="note">
-                    The Corporation does not require a fixed number of AI
-                    employees. Employees and departments can grow as the system
-                    evolves.
-                </div>
-
-            </div>
+Standalone foundations: Client/Business adapter, Tool registry,
+in-memory Human Approval registry</pre>
+            <p><strong>Employee != Agent != Provider != Model.</strong> An Employee is an organizational identity and may be associated with a technical Agent. The Agent carries capabilities and Provider/Model identifiers.</p>
         </section>
 
-        <section>
-            <div class="container">
-
-                <h2>AI Employee Architecture</h2>
-
-                <div class="diagram">
-
-
-                    <pre>
-                         AI EMPLOYEE
-                              │
-                ┌─────────────┴─────────────┐
-                │                           │
-              ROLE                     ASSIGNMENT
-                │                           │
-        Architect / Developer /        Provider
-        Researcher / QA / etc.            │
-                                          ▼
-                                        Model
-</pre>
-
-
-                </div>
-
-                <p>
-                    An AI employee is separate from the provider and model that
-                    supply its intelligence.
-                </p>
-
-            </div>
+        <section class="panel">
+            <h2>Task routing and persistence</h2>
+            <p>Role and capability routing intent is stored on the Task and in SQLite; it is not eagerly converted to <code>assigned_agent</code>.</p>
+            <table>
+                <thead><tr><th>Priority</th><th>Route</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>Explicit <code>assigned_agent</code></td></tr>
+                    <tr><td>2</td><td><code>required_role</code> → registered Employee → associated Agent</td></tr>
+                    <tr><td>3</td><td><code>required_capability</code> → matching Agent</td></tr>
+                    <tr><td>4</td><td>Routing failure if no suitable Agent is found</td></tr>
+                </tbody>
+            </table>
+            <p>Routing is deterministic. There is no AI/LLM-based selection and no automatic fallback Agent. Dry-run reports the route without calling the Provider or changing Task state. CLI routing overrides are temporary.</p>
         </section>
 
-        <section>
-            <div class="container">
-
-                <h2>Provider → Model Architecture</h2>
-
-                <div class="flow">
-                    <div class="node">AI Employee</div>
-                    <div class="arrow">→</div>
-                    <div class="node">Provider</div>
-                    <div class="arrow">→</div>
-                    <div class="node">Model</div>
-                    <div class="arrow">→</div>
-                    <div class="node">AI Runtime / API</div>
-                </div>
-
-                <div class="grid">
-
-                    <div class="card">
-                        <h3>🖥️ Local AI</h3>
-
-                        <p>
-                            AI models can run locally on the Corporation's
-                            computer.
-                        </p>
-
-                        <p>
-                            Example:
-                        </p>
-
-                        <code>Ollama → Llama / Gemma</code>
-                    </div>
-
-                    <div class="card">
-                        <h3>☁️ Cloud AI</h3>
-
-                        <p>
-                            Employees can use online AI services through supported
-                            integrations.
-                        </p>
-
-                        <p>
-                            Examples include Gemini, OpenAI, DeepSeek, Anthropic,
-                            Kimi, and future providers.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>🔑 API Access</h3>
-
-                        <p>
-                            Cloud providers may be connected through API keys,
-                            SDKs, HTTP APIs, or other supported authentication
-                            mechanisms.
-                        </p>
-                    </div>
-
-                </div>
-
-            </div>
+        <section class="panel">
+            <h2>Implemented scope and limits</h2>
+            <ul>
+                <li>Task lifecycle, orchestration, task logs, SQLite tasks/projects, and memory stores.</li>
+                <li>Agent/Employee registries and management; Provider/Model commands; Ollama is the only implemented Provider.</li>
+                <li>Corporation/Node identity models and runtime relationship validation; local IDs are configured in startup code.</li>
+                <li>ClientRequest validation and a BusinessLayer-to-Task adapter, not an HTTP intake service.</li>
+                <li>Tool abstraction/registry is not wired to Agent execution; no concrete built-in tools or enforced permissions.</li>
+                <li>Approval request state is in-memory and not an execution gate.</li>
+                <li>Known limitation: TaskRegistry does not persist or reload <code>project_id</code>.</li>
+                <li>Task 26 adds an in-memory Integration Proposal foundation; Task 27 adds public GitHub metadata discovery only.</li>
+            </ul>
         </section>
 
-        <section>
-            <div class="container">
-
-                <h2>Multiple AI Systems</h2>
-
-                <div class="diagram">
-
-
-                    <pre>
-                    🏢 AI CORPORATION
-                           │
-                    ORCHESTRATOR
-                           │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-    ARCHITECT           RESEARCHER         DEVELOPER
-        │                  │                  │
-      OpenAI             Gemini             Ollama
-        │                  │                  │
-       GPT              Gemini Model       Llama/Gemma
-</pre>
-
-
-                </div>
-
-                <p>
-                    Different employees can use different AI providers and
-                    different models at the same time.
-                </p>
-
-            </div>
+        <section class="panel">
+            <h2>Integration Proposal foundation</h2>
+            <p>An <code>IntegrationSource</code> describes an external source independently from internal Employees, Agents, Providers, and Models. An <code>IntegrationProposal</code> captures the requested purpose, source, evaluation/approach/risk notes, timestamps, lifecycle, and approval request.</p>
+            <p>The controlled proposal lifecycle is Discovered → Analyzing → Evaluating → Proposed → Sandboxed → Tested → Review Required → Approved → Integrated, with Rejected and Failed outcomes. Approval and integration are separate states. An <code>IntegrationExecutionRecord</code> is a distinct audit/state record, can only be created for an approved proposal, and performs no execution or project modification.</p>
+            <p>Proposals and execution records are currently in-memory only. The execution record does not perform integration work. Capability names in the model are requested-scope vocabulary, not grants or enforcement.</p>
         </section>
 
-        <section>
-            <div class="container">
-
-                <h2>Add, Remove, or Replace AI</h2>
-
-                <div class="grid">
-
-                    <div class="card">
-                        <h3>➕ Add</h3>
-                        <p>
-                            New AI employees and provider integrations can be
-                            introduced without changing the Corporation's
-                            fundamental architecture.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>➖ Remove</h3>
-                        <p>
-                            An employee or provider can eventually be removed
-                            without rebuilding the entire Corporation.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>🔄 Replace</h3>
-                        <p>
-                            An employee can eventually be reassigned to another
-                            provider or model.
-                        </p>
-                    </div>
-
-                </div>
-
-                <div class="diagram" style="margin-top: 24px;">
-
-
-                    <pre>
-OLD
-
-Developer
-   │
-   ▼
-Ollama
-   │
-   ▼
-Llama
-
-
-        ↓ REPLACE
-
-
-NEW
-
-Developer
-   │
-   ▼
-Cloud Provider
-   │
-   ▼
-Configured Cloud Model
-</pre>
-
-
-                </div>
-
-            </div>
+        <section class="panel">
+            <h2>Public GitHub source discovery (Task 27)</h2>
+            <p><code>SourceDiscovery</code> is a source-adapter boundary; <code>GitHubRepositoryDiscovery</code> accepts validated HTTPS public GitHub repository sources and calls only fixed GitHub REST API endpoints. It returns typed repository metadata, latest release details when available, and README availability/size plus a bounded plain-text excerpt where safe. Expected API, rate-limit, network, not-found, invalid-source, and malformed-response cases are explicit errors.</p>
+            <p>Repository content is untrusted data, not instructions. Discovery does not clone, install dependencies, execute commands/code, semantically analyze or evaluate the project, create an integration proposal automatically, sandbox it, modify ERSELMETZ, approve, or integrate anything. A future proposal can reference a discovery result by ID.</p>
         </section>
 
-        <section>
-            <div class="container">
-
-                <h2>No Fixed AI Limit</h2>
-
-                <div class="diagram">
-
-
-                    <pre>
-                🏢 AI CORPORATION
-                       │
-                 ORCHESTRATOR
-                       │
-        ┌──────────────┼──────────────┐
-        │              │              │
-        ▼              ▼              ▼
-      Agent          Agent          Agent
-        │              │              │
-        ▼              ▼              ▼
-    Provider       Provider       Provider
-        │              │              │
-        ▼              ▼              ▼
-      Model          Model          Model
-
-        ... more employees ...
-        ... more providers ...
-        ... more models ...
-</pre>
-
-
-                </div>
-
-                <p>
-                    The architecture does not impose an arbitrary limit such as
-                    three, five, or ten AI systems.
-                </p>
-
-                <p>
-                    Practical limits depend on hardware resources, provider
-                    limits, API limits, system performance, configuration, and
-                    available infrastructure.
-                </p>
-
-            </div>
+        <section class="panel">
+            <h2>Future roadmap</h2>
+            <p>Analysis/Learning → Evaluation → Integration Design → Sandbox → Implementation → Testing → Review → Approval → Integration → Monitoring; richer orchestration and multi-Agent collaboration; AI-based routing and advanced Provider/Model selection; Agent-to-Agent communication; networking and Node Discovery; Authentication, Authorization, Encryption, Offline Mode, Synchronization, and Conflict Resolution; QA guardian and evaluation; richer Tools/MCP; open-source coding, repository, terminal, browser/computer, voice, and Git/GitHub integrations; controlled self-improvement.</p>
+            <p>The Corporation is intended to provide governance, organization, orchestration, identity, task management, routing, approval, and coordination—not to unnecessarily reinvent mature open-source coding and agent infrastructure. Listed integration areas are plans, not current integrations.</p>
+            <p><strong>Controlled improvement:</strong> Discovery → Analysis/Learning → Evaluation → Integration Design → Sandbox → Implementation → Testing → Review → Approval → Integration → Monitoring. Unrestricted autonomous self-modification is not the current design.</p>
         </section>
 
-        <section>
-            <div class="container">
-
-                <h2>AI Corporation vs AI Provider</h2>
-
-                <div class="diagram">
-
-
-                    <pre>
-AI CORPORATION
-    │
-    ├── Employees
-    ├── Projects
-    ├── Tasks
-    ├── Memory
-    ├── Orchestrator
-    ├── Tools
-    ├── Permissions
-    └── Provider Configuration
-             │
-             ├── Ollama
-             ├── OpenAI
-             ├── Google
-             ├── DeepSeek
-             ├── Anthropic
-             ├── Kimi
-             └── Other Providers
-</pre>
-
-
-                </div>
-
-                <div class="note">
-                    The Corporation is the software organization. AI providers
-                    are resources that the Corporation can use.
-                </div>
-
-            </div>
-        </section>
-
-        <section>
-            <div class="container">
-
-                <h2>Tools and Permissions</h2>
-
-                <div class="diagram">
-
-
-                    <pre>
-AI MODEL
-    │
-    ▼
-AI EMPLOYEE
-    │
-    ▼
-TOOL SYSTEM
-    │
-    ├── File System
-    ├── Terminal
-    ├── Browser
-    ├── Git
-    ├── Applications
-    └── Future Tools
-</pre>
-
-
-                </div>
-
-                <p>
-                    Intelligence and computer access are separate systems.
-                    Permissions determine what an employee may do.
-                </p>
-
-            </div>
-        </section>
-
-        <section>
-            <div class="container">
-
-                <h2>Human Approval</h2>
-
-                <div class="flow">
-                    <div class="node">AI Employees</div>
-                    <div class="arrow">→</div>
-                    <div class="node">Work</div>
-                    <div class="arrow">→</div>
-                    <div class="node">Review</div>
-                    <div class="arrow">→</div>
-                    <div class="node">Human Approval</div>
-                </div>
-
-                <p>
-                    The human remains the final authority for important or
-                    sensitive actions.
-                </p>
-
-            </div>
-        </section>
-
-        <section>
-            <div class="container">
-
-                <h2>One Computer = One AI Corporation</h2>
-
-                <div class="diagram">
-
-                    <pre>
-PC 1
-└── AI Corporation A
-    ├── Employees
-    ├── Projects
-    ├── Tasks
-    └── AI Providers
-
-PC 2
-└── AI Corporation B
-    ├── Employees
-    ├── Projects
-    ├── Tasks
-    └── AI Providers
-
-PC 3
-└── AI Corporation C
-    ├── Employees
-    ├── Projects
-    ├── Tasks
-    └── AI Providers
-</pre>
-
-                </div>
-
-                <p>
-                    The current architecture is local-first. Future versions
-                    may allow independent Corporations to communicate and
-                    collaborate over a network.
-                </p>
-
-            </div>
-        </section>
-
-        <section>
-            <div class="container">
-
-                <h2>Core Principles</h2>
-
-                <div class="grid">
-
-                    <div class="card">
-                        <h3>Agent ≠ Provider ≠ Model</h3>
-                        <p>
-                            These are separate architectural concepts.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Local + Cloud</h3>
-                        <p>
-                            Local and cloud AI systems can coexist.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Extensible</h3>
-                        <p>
-                            New AI providers, models, and employees can be added
-                            without redesigning the Corporation.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Replaceable</h3>
-                        <p>
-                            AI assignments can eventually be changed without
-                            rebuilding the Corporation.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Tool Separation</h3>
-                        <p>
-                            AI intelligence is separate from computer-control
-                            tools.
-                        </p>
-                    </div>
-
-                    <div class="card">
-                        <h3>Human Control</h3>
-                        <p>
-                            Sensitive operations can require human approval.
-                        </p>
-                    </div>
-
-                </div>
-
-            </div>
-        </section>
-
+        <p class="note">For the full implementation audit, limitations, and roadmap, see <a href="../ARCHITECTURE.md">ARCHITECTURE.md</a>. The repository overview is in <a href="../README.md">README.md</a>.</p>
     </main>
-
-    <footer>
-        <div class="container">
-            ERSELMETZ AI CORPORATION — Architecture Documentation
-        </div>
-    </footer>
-
+    <footer><small>ERSELMETZ AI CORPORATION · Current architecture, not a promise of planned functionality</small></footer>
 </body>
-
 </html>

@@ -1,777 +1,193 @@
-# ERSELMETZ AI CORPORATION — Architecture
+# ERSELMETZ AI CORPORATION — Current Architecture and Roadmap
 
-## Overview
+## Product definition
 
-**ERSELMETZ AI CORPORATION** is an actual software system implementing a virtual/simulated AI organization.
+**ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-The system is designed to operate as an AI Corporation where multiple AI employees can work together under an Orchestrator.
+This document separates the implemented Tasks 1–27 foundation from future architecture. Source code is authoritative if implementation and documentation disagree.
 
-The architecture is intentionally **AI-provider agnostic**.
-
-The Corporation must not depend on a single AI vendor, a single model, or a single AI runtime.
-
-AI employees can use:
-
-* Local/offline LLMs
-* Cloud-hosted LLMs
-* AI providers accessed through APIs
-* Different models from the same provider
-* Different providers at the same time
-* Additional AI systems added in the future
-
-The system should allow AI employees to be **added, removed, replaced, reassigned, and expanded without redesigning the Corporation itself**.
-
----
-
-# 1. High-Level Corporation Organization
+## Implemented system at a glance
 
 ```text
-                         👨‍💻 YOU
-                    CEO / PRODUCT OWNER
-                           │
-                           ▼
-                  🏢 AI CORPORATION
-                           │
-                    ┌──────┴──────┐
-                    │ ORCHESTRATOR│
-                    │   / Manager │
-                    └──────┬──────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
-        ▼                  ▼                  ▼
-   🧠 ARCHITECT        🔬 R&D             📋 PM
-    AI Agent          AI Agent          AI Agent
-        │                  │                  │
-        └──────────────────┼──────────────────┘
-                           ▼
-                  💻 ENGINEERING
-                    Developer Agent
-                           │
-                 ┌─────────┴─────────┐
-                 ▼                   ▼
-              🧪 QA              🛡️ SECURITY
-             AI Agent             AI Agent
-                 │                   │
-                 └─────────┬─────────┘
-                           ▼
-                    👀 CODE REVIEW
-                       AI Agent
-                           │
-                           ▼
-                    🔀 Git / GitHub
-                           │
-                           ▼
-                    👨‍💻 HUMAN APPROVAL
-```
-
-This diagram represents the **organizational workflow**.
-
-The actual number of employees is not fixed.
-
-The Corporation may have:
-
-```text
-1 AI
-5 AI employees
-10 AI employees
-50 AI employees
-100+ AI employees
-```
-
-The architecture should not require a fixed number of AI employees.
-
----
-
-# 2. AI Employee Architecture
-
-An AI employee is not the same thing as an AI provider or an AI model.
-
-These concepts must remain separate.
-
-```text
-                         AI EMPLOYEE
+Command interface
+      │
+      ▼
+Orchestrator ─────────── task logs
+      │
+      ├── TaskRegistry ─ SQLite tasks
+      ├── ProjectRegistry ─ SQLite projects
+      └── TaskRouter
+            ├── explicit Agent assignment
+            ├── required Employee role ─ Employee ─ Agent
+            └── required capability ─ Agent
                               │
-                ┌─────────────┴─────────────┐
-                │                           │
-              ROLE                     ASSIGNMENT
-                │                           │
-        Architect / Developer /        Provider
-        Researcher / QA / etc.            │
-                                          ▼
-                                        Model
+                              ▼
+                          Provider
+                              │
+                              ▼
+                            Model
+
+Startup identity:
+Corporation + Node → RuntimeContext → context validation
+
+Standalone foundations, not wired into task execution:
+Tool / ToolRegistry
+ApprovalRequest / ApprovalRegistry
+ClientRequest / BusinessLayer adapter
 ```
 
-For example:
+### Identity and runtime
+
+- **Corporation** is the identity of the modeled organization.
+- **Node / Installation** identifies a participating software or physical installation and contains a `corporation_id`.
+- **Runtime Context** carries Corporation and Node IDs. `RuntimeConfig` turns configured IDs into a context; `RuntimeInitializer` validates that both identities exist and the Node belongs to the selected Corporation.
+- In the current startup path, local identity IDs (`corp_local`, `node_local`) are configured directly in code. Corporation and Node registries are in-memory registries; durable installation identity/configuration and network participation are not implemented.
+
+### Organization and AI execution
+
+Keep these entities separate:
+
+| Concept | Implemented responsibility |
+|---|---|
+| **Employee** | Organizational identity, role, responsibilities, optional associated Agent |
+| **Agent** | Technical identity with role metadata, capabilities, permissions metadata, and Provider/Model identifiers |
+| **Provider** | Interface for generating a response; only Ollama is implemented and registered by current startup |
+| **Model** | Identifier supplied to the Agent's selected Provider |
+
+Therefore, **Employee != Agent != Provider != Model**. The Employee registry and Agent registry are in-memory. Provider registry is in-memory. Model management updates an Agent's in-memory Provider/Model assignment; durable administration/configuration is not provided.
+
+The Ollama integration sends a prompt to the configured Ollama HTTP endpoint. Other providers shown in older conceptual diagrams are not implemented integrations.
+
+### Tasks, persistence, and lifecycle
+
+A Task has `pending`, `running`, `completed`, or `failed` status and can carry:
+
+- `assigned_agent` for an explicit Agent assignment;
+- `required_role` for an Employee-role requirement;
+- `required_capability` for a capability requirement.
+
+`TaskRegistry` inserts, reloads, and updates these routing fields in SQLite. Database initialization adds `required_role` and `required_capability` with `ALTER TABLE` when an existing `tasks` table lacks them. Existing task rows are retained and read with NULL routing requirements.
+
+The Orchestrator creates tasks, routes and executes them, persists task state, and logs task-created/started/completed/failed events. A successful route during ordinary execution assigns the selected Agent before execution. A routing failure during ordinary execution marks the Task failed; a dry-run routing failure is surfaced as a `RoutingError`.
+
+SQLite currently stores Tasks, Projects, task logs, agent memory, and project memory in the configured database file. **Known limitation:** TaskRegistry does not persist/reload `project_id`, even though it is present on the Task model. Employee, Agent, Provider, model assignment, approval, tool, Corporation, and Node registries are not persisted as complete administration subsystems.
+
+### Deterministic Task Router
+
+Task creation stores role/capability intent and does not eagerly resolve it into an Agent assignment. The deterministic priority is:
+
+1. **Explicit assigned Agent** — resolve the exact assigned Agent; an invalid explicit assignment fails.
+2. **Required Role** — find a registered Employee with an exact role match, then use its associated Agent.
+3. **Required Capability** — find a registered Agent with the exact capability.
+4. **Routing failure** — raise `RoutingError` if no suitable Agent is found.
+
+When no Employee matches the requested role, routing can continue to a capability requirement if one is present. A matching Employee without an Agent produces a routing error. Task creation via the CLI accepts mutually exclusive routing options; a task with no requirement is permitted but cannot route unless an override supplies a route.
+
+Routing is deterministic and does not use AI/LLM reasoning. There is no automatic fallback Agent.
+
+### Dry-run
+
+`dry-run TASK-ID` uses the Task's persisted routing requirements. It reports the selected Agent/Employee, Provider, Model, route method, and ready status without calling the Provider. A dry-run does not change task status, result, error, `assigned_agent`, or stored routing requirements.
+
+An explicit dry-run override (`--agent`, `--role`, or `--capability`) is applied only to that routing request. It does not mutate or persist the Task.
+
+### Command interface and management
+
+The interactive CLI includes status and listing commands; Employee management; Provider management; Model assignment/replacement; Agent listing; Task creation; and dry-run. Task syntax is:
 
 ```text
-Employee:
-    Researcher
-
-Provider:
-    Ollama
-
-Model:
-    llama3.2:3b
+task <description> --agent <id>
+task <description> --role <role>
+task <description> --capability <capability>
+dry-run <task_id> [--agent <id> | --role <role> | --capability <capability>]
 ```
 
-Another employee may use:
+Employee, Provider, and Model management operates on the current in-memory registries/runtime. The Task routing requirements are persisted.
 
-```text
-Employee:
-    Architect
+### Other implemented foundations
 
-Provider:
-    OpenAI
+- **Client/business layer:** `ClientRequest` validates basic required text fields; `BusinessLayer` translates a request into an Orchestrator Task. This is an application-level adapter, not an HTTP service or complete external intake system.
+- **Tools:** an abstract `Tool` base class and in-memory `ToolRegistry` establish a registry foundation. There are no concrete built-in tools, Agent-to-tool execution path, or enforced permission policy.
+- **Human approval:** `ApprovalRequest` and `ApprovalRegistry` model pending/approved/rejected requests in memory. Approval is not persisted and is not integrated as a gate around task execution or sensitive actions.
 
-Model:
-    configured OpenAI model
-```
+### Integration Proposal foundation (Task 26)
 
-Another may use:
+The `app.integrations` package establishes concepts for future controlled integration work:
 
-```text
-Employee:
-    Researcher
+- **IntegrationSource** separates an external source description (`source_type`, `location`, optional project name) from Corporation Agents, Employees, Providers, and Models. The source type is a string so future adapters can add types without changing the proposal model.
+- **IntegrationProposal** describes the requested purpose, source, optional `source_discovery_id`, evaluation/approach/risk notes, timestamps, lifecycle status, and an attached existing `ApprovalRequest`. Its lifecycle status is read-only; transitions are controlled by an explicit transition method.
+- **IntegrationRegistry** stores proposals in memory. Proposal and execution persistence is deliberately deferred; it uses no second database and introduces no SQLite schema changes.
+- **IntegrationExecutionRecord** is a separate audit/state record, not an executor. It can only be created for a proposal whose linked ApprovalRequest has been approved. The record does not clone sources, execute external code, write project files, or integrate changes. Proposal status `APPROVED` is distinct from `INTEGRATED`; marking a proposal integrated requires a completed record linked to that proposal.
+- **IntegrationCapability** names possible future scopes. Requested scopes are descriptions only, not grants. No integration tool, unrestricted write/delete, commit, push, or execution privilege is provided.
 
-Provider:
-    Google
+### Public GitHub source discovery (Task 27)
 
-Model:
-    configured Gemini model
-```
+`SourceDiscovery` is an adapter boundary that accepts an `IntegrationSource` and returns a typed `SourceDiscoveryResult`. `GitHubRepositoryDiscovery` implements the first adapter for `github_repository` sources; additional source adapters can be added independently.
 
-The employee's role should not determine which company or model provides the intelligence.
+The GitHub adapter accepts only HTTPS `github.com/{owner}/{repository}` URLs (with optional `.git` suffix/trailing slash), validates path components, rejects credentials, ports, query/fragment strings, encoded paths, other hosts, and other protocols, and never requests the user-supplied URL. It builds requests only to fixed `https://api.github.com/repos/...` endpoints and disables redirects. Public repository metadata, latest-release metadata when available, and README availability/size plus an excerpt capped at 2,000 characters for README content up to 64 KiB are returned in typed result objects. Repository-not-found, private repository, rate-limit, API, network, invalid-source, and malformed-response cases use explicit discovery exceptions. Optional README/release 404s are represented as unavailable.
 
----
+The README excerpt is untrusted plain text; it is not interpreted as instructions or executed. Discovery performs no clone, package installation, shell invocation, source-code execution, semantic analysis, evaluation, sandboxing, project write, approval, or integration. No GitHub authentication token is required or configured. HTTP uses the existing `httpx` dependency. Discovery does not mutate the proposal lifecycle; a future proposal may refer to the result via `source_discovery_id`. No CLI or persistence is added for discovery in this task.
 
-# 3. Provider and Model Separation
+The intended future progression remains Discovery → Analysis/Learning → Evaluation → Integration Design → Sandbox → Implementation → Testing → Review → Approval → Integration → Monitoring. Task 27 implements only public GitHub information discovery. Proposals remain a separate domain rather than being represented as Tasks or passed through the Task Router.
 
-The Corporation uses the following conceptual separation:
+## Tasks 1–27 completion scope
 
-```text
-┌────────────────────┐
-│      AI AGENT      │
-│                    │
-│ Role               │
-│ Capabilities       │
-│ Permissions        │
-│ Provider assignment│
-│ Model assignment   │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│      PROVIDER      │
-│                    │
-│ AI service/runtime │
-│ Connection/config  │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│       MODEL        │
-│                    │
-│ Specific LLM       │
-└────────────────────┘
-```
+Tasks 1–27 are complete as the current foundation. Their implemented areas include:
 
-### Provider
+1. Task and Project domain/registry foundations.
+2. Task lifecycle, orchestration, logging, and SQLite persistence.
+3. Agent, Employee, Provider, and Model domain boundaries.
+4. Agent capability lookup and Employee-role lookup.
+5. Ollama execution integration and Provider interface.
+6. Employee and Provider management foundations.
+7. Model assignment/replacement management for the in-memory Agent.
+8. Tool abstraction and registry foundation.
+9. Human approval request/status foundation.
+10. Client request validation and business-layer Task translation.
+11. Corporation and Node identity models and registries.
+12. Runtime identity configuration, context validation, and startup wiring.
+13. Interactive Corporation command interface and management/listing commands.
+14. Deterministic explicit-Agent, role, and capability routing.
+15. Dry-run execution and CLI routing options.
+16. Persistent role/capability requirements with additive SQLite migration and reload.
+17. Integration source/proposal models, controlled lifecycle, proposal registry, and approval-gated execution record foundation.
+18. Public GitHub repository metadata discovery through a source-adapter abstraction.
 
-A provider represents the service or runtime used to access an AI model.
+This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, project ID persistence is incomplete, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 
-Examples include:
+## Future / planned roadmap
 
-* Ollama
-* OpenAI
-* Google
-* Anthropic
-* DeepSeek
-* Kimi
-* Other compatible AI services
-* Future providers
+None of the following should be represented as implemented until code provides it:
 
-### Model
+- Richer workflow orchestration, dependency scheduling, and multi-Agent collaboration.
+- AI-based, semantic, or policy-aware task routing; dynamic selection and advanced Provider/Model selection.
+- Agent-to-Agent communication.
+- Additional Provider integrations beyond Ollama.
+- Durable organization, Agent, Employee, Provider, and model configuration management.
+- A Software Reliability Engineer / QA guardian and richer evaluation.
+- Authentication, authorization, encryption, and permission enforcement.
+- Offline Mode, durable queues, synchronization, and conflict resolution.
+- Node discovery and networking among independent Corporation installations.
+- Richer Tool and MCP integration, concrete tools, and controlled tool execution.
+- Open-source coding/editing, repository mapping, terminal, browser/computer-control, voice, and Git/GitHub workflow integrations.
+- Git/GitHub automation.
+- Controlled self-improvement and a sandbox/evaluation pipeline.
+- External integration stages beyond Task 27 discovery: analyze/learn, evaluate, design, sandbox, implement, test, review, approval orchestration, integrate, and monitor.
 
-A model represents the specific AI model being used.
+### Open-source ecosystem direction
 
-Examples include:
+ERSELMETZ AI CORPORATION should not unnecessarily recreate mature open-source agent and coding infrastructure. Its intended role is the **governance + organization + orchestration + identity + task management + routing + approval + coordination layer**. Suitable existing projects, protocols, and tools may be integrated for specialized coding/editing, repository mapping, terminal execution, browser/computer interaction, MCP/tool integration, voice/computer control, and Git/GitHub workflows. Such examples describe a direction only; no such integration is implied to exist today.
 
-* Llama
-* Gemma
-* DeepSeek models
-* Gemini models
-* GPT models
-* Claude models
-* Future models
+### Controlled self-improvement
 
-The provider and model must remain independently representable.
+The intended future improvement path is:
 
----
+**Discovery → Analysis/Learning → Evaluation → Integration Design → Sandbox → Implementation → Testing → Review → Approval → Integration → Monitoring**
 
-# 4. Local / Offline AI
+Unrestricted autonomous self-modification is **not** the current design. Future changes must be controlled, testable, auditable, and subject to appropriate approval boundaries.
 
-The Corporation can use AI that runs locally on the computer.
+The `IntegrationCapability` enum defines possible request scopes: `READ_SOURCE`, `ANALYZE_SOURCE`, `RUN_SANDBOX`, `WRITE_PROJECT`, `RUN_TESTS`, `REQUEST_APPROVAL`, and `INTEGRATE`. Execution records can describe requested scopes, but Task 26 grants or enforces none of them; delete, commit, and push authority are not provided by the integration foundation. Human/orchestrator approval must remain explicit before any future integration execution.
 
-Example:
+## Development rule
 
-```text
-AI Corporation
-      │
-      ▼
-AI Employee
-      │
-      ▼
-Ollama Provider
-      │
-      ▼
-Local LLM
-      │
-      ▼
-Llama / Gemma / other local model
-```
-
-A local AI can operate without sending prompts to an external AI service, depending on the configured runtime and model.
-
-Example configuration concept:
-
-```text
-Employee: Developer
-
-Provider: Ollama
-
-Model: llama3.2:3b
-```
-
-This allows the Corporation to continue using locally available AI infrastructure.
-
----
-
-# 5. Online / Cloud AI
-
-The Corporation can also use online AI services.
-
-Example:
-
-```text
-AI Employee
-      │
-      ▼
-Cloud Provider
-      │
-      ▼
-Online AI Model
-```
-
-Possible integrations include:
-
-```text
-Google / Gemini
-OpenAI / ChatGPT
-DeepSeek
-Anthropic / Claude
-Kimi
-Other providers
-```
-
-Cloud providers may be accessed through:
-
-* API keys
-* Provider SDKs
-* HTTP APIs
-* Other supported authentication mechanisms
-* Future native integrations
-
-The Corporation architecture must not assume that all providers use the same connection method.
-
----
-
-# 6. Multiple AI Providers at the Same Time
-
-The Corporation is designed to support multiple AI systems simultaneously.
-
-For example:
-
-```text
-                    AI CORPORATION
-                           │
-                    ORCHESTRATOR
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
-        ▼                  ▼                  ▼
-   ARCHITECT           RESEARCHER          DEVELOPER
-        │                  │                  │
-        ▼                  ▼                  ▼
-     OpenAI             Gemini             Ollama
-        │                  │                  │
-        ▼                  ▼                  ▼
-      GPT              Gemini Model       Llama/Gemma
-```
-
-There is no architectural requirement that every employee use the same AI.
-
----
-
-# 7. AI Can Be Added, Removed, or Replaced
-
-AI integration must be treated as a configurable part of the Corporation.
-
-An AI employee may be:
-
-```text
-ADD
- │
- ▼
-Employee + Provider + Model
-```
-
-An existing employee may be:
-
-```text
-REMOVE
- │
- ▼
-Employee no longer participates
-```
-
-An employee may also be reassigned:
-
-```text
-OLD
-
-Developer
-   │
-   ▼
-Ollama
-   │
-   ▼
-Llama
-
-
-NEW
-
-Developer
-   │
-   ▼
-OpenAI
-   │
-   ▼
-Configured GPT model
-```
-
-The Corporation itself does not need to be rebuilt when an AI provider or model changes.
-
----
-
-# 8. Replacement Principle
-
-The system should eventually support commands conceptually similar to:
-
-```text
-"Replace the Researcher AI with Gemini."
-```
-
-or:
-
-```text
-"Use DeepSeek for the Developer."
-```
-
-or:
-
-```text
-"Move the Architect employee to a local Llama model."
-```
-
-The goal is that these changes can be handled through Corporation configuration and management systems rather than requiring developers to manually rewrite core Python code.
-
-The exact command/interface is a future implementation detail.
-
----
-
-# 9. Temporary Model Override
-
-Permanent employee configuration and task-specific configuration are separate concepts.
-
-An employee may have a permanent assignment:
-
-```text
-Developer
-    Provider: Ollama
-    Model: llama3.2:3b
-```
-
-But a specific task may temporarily request another model:
-
-```text
-Task
-    ↓
-Temporary Provider/Model Override
-    ↓
-Execute
-    ↓
-Return to Employee's normal assignment
-```
-
-This allows the Corporation to eventually use specialized models for individual tasks without permanently changing an employee.
-
----
-
-# 10. Provider Registry
-
-The Corporation uses a provider registry to prevent the Orchestrator from being tightly coupled to one provider.
-
-Conceptually:
-
-```text
-ProviderRegistry
-    │
-    ├── OllamaProvider
-    ├── OpenAIProvider
-    ├── GoogleProvider
-    ├── AnthropicProvider
-    ├── DeepSeekProvider
-    ├── KimiProvider
-    └── FutureProvider...
-```
-
-The exact providers implemented at any given time may change.
-
-The architecture should allow additional providers to be introduced without changing the fundamental Corporation design.
-
----
-
-# 11. Unlimited AI Integration Concept
-
-There is intentionally no hard architectural limit such as:
-
-```text
-Only 3 AI systems
-Only 5 providers
-Only 10 employees
-```
-
-Instead:
-
-```text
-                AI CORPORATION
-                       │
-                 ORCHESTRATOR
-                       │
-        ┌──────────────┼──────────────┐
-        │              │              │
-        ▼              ▼              ▼
-      Agent          Agent          Agent
-        │              │              │
-        ▼              ▼              ▼
-    Provider       Provider       Provider
-        │              │              │
-        ▼              ▼              ▼
-      Model          Model          Model
-
-        ... additional employees ...
-        ... additional providers ...
-        ... additional models ...
-```
-
-The practical limit depends on available hardware, provider limits, API limits, resources, configuration, and system performance — not on an arbitrary fixed employee count in the Corporation architecture.
-
----
-
-# 12. Orchestrator
-
-The Orchestrator is the management and coordination layer.
-
-Conceptually:
-
-```text
-USER
- │
- ▼
-ORCHESTRATOR
- │
- ├── Select / coordinate employee
- ├── Manage task execution
- ├── Coordinate workflow
- ├── Track task state
- └── Communicate with Corporation systems
-```
-
-The Orchestrator should not need to know the internal implementation details of every AI provider.
-
-Instead:
-
-```text
-Orchestrator
-      │
-      ▼
-Agent
-      │
-      ▼
-Provider
-      │
-      ▼
-Model
-```
-
-This separation keeps the Corporation extensible.
-
----
-
-# 13. Tools Are Separate From Intelligence
-
-An AI model is not automatically allowed to control the computer.
-
-The architecture separates intelligence from tools.
-
-```text
-AI MODEL
-    │
-    ▼
-AI EMPLOYEE
-    │
-    ▼
-TOOL SYSTEM
-    │
-    ├── File System
-    ├── Terminal
-    ├── Browser
-    ├── Git
-    ├── Applications
-    └── Future Tools
-```
-
-Permissions determine which tools an employee may use.
-
-Examples of permissions:
-
-```text
-read
-write
-execute
-git
-publish
-delete
-```
-
-Sensitive operations may require human approval.
-
----
-
-# 14. Human Approval
-
-The human remains the final authority.
-
-The Corporation can automate work while preserving human control over important actions.
-
-```text
-AI EMPLOYEES
-      │
-      ▼
-WORK
-      │
-      ▼
-REVIEW
-      │
-      ▼
-GIT / PUBLISH / SENSITIVE ACTION
-      │
-      ▼
-HUMAN APPROVAL
-```
-
-The exact approval mechanisms will evolve as the system grows.
-
----
-
-# 15. Complete Technical Architecture
-
-```text
-                         👨‍💻 HUMAN / CEO
-                               │
-                               ▼
-                    🏢 AI CORPORATION
-                               │
-                               ▼
-                        ORCHESTRATOR
-                               │
-             ┌─────────────────┼─────────────────┐
-             │                 │                 │
-             ▼                 ▼                 ▼
-          PROJECTS           TASKS          AI EMPLOYEES
-                                                 │
-                                  ┌──────────────┼──────────────┐
-                                  │              │              │
-                                  ▼              ▼              ▼
-                               ROLE        PROVIDER        MODEL
-                                                │              │
-                                                └──────┬───────┘
-                                                       ▼
-                                                AI RUNTIME / API
-                                                       │
-                              ┌────────────────────────┼────────────────────┐
-                              │                        │                    │
-                              ▼                        ▼                    ▼
-                           OLLAMA                 CLOUD APIs          FUTURE AI
-                              │                        │                    │
-                              ▼                        ▼                    ▼
-                         Local LLMs            Gemini / GPT /       Additional
-                         Llama / Gemma         DeepSeek / etc.      providers
-```
-
----
-
-# 16. Corporation vs AI Provider
-
-These are different layers.
-
-```text
-AI CORPORATION
-    │
-    ├── Employees
-    ├── Projects
-    ├── Tasks
-    ├── Memory
-    ├── Orchestrator
-    ├── Tools
-    ├── Permissions
-    └── Provider configuration
-             │
-             ├── Ollama
-             ├── OpenAI
-             ├── Google
-             ├── DeepSeek
-             ├── Anthropic
-             └── Other providers
-```
-
-The Corporation is the software organization.
-
-The AI providers are resources that the Corporation can use.
-
----
-
-# 17. One Computer = One AI Corporation
-
-The long-term system is designed around the concept that each installation represents an independent AI Corporation.
-
-```text
-PC 1
-└── AI Corporation A
-    ├── Employees
-    ├── Projects
-    ├── Tasks
-    └── AI Providers
-
-PC 2
-└── AI Corporation B
-    ├── Employees
-    ├── Projects
-    ├── Tasks
-    └── AI Providers
-
-PC 3
-└── AI Corporation C
-    ├── Employees
-    ├── Projects
-    ├── Tasks
-    └── AI Providers
-```
-
-Future versions may allow multiple Corporations to communicate and collaborate over a network.
-
-Networking is not part of the current local-first architecture.
-
----
-
-# 18. Core Architectural Principles
-
-The following principles should be preserved when implementing future features.
-
-1. **One PC = one independent AI Corporation.**
-
-2. **Agent ≠ Provider ≠ Model.**
-
-3. **An Agent represents an AI employee.**
-
-4. **A Provider represents an AI service/runtime.**
-
-5. **A Model represents a specific AI model.**
-
-6. **Employees can use different providers and models.**
-
-7. **Local and cloud AI can coexist.**
-
-8. **The Corporation must not be permanently tied to one AI vendor.**
-
-9. **AI employees can eventually be added, removed, replaced, or reassigned.**
-
-10. **The number of AI employees is not fixed by the architecture.**
-
-11. **Tools are separate from AI intelligence.**
-
-12. **Permissions control tool access.**
-
-13. **Sensitive operations can require human approval.**
-
-14. **The Orchestrator coordinates work rather than embedding provider-specific logic everywhere.**
-
-15. **New features should preserve existing architectural boundaries.**
-
-16. **The Corporation should remain usable with local AI, cloud AI, or a combination of both.**
-
-17. **Provider-specific implementation details belong inside provider integrations, not throughout the Corporation core.**
-
-18. **The system should be extensible without requiring a redesign when new AI providers or models appear.**
-
----
-
-# 19. Current Implementation vs Future Architecture
-
-Not everything shown in this document is implemented yet.
-
-The architecture describes both:
-
-* the current software foundation
-* the intended long-term direction
-
-Current development should implement the architecture incrementally.
-
-Future concepts such as:
-
-* automatic model routing
-* fallback providers
-* task-specific model selection
-* additional cloud providers
-* dynamic employee management
-* tool authorization
-* human approval workflows
-* Corporation-to-Corporation networking
-
-should be introduced only when their corresponding development milestones are reached.
-
-Do not implement future architecture prematurely unless the current roadmap explicitly calls for it.
-
----
-
-# 20. Development Rule
-
-Before making architectural changes, coding agents should read:
-
-```text
-README.md
-ARCHITECTURE.md
-```
-
-and any relevant documentation under:
-
-```text
-docs/
-```
-
-The purpose is to ensure that implementation decisions remain consistent with the Corporation's architecture.
-
-The AI Corporation is designed to evolve.
-
-**The Corporation should not need to be rebuilt simply because the AI employees, providers, or models change.**
+Before implementing a future milestone, inspect the actual implementation and tests for the affected area. Treat this architecture as a description of current behavior plus clearly labeled direction—not as evidence that planned behavior already exists.

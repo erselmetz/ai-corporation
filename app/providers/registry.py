@@ -1,6 +1,5 @@
 from .base import AIProvider
 
-
 class ProviderRegistry:
     def __init__(self):
         self._providers: dict[str, AIProvider] = {}
