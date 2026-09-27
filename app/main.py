@@ -1,4 +1,4 @@
-from app.agents import Agent, AgentRegistry, EmployeeRegistry
+from app.agents import Agent, AgentRegistry, Employee, EmployeeRegistry
 from app.orchestrator import Orchestrator, TaskRegistry
 from app.providers import OllamaProvider, ProviderRegistry
 from app.database import initialize_database
@@ -61,12 +61,24 @@ def main(interactive: bool = True):
 
     agent_registry.register(local_worker)
 
+    # Employees
+    employee_registry = EmployeeRegistry()
+    local_employee = Employee(
+        id="local_employee",
+        name="Local Worker",
+        role="Local AI Worker",
+        responsibilities=["General task execution"],
+        agent=local_worker,
+    )
+    employee_registry.register(local_employee)
+
     # Orchestrator
     orchestrator = Orchestrator(
         agents=agent_registry,
         providers=provider_registry,
         tasks=task_registry,
         projects=projects,
+        employees=employee_registry,
     )
 
     print("ERSELMETZ AI CORPORATION")
@@ -84,9 +96,10 @@ def main(interactive: bool = True):
             node=node,
             orchestrator=orchestrator,
             agent_registry=agent_registry,
-            employee_registry=EmployeeRegistry(), # In main.py, employees are not yet registered, but we pass the registry
+            employee_registry=employee_registry,
             task_registry=task_registry,
             project_registry=projects,
+            provider_registry=provider_registry,
         )
         shell = CommandInterface(ctx)
         shell.run()

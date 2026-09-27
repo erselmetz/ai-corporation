@@ -5,6 +5,7 @@ from typing import Protocol, Any
 
 from app.orchestrator import Orchestrator, TaskRegistry, ProjectRegistry
 from app.agents import AgentRegistry, EmployeeRegistry
+from app.providers import ProviderRegistry
 from app.corporation import Corporation
 from app.node import Node
 
@@ -20,7 +21,8 @@ class CorporationContext:
         agent_registry: AgentRegistry, 
         employee_registry: EmployeeRegistry,
         task_registry: TaskRegistry,
-        project_registry: ProjectRegistry
+        project_registry: ProjectRegistry,
+        provider_registry: ProviderRegistry | None = None
     ):
         self.corp = corp
         self.node = node
@@ -29,6 +31,7 @@ class CorporationContext:
         self.employee_registry = employee_registry
         self.task_registry = task_registry
         self.project_registry = project_registry
+        self.provider_registry = provider_registry
 
 class CommandInterface:
     """
@@ -89,9 +92,9 @@ class CommandInterface:
         elif cmd == "agents":
             self._cmd_agents()
         elif cmd == "task":
-            self._cmd_task(" ".join(args))
+            self._cmd_task(args)
         elif cmd == "dry-run":
-            self._cmd_dry_run(" ".join(args))
+            self._cmd_dry_run(args)
         elif cmd in ("exit", "quit"):
             self.exit_shell()
         else:
@@ -108,12 +111,11 @@ class CommandInterface:
         print("  provider   - Manage AI Providers (add, list, get, remove)")
         print("  model      - Manage Agent Models (set, get, replace)")
         print("  agents     - List all registered AI Agents")
-        print("  task <desc>- Create a new task")
-        print("  dry-run <tid>- Perform a dry-run of the specified task")
+        print("  task <desc> [--agent <id> | --role <role> | --capability <capability>]")
+        print("             - Create a new task with optional routing")
+        print("  dry-run <task_id> [--agent <id> | --role <role> | --capability <capability>]")
+        print("             - Perform a dry-run of the specified task")
         print("  exit/quit   - Terminate the shell")
-
-
-
         print()
 
     def _cmd_status(self):
@@ -253,63 +255,6 @@ class CommandInterface:
         except Exception as e:
             print(f"An error occurred managing providers: {e}")
 
-    def _cmd_provider(self, args: list[str]):
-        if not args:
-            print("Error: Provider command requires a sub-command. Available: add, list, get, remove")
-            return
-
-        sub_cmd = args[0].lower()
-        from app.providers import ProviderManagement
-        mgmt = ProviderManagement(self.context.provider_registry)
-
-        try:
-            if sub_cmd == "add":
-                if len(args) < 3:
-                    print("Error: 'provider add' requires <id> <name>")
-                    return
-                
-                p_id = args[1]
-                name = args[2]
-                provider = mgmt.create_provider(p_id, name)
-                print(f"Provider added: {provider.__class__.__name__} ({name})")
-
-            elif sub_cmd == "list":
-                providers = mgmt.list_providers()
-                if not providers:
-                    print("No providers registered.")
-                    return
-                
-                print("\nRegistered Providers:")
-                print(f"{'ID':<15} | {'Type':<20}")
-                print("-" * 35)
-                for p_id, p in providers.items():
-                    print(f"{p_id:<15} | {p.__class__.__name__:<20}")
-                print()
-
-            elif sub_cmd == "get":
-                if len(args) < 2:
-                    print("Error: 'provider get' requires <id>")
-                    return
-                provider = mgmt.get_provider(args[1])
-                print(f"\nProvider: {provider.__class__.__name__} (ID: {args[1]})")
-                print()
-
-            elif sub_cmd == "remove":
-                if len(args) < 2:
-                    print("Error: 'provider remove' requires <id>")
-                    return
-                mgmt.remove_provider(args[1])
-                print(f"Provider {args[1]} removed successfully.")
-
-            else:
-                print(f"Unknown provider sub-command: {sub_cmd}")
-                print("Available: add, list, get, remove")
-
-        except ValueError as e:
-            print(f"Error: {e}")
-        except Exception as e:
-            print(f"An error occurred managing providers: {e}")
-
     def _cmd_model(self, args: list[str]):
         if not args:
             print("Error: Model command requires a sub-command. Available: set, get, replace")
@@ -366,11 +311,57 @@ class CommandInterface:
             print(f"  Capabilities: {', '.join(agent.capabilities)}")
         print()
 
-    def _cmd_task(self, description: str):
-        if not description:
-            print("Error: Task description is required. Example: 'task Research Python AI'")
+    def _parse_routing_args(self, args: list[str] | str) -> tuple[list[str], dict[str, str] | None, str | None]:
+        if isinstance(args, str):
+            try:
+                tokens = shlex.split(args)
+            except ValueError as e:
+                return [], None, f"Shell Error: {e}"
+        else:
+            tokens = list(args)
+
+        positionals: list[str] = []
+        options: dict[str, str] = {}
+        i = 0
+        while i < len(tokens):
+            token = tokens[i]
+            if token in ("--agent", "--role", "--capability"):
+                opt_name = token[2:]
+                if i + 1 >= len(tokens) or tokens[i + 1].startswith("--"):
+                    return [], None, f"Error: '{token}' requires a value."
+                if opt_name in options:
+                    return [], None, f"Error: Duplicate '{token}' option."
+                if not tokens[i + 1].strip():
+                    return [], None, f"Error: '{token}' value cannot be empty."
+                options[opt_name] = tokens[i + 1]
+                i += 2
+            elif token.startswith("--"):
+                return [], None, f"Error: Unknown option '{token}'."
+            else:
+                positionals.append(token)
+                i += 1
+
+        routing_opts = [k for k in ("agent", "role", "capability") if k in options]
+        if len(routing_opts) > 1:
+            return [], None, "Error: Routing options (--agent, --role, --capability) are mutually exclusive."
+
+        return positionals, options, None
+
+    def _cmd_task(self, args: list[str] | str):
+        positionals, options, error = self._parse_routing_args(args)
+        if error:
+            print(error)
             return
-        
+
+        if not positionals:
+            print("Error: Task description is required. Example: 'task \"Research Python AI\"'")
+            return
+
+        description = " ".join(positionals)
+        agent_id = options.get("agent")
+        role = options.get("role")
+        capability = options.get("capability")
+
         # Use the existing Orchestrator to create a task.
         # Since we don't have a specific project ID from the command, 
         # we'll use a default project if one exists, or create one.
@@ -382,24 +373,50 @@ class CommandInterface:
             from app.orchestrator.project import Project
             proj_reg.register(Project(id=project_id, name="General", description="Default Project", status="active"))
             
-        task = self.context.orchestrator.create_task(
-            title=description[:50], 
-            description=description, 
-            project_id=project_id
-        )
-        print(f"Task created: {task.id} - {task.title}")
+        kwargs: dict[str, Any] = {
+            "title": description[:50],
+            "description": description,
+            "project_id": project_id,
+        }
+        if agent_id:
+            kwargs["agent_id"] = agent_id
+        if role:
+            kwargs["role"] = role
+        if capability:
+            kwargs["capability"] = capability
 
-    def _cmd_dry_run(self, task_id: str):
-        if not task_id:
+        try:
+            task = self.context.orchestrator.create_task(**kwargs)
+            print(f"Task created: {task.id} - {task.title}")
+        except Exception as e:
+            print(f"Error creating task: {e}")
+
+    def _cmd_dry_run(self, args: list[str] | str):
+        positionals, options, error = self._parse_routing_args(args)
+        if error:
+            print(error)
+            return
+
+        if not positionals:
             print("Error: Task ID is required. Example: 'dry-run TASK-123'")
             return
-        
+
+        task_id = positionals[0]
+        agent_id = options.get("agent")
+        role = options.get("role")
+        capability = options.get("capability")
+
         try:
             task = self.context.task_registry.get(task_id)
-            # We execute a dry-run. 
-            # Since the command doesn't provide role/capability, 
-            # it relies on existing task assignment or default routing.
-            result = self.context.orchestrator.execute_task(task, dry_run=True)
+            kwargs: dict[str, Any] = {"dry_run": True}
+            if role:
+                kwargs["role"] = role
+            if capability:
+                kwargs["capability"] = capability
+            if agent_id:
+                kwargs["agent_id"] = agent_id
+
+            result = self.context.orchestrator.execute_task(task, **kwargs)
             print(f"\n{result}")
             print()
         except Exception as e:

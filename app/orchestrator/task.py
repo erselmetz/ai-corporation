@@ -19,3 +19,5 @@ class Task:
     status: TaskStatus = TaskStatus.PENDING
     result: str | None = None
     error: str | None = None
+    required_role: str | None = None
+    required_capability: str | None = None

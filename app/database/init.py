@@ -12,12 +12,25 @@ def initialize_database() -> None:
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
                 assigned_agent TEXT,
+                required_role TEXT,
+                required_capability TEXT,
                 status TEXT NOT NULL,
                 result TEXT,
                 error TEXT
             )
             """
         )
+
+        task_columns = {
+            row["name"]
+            for row in connection.execute("PRAGMA table_info(tasks)").fetchall()
+        }
+        if "required_role" not in task_columns:
+            connection.execute("ALTER TABLE tasks ADD COLUMN required_role TEXT")
+        if "required_capability" not in task_columns:
+            connection.execute(
+                "ALTER TABLE tasks ADD COLUMN required_capability TEXT"
+            )
 
         connection.execute(
             """

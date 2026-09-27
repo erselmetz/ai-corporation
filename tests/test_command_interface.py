@@ -5,6 +5,7 @@ from app.orchestrator import Orchestrator, TaskRegistry, ProjectRegistry
 from app.agents import AgentRegistry, EmployeeRegistry
 from app.corporation import Corporation
 from app.node import Node
+from app.providers import ProviderRegistry
 from app.orchestrator.dry_run import DryRunResult
 from app.orchestrator.task import Task
 
@@ -23,6 +24,8 @@ def mock_ctx():
     emp_reg = MagicMock(spec=EmployeeRegistry)
     task_reg = MagicMock(spec=TaskRegistry)
     proj_reg = MagicMock(spec=ProjectRegistry)
+    provider_reg = MagicMock(spec=ProviderRegistry)
+    provider_reg.all.return_value = {}
     
     return CorporationContext(
         corp=corp,
@@ -31,7 +34,8 @@ def mock_ctx():
         agent_registry=agent_reg,
         employee_registry=emp_reg,
         task_registry=task_reg,
-        project_registry=proj_reg
+        project_registry=proj_reg,
+        provider_registry=provider_reg
     )
 
 def test_help_command(mock_ctx):
@@ -130,3 +134,229 @@ def test_quit_command(mock_ctx):
     interface = CommandInterface(mock_ctx)
     interface.handle_command("quit")
     assert interface._running is False
+
+def test_provider_list_empty(mock_ctx):
+    mock_ctx.provider_registry.all.return_value = {}
+    interface = CommandInterface(mock_ctx)
+    with patch('builtins.print') as mock_print:
+        interface.handle_command("provider list")
+        mock_print.assert_any_call("No providers registered.")
+
+def test_providers_command(mock_ctx):
+    mock_ctx.provider_registry.all.return_value = {}
+    interface = CommandInterface(mock_ctx)
+    with patch('builtins.print') as mock_print:
+        interface.handle_command("providers")
+        mock_print.assert_any_call("No providers registered.")
+
+def test_provider_add_command(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    with patch('builtins.print') as mock_print:
+        interface.handle_command("provider add test_p TestProvider")
+        mock_ctx.provider_registry.register.assert_called_once()
+        mock_print.assert_any_call("Provider added: OllamaProvider (TestProvider)")
+
+def test_model_set_command(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    mock_agent = MagicMock()
+    mock_ctx.agent_registry.get.return_value = mock_agent
+    mock_ctx.provider_registry.exists.return_value = True
+    
+    with patch('builtins.print') as mock_print:
+        interface.handle_command("model set worker_1 ollama gemma4:26b")
+        mock_ctx.agent_registry.get.assert_called_once_with("worker_1")
+        mock_ctx.provider_registry.exists.assert_called_once_with("ollama")
+        assert mock_agent.provider == "ollama"
+        assert mock_agent.model == "gemma4:26b"
+        mock_print.assert_any_call("Model updated for agent worker_1: ollama/gemma4:26b")
+
+def test_task_creation_with_agent(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    mock_task = MagicMock(spec=Task)
+    mock_task.id = "TASK-001"
+    mock_task.title = "Research AI"
+    mock_ctx.orchestrator.create_task.return_value = mock_task
+    mock_ctx.project_registry.all.return_value = []
+    mock_ctx.project_registry.exists.return_value = False
+
+    with patch('builtins.print') as mock_print:
+        interface.handle_command('task "Research AI" --agent local_worker')
+        mock_ctx.orchestrator.create_task.assert_called_once_with(
+            title="Research AI",
+            description="Research AI",
+            project_id="default_proj",
+            agent_id="local_worker"
+        )
+        mock_print.assert_any_call("Task created: TASK-001 - Research AI")
+
+def test_task_creation_with_role(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    mock_task = MagicMock(spec=Task)
+    mock_task.id = "TASK-002"
+    mock_task.title = "Handle Work"
+    mock_ctx.orchestrator.create_task.return_value = mock_task
+    mock_ctx.project_registry.all.return_value = []
+    mock_ctx.project_registry.exists.return_value = False
+
+    with patch('builtins.print') as mock_print:
+        interface.handle_command('task "Handle Work" --role "Local AI Worker"')
+        mock_ctx.orchestrator.create_task.assert_called_once_with(
+            title="Handle Work",
+            description="Handle Work",
+            project_id="default_proj",
+            role="Local AI Worker"
+        )
+        mock_print.assert_any_call("Task created: TASK-002 - Handle Work")
+
+def test_task_creation_with_capability(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    mock_task = MagicMock(spec=Task)
+    mock_task.id = "TASK-003"
+    mock_task.title = "Summarize docs"
+    mock_ctx.orchestrator.create_task.return_value = mock_task
+    mock_ctx.project_registry.all.return_value = []
+    mock_ctx.project_registry.exists.return_value = False
+
+    with patch('builtins.print') as mock_print:
+        interface.handle_command('task "Summarize docs" --capability summarization')
+        mock_ctx.orchestrator.create_task.assert_called_once_with(
+            title="Summarize docs",
+            description="Summarize docs",
+            project_id="default_proj",
+            capability="summarization"
+        )
+        mock_print.assert_any_call("Task created: TASK-003 - Summarize docs")
+
+def test_task_creation_missing_routing_value(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    for flag in ("--agent", "--role", "--capability"):
+        with patch('builtins.print') as mock_print:
+            interface.handle_command(f'task "test description" {flag}')
+            mock_print.assert_any_call(f"Error: '{flag}' requires a value.")
+
+def test_task_creation_multiple_routing_options_rejected(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    cases = [
+        'task "test" --agent local_worker --role Developer',
+        'task "test" --role Developer --capability coding',
+        'task "test" --agent local_worker --capability coding',
+    ]
+    for cmd in cases:
+        with patch('builtins.print') as mock_print:
+            interface.handle_command(cmd)
+            mock_print.assert_any_call("Error: Routing options (--agent, --role, --capability) are mutually exclusive.")
+
+def test_task_creation_without_routing_preserves_behavior(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    mock_task = MagicMock(spec=Task)
+    mock_task.id = "TASK-004"
+    mock_task.title = "Standard task"
+    mock_ctx.orchestrator.create_task.return_value = mock_task
+    mock_ctx.project_registry.all.return_value = []
+    mock_ctx.project_registry.exists.return_value = False
+
+    with patch('builtins.print') as mock_print:
+        interface.handle_command('task "Standard task"')
+        mock_ctx.orchestrator.create_task.assert_called_once_with(
+            title="Standard task",
+            description="Standard task",
+            project_id="default_proj",
+        )
+        mock_print.assert_any_call("Task created: TASK-004 - Standard task")
+
+def test_dry_run_with_agent(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    mock_task = MagicMock(spec=Task)
+    mock_task.id = "TASK-100"
+    mock_ctx.task_registry.get.return_value = mock_task
+    mock_dry = MagicMock(spec=DryRunResult)
+    mock_dry.__str__.return_value = "DRY RUN RESULT: Agent explicit"
+    mock_ctx.orchestrator.execute_task.return_value = mock_dry
+
+    with patch('builtins.print') as mock_print:
+        interface.handle_command("dry-run TASK-100 --agent local_worker")
+        mock_ctx.orchestrator.execute_task.assert_called_once_with(
+            mock_task,
+            dry_run=True,
+            agent_id="local_worker"
+        )
+        mock_print.assert_any_call("\nDRY RUN RESULT: Agent explicit")
+
+def test_dry_run_with_role(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    mock_task = MagicMock(spec=Task)
+    mock_task.id = "TASK-101"
+    mock_ctx.task_registry.get.return_value = mock_task
+    mock_dry = MagicMock(spec=DryRunResult)
+    mock_dry.__str__.return_value = "DRY RUN RESULT: Role matched"
+    mock_ctx.orchestrator.execute_task.return_value = mock_dry
+
+    with patch('builtins.print') as mock_print:
+        interface.handle_command('dry-run TASK-101 --role "Local AI Worker"')
+        mock_ctx.orchestrator.execute_task.assert_called_once_with(
+            mock_task,
+            dry_run=True,
+            role="Local AI Worker"
+        )
+        mock_print.assert_any_call("\nDRY RUN RESULT: Role matched")
+
+def test_dry_run_with_capability(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    mock_task = MagicMock(spec=Task)
+    mock_task.id = "TASK-102"
+    mock_ctx.task_registry.get.return_value = mock_task
+    mock_dry = MagicMock(spec=DryRunResult)
+    mock_dry.__str__.return_value = "DRY RUN RESULT: Capability matched"
+    mock_ctx.orchestrator.execute_task.return_value = mock_dry
+
+    with patch('builtins.print') as mock_print:
+        interface.handle_command("dry-run TASK-102 --capability summarization")
+        mock_ctx.orchestrator.execute_task.assert_called_once_with(
+            mock_task,
+            dry_run=True,
+            capability="summarization"
+        )
+        mock_print.assert_any_call("\nDRY RUN RESULT: Capability matched")
+
+def test_dry_run_missing_routing_value(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    for flag in ("--agent", "--role", "--capability"):
+        with patch('builtins.print') as mock_print:
+            interface.handle_command(f"dry-run TASK-103 {flag}")
+            mock_print.assert_any_call(f"Error: '{flag}' requires a value.")
+
+def test_dry_run_multiple_routing_options_rejected(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    cases = [
+        "dry-run TASK-104 --agent local_worker --role Developer",
+        "dry-run TASK-104 --role Developer --capability coding",
+        "dry-run TASK-104 --agent local_worker --capability coding",
+    ]
+    for cmd in cases:
+        with patch('builtins.print') as mock_print:
+            interface.handle_command(cmd)
+            mock_print.assert_any_call("Error: Routing options (--agent, --role, --capability) are mutually exclusive.")
+
+def test_dry_run_invalid_task_id(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    mock_ctx.task_registry.get.side_effect = ValueError("Task not found: TASK-NONEXIST")
+
+    with patch('builtins.print') as mock_print:
+        interface.handle_command("dry-run TASK-NONEXIST")
+        mock_print.assert_any_call("Error performing dry-run: Task not found: TASK-NONEXIST")
+
+def test_dry_run_no_routing_information_routing_error(mock_ctx):
+    interface = CommandInterface(mock_ctx)
+    mock_task = MagicMock(spec=Task)
+    mock_task.id = "TASK-UNROUTED"
+    mock_ctx.task_registry.get.return_value = mock_task
+    from app.orchestrator.router import RoutingError
+    mock_ctx.orchestrator.execute_task.side_effect = RoutingError(
+        "No suitable agent found for task 'TASK-UNROUTED'. Requested role: None, Requested capability: None"
+    )
+
+    with patch('builtins.print') as mock_print:
+        interface.handle_command("dry-run TASK-UNROUTED")
+        mock_print.assert_any_call(
+            "Error performing dry-run: No suitable agent found for task 'TASK-UNROUTED'. Requested role: None, Requested capability: None"
+        )

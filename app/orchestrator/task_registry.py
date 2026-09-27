@@ -38,17 +38,21 @@ class TaskRegistry:
                     title,
                     description,
                     assigned_agent,
+                    required_role,
+                    required_capability,
                     status,
                     result,
                     error
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     task.id,
                     task.title,
                     task.description,
                     task.assigned_agent,
+                    task.required_role,
+                    task.required_capability,
                     task.status.value,
                     task.result,
                     task.error,
@@ -71,6 +75,8 @@ class TaskRegistry:
                     title,
                     description,
                     assigned_agent,
+                    required_role,
+                    required_capability,
                     status,
                     result,
                     error
@@ -84,6 +90,8 @@ class TaskRegistry:
                     title=row["title"],
                     description=row["description"],
                     assigned_agent=row["assigned_agent"],
+                    required_role=row["required_role"],
+                    required_capability=row["required_capability"],
                     status=TaskStatus(row["status"]),
                     result=row["result"],
                     error=row["error"],
@@ -107,6 +115,8 @@ class TaskRegistry:
                     title = ?,
                     description = ?,
                     assigned_agent = ?,
+                    required_role = ?,
+                    required_capability = ?,
                     status = ?,
                     result = ?,
                     error = ?
@@ -116,6 +126,8 @@ class TaskRegistry:
                     task.title,
                     task.description,
                     task.assigned_agent,
+                    task.required_role,
+                    task.required_capability,
                     task.status.value,
                     task.result,
                     task.error,

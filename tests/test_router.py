@@ -1,4 +1,3 @@
-from uuid import uuid4
 import pytest
 from app.agents import Agent, AgentRegistry, Employee, EmployeeRegistry
 from app.orchestrator import Orchestrator, TaskRegistry, ProjectRegistry
@@ -14,7 +13,7 @@ def setup_corp():
     proj_reg = ProjectRegistry()
     
     # Project for tasks
-    proj = Project(id=f"proj-{uuid4().hex[:4]}", name="Test Project", description="Desc", status="active")
+    proj = Project(id="proj-1", name="Test Project", description="Desc", status="active")
     proj_reg.register(proj)
     
     # Agents

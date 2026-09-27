@@ -45,65 +45,44 @@ class Orchestrator:
         
         return self.run_agent(employee.agent.id, prompt)
 
-    def execute_task(self, task: Task, role: str | None = None, capability: str | None = None, dry_run: bool = False) -> Task | DryRunResult:
+    def execute_task(
+        self,
+        task: Task,
+        role: str | None = None,
+        capability: str | None = None,
+        dry_run: bool = False,
+        agent_id: str | None = None,
+    ) -> Task | DryRunResult:
         try:
-            # Determine WHO should handle the task using the router
-            routing_request = RoutingRequest(task=task, role=role, capability=capability)
-            agent = self.router.route(routing_request)
+            routing_task = task
+            if agent_id:
+                routing_task = Task(
+                    id=task.id,
+                    title=task.title,
+                    description=task.description,
+                    project_id=task.project_id,
+                    assigned_agent=agent_id,
+                    status=task.status,
+                    result=task.result,
+                    error=task.error,
+                    required_role=task.required_role,
+                    required_capability=task.required_capability,
+                )
+
+            routing_request = RoutingRequest(task=routing_task, role=role, capability=capability)
+            agent, routing_method = self.router.route_with_method(routing_request)
             
-            # Update task with the routed agent if it wasn't already assigned
-            if not task.assigned_agent:
+            if not dry_run and task.assigned_agent != agent.id:
                 task.assigned_agent = agent.id
                 self.tasks.update(task)
 
-            # --- Dry-Run Execution Path ---
             if dry_run:
-                # Resolve which employee this agent belongs to if possible
                 selected_employee = None
                 if self.employees:
                     for emp in self.employees.all():
                         if emp.agent and emp.agent.id == agent.id:
                             selected_employee = emp
                             break
-                
-                # Determine routing method for the result
-                routing_method = "explicit_agent" if task.assigned_agent else "unknown"
-                if not task.assigned_agent: # This block is technically unreachable due to routing logic above, but for clarity:
-                    if role: routing_method = "employee_role"
-                    elif capability: routing_method = "capability"
-
-                # Fix routing method detection for dry run
-                # Since we know the router's priority:
-                if task.assigned_agent:
-                    # We need to know if it was ALREADY assigned or assigned BY the router
-                    # But TaskRouter logic says: if task.assigned_agent is present, it's explicit.
-                    # If not, it looks for role, then capability.
-                    # Wait, if the router assigns it, it's no longer "explicitly assigned" in the original task object.
-                    pass
-
-                # Better way to detect routing method:
-                # Re-evaluate priority based on input
-                # Note: This is a slight duplication of Router logic for metadata purposes.
-                method = "explicit_agent" if task.assigned_agent else "unknown"
-                # To be accurate, we should check the original state of the task before routing
-                # But execute_task modifies the task.
-                
-                # Let's just use the routing logic result
-                # But TaskRouter.route() only returns the Agent. 
-                # For the result, we can infer:
-                actual_method = "explicit_agent"
-                # This is tricky because execute_task updates task.assigned_agent.
-                # I'll just mark it as 'routed' if it wasn't explicitly assigned.
-                # Wait, I'll just use a simple heuristic:
-                if role and selected_employee and selected_employee.role == role:
-                    actual_method = "employee_role"
-                elif capability and capability in agent.capabilities:
-                    actual_method = "capability"
-                elif task.assigned_agent:
-                    actual_method = "explicit_agent"
-                else:
-                    actual_method = "routed"
-
                 return DryRunResult(
                     task_id=task.id,
                     task_title=task.title,
@@ -112,7 +91,7 @@ class Orchestrator:
                     selected_employee=selected_employee,
                     provider=agent.provider,
                     model=agent.model,
-                    routing_method=actual_method,
+                    routing_method=routing_method,
                     status="ready"
                 )
 
@@ -181,9 +160,20 @@ class Orchestrator:
         description: str,
         project_id: str,
         agent_id: str | None = None,
+        role: str | None = None,
+        capability: str | None = None,
     ) -> Task:
         if not self.projects.exists(project_id):
             raise ValueError(f"Project not found: {project_id}")
+        if sum(value is not None for value in (agent_id, role, capability)) > 1:
+            raise ValueError("Routing options are mutually exclusive.")
+        for name, value in (
+            ("agent_id", agent_id),
+            ("role", role),
+            ("capability", capability),
+        ):
+            if value is not None and not value.strip():
+                raise ValueError(f"{name} cannot be empty.")
             
         task = Task(
             id=f"TASK-{uuid4().hex[:8].upper()}",
@@ -191,6 +181,8 @@ class Orchestrator:
             description=description,
             project_id=project_id,
             assigned_agent=agent_id,
+            required_role=role,
+            required_capability=capability,
         )
 
         self.tasks.register(task)
