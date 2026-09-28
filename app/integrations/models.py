@@ -109,6 +109,19 @@ class IntegrationProposal:
     proposed_approach: str | None = None
     risk_information: str | None = None
     source_discovery_id: str | None = field(default=None, kw_only=True)
+    source_analysis_id: str | None = field(default=None, kw_only=True)
+    source_evaluation_id: str | None = field(default=None, kw_only=True)
+    intended_capabilities: tuple[str, ...] = field(default=(), kw_only=True)
+    evaluation_findings: tuple[str, ...] = field(default=(), kw_only=True)
+    key_strengths: tuple[str, ...] = field(default=(), kw_only=True)
+    key_concerns: tuple[str, ...] = field(default=(), kw_only=True)
+    unknowns: tuple[str, ...] = field(default=(), kw_only=True)
+    dependency_information: tuple[str, ...] = field(default=(), kw_only=True)
+    license_information: tuple[str, ...] = field(default=(), kw_only=True)
+    security_considerations: tuple[str, ...] = field(default=(), kw_only=True)
+    integration_requirements: tuple[str, ...] = field(default=(), kw_only=True)
+    implementation_considerations: tuple[str, ...] = field(default=(), kw_only=True)
+    evidence_references: tuple[str, ...] = field(default=(), kw_only=True)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     _status: IntegrationStatus = field(
@@ -134,9 +147,38 @@ class IntegrationProposal:
             raise ValueError("Integration proposal purpose cannot be empty")
         if (
             self.source_discovery_id is not None
-            and not self.source_discovery_id.strip()
+            and (
+                not isinstance(self.source_discovery_id, str)
+                or not self.source_discovery_id.strip()
+            )
         ):
             raise ValueError("Source discovery id cannot be empty")
+        for field_name, value in (
+            ("source_analysis_id", self.source_analysis_id),
+            ("source_evaluation_id", self.source_evaluation_id),
+        ):
+            if value is not None and (
+                not isinstance(value, str) or not value.strip()
+            ):
+                raise ValueError(f"{field_name} cannot be empty")
+        for field_name in (
+            "intended_capabilities",
+            "evaluation_findings",
+            "key_strengths",
+            "key_concerns",
+            "unknowns",
+            "dependency_information",
+            "license_information",
+            "security_considerations",
+            "integration_requirements",
+            "implementation_considerations",
+            "evidence_references",
+        ):
+            value = getattr(self, field_name)
+            if not isinstance(value, tuple) or any(
+                not isinstance(item, str) or not item.strip() for item in value
+            ):
+                raise ValueError(f"{field_name} must be a tuple of non-empty strings")
         if self.project_name is not None and not self.project_name.strip():
             raise ValueError("Integration proposal project name cannot be empty")
 

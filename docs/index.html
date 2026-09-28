@@ -26,7 +26,7 @@
 </head>
 <body>
     <header>
-        <p>Current implementation · Tasks 1–27</p>
+        <p>Current implementation · Tasks 1–36</p>
         <h1>ERSELMETZ AI CORPORATION</h1>
         <p><strong>ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.</strong>
             The organization is the domain model; the software implements its current capabilities.</p>
@@ -78,28 +78,87 @@ in-memory Human Approval registry</pre>
                 <li>Tool abstraction/registry is not wired to Agent execution; no concrete built-in tools or enforced permissions.</li>
                 <li>Approval request state is in-memory and not an execution gate.</li>
                 <li>Known limitation: TaskRegistry does not persist or reload <code>project_id</code>.</li>
-                <li>Task 26 adds an in-memory Integration Proposal foundation; Task 27 adds public GitHub metadata discovery only.</li>
+                <li>Tasks 26–30 add the in-memory proposal foundation, GitHub discovery, bounded analysis/learning, evidence-backed evaluation, and proposal generation; Tasks 31–33 add the sandbox foundation, execution boundary, and optional Docker backend; Task 34 adds controlled source staging.</li>
             </ul>
         </section>
 
         <section class="panel">
             <h2>Integration Proposal foundation</h2>
             <p>An <code>IntegrationSource</code> describes an external source independently from internal Employees, Agents, Providers, and Models. An <code>IntegrationProposal</code> captures the requested purpose, source, evaluation/approach/risk notes, timestamps, lifecycle, and approval request.</p>
-            <p>The controlled proposal lifecycle is Discovered → Analyzing → Evaluating → Proposed → Sandboxed → Tested → Review Required → Approved → Integrated, with Rejected and Failed outcomes. Approval and integration are separate states. An <code>IntegrationExecutionRecord</code> is a distinct audit/state record, can only be created for an approved proposal, and performs no execution or project modification.</p>
+            <p>The proposal lifecycle is Discovered → Analyzing → Evaluating → Proposed → Sandboxed → Tested → Review Required → Approved → Integrated, with Rejected and Failed outcomes. Sandbox records are separate: creating one does not transition the proposal. Approval and integration are separate states. An <code>IntegrationExecutionRecord</code> is a distinct audit/state record, can only be created for an approved proposal, and performs no execution or project modification.</p>
             <p>Proposals and execution records are currently in-memory only. The execution record does not perform integration work. Capability names in the model are requested-scope vocabulary, not grants or enforcement.</p>
         </section>
 
         <section class="panel">
             <h2>Public GitHub source discovery (Task 27)</h2>
             <p><code>SourceDiscovery</code> is a source-adapter boundary; <code>GitHubRepositoryDiscovery</code> accepts validated HTTPS public GitHub repository sources and calls only fixed GitHub REST API endpoints. It returns typed repository metadata, latest release details when available, and README availability/size plus a bounded plain-text excerpt where safe. Expected API, rate-limit, network, not-found, invalid-source, and malformed-response cases are explicit errors.</p>
-            <p>Repository content is untrusted data, not instructions. Discovery does not clone, install dependencies, execute commands/code, semantically analyze or evaluate the project, create an integration proposal automatically, sandbox it, modify ERSELMETZ, approve, or integrate anything. A future proposal can reference a discovery result by ID.</p>
+            <p>Discovery collects metadata only. Repository content is untrusted data, not instructions; discovery does not clone, install, execute, evaluate, sandbox, modify ERSELMETZ, approve, or integrate anything. A future proposal can reference a discovery result by ID.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Bounded source analysis / learning (Task 28)</h2>
+            <p><code>SourceAnalyzer</code> accepts a Task 27 <code>SourceDiscoveryResult</code>; <code>GitHubRepositoryAnalyzer</code> inventories the repository tree and reads selected documentation and dependency manifests from fixed GitHub API endpoints. Typed results keep direct file/structure facts separate from evidence-linked observations about purpose, frameworks, and potential capabilities. Those observations are not verification or integration recommendations.</p>
+            <p>Analysis is bounded to 50 relevant files, depth 8, four documentation files, 48 KiB per file, 256 KiB of decoded content, and a 2 MiB tree response. Truncated or limited results are marked incomplete. All content remains untrusted text: no code execution, shell commands, installation, local writes, evaluation scores, approval, or integration occur. Results are in-memory only; there is no analyze CLI because discovery results are not persisted.</p>
+        </section>
+
+        <section class="panel">
+            <h2>External source evaluation (Task 29)</h2>
+            <p><code>GitHubRepositoryEvaluator</code> consumes only existing discovery and analysis results and produces typed, evidence-linked findings about capability fit, architecture, dependencies, license metadata, bounded security observations, maintenance signals, and integration complexity. The result summarizes strengths, concerns, unknowns, and requirements; unknown evidence remains unknown, and no score or ranking is produced.</p>
+            <p>Evaluation is decision support only. It does not approve integration, create or transition proposals, execute external code, install dependencies, modify ERSELMETZ, or commit/push. A later proposal, review, and human approval remain separate controlled stages. Results are in-memory only.</p>
+        </section>
+
+        <section class="panel">
+            <h2>External integration proposal generation (Task 30)</h2>
+            <p><code>GitHubIntegrationProposalGenerator</code> consumes already-produced discovery, analysis, and evaluation results to create a structured <code>IntegrationProposal</code>. It preserves source/evaluation traceability and evidence-backed strengths, concerns, unknowns, dependency/license/security observations, and requirements. Missing evidence remains explicitly unknown; no score or ranking is created.</p>
+            <p>The generated proposal describes a possible integration and stops at <code>PROPOSED</code>. It does not imply approval, automatically register itself, execute external code, install dependencies, clone repositories, or modify ERSELMETZ or Git state. The existing registry can store it when a caller explicitly registers it. Controlled review and human approval are required before integration.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Integration sandbox foundation (Task 31)</h2>
+            <p><code>IntegrationSandbox</code> has an explicit identity linked to a <code>PROPOSED</code> proposal and its discovery result. The separate in-memory <code>IntegrationSandboxRegistry</code> supports create, get, list, explicit lifecycle transitions, and destroy without changing proposal state. Lifecycle states include Configured, Ready, Running, Completed, Failed, and Destroyed; Task 32 still blocks entering Running because there is no actual isolated backend.</p>
+            <p><code>SandboxIsolationPolicy</code> defines restrictive filesystem, network, process, environment, credential, and resource-limit defaults. These settings are policy metadata only, not enforcement. Task 31 does not execute code, install dependencies, create containers or VMs, enforce network/filesystem isolation or resource limits, modify the host or ERSELMETZ, or add CLI/persistence. Actual isolation requires a future isolated backend.</p>
+            <p>The implemented external-source pipeline is Discovery → Analysis/Learning → Evaluation → Proposal → Sandbox Foundation. Testing, review, human approval, and integration remain separate stages.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Sandbox execution boundary (Task 32)</h2>
+            <p><code>SandboxExecutionRequest</code> and <code>SandboxExecutionResult</code> define typed execution inputs and outcomes. <code>SandboxExecutor</code> defines the boundary, and <code>SandboxBackend</code> describes future prepare, execute, collect-result, and cleanup operations. The default <code>UnavailableSandboxBackend</code> reports backend <code>none</code> and no isolation enforcement.</p>
+            <p>A valid request without an implemented isolated backend returns <code>BLOCKED</code>, with no exit code or execution measurements; the sandbox remains <code>READY</code>. Task 32 validates relative entrypoints, sandbox/proposal linkage, timeout, environment mode, and requested resource bounds. Requests do not carry host environment variables or credentials.</p>
+            <p>The executor abstraction is not actual isolation enforcement. Task 32 does not execute external code or host processes, invoke shell/subprocess, run Docker/Podman/VMs, install dependencies, clone repositories, grant network access, enforce filesystem/resource limits, or inject credentials. The implemented architecture is Integration Sandbox → Sandbox Executor → Sandbox Backend → Actual Isolated Runtime (future).</p>
+        </section>
+
+        <section class="panel">
+            <h2>Docker sandbox backend (Task 33)</h2>
+            <p><code>DockerSandboxBackend</code> implements the backend contract through the optional official Docker Python SDK; <code>DockerSandboxExecutor</code> coordinates the registered sandbox lifecycle and cleanup. The SDK is not a base dependency and is never installed automatically. Without the SDK, a Linux Docker daemon, an explicitly configured digest-pinned image allowlist, and the approved image already present locally, the request is blocked. Images are never pulled automatically.</p>
+            <p>Containers request network disabled, no host mounts or Docker socket, no credentials or host environment, non-privileged mode, non-root numeric user, all capabilities dropped, no-new-privileges, read-only root filesystem, memory/CPU/PID/disk limits, bounded timeout, output collection, and forced cleanup after completion/failure/timeout. Arguments are passed structurally to a container entrypoint. If Docker cannot apply requested controls, execution fails closed; no host subprocess fallback exists.</p>
+            <p><strong>Docker container isolation is the current execution mechanism for the sandbox backend when configured, but sandbox execution is still an experimentation layer and does not imply approval or integration.</strong> The executor/backend abstraction is distinct from enforcement: Docker performs the isolation only for an actually created container. No repository clone, source staging, dependency installation, approval, or integration is performed.</p>
+            <p>Architecture: Integration Sandbox → SandboxExecutor → SandboxBackend → DockerSandboxBackend → Disposable Docker container.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Controlled source staging (Task 34)</h2>
+            <p><code>SourceStager</code> defines an inert preparation boundary; <code>GitHubSourceStager</code> accepts only a validated public GitHub <code>SourceDiscoveryResult</code>. It uses HTTPS to a fixed GitHub API archive endpoint and validates redirects to the corresponding codeload repository only. It does not use Git/host credentials or environment proxy settings, and never invokes shell, subprocess, Docker, or staged instructions.</p>
+            <p>Compressed archive size, archive member count, file count, total expanded bytes, individual file size, and path depth are bounded. Members are validated before any extraction; absolute/traversal paths, conflicting paths, links, and special files are rejected. Source is written into a dedicated temporary workspace outside the project repository. Failed attempts clean up partial workspaces; successful results include discovery linkage, counts, status, timestamps, and SHA-256 identity metadata. Hashes do not establish trust or approval.</p>
+            <p>Staging does not execute source, install dependencies, change proposal lifecycle, modify the project or Git state, or integrate code. The pipeline is GitHub Source → Discovery → Analysis/Learning → Evaluation → Proposal → Sandbox → Controlled Source Staging → Sandbox Source Binding → Sandbox Executor → Docker Backend → Isolated Container. Staging prepares data only; Docker execution remains experimentation and does not imply proposal approval or integration.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Sandbox/source binding (Task 35)</h2>
+            <p><code>SandboxSourceBindingRegistry</code> associates a completed staging result with its registered sandbox and proposal after checking proposal/sandbox/discovery/staging linkage. It requires the real workspace to be a direct child of the explicitly configured staging root, match the staging-ID-derived name, remain outside the project, and contain no symlink or non-regular file. It recomputes the Task 34 content hash, file count, and total size; mismatch or unsafe paths fail closed.</p>
+            <p>The resulting in-memory binding preserves source/archive SHA-256 metadata but is not a trust or approval signal. Binding does not transition proposal, sandbox, or task state; it does not call the executor or Docker, execute files, install dependencies, or expose host paths.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Sandbox execution preparation (Task 36)</h2>
+            <p><code>ExecutionPreparationRegistry</code> resolves the existing proposal, sandbox, completed staging result, and registered source binding. It rechecks their ID relationships, the staging-controlled workspace boundary, the sandbox’s restrictive policy metadata, and the current content hash/file count/byte size. It creates an immutable, in-memory readiness record with source identity, policy snapshot, timestamp, validation notes, and limitations. A future execution layer can revalidate the recorded workspace with <code>verify_workspace</code> immediately before use.</p>
+            <p>The preparation request accepts no command/entrypoint, host environment, or credential references. Preparation is validation only: no source execution, subprocess, shell, Docker, package installation, network download, lifecycle transition, approval, or integration occurs. Matching SHA-256 is identity metadata, not proof of safety or trust. Pipeline: Source Staging prepares controlled source → Sandbox Source Binding associates it → Execution Preparation validates readiness → Sandbox Executor remains the execution boundary → Docker Backend provides isolation only for a separately enabled future execution.</p>
         </section>
 
         <section class="panel">
             <h2>Future roadmap</h2>
-            <p>Analysis/Learning → Evaluation → Integration Design → Sandbox → Implementation → Testing → Review → Approval → Integration → Monitoring; richer orchestration and multi-Agent collaboration; AI-based routing and advanced Provider/Model selection; Agent-to-Agent communication; networking and Node Discovery; Authentication, Authorization, Encryption, Offline Mode, Synchronization, and Conflict Resolution; QA guardian and evaluation; richer Tools/MCP; open-source coding, repository, terminal, browser/computer, voice, and Git/GitHub integrations; controlled self-improvement.</p>
+            <p>Dependency installation → Testing → Review → Human Approval → Integration → Monitoring; richer orchestration and multi-Agent collaboration; AI-based routing and advanced Provider/Model selection; Agent-to-Agent communication; networking and Node Discovery; Authentication, Authorization, Encryption, Offline Mode, Synchronization, and Conflict Resolution; QA guardian; richer Tools/MCP; open-source coding, repository, terminal, browser/computer, voice, and Git/GitHub integrations; controlled self-improvement.</p>
             <p>The Corporation is intended to provide governance, organization, orchestration, identity, task management, routing, approval, and coordination—not to unnecessarily reinvent mature open-source coding and agent infrastructure. Listed integration areas are plans, not current integrations.</p>
-            <p><strong>Controlled improvement:</strong> Discovery → Analysis/Learning → Evaluation → Integration Design → Sandbox → Implementation → Testing → Review → Approval → Integration → Monitoring. Unrestricted autonomous self-modification is not the current design.</p>
+            <p><strong>Controlled improvement:</strong> Discover → Analyze/Learn → Evaluate → Proposal → Sandbox Foundation → Controlled Source Staging → Sandbox Source Binding → Sandbox Executor → Docker Sandbox Backend → Disposable Container → Test → Review → Approve → Integrate → Monitor. Unrestricted autonomous self-modification is not the current design.</p>
         </section>
 
         <p class="note">For the full implementation audit, limitations, and roadmap, see <a href="../ARCHITECTURE.md">ARCHITECTURE.md</a>. The repository overview is in <a href="../README.md">README.md</a>.</p>

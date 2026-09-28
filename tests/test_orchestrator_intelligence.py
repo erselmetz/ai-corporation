@@ -3,7 +3,7 @@ from app.providers import OllamaProvider, ProviderRegistry
 from app.orchestrator import Orchestrator, TaskRegistry, ProjectRegistry, Project
 from app.database import initialize_database
 
-def test_orchestrator_run_employee():
+def test_orchestrator_run_employee(require_ollama_service):
     # Setup
     initialize_database()
     agent_registry = AgentRegistry()
@@ -74,7 +74,7 @@ def test_orchestrator_run_employee_no_agent():
     except RuntimeError as e:
         assert "Employee 'Agentless AI' has no assigned agent" in str(e)
 
-def test_backward_compatibility():
+def test_backward_compatibility(require_ollama_service):
     # Ensure run_agent still works
     initialize_database()
     agent_registry = AgentRegistry()

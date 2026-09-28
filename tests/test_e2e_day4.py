@@ -3,7 +3,7 @@ from app.providers import OllamaProvider, ProviderRegistry
 from app.orchestrator import Orchestrator, TaskRegistry, ProjectRegistry, Project
 from app.database import initialize_database
 
-def test_e2e_provider_model_flow():
+def test_e2e_provider_model_flow(require_ollama_service):
     # Setup
     initialize_database()
     
