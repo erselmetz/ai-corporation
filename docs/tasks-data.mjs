@@ -51,13 +51,13 @@ export const taskGroups = [
     name: "Web/API Corporation Interface",
     range: "37–54",
     tasks: [
-      ["Core/API Architecture", "Design an API boundary for Corporation capabilities without coupling public documentation to runtime internals."],
-      ["FastAPI Foundation", "Introduce a FastAPI service as a separate application interface when this roadmap item is implemented."],
-      ["API Authentication & Authorization Foundation", "Define and enforce authenticated identities and authorization policy for API operations."],
-      ["Corporation Status API", "Expose an appropriately authorized view of Corporation runtime status."],
-      ["Employee/Agent API", "Provide controlled API operations for organizational Employees and technical Agents."],
-      ["Provider & Model API", "Expose Provider and Model configuration through validated, authorized operations."],
-      ["Task API", "Support authorized Task creation, inspection, and lifecycle operations through the API."],
+      ["Core/API Architecture", "Establish the CorporationApplicationService boundary used by external interfaces; API routes do not access registries directly."],
+      ["FastAPI Foundation", "Provide the standalone FastAPI interface and preserve public root and health endpoints."],
+      ["API Authentication & Authorization Foundation", "Add injectable authentication and permission dependencies; the default backend rejects requests."],
+      ["Corporation Status API", "Expose Corporation and Node identity through the authorized GET /api/status resource."],
+      ["Employee/Agent API", "Expose authorized Employee list/detail/create/delete and Agent list/detail resources using explicit response schemas."],
+      ["Provider & Model API", "Expose authorized Provider management and Agent Provider/Model assignment read/replacement operations."],
+      ["Task API", "Expose authorized Task list/detail/create and non-mutating dry-run; HTTP execution and lifecycle mutation are not exposed."],
       ["Project API", "Expose project information and management through a deliberate API contract."],
       ["Activity & Logs API", "Provide scoped access to Corporation activity and logs with appropriate privacy controls."],
       ["Web UI Foundation", "Establish a maintainable web interface for authenticated Corporation administration."],
@@ -164,7 +164,7 @@ export const tasks = taskGroups.flatMap((group) =>
       title,
       description,
       category: group.name,
-      status: number <= 36 ? "completed" : "planned",
+      status: number <= 43 ? "completed" : "planned",
     };
   })
 );

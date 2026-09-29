@@ -4,28 +4,31 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–36 foundation from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–43 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
 ```text
-Command interface
-      │
-      ▼
-Orchestrator ─────────── task logs
-      │
-      ├── TaskRegistry ─ SQLite tasks
-      ├── ProjectRegistry ─ SQLite projects
-      └── TaskRouter
-            ├── explicit Agent assignment
-            ├── required Employee role ─ Employee ─ Agent
-            └── required capability ─ Agent
-                              │
-                              ▼
-                          Provider
-                              │
-                              ▼
-                            Model
+Client
+  ↓
+FastAPI → Authentication → Authorization → API routes
+                                              ↓
+                              CorporationApplicationService
+                                              ↓
+                                     Corporation Core
+                                     ├── Orchestrator ─ task logs
+                                     ├── TaskRegistry ─ SQLite tasks
+                                     ├── ProjectRegistry ─ SQLite projects
+                                     └── TaskRouter
+                                           ├── explicit Agent assignment
+                                           ├── required Employee role ─ Employee ─ Agent
+                                           └── required capability ─ Agent
+                                                     │
+                                                     ▼
+                                                  Provider
+                                                     │
+                                                     ▼
+                                                   Model
 
 Startup identity:
 Corporation + Node → RuntimeContext → context validation
@@ -35,6 +38,24 @@ Tool / ToolRegistry
 ApprovalRequest / ApprovalRegistry
 ClientRequest / BusinessLayer adapter
 ```
+
+The CLI also uses `CorporationApplicationService` for application operations. This interface-neutral service is the application boundary for Corporation status, Employee, Agent, Provider, Model assignment, and Task use cases. It coordinates existing management services and the Orchestrator and returns summaries rather than exposing registries as an interface contract. FastAPI resource routes use this boundary; the service has no HTTP, CLI, or database-driver logic, and the existing Core remains responsible for domain behavior and persistence.
+
+The FastAPI application in `app.api` exposes the status, Employee/Agent, Provider/Model assignment, and Task resources described under [API boundary](#api-boundary). `/` and `/health` remain public; resource routes use the shared application-service dependency and do not directly manipulate `TaskRegistry`, `ProjectRegistry`, or other internal registries. Authentication uses an injectable backend and rejects by default. Authorization checks the authenticated principal's required permission. A production identity provider and credential/token implementation are not configured by this foundation.
+
+### API boundary
+
+The Task API implements:
+
+- `GET /api/tasks` and `GET /api/tasks/{task_id}` with `task:read`.
+- `POST /api/tasks` with `task:create`.
+- `POST /api/tasks/{task_id}/dry-run` with `task:read`.
+
+Task creation accepts existing title, description, optional project ID, and one existing routing selector (Agent ID, role, or capability). It delegates Task ID generation to the Orchestrator/Application Service. Task responses use explicit Pydantic schemas containing ID, title, description, project ID, status, assigned Agent, required role, and required capability; internal result/error fields and registry objects are not included. A Task's project relationship is represented by ID, but `TaskRegistry` currently does not persist or reload `project_id`.
+
+Dry-run returns the current routing preview via the Application Service. It does not execute an Agent or Provider and does not mutate Task state. The API does not expose unrestricted task execution or Task lifecycle mutation endpoints. Missing Tasks and referenced Projects return 404; invalid routing/domain options return 400; request schema validation uses FastAPI/Pydantic 422 responses.
+
+Other resource permissions are similarly minimal: `corporation:read`, `employee:read` / `employee:manage`, `agent:read`, `provider:read` / `provider:manage`, and `model:read` / `model:manage`. These are route permission requirements, not a configured user/role management system. The default authentication backend rejects requests until an application supplies an authentication backend.
 
 ### Identity and runtime
 
@@ -218,37 +239,38 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–36 completion scope
+## Tasks 1–43 completion scope
 
-Tasks 1–36 are complete as the current foundation. Their implemented areas include:
+Tasks 1–43 are complete as the current foundation. Their implemented areas include:
 
-1. Task and Project domain/registry foundations.
-2. Task lifecycle, orchestration, logging, and SQLite persistence.
-3. Agent, Employee, Provider, and Model domain boundaries.
-4. Agent capability lookup and Employee-role lookup.
-5. Ollama execution integration and Provider interface.
-6. Employee and Provider management foundations.
-7. Model assignment/replacement management for the in-memory Agent.
-8. Tool abstraction and registry foundation.
-9. Human approval request/status foundation.
-10. Client request validation and business-layer Task translation.
-11. Corporation and Node identity models and registries.
-12. Runtime identity configuration, context validation, and startup wiring.
-13. Interactive Corporation command interface and management/listing commands.
-14. Deterministic explicit-Agent, role, and capability routing.
-15. Dry-run execution and CLI routing options.
-16. Persistent role/capability requirements with additive SQLite migration and reload.
-17. Integration source/proposal models, controlled lifecycle, proposal registry, and approval-gated execution record foundation.
-18. Public GitHub repository metadata discovery through a source-adapter abstraction.
-19. Bounded GitHub repository structure/documentation analysis through a source-analyzer abstraction.
-20. Evidence-backed source evaluation based on existing discovery and analysis results.
-21. Evidence-based proposal generation from existing discovery, analysis, and evaluation results.
-22. In-memory integration sandbox metadata, policy definitions, and controlled lifecycle foundation.
-23. Typed sandbox execution requests/results, executor/backend boundaries, and blocked behavior without an isolated backend.
-24. Optional Docker sandbox execution backend with an explicit image policy, enforced container controls, bounded runtime, and cleanup.
-25. Controlled staging of validated public GitHub source archives into a bounded temporary workspace, without execution or project modification.
-26. Integrity-checked in-memory binding of a staged workspace to its proposal and registered sandbox, without lifecycle changes or execution.
-27. Immutable readiness preparation that revalidates staged-source identity, sandbox policy, and existing proposal/sandbox/binding relationships without accepting execution commands or host credentials.
+- Task and Project domain/registry foundations.
+- Task lifecycle, orchestration, logging, and SQLite persistence.
+- Agent, Employee, Provider, and Model domain boundaries.
+- Agent capability lookup and Employee-role lookup.
+- Ollama execution integration and Provider interface.
+- Employee and Provider management foundations.
+- Model assignment/replacement management for the in-memory Agent.
+- Tool abstraction and registry foundation.
+- Human approval request/status foundation.
+- Client request validation and business-layer Task translation.
+- Corporation and Node identity models and registries.
+- Runtime identity configuration, context validation, and startup wiring.
+- Interactive Corporation command interface and management/listing commands.
+- Deterministic explicit-Agent, role, and capability routing.
+- Dry-run execution and CLI routing options.
+- Persistent role/capability requirements with additive SQLite migration and reload.
+- Integration source/proposal models, controlled lifecycle, proposal registry, and approval-gated execution record foundation.
+- Public GitHub repository metadata discovery through a source-adapter abstraction.
+- Bounded GitHub repository structure/documentation analysis through a source-analyzer abstraction.
+- Evidence-backed source evaluation based on existing discovery and analysis results.
+- Evidence-based proposal generation from existing discovery, analysis, and evaluation results.
+- In-memory integration sandbox metadata, policy definitions, and controlled lifecycle foundation.
+- Typed sandbox execution requests/results, executor/backend boundaries, and blocked behavior without an isolated backend.
+- Optional Docker sandbox execution backend with an explicit image policy, enforced container controls, bounded runtime, and cleanup.
+- Controlled staging of validated public GitHub source archives into a bounded temporary workspace, without execution or project modification.
+- Integrity-checked in-memory binding of a staged workspace to its proposal and registered sandbox, without lifecycle changes or execution.
+- Immutable readiness preparation that revalidates staged-source identity, sandbox policy, and existing proposal/sandbox/binding relationships without accepting execution commands or host credentials.
+- Application Service and FastAPI authentication/authorization foundations, plus Corporation status, Employee/Agent, Provider/Model assignment, and Task APIs. The Task API supports read, create, and non-mutating dry-run only; it does not expose HTTP execution or lifecycle mutation.
 
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, project ID persistence is incomplete, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 
@@ -262,7 +284,7 @@ None of the following should be represented as implemented until code provides i
 - Additional Provider integrations beyond Ollama.
 - Durable organization, Agent, Employee, Provider, and model configuration management.
 - A Software Reliability Engineer / QA guardian and richer evaluation.
-- Authentication, authorization, encryption, and permission enforcement.
+- Production identity/authentication, authorization policy and permission administration, and encryption.
 - Offline Mode, durable queues, synchronization, and conflict resolution.
 - Node discovery and networking among independent Corporation installations.
 - Richer Tool and MCP integration, concrete tools, and controlled tool execution.

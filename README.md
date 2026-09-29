@@ -2,9 +2,9 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** The organization is the system's domain model and operating concept; the software implements its current capabilities.
 
-The current application is a local Python command-line system. It models a Corporation and installation Node, an Orchestrator, Employees, technical Agents, a Provider/Model execution boundary, persisted Tasks, deterministic routing, and dry-run inspection.
+The current application includes a local Python command-line system and a FastAPI interface. It models a Corporation and installation Node, an Orchestrator, Employees, technical Agents, a Provider/Model execution boundary, persisted Tasks, deterministic routing, and dry-run inspection.
 
-> **Implementation status:** Tasks 1–36 are complete as foundations. Tasks 27–30 add public GitHub discovery, bounded source analysis/learning, evidence-backed evaluation, and proposal generation; Tasks 31–33 add sandbox foundations and a Docker execution backend; Task 34 adds controlled, inert source staging; Task 35 binds a verified staged workspace to its sandbox; Task 36 validates an immutable readiness record without executing it.
+> **Implementation status:** Tasks 1–43 are complete as foundations. Tasks 27–30 add public GitHub discovery, bounded source analysis/learning, evidence-backed evaluation, and proposal generation; Tasks 31–33 add sandbox foundations and a Docker execution backend; Tasks 34–36 add controlled source staging, verified sandbox binding, and immutable execution preparation without executing staged source. Tasks 37–43 establish the Application Service/API foundation and authorized Corporation status, Employee/Agent, Provider/Model, and Task APIs. These remain foundations, not production-complete subsystems.
 
 ## Current architecture
 
@@ -13,17 +13,25 @@ Corporation identity
 └── Node / installation identity
     └── Runtime Context (validated Corporation + Node IDs)
 
-CLI / client request
-└── Orchestrator
-    ├── Task lifecycle and logs
-    └── Task Router
-        └── Employee role or Agent capability / explicit Agent
-            └── Agent
-                └── Provider (currently Ollama)
-                    └── Model (configured on the Agent)
-
-SQLite: tasks, projects, task logs, agent memory, project memory
+Client
+  ↓
+FastAPI → Authentication → Authorization → API route
+                                              ↓
+                              CorporationApplicationService
+                                              ↓
+                                     Corporation Core
+                                     ├── Orchestrator
+                                     ├── Task/Project registries
+                                     └── Task Router → Agent → Provider → Model
 ```
+
+The CLI also uses CorporationApplicationService for application operations.
+
+SQLite stores tasks, projects, task logs, agent memory, and project memory.
+
+The FastAPI resource routes call `CorporationApplicationService`; they do not directly access Core registries. Current Task API operations are `GET /api/tasks`, `GET /api/tasks/{task_id}`, `POST /api/tasks`, and `POST /api/tasks/{task_id}/dry-run`. Creation delegates ID generation to Core and preserves the existing project and routing requirements. Responses use explicit schemas and omit internal Task fields. The dry-run inspects routing without executing an Agent/Provider or mutating Task state. There is no HTTP task-execution endpoint or lifecycle-mutation endpoint.
+
+API authentication and authorization are injectable foundations. The default authentication backend rejects requests; a production identity/authentication provider is not configured here. Protected routes require their declared permissions. See [Current architecture and roadmap](./ARCHITECTURE.md) and the [public documentation site](./docs/index.html) for the current API boundary and broader limitations.
 
 These are distinct concepts: **Employee != Agent != Provider != Model**.
 
