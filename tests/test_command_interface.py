@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 from app.interface.command import CommandInterface, CorporationContext
 from app.orchestrator import Orchestrator, TaskRegistry, ProjectRegistry
-from app.agents import AgentRegistry, EmployeeRegistry
+from app.agents import Agent, AgentRegistry, EmployeeRegistry
 from app.corporation import Corporation
 from app.node import Node
 from app.providers import ProviderRegistry
@@ -26,6 +26,11 @@ def mock_ctx():
     proj_reg = MagicMock(spec=ProjectRegistry)
     provider_reg = MagicMock(spec=ProviderRegistry)
     provider_reg.all.return_value = {}
+    orch.agents = agent_reg
+    orch.employees = emp_reg
+    orch.tasks = task_reg
+    orch.projects = proj_reg
+    orch.providers = provider_reg
     
     return CorporationContext(
         corp=corp,
@@ -75,9 +80,11 @@ def test_agents_command_empty(mock_ctx):
 
 def test_task_creation_command(mock_ctx):
     interface = CommandInterface(mock_ctx)
-    mock_task = MagicMock(spec=Task)
-    mock_task.id = "TASK-123"
-    mock_task.title = "Test Task"
+    mock_task = Task(
+        id="TASK-123",
+        title="Test Task",
+        description="Create a new task",
+    )
     mock_ctx.orchestrator.create_task.return_value = mock_task
     mock_ctx.project_registry.all.return_value = []
     mock_ctx.project_registry.exists.return_value = False
@@ -92,15 +99,38 @@ def test_dry_run_command(mock_ctx):
     mock_task = MagicMock(spec=Task)
     mock_task.id = "TASK-123"
     mock_ctx.task_registry.get.return_value = mock_task
-    
     mock_dry_result = MagicMock(spec=DryRunResult)
-    mock_dry_result.__str__.return_value = "DRY RUN RESULT: Ready"
+    mock_dry_result.task_id = "TASK-123"
+    mock_dry_result.task_title = "Task title"
+    mock_dry_result.task_description = "Task description"
+    mock_dry_result.selected_agent = Agent(
+        id="agent-1",
+        name="Worker",
+        role="Worker role",
+        provider="ollama",
+        model="test-model",
+    )
+    mock_dry_result.selected_employee = None
+    mock_dry_result.provider = "ollama"
+    mock_dry_result.model = "test-model"
+    mock_dry_result.routing_method = "explicit_agent"
+    mock_dry_result.status = "ready"
     mock_ctx.orchestrator.execute_task.return_value = mock_dry_result
-    
+
     with patch('builtins.print') as mock_print:
         interface.handle_command("dry-run TASK-123")
         mock_ctx.orchestrator.execute_task.assert_called_once_with(mock_task, dry_run=True)
-        mock_print.assert_any_call("\nDRY RUN RESULT: Ready")
+        mock_print.assert_any_call(
+            "\nDRY RUN RESULT\n"
+            "Task: [TASK-123] Task title\n"
+            "Description: Task description\n"
+            "Employee: N/A\n"
+            "Agent: Worker (Worker role)\n"
+            "Provider: ollama\n"
+            "Model: test-model\n"
+            "Route: explicit_agent\n"
+            "Status: ready"
+        )
 
 def test_unknown_command(mock_ctx):
     interface = CommandInterface(mock_ctx)
@@ -172,9 +202,11 @@ def test_model_set_command(mock_ctx):
 
 def test_task_creation_with_agent(mock_ctx):
     interface = CommandInterface(mock_ctx)
-    mock_task = MagicMock(spec=Task)
-    mock_task.id = "TASK-001"
-    mock_task.title = "Research AI"
+    mock_task = Task(
+        id="TASK-001",
+        title="Research AI",
+        description="Research AI",
+    )
     mock_ctx.orchestrator.create_task.return_value = mock_task
     mock_ctx.project_registry.all.return_value = []
     mock_ctx.project_registry.exists.return_value = False
@@ -191,9 +223,11 @@ def test_task_creation_with_agent(mock_ctx):
 
 def test_task_creation_with_role(mock_ctx):
     interface = CommandInterface(mock_ctx)
-    mock_task = MagicMock(spec=Task)
-    mock_task.id = "TASK-002"
-    mock_task.title = "Handle Work"
+    mock_task = Task(
+        id="TASK-002",
+        title="Handle Work",
+        description="Handle Work",
+    )
     mock_ctx.orchestrator.create_task.return_value = mock_task
     mock_ctx.project_registry.all.return_value = []
     mock_ctx.project_registry.exists.return_value = False
@@ -210,9 +244,11 @@ def test_task_creation_with_role(mock_ctx):
 
 def test_task_creation_with_capability(mock_ctx):
     interface = CommandInterface(mock_ctx)
-    mock_task = MagicMock(spec=Task)
-    mock_task.id = "TASK-003"
-    mock_task.title = "Summarize docs"
+    mock_task = Task(
+        id="TASK-003",
+        title="Summarize docs",
+        description="Summarize docs",
+    )
     mock_ctx.orchestrator.create_task.return_value = mock_task
     mock_ctx.project_registry.all.return_value = []
     mock_ctx.project_registry.exists.return_value = False
@@ -248,9 +284,11 @@ def test_task_creation_multiple_routing_options_rejected(mock_ctx):
 
 def test_task_creation_without_routing_preserves_behavior(mock_ctx):
     interface = CommandInterface(mock_ctx)
-    mock_task = MagicMock(spec=Task)
-    mock_task.id = "TASK-004"
-    mock_task.title = "Standard task"
+    mock_task = Task(
+        id="TASK-004",
+        title="Standard task",
+        description="Standard task",
+    )
     mock_ctx.orchestrator.create_task.return_value = mock_task
     mock_ctx.project_registry.all.return_value = []
     mock_ctx.project_registry.exists.return_value = False
@@ -270,7 +308,21 @@ def test_dry_run_with_agent(mock_ctx):
     mock_task.id = "TASK-100"
     mock_ctx.task_registry.get.return_value = mock_task
     mock_dry = MagicMock(spec=DryRunResult)
-    mock_dry.__str__.return_value = "DRY RUN RESULT: Agent explicit"
+    mock_dry.task_id = "TASK-100"
+    mock_dry.task_title = "Task title"
+    mock_dry.task_description = "Task description"
+    mock_dry.selected_agent = Agent(
+        id="local_worker",
+        name="Local Worker",
+        role="Local AI Worker",
+        provider="ollama",
+        model="test-model",
+    )
+    mock_dry.selected_employee = None
+    mock_dry.provider = "ollama"
+    mock_dry.model = "test-model"
+    mock_dry.routing_method = "explicit_agent"
+    mock_dry.status = "ready"
     mock_ctx.orchestrator.execute_task.return_value = mock_dry
 
     with patch('builtins.print') as mock_print:
@@ -280,7 +332,17 @@ def test_dry_run_with_agent(mock_ctx):
             dry_run=True,
             agent_id="local_worker"
         )
-        mock_print.assert_any_call("\nDRY RUN RESULT: Agent explicit")
+        mock_print.assert_any_call(
+            "\nDRY RUN RESULT\n"
+            "Task: [TASK-100] Task title\n"
+            "Description: Task description\n"
+            "Employee: N/A\n"
+            "Agent: Local Worker (Local AI Worker)\n"
+            "Provider: ollama\n"
+            "Model: test-model\n"
+            "Route: explicit_agent\n"
+            "Status: ready"
+        )
 
 def test_dry_run_with_role(mock_ctx):
     interface = CommandInterface(mock_ctx)
@@ -288,7 +350,21 @@ def test_dry_run_with_role(mock_ctx):
     mock_task.id = "TASK-101"
     mock_ctx.task_registry.get.return_value = mock_task
     mock_dry = MagicMock(spec=DryRunResult)
-    mock_dry.__str__.return_value = "DRY RUN RESULT: Role matched"
+    mock_dry.task_id = "TASK-101"
+    mock_dry.task_title = "Task title"
+    mock_dry.task_description = "Task description"
+    mock_dry.selected_agent = Agent(
+        id="local_worker",
+        name="Local Worker",
+        role="Local AI Worker",
+        provider="ollama",
+        model="test-model",
+    )
+    mock_dry.selected_employee = None
+    mock_dry.provider = "ollama"
+    mock_dry.model = "test-model"
+    mock_dry.routing_method = "employee_role"
+    mock_dry.status = "ready"
     mock_ctx.orchestrator.execute_task.return_value = mock_dry
 
     with patch('builtins.print') as mock_print:
@@ -298,7 +374,17 @@ def test_dry_run_with_role(mock_ctx):
             dry_run=True,
             role="Local AI Worker"
         )
-        mock_print.assert_any_call("\nDRY RUN RESULT: Role matched")
+        mock_print.assert_any_call(
+            "\nDRY RUN RESULT\n"
+            "Task: [TASK-101] Task title\n"
+            "Description: Task description\n"
+            "Employee: N/A\n"
+            "Agent: Local Worker (Local AI Worker)\n"
+            "Provider: ollama\n"
+            "Model: test-model\n"
+            "Route: employee_role\n"
+            "Status: ready"
+        )
 
 def test_dry_run_with_capability(mock_ctx):
     interface = CommandInterface(mock_ctx)
@@ -306,7 +392,21 @@ def test_dry_run_with_capability(mock_ctx):
     mock_task.id = "TASK-102"
     mock_ctx.task_registry.get.return_value = mock_task
     mock_dry = MagicMock(spec=DryRunResult)
-    mock_dry.__str__.return_value = "DRY RUN RESULT: Capability matched"
+    mock_dry.task_id = "TASK-102"
+    mock_dry.task_title = "Task title"
+    mock_dry.task_description = "Task description"
+    mock_dry.selected_agent = Agent(
+        id="local_worker",
+        name="Local Worker",
+        role="Local AI Worker",
+        provider="ollama",
+        model="test-model",
+    )
+    mock_dry.selected_employee = None
+    mock_dry.provider = "ollama"
+    mock_dry.model = "test-model"
+    mock_dry.routing_method = "capability"
+    mock_dry.status = "ready"
     mock_ctx.orchestrator.execute_task.return_value = mock_dry
 
     with patch('builtins.print') as mock_print:
@@ -316,7 +416,17 @@ def test_dry_run_with_capability(mock_ctx):
             dry_run=True,
             capability="summarization"
         )
-        mock_print.assert_any_call("\nDRY RUN RESULT: Capability matched")
+        mock_print.assert_any_call(
+            "\nDRY RUN RESULT\n"
+            "Task: [TASK-102] Task title\n"
+            "Description: Task description\n"
+            "Employee: N/A\n"
+            "Agent: Local Worker (Local AI Worker)\n"
+            "Provider: ollama\n"
+            "Model: test-model\n"
+            "Route: capability\n"
+            "Status: ready"
+        )
 
 def test_dry_run_missing_routing_value(mock_ctx):
     interface = CommandInterface(mock_ctx)

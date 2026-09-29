@@ -1,8 +1,8 @@
 from __future__ import annotations
 import shlex
-from typing import Protocol, Any
 
 
+from app.application import CorporationApplicationService, DryRunSummary
 from app.orchestrator import Orchestrator, TaskRegistry, ProjectRegistry
 from app.agents import AgentRegistry, EmployeeRegistry
 from app.providers import ProviderRegistry
@@ -37,8 +37,15 @@ class CommandInterface:
     """
     Interactive command interface for ERSELMETZ AI CORPORATION.
     """
-    def __init__(self, context: CorporationContext):
+    def __init__(
+        self,
+        context: CorporationContext,
+        application_service: CorporationApplicationService | None = None,
+    ):
         self.context = context
+        self.application_service = application_service or CorporationApplicationService(
+            context.orchestrator
+        )
         self._running = False
 
     def run(self):
@@ -135,9 +142,6 @@ class CommandInterface:
             return
 
         sub_cmd = args[0].lower()
-        from app.agents import EmployeeManagement
-        mgmt = EmployeeManagement(self.context.employee_registry)
-
         try:
             if sub_cmd == "add":
                 if len(args) < 5:
@@ -148,11 +152,13 @@ class CommandInterface:
                 name = args[2]
                 role = args[3]
                 resp = args[4:]
-                emp = mgmt.create_employee(emp_id, name, role, resp)
+                emp = self.application_service.create_employee(
+                    emp_id, name, role, resp
+                )
                 print(f"Employee created: {emp.name} ({emp.id})")
 
             elif sub_cmd == "list":
-                employees = mgmt.list_employees()
+                employees = self.application_service.list_employees()
                 if not employees:
                     print("No employees registered.")
                     return
@@ -161,7 +167,7 @@ class CommandInterface:
                 print(f"{'ID':<15} | {'Name':<20} | {'Role':<20} | {'Agent ID':<15}")
                 print("-" * 70)
                 for emp in employees:
-                    agent_id = emp.agent.id if emp.agent else "None"
+                    agent_id = emp.agent_id or "None"
                     print(f"{emp.id:<15} | {emp.name:<20} | {emp.role:<20} | {agent_id:<15}")
                 print()
 
@@ -169,8 +175,8 @@ class CommandInterface:
                 if len(args) < 2:
                     print("Error: 'employee get' requires <id>")
                     return
-                emp = mgmt.get_employee(args[1])
-                agent_id = emp.agent.id if emp.agent else "None"
+                emp = self.application_service.get_employee(args[1])
+                agent_id = emp.agent_id or "None"
                 print("\nEmployee Details:")
                 print(f"ID:              {emp.id}")
                 print(f"Name:            {emp.name}")
@@ -183,7 +189,7 @@ class CommandInterface:
                 if len(args) < 2:
                     print("Error: 'employee remove' requires <id>")
                     return
-                mgmt.remove_employee(args[1])
+                self.application_service.remove_employee(args[1])
                 print(f"Employee {args[1]} removed successfully.")
 
             else:
@@ -204,9 +210,6 @@ class CommandInterface:
             return
 
         sub_cmd = args[0].lower()
-        from app.providers import ProviderManagement
-        mgmt = ProviderManagement(self.context.provider_registry)
-
         try:
             if sub_cmd == "add":
                 if len(args) < 3:
@@ -215,11 +218,11 @@ class CommandInterface:
                 
                 p_id = args[1]
                 name = args[2]
-                provider = mgmt.create_provider(p_id, name)
-                print(f"Provider added: {provider.__class__.__name__} ({name})")
+                provider = self.application_service.create_provider(p_id, name)
+                print(f"Provider added: {provider.type_name} ({name})")
 
             elif sub_cmd == "list":
-                providers = mgmt.list_providers()
+                providers = self.application_service.list_providers()
                 if not providers:
                     print("No providers registered.")
                     return
@@ -227,23 +230,23 @@ class CommandInterface:
                 print("\nRegistered Providers:")
                 print(f"{'ID':<15} | {'Type':<20}")
                 print("-" * 35)
-                for p_id, p in providers.items():
-                    print(f"{p_id:<15} | {p.__class__.__name__:<20}")
+                for provider in providers:
+                    print(f"{provider.id:<15} | {provider.type_name:<20}")
                 print()
 
             elif sub_cmd == "get":
                 if len(args) < 2:
                     print("Error: 'provider get' requires <id>")
                     return
-                provider = mgmt.get_provider(args[1])
-                print(f"\nProvider: {provider.__class__.__name__} (ID: {args[1]})")
+                provider = self.application_service.get_provider(args[1])
+                print(f"\nProvider: {provider.type_name} (ID: {args[1]})")
                 print()
 
             elif sub_cmd == "remove":
                 if len(args) < 2:
                     print("Error: 'provider remove' requires <id>")
                     return
-                mgmt.remove_provider(args[1])
+                self.application_service.remove_provider(args[1])
                 print(f"Provider {args[1]} removed successfully.")
 
             else:
@@ -261,9 +264,6 @@ class CommandInterface:
             return
 
         sub_cmd = args[0].lower()
-        from app.agents import ModelManagement
-        mgmt = ModelManagement(self.context.agent_registry, self.context.provider_registry)
-
         try:
             if sub_cmd == "set" or sub_cmd == "replace":
                 if len(args) < 4:
@@ -274,7 +274,9 @@ class CommandInterface:
                 provider_id = args[2]
                 model_name = args[3]
                 
-                mgmt.assign_model(agent_id, provider_id, model_name)
+                self.application_service.assign_model(
+                    agent_id, provider_id, model_name
+                )
                 print(f"Model updated for agent {agent_id}: {provider_id}/{model_name}")
 
             elif sub_cmd == "get":
@@ -282,10 +284,10 @@ class CommandInterface:
                     print("Error: 'model get' requires <agent_id>")
                     return
                 
-                info = mgmt.get_model(args[1])
+                info = self.application_service.get_model(args[1])
                 print(f"\nAgent: {args[1]}")
-                print(f"Provider: {info['provider']}")
-                print(f"Model:    {info['model']}")
+                print(f"Provider: {info.provider}")
+                print(f"Model:    {info.model}")
                 print()
 
             else:
@@ -298,7 +300,7 @@ class CommandInterface:
             print(f"An error occurred managing models: {e}")
 
     def _cmd_agents(self):
-        agents = self.context.agent_registry.all()
+        agents = self.application_service.list_agents()
         if not agents:
             print("No agents registered.")
             return
@@ -362,31 +364,14 @@ class CommandInterface:
         role = options.get("role")
         capability = options.get("capability")
 
-        # Use the existing Orchestrator to create a task.
-        # Since we don't have a specific project ID from the command, 
-        # we'll use a default project if one exists, or create one.
-        proj_reg = self.context.project_registry
-        projects = proj_reg.all()
-        project_id = projects[0].id if projects else "default_proj"
-        
-        if not proj_reg.exists(project_id):
-            from app.orchestrator.project import Project
-            proj_reg.register(Project(id=project_id, name="General", description="Default Project", status="active"))
-            
-        kwargs: dict[str, Any] = {
-            "title": description[:50],
-            "description": description,
-            "project_id": project_id,
-        }
-        if agent_id:
-            kwargs["agent_id"] = agent_id
-        if role:
-            kwargs["role"] = role
-        if capability:
-            kwargs["capability"] = capability
-
         try:
-            task = self.context.orchestrator.create_task(**kwargs)
+            task = self.application_service.create_task(
+                title=description[:50],
+                description=description,
+                agent_id=agent_id,
+                role=role,
+                capability=capability,
+            )
             print(f"Task created: {task.id} - {task.title}")
         except Exception as e:
             print(f"Error creating task: {e}")
@@ -407,20 +392,30 @@ class CommandInterface:
         capability = options.get("capability")
 
         try:
-            task = self.context.task_registry.get(task_id)
-            kwargs: dict[str, Any] = {"dry_run": True}
-            if role:
-                kwargs["role"] = role
-            if capability:
-                kwargs["capability"] = capability
-            if agent_id:
-                kwargs["agent_id"] = agent_id
-
-            result = self.context.orchestrator.execute_task(task, **kwargs)
-            print(f"\n{result}")
+            result = self.application_service.dry_run_task(
+                task_id,
+                role=role,
+                capability=capability,
+                agent_id=agent_id,
+            )
+            print(f"\n{self._format_dry_run(result)}")
             print()
         except Exception as e:
             print(f"Error performing dry-run: {e}")
+
+    @staticmethod
+    def _format_dry_run(result: DryRunSummary) -> str:
+        return (
+            "DRY RUN RESULT\n"
+            f"Task: [{result.task_id}] {result.task_title}\n"
+            f"Description: {result.task_description}\n"
+            f"Employee: {result.selected_employee_name or 'N/A'}\n"
+            f"Agent: {result.selected_agent_name} ({result.selected_agent_role})\n"
+            f"Provider: {result.provider}\n"
+            f"Model: {result.model}\n"
+            f"Route: {result.routing_method}\n"
+            f"Status: {result.status}"
+        )
 
     def exit_shell(self):
         print("Exiting Corporation Shell...")

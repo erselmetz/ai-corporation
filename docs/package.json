@@ -1,0 +1,14 @@
+{
+  "name": "erselmetz-ai-corporation-docs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone public documentation website for ERSELMETZ AI CORPORATION",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  }
+}

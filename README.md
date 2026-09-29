@@ -122,4 +122,6 @@ Unrestricted autonomous self-modification is not the current design. Any future 
 ## Documentation
 
 - [Architecture and roadmap](./ARCHITECTURE.md)
-- [Visual architecture overview](./docs/index.html)
+- [Public documentation website](./docs/index.html)
+
+The documentation site is a standalone Node.js presentation website in `docs/`. Run it independently with `cd docs` and `npm start` (Node.js 18+); it does not connect to the Corporation runtime.
