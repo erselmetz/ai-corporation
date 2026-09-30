@@ -108,6 +108,31 @@ class ModelAssignmentRequest(BaseModel):
         return value
 
 
+class ProjectResponse(BaseModel):
+    id: str
+    name: str
+    description: str
+    status: str
+
+
+class ProjectListResponse(BaseModel):
+    items: list[ProjectResponse]
+
+
+class ProjectCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1)
+    description: str = ""
+
+    @field_validator("name")
+    @classmethod
+    def require_non_blank_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Project name cannot be blank")
+        return value
+
+
 class TaskResponse(BaseModel):
     id: str
     title: str

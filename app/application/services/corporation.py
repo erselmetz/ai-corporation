@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from uuid import uuid4
 
 from app.agents import Agent, Employee, EmployeeManagement, ModelManagement
 from app.corporation import Corporation
@@ -33,6 +34,14 @@ class EmployeeSummary:
     role: str
     responsibilities: tuple[str, ...]
     agent_id: str | None
+
+
+@dataclass(frozen=True)
+class ProjectSummary:
+    id: str
+    name: str
+    description: str
+    status: str
 
 
 @dataclass(frozen=True)
@@ -140,6 +149,28 @@ class CorporationApplicationService:
 
     def remove_employee(self, employee_id: str) -> None:
         self._employee_management().remove_employee(employee_id)
+
+    def list_projects(self) -> list[ProjectSummary]:
+        return [
+            self._project_summary(project)
+            for project in self._orchestrator.projects.all()
+        ]
+
+    def get_project(self, project_id: str) -> ProjectSummary:
+        return self._project_summary(self._orchestrator.projects.get(project_id))
+
+    def create_project(
+        self,
+        name: str,
+        description: str = "",
+    ) -> ProjectSummary:
+        project = Project(
+            id=f"PROJECT-{uuid4().hex[:8].upper()}",
+            name=name,
+            description=description,
+        )
+        self._orchestrator.projects.register(project)
+        return self._project_summary(project)
 
     def list_providers(self) -> list[ProviderSummary]:
         return [
@@ -391,4 +422,13 @@ class CorporationApplicationService:
             assigned_agent=task.assigned_agent,
             required_role=task.required_role,
             required_capability=task.required_capability,
+        )
+
+    @staticmethod
+    def _project_summary(project: Project) -> ProjectSummary:
+        return ProjectSummary(
+            id=project.id,
+            name=project.name,
+            description=project.description,
+            status=project.status,
         )

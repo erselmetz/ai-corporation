@@ -6,6 +6,7 @@ from .services import (
     EmployeeSummary,
     ModelAssignmentSummary,
     ModelSummary,
+    ProjectSummary,
     ProviderSummary,
     TaskSummary,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "EmployeeSummary",
     "ModelAssignmentSummary",
     "ModelSummary",
+    "ProjectSummary",
     "ProviderSummary",
     "TaskSummary",
 ]

@@ -11,7 +11,11 @@ from fastapi import (
     status,
 )
 
-from app.application import CorporationApplicationService, TaskSummary
+from app.application import (
+    CorporationApplicationService,
+    ProjectSummary,
+    TaskSummary,
+)
 from app.runtime import create_corporation_runtime
 from .models import (
     AgentListResponse,
@@ -28,6 +32,9 @@ from .models import (
     ProviderCreateRequest,
     ProviderListResponse,
     ProviderResponse,
+    ProjectCreateRequest,
+    ProjectListResponse,
+    ProjectResponse,
     TaskCreateRequest,
     TaskDryRunResponse,
     TaskListResponse,
@@ -397,6 +404,79 @@ def replace_model_assignment(
         provider_id=result.provider_id,
         model_id=result.model_id,
     )
+
+
+def _project_response(summary: ProjectSummary) -> ProjectResponse:
+    return ProjectResponse(
+        id=summary.id,
+        name=summary.name,
+        description=summary.description,
+        status=summary.status,
+    )
+
+
+@corporation_router.get(
+    "/projects",
+    response_model=ProjectListResponse,
+    dependencies=[Depends(require_permission("project:read"))],
+)
+def list_projects(
+    application_service: CorporationApplicationService = Depends(
+        get_application_service
+    ),
+) -> ProjectListResponse:
+    return ProjectListResponse(
+        items=[
+            _project_response(summary)
+            for summary in application_service.list_projects()
+        ]
+    )
+
+
+@corporation_router.get(
+    "/projects/{project_id}",
+    response_model=ProjectResponse,
+    dependencies=[Depends(require_permission("project:read"))],
+)
+def get_project(
+    project_id: str,
+    application_service: CorporationApplicationService = Depends(
+        get_application_service
+    ),
+) -> ProjectResponse:
+    try:
+        summary = application_service.get_project(project_id)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found",
+        ) from exc
+    return _project_response(summary)
+
+
+@corporation_router.post(
+    "/projects",
+    response_model=ProjectResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_permission("project:create"))],
+)
+def create_project(
+    project: ProjectCreateRequest,
+    application_service: CorporationApplicationService = Depends(
+        get_application_service
+    ),
+) -> ProjectResponse:
+    try:
+        summary = application_service.create_project(
+            name=project.name,
+            description=project.description,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Project conflicts with an existing project",
+        ) from exc
+    return _project_response(summary)
 
 
 def _task_response(summary: TaskSummary) -> TaskResponse:
