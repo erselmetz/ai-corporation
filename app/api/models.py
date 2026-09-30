@@ -133,6 +133,17 @@ class ProjectCreateRequest(BaseModel):
         return value
 
 
+class ActivityResponse(BaseModel):
+    id: int
+    task_id: str
+    event: str
+    created_at: str
+
+
+class ActivityListResponse(BaseModel):
+    items: list[ActivityResponse]
+
+
 class TaskResponse(BaseModel):
     id: str
     title: str

@@ -45,6 +45,14 @@ class ProjectSummary:
 
 
 @dataclass(frozen=True)
+class ActivitySummary:
+    id: int
+    task_id: str
+    event: str
+    created_at: str
+
+
+@dataclass(frozen=True)
 class ProviderSummary:
     id: str
     type_name: str
@@ -171,6 +179,24 @@ class CorporationApplicationService:
         )
         self._orchestrator.projects.register(project)
         return self._project_summary(project)
+
+    def list_activity(
+        self,
+        limit: int = 100,
+        task_id: str | None = None,
+    ) -> list[ActivitySummary]:
+        return [
+            ActivitySummary(
+                id=record["id"],
+                task_id=record["task_id"],
+                event=record["event"],
+                created_at=record["created_at"],
+            )
+            for record in self._orchestrator.logger.list_activity(
+                limit=limit,
+                task_id=task_id,
+            )
+        ]
 
     def list_providers(self) -> list[ProviderSummary]:
         return [

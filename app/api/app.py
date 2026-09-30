@@ -6,18 +6,22 @@ from fastapi import (
     Depends,
     FastAPI,
     HTTPException,
+    Query,
     Request,
     Response,
     status,
 )
 
 from app.application import (
+    ActivitySummary,
     CorporationApplicationService,
     ProjectSummary,
     TaskSummary,
 )
 from app.runtime import create_corporation_runtime
 from .models import (
+    ActivityListResponse,
+    ActivityResponse,
     AgentListResponse,
     AgentResponse,
     CorporationIdentityResponse,
@@ -477,6 +481,38 @@ def create_project(
             detail="Project conflicts with an existing project",
         ) from exc
     return _project_response(summary)
+
+
+def _activity_response(summary: ActivitySummary) -> ActivityResponse:
+    return ActivityResponse(
+        id=summary.id,
+        task_id=summary.task_id,
+        event=summary.event,
+        created_at=summary.created_at,
+    )
+
+
+@corporation_router.get(
+    "/activity",
+    response_model=ActivityListResponse,
+    dependencies=[Depends(require_permission("activity:read"))],
+)
+def list_activity(
+    task_id: str | None = Query(default=None, min_length=1),
+    limit: int = Query(default=100, ge=1, le=100),
+    application_service: CorporationApplicationService = Depends(
+        get_application_service
+    ),
+) -> ActivityListResponse:
+    return ActivityListResponse(
+        items=[
+            _activity_response(summary)
+            for summary in application_service.list_activity(
+                limit=limit,
+                task_id=task_id,
+            )
+        ]
+    )
 
 
 def _task_response(summary: TaskSummary) -> TaskResponse:

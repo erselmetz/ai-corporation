@@ -1,4 +1,5 @@
 from .services import (
+    ActivitySummary,
     AgentSummary,
     CorporationApplicationService,
     CorporationStatusSummary,
@@ -12,6 +13,7 @@ from .services import (
 )
 
 __all__ = [
+    "ActivitySummary",
     "AgentSummary",
     "CorporationApplicationService",
     "CorporationStatusSummary",

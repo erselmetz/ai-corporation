@@ -59,7 +59,7 @@ export const taskGroups = [
       ["Provider & Model API", "Expose authorized Provider management and Agent Provider/Model assignment read/replacement operations."],
       ["Task API", "Expose authorized Task list/detail/create and non-mutating dry-run; HTTP execution and lifecycle mutation are not exposed."],
       ["Project API", "Expose authenticated Project list, detail, and creation operations through CorporationApplicationService."],
-      ["Activity & Logs API", "Provide scoped access to Corporation activity and logs with appropriate privacy controls."],
+      ["Activity & Logs API", "Expose bounded, authenticated, read-only Task activity summaries through the Application Service."],
       ["Web UI Foundation", "Establish a maintainable web interface for authenticated Corporation administration."],
       ["Corporation Dashboard", "Summarize live Corporation status and activity in the future authenticated application UI."],
       ["Employee Management UI", "Provide interface workflows for managing Employees and their Agent associations."],
@@ -164,7 +164,7 @@ export const tasks = taskGroups.flatMap((group) =>
       title,
       description,
       category: group.name,
-      status: number <= 44 ? "completed" : "planned",
+      status: number <= 45 ? "completed" : "planned",
     };
   })
 );
