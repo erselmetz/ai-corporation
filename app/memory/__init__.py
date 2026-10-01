@@ -1,3 +1,4 @@
+from .conversation_store import ConversationMemoryStore
 from .project_store import ProjectMemoryStore
 from .store import MemoryStore
 from .models import (
@@ -9,6 +10,7 @@ from .models import (
 )
 
 __all__ = [
+    "ConversationMemoryStore",
     "MemoryStore",
     "ProjectMemoryStore",
     "MemoryRecord",

@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-02",
                 "type": "development",
+                "title": "Persistent Conversation Memory",
+                "summary": "Added explicitly opted-in SQLite conversation memory with immutable bounded records, owner/conversation-scoped retrieval, expiry enforcement, explicit deletion and scoped cleanup, and corrupt-data rejection; chat messages are never saved automatically.",
+            },
+            {
+                "date": "2026-10-02",
+                "type": "development",
                 "title": "Memory Architecture",
                 "summary": "Defined immutable scoped memory records with explicit owners, note/summary types, required provenance and expiry, retention opt-in, and exact owner/scope retrieval checks without automatic sharing or storage.",
             },

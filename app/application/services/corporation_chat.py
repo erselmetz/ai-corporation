@@ -66,6 +66,20 @@ class CorporationChatService:
         self._chat.close_conversation(conversation_id)
         return self.get(conversation_id)
 
+    def retain_message(self, conversation_id: str, message_id: str, *, memory_id: str,
+                       owner_id: str, expires_at, now, retention_opt_in: bool = False):
+        """Explicit trusted-local retention; never called automatically by send."""
+        from app.memory import ConversationMemoryStore, MemoryRecord, MemoryScope, MemoryType
+        record = self.get(conversation_id)
+        source = next((m for m in record.messages if m.id == message_id), None)
+        if source is None or source.status is not MessageStatus.COMPLETED:
+            raise ValueError("Only completed conversation messages can be retained")
+        memory = MemoryRecord(memory_id, owner_id, MemoryScope.CONVERSATION,
+                              conversation_id, MemoryType.NOTE, source.content,
+                              source.id, now, expires_at, retention_opt_in)
+        ConversationMemoryStore().retain(memory, now=now)
+        return memory
+
     def review_task(self, conversation_id: str, message_id: str, title: str,
                     project_id: str, agent_id: str) -> ChatTaskReview:
         """Prepare immutable fields for local human review; never create a Task."""

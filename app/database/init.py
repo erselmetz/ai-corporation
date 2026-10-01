@@ -83,6 +83,22 @@ def initialize_database() -> None:
             """
         )
 
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS conversation_memory (
+                id TEXT PRIMARY KEY,
+                owner_id TEXT NOT NULL,
+                scope_id TEXT NOT NULL,
+                type TEXT NOT NULL,
+                content TEXT NOT NULL,
+                source_id TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                retention_opt_in INTEGER NOT NULL CHECK(retention_opt_in = 1)
+            )
+            """
+        )
+
         connection.commit()
 
     finally:
