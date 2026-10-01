@@ -32,7 +32,7 @@ def corporation_dashboard() -> HTMLResponse:
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
-                <li><span aria-disabled="true">Activity — planned</span></li>
+                <li><a href="/ui/activity">Activity &amp; logs</a></li>
               </ul>
             </nav>
             <main id="dashboard" class="content">
@@ -88,6 +88,81 @@ def corporation_dashboard() -> HTMLResponse:
     )
 
 
+@router.get("/ui/activity", response_class=HTMLResponse, include_in_schema=False)
+def activity_page() -> HTMLResponse:
+    return HTMLResponse(
+        """
+        <!doctype html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta name="description" content="ERSELMETZ AI CORPORATION Activity and logs">
+          <title>Activity &amp; Logs — ERSELMETZ AI CORPORATION</title>
+          <link rel="stylesheet" href="/ui/static/style.css">
+          <script type="module" src="/ui/static/activity.mjs"></script>
+        </head>
+        <body>
+          <header class="site-header">
+            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
+            <span class="product-label">Corporation Web UI</span>
+          </header>
+          <div class="layout">
+            <nav class="navigation" aria-label="Corporation navigation">
+              <h2>Navigation</h2>
+              <ul>
+                <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/employees">Employee management</a></li>
+                <li><a href="/ui/providers">Provider &amp; model management</a></li>
+                <li><a href="/ui/tasks">Task management</a></li>
+                <li><a href="/ui/projects">Project management</a></li>
+                <li><a href="/ui/activity" aria-current="page">Activity &amp; logs</a></li>
+              </ul>
+            </nav>
+            <main class="content activity-page">
+              <div class="dashboard-heading">
+                <div>
+                  <p class="eyebrow">Read-only records</p>
+                  <h1>Activity &amp; Logs</h1>
+                </div>
+                <a class="back-link" href="/ui">Back to dashboard</a>
+              </div>
+              <p class="auth-boundary">
+                Activity data comes from the protected API. Browser sign-in is
+                not configured; an authenticated session with activity read
+                permission is required.
+              </p>
+              <section class="management-card" aria-labelledby="activity-list-title">
+                <div class="section-heading">
+                  <h2 id="activity-list-title">Activity records</h2>
+                  <button id="activity-refresh" type="button">Refresh</button>
+                </div>
+                <p class="muted activity-boundary">
+                  Shows only the bounded records returned by the API, not the
+                  complete activity history. The API omits log message details.
+                </p>
+                <div class="activity-filters">
+                  <label for="activity-limit">Maximum records</label>
+                  <select id="activity-limit" name="limit">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100" selected>100</option>
+                  </select>
+                  <label for="activity-task-id">Task ID (optional)</label>
+                  <input id="activity-task-id" name="task_id" autocomplete="off">
+                </div>
+                <p id="activity-list-state" class="section-state" role="status" aria-live="polite">Loading activity…</p>
+                <ol id="activity-list" class="activity-list" aria-label="Activity records"></ol>
+              </section>
+            </main>
+          </div>
+        </body>
+        </html>
+        """
+    )
+
+
 @router.get("/ui/employees", response_class=HTMLResponse, include_in_schema=False)
 def employee_management_page() -> HTMLResponse:
     return HTMLResponse(
@@ -116,7 +191,7 @@ def employee_management_page() -> HTMLResponse:
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
-                <li><span aria-disabled="true">Activity — planned</span></li>
+                <li><a href="/ui/activity">Activity &amp; logs</a></li>
               </ul>
             </nav>
             <main class="content employee-page">
@@ -199,7 +274,7 @@ def provider_model_management_page() -> HTMLResponse:
                 <li><a href="/ui/providers" aria-current="page">Provider &amp; Model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
-                <li><span aria-disabled="true">Activity — planned</span></li>
+                <li><a href="/ui/activity">Activity &amp; logs</a></li>
               </ul>
             </nav>
             <main class="content provider-page">
@@ -292,7 +367,7 @@ def task_management_page() -> HTMLResponse:
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks" aria-current="page">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
-                <li><span aria-disabled="true">Activity — planned</span></li>
+                <li><a href="/ui/activity">Activity &amp; logs</a></li>
               </ul>
             </nav>
             <main class="content task-page">
@@ -388,7 +463,7 @@ def project_management_page() -> HTMLResponse:
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects" aria-current="page">Project management</a></li>
-                <li><span aria-disabled="true">Activity — planned</span></li>
+                <li><a href="/ui/activity">Activity &amp; logs</a></li>
               </ul>
             </nav>
             <main class="content project-page">

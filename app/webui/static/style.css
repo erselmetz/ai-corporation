@@ -357,6 +357,87 @@ button:disabled {
   align-items: start;
 }
 
+.activity-filters {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.45fr) minmax(14rem, 1fr);
+  gap: 0.45rem 0.75rem;
+  align-items: center;
+  max-width: 38rem;
+  margin-top: 0.9rem;
+}
+
+.activity-filters label {
+  font-size: 0.83rem;
+  font-weight: 650;
+}
+
+.activity-filters input,
+.activity-filters select {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #b8c7cf;
+  border-radius: 0.35rem;
+  color: inherit;
+  background: #fff;
+  font: inherit;
+}
+
+.activity-boundary {
+  margin-bottom: 0.6rem;
+}
+
+.activity-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-item,
+.activity-entry,
+.activity-metadata,
+.activity-data-row {
+  min-width: 0;
+}
+
+.activity-entry {
+  padding: 0.75rem;
+  border: 1px solid #d7e0e5;
+  border-radius: 0.45rem;
+  background: #fff;
+}
+
+.activity-entry h3 {
+  margin: 0 0 0.55rem;
+  overflow-wrap: anywhere;
+}
+
+.activity-metadata {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.activity-data-row {
+  display: grid;
+  grid-template-columns: minmax(6rem, 0.25fr) minmax(0, 1fr);
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.activity-data-row dt {
+  color: #526b7b;
+  font-weight: 650;
+}
+
+.activity-data-row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .management-card {
   min-width: 0;
   padding: 0.9rem;
@@ -547,6 +628,15 @@ button:disabled {
 
   .project-layout {
     grid-template-columns: 1fr;
+  }
+
+  .activity-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-data-row {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
   }
 
   .create-card {

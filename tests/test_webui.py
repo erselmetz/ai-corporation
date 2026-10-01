@@ -268,3 +268,45 @@ def test_project_management_page_uses_existing_protected_project_contract():
     orchestrator.run_agent.assert_not_called()
     orchestrator.create_task.assert_not_called()
     assert orchestrator.method_calls == []
+
+
+def test_activity_page_uses_existing_protected_read_only_api():
+    orchestrator = MagicMock(spec=Orchestrator)
+    application = create_app(CorporationApplicationService(orchestrator))
+
+    with TestClient(application) as client:
+        page = client.get("/ui/activity")
+        script = client.get("/ui/static/activity.mjs")
+        stylesheet = client.get("/ui/static/style.css")
+        dashboard = client.get("/ui")
+        projects = client.get("/ui/projects")
+        protected = client.get("/api/activity")
+        invalid_limit = client.get("/api/activity?limit=101")
+        unsupported_detail = client.get("/api/activity/1")
+
+    assert page.status_code == 200
+    assert page.headers["content-type"].startswith("text/html")
+    assert "Activity &amp; Logs" in page.text
+    assert 'href="/ui/static/style.css"' in page.text
+    assert 'src="/ui/static/activity.mjs"' in page.text
+    assert 'name="limit"' in page.text
+    assert 'name="task_id"' in page.text
+    assert script.status_code == 200
+    assert script.headers["content-type"].startswith("text/javascript")
+    assert stylesheet.status_code == 200
+    assert "activity-list" in stylesheet.text
+    assert "/api/activity?" in script.text
+    assert "task_id" in script.text
+    assert "Bearer " not in script.text
+    assert "api_key" not in script.text.lower()
+    assert "password" not in script.text.lower()
+    assert 'href="/ui/activity"' in dashboard.text
+    assert 'href="/ui/activity"' in projects.text
+    assert protected.status_code == 401
+    assert invalid_limit.status_code == 401
+    assert unsupported_detail.status_code == 404
+
+    orchestrator.execute_task.assert_not_called()
+    orchestrator.run_agent.assert_not_called()
+    orchestrator.create_task.assert_not_called()
+    assert orchestrator.method_calls == []
