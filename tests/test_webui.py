@@ -310,3 +310,43 @@ def test_activity_page_uses_existing_protected_read_only_api():
     orchestrator.run_agent.assert_not_called()
     orchestrator.create_task.assert_not_called()
     assert orchestrator.method_calls == []
+
+
+def test_documentation_portal_uses_only_its_protected_markdown_api():
+    orchestrator = MagicMock(spec=Orchestrator)
+    application = create_app(CorporationApplicationService(orchestrator))
+
+    with TestClient(application) as client:
+        page = client.get("/ui/documentation")
+        script = client.get("/ui/static/documentation.mjs")
+        stylesheet = client.get("/ui/static/style.css")
+        dashboard = client.get("/ui")
+        activity = client.get("/ui/activity")
+        api_list = client.get("/api/documentation")
+        api_detail = client.get("/api/documentation/corporation-overview")
+
+    assert page.status_code == 200
+    assert page.headers["content-type"].startswith("text/html")
+    assert "Documentation &amp; Knowledge Portal" in page.text
+    assert "separate from the" in page.text
+    assert 'href="/ui/static/style.css"' in page.text
+    assert 'src="/ui/static/documentation.mjs"' in page.text
+    assert "documentation:read" in page.text
+    assert script.status_code == 200
+    assert script.headers["content-type"].startswith("text/javascript")
+    assert stylesheet.status_code == 200
+    assert "documentation-layout" in stylesheet.text
+    assert "/api/documentation" in script.text
+    assert "credentials: \"same-origin\"" in script.text
+    assert "innerHTML" not in script.text
+    assert "node:fs" not in script.text
+    assert "sqlite" not in script.text.lower()
+    assert "DATABASE_PATH" not in script.text
+    assert 'href="/ui/documentation"' in dashboard.text
+    assert 'href="/ui/documentation"' in activity.text
+    assert api_list.status_code == 401
+    assert api_detail.status_code == 401
+    orchestrator.execute_task.assert_not_called()
+    orchestrator.run_agent.assert_not_called()
+    orchestrator.create_task.assert_not_called()
+    assert orchestrator.method_calls == []

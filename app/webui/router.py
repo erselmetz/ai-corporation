@@ -33,6 +33,7 @@ def corporation_dashboard() -> HTMLResponse:
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/documentation">Documentation portal</a></li>
               </ul>
             </nav>
             <main id="dashboard" class="content">
@@ -88,6 +89,77 @@ def corporation_dashboard() -> HTMLResponse:
     )
 
 
+@router.get("/ui/documentation", response_class=HTMLResponse, include_in_schema=False)
+def documentation_portal_page() -> HTMLResponse:
+    return HTMLResponse(
+        """
+        <!doctype html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta name="description" content="Internal Corporation Documentation Portal">
+          <title>Documentation Portal — ERSELMETZ AI CORPORATION</title>
+          <link rel="stylesheet" href="/ui/static/style.css">
+          <script type="module" src="/ui/static/documentation.mjs"></script>
+        </head>
+        <body>
+          <header class="site-header">
+            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
+            <span class="product-label">Corporation Web UI</span>
+          </header>
+          <div class="layout">
+            <nav class="navigation" aria-label="Corporation navigation">
+              <h2>Navigation</h2>
+              <ul>
+                <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/employees">Employee management</a></li>
+                <li><a href="/ui/providers">Provider &amp; model management</a></li>
+                <li><a href="/ui/tasks">Task management</a></li>
+                <li><a href="/ui/projects">Project management</a></li>
+                <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/documentation" aria-current="page">Documentation portal</a></li>
+              </ul>
+            </nav>
+            <main class="content documentation-page">
+              <div class="dashboard-heading">
+                <div>
+                  <p class="eyebrow">Read-only Corporation knowledge</p>
+                  <h1>Documentation &amp; Knowledge Portal</h1>
+                </div>
+                <a class="back-link" href="/ui">Back to dashboard</a>
+              </div>
+              <p class="auth-boundary">
+                This internal portal reads approved Markdown files from
+                <code>corporation_docs/</code> through the protected
+                <code>documentation:read</code> API. It is separate from the
+                public documentation website in <code>docs/</code>. Browser
+                sign-in is not configured; an authenticated session is required.
+              </p>
+              <div class="documentation-layout">
+                <section class="management-card" aria-labelledby="documentation-list-title">
+                  <div class="section-heading">
+                    <h2 id="documentation-list-title">Documents</h2>
+                    <button id="documentation-refresh" type="button">Refresh</button>
+                  </div>
+                  <p id="documentation-list-state" class="section-state" role="status" aria-live="polite">Loading documents…</p>
+                  <ul id="documentation-list" class="record-list" aria-label="Documentation records"></ul>
+                </section>
+                <section class="management-card" aria-labelledby="documentation-detail-heading">
+                  <h2 id="documentation-detail-heading">Document</h2>
+                  <p id="documentation-detail-state" class="section-state" role="status" aria-live="polite">Select a document to read it.</p>
+                  <h3 id="documentation-content-title" hidden></h3>
+                  <pre id="documentation-content" class="documentation-content" hidden></pre>
+                </section>
+              </div>
+            </main>
+          </div>
+        </body>
+        </html>
+        """
+    )
+
+
 @router.get("/ui/activity", response_class=HTMLResponse, include_in_schema=False)
 def activity_page() -> HTMLResponse:
     return HTMLResponse(
@@ -117,6 +189,7 @@ def activity_page() -> HTMLResponse:
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity" aria-current="page">Activity &amp; logs</a></li>
+                <li><a href="/ui/documentation">Documentation portal</a></li>
               </ul>
             </nav>
             <main class="content activity-page">
@@ -192,6 +265,7 @@ def employee_management_page() -> HTMLResponse:
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/documentation">Documentation portal</a></li>
               </ul>
             </nav>
             <main class="content employee-page">
@@ -275,6 +349,7 @@ def provider_model_management_page() -> HTMLResponse:
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/documentation">Documentation portal</a></li>
               </ul>
             </nav>
             <main class="content provider-page">
@@ -368,6 +443,7 @@ def task_management_page() -> HTMLResponse:
                 <li><a href="/ui/tasks" aria-current="page">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/documentation">Documentation portal</a></li>
               </ul>
             </nav>
             <main class="content task-page">
@@ -464,6 +540,7 @@ def project_management_page() -> HTMLResponse:
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects" aria-current="page">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/documentation">Documentation portal</a></li>
               </ul>
             </nav>
             <main class="content project-page">

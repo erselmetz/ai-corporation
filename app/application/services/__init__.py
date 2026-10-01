@@ -11,12 +11,26 @@ from .corporation import (
     ProviderSummary,
     TaskSummary,
 )
+from .documentation import (
+    DocumentationApplicationService,
+    DocumentationDocument,
+    DocumentationNotFound,
+    DocumentationSource,
+    DocumentationSourceUnavailable,
+    DocumentationSummary,
+)
 
 __all__ = [
     "ActivitySummary",
     "AgentSummary",
     "CorporationApplicationService",
     "CorporationStatusSummary",
+    "DocumentationApplicationService",
+    "DocumentationDocument",
+    "DocumentationNotFound",
+    "DocumentationSource",
+    "DocumentationSourceUnavailable",
+    "DocumentationSummary",
     "DryRunSummary",
     "EmployeeSummary",
     "ModelAssignmentSummary",

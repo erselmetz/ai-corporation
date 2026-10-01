@@ -18,9 +18,15 @@ from starlette.types import Scope
 from app.application import (
     ActivitySummary,
     CorporationApplicationService,
+    DocumentationApplicationService,
+    DocumentationDocument,
+    DocumentationNotFound,
+    DocumentationSource,
+    DocumentationSourceUnavailable,
     ProjectSummary,
     TaskSummary,
 )
+from app.documentation import MarkdownDocumentationSource
 from app.runtime import create_corporation_runtime
 from app.webui import web_ui_router
 from .models import (
@@ -30,6 +36,9 @@ from .models import (
     AgentResponse,
     CorporationIdentityResponse,
     CorporationStatusResponse,
+    DocumentationListResponse,
+    DocumentationResponse,
+    DocumentationSummaryResponse,
     EmployeeCreateRequest,
     EmployeeListResponse,
     EmployeeResponse,
@@ -82,6 +91,12 @@ def get_application_service(request: Request) -> CorporationApplicationService:
     return request.app.state.application_service
 
 
+def get_documentation_service(
+    request: Request,
+) -> DocumentationApplicationService:
+    return request.app.state.documentation_service
+
+
 @corporation_router.get(
     "/status",
     response_model=CorporationStatusResponse,
@@ -102,6 +117,63 @@ def corporation_status(
             id=summary.node_id,
             name=summary.node_name,
         ),
+    )
+
+
+@corporation_router.get(
+    "/documentation",
+    response_model=DocumentationListResponse,
+    dependencies=[Depends(require_permission("documentation:read"))],
+)
+def list_documentation(
+    documentation_service: DocumentationApplicationService = Depends(
+        get_documentation_service
+    ),
+) -> DocumentationListResponse:
+    try:
+        summaries = documentation_service.list_documents()
+    except DocumentationSourceUnavailable as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Documentation source unavailable",
+        ) from exc
+    return DocumentationListResponse(
+        items=[
+            DocumentationSummaryResponse(id=summary.id, title=summary.title)
+            for summary in summaries
+        ]
+    )
+
+
+@corporation_router.get(
+    "/documentation/{document_id}",
+    response_model=DocumentationResponse,
+    dependencies=[Depends(require_permission("documentation:read"))],
+)
+def get_documentation(
+    document_id: str,
+    documentation_service: DocumentationApplicationService = Depends(
+        get_documentation_service
+    ),
+) -> DocumentationResponse:
+    try:
+        document: DocumentationDocument = documentation_service.get_document(
+            document_id
+        )
+    except DocumentationNotFound as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Documentation document not found",
+        ) from exc
+    except DocumentationSourceUnavailable as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Documentation source unavailable",
+        ) from exc
+    return DocumentationResponse(
+        id=document.id,
+        title=document.title,
+        content=document.content,
     )
 
 
@@ -655,6 +727,7 @@ def dry_run_task(
 def create_app(
     application_service: CorporationApplicationService | None = None,
     authentication_backend: AuthenticationBackend | None = None,
+    documentation_source: DocumentationSource | None = None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
@@ -663,6 +736,14 @@ def create_app(
             application.state.application_service = runtime.application_service
         else:
             application.state.application_service = application_service
+        source = documentation_source
+        if source is None:
+            source = MarkdownDocumentationSource(
+                Path(__file__).resolve().parents[2] / "corporation_docs"
+            )
+        application.state.documentation_service = DocumentationApplicationService(
+            source
+        )
         yield
 
     application = FastAPI(

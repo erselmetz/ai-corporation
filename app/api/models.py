@@ -16,6 +16,19 @@ class CorporationStatusResponse(BaseModel):
     node: NodeIdentityResponse
 
 
+class DocumentationSummaryResponse(BaseModel):
+    id: str
+    title: str
+
+
+class DocumentationListResponse(BaseModel):
+    items: list[DocumentationSummaryResponse]
+
+
+class DocumentationResponse(DocumentationSummaryResponse):
+    content: str
+
+
 class EmployeeResponse(BaseModel):
     id: str
     name: str
