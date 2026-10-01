@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–48 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–49 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -59,7 +59,11 @@ Dry-run returns the current routing preview via the Application Service. It does
 
 The Project API provides authenticated list/detail/create operations through the Application Service and existing ProjectRegistry. The Activity API provides `GET /api/activity` with `activity:read`; it returns at most 100 newest-first Task log summaries by default, optionally filtered by `task_id`. It exposes only the existing log ID, Task ID, event, and timestamp; the stored message is omitted. There is no individual-log retrieval or Activity mutation endpoint.
 
-Task 46 adds the FastAPI Web UI foundation; Task 47 adds a compact read-only dashboard at `/ui`. Task 48 adds Employee Management at `/ui/employees`. It lists Employees and fetches details through `GET /api/employees` and `GET /api/employees/{employee_id}` (`employee:read`), creates with `POST /api/employees` and removes with `DELETE /api/employees/{employee_id}` (`employee:manage`). The existing create schema requires caller-supplied `id`, `name`, and `role`, and optionally accepts responsibilities; it does not accept or modify an Agent association. Removal requires explicit browser confirmation and follows the existing API behavior. Browser requests use same-origin credentials; no browser sign-in mechanism is added. Failures retain distinct authentication, permission, validation/conflict, missing-record, and general states. Tasks 49–54 remain planned and cover Provider/Model, Task, Project, Activity, Corporation documentation, and updates interfaces.
+Task 46 adds the FastAPI Web UI foundation; Task 47 adds a compact read-only dashboard at `/ui`. Task 48 adds Employee Management at `/ui/employees`. It lists Employees and fetches details through `GET /api/employees` and `GET /api/employees/{employee_id}` (`employee:read`), creates with `POST /api/employees` and removes with `DELETE /api/employees/{employee_id}` (`employee:manage`). The existing create schema requires caller-supplied `id`, `name`, and `role`, and optionally accepts responsibilities; it does not accept or modify an Agent association. Removal requires explicit browser confirmation and follows the existing API behavior.
+
+Task 49 adds Provider and Model Management at `/ui/providers`. Provider list/detail reads use `GET /api/providers` and `GET /api/providers/{provider_id}` with `provider:read`; creation uses `POST /api/providers` with exactly `id` / `name`, and removal uses `DELETE /api/providers/{provider_id}`, both requiring `provider:manage`. Provider responses expose only ID and configured type. Model assignments use `GET /api/models` and `GET /api/models/{agent_id}` with `model:read`; replacement uses `PUT /api/models/{agent_id}` with exactly `provider_id` / `model_id` and requires `model:manage`. Assignments identify Agents by ID only. No credential/configuration fields, Employee or Agent mutation, or direct Core access is introduced.
+
+Management pages use same-origin browser requests and preserve API authorization. No browser sign-in/session mechanism is configured, so the relevant authenticated session and distinct read/manage permissions remain prerequisites for protected data/actions. Failures retain distinct authentication, permission, validation/conflict, missing-record, and general states. Tasks 50–54 remain planned and cover Task, Project, Activity, Corporation documentation, and updates interfaces.
 
 Other resource permissions are similarly minimal: `corporation:read`, `employee:read` / `employee:manage`, `agent:read`, `provider:read` / `provider:manage`, `model:read` / `model:manage`, `project:read` / `project:create`, and `activity:read`. These are route permission requirements, not a configured user/role management system. The default authentication backend rejects requests until an application supplies an authentication backend.
 
@@ -245,9 +249,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–48 completion scope
+## Tasks 1–49 completion scope
 
-Tasks 1–48 are complete as the current foundation. Their implemented areas include:
+Tasks 1–49 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -278,9 +282,10 @@ Tasks 1–48 are complete as the current foundation. Their implemented areas inc
 - Immutable readiness preparation that revalidates staged-source identity, sandbox policy, and existing proposal/sandbox/binding relationships without accepting execution commands or host credentials.
 - Application Service and FastAPI authentication/authorization foundations, plus Corporation status, Employee/Agent, Provider/Model assignment, and Task APIs. The Task API supports read, create, and non-mutating dry-run only; it does not expose HTTP execution or lifecycle mutation.
 - Project list/detail/create and bounded, read-only Task Activity APIs using explicit summaries and the existing persistence/logging infrastructure.
-- a FastAPI-served Corporation Web UI foundation, read-only dashboard at `/ui`, and Employee Management at `/ui/employees`, with CSS and browser modules under `/ui/static/`. The dashboard and management page consume only existing protected APIs and preserve their authentication and permission checks. Browser authentication is not configured, so protected data/actions require a future authenticated session; pages clearly render per-resource failure states meanwhile. Tasks 49–54 remain planned.
+- a FastAPI-served Corporation Web UI foundation, read-only dashboard at `/ui`, Employee Management at `/ui/employees`, and Provider/Model Management at `/ui/providers`, with CSS and browser modules under `/ui/static/`. The dashboard and management pages consume only existing protected APIs and preserve their authentication and permission checks. Browser authentication is not configured, so protected data/actions require an authenticated session; pages clearly render per-resource failure states meanwhile.
+- Provider administration through the existing `provider:read` / `provider:manage` endpoints, limited to the supported ID/name create contract and safe ID/type responses; model assignment viewing/replacement through `model:read` / `model:manage` with the supported Agent ID and provider/model identifiers.
 
-This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, project ID persistence is incomplete, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider. Tasks 49–54 cover future Provider/Model, Task, Project, Activity, Corporation documentation, and updates interfaces; they are not part of Task 48.
+This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, project ID persistence is incomplete, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider. Tasks 50–54 cover future Task, Project, Activity, Corporation documentation, and updates interfaces; they are not part of Task 49.
 
 ## Future / planned roadmap
 

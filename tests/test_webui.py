@@ -116,3 +116,60 @@ def test_employee_management_page_and_script_keep_employee_api_protected():
     orchestrator.run_agent.assert_not_called()
     orchestrator.create_task.assert_not_called()
     assert orchestrator.method_calls == []
+
+
+def test_provider_model_management_page_uses_protected_apis_and_safe_assets():
+    orchestrator = MagicMock(spec=Orchestrator)
+    application = create_app(CorporationApplicationService(orchestrator))
+
+    with TestClient(application) as client:
+        page = client.get("/ui/providers")
+        script = client.get("/ui/static/providers.mjs")
+        stylesheet = client.get("/ui/static/style.css")
+        dashboard = client.get("/ui")
+        employees = client.get("/ui/employees")
+        protected = [
+            client.get("/api/providers"),
+            client.get("/api/providers/local"),
+            client.post("/api/providers", json={"id": "local", "name": "Local"}),
+            client.delete("/api/providers/local"),
+            client.get("/api/models"),
+            client.get("/api/models/agent-1"),
+            client.put(
+                "/api/models/agent-1",
+                json={"provider_id": "local", "model_id": "model"},
+            ),
+        ]
+
+    assert page.status_code == 200
+    assert page.headers["content-type"].startswith("text/html")
+    assert "ERSELMETZ AI CORPORATION" in page.text
+    assert "Provider &amp; Model Management" in page.text
+    assert 'href="/ui"' in page.text
+    assert 'href="/ui/employees"' in page.text
+    assert 'src="/ui/static/providers.mjs"' in page.text
+    assert script.status_code == 200
+    assert script.headers["content-type"].startswith("text/javascript")
+    assert stylesheet.status_code == 200
+    assert "management-grid" in stylesheet.text
+    assert all(
+        endpoint in script.text
+        for endpoint in (
+            "/api/providers",
+            "/api/models",
+            "method: \"DELETE\"",
+            "method: \"PUT\"",
+        )
+    )
+    assert "Bearer " not in script.text
+    assert "api_key" not in script.text.lower()
+    assert "password" not in script.text.lower()
+    assert "Employee management" in dashboard.text
+    assert 'href="/ui/providers"' in dashboard.text
+    assert 'href="/ui/providers"' in employees.text
+    assert [response.status_code for response in protected] == [401] * 7
+
+    orchestrator.execute_task.assert_not_called()
+    orchestrator.run_agent.assert_not_called()
+    orchestrator.create_task.assert_not_called()
+    assert orchestrator.method_calls == []

@@ -29,7 +29,7 @@ def corporation_dashboard() -> HTMLResponse:
               <ul>
                 <li><a href="#dashboard" aria-current="page">Dashboard</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
-                <li><span aria-disabled="true">Provider &amp; model — planned</span></li>
+                <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><span aria-disabled="true">Task management — planned</span></li>
                 <li><span aria-disabled="true">Projects — planned</span></li>
                 <li><span aria-disabled="true">Activity — planned</span></li>
@@ -113,7 +113,7 @@ def employee_management_page() -> HTMLResponse:
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
                 <li><a href="/ui/employees" aria-current="page">Employee management</a></li>
-                <li><span aria-disabled="true">Provider &amp; model — planned</span></li>
+                <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><span aria-disabled="true">Task management — planned</span></li>
                 <li><span aria-disabled="true">Projects — planned</span></li>
                 <li><span aria-disabled="true">Activity — planned</span></li>
@@ -161,6 +161,99 @@ def employee_management_page() -> HTMLResponse:
                     <button id="employee-create-submit" type="submit">Create employee</button>
                     <p id="employee-create-state" class="section-state" role="status" aria-live="polite"></p>
                   </form>
+                </section>
+              </div>
+            </main>
+          </div>
+        </body>
+        </html>
+        """
+    )
+
+
+@router.get("/ui/providers", response_class=HTMLResponse, include_in_schema=False)
+def provider_model_management_page() -> HTMLResponse:
+    return HTMLResponse(
+        """
+        <!doctype html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta name="description" content="ERSELMETZ AI CORPORATION Provider and Model management">
+          <title>Provider &amp; Model Management — ERSELMETZ AI CORPORATION</title>
+          <link rel="stylesheet" href="/ui/static/style.css">
+          <script type="module" src="/ui/static/providers.mjs"></script>
+        </head>
+        <body>
+          <header class="site-header">
+            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
+            <span class="product-label">Corporation Web UI</span>
+          </header>
+          <div class="layout">
+            <nav class="navigation" aria-label="Corporation navigation">
+              <h2>Navigation</h2>
+              <ul>
+                <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/employees">Employee management</a></li>
+                <li><a href="/ui/providers" aria-current="page">Provider &amp; Model management</a></li>
+                <li><span aria-disabled="true">Task management — planned</span></li>
+                <li><span aria-disabled="true">Projects — planned</span></li>
+                <li><span aria-disabled="true">Activity — planned</span></li>
+              </ul>
+            </nav>
+            <main class="content provider-page">
+              <div class="dashboard-heading">
+                <div>
+                  <p class="eyebrow">Configuration</p>
+                  <h1>Provider &amp; Model Management</h1>
+                </div>
+                <a class="back-link" href="/ui">Back to dashboard</a>
+              </div>
+              <p class="auth-boundary">
+                Provider and model data/actions use protected APIs. Browser
+                sign-in is not configured; authenticated sessions require
+                provider/model read or manage permissions.
+              </p>
+              <div class="management-grid">
+                <section class="management-card" aria-labelledby="provider-section-title">
+                  <div class="section-heading">
+                    <h2 id="provider-section-title">Configured Providers</h2>
+                    <button id="provider-refresh" type="button">Refresh</button>
+                  </div>
+                  <p id="provider-list-state" class="section-state" role="status" aria-live="polite">Loading providers…</p>
+                  <ul id="provider-list" class="record-list" aria-label="Configured providers"></ul>
+                  <section class="management-detail" aria-labelledby="provider-detail-title">
+                    <h3 id="provider-detail-title">Provider details</h3>
+                    <p id="provider-detail-state" class="section-state" role="status" aria-live="polite">Select a provider to view details.</p>
+                    <div id="provider-detail" hidden></div>
+                  </section>
+                  <section class="management-form" aria-labelledby="provider-create-title">
+                    <h3 id="provider-create-title">Create provider</h3>
+                    <p class="muted">Only the current API's Provider ID and name are accepted. Credentials and provider configuration are not supported here.</p>
+                    <form id="provider-create-form">
+                      <label for="provider-id">Provider ID</label>
+                      <input id="provider-id" name="id" autocomplete="off" required>
+                      <label for="provider-name">Name</label>
+                      <input id="provider-name" name="name" required>
+                      <button id="provider-create-submit" type="submit">Create provider</button>
+                      <p id="provider-create-state" class="section-state" role="status" aria-live="polite"></p>
+                    </form>
+                  </section>
+                </section>
+                <section class="management-card" aria-labelledby="model-section-title">
+                  <div class="section-heading">
+                    <h2 id="model-section-title">Agent Model Assignments</h2>
+                    <button id="model-refresh" type="button">Refresh</button>
+                  </div>
+                  <p class="muted">Assignments identify Agents by the ID returned by the Model API. No Employee/Agent details are modified here.</p>
+                  <p id="model-list-state" class="section-state" role="status" aria-live="polite">Loading model assignments…</p>
+                  <ul id="model-list" class="record-list" aria-label="Agent model assignments"></ul>
+                  <section class="management-detail" aria-labelledby="model-detail-title">
+                    <h3 id="model-detail-title">Assignment details</h3>
+                    <p id="model-detail-state" class="section-state" role="status" aria-live="polite">Select an assignment to inspect or replace it.</p>
+                    <div id="model-detail" hidden></div>
+                  </section>
                 </section>
               </div>
             </main>
