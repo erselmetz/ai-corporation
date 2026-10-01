@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–56 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–57 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–56 completion scope
+## Tasks 1–57 completion scope
 
-Tasks 1–56 are complete as the current foundation. Their implemented areas include:
+Tasks 1–57 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -341,3 +341,9 @@ The `IntegrationCapability` enum defines possible request scopes: `READ_SOURCE`,
 ## Development rule
 
 Before implementing a future milestone, inspect the actual implementation and tests for the affected area. Treat this architecture as a description of current behavior plus clearly labeled direction—not as evidence that planned behavior already exists.
+
+## Chat Context (Task 57)
+
+Added caller-supplied context bounded to 8192 UTF-8 bytes per conversation, with atomic replacement, isolation, and clearing on successful closure; no retrieval, persistence, provider calls, or chat API/UI.
+
+The Core service has no authenticated principal contract; only trusted in-process callers may supply and read context and must enforce authorization and relevance before calling it. No external context endpoint is exposed. Context is untrusted text, excluded from conversation snapshots, and cannot fetch runtime resources. Failed validation or unsuccessful closure preserves existing context. Successful closure removes service-owned context; caller-held strings cannot be revoked. Retention is in-memory for the open conversation or service lifetime. The Task 53 portal remains file-based and read-only.

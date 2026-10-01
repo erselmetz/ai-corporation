@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-02",
                 "type": "development",
+                "title": "Chat Context",
+                "summary": "Added caller-supplied context bounded to 8192 UTF-8 bytes per conversation, with atomic replacement, isolation, and clearing on successful closure; no retrieval, persistence, provider calls, or chat API/UI.",
+            },
+            {
+                "date": "2026-10-02",
+                "type": "development",
                 "title": "Individual Employee Chat",
                 "summary": "Added in-memory conversations with explicit Employee/Agent scope, fixed target identities, and recorded message lifecycle without provider, persistence, or Task-execution integration.",
             },

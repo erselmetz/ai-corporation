@@ -47,10 +47,13 @@ class EmployeeChatService:
     It owns its Conversations and returns immutable snapshots of their state.
     """
 
+    MAX_CONTEXT_BYTES = 8192
+
     def __init__(self, employees: EmployeeRegistry, agents: AgentRegistry):
         self._employees = employees
         self._agents = agents
         self._sessions: dict[str, _ChatSession] = {}
+        self._context: dict[str, str] = {}
 
     def start_conversation(
         self,
@@ -85,6 +88,34 @@ class EmployeeChatService:
     def get_conversation(self, conversation_id: str) -> ChatConversationSummary:
         return self._summary(self._get_session(conversation_id))
 
+    def set_context(self, conversation_id: str, content: str) -> None:
+        """Replace caller-authorized context for this conversation only.
+
+        The trusted Core caller supplies relevant, authorized text, excluding
+        secrets and internal runtime data. No resources are fetched. Text is
+        untrusted data, not executable instructions. Empty text clears context.
+        """
+        session = self._get_session(conversation_id)
+        if session.conversation.status is not ConversationStatus.OPEN:
+            raise ValueError("Cannot set context on a closed conversation")
+        if not isinstance(content, str):
+            raise TypeError("Context must be text")
+        if len(content.encode("utf-8")) > self.MAX_CONTEXT_BYTES:
+            raise ValueError("Context exceeds byte limit")
+        if content:
+            self._context[conversation_id] = content
+        else:
+            self._context.pop(conversation_id, None)
+
+    def get_context(self, conversation_id: str) -> str:
+        """Read current context; the trusted caller enforces access externally.
+
+        Context is intentionally excluded from conversation snapshots so old
+        snapshots do not retain it after replacement or successful closure.
+        """
+        self._get_session(conversation_id)
+        return self._context.get(conversation_id, "")
+
     def add_message(
         self,
         conversation_id: str,
@@ -110,6 +141,7 @@ class EmployeeChatService:
     def close_conversation(self, conversation_id: str) -> ChatConversationSummary:
         session = self._get_session(conversation_id)
         session.conversation.close()
+        self._context.pop(conversation_id, None)
         return self._summary(session)
 
     def _get_session(self, conversation_id: str) -> _ChatSession:
