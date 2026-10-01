@@ -271,6 +271,120 @@ button:disabled {
   line-height: 1.4;
 }
 
+.back-link {
+  color: #15577b;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.employee-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.employee-card {
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid #d7e0e5;
+  border-radius: 0.55rem;
+  background: #fff;
+}
+
+.create-card {
+  grid-column: 1 / -1;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.section-heading h2 {
+  margin: 0;
+}
+
+.employee-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.employee-select {
+  width: 100%;
+  text-align: left;
+}
+
+.employee-select[aria-pressed="true"] {
+  border-color: #6c91a5;
+  background: #e8f1f5;
+}
+
+.employee-detail {
+  margin-top: 0.75rem;
+}
+
+.employee-detail h3 {
+  margin-top: 0.9rem;
+}
+
+.employee-detail .compact-list {
+  margin-bottom: 0.9rem;
+}
+
+.danger-button {
+  border-color: #d2a5a1;
+  color: #812f28;
+  background: #fff8f7;
+}
+
+.danger-button:hover:not(:disabled) {
+  background: #fcebe9;
+}
+
+#employee-create-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.75rem;
+}
+
+#employee-create-form label {
+  align-self: end;
+  font-size: 0.83rem;
+  font-weight: 650;
+}
+
+#employee-create-form input,
+#employee-create-form textarea {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #b8c7cf;
+  border-radius: 0.35rem;
+  color: inherit;
+  background: #fff;
+  font: inherit;
+}
+
+#employee-responsibilities {
+  resize: vertical;
+}
+
+#employee-create-submit,
+#employee-create-state {
+  grid-column: 1 / -1;
+}
+
+#employee-create-state:empty {
+  display: none;
+}
+
 @media (max-width: 70rem) {
   .dashboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -288,6 +402,14 @@ button:disabled {
 
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .employee-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .create-card {
+    grid-column: auto;
   }
 }
 
@@ -314,5 +436,14 @@ button:disabled {
 
   .navigation ul {
     grid-template-columns: 1fr;
+  }
+
+  #employee-create-form {
+    grid-template-columns: 1fr;
+  }
+
+  #employee-create-submit,
+  #employee-create-state {
+    grid-column: auto;
   }
 }

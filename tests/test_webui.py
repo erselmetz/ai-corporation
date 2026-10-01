@@ -73,3 +73,46 @@ def test_dashboard_shell_and_assets_are_served_without_runtime_execution():
     orchestrator.run_agent.assert_not_called()
     orchestrator.create_task.assert_not_called()
     assert orchestrator.method_calls == []
+
+
+def test_employee_management_page_and_script_keep_employee_api_protected():
+    orchestrator = MagicMock(spec=Orchestrator)
+    application = create_app(CorporationApplicationService(orchestrator))
+
+    with TestClient(application) as client:
+        page = client.get("/ui/employees")
+        script = client.get("/ui/static/employees.mjs")
+        dashboard = client.get("/ui")
+        list_response = client.get("/api/employees")
+        create_response = client.post(
+            "/api/employees",
+            json={
+                "id": "employee-1",
+                "name": "Example",
+                "role": "Operator",
+            },
+        )
+        delete_response = client.delete("/api/employees/employee-1")
+
+    assert page.status_code == 200
+    assert page.headers["content-type"].startswith("text/html")
+    assert "ERSELMETZ AI CORPORATION" in page.text
+    assert "Employee Management" in page.text
+    assert 'href="/ui"' in page.text
+    assert 'src="/ui/static/employees.mjs"' in page.text
+    assert script.status_code == 200
+    assert script.headers["content-type"].startswith("text/javascript")
+    assert "/api/employees" in script.text
+    assert "employee:read" not in script.text
+    assert "employee:manage" not in script.text
+    assert "Bearer " not in script.text
+    assert "password" not in script.text.lower()
+    assert "Employee management" in dashboard.text
+    assert list_response.status_code == 401
+    assert create_response.status_code == 401
+    assert delete_response.status_code == 401
+
+    orchestrator.execute_task.assert_not_called()
+    orchestrator.run_agent.assert_not_called()
+    orchestrator.create_task.assert_not_called()
+    assert orchestrator.method_calls == []

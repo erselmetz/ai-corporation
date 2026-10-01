@@ -63,11 +63,11 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5]);
   });
 
-  it("marks exactly tasks 1–47 complete and all later tasks planned", () => {
-    assert.ok(tasks.slice(0, 47).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(47).every((task) => task.status === "planned"));
-    assert.equal(tasks[46].number, 47);
+  it("marks exactly tasks 1–48 complete and all later tasks planned", () => {
+    assert.ok(tasks.slice(0, 48).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(48).every((task) => task.status === "planned"));
     assert.equal(tasks[47].number, 48);
+    assert.equal(tasks[48].number, 49);
   });
 
   it("serves only read methods", async () => {

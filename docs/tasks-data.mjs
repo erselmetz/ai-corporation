@@ -62,7 +62,7 @@ export const taskGroups = [
       ["Activity & Logs API", "Expose bounded, authenticated, read-only Task activity summaries through the Application Service."],
       ["Web UI Foundation", "Serve a presentation-only Corporation Web UI shell and static assets through FastAPI; protect future data and actions with the existing security boundary."],
       ["Corporation Dashboard", "Provide a compact read-only dashboard using existing protected Corporation APIs; preserve authentication, show explicit data-loading states, and do not invent provider health or task recency."],
-      ["Employee Management UI", "Provide interface workflows for managing Employees and their Agent associations."],
+      ["Employee Management UI", "List, inspect, create, and remove Employees through the existing protected Employee API; do not create or modify Agents."],
       ["Provider & Model UI", "Provide interface workflows for Provider setup and Agent Model assignment."],
       ["Task Management UI", "Provide a user interface for task creation, routing, and lifecycle inspection."],
       ["Project Management UI", "Provide project-facing administration and task coordination views."],
@@ -164,7 +164,7 @@ export const tasks = taskGroups.flatMap((group) =>
       title,
       description,
       category: group.name,
-      status: number <= 47 ? "completed" : "planned",
+      status: number <= 48 ? "completed" : "planned",
     };
   })
 );
