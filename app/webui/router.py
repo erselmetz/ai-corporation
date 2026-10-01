@@ -34,6 +34,7 @@ def corporation_dashboard() -> HTMLResponse:
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
                 <li><a href="/ui/documentation">Documentation portal</a></li>
+                <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
             </nav>
             <main id="dashboard" class="content">
@@ -119,6 +120,7 @@ def documentation_portal_page() -> HTMLResponse:
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
                 <li><a href="/ui/documentation" aria-current="page">Documentation portal</a></li>
+                <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
             </nav>
             <main class="content documentation-page">
@@ -190,6 +192,7 @@ def activity_page() -> HTMLResponse:
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity" aria-current="page">Activity &amp; logs</a></li>
                 <li><a href="/ui/documentation">Documentation portal</a></li>
+                <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
             </nav>
             <main class="content activity-page">
@@ -236,6 +239,68 @@ def activity_page() -> HTMLResponse:
     )
 
 
+@router.get("/ui/updates", response_class=HTMLResponse, include_in_schema=False)
+def updates_page() -> HTMLResponse:
+    return HTMLResponse(
+        """
+        <!doctype html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta name="description" content="Curated Corporation software updates">
+          <title>Updates / Changelog — ERSELMETZ AI CORPORATION</title>
+          <link rel="stylesheet" href="/ui/static/style.css">
+          <script type="module" src="/ui/static/updates.mjs"></script>
+        </head>
+        <body>
+          <header class="site-header">
+            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
+            <span class="product-label">Corporation Web UI</span>
+          </header>
+          <div class="layout">
+            <nav class="navigation" aria-label="Corporation navigation">
+              <h2>Navigation</h2>
+              <ul>
+                <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/employees">Employee management</a></li>
+                <li><a href="/ui/providers">Provider &amp; model management</a></li>
+                <li><a href="/ui/tasks">Task management</a></li>
+                <li><a href="/ui/projects">Project management</a></li>
+                <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/documentation">Documentation portal</a></li>
+                <li><a href="/ui/updates" aria-current="page">Updates / changelog</a></li>
+              </ul>
+            </nav>
+            <main class="content updates-page">
+              <div class="dashboard-heading">
+                <div>
+                  <p class="eyebrow">Curated project record</p>
+                  <h1>Updates / Changelog</h1>
+                </div>
+                <button id="updates-refresh" type="button">Refresh</button>
+              </div>
+              <p class="auth-boundary">
+                This read-only page shows manually maintained, verified
+                development updates and release records. It is separate from
+                the public project updates page in <code>docs/</code>. Entries
+                are not inferred from roadmap tasks or Git history. Browser
+                sign-in is not configured; an authenticated session with
+                <code>updates:read</code> permission is required.
+              </p>
+              <section class="management-card" aria-labelledby="updates-list-title">
+                <h2 id="updates-list-title">Curated updates</h2>
+                <p id="updates-list-state" class="section-state" role="status" aria-live="polite">Loading updates…</p>
+                <ol id="updates-list" class="updates-list" aria-label="Corporation updates"></ol>
+              </section>
+            </main>
+          </div>
+        </body>
+        </html>
+        """
+    )
+
+
 @router.get("/ui/employees", response_class=HTMLResponse, include_in_schema=False)
 def employee_management_page() -> HTMLResponse:
     return HTMLResponse(
@@ -266,6 +331,7 @@ def employee_management_page() -> HTMLResponse:
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
                 <li><a href="/ui/documentation">Documentation portal</a></li>
+                <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
             </nav>
             <main class="content employee-page">
@@ -350,6 +416,7 @@ def provider_model_management_page() -> HTMLResponse:
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
                 <li><a href="/ui/documentation">Documentation portal</a></li>
+                <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
             </nav>
             <main class="content provider-page">
@@ -444,6 +511,7 @@ def task_management_page() -> HTMLResponse:
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
                 <li><a href="/ui/documentation">Documentation portal</a></li>
+                <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
             </nav>
             <main class="content task-page">
@@ -541,6 +609,7 @@ def project_management_page() -> HTMLResponse:
                 <li><a href="/ui/projects" aria-current="page">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
                 <li><a href="/ui/documentation">Documentation portal</a></li>
+                <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
             </nav>
             <main class="content project-page">

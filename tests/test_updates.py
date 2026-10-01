@@ -1,0 +1,187 @@
+import json
+from pathlib import Path
+from unittest.mock import MagicMock
+
+from fastapi.testclient import TestClient
+import pytest
+from starlette.requests import Request
+
+from app.api import AuthenticatedPrincipal, create_app
+from app.application import (
+    CorporationApplicationService,
+    UpdateSummary,
+    UpdatesSourceUnavailable,
+)
+from app.orchestrator import Orchestrator
+from app.updates import CuratedUpdatesManifest
+
+
+class UpdatesTestAuthenticationBackend:
+    def __init__(self, permissions: frozenset[str] | None):
+        self._permissions = permissions
+
+    def authenticate(self, _request: Request) -> AuthenticatedPrincipal | None:
+        if self._permissions is None:
+            return None
+        return AuthenticatedPrincipal(
+            identity="updates-test-user",
+            permissions=self._permissions,
+        )
+
+
+def write_manifest(path: Path, items: list[dict[str, str]]) -> None:
+    path.write_text(json.dumps({"items": items}), encoding="utf-8")
+
+
+def update(
+    entry_date: str = "2026-10-02",
+    entry_type: str = "development",
+    title: str = "Corporation Updates page",
+    summary: str = "Added the internal Updates page.",
+) -> dict[str, str]:
+    return {
+        "date": entry_date,
+        "type": entry_type,
+        "title": title,
+        "summary": summary,
+    }
+
+
+def test_manifest_returns_only_curated_fields_newest_first(tmp_path: Path):
+    manifest_path = tmp_path / "updates.json"
+    write_manifest(
+        manifest_path,
+        [update("2026-09-30"), update("2026-10-02", "release", "Release record")],
+    )
+
+    updates = CuratedUpdatesManifest(manifest_path).list_updates()
+
+    assert updates == [
+        UpdateSummary(
+            date="2026-10-02",
+            type="release",
+            title="Release record",
+            summary="Added the internal Updates page.",
+        ),
+        UpdateSummary(
+            date="2026-09-30",
+            type="development",
+            title="Corporation Updates page",
+            summary="Added the internal Updates page.",
+        ),
+    ]
+    assert all(
+        set(vars(item)) == {"date", "type", "title", "summary"}
+        for item in updates
+    )
+
+
+def test_manifest_allows_a_successful_empty_result(tmp_path: Path):
+    manifest_path = tmp_path / "updates.json"
+    write_manifest(manifest_path, [])
+
+    assert CuratedUpdatesManifest(manifest_path).list_updates() == []
+
+
+def test_manifest_rejects_invalid_dates_types_and_unapproved_fields(tmp_path: Path):
+    manifest_path = tmp_path / "updates.json"
+    for invalid in (
+        update("2026-02-30"),
+        update(entry_type="planned"),
+        {**update(), "version": "1.0"},
+    ):
+        write_manifest(manifest_path, [invalid])
+        with pytest.raises(UpdatesSourceUnavailable):
+            CuratedUpdatesManifest(manifest_path).list_updates()
+
+
+def test_updates_api_requires_authentication_and_updates_read_permission():
+    service = CorporationApplicationService(MagicMock(spec=Orchestrator))
+    source = MagicMock()
+    source.list_updates.return_value = [
+        UpdateSummary(
+            date="2026-10-02",
+            type="development",
+            title="Corporation Updates page",
+            summary="Added the internal Updates page.",
+        )
+    ]
+    no_auth = create_app(
+        service,
+        UpdatesTestAuthenticationBackend(None),
+        updates_source=source,
+    )
+    no_permission = create_app(
+        service,
+        UpdatesTestAuthenticationBackend(frozenset({"task:read"})),
+        updates_source=source,
+    )
+    authorized = create_app(
+        service,
+        UpdatesTestAuthenticationBackend(frozenset({"updates:read"})),
+        updates_source=source,
+    )
+
+    with TestClient(no_auth) as client:
+        assert client.get("/api/updates").status_code == 401
+    with TestClient(no_permission) as client:
+        denied = client.get("/api/updates")
+        assert denied.status_code == 403
+        assert denied.json() == {"detail": "Permission denied"}
+    with TestClient(authorized) as client:
+        response = client.get("/api/updates")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json() == {
+        "items": [
+            {
+                "date": "2026-10-02",
+                "type": "development",
+                "title": "Corporation Updates page",
+                "summary": "Added the internal Updates page.",
+            }
+        ]
+    }
+    source.list_updates.assert_called_once_with()
+    service._orchestrator.create_task.assert_not_called()
+    service._orchestrator.execute_task.assert_not_called()
+    assert service._orchestrator.method_calls == []
+
+
+def test_updates_api_reports_unavailable_source_as_server_error():
+    source = MagicMock()
+    source.list_updates.side_effect = UpdatesSourceUnavailable
+    application = create_app(
+        CorporationApplicationService(MagicMock(spec=Orchestrator)),
+        UpdatesTestAuthenticationBackend(frozenset({"updates:read"})),
+        updates_source=source,
+    )
+
+    with TestClient(application) as client:
+        response = client.get("/api/updates")
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Updates source unavailable"}
+
+
+def test_updates_api_reads_the_default_version_controlled_manifest():
+    application = create_app(
+        CorporationApplicationService(MagicMock(spec=Orchestrator)),
+        UpdatesTestAuthenticationBackend(frozenset({"updates:read"})),
+    )
+
+    with TestClient(application) as client:
+        response = client.get("/api/updates")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "items": [
+            {
+                "date": "2026-10-02",
+                "type": "development",
+                "title": "Corporation Updates page",
+                "summary": "Added a protected, read-only Updates / Changelog page backed by a manually curated update manifest.",
+            }
+        ]
+    }

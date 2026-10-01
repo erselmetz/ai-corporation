@@ -19,6 +19,13 @@ from .documentation import (
     DocumentationSourceUnavailable,
     DocumentationSummary,
 )
+from .updates import (
+    UpdateSummary,
+    UpdateType,
+    UpdatesApplicationService,
+    UpdatesSource,
+    UpdatesSourceUnavailable,
+)
 
 __all__ = [
     "ActivitySummary",
@@ -31,6 +38,11 @@ __all__ = [
     "DocumentationSource",
     "DocumentationSourceUnavailable",
     "DocumentationSummary",
+    "UpdateSummary",
+    "UpdateType",
+    "UpdatesApplicationService",
+    "UpdatesSource",
+    "UpdatesSourceUnavailable",
     "DryRunSummary",
     "EmployeeSummary",
     "ModelAssignmentSummary",

@@ -1,3 +1,6 @@
+from datetime import date
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -27,6 +30,17 @@ class DocumentationListResponse(BaseModel):
 
 class DocumentationResponse(DocumentationSummaryResponse):
     content: str
+
+
+class UpdateResponse(BaseModel):
+    date: date
+    type: Literal["development", "release"]
+    title: str
+    summary: str
+
+
+class UpdatesListResponse(BaseModel):
+    items: list[UpdateResponse]
 
 
 class EmployeeResponse(BaseModel):

@@ -1,0 +1,10 @@
+{
+  "items": [
+    {
+      "date": "2026-10-02",
+      "type": "development",
+      "title": "Corporation Updates page",
+      "summary": "Added a protected, read-only Updates / Changelog page backed by a manually curated update manifest."
+    }
+  ]
+}

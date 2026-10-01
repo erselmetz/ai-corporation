@@ -350,3 +350,41 @@ def test_documentation_portal_uses_only_its_protected_markdown_api():
     orchestrator.run_agent.assert_not_called()
     orchestrator.create_task.assert_not_called()
     assert orchestrator.method_calls == []
+
+
+def test_updates_page_uses_only_the_protected_curated_updates_api():
+    orchestrator = MagicMock(spec=Orchestrator)
+    application = create_app(CorporationApplicationService(orchestrator))
+
+    with TestClient(application) as client:
+        page = client.get("/ui/updates")
+        script = client.get("/ui/static/updates.mjs")
+        stylesheet = client.get("/ui/static/style.css")
+        dashboard = client.get("/ui")
+        documentation = client.get("/ui/documentation")
+        api_list = client.get("/api/updates")
+
+    assert page.status_code == 200
+    assert page.headers["content-type"].startswith("text/html")
+    assert "Updates / Changelog" in page.text
+    assert "manually maintained" in page.text
+    assert "separate from" in page.text
+    assert "updates:read" in page.text
+    assert 'src="/ui/static/updates.mjs"' in page.text
+    assert script.status_code == 200
+    assert script.headers["content-type"].startswith("text/javascript")
+    assert stylesheet.status_code == 200
+    assert "updates-list" in stylesheet.text
+    assert "/api/updates" in script.text
+    assert "credentials: \"same-origin\"" in script.text
+    assert "innerHTML" not in script.text
+    assert "node:fs" not in script.text
+    assert "sqlite" not in script.text.lower()
+    assert "DATABASE_PATH" not in script.text
+    assert 'href="/ui/updates"' in dashboard.text
+    assert 'href="/ui/updates"' in documentation.text
+    assert api_list.status_code == 401
+    orchestrator.execute_task.assert_not_called()
+    orchestrator.run_agent.assert_not_called()
+    orchestrator.create_task.assert_not_called()
+    assert orchestrator.method_calls == []

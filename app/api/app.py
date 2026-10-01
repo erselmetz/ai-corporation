@@ -25,8 +25,12 @@ from app.application import (
     DocumentationSourceUnavailable,
     ProjectSummary,
     TaskSummary,
+    UpdatesApplicationService,
+    UpdatesSource,
+    UpdatesSourceUnavailable,
 )
 from app.documentation import MarkdownDocumentationSource
+from app.updates import CuratedUpdatesManifest
 from app.runtime import create_corporation_runtime
 from app.webui import web_ui_router
 from .models import (
@@ -56,6 +60,8 @@ from .models import (
     TaskDryRunResponse,
     TaskListResponse,
     TaskResponse,
+    UpdatesListResponse,
+    UpdateResponse,
 )
 from app.orchestrator.router import RoutingError
 from .security import (
@@ -95,6 +101,10 @@ def get_documentation_service(
     request: Request,
 ) -> DocumentationApplicationService:
     return request.app.state.documentation_service
+
+
+def get_updates_service(request: Request) -> UpdatesApplicationService:
+    return request.app.state.updates_service
 
 
 @corporation_router.get(
@@ -174,6 +184,34 @@ def get_documentation(
         id=document.id,
         title=document.title,
         content=document.content,
+    )
+
+
+@corporation_router.get(
+    "/updates",
+    response_model=UpdatesListResponse,
+    dependencies=[Depends(require_permission("updates:read"))],
+)
+def list_updates(
+    updates_service: UpdatesApplicationService = Depends(get_updates_service),
+) -> UpdatesListResponse:
+    try:
+        updates = updates_service.list_updates()
+    except UpdatesSourceUnavailable as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Updates source unavailable",
+        ) from exc
+    return UpdatesListResponse(
+        items=[
+            UpdateResponse(
+                date=update.date,
+                type=update.type,
+                title=update.title,
+                summary=update.summary,
+            )
+            for update in updates
+        ]
     )
 
 
@@ -728,6 +766,7 @@ def create_app(
     application_service: CorporationApplicationService | None = None,
     authentication_backend: AuthenticationBackend | None = None,
     documentation_source: DocumentationSource | None = None,
+    updates_source: UpdatesSource | None = None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
@@ -744,6 +783,12 @@ def create_app(
         application.state.documentation_service = DocumentationApplicationService(
             source
         )
+        source_updates = updates_source
+        if source_updates is None:
+            source_updates = CuratedUpdatesManifest(
+                Path(__file__).resolve().parents[2] / "corporation_updates.json"
+            )
+        application.state.updates_service = UpdatesApplicationService(source_updates)
         yield
 
     application = FastAPI(

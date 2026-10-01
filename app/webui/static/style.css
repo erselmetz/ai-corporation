@@ -415,6 +415,60 @@ button:disabled {
   list-style: none;
 }
 
+.updates-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.update-item,
+.update-entry {
+  min-width: 0;
+}
+
+.update-entry {
+  padding: 0.85rem;
+  border: 1px solid #d7e0e5;
+  border-radius: 0.45rem;
+  background: #fff;
+}
+
+.update-entry h3 {
+  margin-bottom: 0.45rem;
+  overflow-wrap: anywhere;
+}
+
+.update-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 0.5rem;
+  color: #60727e;
+  font-size: 0.78rem;
+}
+
+.update-kind {
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+  color: #244d64;
+  background: #e8f1f5;
+  font-weight: 650;
+}
+
+.update-kind-release {
+  color: #3f6850;
+  background: #eaf4ed;
+}
+
+.update-summary {
+  margin: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .activity-item,
 .activity-entry,
 .activity-metadata,

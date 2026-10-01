@@ -68,7 +68,7 @@ export const taskGroups = [
       ["Project Management UI", "List and inspect Projects and create them through the existing protected Project API; do not invent deletion or lifecycle actions."],
       ["Activity / Logs UI", "Display the existing protected Activity API's bounded safe summaries with supported limits, optional Task filtering, and refresh; do not add detail or mutation operations."],
       ["Documentation Portal — Corporation-integrated documentation and knowledge portal", "Provide a read-only internal portal for top-level UTF-8 Markdown files in corporation_docs/ through protected list/detail APIs; keep it separate from the public docs website and future AI-managed Knowledge System."],
-      ["Updates / Changelog Page", "Publish curated release and project updates with clear dates and status."]
+      ["Updates / Changelog Page", "Provide a read-only Corporation UI for manually curated, explicitly dated development updates and release records from a maintained manifest."]
     ]
   },
   {
@@ -164,7 +164,7 @@ export const tasks = taskGroups.flatMap((group) =>
       title,
       description,
       category: group.name,
-      status: number <= 53 ? "completed" : "planned",
+      status: number <= 54 ? "completed" : "planned",
     };
   })
 );
