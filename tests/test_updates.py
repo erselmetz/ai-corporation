@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-02",
                 "type": "development",
+                "title": "Individual Employee Chat",
+                "summary": "Added in-memory conversations with explicit Employee/Agent scope, fixed target identities, and recorded message lifecycle without provider, persistence, or Task-execution integration.",
+            },
+            {
+                "date": "2026-10-02",
+                "type": "development",
                 "title": "Conversation Foundation",
                 "summary": "Added in-memory Conversation and Message records with controlled message lifecycle and no provider, persistence, or Task-execution integration.",
             },

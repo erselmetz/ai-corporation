@@ -63,15 +63,15 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5]);
   });
 
-  it("marks exactly tasks 1–55 complete and all later tasks planned", () => {
-    assert.ok(tasks.slice(0, 55).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(55).every((task) => task.status === "planned"));
+  it("marks exactly tasks 1–56 complete and all later tasks planned", () => {
+    assert.ok(tasks.slice(0, 56).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(56).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
     assert.deepEqual(
-      tasks.slice(52, 56).map(({ number, status }) => [number, status]),
-      [[53, "completed"], [54, "completed"], [55, "completed"], [56, "planned"]],
+      tasks.slice(52, 57).map(({ number, status }) => [number, status]),
+      [[53, "completed"], [54, "completed"], [55, "completed"], [56, "completed"], [57, "planned"]],
     );
   });
 

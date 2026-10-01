@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–55 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–56 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -21,8 +21,8 @@ FastAPI
                                      ├── Orchestrator ─ task logs
                                      ├── TaskRegistry ─ SQLite tasks
                                      ├── ProjectRegistry ─ SQLite projects
-                                            ├── Conversation / Message records (in-memory)
-                                            └── TaskRouter
+                                     ├── EmployeeChatService ─ Conversation / Message records (in-memory)
+                                     └── TaskRouter
                                            ├── explicit Agent assignment
                                            ├── required Employee role ─ Employee ─ Agent
                                            └── required capability ─ Agent
@@ -42,7 +42,7 @@ ApprovalRequest / ApprovalRegistry
 ClientRequest / BusinessLayer adapter
 ```
 
-The CLI also uses `CorporationApplicationService` for application operations. This interface-neutral service is the application boundary for Corporation status, Employee, Agent, Provider, Model assignment, Task, Project, and Activity use cases. It coordinates existing management services and the Orchestrator and returns summaries rather than exposing registries as an interface contract. FastAPI resource routes use this boundary; the service has no HTTP, CLI, or database-driver logic, and the existing Core remains responsible for domain behavior and persistence. Task 55 adds in-memory Conversation/Message Core records but no Conversation Application Service or interface contract.
+The CLI also uses `CorporationApplicationService` for application operations. This interface-neutral service is the application boundary for Corporation status, Employee, Agent, Provider, Model assignment, Task, Project, and Activity use cases. It coordinates existing management services and the Orchestrator and returns summaries rather than exposing registries as an interface contract. FastAPI resource routes use this boundary; the service has no HTTP, CLI, or database-driver logic, and the existing Core remains responsible for domain behavior and persistence. Task 55 adds in-memory Conversation/Message Core records. Task 56 adds the standalone Core `EmployeeChatService`, constructed with existing Employee and Agent registries, with no Conversation Application Service, API, or UI integration. It owns in-memory conversations, resolves exactly one explicit Employee/Agent selection at creation, captures fixed target IDs and scope, and returns immutable snapshots. Supplied messages and lifecycle outcomes reuse Task 55 rules; the service does not generate responses, invoke the Orchestrator/Providers, access memory or SQLite, or create Tasks. Employee reassignment does not retarget an existing conversation; a new conversation can select the new assignment.
 
 The FastAPI application in `app.api` serves a public dashboard at `/ui`, Corporation management pages, and app-owned static assets below `/ui/static`. Browser modules request protected Corporation data only from existing API endpoints; they do not access registries, SQLite, providers, or other Core internals. `/` and `/health` remain public; resource routes use application-service dependencies and do not directly manipulate internal registries. Authentication uses an injectable backend and rejects by default. Authorization checks the authenticated principal's required permission. A production identity provider and browser sign-in/session implementation are not configured; UI pages therefore report authentication-required, forbidden, or other failures and never represent failures as empty data. The public Node.js documentation site in `docs/` remains a separate application.
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–55 completion scope
+## Tasks 1–56 completion scope
 
-Tasks 1–55 are complete as the current foundation. Their implemented areas include:
+Tasks 1–56 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -300,7 +300,8 @@ Tasks 1–55 are complete as the current foundation. Their implemented areas inc
 - Activity / Logs at `/ui/activity`, using only the existing protected bounded Activity endpoint with `activity:read`; the UI displays the API's safe summary fields and does not add detail or mutation operations.
 - The read-only Documentation Portal at `/ui/documentation`, with protected document-list and document-content APIs requiring `documentation:read`. Its replaceable application-service source reads only top-level UTF-8 Markdown files from `corporation_docs/`; it validates filename-based IDs, rejects symlink/path escapes, and keeps browser access within the API boundary. The internal portal remains separate from the public `docs/` website and is not an AI-managed knowledge system.
 - The read-only Updates / Changelog page at `/ui/updates`, with protected `GET /api/updates` requiring `updates:read`. Its replaceable application-service source reads a fixed, manually maintained `corporation_updates.json` manifest containing verified, explicitly dated development or release records; it does not infer updates from Git history and remains separate from the public `docs/updates.html` project summary.
-- In-memory Conversation and Message records with explicit message lifecycle transitions and open/closed Conversation state. Closing rejects outstanding pending Messages, and closed Conversations reject new ones. No persistence, provider interaction, Conversation API/UI, or Task conversion is included.
+- In-memory Conversation and Message records with explicit message lifecycle transitions and open/closed Conversation state. Closing rejects outstanding pending Messages, and closed Conversations reject new ones.
+- Individual Employee Chat Core service over those records with a fixed Employee/Agent target, explicit scope, and immutable snapshots. Messages and lifecycle outcomes are supplied explicitly; there is no automatic response generation, persistence, context retrieval, provider interaction, Conversation API/UI, or Task conversion.
 
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, project ID persistence is incomplete, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 
