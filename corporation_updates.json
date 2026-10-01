@@ -3,6 +3,12 @@
     {
       "date": "2026-10-02",
       "type": "development",
+      "title": "Memory Architecture",
+      "summary": "Defined immutable scoped memory records with explicit owners, note/summary types, required provenance and expiry, retention opt-in, and exact owner/scope retrieval checks without automatic sharing or storage."
+    },
+    {
+      "date": "2026-10-02",
+      "type": "development",
       "title": "AI Activity Visualization",
       "summary": "Added permission-aware Task lifecycle progress to the Activity page using protected Task detail reads, with explicit pending/running/completed/failed states, separate access errors, stale-response rejection, and no fabricated provider telemetry."
     },
