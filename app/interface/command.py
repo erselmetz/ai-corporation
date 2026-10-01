@@ -125,6 +125,8 @@ class CommandInterface:
         print("  dry-run <task_id> [--agent <id> | --role <role> | --capability <capability>]")
         print("             - Perform a dry-run of the specified task")
         print("  chat start <id> <agent> | send <id> <text> | get <id> | close <id>")
+        print("  chat review-task <chat-id> <message-id> <title> <project-id> <agent-id>")
+        print("  chat confirm-task <review-id> CONFIRM - Create pending Task after review")
         print("  exit/quit   - Terminate the shell")
         print()
 
@@ -133,7 +135,16 @@ class CommandInterface:
             if not args:
                 raise ValueError("chat requires start, send, get, or close")
             action = args[0]
-            if action == "start" and len(args) == 3:
+            if action == "review-task" and len(args) == 6:
+                review = self.application_service.corporation_chat().review_task(*args[1:])
+                print(f"Review {review.id}: title={review.title!r}; description={review.description!r}; project={review.project_id}; agent={review.agent_id}; route=explicit_agent; initial status=pending")
+                print("Confirm only after reviewing every field: chat confirm-task <review-id> CONFIRM")
+                return
+            elif action == "confirm-task" and len(args) == 3 and args[2] == "CONFIRM":
+                result = self.application_service.corporation_chat().confirm_task(args[1], confirmed=True)
+                print(f"Task {result.task_id}: {result.status.value}; project {result.project_id}; agent {result.agent_id}; review {result.review_id}")
+                return
+            elif action == "start" and len(args) == 3:
                 result = self.application_service.corporation_chat().start(args[1], args[2])
             elif action == "send" and len(args) >= 3:
                 result = self.application_service.corporation_chat().send(args[1], " ".join(args[2:]))
@@ -144,7 +155,7 @@ class CommandInterface:
                 raise ValueError("Invalid chat command arguments")
             print(f"Corporation {result.corporation_id} chat {result.id}: {result.status.value}; coordinator {result.coordinator_agent_id}")
             for message in result.messages:
-                print(f"{message.role.value} [{message.status.value}]: {message.content}")
+                print(f"{message.id} {message.role.value} [{message.status.value}]: {message.content}")
         except Exception as exc:
             print(f"Chat error: {exc}")
 
