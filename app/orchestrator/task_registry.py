@@ -37,6 +37,7 @@ class TaskRegistry:
                     id,
                     title,
                     description,
+                    project_id,
                     assigned_agent,
                     required_role,
                     required_capability,
@@ -44,12 +45,13 @@ class TaskRegistry:
                     result,
                     error
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     task.id,
                     task.title,
                     task.description,
+                    task.project_id,
                     task.assigned_agent,
                     task.required_role,
                     task.required_capability,
@@ -74,6 +76,7 @@ class TaskRegistry:
                     id,
                     title,
                     description,
+                    project_id,
                     assigned_agent,
                     required_role,
                     required_capability,
@@ -89,6 +92,7 @@ class TaskRegistry:
                     id=row["id"],
                     title=row["title"],
                     description=row["description"],
+                    project_id=row["project_id"],
                     assigned_agent=row["assigned_agent"],
                     required_role=row["required_role"],
                     required_capability=row["required_capability"],
@@ -114,6 +118,7 @@ class TaskRegistry:
                 SET
                     title = ?,
                     description = ?,
+                    project_id = ?,
                     assigned_agent = ?,
                     required_role = ?,
                     required_capability = ?,
@@ -125,6 +130,7 @@ class TaskRegistry:
                 (
                     task.title,
                     task.description,
+                    task.project_id,
                     task.assigned_agent,
                     task.required_role,
                     task.required_capability,

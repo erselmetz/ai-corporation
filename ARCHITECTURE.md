@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–62 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–63 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -112,7 +112,7 @@ A Task has `pending`, `running`, `completed`, or `failed` status and can carry:
 
 The Orchestrator creates tasks, routes and executes them, persists task state, and logs task-created/started/completed/failed events. A successful route during ordinary execution assigns the selected Agent before execution. A routing failure during ordinary execution marks the Task failed; a dry-run routing failure is surfaced as a `RoutingError`.
 
-SQLite currently stores Tasks, Projects, task logs, agent memory, and project memory in the configured database file. **Known limitation:** TaskRegistry does not persist/reload `project_id`, even though it is present on the Task model. Employee, Agent, Provider, model assignment, approval, tool, Corporation, and Node registries are not persisted as complete administration subsystems.
+SQLite currently stores Tasks, Projects, task logs, agent memory, and project memory in the configured database file. **Known limitation:** TaskRegistry persists/reloads `project_id` for new or updated Tasks; historical rows with unstored associations remain null and are not inferred. Employee, Agent, Provider, model assignment, approval, tool, Corporation, and Node registries are not persisted as complete administration subsystems.
 
 ### Deterministic Task Router
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–62 completion scope
+## Tasks 1–63 completion scope
 
-Tasks 1–62 are complete as the current foundation. Their implemented areas include:
+Tasks 1–63 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -303,7 +303,7 @@ Tasks 1–62 are complete as the current foundation. Their implemented areas inc
 - In-memory Conversation and Message records with explicit message lifecycle transitions and open/closed Conversation state. Closing rejects outstanding pending Messages, and closed Conversations reject new ones.
 - Individual Employee Chat Core service over those records with a fixed Employee/Agent target, explicit scope, and immutable snapshots. Messages and lifecycle outcomes are supplied explicitly; there is no automatic response generation, persistence, context retrieval, provider interaction, Conversation API/UI, or Task conversion.
 
-This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, project ID persistence is incomplete, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
+This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, historical Task project associations may be unknown, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 
 ## Future / planned roadmap
 
@@ -377,3 +377,9 @@ MemoryRecord supports explicit conversation or project scope; owner, scope ID, r
 Added explicitly opted-in SQLite conversation memory with immutable bounded records, owner/conversation-scoped retrieval, expiry enforcement, explicit deletion and scoped cleanup, and corrupt-data rejection; chat messages are never saved automatically.
 
 ConversationMemoryStore uses an additive conversation_memory table in the existing SQLite database; no legacy rows or schemas are replaced. The application chat service exposes explicit retain_message for completed messages with caller-supplied memory ID, trusted owner ID, retention consent, current time, and required expiry. Retained content is a note with source message ID, not an automatic transcript archive. Records are append-only; duplicate IDs cannot overwrite owners or content. Retrieval requires the exact owner and conversation and rejects expired or malformed records. Explicit forget permits withdrawal; purge_expired physically removes only validated expired records in a requested owner/conversation scope. Expiry always denies retrieval even before cleanup; cleanup is explicit, not scheduled. Retained notes survive chat closure until expiry or deletion; service-owned temporary context still clears on closure. Retrieval remains possible after service restart by stable IDs. No HTTP/UI memory route or background capture is added. Trusted callers enforce owner identity and source access. SQLite is plaintext; physical secure erasure and backup deletion are not claimed. Existing legacy Agent/Project stores remain separate. Provider execution and Task creation are not involved.
+
+## Project Knowledge (Task 63)
+
+Added private owner-scoped durable Project Knowledge with explicit Task provenance and verified project associations; reused retention/access rules and added non-destructive Task project-ID persistence without inferring historical links.
+
+CorporationApplicationService.project_knowledge provides explicit retention/retrieval/deletion of project-scoped MemoryRecord notes or summaries. The source ID must identify a registered Task with the same verified project ID, checked both at retention and retrieval. Exact owner/project access and mandatory consent/expiry reuse the scoped memory policy. Project knowledge is private to its explicit owner, not shared automatically with all Project users. SQLite storage shares controlled mechanics with conversation memory but uses a distinct project_knowledge table, leaving legacy project_memory unchanged. No automatic extraction, provider call, Task execution, UI, or HTTP endpoint is added. The necessary project-ID persistence prerequisite uses an additive nullable tasks.project_id column and saves/reloads/updates known associations. Historical rows remain null because their original project association was never stored; knowledge linking to such Tasks fails closed instead of inferring ownership. Existing rows are preserved and the migration is idempotent. The Task 53 documentation source remains file-based and read-only.

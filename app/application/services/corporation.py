@@ -115,6 +115,10 @@ class CorporationApplicationService:
         self._corporation = corporation
         self._node = node
 
+    def project_knowledge(self):
+        from .project_knowledge import ProjectKnowledgeService
+        return ProjectKnowledgeService(self._orchestrator)
+
     def corporation_chat(self):
         """Local-only facade; no HTTP exposure or new permission grant."""
         if self._corporation is None:

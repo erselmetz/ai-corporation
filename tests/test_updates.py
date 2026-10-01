@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-02",
                 "type": "development",
+                "title": "Project Knowledge",
+                "summary": "Added private owner-scoped durable Project Knowledge with explicit Task provenance and verified project associations; reused retention/access rules and added non-destructive Task project-ID persistence without inferring historical links.",
+            },
+            {
+                "date": "2026-10-02",
+                "type": "development",
                 "title": "Persistent Conversation Memory",
                 "summary": "Added explicitly opted-in SQLite conversation memory with immutable bounded records, owner/conversation-scoped retrieval, expiry enforcement, explicit deletion and scoped cleanup, and corrupt-data rejection; chat messages are never saved automatically.",
             },

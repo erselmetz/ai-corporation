@@ -11,6 +11,7 @@ def initialize_database() -> None:
                 id TEXT PRIMARY KEY,
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
+                project_id TEXT,
                 assigned_agent TEXT,
                 required_role TEXT,
                 required_capability TEXT,
@@ -25,6 +26,8 @@ def initialize_database() -> None:
             row["name"]
             for row in connection.execute("PRAGMA table_info(tasks)").fetchall()
         }
+        if "project_id" not in task_columns:
+            connection.execute("ALTER TABLE tasks ADD COLUMN project_id TEXT")
         if "required_role" not in task_columns:
             connection.execute("ALTER TABLE tasks ADD COLUMN required_role TEXT")
         if "required_capability" not in task_columns:
@@ -86,6 +89,22 @@ def initialize_database() -> None:
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS conversation_memory (
+                id TEXT PRIMARY KEY,
+                owner_id TEXT NOT NULL,
+                scope_id TEXT NOT NULL,
+                type TEXT NOT NULL,
+                content TEXT NOT NULL,
+                source_id TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                retention_opt_in INTEGER NOT NULL CHECK(retention_opt_in = 1)
+            )
+            """
+        )
+
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS project_knowledge (
                 id TEXT PRIMARY KEY,
                 owner_id TEXT NOT NULL,
                 scope_id TEXT NOT NULL,
