@@ -4,7 +4,7 @@
 
 The current application includes a local Python command-line system and a FastAPI interface. It models a Corporation and installation Node, an Orchestrator, Employees, technical Agents, a Provider/Model execution boundary, persisted Tasks, deterministic routing, and dry-run inspection.
 
-> **Implementation status:** Tasks 1–46 are complete as foundations. Tasks 27–30 add public GitHub discovery, bounded source analysis/learning, evidence-backed evaluation, and proposal generation; Tasks 31–33 add sandbox foundations and a Docker execution backend; Tasks 34–36 add controlled source staging, verified sandbox binding, and immutable execution preparation without executing staged source. Tasks 37–45 establish the Application Service/API foundation and authorized Corporation status, Employee/Agent, Provider/Model, Task, Project, and Activity APIs. Task 46 adds a presentation-only Web UI shell served by FastAPI; Corporation dashboards and management pages remain planned. These remain foundations, not production-complete subsystems.
+> **Implementation status:** Tasks 1–47 are complete as foundations. Tasks 27–30 add public GitHub discovery, bounded source analysis/learning, evidence-backed evaluation, and proposal generation; Tasks 31–33 add sandbox foundations and a Docker execution backend; Tasks 34–36 add controlled source staging, verified sandbox binding, and immutable execution preparation without executing staged source. Tasks 37–45 establish the Application Service/API foundation and authorized Corporation status, Employee/Agent, Provider/Model, Task, Project, and Activity APIs. Task 46 provides the FastAPI-served Web UI foundation; Task 47 adds a read-only executive dashboard that retrieves data only from the existing protected APIs. Browser authentication is not configured, so dashboard data remains unavailable until an authenticated session with the required permissions exists. Tasks 48–54 remain planned. These remain foundations, not production-complete subsystems.
 
 ## Current architecture
 
@@ -16,7 +16,7 @@ Corporation identity
 Browser / API client
   ↓
 FastAPI
-  ├── Public Web UI shell (/ui) + app-owned static assets
+  ├── Public Web UI dashboard (/ui) + app-owned static assets
   └── Protected API routes → Authentication → Authorization
                                               ↓
                               CorporationApplicationService
@@ -27,7 +27,7 @@ FastAPI
                                      └── Task Router → Agent → Provider → Model
 ```
 
-The `/ui` shell is presentation-only and public; it does not read or change Corporation data. Future UI pages that present protected data or perform actions must use the existing authentication/authorization and Application Service boundaries. The standalone public documentation site in `docs/` is a separate Node.js application and is not the Corporation Web UI.
+The `/ui` dashboard is a public presentation route. Its browser module requests Corporation data only from the existing protected API read endpoints; it does not read or change Core data itself. Each API keeps its existing authentication and permission checks. The default authentication backend rejects requests, and no browser sign-in/session integration is configured, so the dashboard reports authentication-required, forbidden, and other loading failures instead of treating them as empty results. Existing list APIs provide the displayed complete list counts; task timestamps and provider availability are not provided, so the dashboard does not claim recent tasks or provider health. Future UI actions and pages must preserve the same boundary. The standalone public Node.js documentation site in `docs/` remains a separate application and is not the Corporation Web UI.
 
 The CLI also uses CorporationApplicationService for application operations.
 

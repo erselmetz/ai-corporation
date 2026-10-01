@@ -13,6 +13,7 @@ from fastapi import (
     status,
 )
 from fastapi.staticfiles import StaticFiles
+from starlette.types import Scope
 
 from app.application import (
     ActivitySummary,
@@ -56,6 +57,14 @@ from .security import (
 
 api_router = APIRouter()
 corporation_router = APIRouter(prefix="/api")
+
+
+class WebUIStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        response = await super().get_response(path, scope)
+        if path.endswith(".mjs") and response.status_code == status.HTTP_200_OK:
+            response.headers["content-type"] = "text/javascript; charset=utf-8"
+        return response
 
 
 @api_router.get("/")
@@ -668,7 +677,9 @@ def create_app(
     )
     application.mount(
         "/ui/static",
-        StaticFiles(directory=str(Path(__file__).parent.parent / "webui" / "static")),
+        WebUIStaticFiles(
+            directory=str(Path(__file__).parent.parent / "webui" / "static")
+        ),
         name="web-ui-static",
     )
     application.include_router(api_router)
