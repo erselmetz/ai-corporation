@@ -65,7 +65,7 @@ export const taskGroups = [
       ["Employee Management UI", "List, inspect, create, and remove Employees through the existing protected Employee API; do not create or modify Agents."],
       ["Provider & Model UI", "Provide interface workflows for Provider setup and Agent Model assignment."],
       ["Task Management UI", "Provide a user interface for task creation, routing, and lifecycle inspection."],
-      ["Project Management UI", "Provide project-facing administration and task coordination views."],
+      ["Project Management UI", "List and inspect Projects and create them through the existing protected Project API; do not invent deletion or lifecycle actions."],
       ["Activity / Logs UI", "Present authorized Corporation activity and logs in a searchable interface."],
       ["Documentation Portal — Corporation-integrated documentation and knowledge portal", "Add a Corporation-integrated documentation and knowledge portal; distinct from the standalone public documentation website in docs/."],
       ["Updates / Changelog Page", "Publish curated release and project updates with clear dates and status."]
@@ -164,7 +164,7 @@ export const tasks = taskGroups.flatMap((group) =>
       title,
       description,
       category: group.name,
-      status: number <= 50 ? "completed" : "planned",
+      status: number <= 51 ? "completed" : "planned",
     };
   })
 );

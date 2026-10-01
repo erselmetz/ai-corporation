@@ -223,3 +223,48 @@ def test_task_management_page_uses_existing_protected_task_contract():
     orchestrator.run_agent.assert_not_called()
     orchestrator.create_task.assert_not_called()
     assert orchestrator.method_calls == []
+
+
+def test_project_management_page_uses_existing_protected_project_contract():
+    orchestrator = MagicMock(spec=Orchestrator)
+    application = create_app(CorporationApplicationService(orchestrator))
+
+    with TestClient(application) as client:
+        page = client.get("/ui/projects")
+        script = client.get("/ui/static/projects.mjs")
+        stylesheet = client.get("/ui/static/style.css")
+        dashboard = client.get("/ui")
+        tasks = client.get("/ui/tasks")
+        protected = [
+            client.get("/api/projects"),
+            client.get("/api/projects/project-1"),
+            client.post(
+                "/api/projects",
+                json={"name": "Project", "description": "Description"},
+            ),
+        ]
+        unsupported_delete = client.delete("/api/projects/project-1")
+
+    assert page.status_code == 200
+    assert page.headers["content-type"].startswith("text/html")
+    assert "Project Management" in page.text
+    assert 'href="/ui/static/style.css"' in page.text
+    assert 'src="/ui/static/projects.mjs"' in page.text
+    assert script.status_code == 200
+    assert script.headers["content-type"].startswith("text/javascript")
+    assert stylesheet.status_code == 200
+    assert "project-layout" in stylesheet.text
+    assert all(endpoint in script.text for endpoint in ("/api/projects", "method: \"POST\""))
+    assert "method: \"DELETE\"" not in script.text
+    assert "Bearer " not in script.text
+    assert "api_key" not in script.text.lower()
+    assert "password" not in script.text.lower()
+    assert 'href="/ui/projects"' in dashboard.text
+    assert 'href="/ui/projects"' in tasks.text
+    assert [response.status_code for response in protected] == [401] * 3
+    assert unsupported_delete.status_code == 405
+
+    orchestrator.execute_task.assert_not_called()
+    orchestrator.run_agent.assert_not_called()
+    orchestrator.create_task.assert_not_called()
+    assert orchestrator.method_calls == []

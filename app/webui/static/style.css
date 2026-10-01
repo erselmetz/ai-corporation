@@ -350,6 +350,13 @@ button:disabled {
   align-items: start;
 }
 
+.project-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(17rem, 0.9fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
 .management-card {
   min-width: 0;
   padding: 0.9rem;
@@ -391,7 +398,8 @@ button:disabled {
 
 #provider-create-form,
 .model-replace-form,
-.task-form {
+.task-form,
+.project-form {
   display: grid;
   gap: 0.5rem;
   margin-top: 0.7rem;
@@ -399,7 +407,8 @@ button:disabled {
 
 #provider-create-form label,
 .model-replace-form label,
-.task-form > label {
+.task-form > label,
+.project-form > label {
   display: grid;
   gap: 0.3rem;
   font-size: 0.83rem;
@@ -410,7 +419,9 @@ button:disabled {
 #provider-create-form textarea,
 .model-replace-form input,
 .task-form input,
-.task-form textarea {
+.task-form textarea,
+.project-form input,
+.project-form textarea {
   width: 100%;
   min-height: 2.5rem;
   padding: 0.5rem 0.6rem;
@@ -423,6 +434,10 @@ button:disabled {
 }
 
 .task-form textarea {
+  resize: vertical;
+}
+
+.project-form textarea {
   resize: vertical;
 }
 
@@ -527,6 +542,10 @@ button:disabled {
   }
 
   .task-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .project-layout {
     grid-template-columns: 1fr;
   }
 
