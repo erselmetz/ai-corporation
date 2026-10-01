@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–57 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–58 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–57 completion scope
+## Tasks 1–58 completion scope
 
-Tasks 1–57 are complete as the current foundation. Their implemented areas include:
+Tasks 1–58 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -347,3 +347,9 @@ Before implementing a future milestone, inspect the actual implementation and te
 Added caller-supplied context bounded to 8192 UTF-8 bytes per conversation, with atomic replacement, isolation, and clearing on successful closure; no retrieval, persistence, provider calls, or chat API/UI.
 
 The Core service has no authenticated principal contract; only trusted in-process callers may supply and read context and must enforce authorization and relevance before calling it. No external context endpoint is exposed. Context is untrusted text, excluded from conversation snapshots, and cannot fetch runtime resources. Failed validation or unsuccessful closure preserves existing context. Successful closure removes service-owned context; caller-held strings cannot be revoked. Retention is in-memory for the open conversation or service lifetime. The Task 53 portal remains file-based and read-only.
+
+## Corporation Chat (Task 58)
+
+Added local Corporation Chat CLI commands with explicit coordinator Agent identity, Orchestrator-mediated replies, bounded prompts, isolated conversation history, and recorded response failures; no automatic Task creation or Web/API chat.
+
+In the trusted local shell: `chat start <id> <agent>`, `chat send <id> <text>`, `chat get <id>`, and `chat close <id>`. The Application Service owns the organization chat service. Runtime Corporation identity is required; coordinator identity stays fixed. Sending is explicit and may call the configured provider through Orchestrator.run_agent. No Task is created or executed. Messages and replies are limited to 8192 UTF-8 bytes; provider prompt input uses at most 16 recent completed messages and rejects totals over 32768 bytes before recording a new message. History remains in-memory until the service ends; persistent conversation memory is future work. JSON serialization separates supplied data structurally but is not a guarantee against model prompt injection; replies never trigger tools or execution. Provider failures expose only a generic error and mark the submitted message failed. No browser authentication or HTTP permissions are added. The Task 53 portal remains read-only and file-based.

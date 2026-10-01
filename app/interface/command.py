@@ -98,6 +98,8 @@ class CommandInterface:
             self._cmd_model(args)
         elif cmd == "agents":
             self._cmd_agents()
+        elif cmd == "chat":
+            self._cmd_chat(args)
         elif cmd == "task":
             self._cmd_task(args)
         elif cmd == "dry-run":
@@ -122,8 +124,29 @@ class CommandInterface:
         print("             - Create a new task with optional routing")
         print("  dry-run <task_id> [--agent <id> | --role <role> | --capability <capability>]")
         print("             - Perform a dry-run of the specified task")
+        print("  chat start <id> <agent> | send <id> <text> | get <id> | close <id>")
         print("  exit/quit   - Terminate the shell")
         print()
+
+    def _cmd_chat(self, args: list[str]):
+        try:
+            if not args:
+                raise ValueError("chat requires start, send, get, or close")
+            action = args[0]
+            if action == "start" and len(args) == 3:
+                result = self.application_service.corporation_chat().start(args[1], args[2])
+            elif action == "send" and len(args) >= 3:
+                result = self.application_service.corporation_chat().send(args[1], " ".join(args[2:]))
+            elif action in ("get", "close") and len(args) == 2:
+                service = self.application_service.corporation_chat()
+                result = service.get(args[1]) if action == "get" else service.close(args[1])
+            else:
+                raise ValueError("Invalid chat command arguments")
+            print(f"Corporation {result.corporation_id} chat {result.id}: {result.status.value}; coordinator {result.coordinator_agent_id}")
+            for message in result.messages:
+                print(f"{message.role.value} [{message.status.value}]: {message.content}")
+        except Exception as exc:
+            print(f"Chat error: {exc}")
 
     def _cmd_status(self):
         ctx = self.context

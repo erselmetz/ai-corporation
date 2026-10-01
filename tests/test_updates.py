@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-02",
                 "type": "development",
+                "title": "Corporation Chat",
+                "summary": "Added local Corporation Chat CLI commands with explicit coordinator Agent identity, Orchestrator-mediated replies, bounded prompts, isolated conversation history, and recorded response failures; no automatic Task creation or Web/API chat.",
+            },
+            {
+                "date": "2026-10-02",
+                "type": "development",
                 "title": "Chat Context",
                 "summary": "Added caller-supplied context bounded to 8192 UTF-8 bytes per conversation, with atomic replacement, isolation, and clearing on successful closure; no retrieval, persistence, provider calls, or chat API/UI.",
             },

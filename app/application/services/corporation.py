@@ -111,8 +111,18 @@ class CorporationApplicationService:
         node: Node | None = None,
     ):
         self._orchestrator = orchestrator
+        self._corporation_chat = None
         self._corporation = corporation
         self._node = node
+
+    def corporation_chat(self):
+        """Local-only facade; no HTTP exposure or new permission grant."""
+        if self._corporation is None:
+            raise RuntimeError("Corporation runtime identity is not configured")
+        if self._corporation_chat is None:
+            from .corporation_chat import CorporationChatService
+            self._corporation_chat = CorporationChatService(self._corporation.id, self._orchestrator)
+        return self._corporation_chat
 
     def get_corporation_status(self) -> CorporationStatusSummary:
         if self._corporation is None or self._node is None:
