@@ -1,3 +1,5 @@
+import { mountTaskProgress } from "./task-progress.mjs";
+
 const allowedLimits = new Set(["10", "25", "50", "100"]);
 
 function validActivity(entry) {
@@ -75,6 +77,7 @@ export function mountActivityPage({
   const limitInput = documentRef.getElementById("activity-limit");
   const taskIdInput = documentRef.getElementById("activity-task-id");
   let isLoading = false;
+  mountTaskProgress({ documentRef, fetchImpl });
 
   async function loadActivity() {
     if (isLoading) return false;

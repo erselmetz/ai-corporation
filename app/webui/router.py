@@ -231,6 +231,12 @@ def activity_page() -> HTMLResponse:
                 <p id="activity-list-state" class="section-state" role="status" aria-live="polite">Loading activity…</p>
                 <ol id="activity-list" class="activity-list" aria-label="Activity records"></ol>
               </section>
+              <section class="management-card" aria-labelledby="task-progress-title">
+                <h2 id="task-progress-title">AI / Task execution progress</h2>
+                <p class="muted">Select a Task ID in the filter above and refresh. Task progress requires task:read independently of activity:read. Local chat replies have no browser telemetry. This is a lifecycle snapshot, not a percentage or live stream.</p>
+                <p id="task-progress-state" class="section-state" role="status" aria-live="polite"></p>
+                <div id="task-progress"></div>
+              </section>
             </main>
           </div>
         </body>

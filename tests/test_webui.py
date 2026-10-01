@@ -388,3 +388,19 @@ def test_updates_page_uses_only_the_protected_curated_updates_api():
     orchestrator.run_agent.assert_not_called()
     orchestrator.create_task.assert_not_called()
     assert orchestrator.method_calls == []
+
+
+def test_activity_progress_shell_and_asset_preserve_fail_closed_task_reads():
+    orchestrator = MagicMock(spec=Orchestrator)
+    app = create_app(CorporationApplicationService(orchestrator))
+    with TestClient(app) as client:
+        shell = client.get("/ui/activity")
+        asset = client.get("/ui/static/task-progress.mjs")
+        protected = client.get("/api/tasks/task")
+    assert shell.status_code == 200
+    assert 'id="task-progress"' in shell.text
+    assert "task:read independently of activity:read" in shell.text
+    assert asset.status_code == 200
+    assert protected.status_code == 401
+    orchestrator.run_agent.assert_not_called()
+    orchestrator.execute_task.assert_not_called()

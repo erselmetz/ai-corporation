@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-02",
                 "type": "development",
+                "title": "AI Activity Visualization",
+                "summary": "Added permission-aware Task lifecycle progress to the Activity page using protected Task detail reads, with explicit pending/running/completed/failed states, separate access errors, stale-response rejection, and no fabricated provider telemetry.",
+            },
+            {
+                "date": "2026-10-02",
+                "type": "development",
                 "title": "Corporation Task Creation via Chat",
                 "summary": "Added immutable chat-to-Task reviews of completed user messages with explicit project and Agent routing; human CONFIRM creates a pending persisted Task without execution, and consumed reviews cannot be replayed.",
             },

@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–59 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–60 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–59 completion scope
+## Tasks 1–60 completion scope
 
-Tasks 1–59 are complete as the current foundation. Their implemented areas include:
+Tasks 1–60 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -359,3 +359,9 @@ In the trusted local shell: `chat start <id> <agent>`, `chat send <id> <text>`, 
 Added immutable chat-to-Task reviews of completed user messages with explicit project and Agent routing; human CONFIRM creates a pending persisted Task without execution, and consumed reviews cannot be replayed.
 
 Local commands: `chat review-task <chat-id> <message-id> <title> <project-id> <agent-id>` prints the source text, title, explicit Agent route, project, and pending initial status. `chat confirm-task <review-id> CONFIRM` is the separate human confirmation step. IDs appear with chat messages. Only completed user messages from an open conversation can be reviewed; model replies are not Task sources. Reviews capture immutable fields and validate existing projects/Agents before review and again before confirmation. Creation uses the existing Orchestrator persistence and TASK_CREATED log; ordinary Task inspection exposes subsequent lifecycle. No provider or Task execution occurs during review/confirmation. The trusted local operator is the reviewer; there is no Web/API approval or identity administration. Reviews are in-memory and consumed before creation, including uncertain persistence/logging failures, requiring human inspection rather than automatic retry. This is not a transactional recovery guarantee. The file-based read-only Task 53 portal and default-deny HTTP authentication remain unchanged.
+
+## AI Activity Visualization (Task 60)
+
+Added permission-aware Task lifecycle progress to the Activity page using protected Task detail reads, with explicit pending/running/completed/failed states, separate access errors, stale-response rejection, and no fabricated provider telemetry.
+
+At `/ui/activity`, enter a Task ID in the existing filter and refresh to inspect its current execution lifecycle and assigned Agent. This uses only `GET /api/tasks/{task_id}` with `task:read`; activity records independently require `activity:read`. Authentication remains fail-closed and browser sign-in is not configured. Progress is a manually refreshed snapshot, not a stream, percentage, queue position, or provider health claim. Failed requests clear old progress; changing the selected Task invalidates in-flight responses. Task result/error contents are not displayed in this panel. Synchronous local chat has no browser telemetry; no chat progress API or provider instrumentation is added. No runtime, persistence, or dependencies changed. The Task 53 portal stays file-based and read-only; public docs remain separate from runtime.
