@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 
 from fastapi import (
@@ -11,6 +12,7 @@ from fastapi import (
     Response,
     status,
 )
+from fastapi.staticfiles import StaticFiles
 
 from app.application import (
     ActivitySummary,
@@ -19,6 +21,7 @@ from app.application import (
     TaskSummary,
 )
 from app.runtime import create_corporation_runtime
+from app.webui import web_ui_router
 from .models import (
     ActivityListResponse,
     ActivityResponse,
@@ -663,8 +666,14 @@ def create_app(
         if authentication_backend is None
         else authentication_backend
     )
+    application.mount(
+        "/ui/static",
+        StaticFiles(directory=str(Path(__file__).parent.parent / "webui" / "static")),
+        name="web-ui-static",
+    )
     application.include_router(api_router)
     application.include_router(corporation_router)
+    application.include_router(web_ui_router)
     return application
 
 

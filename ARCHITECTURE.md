@@ -4,14 +4,16 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–43 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–46 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
 ```text
-Client
+Browser / API client
   ↓
-FastAPI → Authentication → Authorization → API routes
+FastAPI
+  ├── Public Web UI shell (/ui) + static assets
+  └── Protected API routes → Authentication → Authorization
                                               ↓
                               CorporationApplicationService
                                               ↓
@@ -39,9 +41,9 @@ ApprovalRequest / ApprovalRegistry
 ClientRequest / BusinessLayer adapter
 ```
 
-The CLI also uses `CorporationApplicationService` for application operations. This interface-neutral service is the application boundary for Corporation status, Employee, Agent, Provider, Model assignment, and Task use cases. It coordinates existing management services and the Orchestrator and returns summaries rather than exposing registries as an interface contract. FastAPI resource routes use this boundary; the service has no HTTP, CLI, or database-driver logic, and the existing Core remains responsible for domain behavior and persistence.
+The CLI also uses `CorporationApplicationService` for application operations. This interface-neutral service is the application boundary for Corporation status, Employee, Agent, Provider, Model assignment, Task, Project, and Activity use cases. It coordinates existing management services and the Orchestrator and returns summaries rather than exposing registries as an interface contract. FastAPI resource routes use this boundary; the service has no HTTP, CLI, or database-driver logic, and the existing Core remains responsible for domain behavior and persistence.
 
-The FastAPI application in `app.api` exposes the status, Employee/Agent, Provider/Model assignment, and Task resources described under [API boundary](#api-boundary). `/` and `/health` remain public; resource routes use the shared application-service dependency and do not directly manipulate `TaskRegistry`, `ProjectRegistry`, or other internal registries. Authentication uses an injectable backend and rejects by default. Authorization checks the authenticated principal's required permission. A production identity provider and credential/token implementation are not configured by this foundation.
+The FastAPI application in `app.api` serves a public, presentation-only Web UI shell at `/ui` and app-owned static assets below `/ui/static`. The shell does not fetch Corporation data or perform actions. Future UI pages that need protected data or actions must call protected API/application use cases using the established authentication and authorization boundary. `/` and `/health` remain public; resource routes use the shared application-service dependency and do not directly manipulate `TaskRegistry`, `ProjectRegistry`, `TaskLogger`, or other internal registries. Authentication uses an injectable backend and rejects by default. Authorization checks the authenticated principal's required permission. A production identity provider and credential/token implementation are not configured by this foundation. The public Node.js documentation site in `docs/` remains a separate application.
 
 ### API boundary
 
@@ -55,7 +57,11 @@ Task creation accepts existing title, description, optional project ID, and one 
 
 Dry-run returns the current routing preview via the Application Service. It does not execute an Agent or Provider and does not mutate Task state. The API does not expose unrestricted task execution or Task lifecycle mutation endpoints. Missing Tasks and referenced Projects return 404; invalid routing/domain options return 400; request schema validation uses FastAPI/Pydantic 422 responses.
 
-Other resource permissions are similarly minimal: `corporation:read`, `employee:read` / `employee:manage`, `agent:read`, `provider:read` / `provider:manage`, and `model:read` / `model:manage`. These are route permission requirements, not a configured user/role management system. The default authentication backend rejects requests until an application supplies an authentication backend.
+The Project API provides authenticated list/detail/create operations through the Application Service and existing ProjectRegistry. The Activity API provides `GET /api/activity` with `activity:read`; it returns at most 100 newest-first Task log summaries by default, optionally filtered by `task_id`. It exposes only the existing log ID, Task ID, event, and timestamp; the stored message is omitted. There is no individual-log retrieval or Activity mutation endpoint.
+
+Task 46 adds only the Web UI shell and CSS foundation. Tasks 47–54 remain planned and cover the future dashboard, management interfaces, Activity UI, Corporation documentation portal, and updates page.
+
+Other resource permissions are similarly minimal: `corporation:read`, `employee:read` / `employee:manage`, `agent:read`, `provider:read` / `provider:manage`, `model:read` / `model:manage`, `project:read` / `project:create`, and `activity:read`. These are route permission requirements, not a configured user/role management system. The default authentication backend rejects requests until an application supplies an authentication backend.
 
 ### Identity and runtime
 
@@ -239,9 +245,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–43 completion scope
+## Tasks 1–46 completion scope
 
-Tasks 1–43 are complete as the current foundation. Their implemented areas include:
+Tasks 1–46 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -271,8 +277,10 @@ Tasks 1–43 are complete as the current foundation. Their implemented areas inc
 - Integrity-checked in-memory binding of a staged workspace to its proposal and registered sandbox, without lifecycle changes or execution.
 - Immutable readiness preparation that revalidates staged-source identity, sandbox policy, and existing proposal/sandbox/binding relationships without accepting execution commands or host credentials.
 - Application Service and FastAPI authentication/authorization foundations, plus Corporation status, Employee/Agent, Provider/Model assignment, and Task APIs. The Task API supports read, create, and non-mutating dry-run only; it does not expose HTTP execution or lifecycle mutation.
+- Project list/detail/create and bounded, read-only Task Activity APIs using explicit summaries and the existing persistence/logging infrastructure.
+- A presentation-only Corporation Web UI shell at `/ui`, with CSS served from `/ui/static/`. It does not access Corporation data or actions. Future Dashboard and management interfaces remain separate planned tasks.
 
-This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, project ID persistence is incomplete, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
+This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, project ID persistence is incomplete, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider. Tasks 47–54 cover the future dashboard, management interfaces, Activity UI, Corporation documentation portal, and updates page; they are not part of Task 46.
 
 ## Future / planned roadmap
 

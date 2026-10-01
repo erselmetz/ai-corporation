@@ -4,7 +4,7 @@
 
 The current application includes a local Python command-line system and a FastAPI interface. It models a Corporation and installation Node, an Orchestrator, Employees, technical Agents, a Provider/Model execution boundary, persisted Tasks, deterministic routing, and dry-run inspection.
 
-> **Implementation status:** Tasks 1–43 are complete as foundations. Tasks 27–30 add public GitHub discovery, bounded source analysis/learning, evidence-backed evaluation, and proposal generation; Tasks 31–33 add sandbox foundations and a Docker execution backend; Tasks 34–36 add controlled source staging, verified sandbox binding, and immutable execution preparation without executing staged source. Tasks 37–43 establish the Application Service/API foundation and authorized Corporation status, Employee/Agent, Provider/Model, and Task APIs. These remain foundations, not production-complete subsystems.
+> **Implementation status:** Tasks 1–46 are complete as foundations. Tasks 27–30 add public GitHub discovery, bounded source analysis/learning, evidence-backed evaluation, and proposal generation; Tasks 31–33 add sandbox foundations and a Docker execution backend; Tasks 34–36 add controlled source staging, verified sandbox binding, and immutable execution preparation without executing staged source. Tasks 37–45 establish the Application Service/API foundation and authorized Corporation status, Employee/Agent, Provider/Model, Task, Project, and Activity APIs. Task 46 adds a presentation-only Web UI shell served by FastAPI; Corporation dashboards and management pages remain planned. These remain foundations, not production-complete subsystems.
 
 ## Current architecture
 
@@ -13,9 +13,11 @@ Corporation identity
 └── Node / installation identity
     └── Runtime Context (validated Corporation + Node IDs)
 
-Client
+Browser / API client
   ↓
-FastAPI → Authentication → Authorization → API route
+FastAPI
+  ├── Public Web UI shell (/ui) + app-owned static assets
+  └── Protected API routes → Authentication → Authorization
                                               ↓
                               CorporationApplicationService
                                               ↓
@@ -25,11 +27,13 @@ FastAPI → Authentication → Authorization → API route
                                      └── Task Router → Agent → Provider → Model
 ```
 
+The `/ui` shell is presentation-only and public; it does not read or change Corporation data. Future UI pages that present protected data or perform actions must use the existing authentication/authorization and Application Service boundaries. The standalone public documentation site in `docs/` is a separate Node.js application and is not the Corporation Web UI.
+
 The CLI also uses CorporationApplicationService for application operations.
 
 SQLite stores tasks, projects, task logs, agent memory, and project memory.
 
-The FastAPI resource routes call `CorporationApplicationService`; they do not directly access Core registries. Current Task API operations are `GET /api/tasks`, `GET /api/tasks/{task_id}`, `POST /api/tasks`, and `POST /api/tasks/{task_id}/dry-run`. Creation delegates ID generation to Core and preserves the existing project and routing requirements. Responses use explicit schemas and omit internal Task fields. The dry-run inspects routing without executing an Agent/Provider or mutating Task state. There is no HTTP task-execution endpoint or lifecycle-mutation endpoint.
+The FastAPI resource routes call `CorporationApplicationService`; they do not directly access Core registries. Current API resources include Corporation status; Employee/Agent; Provider/Model assignment; Task; Project; and read-only Activity. The Activity API exposes bounded task-log summaries and omits message text. The Task API supports `GET /api/tasks`, `GET /api/tasks/{task_id}`, `POST /api/tasks`, and `POST /api/tasks/{task_id}/dry-run`. Creation delegates ID generation to Core and preserves the existing project and routing requirements. Responses use explicit schemas and omit internal Task fields. The dry-run inspects routing without executing an Agent/Provider or mutating Task state. There is no HTTP task-execution endpoint or lifecycle-mutation endpoint.
 
 API authentication and authorization are injectable foundations. The default authentication backend rejects requests; a production identity/authentication provider is not configured here. Protected routes require their declared permissions. See [Current architecture and roadmap](./ARCHITECTURE.md) and the [public documentation site](./docs/index.html) for the current API boundary and broader limitations.
 

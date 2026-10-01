@@ -1,0 +1,92 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, sans-serif;
+  color: #17212b;
+  background: #f3f6f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 2rem;
+  color: #fff;
+  background: #183044;
+}
+
+.brand {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.product-label {
+  color: #c8dce8;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
+  gap: 2rem;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.navigation,
+.content {
+  padding: 1.5rem;
+  border: 1px solid #d6e0e6;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.navigation h2,
+.eyebrow {
+  margin-top: 0;
+  color: #526b7b;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.navigation ul {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navigation a {
+  color: #15577b;
+}
+
+.navigation [aria-disabled="true"] {
+  color: #687985;
+}
+
+.content {
+  min-height: 18rem;
+}
+
+@media (max-width: 42rem) {
+  .site-header {
+    padding: 1rem;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+}
