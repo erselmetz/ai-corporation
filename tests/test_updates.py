@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-02",
                 "type": "development",
+                "title": "Conversation Foundation",
+                "summary": "Added in-memory Conversation and Message records with controlled message lifecycle and no provider, persistence, or Task-execution integration.",
+            },
+            {
+                "date": "2026-10-02",
+                "type": "development",
                 "title": "Corporation Updates page",
                 "summary": "Added a protected, read-only Updates / Changelog page backed by a manually curated update manifest.",
             }

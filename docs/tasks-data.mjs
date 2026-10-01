@@ -75,7 +75,7 @@ export const taskGroups = [
     name: "AI Interaction",
     range: "55–60",
     tasks: [
-      ["Conversation Foundation", "Define conversation records, message lifecycle, and the boundary between chat and task execution."],
+      ["Conversation Foundation", "Define in-memory conversation/message records, controlled message lifecycle, and the boundary between chat and Task execution without adding persistence or chat interfaces."],
       ["Individual Employee Chat", "Support conversations directed to a selected Employee/Agent with explicit identity and scope."],
       ["Chat Context", "Supply bounded, relevant context to a conversation while respecting access and retention rules."],
       ["Corporation Chat", "Add an organization-level conversation interface coordinated by the Corporation Orchestrator."],
@@ -164,7 +164,7 @@ export const tasks = taskGroups.flatMap((group) =>
       title,
       description,
       category: group.name,
-      status: number <= 54 ? "completed" : "planned",
+      status: number <= 55 ? "completed" : "planned",
     };
   })
 );
