@@ -30,7 +30,7 @@ def corporation_dashboard() -> HTMLResponse:
                 <li><a href="#dashboard" aria-current="page">Dashboard</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
-                <li><span aria-disabled="true">Task management — planned</span></li>
+                <li><a href="/ui/tasks">Task management</a></li>
                 <li><span aria-disabled="true">Projects — planned</span></li>
                 <li><span aria-disabled="true">Activity — planned</span></li>
               </ul>
@@ -114,7 +114,7 @@ def employee_management_page() -> HTMLResponse:
                 <li><a href="/ui">Dashboard</a></li>
                 <li><a href="/ui/employees" aria-current="page">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
-                <li><span aria-disabled="true">Task management — planned</span></li>
+                <li><a href="/ui/tasks">Task management</a></li>
                 <li><span aria-disabled="true">Projects — planned</span></li>
                 <li><span aria-disabled="true">Activity — planned</span></li>
               </ul>
@@ -197,7 +197,7 @@ def provider_model_management_page() -> HTMLResponse:
                 <li><a href="/ui">Dashboard</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers" aria-current="page">Provider &amp; Model management</a></li>
-                <li><span aria-disabled="true">Task management — planned</span></li>
+                <li><a href="/ui/tasks">Task management</a></li>
                 <li><span aria-disabled="true">Projects — planned</span></li>
                 <li><span aria-disabled="true">Activity — planned</span></li>
               </ul>
@@ -254,6 +254,102 @@ def provider_model_management_page() -> HTMLResponse:
                     <p id="model-detail-state" class="section-state" role="status" aria-live="polite">Select an assignment to inspect or replace it.</p>
                     <div id="model-detail" hidden></div>
                   </section>
+                </section>
+              </div>
+            </main>
+          </div>
+        </body>
+        </html>
+        """
+    )
+
+
+@router.get("/ui/tasks", response_class=HTMLResponse, include_in_schema=False)
+def task_management_page() -> HTMLResponse:
+    return HTMLResponse(
+        """
+        <!doctype html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta name="description" content="ERSELMETZ AI CORPORATION Task management">
+          <title>Task Management — ERSELMETZ AI CORPORATION</title>
+          <link rel="stylesheet" href="/ui/static/style.css">
+          <script type="module" src="/ui/static/tasks.mjs"></script>
+        </head>
+        <body>
+          <header class="site-header">
+            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
+            <span class="product-label">Corporation Web UI</span>
+          </header>
+          <div class="layout">
+            <nav class="navigation" aria-label="Corporation navigation">
+              <h2>Navigation</h2>
+              <ul>
+                <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/employees">Employee management</a></li>
+                <li><a href="/ui/providers">Provider &amp; model management</a></li>
+                <li><a href="/ui/tasks" aria-current="page">Task management</a></li>
+                <li><span aria-disabled="true">Projects — planned</span></li>
+                <li><span aria-disabled="true">Activity — planned</span></li>
+              </ul>
+            </nav>
+            <main class="content task-page">
+              <div class="dashboard-heading">
+                <div>
+                  <p class="eyebrow">Work management</p>
+                  <h1>Task Management</h1>
+                </div>
+                <a class="back-link" href="/ui">Back to dashboard</a>
+              </div>
+              <p class="auth-boundary">
+                Task records and actions use protected APIs. Browser sign-in
+                is not configured; an authenticated session with task read or
+                create permission is required.
+              </p>
+              <div class="task-layout">
+                <section class="management-card" aria-labelledby="task-list-title">
+                  <div class="section-heading">
+                    <h2 id="task-list-title">Tasks</h2>
+                    <button id="task-refresh" type="button">Refresh</button>
+                  </div>
+                  <p id="task-list-state" class="section-state" role="status" aria-live="polite">Loading tasks…</p>
+                  <ul id="task-list" class="record-list" aria-label="Task records"></ul>
+                  <section class="management-detail" aria-labelledby="task-detail-title">
+                    <h3 id="task-detail-title">Task details</h3>
+                    <p id="task-detail-state" class="section-state" role="status" aria-live="polite">Select a task to view its details.</p>
+                    <div id="task-detail" hidden></div>
+                  </section>
+                  <section class="management-detail" aria-labelledby="task-preview-title">
+                    <h3 id="task-preview-title">Routing preview</h3>
+                    <p id="task-preview-state" class="section-state" role="status" aria-live="polite">Select a task to preview routing.</p>
+                    <div id="task-preview" hidden></div>
+                  </section>
+                </section>
+                <section class="management-card" aria-labelledby="task-create-title">
+                  <h2 id="task-create-title">Create task</h2>
+                  <p class="muted">Task IDs and status are generated by the existing API. Choose no more than one optional routing selector. Routing preview does not execute an Agent or Provider.</p>
+                  <form id="task-create-form" class="task-form">
+                    <label for="task-title">Title</label>
+                    <input id="task-title" name="title" required>
+                    <label for="task-description">Description</label>
+                    <textarea id="task-description" name="description" rows="4" required></textarea>
+                    <label for="task-project-id">Project ID (optional)</label>
+                    <input id="task-project-id" name="project_id">
+                    <p class="muted task-project-note">The current task persistence does not reliably retain project association after reload.</p>
+                    <fieldset>
+                      <legend>Optional routing selector (choose at most one)</legend>
+                      <label for="task-agent-id">Agent ID</label>
+                      <input id="task-agent-id" name="agent_id">
+                      <label for="task-role">Employee role</label>
+                      <input id="task-role" name="role">
+                      <label for="task-capability">Agent capability</label>
+                      <input id="task-capability" name="capability">
+                    </fieldset>
+                    <button id="task-create-submit" type="submit">Create task</button>
+                    <p id="task-create-state" class="section-state" role="status" aria-live="polite"></p>
+                  </form>
                 </section>
               </div>
             </main>

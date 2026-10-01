@@ -343,6 +343,13 @@ button:disabled {
   gap: 0.85rem;
 }
 
+.task-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(17rem, 0.9fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
 .management-card {
   min-width: 0;
   padding: 0.9rem;
@@ -383,14 +390,16 @@ button:disabled {
 }
 
 #provider-create-form,
-.model-replace-form {
+.model-replace-form,
+.task-form {
   display: grid;
   gap: 0.5rem;
   margin-top: 0.7rem;
 }
 
 #provider-create-form label,
-.model-replace-form label {
+.model-replace-form label,
+.task-form > label {
   display: grid;
   gap: 0.3rem;
   font-size: 0.83rem;
@@ -398,7 +407,10 @@ button:disabled {
 }
 
 #provider-create-form input,
-.model-replace-form input {
+#provider-create-form textarea,
+.model-replace-form input,
+.task-form input,
+.task-form textarea {
   width: 100%;
   min-height: 2.5rem;
   padding: 0.5rem 0.6rem;
@@ -408,6 +420,31 @@ button:disabled {
   background: #fff;
   font: inherit;
   font-weight: 400;
+}
+
+.task-form textarea {
+  resize: vertical;
+}
+
+.task-form fieldset {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 0.35rem 0;
+  padding: 0.75rem;
+  border: 1px solid #d7e0e5;
+  border-radius: 0.4rem;
+}
+
+.task-form legend {
+  padding: 0 0.25rem;
+  color: #526b7b;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.task-project-note {
+  margin-top: -0.35rem;
 }
 
 #provider-create-state:empty {
@@ -486,6 +523,10 @@ button:disabled {
   }
 
   .management-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-layout {
     grid-template-columns: 1fr;
   }
 

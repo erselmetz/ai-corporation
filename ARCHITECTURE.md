@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–49 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–50 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -63,7 +63,9 @@ Task 46 adds the FastAPI Web UI foundation; Task 47 adds a compact read-only das
 
 Task 49 adds Provider and Model Management at `/ui/providers`. Provider list/detail reads use `GET /api/providers` and `GET /api/providers/{provider_id}` with `provider:read`; creation uses `POST /api/providers` with exactly `id` / `name`, and removal uses `DELETE /api/providers/{provider_id}`, both requiring `provider:manage`. Provider responses expose only ID and configured type. Model assignments use `GET /api/models` and `GET /api/models/{agent_id}` with `model:read`; replacement uses `PUT /api/models/{agent_id}` with exactly `provider_id` / `model_id` and requires `model:manage`. Assignments identify Agents by ID only. No credential/configuration fields, Employee or Agent mutation, or direct Core access is introduced.
 
-Management pages use same-origin browser requests and preserve API authorization. No browser sign-in/session mechanism is configured, so the relevant authenticated session and distinct read/manage permissions remain prerequisites for protected data/actions. Failures retain distinct authentication, permission, validation/conflict, missing-record, and general states. Tasks 50–54 remain planned and cover Task, Project, Activity, Corporation documentation, and updates interfaces.
+Management pages use same-origin browser requests and preserve API authorization. No browser sign-in/session mechanism is configured, so the relevant authenticated session and distinct read/manage permissions remain prerequisites for protected data/actions. Failures retain distinct authentication, permission, validation/conflict, missing-record, and general states. Tasks 51–54 remain planned and cover Project, Activity, Corporation documentation, and updates interfaces.
+
+Task 50 adds Task Management at `/ui/tasks`. The page uses `GET /api/tasks` and `GET /api/tasks/{task_id}` (`task:read`), `POST /api/tasks` (`task:create`), and the existing non-mutating `POST /api/tasks/{task_id}/dry-run` (`task:read`). Creation accepts only title, description, optional project ID, and at most one Agent ID, role, or capability selector; the API generates Task ID and status. The API has no Task DELETE route or lifecycle mutation actions, and the UI does not invent them. Project association persistence remains limited by the existing TaskRegistry. Tasks 51–54 remain planned.
 
 Other resource permissions are similarly minimal: `corporation:read`, `employee:read` / `employee:manage`, `agent:read`, `provider:read` / `provider:manage`, `model:read` / `model:manage`, `project:read` / `project:create`, and `activity:read`. These are route permission requirements, not a configured user/role management system. The default authentication backend rejects requests until an application supplies an authentication backend.
 
@@ -249,9 +251,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–49 completion scope
+## Tasks 1–50 completion scope
 
-Tasks 1–49 are complete as the current foundation. Their implemented areas include:
+Tasks 1–50 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -284,8 +286,9 @@ Tasks 1–49 are complete as the current foundation. Their implemented areas inc
 - Project list/detail/create and bounded, read-only Task Activity APIs using explicit summaries and the existing persistence/logging infrastructure.
 - a FastAPI-served Corporation Web UI foundation, read-only dashboard at `/ui`, Employee Management at `/ui/employees`, and Provider/Model Management at `/ui/providers`, with CSS and browser modules under `/ui/static/`. The dashboard and management pages consume only existing protected APIs and preserve their authentication and permission checks. Browser authentication is not configured, so protected data/actions require an authenticated session; pages clearly render per-resource failure states meanwhile.
 - Provider administration through the existing `provider:read` / `provider:manage` endpoints, limited to the supported ID/name create contract and safe ID/type responses; model assignment viewing/replacement through `model:read` / `model:manage` with the supported Agent ID and provider/model identifiers.
+- Task Management at `/ui/tasks`, using the protected Task list/detail/create and non-mutating dry-run APIs; no Task deletion or lifecycle mutation action is exposed because the API does not support one.
 
-This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, project ID persistence is incomplete, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider. Tasks 50–54 cover future Task, Project, Activity, Corporation documentation, and updates interfaces; they are not part of Task 49.
+This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, project ID persistence is incomplete, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider. Tasks 51–54 cover future Project, Activity, Corporation documentation, and updates interfaces; they are not part of Task 50.
 
 ## Future / planned roadmap
 

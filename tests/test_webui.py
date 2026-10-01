@@ -173,3 +173,53 @@ def test_provider_model_management_page_uses_protected_apis_and_safe_assets():
     orchestrator.run_agent.assert_not_called()
     orchestrator.create_task.assert_not_called()
     assert orchestrator.method_calls == []
+
+
+def test_task_management_page_uses_existing_protected_task_contract():
+    orchestrator = MagicMock(spec=Orchestrator)
+    application = create_app(CorporationApplicationService(orchestrator))
+
+    with TestClient(application) as client:
+        page = client.get("/ui/tasks")
+        script = client.get("/ui/static/tasks.mjs")
+        stylesheet = client.get("/ui/static/style.css")
+        dashboard = client.get("/ui")
+        employees = client.get("/ui/employees")
+        providers = client.get("/ui/providers")
+        protected = [
+            client.get("/api/tasks"),
+            client.get("/api/tasks/TASK-1"),
+            client.post(
+                "/api/tasks",
+                json={"title": "Task", "description": "Description"},
+            ),
+            client.post("/api/tasks/TASK-1/dry-run"),
+        ]
+        unsupported_delete = client.delete("/api/tasks/TASK-1")
+
+    assert page.status_code == 200
+    assert page.headers["content-type"].startswith("text/html")
+    assert "ERSELMETZ AI CORPORATION" in page.text
+    assert "Task Management" in page.text
+    assert 'href="/ui"' in page.text
+    assert 'src="/ui/static/tasks.mjs"' in page.text
+    assert 'href="/ui/static/style.css"' in page.text
+    assert script.status_code == 200
+    assert script.headers["content-type"].startswith("text/javascript")
+    assert stylesheet.status_code == 200
+    assert "task-layout" in stylesheet.text
+    assert all(endpoint in script.text for endpoint in ("/api/tasks", "/dry-run"))
+    assert "DELETE" not in script.text
+    assert "Bearer " not in script.text
+    assert "api_key" not in script.text.lower()
+    assert "password" not in script.text.lower()
+    assert 'href="/ui/tasks"' in dashboard.text
+    assert 'href="/ui/tasks"' in employees.text
+    assert 'href="/ui/tasks"' in providers.text
+    assert [response.status_code for response in protected] == [401] * 4
+    assert unsupported_delete.status_code == 405
+
+    orchestrator.execute_task.assert_not_called()
+    orchestrator.run_agent.assert_not_called()
+    orchestrator.create_task.assert_not_called()
+    assert orchestrator.method_calls == []
