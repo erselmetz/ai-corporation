@@ -1,6 +1,6 @@
 from app.database import get_connection
 
-from .task import Task, TaskStatus
+from .task import Task, TaskFailureCategory, TaskStatus
 
 
 class TaskRegistry:
@@ -43,9 +43,10 @@ class TaskRegistry:
                     required_capability,
                     status,
                     result,
-                    error
+                    error,
+                    failure_category
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     task.id,
@@ -58,6 +59,7 @@ class TaskRegistry:
                     task.status.value,
                     task.result,
                     task.error,
+                    task.failure_category.value if task.failure_category else None,
                 ),
             )
 
@@ -82,7 +84,8 @@ class TaskRegistry:
                     required_capability,
                     status,
                     result,
-                    error
+                    error,
+                    failure_category
                 FROM tasks
                 """
             ).fetchall()
@@ -99,6 +102,11 @@ class TaskRegistry:
                     status=TaskStatus(row["status"]),
                     result=row["result"],
                     error=row["error"],
+                    failure_category=(
+                        TaskFailureCategory(row["failure_category"])
+                        if row["failure_category"] is not None
+                        else None
+                    ),
                 )
 
                 self._tasks[task.id] = task
@@ -124,7 +132,8 @@ class TaskRegistry:
                     required_capability = ?,
                     status = ?,
                     result = ?,
-                    error = ?
+                    error = ?,
+                    failure_category = ?
                 WHERE id = ?
                 """,
                 (
@@ -137,6 +146,7 @@ class TaskRegistry:
                     task.status.value,
                     task.result,
                     task.error,
+                    task.failure_category.value if task.failure_category else None,
                     task.id,
                 ),
             )

@@ -34,6 +34,11 @@ from .system_monitoring import (
     SystemMonitoringReport,
     SystemMonitoringService,
 )
+from .failure_detection import (
+    DetectedFailure,
+    FailureDetectionReport,
+    FailureDetectionService,
+)
 
 __all__ = [
     "ActivitySummary",
@@ -64,4 +69,7 @@ __all__ = [
     "MonitoringSignalType",
     "SystemMonitoringReport",
     "SystemMonitoringService",
+    "DetectedFailure",
+    "FailureDetectionReport",
+    "FailureDetectionService",
 ]

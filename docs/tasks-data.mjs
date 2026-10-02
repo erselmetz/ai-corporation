@@ -164,7 +164,7 @@ export const tasks = taskGroups.flatMap((group) =>
       title,
       description,
       category: group.name,
-      status: number <= 75 ? "completed" : "planned",
+      status: number <= 76 ? "completed" : "planned",
     };
   })
 );

@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-03",
                 "type": "development",
+                "title": "Error Detection",
+                "summary": "Added persisted routing- and execution-stage failure categories, migrated historical failed Tasks to UNKNOWN, and exposed bounded immutable failure summaries with Task IDs and category codes only; raw exception text, retries, Task execution, and lifecycle changes are excluded.",
+            },
+            {
+                "date": "2026-10-03",
+                "type": "development",
                 "title": "System Monitoring",
                 "summary": "Added an on-demand immutable report over local Task status, Provider registration, and configured resource-capacity snapshots, with bounded factual failure and exhausted-capacity signals; Provider availability remains UNKNOWN, and monitoring performs no probes, polling, persistence, Task execution, or runtime changes.",
             },

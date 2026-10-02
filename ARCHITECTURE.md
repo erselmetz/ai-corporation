@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–75 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–76 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–75 completion scope
+## Tasks 1–76 completion scope
 
-Tasks 1–75 are complete as the current foundation. Their implemented areas include:
+Tasks 1–76 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -306,6 +306,7 @@ Tasks 1–75 are complete as the current foundation. Their implemented areas inc
 - Review-only model-candidate selection from explicit caller-supplied capability, policy, availability, and cost facts; existing assignment and execution paths are unchanged.
 - Bounded caller-driven multi-Agent collaboration records with explicit participant roles, one-way handoffs, shared context snapshots, metadata-only Task audit events, and no Provider calls or Task lifecycle mutation.
 - On-demand immutable monitoring reports over local Task, Provider-registration, and configured resource-capacity snapshots, with bounded factual failure/capacity signals and no Provider probes or runtime changes.
+- Persisted routing/execution-stage failure categories, UNKNOWN for legacy unclassified failures, and bounded failure summaries without raw exception text.
 
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, historical Task project associations may be unknown, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 
@@ -452,4 +453,8 @@ Collaboration only records supplied content; it never calls Providers, recursive
 
 ## System Monitoring (Task 75)
 
-`application_service.monitor_system()` returns an on-demand immutable report over current local Task status, Provider registration, and configured resource-capacity snapshots. It reports failed Task IDs (up to 100, with an omitted count) and exhausted configured capacity as factual signals, without adding alert rankings or policy thresholds. Provider availability remains UNKNOWN because monitoring performs no Provider probes; hardware feasibility also remains unknown. Unconfigured capacity is reported as absent. Task error text is not included. Sources are sampled independently, so observations can change while the report is being collected and the report does not reserve capacity. Reports are not cached or persisted, and monitoring does not execute Tasks, modify assignments, poll in the background, remediate, or add API/UI. Tasks 76+ error detection and controlled self-maintenance remain separate.
+`application_service.monitor_system()` returns an on-demand immutable report over current local Task status, Provider registration, and configured resource-capacity snapshots. It reports failed Task IDs (up to 100, with an omitted count) and exhausted configured capacity as factual signals, without adding alert rankings or policy thresholds. Provider availability remains UNKNOWN because monitoring performs no Provider probes; hardware feasibility also remains unknown. Unconfigured capacity is reported as absent. Task error text is not included. Sources are sampled independently, so observations can change while the report is being collected and the report does not reserve capacity. Reports are not cached or persisted, and monitoring does not execute Tasks, modify assignments, poll in the background, remediate, or add API/UI.
+
+## Error Detection (Task 76)
+
+Task failures caught at the routing and Agent/Provider execution stages are stored as `routing` or `execution` categories. These identify the stage where failure was caught, not its root cause. The additive SQLite migration marks historical failed Tasks without a category as `unknown`; in-memory failed Tasks with no category also report `unknown`. `application_service.detect_failures()` returns immutable, bounded summaries containing Task IDs and category codes only, with total and omitted counts. It never exposes Task.error or exception/log message text. It does not change Task lifecycle, retry, or execute work; Task 77 diagnostic investigation remains separate.

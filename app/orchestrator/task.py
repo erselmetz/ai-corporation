@@ -9,6 +9,12 @@ class TaskStatus(str, Enum):
     FAILED = "failed"
 
 
+class TaskFailureCategory(str, Enum):
+    UNKNOWN = "unknown"
+    ROUTING = "routing"
+    EXECUTION = "execution"
+
+
 @dataclass
 class Task:
     id: str
@@ -21,3 +27,4 @@ class Task:
     error: str | None = None
     required_role: str | None = None
     required_capability: str | None = None
+    failure_category: TaskFailureCategory | None = None

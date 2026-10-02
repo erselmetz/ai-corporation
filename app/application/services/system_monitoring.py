@@ -1,9 +1,9 @@
 """On-demand, read-only monitoring over local runtime snapshots."""
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from collections.abc import Iterable
 
 from app.orchestrator.task import TaskStatus
 from app.orchestrator.task_registry import TaskRegistry

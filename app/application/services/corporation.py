@@ -7,6 +7,7 @@ from app.node import Node
 from app.orchestrator import Orchestrator, Project, Task
 from app.orchestrator.dry_run import DryRunResult
 from app.providers import ProviderManagement
+from .failure_detection import FailureDetectionReport, FailureDetectionService
 from .system_monitoring import SystemMonitoringReport
 
 
@@ -166,6 +167,10 @@ class CorporationApplicationService:
             providers=self._orchestrator.providers,
             resource_manager=self._resource_manager,
         ).report()
+
+    def detect_failures(self) -> FailureDetectionReport:
+        """Return bounded Task failure categories without exception details."""
+        return FailureDetectionService(tasks=self._orchestrator.tasks).report()
 
     def execute_controlled_task(self, task_id):
         self.resource_manager()  # Reject missing configuration before touching Tasks.

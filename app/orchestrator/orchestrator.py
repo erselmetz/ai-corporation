@@ -4,7 +4,7 @@ from app.agents import AgentRegistry, EmployeeRegistry
 from app.database import TaskLogger
 from app.providers import ProviderRegistry
 
-from .task import Task, TaskStatus
+from .task import Task, TaskFailureCategory, TaskStatus
 from .task_registry import TaskRegistry
 from .router import TaskRouter, RoutingRequest, RoutingError
 from .dry_run import DryRunResult
@@ -71,6 +71,7 @@ class Orchestrator:
                     error=task.error,
                     required_role=task.required_role,
                     required_capability=task.required_capability,
+                    failure_category=task.failure_category,
                 )
 
             routing_request = RoutingRequest(task=routing_task, role=role, capability=capability)
@@ -112,12 +113,14 @@ class Orchestrator:
             task.status = TaskStatus.FAILED
             task.error = error
             task.result = None
+            task.failure_category = TaskFailureCategory.ROUTING
             self.tasks.update(task)
             self.logger.log(task.id, "TASK_FAILED", error)
             return task
 
         task.status = TaskStatus.RUNNING
         task.error = None
+        task.failure_category = None
         self.tasks.update(task)
 
         self.logger.log(
@@ -140,6 +143,7 @@ class Orchestrator:
             task.status = TaskStatus.FAILED
             task.error = str(exc)
             task.result = None
+            task.failure_category = TaskFailureCategory.EXECUTION
 
         self.tasks.update(task)
 

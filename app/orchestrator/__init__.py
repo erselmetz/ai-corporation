@@ -1,5 +1,5 @@
 from .orchestrator import Orchestrator
-from .task import Task, TaskStatus
+from .task import Task, TaskFailureCategory, TaskStatus
 from .task_registry import TaskRegistry
 from .project import Project
 from .project_registry import ProjectRegistry
@@ -16,6 +16,7 @@ from .collaboration import (
 __all__ = [
     "Orchestrator",
     "Task",
+    "TaskFailureCategory",
     "TaskStatus",
     "TaskRegistry",
     "Project",

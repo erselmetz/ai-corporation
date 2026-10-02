@@ -2,7 +2,14 @@ import pytest
 
 from app.agents import Agent, AgentRegistry, Employee, EmployeeRegistry
 from app.database import get_connection, initialize_database
-from app.orchestrator import Orchestrator, Project, ProjectRegistry, Task, TaskRegistry
+from app.orchestrator import (
+    Orchestrator,
+    Project,
+    ProjectRegistry,
+    Task,
+    TaskFailureCategory,
+    TaskRegistry,
+)
 from app.orchestrator.dry_run import DryRunResult
 from app.orchestrator.router import RoutingError
 from app.providers import ProviderRegistry
@@ -182,6 +189,22 @@ def test_existing_tasks_migrate_with_null_routing_requirements():
             """,
             ("legacy-task", "Legacy", "Existing task", "old-agent", "pending", None, None),
         )
+        connection.execute(
+            """
+            INSERT INTO tasks (
+                id, title, description, assigned_agent, status, result, error
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "legacy-failed-task",
+                "Legacy failed",
+                "Existing failed task",
+                "old-agent",
+                "failed",
+                None,
+                "private historical exception",
+            ),
+        )
         connection.commit()
     finally:
         connection.close()
@@ -193,6 +216,8 @@ def test_existing_tasks_migrate_with_null_routing_requirements():
     assert migrated.assigned_agent == "old-agent"
     assert migrated.required_role is None
     assert migrated.required_capability is None
+    legacy_failed = TaskRegistry().get("legacy-failed-task")
+    assert legacy_failed.failure_category is TaskFailureCategory.UNKNOWN
 
     connection = get_connection()
     try:
@@ -202,6 +227,7 @@ def test_existing_tasks_migrate_with_null_routing_requirements():
         }
         assert "required_role" in columns
         assert "required_capability" in columns
+        assert "failure_category" in columns
         assert connection.execute(
             "SELECT COUNT(*) FROM tasks WHERE id = 'legacy-task'"
         ).fetchone()[0] == 1

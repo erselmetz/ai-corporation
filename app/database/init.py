@@ -17,7 +17,8 @@ def initialize_database() -> None:
                 required_capability TEXT,
                 status TEXT NOT NULL,
                 result TEXT,
-                error TEXT
+                error TEXT,
+                failure_category TEXT
             )
             """
         )
@@ -34,6 +35,17 @@ def initialize_database() -> None:
             connection.execute(
                 "ALTER TABLE tasks ADD COLUMN required_capability TEXT"
             )
+        if "failure_category" not in task_columns:
+            connection.execute(
+                "ALTER TABLE tasks ADD COLUMN failure_category TEXT"
+            )
+        connection.execute(
+            """
+            UPDATE tasks
+            SET failure_category = 'unknown'
+            WHERE status = 'failed' AND failure_category IS NULL
+            """
+        )
 
         connection.execute(
             """
