@@ -115,6 +115,10 @@ class CorporationApplicationService:
         self._corporation = corporation
         self._node = node
 
+    def context_retrieval(self):
+        from .context_retrieval import ContextRetrievalService
+        return ContextRetrievalService(self.memory_management())
+
     def memory_management(self):
         from .memory_management import MemoryManagementService
         return MemoryManagementService(self._orchestrator, self._corporation.id if self._corporation else None)
