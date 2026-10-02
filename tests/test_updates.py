@@ -178,6 +178,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
     assert response.json() == {
         "items": [
             {
+                "date": "2026-10-03",
+                "type": "development",
+                "title": "Model Resource Awareness",
+                "summary": "Added bounded immutable model resource assessments from configured global/provider/model admission slots and provider registration, including the existing historical allocation-ID budget; snapshots reserve nothing and keep hardware feasibility and provider health unknown.",
+            },
+            {
                 "date": "2026-10-02",
                 "type": "development",
                 "title": "Controlled Concurrency",

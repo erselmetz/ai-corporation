@@ -82,6 +82,7 @@ class ResourceSnapshot:
     registered_providers: tuple[str, ...]
     hardware_capacity: str = "unknown"
     provider_health: str = "unknown"
+    allocation_id_history_capacity: Capacity | None = None
 
 
 class ResourceCapacityError(ValueError):
@@ -140,4 +141,5 @@ class ResourceManager:
             models = tuple((value.provider_id, value.model_id, Capacity(value.slots, sum((item.provider_id, item.model_id) == (value.provider_id, value.model_id) for item in active)))
                            for value in sorted(self._limits.models, key=lambda item: (item.provider_id, item.model_id)))
             registered = tuple(sorted(value.provider_id for value in self._limits.providers if self._registry.exists(value.provider_id)))
-            return ResourceSnapshot(Capacity(self._limits.global_slots, len(active)), providers, models, active, registered)
+            return ResourceSnapshot(Capacity(self._limits.global_slots, len(active)), providers, models, active, registered,
+                                    allocation_id_history_capacity=Capacity(self.MAX_ALLOCATION_IDS, len(self._used_ids)))

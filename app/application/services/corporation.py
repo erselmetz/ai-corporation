@@ -117,6 +117,12 @@ class CorporationApplicationService:
         self._corporation = corporation
         self._node = node
 
+    def assess_model_resources(self, candidates):
+        from app.resources.assessment import assess_model_resources
+        snapshot = self._resource_manager.snapshot() if self._resource_manager is not None else None
+        return assess_model_resources(candidates, snapshot=snapshot,
+                                      registered_providers=self._orchestrator.providers.all())
+
     def execute_controlled_task(self, task_id):
         self.resource_manager()  # Reject missing configuration before touching Tasks.
         return self._task_summary(self._controlled_execution.execute(task_id))
