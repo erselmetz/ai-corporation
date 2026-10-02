@@ -11,7 +11,7 @@ class _ScopedMemoryStore:
 
     @property
     def _table(self):
-        return {MemoryScope.CONVERSATION: "conversation_memory", MemoryScope.PROJECT: "project_knowledge"}[self._scope]
+        return {MemoryScope.CONVERSATION: "conversation_memory", MemoryScope.PROJECT: "project_knowledge", MemoryScope.CORPORATION: "corporation_knowledge"}[self._scope]
 
     @staticmethod
     def _request(memory_id: str, owner_id: str, scope_id: str):
@@ -26,6 +26,15 @@ class _ScopedMemoryStore:
                             row["source_id"], datetime.fromisoformat(row["created_at"]),
                             datetime.fromisoformat(row["expires_at"]), True)
 
+    def _insert(self, connection, record: MemoryRecord) -> None:
+        connection.execute(
+            f"INSERT INTO {self._table} "
+            "(id, owner_id, scope_id, type, content, source_id, created_at, expires_at, retention_opt_in) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (record.id, record.owner_id, record.scope_id, record.type.value,
+             record.content, record.source_id, record.created_at.isoformat(),
+             record.expires_at.isoformat(), 1))
+
     def retain(self, record: MemoryRecord, *, now: datetime) -> None:
         if not isinstance(record, MemoryRecord):
             raise TypeError("Expected a MemoryRecord")
@@ -36,13 +45,7 @@ class _ScopedMemoryStore:
         connection = get_connection()
         try:
             with connection:
-                connection.execute(
-                    f"INSERT INTO {self._table} "
-                    "(id, owner_id, scope_id, type, content, source_id, created_at, expires_at, retention_opt_in) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (record.id, record.owner_id, record.scope_id, record.type.value,
-                     record.content, record.source_id, record.created_at.isoformat(),
-                     record.expires_at.isoformat(), 1))
+                self._insert(connection, record)
         except sqlite3.IntegrityError:
             raise ValueError("Memory id already exists or record violates storage constraints") from None
         finally:

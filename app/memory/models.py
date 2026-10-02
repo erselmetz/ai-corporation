@@ -7,6 +7,7 @@ from enum import Enum
 class MemoryScope(str, Enum):
     CONVERSATION = "conversation"
     PROJECT = "project"
+    CORPORATION = "corporation"
 
 
 class MemoryType(str, Enum):

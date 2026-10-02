@@ -118,6 +118,42 @@ def initialize_database() -> None:
             """
         )
 
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS corporation_knowledge (
+                id TEXT PRIMARY KEY,
+                owner_id TEXT NOT NULL,
+                scope_id TEXT NOT NULL,
+                type TEXT NOT NULL,
+                content TEXT NOT NULL,
+                source_id TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                retention_opt_in INTEGER NOT NULL CHECK(retention_opt_in = 1)
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS corporation_knowledge_provenance (
+                knowledge_id TEXT PRIMARY KEY,
+                source_scope TEXT NOT NULL,
+                source_scope_id TEXT NOT NULL,
+                source_reference TEXT NOT NULL,
+                source_created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS corporation_knowledge_readers (
+                knowledge_id TEXT NOT NULL,
+                reader_id TEXT NOT NULL,
+                PRIMARY KEY (knowledge_id, reader_id)
+            )
+            """
+        )
+
         connection.commit()
 
     finally:

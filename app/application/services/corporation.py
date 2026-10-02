@@ -115,6 +115,12 @@ class CorporationApplicationService:
         self._corporation = corporation
         self._node = node
 
+    def corporation_knowledge(self):
+        if self._corporation is None:
+            raise RuntimeError("Corporation runtime identity is not configured")
+        from .corporation_knowledge import CorporationKnowledgeService
+        return CorporationKnowledgeService(self._corporation.id, self._orchestrator)
+
     def project_knowledge(self):
         from .project_knowledge import ProjectKnowledgeService
         return ProjectKnowledgeService(self._orchestrator)
