@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-02",
                 "type": "development",
+                "title": "Improved Task Planning",
+                "summary": "Added immutable review-only Task plans for explicitly selected Tasks in one Project, with validated dependency graphs and deterministic order, actual lifecycle snapshots, authorized traced context, and caller-defined outcome/evidence criteria that remain unverified.",
+            },
+            {
+                "date": "2026-10-02",
+                "type": "development",
                 "title": "Context Retrieval",
                 "summary": "Added bounded deterministic Context Retrieval over explicitly selected authorized memory scopes, with source references, provenance, expiry and revision traces, live scoped access rechecks, and explicit candidate/result/byte limit indicators.",
             },

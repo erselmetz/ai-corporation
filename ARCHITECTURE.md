@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–66 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–67 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–66 completion scope
+## Tasks 1–67 completion scope
 
-Tasks 1–66 are complete as the current foundation. Their implemented areas include:
+Tasks 1–67 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -401,3 +401,9 @@ The /ui/memory page uses protected /api/memory services. memory:read permits sco
 Added bounded deterministic Context Retrieval over explicitly selected authorized memory scopes, with source references, provenance, expiry and revision traces, live scoped access rechecks, and explicit candidate/result/byte limit indicators.
 
 ContextRetrievalService is available through application_service.context_retrieval(). Trusted callers supply the authenticated actor, one exact conversation/project/Corporation scope, a timezone-aware current time, and a keyword query. It uses case-folded word matching, ranks by distinct matched terms with memory-ID tie breaking, and does not broaden access or scope. Queries are limited to 1024 UTF-8 bytes and 32 distinct terms; retrieval scans at most 100 authorized records, returns at most 10 matches (default 5), and bounds serialized hit payloads to 32768 bytes. Candidate-limit reporting is conservative when exactly 100 records are returned; results are not a complete-history or semantic-search guarantee. Expired records are excluded, project associations are verified, named-reader grants are rechecked, and corrupt data fails explicitly. Immutable results carry original references, expiry, and revision; caller-held snapshots cannot be revoked and must be retrieved again before later use. Retrieved content remains untrusted knowledge, not instructions. No provider execution, automatic chat injection, new HTTP/UI route, dependency, or change to the file-based read-only Documentation Portal is added.
+
+## Improved Task Planning (Task 67)
+
+Added immutable review-only Task plans for explicitly selected Tasks in one Project, with validated dependency graphs and deterministic order, actual lifecycle snapshots, authorized traced context, and caller-defined outcome/evidence criteria that remain unverified.
+
+The application_service.task_planning() service builds in-memory review plans for 1 to 50 existing Tasks within one exact Project. Dependencies must be explicitly selected; missing Tasks, duplicate/self dependencies, cross-project links and cycles are rejected. Each Task requires 1 to 10 bounded expected-outcome, verification-method and expected-evidence criteria. Completed lifecycle status never proves those criteria: all plan outcomes remain unverified. Plans show deterministic dependency order and currently unmet prerequisites, but do not enforce execution eligibility. Optional context requires an explicit query, authorized scope and resource ID through Task 66; Project context must match the planned Project. Trusted callers authorize selected Tasks and bind actor identity. Plans and context are immutable snapshots and must be rebuilt before later use. No Task creation, execution, provider call, persistence, queue, new HTTP/UI route or change to the file-based read-only Documentation Portal is added. Existing Task summaries and execution behavior are preserved.

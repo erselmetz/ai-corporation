@@ -115,6 +115,10 @@ class CorporationApplicationService:
         self._corporation = corporation
         self._node = node
 
+    def task_planning(self):
+        from .task_planning import TaskPlanningService
+        return TaskPlanningService(self._orchestrator, self.context_retrieval())
+
     def context_retrieval(self):
         from .context_retrieval import ContextRetrievalService
         return ContextRetrievalService(self.memory_management())
