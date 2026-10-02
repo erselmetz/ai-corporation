@@ -63,23 +63,23 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5]);
   });
 
-  it("marks exactly tasks 1–76 complete and all later tasks planned", () => {
-    assert.ok(tasks.slice(0, 76).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(76).every((task) => task.status === "planned"));
+  it("marks exactly tasks 1–77 complete and all later tasks planned", () => {
+    assert.ok(tasks.slice(0, 77).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(77).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
     assert.deepEqual(
-      tasks.slice(52, 76).map(({ number, status }) => [number, status]),
-      [[53, "completed"], [54, "completed"], [55, "completed"], [56, "completed"], [57, "completed"], [58, "completed"], [59, "completed"], [60, "completed"], [61, "completed"], [62, "completed"], [63, "completed"], [64, "completed"], [65, "completed"], [66, "completed"], [67, "completed"], [68, "completed"], [69, "completed"], [70, "completed"], [71, "completed"], [72, "completed"], [73, "completed"], [74, "completed"], [75, "completed"], [76, "completed"]],
+      tasks.slice(52, 77).map(({ number, status }) => [number, status]),
+      [[53, "completed"], [54, "completed"], [55, "completed"], [56, "completed"], [57, "completed"], [58, "completed"], [59, "completed"], [60, "completed"], [61, "completed"], [62, "completed"], [63, "completed"], [64, "completed"], [65, "completed"], [66, "completed"], [67, "completed"], [68, "completed"], [69, "completed"], [70, "completed"], [71, "completed"], [72, "completed"], [73, "completed"], [74, "completed"], [75, "completed"], [76, "completed"], [77, "completed"]],
     );
   });
 
   it("describes the current completed and planned ranges on the roadmap page", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
-    assert.match(html, /Milestones 1–76 are completed foundations/);
-    assert.match(html, /Tasks 77–100 remain planned/);
+    assert.match(html, /Milestones 1–77 are completed foundations/);
+    assert.match(html, /Tasks 78–100 remain planned/);
   });
 
   it("serves only read methods", async () => {

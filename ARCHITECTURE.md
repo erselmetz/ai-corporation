@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–76 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–77 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–76 completion scope
+## Tasks 1–77 completion scope
 
-Tasks 1–76 are complete as the current foundation. Their implemented areas include:
+Tasks 1–77 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -307,6 +307,7 @@ Tasks 1–76 are complete as the current foundation. Their implemented areas inc
 - Bounded caller-driven multi-Agent collaboration records with explicit participant roles, one-way handoffs, shared context snapshots, metadata-only Task audit events, and no Provider calls or Task lifecycle mutation.
 - On-demand immutable monitoring reports over local Task, Provider-registration, and configured resource-capacity snapshots, with bounded factual failure/capacity signals and no Provider probes or runtime changes.
 - Persisted routing/execution-stage failure categories, UNKNOWN for legacy unclassified failures, and bounded failure summaries without raw exception text.
+- One-call caller-selected Agent diagnostics over bounded caller-supplied sanitized evidence, with citations validated against supplied references.
 
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, historical Task project associations may be unknown, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 
@@ -457,4 +458,8 @@ Collaboration only records supplied content; it never calls Providers, recursive
 
 ## Error Detection (Task 76)
 
-Task failures caught at the routing and Agent/Provider execution stages are stored as `routing` or `execution` categories. These identify the stage where failure was caught, not its root cause. The additive SQLite migration marks historical failed Tasks without a category as `unknown`; in-memory failed Tasks with no category also report `unknown`. `application_service.detect_failures()` returns immutable, bounded summaries containing Task IDs and category codes only, with total and omitted counts. It never exposes Task.error or exception/log message text. It does not change Task lifecycle, retry, or execute work; Task 77 diagnostic investigation remains separate.
+Task failures caught at the routing and Agent/Provider execution stages are stored as `routing` or `execution` categories. These identify the stage where failure was caught, not its root cause. The additive SQLite migration marks historical failed Tasks without a category as `unknown`; in-memory failed Tasks with no category also report `unknown`. `application_service.detect_failures()` returns immutable, bounded summaries containing Task IDs and category codes only, with total and omitted counts. It never exposes Task.error or exception/log message text. It does not change Task lifecycle, retry, or execute work.
+
+## Diagnostic Agent (Task 77)
+
+`application_service.diagnose_failure(agent_id, failure, evidence)` performs one call through the caller-selected registered Agent, using only a current Task 76 failure record and 1–20 explicit caller-supplied sanitized evidence items. The trusted caller is responsible for removing secrets and exception text before constructing `DiagnosticEvidence`. Each evidence item is bounded to 8192 UTF-8 bytes and total evidence to 32768 bytes. The bounded structured response permits at most 10 findings and unknowns; every finding must cite reference IDs present in that request. The result contains the failure and selected Agent IDs, cited findings, and unknowns—not the supplied evidence itself. Citations are checked for reference identity, not truth; generated diagnostics require human review. No Task.error, logs, or other records are retrieved automatically. No Task creation/execution, assignment changes, retries, remediation, persistence, or API/UI are added. Tasks 78+ maintenance proposals and automated changes remain separate.

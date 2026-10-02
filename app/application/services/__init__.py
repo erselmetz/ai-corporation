@@ -39,6 +39,14 @@ from .failure_detection import (
     FailureDetectionReport,
     FailureDetectionService,
 )
+from .diagnostics import (
+    DiagnosticEvidence,
+    DiagnosticFinding,
+    DiagnosticProviderError,
+    DiagnosticReport,
+    DiagnosticResponseError,
+    DiagnosticService,
+)
 
 __all__ = [
     "ActivitySummary",
@@ -72,4 +80,10 @@ __all__ = [
     "DetectedFailure",
     "FailureDetectionReport",
     "FailureDetectionService",
+    "DiagnosticEvidence",
+    "DiagnosticFinding",
+    "DiagnosticProviderError",
+    "DiagnosticReport",
+    "DiagnosticResponseError",
+    "DiagnosticService",
 ]

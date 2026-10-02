@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-03",
                 "type": "development",
+                "title": "Diagnostic Agent",
+                "summary": "Added one-call, caller-selected Agent diagnostics over bounded caller-supplied evidence only, with validated bounded summaries and citations restricted to supplied reference IDs; no automatic retrieval, raw error input, Task creation/execution, assignment changes, retries, or remediation.",
+            },
+            {
+                "date": "2026-10-03",
+                "type": "development",
                 "title": "Error Detection",
                 "summary": "Added persisted routing- and execution-stage failure categories, migrated historical failed Tasks to UNKNOWN, and exposed bounded immutable failure summaries with Task IDs and category codes only; raw exception text, retries, Task execution, and lifecycle changes are excluded.",
             },
