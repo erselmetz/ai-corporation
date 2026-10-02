@@ -123,6 +123,10 @@ class CorporationApplicationService:
         return assess_model_resources(candidates, snapshot=snapshot,
                                       registered_providers=self._orchestrator.providers.all())
 
+    def check_provider_availability(self, provider_id):
+        """Explicitly check a registered provider without changing runtime state."""
+        return self._orchestrator.providers.get(provider_id).check_availability()
+
     def execute_controlled_task(self, task_id):
         self.resource_manager()  # Reject missing configuration before touching Tasks.
         return self._task_summary(self._controlled_execution.execute(task_id))
