@@ -154,6 +154,25 @@ def initialize_database() -> None:
             """
         )
 
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS execution_queue (
+                sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+                corporation_id TEXT NOT NULL,
+                id TEXT NOT NULL,
+                task_id TEXT NOT NULL,
+                state TEXT NOT NULL CHECK(state IN ('queued','claimed','completed','failed','abandoned')),
+                worker_id TEXT,
+                claim_id TEXT,
+                resolution TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                UNIQUE(corporation_id, id),
+                UNIQUE(corporation_id, task_id),
+                UNIQUE(corporation_id, claim_id)
+            )
+        """)
+        connection.execute("CREATE INDEX IF NOT EXISTS execution_queue_fifo ON execution_queue(corporation_id, state, sequence)")
+
         connection.commit()
 
     finally:

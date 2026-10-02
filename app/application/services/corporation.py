@@ -116,6 +116,11 @@ class CorporationApplicationService:
         self._corporation = corporation
         self._node = node
 
+    def execution_queue(self):
+        if self._corporation is None:
+            raise RuntimeError("Corporation identity is not configured")
+        return self._orchestrator.execution_queue(self._corporation.id)
+
     def resource_manager(self, limits=None):
         from app.resources import ResourceManager
         if self._resource_manager is None:

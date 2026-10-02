@@ -29,6 +29,10 @@ class Orchestrator:
         self.employees = employees
         self.router = TaskRouter(agents, employees)
 
+    def execution_queue(self, corporation_id):
+        from .execution_queue import ExecutionQueue
+        return ExecutionQueue(corporation_id)
+
     def run_agent(self, agent_id: str, prompt: str) -> str:
         agent = self.agents.get(agent_id)
 
