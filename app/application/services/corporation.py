@@ -115,6 +115,10 @@ class CorporationApplicationService:
         self._corporation = corporation
         self._node = node
 
+    def memory_management(self):
+        from .memory_management import MemoryManagementService
+        return MemoryManagementService(self._orchestrator, self._corporation.id if self._corporation else None)
+
     def corporation_knowledge(self):
         if self._corporation is None:
             raise RuntimeError("Corporation runtime identity is not configured")

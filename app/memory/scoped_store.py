@@ -3,7 +3,7 @@ from datetime import datetime
 import sqlite3
 
 from app.database import get_connection
-from .models import MemoryRecord, MemoryScope, MemoryType, require_memory_access, _identifier, _time
+from .models import MemoryRecord, MemoryScope, MemoryType, MemoryDataError, require_memory_access, _identifier, _time
 
 
 class _ScopedMemoryStore:
@@ -19,12 +19,15 @@ class _ScopedMemoryStore:
             _identifier(value, label)
 
     def _record(self, row) -> MemoryRecord:
-        if row["retention_opt_in"] != 1:
-            raise ValueError("Stored memory has invalid retention consent")
-        return MemoryRecord(row["id"], row["owner_id"], self._scope,
-                            row["scope_id"], MemoryType(row["type"]), row["content"],
-                            row["source_id"], datetime.fromisoformat(row["created_at"]),
-                            datetime.fromisoformat(row["expires_at"]), True)
+        try:
+            if row["retention_opt_in"] != 1:
+                raise ValueError("Stored memory has invalid retention consent")
+            return MemoryRecord(row["id"], row["owner_id"], self._scope,
+                                row["scope_id"], MemoryType(row["type"]), row["content"],
+                                row["source_id"], datetime.fromisoformat(row["created_at"]),
+                                datetime.fromisoformat(row["expires_at"]), True)
+        except (ValueError, TypeError, KeyError, IndexError):
+            raise MemoryDataError("Stored memory is invalid") from None
 
     def _insert(self, connection, record: MemoryRecord) -> None:
         connection.execute(
@@ -48,6 +51,27 @@ class _ScopedMemoryStore:
                 self._insert(connection, record)
         except sqlite3.IntegrityError:
             raise ValueError("Memory id already exists or record violates storage constraints") from None
+        finally:
+            connection.close()
+
+    def list_scoped(self, *, actor_id: str, scope_id: str, limit: int = 50):
+        _identifier(actor_id, "actor_id")
+        _identifier(scope_id, "scope_id")
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError("Memory limit must be 1 to 100")
+        connection = get_connection()
+        try:
+            if self._scope is MemoryScope.CORPORATION:
+                rows = connection.execute(
+                    "SELECT k.* FROM corporation_knowledge k WHERE k.scope_id = ? AND "
+                    "(k.owner_id = ? OR EXISTS (SELECT 1 FROM corporation_knowledge_readers r "
+                    "WHERE r.knowledge_id = k.id AND r.reader_id = ?)) ORDER BY k.id LIMIT ?",
+                    (scope_id, actor_id, actor_id, limit)).fetchall()
+            else:
+                rows = connection.execute(
+                    f"SELECT * FROM {self._table} WHERE owner_id = ? AND scope_id = ? ORDER BY id LIMIT ?",
+                    (actor_id, scope_id, limit)).fetchall()
+            return tuple(self._record(row) for row in rows)
         finally:
             connection.close()
 

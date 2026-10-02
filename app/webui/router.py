@@ -33,6 +33,7 @@ def corporation_dashboard() -> HTMLResponse:
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/memory">Memory</a></li>
                 <li><a href="/ui/documentation">Documentation portal</a></li>
                 <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
@@ -119,6 +120,7 @@ def documentation_portal_page() -> HTMLResponse:
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/memory">Memory</a></li>
                 <li><a href="/ui/documentation" aria-current="page">Documentation portal</a></li>
                 <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
@@ -274,6 +276,7 @@ def updates_page() -> HTMLResponse:
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/memory">Memory</a></li>
                 <li><a href="/ui/documentation">Documentation portal</a></li>
                 <li><a href="/ui/updates" aria-current="page">Updates / changelog</a></li>
               </ul>
@@ -336,6 +339,7 @@ def employee_management_page() -> HTMLResponse:
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/memory">Memory</a></li>
                 <li><a href="/ui/documentation">Documentation portal</a></li>
                 <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
@@ -421,6 +425,7 @@ def provider_model_management_page() -> HTMLResponse:
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/memory">Memory</a></li>
                 <li><a href="/ui/documentation">Documentation portal</a></li>
                 <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
@@ -516,6 +521,7 @@ def task_management_page() -> HTMLResponse:
                 <li><a href="/ui/tasks" aria-current="page">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/memory">Memory</a></li>
                 <li><a href="/ui/documentation">Documentation portal</a></li>
                 <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
@@ -614,6 +620,7 @@ def project_management_page() -> HTMLResponse:
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects" aria-current="page">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
+                <li><a href="/ui/memory">Memory</a></li>
                 <li><a href="/ui/documentation">Documentation portal</a></li>
                 <li><a href="/ui/updates">Updates / changelog</a></li>
               </ul>
@@ -664,3 +671,26 @@ def project_management_page() -> HTMLResponse:
         </html>
         """
     )
+
+
+@router.get("/ui/memory", response_class=HTMLResponse, include_in_schema=False)
+def memory_page() -> HTMLResponse:
+    return HTMLResponse("""<!doctype html><html lang="en"><head>
+      <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Memory — ERSELMETZ AI CORPORATION</title><link rel="stylesheet" href="/ui/static/style.css">
+      <script type="module" src="/ui/static/memory.mjs"></script></head><body>
+      <main class="content"><a href="/ui">Back to dashboard</a><h1>Memory management</h1>
+      <p>Browser sign-in is not configured. Reads require memory:read; changes require memory:manage and owner authority. Owner identity comes from the authenticated session.</p>
+      <section class="management-card"><h2>Inspect stored memory</h2>
+      <label for="memory-scope">Scope</label><select id="memory-scope"><option value="conversation">Conversation</option><option value="project">Project</option><option value="corporation">Corporation publication</option></select>
+      <label for="memory-scope-id">Conversation, Project, or Corporation ID</label><input id="memory-scope-id" autocomplete="off">
+      <button id="memory-refresh" type="button">Refresh</button>
+      <p id="memory-state" role="status" aria-live="polite">Choose a scope and enter its resource ID.</p><ul id="memory-list"></ul></section>
+      <section class="management-card"><h2>Inspect, correct, retain, or remove</h2>
+      <p id="memory-detail-state" role="status" aria-live="polite"></p>
+      <label for="memory-content">Content</label><textarea id="memory-content"></textarea>
+      <label for="memory-expiry">Expiry (ISO timestamp with timezone)</label><input id="memory-expiry" type="text">
+      <label><input id="memory-consent" type="checkbox">I explicitly consent to retaining this corrected memory until the stated expiry.</label>
+      <button id="memory-save" type="button" disabled>Save correction / retention</button><button id="memory-remove" type="button" disabled>Remove memory</button>
+      <p>Expired content cannot be restored through this page. Publications preserve their source expiry and stay immutable; owners may withdraw them. Removing a private source does not withdraw an independently published copy. Caller-held copies and backups cannot be revoked by this interface.</p>
+      </section></main></body></html>""")

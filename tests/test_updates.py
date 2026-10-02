@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-02",
                 "type": "development",
+                "title": "Memory Management UI",
+                "summary": "Added authorized memory inspection, owner correction and explicit retention, revision-conflict protection, expired-record removal, and owner withdrawal of immutable published knowledge through scoped API services and a browser page; default authentication remains fail-closed.",
+            },
+            {
+                "date": "2026-10-02",
+                "type": "development",
                 "title": "Corporation Knowledge",
                 "summary": "Added explicit owner-approved Corporation Knowledge publication to bounded named-reader lists, with copied provenance and inherited expiry, deny-by-default scoped reads, owner revocation/withdrawal, and atomic durable publication; private memory is never shared automatically.",
             },

@@ -53,6 +53,10 @@ class MemoryRecord:
             raise ValueError("Explicit memory retention opt-in is required")
 
 
+class MemoryDataError(ValueError):
+    """Malformed stored data; never treated as an empty retrieval result."""
+
+
 class MemoryExpiredError(ValueError):
     pass
 

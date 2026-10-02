@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–64 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–65 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–64 completion scope
+## Tasks 1–65 completion scope
 
-Tasks 1–64 are complete as the current foundation. Their implemented areas include:
+Tasks 1–65 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -389,3 +389,9 @@ CorporationApplicationService.project_knowledge provides explicit retention/retr
 Added explicit owner-approved Corporation Knowledge publication to bounded named-reader lists, with copied provenance and inherited expiry, deny-by-default scoped reads, owner revocation/withdrawal, and atomic durable publication; private memory is never shared automatically.
 
 CorporationApplicationService.corporation_knowledge requires configured Corporation identity. Publishing explicitly retrieves an owner-authorized conversation or Project memory source through existing services; Project/Task provenance is checked before publication. Publication requires separate publication_opt_in=True and 1–100 distinct named reader IDs; wildcard access and implicit membership/admin access are unavailable. Content, source memory ID, scope/resource reference, original source timestamp, type, and expiry are copied into an immutable snapshot. Publication cannot extend source expiry. Records, provenance, and grants commit together or roll back together in additive SQLite tables. Reads require the exact Corporation plus the owner or a named reader and reject expired/corrupt records. Only the owner may revoke an individual grant or withdraw the entire publication, including after expiry. Caller-held copies cannot be revoked. A publication is a separately consented copy: deleting its private source does not automatically withdraw the publication, and withdrawing publication does not delete its private source. Trusted callers bind actor IDs to actual authenticated/local identity. No knowledge HTTP/UI routes, provider calls, Task execution, automatic promotion, or scheduled cleanup are added. Legacy stores and the read-only file-based Task 53 portal remain unchanged.
+
+## Memory Management UI (Task 65)
+
+Added authorized memory inspection, owner correction and explicit retention, revision-conflict protection, expired-record removal, and owner withdrawal of immutable published knowledge through scoped API services and a browser page; default authentication remains fail-closed.
+
+The /ui/memory page uses protected /api/memory services. memory:read permits scoped inspection; memory:manage also requires record ownership for mutations. The server binds owners/readers to authenticated identity and denies access by default. Lists contain metadata only (50 records by default, maximum 100), including expired records whose content cannot be read or restored. Active private notes can be corrected or retained with explicit consent and a future timezone-aware expiry; source references remain intact and stale revisions are rejected. Published knowledge is an immutable snapshot: named readers can inspect it, while its owner can withdraw it. Removing a private source does not withdraw separately consented publication; deletion cannot revoke caller-held copies or backups. This page adds no automatic capture, provider execution, semantic retrieval, or changes to the file-based read-only Documentation Portal. Browser authentication remains unconfigured.

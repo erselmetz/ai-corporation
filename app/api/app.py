@@ -810,6 +810,8 @@ def create_app(
     )
     application.include_router(api_router)
     application.include_router(corporation_router)
+    from .memory import router as memory_router
+    application.include_router(memory_router)
     application.include_router(web_ui_router)
     return application
 

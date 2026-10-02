@@ -3,7 +3,7 @@ from datetime import datetime
 import sqlite3
 
 from app.database import get_connection
-from .models import MemoryRecord, MemoryScope, require_memory_access, _identifier, _time
+from .models import MemoryRecord, MemoryScope, MemoryDataError, require_memory_access, _identifier, _time
 from .scoped_store import _ScopedMemoryStore
 
 
@@ -92,13 +92,16 @@ class CorporationKnowledgeStore(_ScopedMemoryStore):
             source = connection.execute(
                 "SELECT * FROM corporation_knowledge_provenance WHERE knowledge_id = ?",
                 (knowledge_id,)).fetchone()
-            if source is None:
-                raise ValueError("Knowledge provenance is missing")
-            provenance = KnowledgeProvenance(MemoryScope(source["source_scope"]),
-                                             source["source_scope_id"], source["source_reference"],
-                                             datetime.fromisoformat(source["source_created_at"]))
-            if provenance.source_created_at > record.created_at:
-                raise ValueError("Knowledge provenance time is invalid")
+            try:
+                if source is None:
+                    raise ValueError("Knowledge provenance is missing")
+                provenance = KnowledgeProvenance(MemoryScope(source["source_scope"]),
+                                                 source["source_scope_id"], source["source_reference"],
+                                                 datetime.fromisoformat(source["source_created_at"]))
+                if provenance.source_created_at > record.created_at:
+                    raise ValueError("Knowledge provenance time is invalid")
+            except (ValueError, TypeError, KeyError, IndexError):
+                raise MemoryDataError("Stored knowledge provenance is invalid") from None
             return CorporationKnowledge(record, provenance)
         finally:
             connection.close()
