@@ -3,6 +3,12 @@
     {
       "date": "2026-10-02",
       "type": "development",
+      "title": "Resource Manager",
+      "summary": "Added explicitly configured local execution-slot accounting with immutable global/provider/model capacity snapshots, atomic allocation/release, exhausted-capacity rejection, and unknown hardware/health reporting; existing execution paths remain unchanged."
+    },
+    {
+      "date": "2026-10-02",
+      "type": "development",
       "title": "Improved Task Planning",
       "summary": "Added immutable review-only Task plans for explicitly selected Tasks in one Project, with validated dependency graphs and deterministic order, actual lifecycle snapshots, authorized traced context, and caller-defined outcome/evidence criteria that remain unverified."
     },

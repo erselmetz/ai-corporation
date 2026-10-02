@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–67 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–68 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–67 completion scope
+## Tasks 1–68 completion scope
 
-Tasks 1–67 are complete as the current foundation. Their implemented areas include:
+Tasks 1–68 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -407,3 +407,9 @@ ContextRetrievalService is available through application_service.context_retriev
 Added immutable review-only Task plans for explicitly selected Tasks in one Project, with validated dependency graphs and deterministic order, actual lifecycle snapshots, authorized traced context, and caller-defined outcome/evidence criteria that remain unverified.
 
 The application_service.task_planning() service builds in-memory review plans for 1 to 50 existing Tasks within one exact Project. Dependencies must be explicitly selected; missing Tasks, duplicate/self dependencies, cross-project links and cycles are rejected. Each Task requires 1 to 10 bounded expected-outcome, verification-method and expected-evidence criteria. Completed lifecycle status never proves those criteria: all plan outcomes remain unverified. Plans show deterministic dependency order and currently unmet prerequisites, but do not enforce execution eligibility. Optional context requires an explicit query, authorized scope and resource ID through Task 66; Project context must match the planned Project. Trusted callers authorize selected Tasks and bind actor identity. Plans and context are immutable snapshots and must be rebuilt before later use. No Task creation, execution, provider call, persistence, queue, new HTTP/UI route or change to the file-based read-only Documentation Portal is added. Existing Task summaries and execution behavior are preserved.
+
+## Resource Manager (Task 68)
+
+Added explicitly configured local execution-slot accounting with immutable global/provider/model capacity snapshots, atomic allocation/release, exhausted-capacity rejection, and unknown hardware/health reporting; existing execution paths remain unchanged.
+
+application_service.resource_manager(limits) configures a local manager once; later calls return the same instance. No limits are inferred and an unconfigured manager is unavailable. ResourceLimits requires a global limit plus immutable unique provider and exact provider/model limits (1 to 100 entries each); every slot limit is an integer from 1 to 10000. Configured providers must be registered; model identifiers are configuration, not claims of discovered model availability. Explicit allocations consume one global, provider and model slot atomically; unknown/unconfigured resources, duplicate IDs and exhausted capacity are rejected without changing counters. Release requires an active allocation and remains possible after provider removal. Snapshots distinguish provider registration from unknown health and hardware capacity. Allocation IDs cannot be reused within this manager and lifetime ID history is bounded to 10000; accounting is in-memory and is not preserved across restart. Trusted application callers configure and manage allocations. Existing executions outside the manager are not tracked or gated; no automatic integration, queue, scheduler, hardware polling, provider call, persistence, new API/UI, dependency or change to sandbox policies or the read-only Documentation Portal is introduced.

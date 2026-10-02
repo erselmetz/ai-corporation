@@ -112,8 +112,19 @@ class CorporationApplicationService:
     ):
         self._orchestrator = orchestrator
         self._corporation_chat = None
+        self._resource_manager = None
         self._corporation = corporation
         self._node = node
+
+    def resource_manager(self, limits=None):
+        from app.resources import ResourceManager
+        if self._resource_manager is None:
+            if limits is None:
+                raise RuntimeError("Resource limits are not configured")
+            self._resource_manager = ResourceManager(limits, self._orchestrator.providers)
+        elif limits is not None:
+            raise ValueError("Resource manager is already configured")
+        return self._resource_manager
 
     def task_planning(self):
         from .task_planning import TaskPlanningService
