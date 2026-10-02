@@ -7,6 +7,7 @@ from app.node import Node
 from app.orchestrator import Orchestrator, Project, Task
 from app.orchestrator.dry_run import DryRunResult
 from app.providers import ProviderManagement
+from .system_monitoring import SystemMonitoringReport
 
 
 @dataclass(frozen=True)
@@ -156,6 +157,15 @@ class CorporationApplicationService:
                 logger=self._orchestrator.logger,
             )
         return self._task_collaboration
+
+    def monitor_system(self) -> SystemMonitoringReport:
+        """Return an on-demand report without probing Providers or changing state."""
+        from .system_monitoring import SystemMonitoringService
+        return SystemMonitoringService(
+            tasks=self._orchestrator.tasks,
+            providers=self._orchestrator.providers,
+            resource_manager=self._resource_manager,
+        ).report()
 
     def execute_controlled_task(self, task_id):
         self.resource_manager()  # Reject missing configuration before touching Tasks.

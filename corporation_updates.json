@@ -3,6 +3,12 @@
     {
       "date": "2026-10-03",
       "type": "development",
+      "title": "System Monitoring",
+      "summary": "Added an on-demand immutable report over local Task status, Provider registration, and configured resource-capacity snapshots, with bounded factual failure and exhausted-capacity signals; Provider availability remains UNKNOWN, and monitoring performs no probes, polling, persistence, Task execution, or runtime changes."
+    },
+    {
+      "date": "2026-10-03",
+      "type": "development",
       "title": "Multi-Agent Collaboration",
       "summary": "Added bounded caller-driven in-memory handoffs among 2–10 distinct registered Agents on an existing pending Task, with registered-role verification, append-only shared context, explicit terminal failure/completion, and metadata-only Task audit events; no Provider calls, Task lifecycle changes, assignment changes, Task creation, or API/UI."
     },

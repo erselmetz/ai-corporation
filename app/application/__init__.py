@@ -3,6 +3,8 @@ from .services import (
     AgentSummary,
     CorporationApplicationService,
     CorporationStatusSummary,
+    CapacityObservation,
+    CapacityScope,
     DocumentationApplicationService,
     DocumentationDocument,
     DocumentationNotFound,
@@ -18,9 +20,13 @@ from .services import (
     EmployeeSummary,
     ModelAssignmentSummary,
     ModelSummary,
+    MonitoringSignal,
+    MonitoringSignalType,
     ProjectSummary,
     ProviderSummary,
     TaskSummary,
+    SystemMonitoringReport,
+    SystemMonitoringService,
 )
 
 __all__ = [
@@ -28,6 +34,8 @@ __all__ = [
     "AgentSummary",
     "CorporationApplicationService",
     "CorporationStatusSummary",
+    "CapacityObservation",
+    "CapacityScope",
     "DocumentationApplicationService",
     "DocumentationDocument",
     "DocumentationNotFound",
@@ -43,7 +51,11 @@ __all__ = [
     "EmployeeSummary",
     "ModelAssignmentSummary",
     "ModelSummary",
+    "MonitoringSignal",
+    "MonitoringSignalType",
     "ProjectSummary",
     "ProviderSummary",
     "TaskSummary",
+    "SystemMonitoringReport",
+    "SystemMonitoringService",
 ]

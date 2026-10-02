@@ -26,6 +26,14 @@ from .updates import (
     UpdatesSource,
     UpdatesSourceUnavailable,
 )
+from .system_monitoring import (
+    CapacityObservation,
+    CapacityScope,
+    MonitoringSignal,
+    MonitoringSignalType,
+    SystemMonitoringReport,
+    SystemMonitoringService,
+)
 
 __all__ = [
     "ActivitySummary",
@@ -50,4 +58,10 @@ __all__ = [
     "ProjectSummary",
     "ProviderSummary",
     "TaskSummary",
+    "CapacityObservation",
+    "CapacityScope",
+    "MonitoringSignal",
+    "MonitoringSignalType",
+    "SystemMonitoringReport",
+    "SystemMonitoringService",
 ]
