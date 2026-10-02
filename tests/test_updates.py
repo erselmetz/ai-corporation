@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-02",
                 "type": "development",
+                "title": "Controlled Concurrency",
+                "summary": "Added an explicitly configured local controlled-execution path using existing Orchestrator routing and global/provider/model slot budgets, with duplicate-Task admission protection, nonblocking capacity rejection, and finally cleanup on success or failure; direct execution remains unchanged.",
+            },
+            {
+                "date": "2026-10-02",
+                "type": "development",
                 "title": "Execution Queue",
                 "summary": "Added a durable Corporation-scoped FIFO execution queue with atomic explicit claims, immutable lifecycle snapshots, persisted Task-outcome acknowledgement, and confirmed human resolution; interrupted claims are never automatically replayed.",
             },

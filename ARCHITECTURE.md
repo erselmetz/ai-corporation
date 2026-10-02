@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–69 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–70 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–69 completion scope
+## Tasks 1–70 completion scope
 
-Tasks 1–69 are complete as the current foundation. Their implemented areas include:
+Tasks 1–70 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -419,3 +419,9 @@ application_service.resource_manager(limits) configures a local manager once; la
 Added a durable Corporation-scoped FIFO execution queue with atomic explicit claims, immutable lifecycle snapshots, persisted Task-outcome acknowledgement, and confirmed human resolution; interrupted claims are never automatically replayed.
 
 application_service.execution_queue() exposes the configured Corporation queue through the Orchestrator. Additive SQLite storage preserves insertion sequence, unique entry/Task membership and claim IDs. Trusted callers explicitly enqueue existing pending Tasks, inspect bounded FIFO snapshots (default 50, maximum 100), claim the next pending entry, and acknowledge a matching worker/claim only after the persisted Task is completed or failed. Queue lifecycle is separate from Task lifecycle and never proves acceptance criteria. A FIFO head whose Task changed externally blocks new claims until explicit human resolution. Claimed entries survive restart and are not replayed; abandon requires literal confirmation and a bounded recorded resolution, preserves claim metadata, and does not alter the Task. Duplicate membership, duplicate claims, invalid transitions, backwards/naive times and malformed stored records are rejected. Queue entries and Task membership are retained; this foundation provides no cleanup, requeue, retry, automatic worker, provider call, scheduling, parallel runtime, new API/UI or exactly-once external-execution guarantee. Existing executions are unchanged, caller authority is enforced by the trusted application boundary, and the Documentation Portal remains file-based/read-only.
+
+## Controlled Concurrency (Task 70)
+
+Added an explicitly configured local controlled-execution path using existing Orchestrator routing and global/provider/model slot budgets, with duplicate-Task admission protection, nonblocking capacity rejection, and finally cleanup on success or failure; direct execution remains unchanged.
+
+After explicit resource configuration, application_service.execute_controlled_task(task_id) admits pending Tasks only. Missing Tasks and existing RoutingError failures consume no capacity: dry-run routing happens before reservation. Admission coordinates duplicate Task IDs within one controller and reserves global/provider/model slots before invoking the existing Orchestrator. Finally cleanup releases allocations after success, provider failure or runtime failure; no automatic retry occurs if persistence failure leaves a Task running. The controller is constructed during resource configuration before concurrent calls begin. It coordinates only its local process/service instance and provides no distributed or multi-process coordination. Legacy/direct execution paths are intentionally outside its coordination. Registry and resource-configuration mutations performed outside the controlled path are not synchronized; correct use requires completing explicit resource configuration before concurrent controlled calls and keeping external configuration changes coordinated by the caller. The controlled path adds no registry/configuration mutation, queue worker, retry/replay, dependency enforcement, provider-routing override, API/UI or new dependency. Tests use deterministic fake providers; no live Ollama is required. Public docs remain separate and the Documentation Portal stays file-based/read-only.

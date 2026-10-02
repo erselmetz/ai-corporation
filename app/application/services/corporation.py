@@ -113,8 +113,13 @@ class CorporationApplicationService:
         self._orchestrator = orchestrator
         self._corporation_chat = None
         self._resource_manager = None
+        self._controlled_execution = None
         self._corporation = corporation
         self._node = node
+
+    def execute_controlled_task(self, task_id):
+        self.resource_manager()  # Reject missing configuration before touching Tasks.
+        return self._task_summary(self._controlled_execution.execute(task_id))
 
     def execution_queue(self):
         if self._corporation is None:
@@ -127,6 +132,8 @@ class CorporationApplicationService:
             if limits is None:
                 raise RuntimeError("Resource limits are not configured")
             self._resource_manager = ResourceManager(limits, self._orchestrator.providers)
+            from .controlled_execution import ControlledExecution
+            self._controlled_execution = ControlledExecution(self._orchestrator, self._resource_manager)
         elif limits is not None:
             raise ValueError("Resource manager is already configured")
         return self._resource_manager
