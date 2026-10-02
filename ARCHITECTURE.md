@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–73 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–74 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–73 completion scope
+## Tasks 1–74 completion scope
 
-Tasks 1–73 are complete as the current foundation. Their implemented areas include:
+Tasks 1–74 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -302,6 +302,9 @@ Tasks 1–73 are complete as the current foundation. Their implemented areas inc
 - The read-only Updates / Changelog page at `/ui/updates`, with protected `GET /api/updates` requiring `updates:read`. Its replaceable application-service source reads a fixed, manually maintained `corporation_updates.json` manifest containing verified, explicitly dated development or release records; it does not infer updates from Git history and remains separate from the public `docs/updates.html` project summary.
 - In-memory Conversation and Message records with explicit message lifecycle transitions and open/closed Conversation state. Closing rejects outstanding pending Messages, and closed Conversations reject new ones.
 - Individual Employee Chat Core service over those records with a fixed Employee/Agent target, explicit scope, and immutable snapshots. Messages and lifecycle outcomes are supplied explicitly; there is no automatic response generation, persistence, context retrieval, provider interaction, Conversation API/UI, or Task conversion.
+- Optional synchronous Provider availability results, defaulting to UNKNOWN when no supported check exists; Ollama has a bounded service-only check that is distinct from model readiness and resource capacity.
+- Review-only model-candidate selection from explicit caller-supplied capability, policy, availability, and cost facts; existing assignment and execution paths are unchanged.
+- Bounded caller-driven multi-Agent collaboration records with explicit participant roles, one-way handoffs, shared context snapshots, metadata-only Task audit events, and no Provider calls or Task lifecycle mutation.
 
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, historical Task project associations may be unknown, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 
@@ -439,3 +442,9 @@ Provider availability is optional and checked only on explicit application-servi
 ## Intelligent Model Routing (Task 73)
 
 `application_service.select_model_candidate` accepts an immutable tuple of up to 100 unique model candidates wrapped with caller-supplied capability declarations, policy tags, Task 72 availability state, and optional non-negative finite `Decimal` cost estimates. Caller-supplied constraints may require capabilities/tags, restrict provider IDs, set a maximum cost, and explicitly opt into UNKNOWN availability. The first eligible candidate in caller order is selected; there is no ranking or hidden default preference. A cost limit excludes candidates without an estimate; without a cost limit, estimates do not affect eligibility. Cost estimates and policy/capability declarations are trusted caller inputs, must share one caller-defined unit, and are not independently verified. Missing providers and UNAVAILABLE candidates are always excluded. Task 71 admission assessment accompanies each candidate but does not filter selection; hardware feasibility remains unknown. This is a review-only result: it does not alter Agent/model assignments, execute Tasks, call providers, or make Task 70 admission decisions.
+
+## Multi-Agent Collaboration (Task 74)
+
+`application_service.task_collaboration()` exposes a local, in-memory, caller-driven collaboration record service for an existing pending Task. The caller explicitly supplies 2–10 distinct registered Agents in order; each participant role must exactly match that Agent's registered role. The first participant is active, and each may hand off once to only the next listed participant. The final participant explicitly completes or fails the collaboration. Each action names the acting Agent, and non-active participants cannot impersonate the current participant. The trusted caller owns the initial context; the collaboration session owns the shared append-only record; and each handoff/completion entry is attributed to the active Agent. Participant failures use explicit reason codes and terminate the collaboration without changing Task status.
+
+Collaboration only records supplied content; it never calls Providers, recursively invokes Agents, creates Tasks, changes assignments, or changes Task lifecycle. Existing TaskLogger records start, handoff, completion, and failure metadata against the Task without putting context/output text in audit logs. Collaboration state/context is in-memory and is lost on process restart; durable audit events do not contain enough data to reconstruct it. The trusted Core/Application Service boundary remains responsible for caller authorization; no collaboration API/UI or new persistence is added. Tasks 75+ monitoring and automated diagnostic/maintenance work remain separate.

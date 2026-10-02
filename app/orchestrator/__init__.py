@@ -3,6 +3,15 @@ from .task import Task, TaskStatus
 from .task_registry import TaskRegistry
 from .project import Project
 from .project_registry import ProjectRegistry
+from .collaboration import (
+    CollaborationEvent,
+    CollaborationEventType,
+    CollaborationFailureReason,
+    CollaborationParticipant,
+    CollaborationSnapshot,
+    CollaborationStatus,
+    TaskCollaborationService,
+)
 
 __all__ = [
     "Orchestrator",
@@ -11,4 +20,11 @@ __all__ = [
     "TaskRegistry",
     "Project",
     "ProjectRegistry",
+    "CollaborationEvent",
+    "CollaborationEventType",
+    "CollaborationFailureReason",
+    "CollaborationParticipant",
+    "CollaborationSnapshot",
+    "CollaborationStatus",
+    "TaskCollaborationService",
 ]

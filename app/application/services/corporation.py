@@ -112,6 +112,7 @@ class CorporationApplicationService:
     ):
         self._orchestrator = orchestrator
         self._corporation_chat = None
+        self._task_collaboration = None
         self._resource_manager = None
         self._controlled_execution = None
         self._corporation = corporation
@@ -144,6 +145,17 @@ class CorporationApplicationService:
             constraints,
             admission_assessments=admission,
         )
+
+    def task_collaboration(self):
+        """Return the local caller-driven Agent collaboration service."""
+        if self._task_collaboration is None:
+            from app.orchestrator.collaboration import TaskCollaborationService
+            self._task_collaboration = TaskCollaborationService(
+                agents=self._orchestrator.agents,
+                tasks=self._orchestrator.tasks,
+                logger=self._orchestrator.logger,
+            )
+        return self._task_collaboration
 
     def execute_controlled_task(self, task_id):
         self.resource_manager()  # Reject missing configuration before touching Tasks.
