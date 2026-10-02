@@ -63,15 +63,15 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5]);
   });
 
-  it("marks exactly tasks 1–72 complete and all later tasks planned", () => {
-    assert.ok(tasks.slice(0, 72).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(72).every((task) => task.status === "planned"));
+  it("marks exactly tasks 1–73 complete and all later tasks planned", () => {
+    assert.ok(tasks.slice(0, 73).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(73).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
     assert.deepEqual(
-      tasks.slice(52, 72).map(({ number, status }) => [number, status]),
-      [[53, "completed"], [54, "completed"], [55, "completed"], [56, "completed"], [57, "completed"], [58, "completed"], [59, "completed"], [60, "completed"], [61, "completed"], [62, "completed"], [63, "completed"], [64, "completed"], [65, "completed"], [66, "completed"], [67, "completed"], [68, "completed"], [69, "completed"], [70, "completed"], [71, "completed"], [72, "completed"]],
+      tasks.slice(52, 73).map(({ number, status }) => [number, status]),
+      [[53, "completed"], [54, "completed"], [55, "completed"], [56, "completed"], [57, "completed"], [58, "completed"], [59, "completed"], [60, "completed"], [61, "completed"], [62, "completed"], [63, "completed"], [64, "completed"], [65, "completed"], [66, "completed"], [67, "completed"], [68, "completed"], [69, "completed"], [70, "completed"], [71, "completed"], [72, "completed"], [73, "completed"]],
     );
   });
 

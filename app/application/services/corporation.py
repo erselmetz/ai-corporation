@@ -127,6 +127,24 @@ class CorporationApplicationService:
         """Explicitly check a registered provider without changing runtime state."""
         return self._orchestrator.providers.get(provider_id).check_availability()
 
+    def select_model_candidate(self, candidates, constraints):
+        from app.resources import ModelRoutingConstraints, RoutingCandidate
+        from app.resources.routing import select_model_candidate
+        if not isinstance(candidates, tuple) or not 1 <= len(candidates) <= 100:
+            raise ValueError("Supply an immutable tuple of 1 to 100 routing candidates")
+        if not all(isinstance(candidate, RoutingCandidate) for candidate in candidates):
+            raise TypeError("Expected RoutingCandidate")
+        if not isinstance(constraints, ModelRoutingConstraints):
+            raise TypeError("Expected ModelRoutingConstraints")
+        admission = self.assess_model_resources(
+            tuple(candidate.candidate for candidate in candidates)
+        )
+        return select_model_candidate(
+            candidates,
+            constraints,
+            admission_assessments=admission,
+        )
+
     def execute_controlled_task(self, task_id):
         self.resource_manager()  # Reject missing configuration before touching Tasks.
         return self._task_summary(self._controlled_execution.execute(task_id))

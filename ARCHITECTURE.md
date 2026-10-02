@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–72 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–73 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–72 completion scope
+## Tasks 1–73 completion scope
 
-Tasks 1–72 are complete as the current foundation. Their implemented areas include:
+Tasks 1–73 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -431,3 +431,11 @@ After explicit resource configuration, application_service.execute_controlled_ta
 Added bounded immutable model resource assessments from configured global/provider/model admission slots and provider registration, including the existing historical allocation-ID budget; snapshots reserve nothing and keep hardware feasibility and provider health unknown.
 
 application_service.assess_model_resources accepts an explicit immutable tuple of 1 to 100 unique ModelCandidate values and preserves caller order without ranking candidates. Assessments expose registered/missing providers, configured/unconfigured global/provider/model Capacity values, fresh-unique-ID admission eligibility and explicit exhaustion/unknown reasons. Capacity is configured admission accounting, not physical compute feasibility. ResourceSnapshot now has a trailing optional allocation_id_history_capacity field; old positional construction remains compatible and absent history is unknown/ineligible. ResourceManager populates it atomically using the existing Capacity abstraction and authoritative historical ID count. Release restores active execution slots but never restores the monotonic distinct-ID budget; at the existing 10000-ID limit, allocation_history_exhausted prevents eligibility even with all active slots free. No allocation/release rule or earlier snapshot field changed. Task 71 consumes public snapshots and public provider registration, never private manager fields or duplicate history arithmetic. Eligibility concerns only a fresh unique allocation ID; reused IDs remain prohibited by Task 68. Assessments are non-reserving local snapshots that may become stale immediately. Refresh before decisions; Task 70 remains authoritative for atomic admission. Eligibility does not guarantee execution, hardware feasibility, provider health, model loading or preference over another model. No hardware polling, provider call, Agent assignment change, Task rerouting, intelligent selection, scheduling, queue worker, retry, API/UI or new dependency is added. Existing direct execution remains unchanged.
+
+## Provider Availability (Task 72)
+
+Provider availability is optional and checked only on explicit application-service request through the registered provider. Providers without a supported check return an immutable UNKNOWN result; registration never implies availability. Ollama checks the lightweight service tags endpoint with a bounded timeout and does not generate text. Expected request/status failures become sanitized UNAVAILABLE results; unexpected programming defects remain visible. Results describe provider/service availability only—not installed-model readiness, inference success, hardware feasibility, or configured Task resource capacity. Checks do not execute Tasks, reserve Task 70 slots, or modify Agent/model assignments. Task 71 configured admission-slot awareness remains separate.
+
+## Intelligent Model Routing (Task 73)
+
+`application_service.select_model_candidate` accepts an immutable tuple of up to 100 unique model candidates wrapped with caller-supplied capability declarations, policy tags, Task 72 availability state, and optional non-negative finite `Decimal` cost estimates. Caller-supplied constraints may require capabilities/tags, restrict provider IDs, set a maximum cost, and explicitly opt into UNKNOWN availability. The first eligible candidate in caller order is selected; there is no ranking or hidden default preference. A cost limit excludes candidates without an estimate; without a cost limit, estimates do not affect eligibility. Cost estimates and policy/capability declarations are trusted caller inputs, must share one caller-defined unit, and are not independently verified. Missing providers and UNAVAILABLE candidates are always excluded. Task 71 admission assessment accompanies each candidate but does not filter selection; hardware feasibility remains unknown. This is a review-only result: it does not alter Agent/model assignments, execute Tasks, call providers, or make Task 70 admission decisions.

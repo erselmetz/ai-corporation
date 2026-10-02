@@ -3,6 +3,12 @@
     {
       "date": "2026-10-03",
       "type": "development",
+      "title": "Intelligent Model Routing",
+      "summary": "Added bounded review-only model candidate selection from explicit caller-supplied capability, policy-tag, provider-availability, and cost-estimate metadata; selection preserves candidate order, excludes UNKNOWN availability unless opted in, reports Task 71 admission separately, and never changes assignments or executes Tasks."
+    },
+    {
+      "date": "2026-10-03",
+      "type": "development",
       "title": "Provider Availability",
       "summary": "Added optional synchronous provider availability checks with immutable AVAILABLE/UNAVAILABLE/UNKNOWN results, a safe UNKNOWN default, explicit Application Service checks, and a bounded Ollama service probe; registration, model readiness, hardware feasibility, resource capacity, generation, and routing remain distinct."
     },
