@@ -17,6 +17,11 @@ from .failure_detection import (
     FailureDetectionService,
 )
 from .maintenance_proposals import MaintenanceProposal, MaintenanceProposalService
+from .maintenance_approvals import (
+    MaintenanceApprovalReview,
+    MaintenanceApprovalService,
+    MaintenanceApprovalSummary,
+)
 from .maintenance_sandbox import (
     MaintenanceSandboxReport,
     MaintenanceSandboxService,
@@ -132,6 +137,9 @@ class CorporationApplicationService:
         self._task_collaboration = None
         self._maintenance_proposals = MaintenanceProposalService()
         self._patch_development = PatchDevelopmentService()
+        self._maintenance_approvals = MaintenanceApprovalService(
+            self._patch_development
+        )
         self._testing_workflow = TestingWorkflowService()
         self._resource_manager = None
         self._controlled_execution = None
@@ -262,6 +270,60 @@ class CorporationApplicationService:
 
     def dispose_patch_workspace(self, workspace_id: str) -> None:
         self._patch_development.dispose(workspace_id)
+
+    def request_maintenance_approval(
+        self,
+        workspace_id: str,
+    ) -> MaintenanceApprovalReview:
+        return self._maintenance_approvals.request_review(workspace_id)
+
+    def list_pending_maintenance_approvals(
+        self,
+    ) -> tuple[MaintenanceApprovalSummary, ...]:
+        return self._maintenance_approvals.list_pending()
+
+    def get_maintenance_approval(
+        self,
+        request_id: str,
+    ) -> MaintenanceApprovalReview:
+        return self._maintenance_approvals.get_review(request_id)
+
+    def approve_maintenance_workspace(
+        self,
+        request_id: str,
+        *,
+        approver_id: str,
+        patch_sha256: str,
+        source_sha256: str,
+    ) -> MaintenanceApprovalReview:
+        return self._maintenance_approvals.approve(
+            request_id,
+            approver_id=approver_id,
+            patch_sha256=patch_sha256,
+            source_sha256=source_sha256,
+        )
+
+    def reject_maintenance_workspace(
+        self,
+        request_id: str,
+        *,
+        approver_id: str,
+        patch_sha256: str,
+        source_sha256: str,
+    ) -> MaintenanceApprovalReview:
+        return self._maintenance_approvals.reject(
+            request_id,
+            approver_id=approver_id,
+            patch_sha256=patch_sha256,
+            source_sha256=source_sha256,
+        )
+
+    def require_approved_maintenance_workspace(
+        self,
+        workspace_id: str,
+    ) -> MaintenanceApprovalReview:
+        """Fail closed unless a human approved this exact patch and source."""
+        return self._maintenance_approvals.require_approved(workspace_id)
 
     def run_selected_tests(
         self,

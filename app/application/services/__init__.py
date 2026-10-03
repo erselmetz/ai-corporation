@@ -57,6 +57,11 @@ from .code_review import (
     ReviewSeverity,
 )
 from .maintenance_proposals import MaintenanceProposal, MaintenanceProposalService
+from .maintenance_approvals import (
+    MaintenanceApprovalReview,
+    MaintenanceApprovalService,
+    MaintenanceApprovalSummary,
+)
 from .patch_development import PatchDevelopmentService, PatchWorkspace
 from .testing_workflow import RunStatus, TestRunReport, TestingWorkflowService
 from .maintenance_sandbox import (
@@ -112,6 +117,9 @@ __all__ = [
     "ReviewSeverity",
     "MaintenanceProposal",
     "MaintenanceProposalService",
+    "MaintenanceApprovalReview",
+    "MaintenanceApprovalService",
+    "MaintenanceApprovalSummary",
     "PatchDevelopmentService",
     "PatchWorkspace",
     "TestRunReport",

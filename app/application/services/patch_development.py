@@ -1,6 +1,6 @@
 """Apply bounded caller-supplied diffs to explicitly selected disposable copies."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import hashlib
 import os
@@ -35,6 +35,7 @@ class PatchWorkspace:
     source_sha256: str
     created_at: datetime
     path: Path
+    unified_diff: str = field(default="", repr=False)
 
 
 class PatchDevelopmentService:
@@ -115,6 +116,7 @@ class PatchDevelopmentService:
                     source_sha256=workspace_source_digest,
                     created_at=datetime.now(timezone.utc),
                     path=workspace_path,
+                    unified_diff=unified_diff,
                 )
                 self._workspaces[workspace.workspace_id] = (
                     workspace,

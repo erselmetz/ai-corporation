@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-03",
                 "type": "development",
+                "title": "Human Approval Workflow",
+                "summary": "Added an authenticated in-memory maintenance review workflow that presents the exact unified diff and binds approval/rejection to the registered workspace plus patch/source SHA-256 hashes. API decisions require maintenance:approve, echo both hashes, record the authenticated reviewer identity and UTC time, and reject stale or disposed workspaces; the configured backend must grant approval permission only to human reviewers. Approval checks fail closed for future consumers. No patch is applied, Git checkpoint created, or Task executed; Task 84+ integration remains planned.",
+            },
+            {
+                "date": "2026-10-03",
+                "type": "development",
                 "title": "Maintenance Sandbox",
                 "summary": "Added a separate Docker-only test path for registered Task 79 workspaces, transferring bounded selected files into an ephemeral no-network/no-host-mount container with resource/runtime/output limits and automatic removal. Requires an explicitly approved, locally present immutable image; missing Docker or controls block without host fallback. Task 80's existing host-permission test workflow remains unchanged, and the Docker daemon/image remain trusted prerequisites.",
             },
