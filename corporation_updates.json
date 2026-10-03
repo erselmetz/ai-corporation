@@ -3,8 +3,14 @@
     {
       "date": "2026-10-03",
       "type": "development",
+      "title": "GitHub Integration",
+      "summary": "Added authenticated, read-only public GitHub repository inspection requiring github:read and an explicit immutable repository allowlist. The default scope is empty; out-of-scope, missing, and private repositories share a not-found response, and out-of-scope requests make no GitHub call. The response omits README text. No credentials, private-repository access, branch/commit/pull-request writes, Task execution, Agent calls, or separate approval records are added; permission plus repository scope are the agreed gates. Tasks 88–100 remain planned."
+    },
+    {
+      "date": "2026-10-03",
+      "type": "development",
       "title": "MCP Integration",
-      "summary": "Added an opt-in synchronous MCP client for explicitly selected local stdio or in-process tools. A frozen tool allowlist, explicit ToolRegistry registration, bounded JSON inputs and text/structured results, per-call timeouts, and sanitized errors keep the adapter scoped. It does not connect tools to Agents, Tasks, APIs, or UI, or perform background discovery/polling. Custom process environments are rejected; local MCP servers are trusted host processes, not OS sandboxes. Tasks 87–100 remain planned."
+      "summary": "Added an opt-in synchronous MCP client for explicitly selected local stdio or in-process tools. A frozen tool allowlist, explicit ToolRegistry registration, bounded JSON inputs and text/structured results, per-call timeouts, and sanitized errors keep the adapter scoped. It does not connect tools to Agents, Tasks, APIs, or UI, or perform background discovery/polling. Custom process environments are rejected; local MCP servers are trusted host processes, not OS sandboxes. At Task 86 completion, Tasks 87–100 remained planned."
     },
     {
       "date": "2026-10-03",

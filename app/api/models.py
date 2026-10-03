@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -41,6 +41,36 @@ class UpdateResponse(BaseModel):
 
 class UpdatesListResponse(BaseModel):
     items: list[UpdateResponse]
+
+
+class GitHubLatestReleaseResponse(BaseModel):
+    tag_name: str
+    name: str | None
+    published_at: str | None
+    html_url: str | None
+
+
+class GitHubRepositoryInspectionResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    owner: str
+    repository_name: str
+    repository_url: str
+    discovered_at: datetime
+    description: str | None
+    default_branch: str | None
+    language: str | None
+    stars: int | None
+    forks: int | None
+    open_issues: int | None
+    license_name: str | None
+    license_spdx_id: str | None
+    created_at: str | None
+    updated_at: str | None
+    pushed_at: str | None
+    latest_release: GitHubLatestReleaseResponse | None
+    readme_available: bool
+    readme_size_bytes: int | None
 
 
 class EmployeeResponse(BaseModel):

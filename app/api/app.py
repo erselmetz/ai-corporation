@@ -23,6 +23,7 @@ from app.application import (
     DocumentationNotFound,
     DocumentationSource,
     DocumentationSourceUnavailable,
+    GitHubRepositoryInspectionService,
     ProjectSummary,
     TaskSummary,
     UpdatesApplicationService,
@@ -767,6 +768,7 @@ def create_app(
     authentication_backend: AuthenticationBackend | None = None,
     documentation_source: DocumentationSource | None = None,
     updates_source: UpdatesSource | None = None,
+    github_repository_inspection_service: GitHubRepositoryInspectionService | None = None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
@@ -789,6 +791,11 @@ def create_app(
                 Path(__file__).resolve().parents[2] / "corporation_updates.json"
             )
         application.state.updates_service = UpdatesApplicationService(source_updates)
+        application.state.github_repository_inspection_service = (
+            GitHubRepositoryInspectionService()
+            if github_repository_inspection_service is None
+            else github_repository_inspection_service
+        )
         yield
 
     application = FastAPI(
@@ -816,6 +823,8 @@ def create_app(
     application.include_router(maintenance_approvals_router)
     from .maintenance_checkpoints import router as maintenance_checkpoints_router
     application.include_router(maintenance_checkpoints_router)
+    from .github import router as github_router
+    application.include_router(github_router)
     application.include_router(web_ui_router)
     return application
 

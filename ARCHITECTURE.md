@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–86 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–87 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–86 completion scope
+## Tasks 1–87 completion scope
 
-Tasks 1–86 are complete as the current foundation. Their implemented areas include:
+Tasks 1–87 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -341,7 +341,13 @@ Task 85 leaves Task 70 controlled execution/admission, Task 71 configured resour
 
 `MCPToolClient` is an opt-in synchronous adapter over the existing `Tool` and `ToolRegistry` contracts. It connects only to explicitly configured local stdio or in-process MCP servers; a frozen tool-name allowlist limits discovery, and callers explicitly register and invoke selected tools. JSON inputs and text/structured results are bounded, requests have a maximum 30-second timeout, custom child-process environments are rejected, and expected server/protocol failures do not expose raw exception details. Each operation opens and closes its own MCP client connection.
 
-The adapter is not wired to Agents, Task execution, APIs, or UI. It creates or executes no Tasks and performs no background discovery, polling, or application-level retry. Local MCP servers remain trusted processes running with host permissions; this integration is not an OS sandbox. Tasks 87–100 remain planned and are not implied by this foundation.
+The adapter is not wired to Agents, Task execution, APIs, or UI. It creates or executes no Tasks and performs no background discovery, polling, or application-level retry. Local MCP servers remain trusted processes running with host permissions; this integration is not an OS sandbox. At Task 86 completion, Tasks 87–100 remained planned.
+
+## GitHub Integration (Task 87)
+
+`GitHubRepositoryInspectionService` reuses Task 27's public repository discovery behind the authenticated `GET /api/github/repositories/{owner}/{repository}` route. Each application instance must be configured with an explicit immutable set of `GitHubRepositoryScope` entries; the route separately requires `github:read`. The default scope set is empty and the default authentication backend rejects requests. Repositories outside scope and missing/private repositories return the same not-found response without contacting GitHub for out-of-scope requests.
+
+The operation is read-only and returns selected public metadata; it omits README text. It does not accept credentials, inspect private repositories, create branches/commits/pull requests, or change GitHub state. There are no separate approval records: the caller permission and repository allowlist are the confirmed access gates. The endpoint is not connected to Agents, Tasks, or automatic maintenance; Tasks 88–100 remain planned.
 
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, historical Task project associations may be unknown, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 

@@ -84,6 +84,15 @@ from .maintenance_workflow import (
     MaintenanceWorkflowStage,
     MaintenanceWorkflowStatus,
 )
+from .github_inspection import (
+    GitHubInspectionRateLimited,
+    GitHubInspectionRequestError,
+    GitHubInspectionUnavailable,
+    GitHubRepositoryInspectionService,
+    GitHubRepositoryNotFound,
+    GitHubRepositoryScope,
+    GitHubRepositoryScopeDenied,
+)
 
 __all__ = [
     "ActivitySummary",
@@ -154,4 +163,11 @@ __all__ = [
     "MaintenanceWorkflowSnapshot",
     "MaintenanceWorkflowStage",
     "MaintenanceWorkflowStatus",
+    "GitHubInspectionRateLimited",
+    "GitHubInspectionRequestError",
+    "GitHubInspectionUnavailable",
+    "GitHubRepositoryInspectionService",
+    "GitHubRepositoryNotFound",
+    "GitHubRepositoryScope",
+    "GitHubRepositoryScopeDenied",
 ]
