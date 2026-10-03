@@ -24,40 +24,42 @@ const publicFiles = new Map([
   ["/tasks-page.js", ["tasks-page.js", "text/javascript; charset=utf-8"]],
 ]);
 
+export default async function handleDocumentationRequest(request, response) {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    response.writeHead(405, { Allow: "GET, HEAD" });
+    response.end("Method not allowed");
+    return;
+  }
+
+  const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
+  const asset = publicFiles.get(pathname);
+  if (!asset) {
+    response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    response.end("Not found");
+    return;
+  }
+
+  try {
+    const [filename, contentType] = asset;
+    const body = await readFile(path.join(siteRoot, filename));
+    response.writeHead(200, {
+      "Content-Type": contentType,
+      "Content-Length": body.length,
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Content-Security-Policy":
+        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'",
+    });
+    response.end(request.method === "HEAD" ? undefined : body);
+  } catch (error) {
+    console.error("Unable to serve documentation file:", error);
+    response.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
+    response.end("Unable to serve documentation");
+  }
+}
+
 export function createDocumentationServer() {
-  return createServer(async (request, response) => {
-    if (request.method !== "GET" && request.method !== "HEAD") {
-      response.writeHead(405, { Allow: "GET, HEAD" });
-      response.end("Method not allowed");
-      return;
-    }
-
-    const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
-    const asset = publicFiles.get(pathname);
-    if (!asset) {
-      response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-      response.end("Not found");
-      return;
-    }
-
-    try {
-      const [filename, contentType] = asset;
-      const body = await readFile(path.join(siteRoot, filename));
-      response.writeHead(200, {
-        "Content-Type": contentType,
-        "Content-Length": body.length,
-        "X-Content-Type-Options": "nosniff",
-        "Referrer-Policy": "strict-origin-when-cross-origin",
-        "Content-Security-Policy":
-          "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'",
-      });
-      response.end(request.method === "HEAD" ? undefined : body);
-    } catch (error) {
-      console.error("Unable to serve documentation file:", error);
-      response.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
-      response.end("Unable to serve documentation");
-    }
-  });
+  return createServer(handleDocumentationRequest);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
