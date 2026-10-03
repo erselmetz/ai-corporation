@@ -3,6 +3,12 @@
     {
       "date": "2026-10-03",
       "type": "development",
+      "title": "External Service Integration",
+      "summary": "Added explicit, on-demand Gemini model discovery against a fixed HTTPS endpoint using a trusted backend API-key configuration. The key is sent only in the x-goog-api-key header and is omitted from URLs, logs, errors, audit events, and result records. Responses are limited to 512 KiB each and at most five pages of 100 models, with no retries. Immutable results include only model IDs, allowlisted service-reported capability metadata, a completeness flag, and a metadata-only audit event; failures are sanitized and carry safe audit metadata. Audit events are caller-retained, not persisted automatically. No content generation, model/Agent assignment, Task execution, Provider changes, chat key entry, general credential store, API/UI, or background polling is added. Tasks 92–100 remain planned."
+    },
+    {
+      "date": "2026-10-03",
+      "type": "development",
       "title": "Computer-Use Capability",
       "summary": "Added caller-driven, read-only browser inspection that reuses Task 88's exact-host HTTPS allowlist and bounded fetch. Scripts, styles, resource URLs, event attributes, and active embedded content are removed before static markup is rendered in an ephemeral headless Chromium context; JavaScript, downloads, user interaction, local-file access, and browser network requests are unavailable. Immutable results are bounded untrusted evidence with user-visible safeguards. No API/UI, persistence, Agent/Provider calls, Task execution, or background polling is added. Tasks 91–100 remain planned."
     },

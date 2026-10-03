@@ -63,9 +63,9 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5]);
   });
 
-  it("marks exactly tasks 1–90 complete and all later tasks planned", () => {
-    assert.ok(tasks.slice(0, 90).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(90).every((task) => task.status === "planned"));
+  it("marks exactly tasks 1–91 complete and all later tasks planned", () => {
+    assert.ok(tasks.slice(0, 91).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(91).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -100,18 +100,21 @@ describe("documentation site", () => {
     assert.equal(tasks[89].title, "Computer-Use Capability");
     assert.equal(tasks[89].description, "Explore permissioned computer interaction with explicit user-visible safeguards.");
     assert.equal(tasks[89].status, "completed");
-    assert.equal(tasks[90].status, "planned");
+    assert.equal(tasks[90].title, "External Service Integration");
+    assert.equal(tasks[90].description, "Connect selected services through scoped credentials and auditable adapters.");
+    assert.equal(tasks[90].status, "completed");
+    assert.equal(tasks[91].status, "planned");
     assert.deepEqual(
-      tasks.slice(52, 90).map(({ number, status }) => [number, status]),
-      Array.from({ length: 38 }, (_, index) => [index + 53, "completed"]),
+      tasks.slice(52, 91).map(({ number, status }) => [number, status]),
+      Array.from({ length: 39 }, (_, index) => [index + 53, "completed"]),
     );
   });
 
   it("describes the current completed and planned ranges on the roadmap page", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
-    assert.match(html, /Milestones 1–90 are completed foundations/);
-    assert.match(html, /Tasks 91–100 remain planned/);
+    assert.match(html, /Milestones 1–91 are completed foundations/);
+    assert.match(html, /Tasks 92–100 remain planned/);
   });
 
   it("serves only read methods", async () => {

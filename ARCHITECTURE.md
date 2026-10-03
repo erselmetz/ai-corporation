@@ -367,6 +367,12 @@ This adapter makes a selected MCP call explicit but does not sandbox the MCP ser
 
 This is a read-only static inspection capability, not general browser or computer control. It exposes no clicks, keyboard input, downloads, filesystem access, browser persistence, API/UI, Agent/Provider calls, Task creation/execution, or background polling. At Task 90 completion, Tasks 91–100 remain planned.
 
+## External Service Integration (Task 91)
+
+`GeminiModelCatalogAdapter` performs explicit, on-demand, read-only model listing against Google's fixed Gemini API models endpoint. A trusted backend supplies `GeminiAPIConfiguration`; the API key is sent only in the `x-goog-api-key` header, is omitted from configuration representations, and is never placed in URLs, audit events, errors, or returned model records. The adapter disables redirects and environment proxies, uses a 10-second timeout per request, caps each response at 512 KiB, and follows at most five model-list pages of at most 100 records each. It does not retry failed requests.
+
+The immutable result contains only model IDs, an allowlist of service-advertised capability names, a pagination-completeness flag, and a metadata-only audit event. Missing capability metadata remains UNKNOWN (`None`); unrecognized capability names are omitted. Audit metadata is returned with successes and sanitized failures, and is not automatically persisted. Listing does not generate content, establish model suitability or future execution success, choose/assign a model, invoke an Agent or Task, or change existing Provider behavior. No chat-based key entry, general credential store, API/UI, or background polling is added. At Task 91 completion, Tasks 92–100 remain planned.
+
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, historical Task project associations may be unknown, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 
 ## Future / planned roadmap

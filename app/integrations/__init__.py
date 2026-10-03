@@ -126,6 +126,17 @@ from .browser_inspection import (
     BrowserInspectionUnavailable,
     ReadOnlyBrowserInspector,
 )
+from .gemini_catalog import (
+    GeminiAPIConfiguration,
+    GeminiCatalogAuditEvent,
+    GeminiCatalogAuditStatus,
+    GeminiCatalogFailureCode,
+    GeminiModel,
+    GeminiModelCapability,
+    GeminiModelCatalogAdapter,
+    GeminiModelCatalogError,
+    GeminiModelCatalogResult,
+)
 
 __all__ = [
     "IntegrationCapability",
@@ -230,4 +241,13 @@ __all__ = [
     "BrowserInspectionResult",
     "BrowserInspectionUnavailable",
     "ReadOnlyBrowserInspector",
+    "GeminiAPIConfiguration",
+    "GeminiCatalogAuditEvent",
+    "GeminiCatalogAuditStatus",
+    "GeminiCatalogFailureCode",
+    "GeminiModel",
+    "GeminiModelCapability",
+    "GeminiModelCatalogAdapter",
+    "GeminiModelCatalogError",
+    "GeminiModelCatalogResult",
 ]
