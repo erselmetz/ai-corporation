@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–85 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–86 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -37,7 +37,7 @@ Startup identity:
 Corporation + Node → RuntimeContext → context validation
 
 Standalone foundations, not wired into task execution:
-Tool / ToolRegistry
+Tool / ToolRegistry / explicit MCPToolClient adapter
 ApprovalRequest / ApprovalRegistry
 ClientRequest / BusinessLayer adapter
 ```
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–85 completion scope
+## Tasks 1–86 completion scope
 
-Tasks 1–85 are complete as the current foundation. Their implemented areas include:
+Tasks 1–86 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -333,9 +333,15 @@ Task 84's `CorporationApplicationService.create_maintenance_checkpoint()` consum
 
 `CorporationApplicationService.start_maintenance_workflow()` and the `record_maintenance_*()` methods maintain a bounded, caller-driven progression from an existing failed Task and Task 76 failure summary. Callers invoke each existing stage separately, then record its result in order: Task 77 diagnostic → Task 78 proposal → Task 79 patch workspace → one Task 80 or Task 82 test report → Task 81 review. A review is accepted only when its evidence digest matches the Task 81 report and its evidence contains the exact workspace diff. Findings remain advisory; only a PASSED test and a recorded review make the workflow ready to request Task 83 approval.
 
-Task 85 records the Task 83 pending request and final human decision only after verifying the existing approval service's workspace and patch/source hashes. It records a Task 84 checkpoint only after verifying the registered checkpoint and the same approval/hash linkage. It does not call Providers, run tests, request or decide approvals, create checkpoints, apply patches, create or execute Tasks, change assignments, or reserve resources. Test failures terminate that workflow; no automatic retry, scheduler, recursive orchestration, API/UI, or new database schema is added. Snapshots are immutable and in-memory, capped at 100 workflows and nine events each; metadata-only stage events are written through the existing Task log. Workflow state cannot be resumed after process restart, although its audit events remain in the Task log. Tasks 86–100 remain planned.
+Task 85 records the Task 83 pending request and final human decision only after verifying the existing approval service's workspace and patch/source hashes. It records a Task 84 checkpoint only after verifying the registered checkpoint and the same approval/hash linkage. It does not call Providers, run tests, request or decide approvals, create checkpoints, apply patches, create or execute Tasks, change assignments, or reserve resources. Test failures terminate that workflow; no automatic retry, scheduler, recursive orchestration, API/UI, or new database schema is added. Snapshots are immutable and in-memory, capped at 100 workflows and nine events each; metadata-only stage events are written through the existing Task log. Workflow state cannot be resumed after process restart, although its audit events remain in the Task log. At Task 85 completion, Tasks 86–100 remained planned.
 
 Task 85 leaves Task 70 controlled execution/admission, Task 71 configured resource-awareness, Task 72 provider availability, and Task 73 review-only candidate selection unchanged. It makes no routing or candidate-selection decision and adds no autonomous capability.
+
+## MCP Integration (Task 86)
+
+`MCPToolClient` is an opt-in synchronous adapter over the existing `Tool` and `ToolRegistry` contracts. It connects only to explicitly configured local stdio or in-process MCP servers; a frozen tool-name allowlist limits discovery, and callers explicitly register and invoke selected tools. JSON inputs and text/structured results are bounded, requests have a maximum 30-second timeout, custom child-process environments are rejected, and expected server/protocol failures do not expose raw exception details. Each operation opens and closes its own MCP client connection.
+
+The adapter is not wired to Agents, Task execution, APIs, or UI. It creates or executes no Tasks and performs no background discovery, polling, or application-level retry. Local MCP servers remain trusted processes running with host permissions; this integration is not an OS sandbox. Tasks 87–100 remain planned and are not implied by this foundation.
 
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, historical Task project associations may be unknown, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 

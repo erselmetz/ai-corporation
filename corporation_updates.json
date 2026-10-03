@@ -3,8 +3,14 @@
     {
       "date": "2026-10-03",
       "type": "development",
+      "title": "MCP Integration",
+      "summary": "Added an opt-in synchronous MCP client for explicitly selected local stdio or in-process tools. A frozen tool allowlist, explicit ToolRegistry registration, bounded JSON inputs and text/structured results, per-call timeouts, and sanitized errors keep the adapter scoped. It does not connect tools to Agents, Tasks, APIs, or UI, or perform background discovery/polling. Custom process environments are rejected; local MCP servers are trusted host processes, not OS sandboxes. Tasks 87–100 remain planned."
+    },
+    {
+      "date": "2026-10-03",
+      "type": "development",
       "title": "Controlled Self-Maintenance",
-      "summary": "Added a bounded caller-driven workflow record linking an existing failed Task to its diagnostic, proposal, patch workspace, one Task 80 or Task 82 test result, and Task 81 review of evidence containing the exact patch. Only a PASSED test and recorded review make it ready for Task 83 approval; review findings remain advisory. Task 83 decisions and Task 84 checkpoints are separately invoked and recorded only after workspace/hash linkage checks. Snapshots are in-memory (up to 100 workflows); metadata-only audit events use existing Task logs. A failed test ends that workflow. No hidden Provider/test/approval/checkpoint calls, automatic retries, background work, Task creation/execution, patch application, API/UI, or assignment/resource changes are added; Tasks 86–100 remain planned."
+      "summary": "Added a bounded caller-driven workflow record linking an existing failed Task to its diagnostic, proposal, patch workspace, one Task 80 or Task 82 test result, and Task 81 review of evidence containing the exact patch. Only a PASSED test and recorded review make it ready for Task 83 approval; review findings remain advisory. Task 83 decisions and Task 84 checkpoints are separately invoked and recorded only after workspace/hash linkage checks. Snapshots are in-memory (up to 100 workflows); metadata-only audit events use existing Task logs. A failed test ends that workflow. No hidden Provider/test/approval/checkpoint calls, automatic retries, background work, Task creation/execution, patch application, API/UI, or assignment/resource changes are added; at Task 85 completion, Tasks 86–100 remained planned."
     },
     {
       "date": "2026-10-03",
