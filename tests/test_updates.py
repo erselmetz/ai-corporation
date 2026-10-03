@@ -180,8 +180,14 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-04",
                 "type": "development",
+                "title": "Controlled Capability Integration",
+                "summary": "Added a bounded caller-driven workflow record linking a Task 93 candidate and matching Task 94 report to an explicitly supplied patch workspace, matching passing Task 80/82 results, Task 81 review evidence containing the exact diff, Task 83 patch approval, and Task 84 checkpoint. The candidate/workspace link and test/review report provenance are not independently verified; approval applies only to exact patch/source hashes. The workflow invokes none of these stages and stops at CHECKPOINTED without registering or activating a capability. Tasks 96–100 remain planned.",
+            },
+            {
+                "date": "2026-10-04",
+                "type": "development",
                 "title": "Capability Evaluation",
-                "summary": "Added deterministic, bounded evidence-coverage reports for caller-supplied capability candidates across fit, risk, and operational-requirement dimensions. Caller-reported assessments and source references are preserved but not independently verified; missing dimensions remain UNKNOWN. Evaluation does not score, rank, recommend, approve, authorize, register, or activate candidates, and makes no Provider call or runtime change. Tasks 95–100 remain planned.",
+                "summary": "Added deterministic, bounded evidence-coverage reports for caller-supplied capability candidates across fit, risk, and operational-requirement dimensions. Caller-reported assessments and source references are preserved but not independently verified; missing dimensions remain UNKNOWN. Evaluation does not score, rank, recommend, approve, authorize, register, or activate candidates, and makes no Provider call or runtime change. At Task 94 completion, Tasks 95–100 remained planned.",
             },
             {
                 "date": "2026-10-04",

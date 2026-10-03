@@ -18,6 +18,13 @@ from app.capability_evaluation import (
     CapabilityEvaluationReport,
 )
 from .code_review import CodeReviewReport, CodeReviewService
+from .capability_integration import (
+    CapabilityIntegrationEvent,
+    CapabilityIntegrationSnapshot,
+    CapabilityIntegrationStage,
+    CapabilityIntegrationStatus,
+    CapabilityIntegrationWorkflowService,
+)
 from .diagnostics import DiagnosticEvidence, DiagnosticReport, DiagnosticService
 from .failure_detection import (
     DetectedFailure,
@@ -151,6 +158,7 @@ class CorporationApplicationService:
         self._orchestrator = orchestrator
         self._corporation_chat = None
         self._task_collaboration = None
+        self._capability_integration_workflow: CapabilityIntegrationWorkflowService | None = None
         self._maintenance_proposals = MaintenanceProposalService()
         self._patch_development = PatchDevelopmentService()
         self._maintenance_approvals = MaintenanceApprovalService(
@@ -231,6 +239,72 @@ class CorporationApplicationService:
         """Group caller-supplied evaluation evidence without validating its claims."""
         from app.capability_evaluation import CapabilityEvaluationService
         return CapabilityEvaluationService().evaluate(candidate, evidence)
+
+    def start_capability_integration_workflow(
+        self,
+        candidate: CapabilityCandidate,
+        evaluation: CapabilityEvaluationReport,
+        workspace_id: str,
+    ) -> CapabilityIntegrationSnapshot:
+        """Record a caller-asserted candidate/workspace link without integrating it."""
+        return self._get_capability_integration_workflow().start(
+            candidate,
+            evaluation,
+            workspace_id,
+        )
+
+    def record_capability_integration_test_result(
+        self,
+        workflow_id: str,
+        report: TestRunReport | MaintenanceSandboxReport,
+    ) -> CapabilityIntegrationSnapshot:
+        return self._get_capability_integration_workflow().record_test_result(
+            workflow_id,
+            report,
+        )
+
+    def record_capability_integration_review(
+        self,
+        workflow_id: str,
+        report: CodeReviewReport,
+        evidence: tuple[DiagnosticEvidence, ...],
+    ) -> CapabilityIntegrationSnapshot:
+        return self._get_capability_integration_workflow().record_review(
+            workflow_id,
+            report,
+            evidence,
+        )
+
+    def record_capability_integration_approval(
+        self,
+        workflow_id: str,
+        request_id: str,
+    ) -> CapabilityIntegrationSnapshot:
+        return self._get_capability_integration_workflow().record_approval(
+            workflow_id,
+            request_id,
+        )
+
+    def record_capability_integration_checkpoint(
+        self,
+        workflow_id: str,
+        checkpoint_id: str,
+    ) -> CapabilityIntegrationSnapshot:
+        return self._get_capability_integration_workflow().record_checkpoint(
+            workflow_id,
+            checkpoint_id,
+        )
+
+    def get_capability_integration_workflow(
+        self,
+        workflow_id: str,
+    ) -> CapabilityIntegrationSnapshot:
+        return self._get_capability_integration_workflow().get(workflow_id)
+
+    def list_capability_integration_workflows(
+        self,
+    ) -> tuple[CapabilityIntegrationSnapshot, ...]:
+        return self._get_capability_integration_workflow().list()
 
     def detect_failures(self) -> FailureDetectionReport:
         """Return bounded Task failure categories without exception details."""
@@ -478,6 +552,19 @@ class CorporationApplicationService:
                 logger=self._orchestrator.logger,
             )
         return self._maintenance_workflow
+
+    def _get_capability_integration_workflow(
+        self,
+    ) -> CapabilityIntegrationWorkflowService:
+        if self._capability_integration_workflow is None:
+            self._capability_integration_workflow = (
+                CapabilityIntegrationWorkflowService(
+                    workspaces=self._patch_development,
+                    approvals=self._maintenance_approvals,
+                    checkpoints=self._git_checkpoints,
+                )
+            )
+        return self._capability_integration_workflow
 
     def run_selected_tests(
         self,

@@ -85,6 +85,11 @@ from .services import (
     CapabilityEvaluationReport,
     CapabilityEvaluationService,
     EvidenceCoverageStatus,
+    CapabilityIntegrationEvent,
+    CapabilityIntegrationSnapshot,
+    CapabilityIntegrationStage,
+    CapabilityIntegrationStatus,
+    CapabilityIntegrationWorkflowService,
 )
 
 __all__ = [
@@ -174,4 +179,9 @@ __all__ = [
     "CapabilityEvaluationReport",
     "CapabilityEvaluationService",
     "EvidenceCoverageStatus",
+    "CapabilityIntegrationEvent",
+    "CapabilityIntegrationSnapshot",
+    "CapabilityIntegrationStage",
+    "CapabilityIntegrationStatus",
+    "CapabilityIntegrationWorkflowService",
 ]

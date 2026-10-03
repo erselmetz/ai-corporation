@@ -10,6 +10,8 @@ import pytest
 
 from app.agents import Agent
 from app.application import (
+    CapabilityIntegrationStage,
+    CapabilityIntegrationStatus,
     DiagnosticEvidence,
     DiagnosticReport,
     DetectedFailure,
@@ -20,6 +22,8 @@ from app.application import (
     RunStatus,
     TestRunReport as HostTestRunReport,
 )
+from app.capability_discovery import CapabilityCandidate
+from app.capability_evaluation import CapabilityEvaluationService
 from app.orchestrator import Task, TaskFailureCategory, TaskStatus
 from app.runtime.factory import create_corporation_runtime
 
@@ -432,3 +436,141 @@ def test_workflow_registry_has_a_fixed_capacity():
     assert len(runtime.application_service.list_maintenance_workflows()) == 100
     with pytest.raises(ValueError, match="workflow limit"):
         runtime.application_service.start_maintenance_workflow(failure)
+
+
+def test_capability_workflow_links_existing_change_control_without_activation(tmp_path):
+    if shutil.which("git") is None:
+        pytest.skip("Git executable is unavailable")
+    runtime, task, _failure, _maintenance, _diagnostic, _proposal, workspace = (
+        _start_patch_workflow(tmp_path)
+    )
+    candidate = CapabilityCandidate(
+        candidate_id="status-capability",
+        name="Read-only status integration",
+        description="Read service status without changing remote state.",
+        source_reference="caller:status-source",
+    )
+    evaluation = CapabilityEvaluationService().evaluate(candidate, ())
+    before_tasks = tuple((item.id, item.status) for item in runtime.tasks.all())
+
+    started = runtime.application_service.start_capability_integration_workflow(
+        candidate,
+        evaluation,
+        workspace.workspace_id,
+    )
+    assert started.status is CapabilityIntegrationStatus.ACTIVE
+    assert started.events[0].stage is CapabilityIntegrationStage.CANDIDATE_LINKED
+    assert any("not semantically verified" in item for item in started.limitations)
+
+    tested = runtime.application_service.record_capability_integration_test_result(
+        started.workflow_id,
+        _passed_host_report(workspace),
+    )
+    review, evidence = _review(runtime, workspace)
+    before_assignments = tuple(
+        (agent.id, agent.provider, agent.model, tuple(agent.capabilities))
+        for agent in runtime.agents.all()
+    )
+    with patch.object(
+        runtime.providers.get("ollama"),
+        "generate",
+        side_effect=AssertionError("Workflow record invoked a Provider"),
+    ) as generate:
+        reviewed = runtime.application_service.record_capability_integration_review(
+            started.workflow_id,
+            review,
+            evidence,
+        )
+    generate.assert_not_called()
+
+    pending = runtime.application_service.request_maintenance_approval(
+        workspace.workspace_id
+    )
+    waiting = runtime.application_service.record_capability_integration_approval(
+        started.workflow_id,
+        pending.request_id,
+    )
+    approved_patch = runtime.application_service.approve_maintenance_workspace(
+        pending.request_id,
+        approver_id="human-reviewer",
+        patch_sha256=pending.patch_sha256,
+        source_sha256=pending.source_sha256,
+    )
+    approved = runtime.application_service.record_capability_integration_approval(
+        started.workflow_id,
+        approved_patch.request_id,
+    )
+    checkpoint = runtime.application_service.create_maintenance_checkpoint(
+        workspace.workspace_id,
+        created_by="checkpoint-operator",
+    )
+    checkpointed = (
+        runtime.application_service.record_capability_integration_checkpoint(
+            started.workflow_id,
+            checkpoint.checkpoint_id,
+        )
+    )
+
+    assert tested.stage is CapabilityIntegrationStage.TESTED
+    assert reviewed.status is CapabilityIntegrationStatus.READY_FOR_APPROVAL
+    assert waiting.status is CapabilityIntegrationStatus.AWAITING_APPROVAL
+    assert approved.status is CapabilityIntegrationStatus.PATCH_APPROVED
+    assert checkpointed.status is CapabilityIntegrationStatus.CHECKPOINTED
+    assert checkpointed.checkpoint_commit_sha == checkpoint.commit_sha
+    assert checkpointed.decision_by == "human-reviewer"
+    assert checkpointed.checkpoint_created_by == "checkpoint-operator"
+    assert [event.stage for event in checkpointed.events] == [
+        CapabilityIntegrationStage.CANDIDATE_LINKED,
+        CapabilityIntegrationStage.TESTED,
+        CapabilityIntegrationStage.REVIEWED,
+        CapabilityIntegrationStage.APPROVAL_PENDING,
+        CapabilityIntegrationStage.PATCH_APPROVED,
+        CapabilityIntegrationStage.CHECKPOINTED,
+    ]
+    assert workspace.unified_diff not in str(checkpointed.events)
+    assert tuple((item.id, item.status) for item in runtime.tasks.all()) == before_tasks
+    assert runtime.tasks.get(task.id).status is TaskStatus.FAILED
+    assert tuple(
+        (agent.id, agent.provider, agent.model, tuple(agent.capabilities))
+        for agent in runtime.agents.all()
+    ) == before_assignments
+
+
+def test_capability_workflow_stops_on_test_failure_and_rejects_mismatched_artifacts(
+    tmp_path,
+):
+    runtime, _task, _failure, _maintenance, _diagnostic, _proposal, workspace = (
+        _start_patch_workflow(tmp_path)
+    )
+    candidate = CapabilityCandidate(
+        candidate_id="status-capability",
+        name="Read-only status integration",
+        description="Read service status without changing remote state.",
+        source_reference="caller:status-source",
+    )
+    evaluation = CapabilityEvaluationService().evaluate(candidate, ())
+    started = runtime.application_service.start_capability_integration_workflow(
+        candidate,
+        evaluation,
+        workspace.workspace_id,
+    )
+    passed = _passed_host_report(workspace)
+    with pytest.raises(ValueError, match="does not match"):
+        runtime.application_service.record_capability_integration_test_result(
+            started.workflow_id,
+            replace(passed, workspace_id="another-workspace"),
+        )
+    assert runtime.application_service.get_capability_integration_workflow(
+        started.workflow_id
+    ) == started
+
+    failed = runtime.application_service.record_capability_integration_test_result(
+        started.workflow_id,
+        replace(passed, run_id="failed-capability-test", status=RunStatus.FAILED),
+    )
+    assert failed.status is CapabilityIntegrationStatus.TEST_FAILED
+    with pytest.raises(ValueError, match="out of order or terminal"):
+        runtime.application_service.record_capability_integration_test_result(
+            started.workflow_id,
+            passed,
+        )
