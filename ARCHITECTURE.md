@@ -403,7 +403,15 @@ The workflow invokes none of these stages; tests, reviews, approvals, and checkp
 
 `CorporationApplicationService.corporation_planning()` builds a bounded, immutable, in-memory organization plan using only explicit caller-supplied priorities, constraints, rationales, and source references. Priority tuple order is the caller's stated order; no priority is inferred, scored, or ranked. Constraints may name the priority IDs they apply to, or have an empty scope to apply organization-wide. References are retained as text and are not independently verified.
 
-The plan is a review snapshot, not an authorization, schedule, or execution decision. It does not inspect Projects or Tasks, modify Agent or model assignments, reserve Task 70 resources, call Providers, create or execute Tasks, coordinate approved workflows, or persist plans. Tasks 97–100 remain planned.
+The plan is a review snapshot, not an authorization, schedule, or execution decision. It does not inspect Projects or Tasks, modify Agent or model assignments, reserve Task 70 resources, call Providers, create or execute Tasks, coordinate approved workflows, or persist plans. At Task 96 completion, Tasks 97–100 remained planned.
+
+## Organization-Level Orchestration (Task 97)
+
+`CorporationApplicationService.organization_coordination()` builds an on-demand immutable report from an existing Task 96 plan and explicit responsibility/workflow selections. Each responsibility link must name a plan priority, a registered Employee, and an exact responsibility string present in that Employee's current record. The caller-selected priority/responsibility association is not a competence or fit assessment.
+
+Workflow references resolve only through the existing Task 85 maintenance-workflow and Task 95 capability-integration services. A reference is accepted only when its own record contains `ApprovalStatus.APPROVED`; this is approval of its exact patch/source hash pair, not general business approval. The report preserves each source's actual status/stage, approval request, hashes, and checkpoint ID. Task 95 approval does not adopt or activate a capability. Reads are bounded and sequential, so the report is not an atomic cross-registry snapshot.
+
+The report does not change Employee responsibilities or Agent/model assignments, infer priority/role fit, claim or modify the Task 69 queue, invoke Task 70 controlled execution, call Providers, create or execute Tasks, or persist records. It is in-memory only and adds no API/UI. Tasks 98–100 remain planned.
 
 ## Future / planned roadmap
 

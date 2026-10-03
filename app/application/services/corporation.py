@@ -631,6 +631,19 @@ class CorporationApplicationService:
         from .organization_planning import OrganizationPlanningService
         return OrganizationPlanningService(self._corporation.id)
 
+    def organization_coordination(self):
+        if self._corporation is None:
+            raise RuntimeError("Corporation identity is not configured")
+        if self._orchestrator.employees is None:
+            raise RuntimeError("Employee registry is not configured")
+        from .organization_coordination import OrganizationCoordinationService
+        return OrganizationCoordinationService(
+            corporation_id=self._corporation.id,
+            employees=self._orchestrator.employees,
+            maintenance_workflows=self._get_maintenance_workflow_service(),
+            capability_workflows=self._get_capability_integration_workflow(),
+        )
+
     def context_retrieval(self):
         from .context_retrieval import ContextRetrievalService
         return ContextRetrievalService(self.memory_management())

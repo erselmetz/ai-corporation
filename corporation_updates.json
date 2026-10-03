@@ -3,8 +3,14 @@
     {
       "date": "2026-10-04",
       "type": "development",
+      "title": "Organization-Level Orchestration",
+      "summary": "Added a bounded immutable review report linking an existing Task 96 priority to a registered Employee responsibility and actual Task 85 maintenance or Task 95 capability-integration workflow records. Workflow IDs are verified in their owning services and must carry their source-specific APPROVED exact-patch decision; status, stage, hashes, approval request, and checkpoint are preserved. Caller-selected priority/responsibility fit is not inferred, Task 95 approval is not capability adoption, and the report does not change assignments, claim queue entries, schedule or execute work, call Providers, create Tasks, or persist. Tasks 98–100 remain planned."
+    },
+    {
+      "date": "2026-10-04",
+      "type": "development",
       "title": "Corporation Planning System",
-      "summary": "Added a bounded immutable in-memory organization plan from explicit caller-supplied priorities, constraints, rationales, and source references. Priority order is caller-defined and preserved; references are not independently verified. Planning does not inspect Projects or Tasks, rank priorities, change assignments, schedule or execute work, call Providers, or persist plans. Tasks 97–100 remain planned."
+      "summary": "Added a bounded immutable in-memory organization plan from explicit caller-supplied priorities, constraints, rationales, and source references. Priority order is caller-defined and preserved; references are not independently verified. Planning does not inspect Projects or Tasks, rank priorities, change assignments, schedule or execute work, call Providers, or persist plans. At Task 96 completion, Tasks 97–100 remained planned."
     },
     {
       "date": "2026-10-04",

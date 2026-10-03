@@ -19,9 +19,14 @@ from app.application import (
     MaintenanceSandboxStatus,
     MaintenanceWorkflowStage,
     MaintenanceWorkflowStatus,
+    OrganizationPriority,
+    OrganizationWorkflowSource,
+    ResponsibilitySelection,
     RunStatus,
     TestRunReport as HostTestRunReport,
+    WorkflowReference,
 )
+from app.approval import ApprovalStatus
 from app.capability_discovery import CapabilityCandidate
 from app.capability_evaluation import CapabilityEvaluationService
 from app.orchestrator import Task, TaskFailureCategory, TaskStatus
@@ -574,3 +579,166 @@ def test_capability_workflow_stops_on_test_failure_and_rejects_mismatched_artifa
             started.workflow_id,
             passed,
         )
+
+
+def test_task97_coordinates_registered_responsibility_and_approved_workflow_sources(
+    tmp_path,
+):
+    runtime, task, _failure, maintenance, _diagnostic, _proposal, workspace = (
+        _start_patch_workflow(tmp_path)
+    )
+    candidate = CapabilityCandidate(
+        candidate_id="coordination-candidate",
+        name="Read-only status integration",
+        description="Read service status without changing remote state.",
+        source_reference="caller:coordination-source",
+    )
+    evaluation = CapabilityEvaluationService().evaluate(candidate, ())
+    capability = runtime.application_service.start_capability_integration_workflow(
+        candidate,
+        evaluation,
+        workspace.workspace_id,
+    )
+
+    passed = _passed_host_report(workspace)
+    runtime.application_service.record_maintenance_test_result(
+        maintenance.workflow_id, passed
+    )
+    runtime.application_service.record_capability_integration_test_result(
+        capability.workflow_id, passed
+    )
+    review, evidence = _review(runtime, workspace)
+    runtime.application_service.record_maintenance_review(
+        maintenance.workflow_id, review, evidence
+    )
+    runtime.application_service.record_capability_integration_review(
+        capability.workflow_id, review, evidence
+    )
+    request = runtime.application_service.request_maintenance_approval(
+        workspace.workspace_id
+    )
+    runtime.application_service.record_maintenance_approval(
+        maintenance.workflow_id, request.request_id
+    )
+    runtime.application_service.record_capability_integration_approval(
+        capability.workflow_id, request.request_id
+    )
+    approved = runtime.application_service.approve_maintenance_workspace(
+        request.request_id,
+        approver_id="human-reviewer",
+        patch_sha256=request.patch_sha256,
+        source_sha256=request.source_sha256,
+    )
+    maintenance = runtime.application_service.record_maintenance_approval(
+        maintenance.workflow_id, approved.request_id
+    )
+    capability = runtime.application_service.record_capability_integration_approval(
+        capability.workflow_id, approved.request_id
+    )
+
+    plan = runtime.application_service.corporation_planning().build(
+        (
+            OrganizationPriority(
+                "priority",
+                "Protect reliability",
+                "Caller-supplied rationale",
+                ("board-note-1",),
+            ),
+        ),
+        (),
+        now=datetime.now(timezone.utc),
+    )
+    selection = ResponsibilitySelection(
+        "priority",
+        "local_employee",
+        "General task execution",
+        (
+            WorkflowReference(
+                OrganizationWorkflowSource.MAINTENANCE,
+                maintenance.workflow_id,
+            ),
+            WorkflowReference(
+                OrganizationWorkflowSource.CAPABILITY_INTEGRATION,
+                capability.workflow_id,
+            ),
+        ),
+    )
+    tasks_before = tuple(
+        (item.id, item.status, item.assigned_agent) for item in runtime.tasks.all()
+    )
+    assignments_before = tuple(
+        (agent.id, agent.provider, agent.model, tuple(agent.capabilities))
+        for agent in runtime.agents.all()
+    )
+    queue = runtime.application_service.execution_queue()
+    queue_before = queue.list()
+    maintenance_before = runtime.application_service.get_maintenance_workflow(
+        maintenance.workflow_id
+    )
+    capability_before = runtime.application_service.get_capability_integration_workflow(
+        capability.workflow_id
+    )
+
+    with (
+        patch.object(
+            runtime.providers.get("ollama"),
+            "generate",
+            side_effect=AssertionError("Coordination invoked a Provider"),
+        ) as generate,
+        patch.object(
+            runtime.orchestrator,
+            "execute_task",
+            side_effect=AssertionError("Coordination executed a Task"),
+        ) as execute_task,
+        patch.object(
+            runtime.orchestrator,
+            "create_task",
+            side_effect=AssertionError("Coordination created a Task"),
+        ) as create_task,
+        patch.object(
+            runtime.orchestrator,
+            "execution_queue",
+            wraps=runtime.orchestrator.execution_queue,
+        ) as queue_factory,
+    ):
+        report = runtime.application_service.organization_coordination().build(
+            plan,
+            (selection,),
+            observed_at=datetime.now(timezone.utc),
+        )
+
+    generate.assert_not_called()
+    execute_task.assert_not_called()
+    create_task.assert_not_called()
+    queue_factory.assert_not_called()
+    assert report.plan == plan
+    assert report.responsibilities[0].employee_id == "local_employee"
+    assert report.responsibilities[0].employee_role == "Local AI Worker"
+    assert report.responsibilities[0].responsibility == "General task execution"
+    maintenance_result, capability_result = report.responsibilities[0].workflows
+    assert maintenance_result.source is OrganizationWorkflowSource.MAINTENANCE
+    assert maintenance_result.status is MaintenanceWorkflowStatus.APPROVED
+    assert maintenance_result.approval_status is ApprovalStatus.APPROVED
+    assert maintenance_result.patch_sha256 == workspace.patch_sha256
+    assert capability_result.source is OrganizationWorkflowSource.CAPABILITY_INTEGRATION
+    assert capability_result.status is CapabilityIntegrationStatus.PATCH_APPROVED
+    assert capability_result.approval_status is ApprovalStatus.APPROVED
+    assert capability_result.patch_sha256 == workspace.patch_sha256
+    assert any("not capability adoption" in item for item in report.limitations)
+    assert runtime.application_service.get_maintenance_workflow(
+        maintenance.workflow_id
+    ) == maintenance_before
+    assert runtime.application_service.get_capability_integration_workflow(
+        capability.workflow_id
+    ) == capability_before
+    assert tuple(
+        (item.id, item.status, item.assigned_agent) for item in runtime.tasks.all()
+    ) == tasks_before
+    assert tuple(
+        (agent.id, agent.provider, agent.model, tuple(agent.capabilities))
+        for agent in runtime.agents.all()
+    ) == assignments_before
+    assert queue.list() == queue_before
+    with pytest.raises(RuntimeError, match="Resource limits are not configured"):
+        runtime.application_service.resource_manager()
+    assert runtime.tasks.get(task.id).status is TaskStatus.FAILED

@@ -40,6 +40,15 @@ from .organization_planning import (
     OrganizationPlanningService,
     OrganizationPriority,
 )
+from .organization_coordination import (
+    CoordinatedResponsibility,
+    CoordinatedWorkflow,
+    OrganizationCoordinationReport,
+    OrganizationCoordinationService,
+    OrganizationWorkflowSource,
+    ResponsibilitySelection,
+    WorkflowReference,
+)
 from .failure_detection import (
     DetectedFailure,
     FailureDetectionReport,
@@ -155,6 +164,13 @@ __all__ = [
     "OrganizationPlan",
     "OrganizationPlanningService",
     "OrganizationPriority",
+    "CoordinatedResponsibility",
+    "CoordinatedWorkflow",
+    "OrganizationCoordinationReport",
+    "OrganizationCoordinationService",
+    "OrganizationWorkflowSource",
+    "ResponsibilitySelection",
+    "WorkflowReference",
     "DetectedFailure",
     "FailureDetectionReport",
     "FailureDetectionService",
