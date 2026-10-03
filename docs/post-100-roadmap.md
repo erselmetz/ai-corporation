@@ -75,6 +75,12 @@ Rejection or a request for more information is also a valid outcome.
 - Demonstrate offline chat with an already-installed compatible local model.
 - Local-only mode must not silently send prompts, context, or files to cloud APIs.
 - Separate model downloads, installed files, loaded models, and execution readiness.
+- On approved onboarding and explicit refresh, automatically discover models from
+  supported local provider inventory endpoints, starting with Ollama. Use bounded
+  loopback checks; do not scan arbitrary files, networks, or credential stores.
+- Show detected provider/model IDs, inventory source, and current evidence. Missing
+  or unsupported discovery remains explicit; detection does not install, download,
+  load, execute, or prove the suitability of a model.
 
 ### P04 - Supported online AI connections
 
@@ -86,6 +92,21 @@ Rejection or a request for more information is also a valid outcome.
 - Show active provider/model and enforce approved spend/request limits where
   metering supports them; missing usage information remains unknown.
 - Require explicit cloud-use and fallback policy before sending local context.
+- Support chat-driven setup such as "Connect my Gemini API and assign suitable
+  positions automatically." Open a secure credential entry control in the chat UI
+  instead of requesting the API key in ordinary conversation text.
+- Submit credentials directly to the backend credential store without sending them
+  to the conversation LLM, transcript/history, analytics, logs, or model context.
+  Never echo the key. Define access controls, rotation, disconnect, and deletion.
+- If a key is pasted into ordinary chat, intercept/redact supported formats before
+  persistence or model submission; detection is fallible, so this is not the normal
+  credential-entry path. Surface accidental exposure with provider-specific recovery
+  guidance instead of pretending that masking reverses earlier disclosure.
+- After authorized entry, verify the connection, discover accessible models where
+  supported, and apply P15 assignment policy. Validation/capability probes must have
+  explicit request/spend limits and must not include private project context.
+- A key alone does not authorize arbitrary paid work, tool access, or cloud transfer;
+  onboarding must capture permitted use, budget, and automatic-assignment preference.
 
 ### P05 - Corporation positions and Employee/Agent management
 
@@ -238,35 +259,44 @@ not a claim that these Employees or Agents are already installed or configured.
 - Document local/cloud speech processing, consent, costs, and retention.
 - Keep typed chat fully usable when voice is disabled or unavailable.
 
-### P15 - Configurable automatic deployment
+### P15 - Automatic capability-based AI position assignment
 
-- Provide deployment profiles for supported local installations, servers, or
-  hosting platforms; do not hardcode one destination or provider.
-- Let the owner select automatic deployment after approved changes pass the
-  required tests/review, or manual deployment. Automatic mode operates only within
-  an explicitly authorized profile and policy, including production approval rules.
-- Show artifact/revision, environment, target, progress, health checks, and verified
-  outcome. A successful build or push does not by itself prove a healthy deployment.
-- Define least-privilege credentials, allowed targets, migration rules, and recovery
-  before enabling a profile; never expose credentials in chat or frontend assets.
-- Support an explicit destination change/migration plan: validate the new target,
-  preserve required state, verify the result, and require separate authorization for
-  retiring the old destination. Do not copy credentials blindly between targets.
-- Keep public documentation deployment separate from Corporation runtime delivery.
-- Stop and surface test/review/health failures; no blind retries, automatic approval
-  of material architecture changes, or claims of rollback for irreversible actions.
-- Initial deterministic tests use fake deployment adapters; any actual deployment
-  requires an explicitly configured and authorized target. This planning document
-  authorizes no deployment, account connection, or credential change now.
+- "Auto deployment" in this product plan means assigning suitable AI connections
+  and models to organizational positions. It does not add automatic website/server
+  release or hosting-target migration requirements.
+- Combine P03 supported local discovery and P04 authorized online onboarding into
+  a reviewable inventory, including the two-local/three-online example in P05.
+- Assess role fit from traceable provider capability metadata, owner-supplied
+  requirements, and optional bounded evaluations under explicit budget. Distinguish
+  declared capabilities, tested performance, availability, and unknowns.
+- An installed model, successful connection, model size/name, or API key alone
+  cannot prove coding, reasoning, security-review, or other job competence.
+- Under an enabled owner-approved automatic policy, fill eligible unassigned roles
+  and show the model, supporting evidence, constraints, and reason for each choice.
+  Otherwise present suggested assignments for review. Leave uncertain or unsupported
+  roles unassigned; do not fabricate capability scores.
+- Preserve established/manual assignments unless the configured policy explicitly
+  permits reassignment. Provide edit, move, disable, and undo controls with defined
+  effects on active work; do not silently change a running job's model.
+- Respect permissions, cloud consent, budget, local capacity, and concurrency limits.
+  Multiple positions may share a model service with isolated contexts; assignment
+  does not require every model to be loaded or every Agent to run simultaneously.
+- Revalidate at supported refresh/admission boundaries and show stale assessments.
+  Provider failure does not silently reroute sensitive work to another connection.
+- Test discovery, onboarding, unknown capabilities, failed credentials, assignment,
+  manual overrides, isolation, and exhaustion with deterministic fake providers.
+- This document authorizes no live credential use, connection, model execution,
+  installation, or assignment change now; all functionality remains planned.
 
 ## Priority and release shape
 
 1. P00/P01 readiness and local access, then P02/P03 usable chat with a local model.
-2. P04/P05 supported online connections and visible organizational responsibilities.
+2. P04/P05 supported online connections and organizational responsibilities, with
+   P15 capability-based automatic assignment after its onboarding/policy dependencies.
 3. P06/P07 task delegation, review, owner reporting, and truthful workflow maps.
 4. P08/P09 memory controls and measured resource management as needed by these flows.
 5. P10/P11 research-to-adaptation and controlled self-maintenance.
-6. P12 supported software management and P15 policy-controlled deployment.
+6. P12 supported software management.
 7. P13 desktop delivery, then optional P14 voice.
 
 This ordering is a proposal. P00 must refine dependencies and identify what can be
