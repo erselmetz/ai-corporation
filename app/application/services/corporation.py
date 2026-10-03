@@ -625,6 +625,12 @@ class CorporationApplicationService:
         from .task_planning import TaskPlanningService
         return TaskPlanningService(self._orchestrator, self.context_retrieval())
 
+    def corporation_planning(self):
+        if self._corporation is None:
+            raise RuntimeError("Corporation identity is not configured")
+        from .organization_planning import OrganizationPlanningService
+        return OrganizationPlanningService(self._corporation.id)
+
     def context_retrieval(self):
         from .context_retrieval import ContextRetrievalService
         return ContextRetrievalService(self.memory_management())

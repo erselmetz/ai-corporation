@@ -180,8 +180,14 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-04",
                 "type": "development",
+                "title": "Corporation Planning System",
+                "summary": "Added a bounded immutable in-memory organization plan from explicit caller-supplied priorities, constraints, rationales, and source references. Priority order is caller-defined and preserved; references are not independently verified. Planning does not inspect Projects or Tasks, rank priorities, change assignments, schedule or execute work, call Providers, or persist plans. Tasks 97–100 remain planned.",
+            },
+            {
+                "date": "2026-10-04",
+                "type": "development",
                 "title": "Controlled Capability Integration",
-                "summary": "Added a bounded caller-driven workflow record linking a Task 93 candidate and matching Task 94 report to an explicitly supplied patch workspace, matching passing Task 80/82 results, Task 81 review evidence containing the exact diff, Task 83 patch approval, and Task 84 checkpoint. The candidate/workspace link and test/review report provenance are not independently verified; approval applies only to exact patch/source hashes. The workflow invokes none of these stages and stops at CHECKPOINTED without registering or activating a capability. Tasks 96–100 remain planned.",
+                "summary": "Added a bounded caller-driven workflow record linking a Task 93 candidate and matching Task 94 report to an explicitly supplied patch workspace, matching passing Task 80/82 results, Task 81 review evidence containing the exact diff, Task 83 patch approval, and Task 84 checkpoint. The candidate/workspace link and test/review report provenance are not independently verified; approval applies only to exact patch/source hashes. The workflow invokes none of these stages and stops at CHECKPOINTED without registering or activating a capability. At Task 95 completion, Tasks 96–100 remained planned.",
             },
             {
                 "date": "2026-10-04",
