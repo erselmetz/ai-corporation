@@ -44,7 +44,7 @@ ClientRequest / BusinessLayer adapter
 
 The CLI also uses `CorporationApplicationService` for application operations. This interface-neutral service is the application boundary for Corporation status, Employee, Agent, Provider, Model assignment, Task, Project, and Activity use cases. It coordinates existing management services and the Orchestrator and returns summaries rather than exposing registries as an interface contract. FastAPI resource routes use this boundary; the service has no HTTP, CLI, or database-driver logic, and the existing Core remains responsible for domain behavior and persistence. Task 55 adds in-memory Conversation/Message Core records. Task 56 adds the standalone Core `EmployeeChatService`, constructed with existing Employee and Agent registries, with no Conversation Application Service, API, or UI integration. It owns in-memory conversations, resolves exactly one explicit Employee/Agent selection at creation, captures fixed target IDs and scope, and returns immutable snapshots. Supplied messages and lifecycle outcomes reuse Task 55 rules; the service does not generate responses, invoke the Orchestrator/Providers, access memory or SQLite, or create Tasks. Employee reassignment does not retarget an existing conversation; a new conversation can select the new assignment.
 
-The FastAPI application in `app.api` serves a public dashboard at `/ui`, Corporation management pages, and app-owned static assets below `/ui/static`. Browser modules request protected Corporation data only from existing API endpoints; they do not access registries, SQLite, providers, or other Core internals. `/` and `/health` remain public; resource routes use application-service dependencies and do not directly manipulate internal registries. Authentication uses an injectable backend and rejects by default. Authorization checks the authenticated principal's required permission. A production identity provider and browser sign-in/session implementation are not configured; UI pages therefore report authentication-required, forbidden, or other failures and never represent failures as empty data. The public Node.js documentation site in `docs/` remains a separate application.
+The FastAPI application in `app.api` serves a public dashboard at `/ui`, Corporation management pages, and app-owned static assets below `/ui/static`. Browser modules request protected Corporation data only from existing API endpoints; they do not access registries, SQLite, providers, or other Core internals. `/` and `/health` remain public; resource routes use application-service dependencies and do not directly manipulate internal registries. Authentication uses an injectable backend and rejects by default. Authorization checks the authenticated principal's required permission. The default API has no configured production identity provider or browser sign-in/session implementation; UI pages therefore report authentication-required, forbidden, or other failures and never represent failures as empty data. The public Node.js documentation site in `docs/` remains a separate application.
 
 ### API boundary
 
@@ -64,7 +64,7 @@ Task 46 adds the FastAPI Web UI foundation; Task 47 adds a compact read-only das
 
 Task 49 adds Provider and Model Management at `/ui/providers`. Provider list/detail reads use `GET /api/providers` and `GET /api/providers/{provider_id}` with `provider:read`; creation uses `POST /api/providers` with exactly `id` / `name`, and removal uses `DELETE /api/providers/{provider_id}`, both requiring `provider:manage`. Provider responses expose only ID and configured type. Model assignments use `GET /api/models` and `GET /api/models/{agent_id}` with `model:read`; replacement uses `PUT /api/models/{agent_id}` with exactly `provider_id` / `model_id` and requires `model:manage`. Assignments identify Agents by ID only. No credential/configuration fields, Employee or Agent mutation, or direct Core access is introduced.
 
-Management pages use same-origin browser requests and preserve API authorization. No browser sign-in/session mechanism is configured, so the relevant authenticated session and distinct read/manage permissions remain prerequisites for protected data/actions. Failures retain distinct authentication, permission, validation/conflict, missing-record, and general states.
+Management pages use same-origin browser requests and preserve API authorization. The default API has no configured browser sign-in/session mechanism, so the relevant authenticated session and distinct read/manage permissions remain prerequisites for protected data/actions. Failures retain distinct authentication, permission, validation/conflict, missing-record, and general states.
 
 Task 50 adds Task Management at `/ui/tasks`. The page uses `GET /api/tasks` and `GET /api/tasks/{task_id}` (`task:read`), `POST /api/tasks` (`task:create`), and the existing non-mutating `POST /api/tasks/{task_id}/dry-run` (`task:read`). Creation accepts only title, description, optional project ID, and at most one Agent ID, role, or capability selector; the API generates Task ID and status. The API has no Task DELETE route or lifecycle mutation actions, and the UI does not invent them. Project association persistence remains limited by the existing TaskRegistry.
 
@@ -293,7 +293,7 @@ Tasks 1–89 are complete as the current foundation. Their implemented areas inc
 - Immutable readiness preparation that revalidates staged-source identity, sandbox policy, and existing proposal/sandbox/binding relationships without accepting execution commands or host credentials.
 - Application Service and FastAPI authentication/authorization foundations, plus Corporation status, Employee/Agent, Provider/Model assignment, and Task APIs. The Task API supports read, create, and non-mutating dry-run only; it does not expose HTTP execution or lifecycle mutation.
 - Project list/detail/create and bounded, read-only Task Activity APIs using explicit summaries and the existing persistence/logging infrastructure.
-- a FastAPI-served Corporation Web UI foundation, read-only dashboard at `/ui`, Employee Management at `/ui/employees`, and Provider/Model Management at `/ui/providers`, with CSS and browser modules under `/ui/static/`. The dashboard and management pages consume only existing protected APIs and preserve their authentication and permission checks. Browser authentication is not configured, so protected data/actions require an authenticated session; pages clearly render per-resource failure states meanwhile.
+- a FastAPI-served Corporation Web UI foundation, read-only dashboard at `/ui`, Employee Management at `/ui/employees`, and Provider/Model Management at `/ui/providers`, with CSS and browser modules under `/ui/static/`. The dashboard and management pages consume only existing protected APIs and preserve their authentication and permission checks. Default API browser authentication is not configured, so protected data/actions require an authenticated session; pages clearly render per-resource failure states meanwhile.
 - Provider administration through the existing `provider:read` / `provider:manage` endpoints, limited to the supported ID/name create contract and safe ID/type responses; model assignment viewing/replacement through `model:read` / `model:manage` with the supported Agent ID and provider/model identifiers.
 - Task Management at `/ui/tasks`, using the protected Task list/detail/create and non-mutating dry-run APIs; no Task deletion or lifecycle mutation action is exposed because the API does not support one.
 - Project Management at `/ui/projects`, using the protected Project list/detail/create APIs and their `project:read` / `project:create` permissions. Creation accepts only name and optional description; no deletion or lifecycle action is exposed because the API does not support one.
@@ -585,3 +585,32 @@ Task failures caught at the routing and Agent/Provider execution stages are stor
 ## Diagnostic Agent (Task 77)
 
 `application_service.diagnose_failure(agent_id, failure, evidence)` performs one call through the caller-selected registered Agent, using only a current Task 76 failure record and 1–20 explicit caller-supplied sanitized evidence items. The trusted caller is responsible for removing secrets and exception text before constructing `DiagnosticEvidence`. Each evidence item is bounded to 8192 UTF-8 bytes and total evidence to 32768 bytes. The bounded structured response permits at most 10 findings and unknowns; every finding must cite reference IDs present in that request. The result contains the failure and selected Agent IDs, cited findings, and unknowns—not the supplied evidence itself. Citations are checked for reference identity, not truth; generated diagnostics require human review. No Task.error, logs, or other records are retrieved automatically. No Task creation/execution, assignment changes, retries, remediation, persistence, or API/UI are added. Tasks 78+ maintenance proposals and automated changes remain separate.
+
+## Local owner Web UI (Task 102)
+
+Start the explicitly configured local app from the repository root:
+
+```powershell
+python -m app.local
+```
+
+Choose and confirm a password of at least 12 characters at the hidden prompts.
+Open `http://127.0.0.1:8000/ui/login`, sign in, and view the dashboard. Use that exact
+address; localhost aliases/other hosts are rejected unless explicitly configured.
+Use `--port 8001` if needed. Ctrl+C stops the app. Password and sessions are
+in-memory for this run; restart invalidates sessions and prompts for a new password.
+
+This mode grants existing read permissions only. Management forms may remain
+visible, but create/change/delete and maintenance actions are denied. Chat is a
+separate following milestone and is not available yet. The normal
+`app.api.app:app` remains rejecting by default; do not launch local mode via a
+reverse proxy or expose it remotely. Startup still uses the existing runtime and
+SQLite initialization; do not treat reads as proof of a configured provider/model.
+No installer, background startup, OS service, or automatic provider call is added.
+
+Local access uses hashed password verification, bounded attempts, opaque expiring
+HttpOnly SameSite=Strict session cookies, logout revocation, loopback peer/Host
+validation, and exact-Origin plus session CSRF checks on writes. Cookies are not
+Secure because this explicitly loopback-only mode uses HTTP; TLS/remote access is
+out of scope. It does not protect against malware or another process under the
+same OS user. Sign-in request validation omits submitted passwords from errors.

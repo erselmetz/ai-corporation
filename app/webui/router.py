@@ -27,6 +27,7 @@ def corporation_dashboard() -> HTMLResponse:
             <nav class="navigation" aria-label="Corporation navigation">
               <h2>Navigation</h2>
               <ul>
+                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
                 <li><a href="#dashboard" aria-current="page">Dashboard</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
@@ -47,9 +48,9 @@ def corporation_dashboard() -> HTMLResponse:
                 <button id="dashboard-retry" type="button">Retry data loading</button>
               </div>
               <p class="auth-boundary">
-                Dashboard data comes from protected Corporation APIs. No browser
-                sign-in flow is configured yet; protected data requires an
-                authenticated session with the relevant read permissions.
+                Dashboard data comes from protected Corporation APIs. Protected data requires an authenticated session with the relevant read
+                permissions. In explicitly configured local mode, use Local sign-in.
+                The default API still rejects access without an authentication backend.
               </p>
               <div class="dashboard-grid">
                 <section class="dashboard-card" id="status-panel" aria-labelledby="status-title">
@@ -115,6 +116,7 @@ def documentation_portal_page() -> HTMLResponse:
               <h2>Navigation</h2>
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
@@ -137,7 +139,7 @@ def documentation_portal_page() -> HTMLResponse:
                 This internal portal reads approved Markdown files from
                 <code>corporation_docs/</code> through the protected
                 <code>documentation:read</code> API. It is separate from the
-                public documentation website in <code>docs/</code>. Browser
+                public documentation website in <code>docs/</code>. In default API mode, browser
                 sign-in is not configured; an authenticated session is required.
               </p>
               <div class="documentation-layout">
@@ -188,6 +190,7 @@ def activity_page() -> HTMLResponse:
               <h2>Navigation</h2>
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
@@ -206,7 +209,7 @@ def activity_page() -> HTMLResponse:
                 <a class="back-link" href="/ui">Back to dashboard</a>
               </div>
               <p class="auth-boundary">
-                Activity data comes from the protected API. Browser sign-in is
+                Activity data comes from the protected API. In default API mode, browser sign-in is
                 not configured; an authenticated session with activity read
                 permission is required.
               </p>
@@ -271,6 +274,7 @@ def updates_page() -> HTMLResponse:
               <h2>Navigation</h2>
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
@@ -293,7 +297,7 @@ def updates_page() -> HTMLResponse:
                 This read-only page shows manually maintained, verified
                 development updates and release records. It is separate from
                 the public project updates page in <code>docs/</code>. Entries
-                are not inferred from roadmap tasks or Git history. Browser
+                are not inferred from roadmap tasks or Git history. In default API mode, browser
                 sign-in is not configured; an authenticated session with
                 <code>updates:read</code> permission is required.
               </p>
@@ -334,6 +338,7 @@ def employee_management_page() -> HTMLResponse:
               <h2>Navigation</h2>
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
                 <li><a href="/ui/employees" aria-current="page">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
@@ -353,7 +358,7 @@ def employee_management_page() -> HTMLResponse:
                 <a class="back-link" href="/ui">Back to dashboard</a>
               </div>
               <p class="auth-boundary">
-                Employee data and actions use protected APIs. Browser sign-in is
+                Employee data and actions use protected APIs. In default API mode, browser sign-in is
                 not configured; an authenticated session with employee read or
                 manage permission is required.
               </p>
@@ -420,6 +425,7 @@ def provider_model_management_page() -> HTMLResponse:
               <h2>Navigation</h2>
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers" aria-current="page">Provider &amp; Model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
@@ -439,7 +445,7 @@ def provider_model_management_page() -> HTMLResponse:
                 <a class="back-link" href="/ui">Back to dashboard</a>
               </div>
               <p class="auth-boundary">
-                Provider and model data/actions use protected APIs. Browser
+                Provider and model data/actions use protected APIs. In default API mode, browser
                 sign-in is not configured; authenticated sessions require
                 provider/model read or manage permissions.
               </p>
@@ -516,6 +522,7 @@ def task_management_page() -> HTMLResponse:
               <h2>Navigation</h2>
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks" aria-current="page">Task management</a></li>
@@ -615,6 +622,7 @@ def project_management_page() -> HTMLResponse:
               <h2>Navigation</h2>
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
@@ -634,7 +642,7 @@ def project_management_page() -> HTMLResponse:
                 <a class="back-link" href="/ui">Back to dashboard</a>
               </div>
               <p class="auth-boundary">
-                Project records and creation use protected APIs. Browser
+                Project records and creation use protected APIs. In default API mode, browser
                 sign-in is not configured; an authenticated session with
                 project read or create permission is required.
               </p>
@@ -680,7 +688,7 @@ def memory_page() -> HTMLResponse:
       <title>Memory — ERSELMETZ AI CORPORATION</title><link rel="stylesheet" href="/ui/static/style.css">
       <script type="module" src="/ui/static/memory.mjs"></script></head><body>
       <main class="content"><a href="/ui">Back to dashboard</a><h1>Memory management</h1>
-      <p>Browser sign-in is not configured. Reads require memory:read; changes require memory:manage and owner authority. Owner identity comes from the authenticated session.</p>
+      <p>In default API mode, browser sign-in is not configured. Reads require memory:read; changes require memory:manage and owner authority. Owner identity comes from the authenticated session.</p>
       <section class="management-card"><h2>Inspect stored memory</h2>
       <label for="memory-scope">Scope</label><select id="memory-scope"><option value="conversation">Conversation</option><option value="project">Project</option><option value="corporation">Corporation publication</option></select>
       <label for="memory-scope-id">Conversation, Project, or Corporation ID</label><input id="memory-scope-id" autocomplete="off">

@@ -1,9 +1,8 @@
 # Post-100 Product Roadmap: ERSELMETZ AI Command Center
 
-Status: P00 source-readiness review completed; P01-P15 implementation remains planned.
+Status: P00 source-readiness review and P01a local-owner access completed (Tasks 101-102); remaining P01 lifecycle work and P02-P15 remain planned.
 See [Task 101 readiness review](post-100-readiness.md) for evidence, gaps, and the
-first proposed implementation checkpoints. No operational capability is claimed
-as implemented by this planning document.
+first proposed implementation checkpoints. The readiness record distinguishes validated checkpoints from remaining planned capabilities.
 Planning date: 2026-10-03 (Asia/Manila).
 
 ## Relationship to the current roadmap
@@ -56,6 +55,10 @@ Completed as Task 101 source review on 2026-10-04; see
 - Do not infer production readiness from a milestone's completed status.
 
 ### P01 - Local access and application lifecycle
+
+P01a completed as Task 102: explicit local password sign-in, expiring sessions,
+read permissions, logout and CSRF/Origin/Host protections. One-click lifecycle,
+installer and remote identity work remain planned. See the readiness record.
 
 - Provide a supported local sign-in/session flow with explicit read/action
   permissions; preserve fail-closed authentication and the service boundary.

@@ -2,7 +2,7 @@
 
 Review date: 2026-10-04 (Asia/Manila).
 Baseline: Task 100 commit `2f5db63d7d471964949027365a2fa8b435b42ae6`.
-Status: readiness review completed; implementation tasks below remain planned.
+Status: Task 101 readiness review and Task 102 local-owner access complete; Tasks 103-104 remain planned.
 The reviewed baseline had a clean working tree and HEAD matching origin/main.
 This review is source inspection, not a fresh execution or full-suite validation.
 
@@ -11,7 +11,7 @@ This review is source inspection, not a fresh execution or full-suite validation
 Tasks 1-100 deliver bounded foundations. Their completed status does not imply
 that the owner can operate an autonomous organization through the browser.
 The current roadmap truthfully marks all 100 foundations complete, while the
-runtime still lacks a supported browser authentication and conversation flow.
+reviewed Task 100 runtime lacked a supported browser authentication and conversation flow.
 
 | Existing foundation | Reuse path | Gap for usable local operation |
 | --- | --- | --- |
@@ -36,7 +36,7 @@ were needed for this review.
 
 ### Task 102 / P01a - Explicit local-owner browser access
 
-Proposed contract, pending owner approval:
+Owner approved the contract on 2026-10-04. Implemented and validated on the same date:
 
 - One local owner on a loopback-only supported launch path; remote/multi-user
   deployment and external identity providers are separate work.
@@ -48,14 +48,18 @@ Proposed contract, pending owner approval:
   authentication contracts remain unchanged and rejecting by default.
 - Grant explicit existing read permissions and later separate chat permissions;
   no implicit management, task execution, maintenance approval, or wildcard grant.
-- Show actual sign-in state in browser navigation and protected-data errors.
+- Provide local sign-in/sign-out navigation, a session-state endpoint, and protected-data errors.
 - Deterministic tests for wrong/missing credentials, expiry/logout, Origin/Host
   checks, CSRF, brute-force bounds, authorization denial, and existing API behavior.
 - Document local startup/stop and the remaining installer/one-click lifecycle work.
 
-This is a material authentication decision. Existing global engineering rules
-require stopping for owner approval before implementing it. The review does not
-claim this contract is already implemented or fully designed.
+The owner approved this authentication decision before implementation. Validation:
+12 focused security tests; full Python suite 868 passed / 3 skipped (Windows
+symlink privileges unavailable); 88 browser-module tests; 8 public-docs tests;
+Python compilation and whitespace review passed. Pylance/pyright diagnostics were
+unavailable. Sessions expire after one hour, are limited to eight, and survive
+neither logout nor restart. This mode is loopback HTTP only, with no installer,
+remote/multi-user identity, or management authority. Task 103 chat is still planned.
 
 ### Task 103 / P02a - Owned coordinator chat API and usable browser chat
 
