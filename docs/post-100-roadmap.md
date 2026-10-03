@@ -182,6 +182,17 @@ not a claim that these Employees or Agents are already installed or configured.
 - Define event/snapshot freshness and reconnect behavior; stale or missing data
   must be visible. Never invent activity to animate a graph.
 - Selecting a node opens authorized details and evidence; omit secrets/raw errors.
+- Preferred visual direction: an original Iron Man/Jarvis-inspired command center,
+  using Three.js as a candidate for interactive 3D corporation/workflow maps,
+  selectable Agent nodes, and restrained status/connection animations.
+- Keep chat, management forms, approvals, and readable operational details in the
+  standard UI. The 3D scene is a presentation layer over authorized real state.
+- Provide equivalent 2D/list views, keyboard access, readable labels, reduced-motion
+  controls, and graceful fallback when graphics support/performance is insufficient.
+- Measure rendering cost alongside local inference; cap visual complexity and allow
+  disabling effects. Decorative animation must not imply nonexistent AI activity.
+- Three.js is a planning preference, not a dependency installation or final framework
+  commitment. Choose the implementation after P00 compatibility/performance review.
 
 ### P08 - Knowledge and memory controls
 
