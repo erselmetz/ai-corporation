@@ -600,9 +600,9 @@ address; localhost aliases/other hosts are rejected unless explicitly configured
 Use `--port 8001` if needed. Ctrl+C stops the app. Password and sessions are
 in-memory for this run; restart invalidates sessions and prompts for a new password.
 
-This mode grants existing read permissions only. Management forms may remain
-visible, but create/change/delete and maintenance actions are denied. Chat is a
-separate following milestone and is not available yet. The normal
+Task 102 initially granted existing read permissions. Task 103 adds separate
+coordinator-chat permissions. Management forms may remain visible, but
+create/change/delete and maintenance actions are denied. The normal
 `app.api.app:app` remains rejecting by default; do not launch local mode via a
 reverse proxy or expose it remotely. Startup still uses the existing runtime and
 SQLite initialization; do not treat reads as proof of a configured provider/model.
@@ -614,3 +614,43 @@ validation, and exact-Origin plus session CSRF checks on writes. Cookies are not
 Secure because this explicitly loopback-only mode uses HTTP; TLS/remote access is
 out of scope. It does not protect against malware or another process under the
 same OS user. Sign-in request validation omits submitted passwords from errors.
+
+
+## Owned coordinator browser chat (Task 103)
+
+Start `python -m app.local`, sign in at `http://127.0.0.1:8000/ui/login`, and open
+**Coordinator chat** (`/ui/chat`). Choose an actual registered Agent and select
+**New conversation**, then type a message and **Send**. The default Local Worker
+uses Ollama with `llama3.2:3b`; that service and model must already be available.
+This milestone does not install, download, discover, or automatically select models.
+The UI shows the actual Agent/provider/model and safe service/model failure guidance.
+
+Chat uses the existing CorporationChatService through a separate principal-owned
+Application Service facade. The API provides owned list/create/get/send/close at
+`/api/chat/conversations`, with distinct `chat:read`, `chat:start`, `chat:send`, and
+`chat:close` permissions. Explicit local mode grants those permissions alongside
+its existing reads; default API authentication still rejects access. Server-generated
+IDs and ownership checks hide other owners' conversations, including trusted CLI
+chat records. Local cookie-authenticated chat writes require session CSRF and Origin.
+
+Messages/replies retain the existing 8192-byte limit and 32768-byte prompt limit.
+This facade retains up to 100 conversations per service run and 200 messages per
+conversation, including failed messages; closing does not free that retained history.
+History and ownership are in memory and do not survive restart. No automatic memory
+retention occurs. Per-conversation local locks reject overlapping get/send/close
+requests with 409; they provide no distributed or multi-process coordination.
+External registry/configuration mutations are not synchronized; a detected provider/
+model reassignment requires a new conversation and configurations should remain
+stable during calls. Separate conversations may call the provider concurrently;
+chat does not reserve Task 68 slots or use Task 70 controlled Task execution.
+
+Sending explicitly calls the selected configured provider through the existing
+Orchestrator, returns a complete response, and never executes generated instructions.
+The current provider contract has no streaming or true cancellation; closing the page
+or signing out does not cancel a request already admitted. Failures record a failed
+user message and expose a safe error; network failures can leave an uncertain outcome,
+so the UI reads the current conversation without automatically replaying the turn.
+Replies are rendered as plain text, including any HTML. No tools, Task creation/
+execution, assignment changes, cloud fallback, automatic retries, deployment, or
+maintenance action is triggered. Keep API credentials out of ordinary chat.
+The CEO label/hierarchy, workforce delegation and richer onboarding remain planned.

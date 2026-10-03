@@ -756,3 +756,9 @@ button:disabled {
     grid-column: auto;
   }
 }
+
+.chat-content { max-width: 60rem; margin: 1rem auto; }
+.chat-content label { display: block; margin-top: 1rem; }
+.chat-content select, .chat-content textarea { width: 100%; margin: .4rem 0; }
+.chat-message { border: 1px solid var(--border, #43506a); border-radius: .5rem; padding: 1rem; margin: .8rem 0; }
+.chat-message p { white-space: pre-wrap; overflow-wrap: anywhere; }

@@ -3,6 +3,12 @@
     {
       "date": "2026-10-04",
       "type": "development",
+      "title": "Owned coordinator browser chat",
+      "summary": "Added principal-owned coordinator chat list/create/get/send/close through application services, distinct chat permissions, generated conversation IDs, local overlapping-request rejection, bounded in-memory history and plain-text browser rendering. Explicit Send reuses CorporationChatService and Orchestrator; failed replies are recorded safely without automatic replay. Local owner mode grants scoped chat alongside reads; default API access remains rejecting. No Task/tool execution, capacity reservation, assignment mutation, streaming, true cancellation, model discovery, transcript persistence, installer or new dependencies are added."
+    },
+    {
+      "date": "2026-10-04",
+      "type": "development",
       "title": "Local owner Web UI access",
       "summary": "Added an explicitly configured loopback-only local launcher with hidden password prompts, expiring in-memory HttpOnly sessions, logout revocation, bounded login attempts, Host/Origin checks and session CSRF protection. Existing read permissions are available after sign-in; management and maintenance writes remain denied. The default API still rejects access without a configured authentication backend. No browser chat, provider calls, installer, remote identity integration or new dependencies are added; sessions do not survive restart."
     },

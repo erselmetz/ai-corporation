@@ -109,12 +109,15 @@ def test_message_lookup_reports_missing_message():
         conversation.get_message("missing")
 
 
-def test_conversation_foundation_adds_no_chat_api_or_ui():
+def test_chat_page_does_not_bypass_default_authentication_or_execute_domain_work():
     orchestrator = MagicMock(spec=Orchestrator)
     application = create_app(CorporationApplicationService(orchestrator))
 
     with TestClient(application) as client:
         assert client.get("/api/conversations").status_code == 404
-        assert client.get("/ui/chat").status_code == 404
+        assert client.get("/ui/chat").status_code == 200
+        assert client.get("/api/chat/conversations").status_code == 401
+        assert client.post("/api/chat/conversations", json={"agent_id": "agent"}).status_code == 401
+        assert client.post("/api/chat/conversations/id/messages", json={"text": "Hello"}).status_code == 401
 
     assert orchestrator.method_calls == []

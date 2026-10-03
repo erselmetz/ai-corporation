@@ -28,6 +28,7 @@ def corporation_dashboard() -> HTMLResponse:
               <h2>Navigation</h2>
               <ul>
                 <li><a href="/ui/login">Local sign-in / sign-out</a></li>
+                <li><a href="/ui/chat">Coordinator chat</a></li>
                 <li><a href="#dashboard" aria-current="page">Dashboard</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
@@ -117,6 +118,7 @@ def documentation_portal_page() -> HTMLResponse:
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
                 <li><a href="/ui/login">Local sign-in / sign-out</a></li>
+                <li><a href="/ui/chat">Coordinator chat</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
@@ -191,6 +193,7 @@ def activity_page() -> HTMLResponse:
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
                 <li><a href="/ui/login">Local sign-in / sign-out</a></li>
+                <li><a href="/ui/chat">Coordinator chat</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
@@ -275,6 +278,7 @@ def updates_page() -> HTMLResponse:
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
                 <li><a href="/ui/login">Local sign-in / sign-out</a></li>
+                <li><a href="/ui/chat">Coordinator chat</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
@@ -339,6 +343,7 @@ def employee_management_page() -> HTMLResponse:
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
                 <li><a href="/ui/login">Local sign-in / sign-out</a></li>
+                <li><a href="/ui/chat">Coordinator chat</a></li>
                 <li><a href="/ui/employees" aria-current="page">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
@@ -426,6 +431,7 @@ def provider_model_management_page() -> HTMLResponse:
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
                 <li><a href="/ui/login">Local sign-in / sign-out</a></li>
+                <li><a href="/ui/chat">Coordinator chat</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers" aria-current="page">Provider &amp; Model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
@@ -523,6 +529,7 @@ def task_management_page() -> HTMLResponse:
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
                 <li><a href="/ui/login">Local sign-in / sign-out</a></li>
+                <li><a href="/ui/chat">Coordinator chat</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks" aria-current="page">Task management</a></li>
@@ -623,6 +630,7 @@ def project_management_page() -> HTMLResponse:
               <ul>
                 <li><a href="/ui">Dashboard</a></li>
                 <li><a href="/ui/login">Local sign-in / sign-out</a></li>
+                <li><a href="/ui/chat">Coordinator chat</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
@@ -702,3 +710,30 @@ def memory_page() -> HTMLResponse:
       <button id="memory-save" type="button" disabled>Save correction / retention</button><button id="memory-remove" type="button" disabled>Remove memory</button>
       <p>Expired content cannot be restored through this page. Publications preserve their source expiry and stay immutable; owners may withdraw them. Removing a private source does not withdraw an independently published copy. Caller-held copies and backups cannot be revoked by this interface.</p>
       </section></main></body></html>""")
+
+
+@router.get("/ui/chat", response_class=HTMLResponse)
+def coordinator_chat_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Coordinator chat - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/chat.mjs"></script></head><body>
+    <main class="content chat-content"><nav aria-label="Chat navigation">
+    <a href="/ui">Dashboard</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <h1>Corporation coordinator chat</h1>
+    <p>Talk to a selected registered Agent. Replies are conversation text; they do not create Tasks,
+    execute tools, or change the corporation. This is the first step toward the planned CEO workspace.</p>
+    <label for="chat-agent">Coordinator and configured model</label><select id="chat-agent"></select>
+    <button id="chat-start" type="button">New conversation</button>
+    <label for="chat-conversation">Your conversations for this app run</label><select id="chat-conversation"></select>
+    <button id="chat-refresh" type="button">Refresh list</button><button id="chat-close" type="button">Close conversation</button>
+    <p id="chat-identity"></p><p id="chat-state" role="status" aria-live="polite"></p>
+    <section id="chat-history" aria-label="Conversation messages" aria-live="polite"></section>
+    <form id="chat-form"><label for="chat-input">Message (up to 8192 UTF-8 bytes)</label>
+    <textarea id="chat-input" rows="4" maxlength="8192" required></textarea>
+    <button id="chat-send" type="submit">Send</button></form>
+    <p>History is in memory and is lost when the app restarts. Up to 100 conversations and 200 messages
+    per conversation are retained for this run. The current provider contract does not stream or
+    cancel requests. For the default local Agent, Ollama and llama3.2:3b must already be available;
+    model discovery and selection through this UI are planned next. Do not paste API keys here.</p>
+    </main></body></html>""")

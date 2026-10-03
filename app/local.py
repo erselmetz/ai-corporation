@@ -26,8 +26,8 @@ LOGIN_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <input id="password" type="password" autocomplete="current-password" required maxlength="1024">
 <button type="submit">Sign in</button></form>
 <p id="login-state" role="status" aria-live="polite"></p>
-<a href="/ui">Dashboard</a> <button id="local-logout" type="button">Sign out</button>
-<p>This first local mode provides read access. Management actions remain unavailable.</p>
+<a href="/ui">Dashboard</a> <a href="/ui/chat">Coordinator chat</a> <button id="local-logout" type="button">Sign out</button>
+<p>Local mode provides read access and separately authorized coordinator chat. Management actions remain unavailable.</p>
 </main><script type="module" src="/ui/static/local-login.mjs"></script></body></html>"""
 
 

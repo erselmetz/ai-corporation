@@ -1,6 +1,6 @@
 # Post-100 Product Roadmap: ERSELMETZ AI Command Center
 
-Status: P00 source-readiness review and P01a local-owner access completed (Tasks 101-102); remaining P01 lifecycle work and P02-P15 remain planned.
+Status: P00 source-readiness review and P01a local-owner access and P02a owned coordinator chat completed (Tasks 101-103); remaining P01/P02 work and P03-P15 remain planned.
 See [Task 101 readiness review](post-100-readiness.md) for evidence, gaps, and the
 first proposed implementation checkpoints. The readiness record distinguishes validated checkpoints from remaining planned capabilities.
 Planning date: 2026-10-03 (Asia/Manila).
@@ -68,6 +68,11 @@ installer and remote identity work remain planned. See the readiness record.
   frontend assets. Local use does not waive authorization.
 
 ### P02 - CEO chat: first usable command center
+
+P02a completed as Task 103: principal-owned selected-Agent chat API/UI, explicit
+Send, actual model identity, safe replies/errors and bounded ephemeral history.
+Streaming, true cancellation, individual Employee entry points, action reviews
+and autonomous CEO delegation remain planned. See the readiness record.
 
 - Connect browser chat to the existing supported conversation/provider services.
 - Provide coordinator identity, individual Employee conversations, response

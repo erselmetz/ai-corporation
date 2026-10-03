@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from threading import Lock
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
@@ -167,6 +168,8 @@ class CorporationApplicationService:
         self._orchestrator = orchestrator
         self._tool_registry = tool_registry
         self._corporation_chat = None
+        self._owned_chat = None
+        self._owned_chat_lock = Lock()
         self._task_collaboration = None
         self._capability_integration_workflow: CapabilityIntegrationWorkflowService | None = None
         self._maintenance_proposals = MaintenanceProposalService()
@@ -688,6 +691,19 @@ class CorporationApplicationService:
     def project_knowledge(self):
         from .project_knowledge import ProjectKnowledgeService
         return ProjectKnowledgeService(self._orchestrator)
+
+    def owned_chat(self):
+        """Separate principal-owned HTTP chat facade, safely constructed once."""
+        with self._owned_chat_lock:
+            if self._owned_chat is None:
+                if self._corporation is None:
+                    raise ValueError("Corporation identity is required")
+                from .corporation_chat import CorporationChatService
+                from .owned_chat import OwnedChatService
+                self._owned_chat = OwnedChatService(
+                    CorporationChatService(self._corporation.id, self._orchestrator),
+                    self.get_agent, self.get_provider)
+            return self._owned_chat
 
     def corporation_chat(self):
         """Local-only facade; no HTTP exposure or new permission grant."""

@@ -2,7 +2,7 @@
 
 Review date: 2026-10-04 (Asia/Manila).
 Baseline: Task 100 commit `2f5db63d7d471964949027365a2fa8b435b42ae6`.
-Status: Task 101 readiness review and Task 102 local-owner access complete; Tasks 103-104 remain planned.
+Status: Tasks 101-103 complete; Task 104 and remaining product work remain planned.
 The reviewed baseline had a clean working tree and HEAD matching origin/main.
 This review is source inspection, not a fresh execution or full-suite validation.
 
@@ -59,11 +59,11 @@ symlink privileges unavailable); 88 browser-module tests; 8 public-docs tests;
 Python compilation and whitespace review passed. Pylance/pyright diagnostics were
 unavailable. Sessions expire after one hour, are limited to eight, and survive
 neither logout nor restart. This mode is loopback HTTP only, with no installer,
-remote/multi-user identity, or management authority. Task 103 chat is still planned.
+remote/multi-user identity, or management authority. Task 103 subsequently adds scoped chat.
 
 ### Task 103 / P02a - Owned coordinator chat API and usable browser chat
 
-Depends on validated Task 102. Scope remains planned:
+Depends on validated Task 102. Owner-approved scoped chat completed on 2026-10-04:
 
 - Authenticated create/get/send/close for principal-owned conversations, through
   the Application Service; no direct API registry/provider access.
@@ -78,6 +78,27 @@ Depends on validated Task 102. Scope remains planned:
   generated text; later reviewed action flows are separately scoped.
 - Test owner isolation, permissions, concurrency, validation, provider failures,
   safe rendering, and service boundaries using deterministic fake providers.
+
+Validation: 7 focused owned-chat tests and 110 affected regressions passed; a real
+Chromium loopback flow passed sign-in, chat, inert HTML reply rendering, mobile
+layout, closure, logout and server shutdown with a deterministic fake provider.
+The final full Python suite passed 876 tests and skipped 3 Windows symlink cases.
+It included 3 existing optional Ollama integration tests because the local service
+was available; new chat tests do not require live Ollama. All 94 browser-module
+and 8 public-docs tests passed, as did compilation/import and whitespace checks.
+Pylance/pyright diagnostics were unavailable. Final scope/security review confirmed
+owner isolation, default-deny authentication, CSRF, bounded history, safe errors,
+no automatic replay, no Task/tool execution and no slot/assignment mutations.
+
+The old Task 55 assertion that `/ui/chat` did not exist was superseded by the
+owner-approved post-100 UI scope; it now verifies that the page causes no domain
+work and that chat requests in default API mode remain denied. Core Conversation,
+Message and Task behavior was not changed. History is process-local and ephemeral;
+100 conversations / 200 messages are retained per run, including closed/failed
+records. Local locks reject overlap rather than queue; external configuration
+changes and other service/process instances are not coordinated. A running provider
+request is not canceled by page close/logout. Streaming, true cancellation, model
+discovery, autonomous delegation, tool execution and installer work remain planned.
 
 ### Task 104 / P03a - Local model discovery and explicit coordinator configuration
 
@@ -105,7 +126,9 @@ planned. Existing Tasks 1-100 are not reopened or renumbered by this review.
 The first runnable goal is: start explicitly configured local app, sign in, see
 existing authorized records, and exchange a message with a selected local Agent.
 That goal requires Task 102, Task 103, and an available compatible local model;
-this review alone does not satisfy it.
+Tasks 102-103 now provide the validated sign-in/chat path. Model discovery and
+selection remain Task 104; the owner must already have the configured local service
+and model. The first chat does not constitute autonomous CEO orchestration.
 
 Preserve the full regression requirements for runtime changes. Reuse still-valid
 inspection findings, run focused tests before affected regressions/full suite,
