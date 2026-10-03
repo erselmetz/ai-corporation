@@ -13,6 +13,7 @@ from .failure_detection import (
     FailureDetectionReport,
     FailureDetectionService,
 )
+from .maintenance_proposals import MaintenanceProposal, MaintenanceProposalService
 from .system_monitoring import SystemMonitoringReport
 
 
@@ -120,6 +121,7 @@ class CorporationApplicationService:
         self._orchestrator = orchestrator
         self._corporation_chat = None
         self._task_collaboration = None
+        self._maintenance_proposals = MaintenanceProposalService()
         self._resource_manager = None
         self._controlled_execution = None
         self._corporation = corporation
@@ -188,6 +190,32 @@ class CorporationApplicationService:
             agents=self._orchestrator.agents,
             orchestrator=self._orchestrator,
         ).diagnose(agent_id, failure, evidence)
+
+    def create_maintenance_proposal(
+        self,
+        proposal_id: str,
+        diagnostic: DiagnosticReport,
+        *,
+        title: str,
+        proposed_change: str,
+        scope: str,
+        risk: str,
+    ) -> MaintenanceProposal:
+        """Record an immutable caller-authored proposal; perform no changes."""
+        return self._maintenance_proposals.create(
+            proposal_id,
+            diagnostic,
+            title=title,
+            proposed_change=proposed_change,
+            scope=scope,
+            risk=risk,
+        )
+
+    def get_maintenance_proposal(self, proposal_id: str) -> MaintenanceProposal:
+        return self._maintenance_proposals.get(proposal_id)
+
+    def list_maintenance_proposals(self) -> tuple[MaintenanceProposal, ...]:
+        return self._maintenance_proposals.all()
 
     def execute_controlled_task(self, task_id):
         self.resource_manager()  # Reject missing configuration before touching Tasks.

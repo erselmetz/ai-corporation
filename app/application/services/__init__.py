@@ -47,6 +47,7 @@ from .diagnostics import (
     DiagnosticResponseError,
     DiagnosticService,
 )
+from .maintenance_proposals import MaintenanceProposal, MaintenanceProposalService
 
 __all__ = [
     "ActivitySummary",
@@ -86,4 +87,6 @@ __all__ = [
     "DiagnosticReport",
     "DiagnosticResponseError",
     "DiagnosticService",
+    "MaintenanceProposal",
+    "MaintenanceProposalService",
 ]

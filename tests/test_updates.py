@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-03",
                 "type": "development",
+                "title": "Maintenance Proposals",
+                "summary": "Added immutable in-memory caller-authored maintenance proposals linked to Task 77 diagnostics, with bounded explicit change, scope, and risk fields; proposals are review-only and do not generate patches, persist, execute Tasks, modify assignments, or apply changes.",
+            },
+            {
+                "date": "2026-10-03",
+                "type": "development",
                 "title": "Diagnostic Agent",
                 "summary": "Added one-call, caller-selected Agent diagnostics over bounded caller-supplied evidence only, with validated bounded summaries and citations restricted to supplied reference IDs; no automatic retrieval, raw error input, Task creation/execution, assignment changes, retries, or remediation.",
             },
