@@ -1,6 +1,9 @@
 # Post-100 Product Roadmap: ERSELMETZ AI Command Center
 
-Status: planned; no capability below is claimed as implemented by this document.
+Status: P00 source-readiness review completed; P01-P15 implementation remains planned.
+See [Task 101 readiness review](post-100-readiness.md) for evidence, gaps, and the
+first proposed implementation checkpoints. No operational capability is claimed
+as implemented by this planning document.
 Planning date: 2026-10-03 (Asia/Manila).
 
 ## Relationship to the current roadmap
@@ -42,6 +45,9 @@ Rejection or a request for more information is also a valid outcome.
 ## Planned tasks and acceptance criteria
 
 ### P00 - Review the completed Task 100 baseline
+
+Completed as Task 101 source review on 2026-10-04; see
+[the readiness record](post-100-readiness.md). No fresh runtime validation claimed.
 
 - Inspect the authoritative roadmap, code, tests, and limitations after Task 100.
 - Map each proposed feature to implemented services, missing interfaces, and
