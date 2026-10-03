@@ -62,6 +62,14 @@ from .maintenance_approvals import (
     MaintenanceApprovalService,
     MaintenanceApprovalSummary,
 )
+from .git_checkpoints import (
+    GitCheckpoint,
+    GitCheckpointBlockedError,
+    GitCheckpointCapacityError,
+    GitCheckpointError,
+    GitCheckpointNotFoundError,
+    GitCheckpointService,
+)
 from .patch_development import PatchDevelopmentService, PatchWorkspace
 from .testing_workflow import RunStatus, TestRunReport, TestingWorkflowService
 from .maintenance_sandbox import (
@@ -120,6 +128,12 @@ __all__ = [
     "MaintenanceApprovalReview",
     "MaintenanceApprovalService",
     "MaintenanceApprovalSummary",
+    "GitCheckpoint",
+    "GitCheckpointBlockedError",
+    "GitCheckpointCapacityError",
+    "GitCheckpointError",
+    "GitCheckpointNotFoundError",
+    "GitCheckpointService",
     "PatchDevelopmentService",
     "PatchWorkspace",
     "TestRunReport",

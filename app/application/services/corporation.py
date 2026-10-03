@@ -22,6 +22,10 @@ from .maintenance_approvals import (
     MaintenanceApprovalService,
     MaintenanceApprovalSummary,
 )
+from .git_checkpoints import (
+    GitCheckpoint,
+    GitCheckpointService,
+)
 from .maintenance_sandbox import (
     MaintenanceSandboxReport,
     MaintenanceSandboxService,
@@ -139,6 +143,10 @@ class CorporationApplicationService:
         self._patch_development = PatchDevelopmentService()
         self._maintenance_approvals = MaintenanceApprovalService(
             self._patch_development
+        )
+        self._git_checkpoints = GitCheckpointService(
+            self._patch_development,
+            self._maintenance_approvals,
         )
         self._testing_workflow = TestingWorkflowService()
         self._resource_manager = None
@@ -324,6 +332,20 @@ class CorporationApplicationService:
     ) -> MaintenanceApprovalReview:
         """Fail closed unless a human approved this exact patch and source."""
         return self._maintenance_approvals.require_approved(workspace_id)
+
+    def create_maintenance_checkpoint(
+        self,
+        workspace_id: str,
+        *,
+        created_by: str,
+    ) -> GitCheckpoint:
+        return self._git_checkpoints.create(workspace_id, created_by=created_by)
+
+    def list_maintenance_checkpoints(self) -> tuple[GitCheckpoint, ...]:
+        return self._git_checkpoints.list()
+
+    def get_maintenance_checkpoint(self, checkpoint_id: str) -> GitCheckpoint:
+        return self._git_checkpoints.get(checkpoint_id)
 
     def run_selected_tests(
         self,

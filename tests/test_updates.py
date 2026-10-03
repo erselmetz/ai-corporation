@@ -180,8 +180,14 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-03",
                 "type": "development",
+                "title": "Git Checkpoint Integration",
+                "summary": "Added an authenticated local checkpoint API requiring maintenance:checkpoint in addition to exact Task 83 approval. It revalidates the registered Task 79 patch/source, requires a clean Git worktree and index, and atomically records the approved diff as a commit on a dedicated local branch using a temporary index; it does not switch branches, push, merge, run Tasks, or alter the active checkout. Checkpoint creator identity is recorded. Branches/commits persist locally; reports are in-memory, and recovery after later integration is an explicit git revert.",
+            },
+            {
+                "date": "2026-10-03",
+                "type": "development",
                 "title": "Human Approval Workflow",
-                "summary": "Added an authenticated in-memory maintenance review workflow that presents the exact unified diff and binds approval/rejection to the registered workspace plus patch/source SHA-256 hashes. API decisions require maintenance:approve, echo both hashes, record the authenticated reviewer identity and UTC time, and reject stale or disposed workspaces; the configured backend must grant approval permission only to human reviewers. Approval checks fail closed for future consumers. No patch is applied, Git checkpoint created, or Task executed; Task 84+ integration remains planned.",
+                "summary": "Added an authenticated in-memory maintenance review workflow that presents the exact unified diff and binds approval/rejection to the registered workspace plus patch/source SHA-256 hashes. API decisions require maintenance:approve, echo both hashes, record the authenticated reviewer identity and UTC time, and reject stale or disposed workspaces; the configured backend must grant approval permission only to human reviewers. Approval checks fail closed for future consumers. Task 83 itself applies no patch, performs no Git operation, and executes no Task; Task 84 separately implements local checkpoints.",
             },
             {
                 "date": "2026-10-03",

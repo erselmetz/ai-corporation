@@ -36,6 +36,7 @@ class PatchWorkspace:
     created_at: datetime
     path: Path
     unified_diff: str = field(default="", repr=False)
+    source_root: Path | None = field(default=None, repr=False)
 
 
 class PatchDevelopmentService:
@@ -117,6 +118,7 @@ class PatchDevelopmentService:
                     created_at=datetime.now(timezone.utc),
                     path=workspace_path,
                     unified_diff=unified_diff,
+                    source_root=root,
                 )
                 self._workspaces[workspace.workspace_id] = (
                     workspace,

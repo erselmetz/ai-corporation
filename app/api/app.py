@@ -814,6 +814,8 @@ def create_app(
     application.include_router(memory_router)
     from .maintenance_approvals import router as maintenance_approvals_router
     application.include_router(maintenance_approvals_router)
+    from .maintenance_checkpoints import router as maintenance_checkpoints_router
+    application.include_router(maintenance_checkpoints_router)
     application.include_router(web_ui_router)
     return application
 
