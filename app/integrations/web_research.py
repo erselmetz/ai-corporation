@@ -52,6 +52,15 @@ class ResearchClassification(str, Enum):
 
 
 @dataclass(frozen=True, slots=True)
+class WebResearchPage:
+    source_url: str
+    content_type: str
+    content: bytes
+    retrieved_at: datetime
+    response_sha256: str
+
+
+@dataclass(frozen=True, slots=True)
 class WebResearchDocument:
     source_url: str
     title: str | None
@@ -182,8 +191,13 @@ class WebResearchClient:
             _normalize_domain(domain) for domain in allowed_domains
         )
 
-    def retrieve(self, url: str) -> WebResearchDocument:
-        source_url = _normalize_page_url(url, self._allowed_domains)
+    def validate_url(self, url: str) -> str:
+        """Validate and canonicalize a caller URL under the configured host policy."""
+        return _normalize_page_url(url, self._allowed_domains)
+
+    def fetch_page(self, url: str) -> WebResearchPage:
+        """Fetch one bounded raw text page without redirects or environment proxies."""
+        source_url = self.validate_url(url)
         try:
             with httpx.Client(
                 timeout=REQUEST_TIMEOUT_SECONDS,
@@ -225,15 +239,26 @@ class WebResearchClient:
         except httpx.RequestError:
             raise WebResearchFetchError("The research page request failed") from None
 
-        title, text = _extract_page_text(bytes(body), content_type)
+        response_body = bytes(body)
+        return WebResearchPage(
+            source_url=source_url,
+            content_type=content_type,
+            content=response_body,
+            retrieved_at=datetime.now(timezone.utc),
+            response_sha256=hashlib.sha256(response_body).hexdigest(),
+        )
+
+    def retrieve(self, url: str) -> WebResearchDocument:
+        page = self.fetch_page(url)
+        title, text = _extract_page_text(page.content, page.content_type)
         text_truncated = len(text) > MAX_TEXT_CHARACTERS
         if text_truncated:
             text = text[:MAX_TEXT_CHARACTERS].rstrip()
         return WebResearchDocument(
-            source_url=source_url,
+            source_url=page.source_url,
             title=None if title is None else title[:500],
             text=text,
             retrieved_at=datetime.now(timezone.utc),
-            response_sha256=hashlib.sha256(body).hexdigest(),
+            response_sha256=page.response_sha256,
             text_truncated=text_truncated,
         )

@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-03",
                 "type": "development",
+                "title": "Computer-Use Capability",
+                "summary": "Added caller-driven, read-only browser inspection that reuses Task 88's exact-host HTTPS allowlist and bounded fetch. Scripts, styles, resource URLs, event attributes, and active embedded content are removed before static markup is rendered in an ephemeral headless Chromium context; JavaScript, downloads, user interaction, local-file access, and browser network requests are unavailable. Immutable results are bounded untrusted evidence with user-visible safeguards. No API/UI, persistence, Agent/Provider calls, Task execution, or background polling is added. Tasks 91–100 remain planned.",
+            },
+            {
+                "date": "2026-10-03",
+                "type": "development",
                 "title": "Coding Tool Integration",
                 "summary": "Added an opt-in MCP coding-tool proposal adapter over explicitly registered MCPTool instances. Callers supply a bounded instruction and selected path/content pairs; the tool returns a bounded unified diff limited to those paths. The result includes source/patch digests and is not applied, executed, persisted, tested, or reviewed automatically. Task 79 and Task 80/81 remain separate caller actions. MCP servers remain trusted host processes, not OS sandboxes. Tasks 90–100 remain planned.",
             },

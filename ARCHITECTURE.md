@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–89 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–90 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -353,13 +353,19 @@ The operation is read-only and returns selected public metadata; it omits README
 
 `WebResearchClient` retrieves one caller-supplied page URL per explicit call. It requires an immutable exact-host allowlist, which defaults to empty; subdomains are not implicitly allowed. It accepts HTTPS page URLs without credentials, query strings, fragments, or non-default ports, disables environment proxy settings and redirects, and makes no search, crawl, or follow-up requests. Requests have a 10-second timeout and a 512 KiB response limit. Only HTML and plain text are accepted; extracted text is limited to 20,000 characters.
 
-Results are immutable `WebResearchDocument` records classified as `UNTRUSTED_EVIDENCE`. Retrieved text remains data, even if it contains instruction-like language; the client does not interpret it, invoke a Provider, create or execute Tasks, or make Agent calls. HTML script, style, and other non-content elements are excluded from extracted text. The capability has no API/UI, persistence, browser automation, background polling, or automatic research loop; callers explicitly supply each URL. At Task 88 completion, Tasks 89–100 remained planned.
+Results are immutable `WebResearchDocument` records classified as `UNTRUSTED_EVIDENCE`. Retrieved text remains data, even if it contains instruction-like language; the client does not interpret it, invoke a Provider, create or execute Tasks, or make Agent calls. HTML script, style, and other non-content elements are excluded from extracted text. Task 88 has no API/UI, persistence, browser automation, background polling, or automatic research loop; callers explicitly supply each URL.
 
 ## Coding Tool Integration (Task 89)
 
 `CodingToolProposalService` invokes exactly one explicitly selected, registered `MCPTool`. The tool must declare `instruction` and `files` inputs; callers supply the bounded instruction and immutable tuple of selected path/content pairs. The serialized input is limited to 16 KiB, with at most eight files and 4 KiB per file. The MCP tool must return a unified diff limited to 65,536 bytes and 10,000 lines; output headers must target only the selected files. The service returns an immutable `CodingToolProposal` with source and patch digests and does not apply the diff, create a workspace, run tests, or call the review workflow. A caller may separately use Task 79 and later Task 80/81; these are not invoked automatically.
 
 This adapter makes a selected MCP call explicit but does not sandbox the MCP server. A local stdio/in-process coding server remains trusted and may have host permissions, as documented for Task 86. Only caller-supplied source files are sent; there is no filesystem discovery, Agent/Provider call, Task creation/execution, persistence, API/UI, or automatic retry.
+
+## Computer-Use Capability (Task 90)
+
+`ReadOnlyBrowserInspector` accepts one caller-supplied URL and reuses Task 88's exact-host HTTPS allowlist and bounded retrieval. It strips scripts, styles, resource-bearing and event attributes, and non-content active elements before rendering the remaining static markup in a fresh headless Chromium context. JavaScript, downloads, browser-generated requests, and local-file access are disabled; the context closes after each explicit call. Results are immutable, bounded, and classified as untrusted evidence, with user-visible safeguards included.
+
+This is a read-only static inspection capability, not general browser or computer control. It exposes no clicks, keyboard input, downloads, filesystem access, browser persistence, API/UI, Agent/Provider calls, Task creation/execution, or background polling. At Task 90 completion, Tasks 91–100 remain planned.
 
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, historical Task project associations may be unknown, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 
@@ -377,7 +383,7 @@ None of the following should be represented as implemented until code provides i
 - Offline Mode, durable queues, synchronization, and conflict resolution.
 - Node discovery and networking among independent Corporation installations.
 - Richer Tool and MCP integration, concrete tools, and controlled tool execution.
-- Open-source coding/editing, repository mapping, terminal, browser/computer-control, voice, and Git/GitHub workflow integrations.
+- Open-source coding/editing, repository mapping, terminal, interactive browser/computer-control, voice, and Git/GitHub workflow integrations.
 - Git/GitHub automation.
 - Controlled self-improvement and a sandbox/evaluation pipeline.
 - External integration stages beyond Task 36 execution preparation: sandbox execution of staged source, dependency installation, testing, review, approval orchestration, integrate, and monitor.

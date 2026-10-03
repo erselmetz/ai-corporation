@@ -120,6 +120,12 @@ from .web_research import (
     WebResearchFetchError,
     WebResearchResponseTooLarge,
 )
+from .browser_inspection import (
+    BrowserInspectionError,
+    BrowserInspectionResult,
+    BrowserInspectionUnavailable,
+    ReadOnlyBrowserInspector,
+)
 
 __all__ = [
     "IntegrationCapability",
@@ -220,4 +226,8 @@ __all__ = [
     "WebResearchError",
     "WebResearchFetchError",
     "WebResearchResponseTooLarge",
+    "BrowserInspectionError",
+    "BrowserInspectionResult",
+    "BrowserInspectionUnavailable",
+    "ReadOnlyBrowserInspector",
 ]
