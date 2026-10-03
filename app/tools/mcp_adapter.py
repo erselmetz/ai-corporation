@@ -201,7 +201,7 @@ class MCPToolClient:
                 title = name
             title = _bounded_text(title, _MAX_DESCRIPTION_BYTES, "MCP server advertised invalid metadata")
             tools.append(
-                _MCPTool(
+                MCPTool(
                     client=self,
                     server_id=self._server.server_id,
                     remote_name=name,
@@ -326,7 +326,7 @@ class MCPToolClient:
         )
 
 
-class _MCPTool(Tool):
+class MCPTool(Tool):
     def __init__(
         self,
         client: MCPToolClient,

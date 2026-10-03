@@ -180,8 +180,14 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-03",
                 "type": "development",
+                "title": "Coding Tool Integration",
+                "summary": "Added an opt-in MCP coding-tool proposal adapter over explicitly registered MCPTool instances. Callers supply a bounded instruction and selected path/content pairs; the tool returns a bounded unified diff limited to those paths. The result includes source/patch digests and is not applied, executed, persisted, tested, or reviewed automatically. Task 79 and Task 80/81 remain separate caller actions. MCP servers remain trusted host processes, not OS sandboxes. Tasks 90–100 remain planned.",
+            },
+            {
+                "date": "2026-10-03",
+                "type": "development",
                 "title": "Browser/Web Research Capability",
-                "summary": "Added explicit HTTPS page retrieval through an immutable exact-host allowlist that defaults to empty. Redirects and environment proxies are disabled; requests have a 10-second timeout, a 512 KiB response limit, and a 20,000-character extracted-text limit. HTML/plain-text results are immutable and classified as untrusted evidence; instruction-like retrieved text is never executed or sent to an Agent/Provider. No search, crawling, API/UI, persistence, Task execution, or background polling is added. Tasks 89–100 remain planned.",
+                "summary": "Added explicit HTTPS page retrieval through an immutable exact-host allowlist that defaults to empty. Redirects and environment proxies are disabled; requests have a 10-second timeout, a 512 KiB response limit, and a 20,000-character extracted-text limit. HTML/plain-text results are immutable and classified as untrusted evidence; instruction-like retrieved text is never executed or sent to an Agent/Provider. No search, crawling, API/UI, persistence, Task execution, or background polling is added. At Task 88 completion, Tasks 89–100 remained planned.",
             },
             {
                 "date": "2026-10-03",

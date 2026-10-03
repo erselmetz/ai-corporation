@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–88 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–89 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–88 completion scope
+## Tasks 1–89 completion scope
 
-Tasks 1–88 are complete as the current foundation. Their implemented areas include:
+Tasks 1–89 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -353,7 +353,13 @@ The operation is read-only and returns selected public metadata; it omits README
 
 `WebResearchClient` retrieves one caller-supplied page URL per explicit call. It requires an immutable exact-host allowlist, which defaults to empty; subdomains are not implicitly allowed. It accepts HTTPS page URLs without credentials, query strings, fragments, or non-default ports, disables environment proxy settings and redirects, and makes no search, crawl, or follow-up requests. Requests have a 10-second timeout and a 512 KiB response limit. Only HTML and plain text are accepted; extracted text is limited to 20,000 characters.
 
-Results are immutable `WebResearchDocument` records classified as `UNTRUSTED_EVIDENCE`. Retrieved text remains data, even if it contains instruction-like language; the client does not interpret it, invoke a Provider, create or execute Tasks, or make Agent calls. HTML script, style, and other non-content elements are excluded from extracted text. The capability has no API/UI, persistence, browser automation, background polling, or automatic research loop; callers explicitly supply each URL. Tasks 89–100 remain planned.
+Results are immutable `WebResearchDocument` records classified as `UNTRUSTED_EVIDENCE`. Retrieved text remains data, even if it contains instruction-like language; the client does not interpret it, invoke a Provider, create or execute Tasks, or make Agent calls. HTML script, style, and other non-content elements are excluded from extracted text. The capability has no API/UI, persistence, browser automation, background polling, or automatic research loop; callers explicitly supply each URL. At Task 88 completion, Tasks 89–100 remained planned.
+
+## Coding Tool Integration (Task 89)
+
+`CodingToolProposalService` invokes exactly one explicitly selected, registered `MCPTool`. The tool must declare `instruction` and `files` inputs; callers supply the bounded instruction and immutable tuple of selected path/content pairs. The serialized input is limited to 16 KiB, with at most eight files and 4 KiB per file. The MCP tool must return a unified diff limited to 65,536 bytes and 10,000 lines; output headers must target only the selected files. The service returns an immutable `CodingToolProposal` with source and patch digests and does not apply the diff, create a workspace, run tests, or call the review workflow. A caller may separately use Task 79 and later Task 80/81; these are not invoked automatically.
+
+This adapter makes a selected MCP call explicit but does not sandbox the MCP server. A local stdio/in-process coding server remains trusted and may have host permissions, as documented for Task 86. Only caller-supplied source files are sent; there is no filesystem discovery, Agent/Provider call, Task creation/execution, persistence, API/UI, or automatic retry.
 
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, historical Task project associations may be unknown, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 

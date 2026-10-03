@@ -63,9 +63,9 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5]);
   });
 
-  it("marks exactly tasks 1–88 complete and all later tasks planned", () => {
-    assert.ok(tasks.slice(0, 88).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(88).every((task) => task.status === "planned"));
+  it("marks exactly tasks 1–89 complete and all later tasks planned", () => {
+    assert.ok(tasks.slice(0, 89).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(89).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -95,18 +95,20 @@ describe("documentation site", () => {
     assert.equal(tasks[86].status, "completed");
     assert.equal(tasks[87].title, "Browser/Web Research Capability");
     assert.equal(tasks[87].status, "completed");
-    assert.equal(tasks[88].status, "planned");
+    assert.equal(tasks[88].title, "Coding Tool Integration");
+    assert.equal(tasks[88].status, "completed");
+    assert.equal(tasks[89].status, "planned");
     assert.deepEqual(
-      tasks.slice(52, 88).map(({ number, status }) => [number, status]),
-      [[53, "completed"], [54, "completed"], [55, "completed"], [56, "completed"], [57, "completed"], [58, "completed"], [59, "completed"], [60, "completed"], [61, "completed"], [62, "completed"], [63, "completed"], [64, "completed"], [65, "completed"], [66, "completed"], [67, "completed"], [68, "completed"], [69, "completed"], [70, "completed"], [71, "completed"], [72, "completed"], [73, "completed"], [74, "completed"], [75, "completed"], [76, "completed"], [77, "completed"], [78, "completed"], [79, "completed"], [80, "completed"], [81, "completed"], [82, "completed"], [83, "completed"], [84, "completed"], [85, "completed"], [86, "completed"], [87, "completed"], [88, "completed"]],
+      tasks.slice(52, 89).map(({ number, status }) => [number, status]),
+      [[53, "completed"], [54, "completed"], [55, "completed"], [56, "completed"], [57, "completed"], [58, "completed"], [59, "completed"], [60, "completed"], [61, "completed"], [62, "completed"], [63, "completed"], [64, "completed"], [65, "completed"], [66, "completed"], [67, "completed"], [68, "completed"], [69, "completed"], [70, "completed"], [71, "completed"], [72, "completed"], [73, "completed"], [74, "completed"], [75, "completed"], [76, "completed"], [77, "completed"], [78, "completed"], [79, "completed"], [80, "completed"], [81, "completed"], [82, "completed"], [83, "completed"], [84, "completed"], [85, "completed"], [86, "completed"], [87, "completed"], [88, "completed"], [89, "completed"]],
     );
   });
 
   it("describes the current completed and planned ranges on the roadmap page", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
-    assert.match(html, /Milestones 1–88 are completed foundations/);
-    assert.match(html, /Tasks 89–100 remain planned/);
+    assert.match(html, /Milestones 1–89 are completed foundations/);
+    assert.match(html, /Tasks 90–100 remain planned/);
   });
 
   it("serves only read methods", async () => {
