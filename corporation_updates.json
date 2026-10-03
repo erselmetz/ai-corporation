@@ -3,6 +3,12 @@
     {
       "date": "2026-10-04",
       "type": "development",
+      "title": "ERSELMETZ AI CORPORATION Platform",
+      "summary": "Added CorporationApplicationService.platform_overview() as a bounded immutable snapshot of Corporation/Node identity, existing registry counts, and the Task 92 capability catalog. Capability records preserve evidence, supplied requirements, policy boundaries, and limitations; registered, configured, unavailable, and unknown source states remain distinct. Missing ToolRegistry configuration is not reported as an empty registry, and unsupplied Gemini metadata remains UNKNOWN. The report makes no readiness or production claim, does not check Provider/model availability, assess hardware feasibility or resource capacity, or make routing decisions, and performs no Provider/network calls, Task execution, reservations, assignment changes, persistence, or API/UI work. Reads are sequential, not atomic; post-100 platform gaps remain planned."
+    },
+    {
+      "date": "2026-10-04",
+      "type": "development",
       "title": "Self-Improvement Pipeline",
       "summary": "Added a bounded review-only snapshot of recorded Task 95 capability workflows. It reports exact status, stage, and events; checks candidate/evaluation linkage and rechecks current workspace, approval, and checkpoint links against recorded identifiers and hashes. Test results and review evidence are marked unverifiable because source reports are not retained. The report does not invoke stages, alter workflows or assignments, create or execute Tasks, call Providers, or adopt/activate capabilities. Cross-service reads are sequential, not atomic. Task 100 remains planned."
     },

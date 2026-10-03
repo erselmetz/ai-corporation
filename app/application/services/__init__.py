@@ -11,6 +11,14 @@ from .corporation import (
     ProviderSummary,
     TaskSummary,
 )
+from .platform_overview import (
+    PlatformCapabilitySource,
+    PlatformOverviewReport,
+    PlatformOverviewService,
+    PlatformRegistryCount,
+    PlatformRegistryName,
+    PlatformSourceState,
+)
 from .documentation import (
     DocumentationApplicationService,
     DocumentationDocument,
@@ -149,6 +157,12 @@ __all__ = [
     "AgentSummary",
     "CorporationApplicationService",
     "CorporationStatusSummary",
+    "PlatformCapabilitySource",
+    "PlatformOverviewReport",
+    "PlatformOverviewService",
+    "PlatformRegistryCount",
+    "PlatformRegistryName",
+    "PlatformSourceState",
     "DocumentationApplicationService",
     "DocumentationDocument",
     "DocumentationNotFound",

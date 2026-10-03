@@ -63,9 +63,9 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5]);
   });
 
-  it("marks exactly tasks 1–99 complete and all later tasks planned", () => {
-    assert.ok(tasks.slice(0, 99).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(99).every((task) => task.status === "planned"));
+  it("marks exactly tasks 1–100 complete and all later tasks planned", () => {
+    assert.ok(tasks.slice(0, 100).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(100).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -131,13 +131,16 @@ describe("documentation site", () => {
     assert.equal(tasks[98].title, "Self-Improvement Pipeline");
     assert.equal(tasks[98].description, "Evolve the controlled proposal, sandbox, testing, review, and approval pipeline.");
     assert.equal(tasks[98].status, "completed");
+    assert.equal(tasks[99].title, "ERSELMETZ AI CORPORATION Platform");
+    assert.equal(tasks[99].description, "Develop a coherent, governed platform for operating a virtual/simulated AI organization.");
+    assert.equal(tasks[99].status, "completed");
   });
 
   it("describes the current completed and planned ranges on the roadmap page", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
-    assert.match(html, /Milestones 1–99 are completed foundations/);
-    assert.match(html, /Task 100 remains planned/);
+    assert.match(html, /Milestones 1–100 are completed foundations/);
+    assert.match(html, /Post-100 roadmap areas remain planned/);
   });
 
   it("serves only read methods", async () => {

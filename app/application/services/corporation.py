@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from app.agents import Agent, Employee, EmployeeManagement, ModelManagement
@@ -9,6 +10,7 @@ from app.orchestrator import Orchestrator, Project, Task
 from app.orchestrator.dry_run import DryRunResult
 from app.providers import ProviderManagement
 from app.integrations import DockerSandboxBackend, SandboxImagePolicy
+from app.tools import ToolRegistry
 from app.capability_discovery import (
     CapabilityCandidate,
     CapabilityDiscoveryReport,
@@ -52,6 +54,9 @@ from .maintenance_workflow import (
 from .patch_development import PatchDevelopmentService, PatchWorkspace
 from .system_monitoring import SystemMonitoringReport
 from .testing_workflow import TestRunReport, TestingWorkflowService
+
+if TYPE_CHECKING:
+    from .platform_overview import PlatformOverviewReport
 
 
 @dataclass(frozen=True)
@@ -154,8 +159,13 @@ class CorporationApplicationService:
         orchestrator: Orchestrator,
         corporation: Corporation | None = None,
         node: Node | None = None,
+        *,
+        tool_registry: ToolRegistry | None = None,
     ):
+        if tool_registry is not None and not isinstance(tool_registry, ToolRegistry):
+            raise TypeError("tool_registry must be a ToolRegistry or None")
         self._orchestrator = orchestrator
+        self._tool_registry = tool_registry
         self._corporation_chat = None
         self._task_collaboration = None
         self._capability_integration_workflow: CapabilityIntegrationWorkflowService | None = None
@@ -697,6 +707,21 @@ class CorporationApplicationService:
             node_id=self._node.id,
             node_name=self._node.name,
         )
+
+    def platform_overview(self) -> "PlatformOverviewReport":
+        """Return a bounded read-only snapshot of current platform sources."""
+        from .platform_overview import PlatformOverviewService
+
+        identity = (
+            self.get_corporation_status()
+            if self._corporation is not None and self._node is not None
+            else None
+        )
+        return PlatformOverviewService(
+            self._orchestrator,
+            identity,
+            self._tool_registry,
+        ).report()
 
     def list_agents(self) -> list[AgentSummary]:
         return [

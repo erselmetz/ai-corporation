@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–90 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–100 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -423,7 +423,15 @@ This is a proposal snapshot, not an automatically generated recommendation, appr
 
 `CorporationApplicationService.review_capability_integration_pipeline()` returns a bounded, immutable report of recorded Task 95 capability-integration workflows. It preserves each workflow's status, stage, and events; checks candidate/evaluation linkage; and rechecks current in-memory workspace, approval, and checkpoint references against their recorded IDs and hashes. Missing or mismatched artifacts are reported rather than repaired. Test results and review evidence are not retained by the source workflow and are explicitly marked unverifiable.
 
-The report is a progress and recorded-artifact consistency snapshot, not a recommendation or claim that a candidate is suitable or ready for adoption. A `CHECKPOINTED` workflow means the exact patch was approved and checkpointed; it does not adopt or activate a capability. Reads across workflow, workspace, approval, and checkpoint registries are sequential, not atomic. The review does not invoke pipeline stages, call Providers, create or execute Tasks, change assignments, mutate workflow state, persist results, or add API/UI. Task 100 remains planned.
+The report is a progress and recorded-artifact consistency snapshot, not a recommendation or claim that a candidate is suitable or ready for adoption. A `CHECKPOINTED` workflow means the exact patch was approved and checkpointed; it does not adopt or activate a capability. Reads across workflow, workspace, approval, and checkpoint registries are sequential, not atomic. The review does not invoke pipeline stages, call Providers, create or execute Tasks, change assignments, mutate workflow state, persist results, or add API/UI. At Task 99 completion, Task 100 remained planned.
+
+## ERSELMETZ AI CORPORATION Platform (Task 100)
+
+`CorporationApplicationService.platform_overview()` returns a separate immutable, on-demand report containing configured Corporation/Node identity when both are available, counts for the existing Employee, Agent, Provider, Project, and Task registries, and a bounded Task 92 capability catalog. Missing identity or registry configuration is reported as `UNAVAILABLE`, not as an empty source. Capability source states distinguish configured Agent/Tool registries, an unavailable ToolRegistry, and `UNKNOWN` Gemini metadata when no existing catalog snapshot was supplied. No ToolRegistry or Gemini catalog is created or fetched for the report.
+
+Capability records retain their evidence source, requirements where supplied, policy boundaries, and limitations. Agent declarations, Tool registration, scope-only metadata, and service-reported metadata remain distinct; scope-only records do not grant access, and absent requirements remain `None`. Registry counts and configured status do not imply Provider health, model availability, hardware feasibility, resource capacity, authorization, or operational readiness. The report does not check Provider/model availability, assess hardware feasibility or resource capacity, or make routing decisions. It performs no Provider/network calls, Task execution, reservation, assignment mutation, persistence, or API/UI work. Registries are sampled sequentially, so the report is not an atomic snapshot.
+
+Task 100 completes the numbered roadmap as a set of foundations, not as a claim of a complete autonomous or production-ready Corporation. Production identity/authentication, durable organization configuration, and other future directions below remain planned.
 
 ## Future / planned roadmap
 

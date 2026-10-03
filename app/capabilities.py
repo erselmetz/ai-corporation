@@ -165,13 +165,13 @@ class CapabilityRegistry:
 
     def __init__(
         self,
-        agents: AgentRegistry,
-        tools: ToolRegistry,
+        agents: AgentRegistry | None,
+        tools: ToolRegistry | None = None,
     ) -> None:
-        if not isinstance(agents, AgentRegistry):
-            raise TypeError("agents must be an AgentRegistry")
-        if not isinstance(tools, ToolRegistry):
-            raise TypeError("tools must be a ToolRegistry")
+        if agents is not None and not isinstance(agents, AgentRegistry):
+            raise TypeError("agents must be an AgentRegistry or None")
+        if tools is not None and not isinstance(tools, ToolRegistry):
+            raise TypeError("tools must be a ToolRegistry or None")
         self._agents = agents
         self._tools = tools
 
@@ -208,7 +208,8 @@ class CapabilityRegistry:
         records: list[CapabilityRecord] = []
         identities: set[tuple[CapabilitySource, str, str]] = set()
 
-        for agent in self._agents.all():
+        agents = () if self._agents is None else self._agents.all()
+        for agent in agents:
             for capability in dict.fromkeys(agent.capabilities):
                 observed_at = datetime.now(timezone.utc)
                 self._append(
@@ -232,7 +233,8 @@ class CapabilityRegistry:
                     ),
                 )
 
-        for tool in self._tools.all():
+        tools = () if self._tools is None else self._tools.all()
+        for tool in tools:
             observed_at = datetime.now(timezone.utc)
             self._append(
                 records,
