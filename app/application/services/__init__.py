@@ -49,6 +49,14 @@ from .organization_coordination import (
     ResponsibilitySelection,
     WorkflowReference,
 )
+from .workforce_review import (
+    EmployeeRoleAssessment,
+    EmployeeRoleChange,
+    RoleCapacityAssessment,
+    WorkforceAdjustmentProposal,
+    WorkforceCapacityTarget,
+    WorkforceReviewService,
+)
 from .failure_detection import (
     DetectedFailure,
     FailureDetectionReport,
@@ -171,6 +179,12 @@ __all__ = [
     "OrganizationWorkflowSource",
     "ResponsibilitySelection",
     "WorkflowReference",
+    "EmployeeRoleAssessment",
+    "EmployeeRoleChange",
+    "RoleCapacityAssessment",
+    "WorkforceAdjustmentProposal",
+    "WorkforceCapacityTarget",
+    "WorkforceReviewService",
     "DetectedFailure",
     "FailureDetectionReport",
     "FailureDetectionService",

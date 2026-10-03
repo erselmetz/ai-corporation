@@ -180,8 +180,14 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-04",
                 "type": "development",
+                "title": "Adaptive Workforce",
+                "summary": "Added caller-authored immutable review proposals for Employee headcount targets by exact role and proposed changes to existing Employee roles/responsibilities, linked to Task 96 priorities with bounded rationale and source references. Current headcounts are read from the registered Employee roster (bounded to 1,000); role changes require matching current Employee snapshots to reject stale requests. Rationales and source references are not independently verified. Proposals are not generated recommendations or approvals and never alter Employee, Agent/model, Task, or Task 71 resource assignments. Targets are not reconciled with individual role changes, and Employee records are read without an atomic snapshot. Tasks 99–100 remain planned.",
+            },
+            {
+                "date": "2026-10-04",
+                "type": "development",
                 "title": "Organization-Level Orchestration",
-                "summary": "Added a bounded immutable review report linking an existing Task 96 priority to a registered Employee responsibility and actual Task 85 maintenance or Task 95 capability-integration workflow records. Workflow IDs are verified in their owning services and must carry their source-specific APPROVED exact-patch decision; status, stage, hashes, approval request, and checkpoint are preserved. Caller-selected priority/responsibility fit is not inferred, Task 95 approval is not capability adoption, and the report does not change assignments, claim queue entries, schedule or execute work, call Providers, create Tasks, or persist. Tasks 98–100 remain planned.",
+                "summary": "Added a bounded immutable review report linking an existing Task 96 priority to a registered Employee responsibility and actual Task 85 maintenance or Task 95 capability-integration workflow records. Workflow IDs are verified in their owning services and must carry their source-specific APPROVED exact-patch decision; status, stage, hashes, approval request, and checkpoint are preserved. Caller-selected priority/responsibility fit is not inferred, Task 95 approval is not capability adoption, and the report does not change assignments, claim queue entries, schedule or execute work, call Providers, create Tasks, or persist. At Task 97 completion, Tasks 98–100 remained planned.",
             },
             {
                 "date": "2026-10-04",

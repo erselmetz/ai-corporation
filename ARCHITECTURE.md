@@ -411,7 +411,13 @@ The plan is a review snapshot, not an authorization, schedule, or execution deci
 
 Workflow references resolve only through the existing Task 85 maintenance-workflow and Task 95 capability-integration services. A reference is accepted only when its own record contains `ApprovalStatus.APPROVED`; this is approval of its exact patch/source hash pair, not general business approval. The report preserves each source's actual status/stage, approval request, hashes, and checkpoint ID. Task 95 approval does not adopt or activate a capability. Reads are bounded and sequential, so the report is not an atomic cross-registry snapshot.
 
-The report does not change Employee responsibilities or Agent/model assignments, infer priority/role fit, claim or modify the Task 69 queue, invoke Task 70 controlled execution, call Providers, create or execute Tasks, or persist records. It is in-memory only and adds no API/UI. Tasks 98–100 remain planned.
+The report does not change Employee responsibilities or Agent/model assignments, infer priority/role fit, claim or modify the Task 69 queue, invoke Task 70 controlled execution, call Providers, create or execute Tasks, or persist records. It is in-memory only and adds no API/UI. At Task 97 completion, Tasks 98–100 remained planned.
+
+## Adaptive Workforce (Task 98)
+
+`CorporationApplicationService.workforce_review()` accepts caller-authored absolute Employee headcount targets by exact role and proposed changes to existing Employee roles/responsibilities, each linked to a Task 96 priority with bounded rationale and source references. The report reads the current Employee roster to show exact-role headcounts and verifies that each role-change proposal's expected role/responsibilities still match the named Employee, rejecting stale proposals. The roster scan is bounded to 1,000 Employees. Caller-provided rationale and source references are not independently verified.
+
+This is a proposal snapshot, not an automatically generated recommendation, approval, or assignment. Capacity means workforce headcount, not Task 71 compute/resource slots. Capacity targets are not reconciled against the proposed individual role changes. Reads are bounded and sequential, not an atomic cross-Employee snapshot. The operation does not add/remove Employees, apply changes, alter Employee/Agent associations, alter Provider/Model assignments, reserve resources, create/execute Tasks, call Providers, or persist proposals. It adds no API/UI. Tasks 99–100 remain planned.
 
 ## Future / planned roadmap
 

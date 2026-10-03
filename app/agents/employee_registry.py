@@ -1,3 +1,5 @@
+from itertools import islice
+
 from .employee import Employee
 
 class EmployeeRegistry:
@@ -37,6 +39,12 @@ class EmployeeRegistry:
     def all(self) -> list[Employee]:
         """Returns all registered employees."""
         return list(self._employees.values())
+
+    def all_bounded(self, limit: int) -> tuple[Employee, ...]:
+        """Returns at most limit registered Employees without materializing the full registry."""
+        if type(limit) is not int or limit < 1:
+            raise ValueError("Employee registry limit must be a positive integer")
+        return tuple(islice(self._employees.values(), limit))
 
     def find_by_role(self, role: str) -> list[Employee]:
         """Finds employees by their organizational role."""

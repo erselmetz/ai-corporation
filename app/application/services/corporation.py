@@ -644,6 +644,17 @@ class CorporationApplicationService:
             capability_workflows=self._get_capability_integration_workflow(),
         )
 
+    def workforce_review(self):
+        if self._corporation is None:
+            raise RuntimeError("Corporation identity is not configured")
+        if self._orchestrator.employees is None:
+            raise RuntimeError("Employee registry is not configured")
+        from .workforce_review import WorkforceReviewService
+        return WorkforceReviewService(
+            self._corporation.id,
+            self._orchestrator.employees,
+        )
+
     def context_retrieval(self):
         from .context_retrieval import ContextRetrievalService
         return ContextRetrievalService(self.memory_management())
