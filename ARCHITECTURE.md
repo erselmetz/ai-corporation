@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–81 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–82 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–81 completion scope
+## Tasks 1–82 completion scope
 
-Tasks 1–81 are complete as the current foundation. Their implemented areas include:
+Tasks 1–82 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -312,12 +312,15 @@ Tasks 1–81 are complete as the current foundation. Their implemented areas inc
 - Bounded application of caller-supplied unified diffs to explicitly selected existing UTF-8 files inside a disposable temporary copy, with patch/source digests and explicit cleanup; no source or test execution, Provider call, Task creation/execution, assignment change, or Git operation.
 - Caller-selected Python test files executed against a separate temporary copy of the selected Task 79 workspace, with bounded runtime/output, a reduced environment, and immutable actual-result reports; no shell, dependency installation, Task execution, Provider calls, or persistence.
 - One-call, caller-selected Agent code reviews over bounded caller-supplied sanitized evidence, with severity/area classifications and citations restricted to supplied references; reports are advisory and are not approvals.
+- A separate Docker-only maintenance test path that transfers only registered Task 79 workspace files into an ephemeral, no-network/no-host-mount container and blocks rather than falling back to host execution.
 
-Task 79's temporary copy is not a security sandbox. It accepts no file additions/deletions/renames. Task 81 reviews only caller-supplied evidence and does not retrieve workspace files or execute tests; maintenance sandboxing, human approval, and Git checkpoint workflows remain separate.
+Task 79's temporary copy is not a security sandbox. It accepts no file additions/deletions/renames. Task 81 reviews only caller-supplied evidence and does not retrieve workspace files or execute tests; human approval and Git checkpoint workflows remain separate.
 
-Task 80 runs only explicitly selected Python test files already present in a registered Task 79 workspace, using a separate temporary copy and a bounded pytest subprocess. It caps test files and combined output, limits runtime to 120 seconds, uses a reduced environment, and returns an immutable actual-result report without persistence. This does not provide OS-level isolation: selected test code still runs with the current user's permissions. Maintenance sandboxing, human approval, and Git checkpoint workflows remain planned Tasks 82 and later.
+Task 80 runs only explicitly selected Python test files already present in a registered Task 79 workspace, using a separate temporary copy and a bounded pytest subprocess. It caps test files and combined output, limits runtime to 120 seconds, uses a reduced environment, and returns an immutable actual-result report without persistence. This does not provide OS-level isolation: selected test code still runs with the current user's permissions. Task 82 adds a separate Docker-only path; it does not silently change Task 80's behavior.
 
-Task 81's `CorporationApplicationService.review_proposed_changes()` makes one call through the explicitly selected registered Agent and reviews only 1–20 caller-supplied `DiagnosticEvidence` items, bounded to 32 KiB total. The supplied content is sent to that Agent's configured Provider; callers must sanitize the evidence and authorize its disclosure before submission. No source files, workspace, Task state, logs, or test reports are retrieved automatically. The immutable in-memory report classifies findings by severity and review area and validates all citations against supplied reference IDs. Findings are advisory, may be incorrect, and an empty result is not approval. The operation does not execute tests or Tasks, modify patches or assignments, change proposal/approval state, persist results, or add API/UI. Tasks 82 and later remain responsible for sandboxing, approval, checkpoints, and controlled maintenance.
+Task 81's `CorporationApplicationService.review_proposed_changes()` makes one call through the explicitly selected registered Agent and reviews only 1–20 caller-supplied `DiagnosticEvidence` items, bounded to 32 KiB total. The supplied content is sent to that Agent's configured Provider; callers must sanitize the evidence and authorize its disclosure before submission. No source files, workspace, Task state, logs, or test reports are retrieved automatically. The immutable in-memory report classifies findings by severity and review area and validates all citations against supplied reference IDs. Findings are advisory, may be incorrect, and an empty result is not approval. The operation does not execute tests or Tasks, modify patches or assignments, change proposal/approval state, persist results, or add API/UI. Human approval, checkpoints, and controlled maintenance remain future Tasks 83 and later.
+
+Task 82's `CorporationApplicationService.run_sandboxed_tests()` runs explicitly selected Python tests from a registered Task 79 workspace only through a caller-configured Docker image pinned by an immutable digest and already present locally; images are never pulled automatically. The image must provide `/bin/sleep`, `python3`, and pytest. At most 20 workspace files and 16 MiB are transferred through Docker's archive API into a writable, `noexec` tmpfs; the container has no host mounts, network, injected environment credentials, or writable root filesystem, and runs as UID 65534 with all capabilities dropped and `no-new-privileges`. Memory, process count, temporary storage, runtime (at most 60 seconds), and captured output (64 KiB) are bounded. Containers are removed after execution; reports are immutable in-memory results and are not persisted. Missing Docker, an unapproved/missing image, unsupported controls, staging failure, or cleanup failure never falls back to Task 80's host-permission subprocess. Docker daemon and image integrity remain trusted prerequisites; this is not protection against a compromised Docker daemon or host administrator. Test code has no host paths mounted and cannot modify host files through this boundary; the Docker daemon still performs its normal ephemeral container bookkeeping. No active Corporation records are changed, and no API/UI is added.
 
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, historical Task project associations may be unknown, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 

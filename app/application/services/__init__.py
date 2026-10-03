@@ -59,6 +59,11 @@ from .code_review import (
 from .maintenance_proposals import MaintenanceProposal, MaintenanceProposalService
 from .patch_development import PatchDevelopmentService, PatchWorkspace
 from .testing_workflow import RunStatus, TestRunReport, TestingWorkflowService
+from .maintenance_sandbox import (
+    MaintenanceSandboxReport,
+    MaintenanceSandboxService,
+    MaintenanceSandboxStatus,
+)
 
 __all__ = [
     "ActivitySummary",
@@ -112,4 +117,7 @@ __all__ = [
     "TestRunReport",
     "RunStatus",
     "TestingWorkflowService",
+    "MaintenanceSandboxReport",
+    "MaintenanceSandboxService",
+    "MaintenanceSandboxStatus",
 ]

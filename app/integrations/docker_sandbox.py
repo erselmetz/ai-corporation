@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import importlib
+from io import BytesIO
 import re
+from pathlib import PurePosixPath, PureWindowsPath
+import tarfile
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -15,6 +18,7 @@ from .sandbox import (
     SandboxFilesystemMode,
     SandboxNetworkMode,
     SandboxProcessMode,
+    SandboxResourceLimits,
     SandboxStatus,
 )
 from .sandbox_executor import (
@@ -82,6 +86,19 @@ class _DockerContainer(Protocol):
 
     def logs(self, *, stdout: bool, stderr: bool) -> bytes: ...
 
+    def put_archive(self, path: str, data: bytes) -> bool: ...
+
+    def exec_run(
+        self,
+        cmd: list[str],
+        *,
+        stdout: bool,
+        stderr: bool,
+        demux: bool,
+        environment: dict[str, str],
+        workdir: str,
+    ) -> tuple[int | None, bytes | str | None]: ...
+
     def kill(self) -> None: ...
 
     def remove(self, *, force: bool, v: bool) -> None: ...
@@ -120,11 +137,19 @@ class DockerSandboxBackend(SandboxBackend):
         image_policy: SandboxImagePolicy,
         *,
         client: _DockerClient | None = None,
+        client_timeout_seconds: int = 10,
     ) -> None:
         if not isinstance(image_policy, SandboxImagePolicy):
             raise TypeError("image_policy must be a SandboxImagePolicy")
+        if (
+            isinstance(client_timeout_seconds, bool)
+            or not isinstance(client_timeout_seconds, int)
+            or not 1 <= client_timeout_seconds <= 300
+        ):
+            raise ValueError("client_timeout_seconds must be from 1 to 300")
         self.image_policy = image_policy
         self._client = client
+        self._client_timeout_seconds = client_timeout_seconds
         self._sdk_checked = client is not None
         self._sdk_error: str | None = None
         self._availability_error: str | None = None
@@ -188,29 +213,12 @@ class DockerSandboxBackend(SandboxBackend):
 
         resources = request.requested_resources
         try:
-            container = client.containers.create(
-                image=image,
-                entrypoint=[f"/{request.entrypoint}"],
-                command=list(request.arguments),
-                detach=True,
-                network_disabled=True,
-                network_mode="none",
-                read_only=True,
-                privileged=False,
-                user="65534:65534",
-                cap_drop=["ALL"],
-                security_opt=["no-new-privileges:true"],
-                mem_limit=f"{resources.max_memory_mb}m",
-                nano_cpus=_NANO_CPUS_PER_CORE,
-                pids_limit=resources.max_processes,
-                storage_opt={"size": f"{resources.max_disk_mb}M"},
-                tmpfs={
-                    "/tmp": (
-                        f"rw,nosuid,nodev,noexec,size={resources.max_disk_mb}m"
-                    )
-                },
-                environment={},
-                auto_remove=False,
+            container = _create_isolated_container(
+                client,
+                image,
+                [f"/{request.entrypoint}"],
+                list(request.arguments),
+                resources,
             )
         except Exception as exc:
             raise DockerSandboxBlockedError(
@@ -223,6 +231,146 @@ class DockerSandboxBackend(SandboxBackend):
             backend_id=self.backend_id,
             handle=state,
         )
+
+    def execute_workspace_command(
+        self,
+        archive: bytes,
+        command: tuple[str, ...],
+        *,
+        timeout_seconds: int,
+        requested_resources: SandboxResourceLimits,
+        max_output_bytes: int,
+    ) -> tuple[int, bytes]:
+        """Run an argv in an ephemeral no-network, no-host-mount workspace."""
+        if not isinstance(archive, bytes) or len(archive) > 16 * 1024 * 1024 + 65536:
+            raise ValueError("Workspace archive is invalid or exceeds the byte limit")
+        _validate_workspace_archive(archive)
+        if (
+            not isinstance(command, tuple)
+            or not command
+            or len(command) > 32
+            or any(
+                not isinstance(argument, str)
+                or not argument
+                or "\x00" in argument
+                or len(argument.encode("utf-8")) > 8192
+                for argument in command
+            )
+        ):
+            raise ValueError("Workspace command must be a bounded argv tuple")
+        if (
+            isinstance(timeout_seconds, bool)
+            or not isinstance(timeout_seconds, int)
+            or timeout_seconds <= 0
+            or not isinstance(requested_resources, SandboxResourceLimits)
+            or timeout_seconds > requested_resources.max_cpu_seconds
+        ):
+            raise ValueError("Workspace execution limits are invalid")
+        if (
+            isinstance(max_output_bytes, bool)
+            or not isinstance(max_output_bytes, int)
+            or not 1 <= max_output_bytes <= 1024 * 1024
+        ):
+            raise ValueError("Workspace output limit is invalid")
+        if not self.available:
+            raise DockerSandboxBlockedError(
+                "Docker maintenance sandbox is unavailable."
+            )
+
+        image = self.image_policy.resolve()
+        client = self._get_client()
+        try:
+            client.images.get(image)
+        except Exception:
+            raise DockerSandboxBlockedError(
+                "Approved Docker image is not available locally; automatic pulls are disabled."
+            ) from None
+
+        try:
+            container = _create_isolated_container(
+                client,
+                image,
+                ["/bin/sleep"],
+                ["infinity"],
+                requested_resources,
+                workspace_tmpfs=True,
+            )
+        except Exception:
+            raise DockerSandboxBlockedError(
+                "Docker could not create a container with all required isolation controls."
+            ) from None
+
+        primary_error: BaseException | None = None
+        result: tuple[int, bytes] | None = None
+        try:
+            try:
+                container.start()
+            except Exception:
+                raise DockerSandboxBackendError(
+                    "Docker maintenance container could not start."
+                ) from None
+            try:
+                staged = container.put_archive("/workspace", archive)
+            except Exception:
+                raise DockerSandboxBackendError(
+                    "Docker could not stage the bounded maintenance workspace."
+                ) from None
+            if staged is not True:
+                raise DockerSandboxBackendError(
+                    "Docker did not accept the maintenance workspace."
+                )
+            try:
+                exit_code, output = container.exec_run(
+                    list(command),
+                    stdout=True,
+                    stderr=True,
+                    demux=False,
+                    environment={
+                        "HOME": "/tmp",
+                        "TMPDIR": "/tmp",
+                        "PYTHONDONTWRITEBYTECODE": "1",
+                        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+                        "PYTHONUTF8": "1",
+                        "PYTHONIOENCODING": "utf-8",
+                    },
+                    workdir="/workspace",
+                )
+            except Exception:
+                raise DockerSandboxBackendError(
+                    "Docker maintenance command failed."
+                ) from None
+            if (
+                isinstance(exit_code, bool)
+                or not isinstance(exit_code, int)
+                or not isinstance(output, (bytes, str))
+            ):
+                raise DockerSandboxBackendError(
+                    "Docker returned an invalid maintenance command result."
+                )
+            output_bytes = (
+                output.encode("utf-8", errors="replace")
+                if isinstance(output, str)
+                else output
+            )
+            result = (exit_code, output_bytes[: max_output_bytes + 256])
+        except BaseException as exc:
+            primary_error = exc
+        cleanup_error = None
+        try:
+            container.remove(force=True, v=True)
+        except Exception:
+            cleanup_error = DockerSandboxBackendError(
+                "Docker maintenance container cleanup failed."
+            )
+        if primary_error is not None:
+            raise primary_error.with_traceback(primary_error.__traceback__)
+        if cleanup_error is not None:
+            raise cleanup_error
+        if result is None:
+            raise DockerSandboxBackendError(
+                "Docker did not return a maintenance command result."
+            )
+        return result
 
     def execute(
         self,
@@ -331,7 +479,7 @@ class DockerSandboxBackend(SandboxBackend):
             self._sdk_checked = True
             try:
                 sdk = importlib.import_module("docker")
-                self._client = sdk.from_env(timeout=10)
+                self._client = sdk.from_env(timeout=self._client_timeout_seconds)
             except ImportError as exc:
                 self._sdk_error = (
                     "Docker Python SDK is not installed; install the optional "
@@ -445,6 +593,108 @@ class DockerSandboxBackend(SandboxBackend):
             error_type.__name__ in {"ReadTimeout", "Timeout"}
             and error_type.__module__.startswith("requests.")
         )
+
+
+def _create_isolated_container(
+    client: _DockerClient,
+    image: str,
+    entrypoint: list[str],
+    command: list[str],
+    resources: SandboxResourceLimits,
+    *,
+    workspace_tmpfs: bool = False,
+) -> _DockerContainer:
+    tmpfs = {
+        "/tmp": f"rw,nosuid,nodev,noexec,size={resources.max_disk_mb}m"
+    }
+    if workspace_tmpfs:
+        tmpfs["/workspace"] = (
+            f"rw,nosuid,nodev,noexec,size={resources.max_disk_mb}m,mode=1777"
+        )
+    return client.containers.create(
+        image=image,
+        entrypoint=entrypoint,
+        command=command,
+        detach=True,
+        network_disabled=True,
+        network_mode="none",
+        read_only=True,
+        privileged=False,
+        user="65534:65534",
+        cap_drop=["ALL"],
+        security_opt=["no-new-privileges:true"],
+        mem_limit=f"{resources.max_memory_mb}m",
+        nano_cpus=_NANO_CPUS_PER_CORE,
+        pids_limit=resources.max_processes,
+        storage_opt={"size": f"{resources.max_disk_mb}M"},
+        tmpfs=tmpfs,
+        environment={},
+        auto_remove=False,
+    )
+
+
+def _validate_workspace_archive(archive: bytes) -> None:
+    try:
+        with tarfile.open(fileobj=BytesIO(archive), mode="r:") as tar:
+            members = tar.getmembers()
+    except (EOFError, tarfile.TarError, OSError):
+        raise ValueError("Workspace archive is invalid") from None
+    if not 1 <= len(members) <= 5200:
+        raise ValueError("Workspace archive member count is invalid")
+
+    names: set[str] = set()
+    file_paths: set[str] = set()
+    file_count = 0
+    total_bytes = 0
+    for member in members:
+        name = member.name
+        if not isinstance(name, str):
+            raise ValueError("Workspace archive path is invalid")
+        path = PurePosixPath(name)
+        windows_path = PureWindowsPath(name)
+        if (
+            not name
+            or "\\" in name
+            or path.is_absolute()
+            or windows_path.is_absolute()
+            or windows_path.drive
+            or path.as_posix() != name
+            or any(part in {"", ".", ".."} for part in name.split("/"))
+            or name in names
+            or member.mode & 0o7000
+            or set(member.pax_headers) - {"path"}
+        ):
+            raise ValueError("Workspace archive paths or file modes are unsafe")
+        names.add(name)
+        if member.isdir():
+            if (
+                member.size != 0
+                or member.uid != 65534
+                or member.gid != 65534
+                or member.mode != 0o777
+            ):
+                raise ValueError("Workspace archive directory is invalid")
+            continue
+        if not member.isfile():
+            raise ValueError("Workspace archive may contain only regular files")
+        if member.uid != 65534 or member.gid != 65534 or member.mode != 0o666:
+            raise ValueError("Workspace archive file metadata is invalid")
+        file_count += 1
+        if member.size < 0 or member.size > 1024 * 1024:
+            raise ValueError("Workspace archive file exceeds the byte limit")
+        total_bytes += member.size
+        file_paths.add(name)
+        if file_count > 20 or total_bytes > 16 * 1024 * 1024:
+            raise ValueError("Workspace archive exceeds file or byte limits")
+    if file_count == 0:
+        raise ValueError("Workspace archive contains no files")
+    if any(
+        parent.as_posix() in file_paths
+        for path in file_paths
+        for parent in PurePosixPath(path).parents
+        if parent.as_posix() != "."
+    ):
+        raise ValueError("Workspace archive path conflicts with a regular file")
 
 
 class DockerSandboxExecutor(SandboxExecutor):

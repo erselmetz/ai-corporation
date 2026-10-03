@@ -8,6 +8,7 @@ from app.node import Node
 from app.orchestrator import Orchestrator, Project, Task
 from app.orchestrator.dry_run import DryRunResult
 from app.providers import ProviderManagement
+from app.integrations import DockerSandboxBackend, SandboxImagePolicy
 from .code_review import CodeReviewReport, CodeReviewService
 from .diagnostics import DiagnosticEvidence, DiagnosticReport, DiagnosticService
 from .failure_detection import (
@@ -16,6 +17,10 @@ from .failure_detection import (
     FailureDetectionService,
 )
 from .maintenance_proposals import MaintenanceProposal, MaintenanceProposalService
+from .maintenance_sandbox import (
+    MaintenanceSandboxReport,
+    MaintenanceSandboxService,
+)
 from .patch_development import PatchDevelopmentService, PatchWorkspace
 from .system_monitoring import SystemMonitoringReport
 from .testing_workflow import TestRunReport, TestingWorkflowService
@@ -265,6 +270,32 @@ class CorporationApplicationService:
     ) -> TestRunReport:
         workspace = self._patch_development.get(workspace_id)
         return self._testing_workflow.run(workspace, selected_tests)
+
+    def run_sandboxed_tests(
+        self,
+        workspace_id: str,
+        selected_tests: tuple[str, ...],
+        image_policy: SandboxImagePolicy,
+        *,
+        timeout_seconds: int = MaintenanceSandboxService.MAX_TIMEOUT_SECONDS,
+    ) -> MaintenanceSandboxReport:
+        """Run selected tests only in an approved isolated Docker image."""
+        if (
+            isinstance(timeout_seconds, bool)
+            or not isinstance(timeout_seconds, int)
+            or not 1 <= timeout_seconds <= MaintenanceSandboxService.MAX_TIMEOUT_SECONDS
+        ):
+            raise ValueError("timeout_seconds must be from 1 to 60")
+        workspace = self._patch_development.get(workspace_id)
+        backend = DockerSandboxBackend(
+            image_policy,
+            client_timeout_seconds=timeout_seconds + 10,
+        )
+        return MaintenanceSandboxService(backend).run(
+            workspace,
+            selected_tests,
+            timeout_seconds=timeout_seconds,
+        )
 
     def execute_controlled_task(self, task_id):
         self.resource_manager()  # Reject missing configuration before touching Tasks.

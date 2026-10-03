@@ -3,6 +3,12 @@
     {
       "date": "2026-10-03",
       "type": "development",
+      "title": "Maintenance Sandbox",
+      "summary": "Added a separate Docker-only test path for registered Task 79 workspaces, transferring bounded selected files into an ephemeral no-network/no-host-mount container with resource/runtime/output limits and automatic removal. Requires an explicitly approved, locally present immutable image; missing Docker or controls block without host fallback. Task 80's existing host-permission test workflow remains unchanged, and the Docker daemon/image remain trusted prerequisites."
+    },
+    {
+      "date": "2026-10-03",
+      "type": "development",
       "title": "Automated Code Review",
       "summary": "Added a one-call, caller-selected Agent review over bounded caller-supplied sanitized evidence, with severity/area classifications and citations restricted to supplied references. Evidence is sent to the selected Agent's configured Provider; callers authorize disclosure. Results are advisory; no files, workspaces, Tasks, tests, assignments, proposals, approvals, or Git state are accessed or changed."
     },
@@ -16,7 +22,7 @@
       "date": "2026-10-03",
       "type": "development",
       "title": "Automated Patch Development",
-      "summary": "Added bounded application of caller-supplied unified diffs to explicitly selected existing files in a disposable temporary copy; source files remain unchanged, and no code, tests, Providers, Tasks, assignments, or Git operations are invoked. The temporary copy is not a security sandbox; sandboxing, approval, and checkpoint workflows remain separate tasks."
+      "summary": "Added bounded application of caller-supplied unified diffs to explicitly selected existing files in a disposable temporary copy; source files remain unchanged, and no code, tests, Providers, Tasks, assignments, or Git operations are invoked. The temporary copy is not a security sandbox; approval and checkpoint workflows remain separate tasks."
     },
     {
       "date": "2026-10-03",
