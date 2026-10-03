@@ -373,6 +373,12 @@ This is a read-only static inspection capability, not general browser or compute
 
 The immutable result contains only model IDs, an allowlist of service-advertised capability names, a pagination-completeness flag, and a metadata-only audit event. Missing capability metadata remains UNKNOWN (`None`); unrecognized capability names are omitted. Audit metadata is returned with successes and sanitized failures, and is not automatically persisted. Listing does not generate content, establish model suitability or future execution success, choose/assign a model, invoke an Agent or Task, or change existing Provider behavior. No chat-based key entry, general credential store, API/UI, or background polling is added. At Task 91 completion, Tasks 92–100 remain planned.
 
+## Capability Registry (Task 92)
+
+`CapabilityRegistry` builds an immutable, read-only inventory from existing Agent declarations, registered Tool metadata, the non-granting `IntegrationCapability` scope enum, and an optional caller-supplied `GeminiModelCatalogResult`. Evidence labels distinguish agent-declared, tool-registered, scope-only, and service-reported records. Ownership identifies the source Agent, Tool, integration pipeline, or Gemini service/model; it is not a human principal or authorization. Requirements are included only where the source defines them; `None` means the source supplied no requirement metadata.
+
+Snapshots preserve source timestamps for Gemini data, report model count and incomplete pagination, cap records at 2,000, and identify that independent registries are read sequentially rather than atomically. Gemini models without allowlisted method metadata do not create inferred capability entries; model count and completeness remain visible. The registry never calls Gemini, persists or registers definitions, alters source registries, grants access, invokes Tools, changes Agent/model assignments, ranks candidates, or executes Tasks. Provider availability and Task 73 selection remain separate. No API/UI, durable state, or background refresh is added. At Task 92 completion, Tasks 93–100 remain planned.
+
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, historical Task project associations may be unknown, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 
 ## Future / planned roadmap
