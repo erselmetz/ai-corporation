@@ -11,8 +11,11 @@ from app.capability_discovery import CapabilityCandidate
 from app.capability_evaluation import CapabilityEvaluationReport
 from .code_review import CodeReviewFinding, CodeReviewReport, CodeReviewService
 from .diagnostics import DiagnosticEvidence, _evidence_digest
-from .git_checkpoints import GitCheckpointService
-from .maintenance_approvals import MaintenanceApprovalService
+from .git_checkpoints import GitCheckpointNotFoundError, GitCheckpointService
+from .maintenance_approvals import (
+    MaintenanceApprovalNotFoundError,
+    MaintenanceApprovalService,
+)
 from .maintenance_sandbox import MaintenanceSandboxReport, MaintenanceSandboxStatus
 from .patch_development import PatchDevelopmentService, PatchWorkspace
 from .testing_workflow import RunStatus, TestRunReport
@@ -155,6 +158,94 @@ class CapabilityIntegrationSnapshot:
             raise TypeError("limitations must be a bounded immutable tuple of text")
         if len(self.limitations) > 8:
             raise ValueError("limitation count exceeds its limit")
+        for limitation in self.limitations:
+            _validate_text(limitation, "limitation", 512)
+
+
+class CapabilityArtifactCheckStatus(str, Enum):
+    CONSISTENT = "consistent"
+    INCONSISTENT = "inconsistent"
+    MISSING = "missing"
+    UNVERIFIABLE = "unverifiable"
+
+
+class CapabilityArtifactConsistency(str, Enum):
+    CONSISTENT = "consistent"
+    INCONSISTENT = "inconsistent"
+    UNVERIFIABLE = "unverifiable"
+
+
+@dataclass(frozen=True, slots=True)
+class CapabilityArtifactCheck:
+    artifact_kind: str
+    artifact_id: str
+    status: CapabilityArtifactCheckStatus
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.artifact_kind, str) or self.artifact_kind not in {
+            "candidate_evaluation",
+            "workspace",
+            "test_result",
+            "review_evidence",
+            "approval",
+            "checkpoint",
+        }:
+            raise ValueError("artifact_kind is unsupported")
+        _validate_text(self.artifact_id, "artifact_id", 256)
+        if not isinstance(self.status, CapabilityArtifactCheckStatus):
+            raise TypeError("status must be a CapabilityArtifactCheckStatus")
+
+
+@dataclass(frozen=True, slots=True)
+class CapabilityIntegrationWorkflowAssessment:
+    workflow: CapabilityIntegrationSnapshot
+    artifact_consistency: CapabilityArtifactConsistency
+    checks: tuple[CapabilityArtifactCheck, ...]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.workflow, CapabilityIntegrationSnapshot):
+            raise TypeError("workflow must be a CapabilityIntegrationSnapshot")
+        if not isinstance(self.artifact_consistency, CapabilityArtifactConsistency):
+            raise TypeError(
+                "artifact_consistency must be a CapabilityArtifactConsistency"
+            )
+        if not isinstance(self.checks, tuple) or not 1 <= len(self.checks) <= 6:
+            raise ValueError("checks must contain 1 to 6 immutable artifact checks")
+        if not all(isinstance(check, CapabilityArtifactCheck) for check in self.checks):
+            raise TypeError("checks must contain CapabilityArtifactCheck values")
+        if len({check.artifact_kind for check in self.checks}) != len(self.checks):
+            raise ValueError("artifact check kinds must be unique")
+        if self.artifact_consistency is not _artifact_consistency(self.checks):
+            raise ValueError("artifact_consistency does not match the artifact checks")
+
+
+@dataclass(frozen=True, slots=True)
+class CapabilityIntegrationPipelineReview:
+    reviewed_at: datetime
+    workflows: tuple[CapabilityIntegrationWorkflowAssessment, ...]
+    limitations: tuple[str, ...] = (
+        "Workflow progress is reported as recorded; it is not a recommendation to advance.",
+        "Test reports and review evidence are not retained for independent revalidation.",
+        "Caller-supplied candidate/workspace links are not semantically validated.",
+        "Checkpointed means the exact patch was checkpointed, not that a capability was adopted or activated.",
+        "Cross-service records are read sequentially and do not form an atomic snapshot.",
+        "The review performs no Provider calls, Task execution, workflow transitions, or assignment changes.",
+    )
+
+    def __post_init__(self) -> None:
+        _validate_time(self.reviewed_at, "reviewed_at")
+        if not isinstance(self.workflows, tuple) or len(self.workflows) > MAX_CAPABILITY_INTEGRATION_WORKFLOWS:
+            raise ValueError("workflows must be an immutable tuple within the workflow limit")
+        if not all(
+            isinstance(workflow, CapabilityIntegrationWorkflowAssessment)
+            for workflow in self.workflows
+        ):
+            raise TypeError("workflows must contain CapabilityIntegrationWorkflowAssessment values")
+        workflow_ids = tuple(item.workflow.workflow_id for item in self.workflows)
+        if len(set(workflow_ids)) != len(workflow_ids):
+            raise ValueError("workflow IDs must be unique")
+        if not isinstance(self.limitations, tuple) or len(self.limitations) > 8:
+            raise ValueError("limitations must be a bounded immutable tuple")
         for limitation in self.limitations:
             _validate_text(limitation, "limitation", 512)
 
@@ -442,6 +533,147 @@ class CapabilityIntegrationWorkflowService:
                 )
             )
 
+    def review_pipeline(self) -> CapabilityIntegrationPipelineReview:
+        workflows = self.list()
+        assessments = tuple(self._assess_workflow(workflow) for workflow in workflows)
+        return CapabilityIntegrationPipelineReview(
+            datetime.now(timezone.utc),
+            assessments,
+        )
+
+    def _assess_workflow(
+        self,
+        workflow: CapabilityIntegrationSnapshot,
+    ) -> CapabilityIntegrationWorkflowAssessment:
+        checks = [
+            CapabilityArtifactCheck(
+                "candidate_evaluation",
+                workflow.candidate.candidate_id,
+                (
+                    CapabilityArtifactCheckStatus.CONSISTENT
+                    if workflow.evaluation.candidate_id == workflow.candidate.candidate_id
+                    else CapabilityArtifactCheckStatus.INCONSISTENT
+                ),
+            ),
+        ]
+
+        try:
+            workspace = self._workspaces.get(workflow.workspace_id)
+        except ValueError:
+            checks.append(
+                CapabilityArtifactCheck(
+                    "workspace",
+                    workflow.workspace_id,
+                    CapabilityArtifactCheckStatus.MISSING,
+                )
+            )
+        else:
+            workspace_matches = (
+                workspace.workspace_id == workflow.workspace_id
+                and workspace.proposal_id == workflow.proposal_id
+                and workspace.patch_sha256 == workflow.patch_sha256
+                and workspace.source_sha256 == workflow.source_sha256
+                and bool(workspace.unified_diff)
+            )
+            checks.append(
+                CapabilityArtifactCheck(
+                    "workspace",
+                    workflow.workspace_id,
+                    (
+                        CapabilityArtifactCheckStatus.CONSISTENT
+                        if workspace_matches
+                        else CapabilityArtifactCheckStatus.INCONSISTENT
+                    ),
+                )
+            )
+
+        if workflow.test_run_id is not None:
+            checks.append(
+                CapabilityArtifactCheck(
+                    "test_result",
+                    workflow.test_run_id,
+                    CapabilityArtifactCheckStatus.UNVERIFIABLE,
+                )
+            )
+        if workflow.review_agent_id is not None:
+            checks.append(
+                CapabilityArtifactCheck(
+                    "review_evidence",
+                    workflow.review_agent_id,
+                    CapabilityArtifactCheckStatus.UNVERIFIABLE,
+                )
+            )
+        if workflow.approval_request_id is not None:
+            try:
+                approval = self._approvals.get_review(workflow.approval_request_id)
+            except MaintenanceApprovalNotFoundError:
+                approval_matches = False
+                approval_missing = True
+            else:
+                approval_missing = False
+                approval_matches = (
+                    approval.request_id == workflow.approval_request_id
+                    and approval.workspace_id == workflow.workspace_id
+                    and approval.proposal_id == workflow.proposal_id
+                    and approval.patch_sha256 == workflow.patch_sha256
+                    and approval.source_sha256 == workflow.source_sha256
+                    and approval.status is workflow.approval_status
+                    and approval.decided_by == workflow.decision_by
+                    and approval.decided_at == workflow.decision_at
+                )
+            checks.append(
+                CapabilityArtifactCheck(
+                    "approval",
+                    workflow.approval_request_id,
+                    (
+                        CapabilityArtifactCheckStatus.MISSING
+                        if approval_missing
+                        else CapabilityArtifactCheckStatus.CONSISTENT
+                        if approval_matches
+                        else CapabilityArtifactCheckStatus.INCONSISTENT
+                    ),
+                )
+            )
+        if workflow.checkpoint_id is not None:
+            try:
+                checkpoint = self._checkpoints.get(workflow.checkpoint_id)
+            except GitCheckpointNotFoundError:
+                checkpoint_matches = False
+                checkpoint_missing = True
+            else:
+                checkpoint_missing = False
+                checkpoint_matches = (
+                    checkpoint.checkpoint_id == workflow.checkpoint_id
+                    and checkpoint.workspace_id == workflow.workspace_id
+                    and checkpoint.proposal_id == workflow.proposal_id
+                    and checkpoint.approval_request_id == workflow.approval_request_id
+                    and checkpoint.patch_sha256 == workflow.patch_sha256
+                    and checkpoint.source_sha256 == workflow.source_sha256
+                    and checkpoint.branch_name == workflow.checkpoint_branch
+                    and checkpoint.commit_sha == workflow.checkpoint_commit_sha
+                    and checkpoint.created_by == workflow.checkpoint_created_by
+                )
+            checks.append(
+                CapabilityArtifactCheck(
+                    "checkpoint",
+                    workflow.checkpoint_id,
+                    (
+                        CapabilityArtifactCheckStatus.MISSING
+                        if checkpoint_missing
+                        else CapabilityArtifactCheckStatus.CONSISTENT
+                        if checkpoint_matches
+                        else CapabilityArtifactCheckStatus.INCONSISTENT
+                    ),
+                )
+            )
+
+        artifact_checks = tuple(checks)
+        return CapabilityIntegrationWorkflowAssessment(
+            workflow,
+            _artifact_consistency(artifact_checks),
+            artifact_checks,
+        )
+
     def _require_current_workspace(
         self,
         current: CapabilityIntegrationSnapshot,
@@ -526,6 +758,22 @@ def _validate_text(value: str, field_name: str, maximum_bytes: int) -> None:
         raise ValueError(f"{field_name} must contain valid Unicode text") from exc
     if encoded_size > maximum_bytes or any(ord(character) < 32 for character in value):
         raise ValueError(f"{field_name} is invalid or exceeds its byte limit")
+
+
+def _artifact_consistency(
+    checks: tuple[CapabilityArtifactCheck, ...],
+) -> CapabilityArtifactConsistency:
+    statuses = {check.status for check in checks}
+    if statuses.intersection(
+        {
+            CapabilityArtifactCheckStatus.INCONSISTENT,
+            CapabilityArtifactCheckStatus.MISSING,
+        }
+    ):
+        return CapabilityArtifactConsistency.INCONSISTENT
+    if CapabilityArtifactCheckStatus.UNVERIFIABLE in statuses:
+        return CapabilityArtifactConsistency.UNVERIFIABLE
+    return CapabilityArtifactConsistency.CONSISTENT
 
 
 def _validate_optional_text(

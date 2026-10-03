@@ -19,7 +19,7 @@ from app.capability_evaluation import (
 )
 from .code_review import CodeReviewReport, CodeReviewService
 from .capability_integration import (
-    CapabilityIntegrationEvent,
+    CapabilityIntegrationPipelineReview,
     CapabilityIntegrationSnapshot,
     CapabilityIntegrationStage,
     CapabilityIntegrationStatus,
@@ -305,6 +305,12 @@ class CorporationApplicationService:
         self,
     ) -> tuple[CapabilityIntegrationSnapshot, ...]:
         return self._get_capability_integration_workflow().list()
+
+    def review_capability_integration_pipeline(
+        self,
+    ) -> CapabilityIntegrationPipelineReview:
+        """Report recorded capability-workflow progress and artifact consistency."""
+        return self._get_capability_integration_workflow().review_pipeline()
 
     def detect_failures(self) -> FailureDetectionReport:
         """Return bounded Task failure categories without exception details."""

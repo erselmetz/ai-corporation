@@ -10,6 +10,8 @@ import pytest
 
 from app.agents import Agent
 from app.application import (
+    CapabilityArtifactCheckStatus,
+    CapabilityArtifactConsistency,
     CapabilityIntegrationStage,
     CapabilityIntegrationStatus,
     DiagnosticEvidence,
@@ -539,6 +541,83 @@ def test_capability_workflow_links_existing_change_control_without_activation(tm
         (agent.id, agent.provider, agent.model, tuple(agent.capabilities))
         for agent in runtime.agents.all()
     ) == before_assignments
+    before_task_states = tuple((item.id, item.status) for item in runtime.tasks.all())
+    with patch.object(
+        runtime.providers.get("ollama"),
+        "generate",
+        side_effect=AssertionError("Pipeline review invoked a Provider"),
+    ) as generate:
+        report = runtime.application_service.review_capability_integration_pipeline()
+    generate.assert_not_called()
+    assessment = next(
+        item for item in report.workflows if item.workflow.workflow_id == started.workflow_id
+    )
+    check_statuses = {
+        check.artifact_kind: check.status for check in assessment.checks
+    }
+    assert assessment.workflow.status is CapabilityIntegrationStatus.CHECKPOINTED
+    assert assessment.artifact_consistency is CapabilityArtifactConsistency.UNVERIFIABLE
+    assert check_statuses["candidate_evaluation"] is CapabilityArtifactCheckStatus.CONSISTENT
+    assert check_statuses["workspace"] is CapabilityArtifactCheckStatus.CONSISTENT
+    assert check_statuses["test_result"] is CapabilityArtifactCheckStatus.UNVERIFIABLE
+    assert check_statuses["review_evidence"] is CapabilityArtifactCheckStatus.UNVERIFIABLE
+    assert check_statuses["approval"] is CapabilityArtifactCheckStatus.CONSISTENT
+    assert check_statuses["checkpoint"] is CapabilityArtifactCheckStatus.CONSISTENT
+    assert tuple((item.id, item.status) for item in runtime.tasks.all()) == before_task_states
+    assert tuple(
+        (agent.id, agent.provider, agent.model, tuple(agent.capabilities))
+        for agent in runtime.agents.all()
+    ) == before_assignments
+
+
+def test_capability_pipeline_review_detects_workspace_drift_without_mutation(
+    tmp_path,
+    monkeypatch,
+):
+    runtime, _task, _failure, _maintenance, _diagnostic, _proposal, workspace = (
+        _start_patch_workflow(tmp_path)
+    )
+    candidate = CapabilityCandidate(
+        candidate_id="pipeline-review-candidate",
+        name="Read-only status integration",
+        description="Read service status without changing remote state.",
+        source_reference="caller:pipeline-review-source",
+    )
+    evaluation = CapabilityEvaluationService().evaluate(candidate, ())
+    started = runtime.application_service.start_capability_integration_workflow(
+        candidate,
+        evaluation,
+        workspace.workspace_id,
+    )
+    original_get = runtime.application_service._patch_development.get
+    monkeypatch.setattr(
+        runtime.application_service._patch_development,
+        "get",
+        lambda workspace_id: replace(
+            original_get(workspace_id),
+            patch_sha256="0" * 64,
+        ),
+    )
+
+    report = runtime.application_service.review_capability_integration_pipeline()
+    assessment = report.workflows[0]
+
+    assert assessment.workflow.workflow_id == started.workflow_id
+    assert assessment.artifact_consistency is CapabilityArtifactConsistency.INCONSISTENT
+    assert next(
+        check for check in assessment.checks if check.artifact_kind == "workspace"
+    ).status is CapabilityArtifactCheckStatus.INCONSISTENT
+    assert runtime.application_service.get_capability_integration_workflow(
+        started.workflow_id
+    ) == started
+
+
+def test_capability_pipeline_review_is_empty_without_recorded_workflows():
+    runtime = create_corporation_runtime()
+
+    report = runtime.application_service.review_capability_integration_pipeline()
+
+    assert report.workflows == ()
 
 
 def test_capability_workflow_stops_on_test_failure_and_rejects_mismatched_artifacts(
@@ -579,6 +658,12 @@ def test_capability_workflow_stops_on_test_failure_and_rejects_mismatched_artifa
             started.workflow_id,
             passed,
         )
+    assessment = runtime.application_service.review_capability_integration_pipeline().workflows[0]
+    assert assessment.workflow.status is CapabilityIntegrationStatus.TEST_FAILED
+    assert assessment.artifact_consistency is CapabilityArtifactConsistency.UNVERIFIABLE
+    assert next(
+        check for check in assessment.checks if check.artifact_kind == "test_result"
+    ).status is CapabilityArtifactCheckStatus.UNVERIFIABLE
 
 
 def test_task97_coordinates_registered_responsibility_and_approved_workflow_sources(

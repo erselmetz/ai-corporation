@@ -63,9 +63,9 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5]);
   });
 
-  it("marks exactly tasks 1–98 complete and all later tasks planned", () => {
-    assert.ok(tasks.slice(0, 98).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(98).every((task) => task.status === "planned"));
+  it("marks exactly tasks 1–99 complete and all later tasks planned", () => {
+    assert.ok(tasks.slice(0, 99).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(99).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -125,16 +125,19 @@ describe("documentation site", () => {
     assert.equal(tasks[97].description, "Adjust organizational capacity and role assignments under explicit governance.");
     assert.equal(tasks[97].status, "completed");
     assert.deepEqual(
-      tasks.slice(52, 98).map(({ number, status }) => [number, status]),
-      Array.from({ length: 46 }, (_, index) => [index + 53, "completed"]),
+      tasks.slice(52, 99).map(({ number, status }) => [number, status]),
+      Array.from({ length: 47 }, (_, index) => [index + 53, "completed"]),
     );
+    assert.equal(tasks[98].title, "Self-Improvement Pipeline");
+    assert.equal(tasks[98].description, "Evolve the controlled proposal, sandbox, testing, review, and approval pipeline.");
+    assert.equal(tasks[98].status, "completed");
   });
 
   it("describes the current completed and planned ranges on the roadmap page", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
-    assert.match(html, /Milestones 1–98 are completed foundations/);
-    assert.match(html, /Tasks 99–100 remain planned/);
+    assert.match(html, /Milestones 1–99 are completed foundations/);
+    assert.match(html, /Task 100 remains planned/);
   });
 
   it("serves only read methods", async () => {

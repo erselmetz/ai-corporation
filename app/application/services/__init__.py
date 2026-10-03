@@ -117,10 +117,15 @@ from .github_inspection import (
     GitHubRepositoryScopeDenied,
 )
 from .capability_integration import (
+    CapabilityArtifactCheck,
+    CapabilityArtifactCheckStatus,
+    CapabilityArtifactConsistency,
     CapabilityIntegrationEvent,
+    CapabilityIntegrationPipelineReview,
     CapabilityIntegrationSnapshot,
     CapabilityIntegrationStage,
     CapabilityIntegrationStatus,
+    CapabilityIntegrationWorkflowAssessment,
     CapabilityIntegrationWorkflowService,
 )
 from app.capability_discovery import (
@@ -244,8 +249,13 @@ __all__ = [
     "CapabilityEvaluationService",
     "EvidenceCoverageStatus",
     "CapabilityIntegrationEvent",
+    "CapabilityArtifactCheck",
+    "CapabilityArtifactCheckStatus",
+    "CapabilityArtifactConsistency",
+    "CapabilityIntegrationPipelineReview",
     "CapabilityIntegrationSnapshot",
     "CapabilityIntegrationStage",
     "CapabilityIntegrationStatus",
+    "CapabilityIntegrationWorkflowAssessment",
     "CapabilityIntegrationWorkflowService",
 ]

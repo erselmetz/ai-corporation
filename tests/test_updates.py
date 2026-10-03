@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-04",
                 "type": "development",
+                "title": "Self-Improvement Pipeline",
+                "summary": "Added a bounded review-only snapshot of recorded Task 95 capability workflows. It reports exact status, stage, and events; checks candidate/evaluation linkage and rechecks current workspace, approval, and checkpoint links against recorded identifiers and hashes. Test results and review evidence are marked unverifiable because source reports are not retained. The report does not invoke stages, alter workflows or assignments, create or execute Tasks, call Providers, or adopt/activate capabilities. Cross-service reads are sequential, not atomic. Task 100 remains planned.",
+            },
+            {
+                "date": "2026-10-04",
+                "type": "development",
                 "title": "Adaptive Workforce",
                 "summary": "Added caller-authored immutable review proposals for Employee headcount targets by exact role and proposed changes to existing Employee roles/responsibilities, linked to Task 96 priorities with bounded rationale and source references. Current headcounts are read from the registered Employee roster (bounded to 1,000); role changes require matching current Employee snapshots to reject stale requests. Rationales and source references are not independently verified. Proposals are not generated recommendations or approvals and never alter Employee, Agent/model, Task, or Task 71 resource assignments. Targets are not reconciled with individual role changes, and Employee records are read without an atomic snapshot. Tasks 99–100 remain planned.",
             },
