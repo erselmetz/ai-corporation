@@ -99,6 +99,7 @@ def test_review_uses_one_selected_agent_call_and_returns_bounded_advisory_findin
         "The evidence does not include the caller contract.",
     )
     assert report.generated_at.tzinfo is timezone.utc
+    assert len(report.evidence_sha256) == 64
     assert runtime.tasks.get(task.id) == task_before
     assert {item.id for item in runtime.tasks.all()} == task_ids_before
     assert runtime.orchestrator.logger.list_activity() == task_logs_before

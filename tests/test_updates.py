@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-03",
                 "type": "development",
+                "title": "Controlled Self-Maintenance",
+                "summary": "Added a bounded caller-driven workflow record linking an existing failed Task to its diagnostic, proposal, patch workspace, one Task 80 or Task 82 test result, and Task 81 review of evidence containing the exact patch. Only a PASSED test and recorded review make it ready for Task 83 approval; review findings remain advisory. Task 83 decisions and Task 84 checkpoints are separately invoked and recorded only after workspace/hash linkage checks. Snapshots are in-memory (up to 100 workflows); metadata-only audit events use existing Task logs. A failed test ends that workflow. No hidden Provider/test/approval/checkpoint calls, automatic retries, background work, Task creation/execution, patch application, API/UI, or assignment/resource changes are added; Tasks 86–100 remain planned.",
+            },
+            {
+                "date": "2026-10-03",
+                "type": "development",
                 "title": "Git Checkpoint Integration",
                 "summary": "Added an authenticated local checkpoint API requiring maintenance:checkpoint in addition to exact Task 83 approval. It revalidates the registered Task 79 patch/source, requires a clean Git worktree and index, and atomically records the approved diff as a commit on a dedicated local branch using a temporary index; it does not switch branches, push, merge, run Tasks, or alter the active checkout. Checkpoint creator identity is recorded. Branches/commits persist locally; reports are in-memory, and recovery after later integration is an explicit git revert.",
             },

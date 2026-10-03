@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import hashlib
 import json
 import re
 
@@ -204,6 +205,18 @@ def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
             raise ValueError("Duplicate JSON object key")
         result[key] = value
     return result
+
+
+def _evidence_digest(evidence: tuple[DiagnosticEvidence, ...]) -> str:
+    digest = hashlib.sha256()
+    for item in evidence:
+        reference = item.reference_id.encode("utf-8")
+        content = item.content.encode("utf-8")
+        digest.update(len(reference).to_bytes(4, "big"))
+        digest.update(reference)
+        digest.update(len(content).to_bytes(4, "big"))
+        digest.update(content)
+    return digest.hexdigest()
 
 
 def _validate_text(

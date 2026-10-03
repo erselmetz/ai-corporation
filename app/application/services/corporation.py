@@ -30,6 +30,10 @@ from .maintenance_sandbox import (
     MaintenanceSandboxReport,
     MaintenanceSandboxService,
 )
+from .maintenance_workflow import (
+    MaintenanceWorkflowService,
+    MaintenanceWorkflowSnapshot,
+)
 from .patch_development import PatchDevelopmentService, PatchWorkspace
 from .system_monitoring import SystemMonitoringReport
 from .testing_workflow import TestRunReport, TestingWorkflowService
@@ -148,6 +152,7 @@ class CorporationApplicationService:
             self._patch_development,
             self._maintenance_approvals,
         )
+        self._maintenance_workflow: MaintenanceWorkflowService | None = None
         self._testing_workflow = TestingWorkflowService()
         self._resource_manager = None
         self._controlled_execution = None
@@ -346,6 +351,108 @@ class CorporationApplicationService:
 
     def get_maintenance_checkpoint(self, checkpoint_id: str) -> GitCheckpoint:
         return self._git_checkpoints.get(checkpoint_id)
+
+    def start_maintenance_workflow(
+        self,
+        failure: DetectedFailure,
+    ) -> MaintenanceWorkflowSnapshot:
+        """Record an existing Task failure without invoking any workflow stage."""
+        return self._get_maintenance_workflow_service().start(failure)
+
+    def get_maintenance_workflow(
+        self,
+        workflow_id: str,
+    ) -> MaintenanceWorkflowSnapshot:
+        return self._get_maintenance_workflow_service().get(workflow_id)
+
+    def list_maintenance_workflows(
+        self,
+    ) -> tuple[MaintenanceWorkflowSnapshot, ...]:
+        return self._get_maintenance_workflow_service().list()
+
+    def record_maintenance_diagnostic(
+        self,
+        workflow_id: str,
+        report: DiagnosticReport,
+    ) -> MaintenanceWorkflowSnapshot:
+        return self._get_maintenance_workflow_service().record_diagnostic(
+            workflow_id,
+            report,
+        )
+
+    def record_maintenance_proposal(
+        self,
+        workflow_id: str,
+        proposal_id: str,
+    ) -> MaintenanceWorkflowSnapshot:
+        return self._get_maintenance_workflow_service().record_proposal(
+            workflow_id,
+            proposal_id,
+        )
+
+    def record_maintenance_patch(
+        self,
+        workflow_id: str,
+        workspace_id: str,
+    ) -> MaintenanceWorkflowSnapshot:
+        return self._get_maintenance_workflow_service().record_patch(
+            workflow_id,
+            workspace_id,
+        )
+
+    def record_maintenance_test_result(
+        self,
+        workflow_id: str,
+        report: TestRunReport | MaintenanceSandboxReport,
+    ) -> MaintenanceWorkflowSnapshot:
+        return self._get_maintenance_workflow_service().record_test_result(
+            workflow_id,
+            report,
+        )
+
+    def record_maintenance_review(
+        self,
+        workflow_id: str,
+        report: CodeReviewReport,
+        evidence: tuple[DiagnosticEvidence, ...],
+    ) -> MaintenanceWorkflowSnapshot:
+        return self._get_maintenance_workflow_service().record_review(
+            workflow_id,
+            report,
+            evidence,
+        )
+
+    def record_maintenance_approval(
+        self,
+        workflow_id: str,
+        request_id: str,
+    ) -> MaintenanceWorkflowSnapshot:
+        return self._get_maintenance_workflow_service().record_approval(
+            workflow_id,
+            request_id,
+        )
+
+    def record_maintenance_checkpoint(
+        self,
+        workflow_id: str,
+        checkpoint_id: str,
+    ) -> MaintenanceWorkflowSnapshot:
+        return self._get_maintenance_workflow_service().record_checkpoint(
+            workflow_id,
+            checkpoint_id,
+        )
+
+    def _get_maintenance_workflow_service(self) -> MaintenanceWorkflowService:
+        if self._maintenance_workflow is None:
+            self._maintenance_workflow = MaintenanceWorkflowService(
+                tasks=self._orchestrator.tasks,
+                proposals=self._maintenance_proposals,
+                workspaces=self._patch_development,
+                approvals=self._maintenance_approvals,
+                checkpoints=self._git_checkpoints,
+                logger=self._orchestrator.logger,
+            )
+        return self._maintenance_workflow
 
     def run_selected_tests(
         self,

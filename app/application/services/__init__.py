@@ -77,6 +77,13 @@ from .maintenance_sandbox import (
     MaintenanceSandboxService,
     MaintenanceSandboxStatus,
 )
+from .maintenance_workflow import (
+    MaintenanceWorkflowEvent,
+    MaintenanceWorkflowService,
+    MaintenanceWorkflowSnapshot,
+    MaintenanceWorkflowStage,
+    MaintenanceWorkflowStatus,
+)
 
 __all__ = [
     "ActivitySummary",
@@ -142,4 +149,9 @@ __all__ = [
     "MaintenanceSandboxReport",
     "MaintenanceSandboxService",
     "MaintenanceSandboxStatus",
+    "MaintenanceWorkflowEvent",
+    "MaintenanceWorkflowService",
+    "MaintenanceWorkflowSnapshot",
+    "MaintenanceWorkflowStage",
+    "MaintenanceWorkflowStatus",
 ]

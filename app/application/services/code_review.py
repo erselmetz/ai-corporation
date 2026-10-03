@@ -9,7 +9,12 @@ import httpx
 
 from app.agents import AgentRegistry
 from app.orchestrator import Orchestrator
-from .diagnostics import DiagnosticEvidence, _unique_object, _validate_text
+from .diagnostics import (
+    DiagnosticEvidence,
+    _evidence_digest,
+    _unique_object,
+    _validate_text,
+)
 
 
 class ReviewSeverity(str, Enum):
@@ -39,6 +44,7 @@ class CodeReviewReport:
     findings: tuple[CodeReviewFinding, ...]
     unknowns: tuple[str, ...]
     generated_at: datetime
+    evidence_sha256: str = ""
 
 
 class CodeReviewResponseError(ValueError):
@@ -104,6 +110,7 @@ class CodeReviewService:
             findings=findings,
             unknowns=unknowns,
             generated_at=datetime.now(timezone.utc),
+            evidence_sha256=_evidence_digest(evidence),
         )
 
     @staticmethod
