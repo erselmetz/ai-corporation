@@ -49,6 +49,7 @@ from .diagnostics import (
 )
 from .maintenance_proposals import MaintenanceProposal, MaintenanceProposalService
 from .patch_development import PatchDevelopmentService, PatchWorkspace
+from .testing_workflow import RunStatus, TestRunReport, TestingWorkflowService
 
 __all__ = [
     "ActivitySummary",
@@ -92,4 +93,7 @@ __all__ = [
     "MaintenanceProposalService",
     "PatchDevelopmentService",
     "PatchWorkspace",
+    "TestRunReport",
+    "RunStatus",
+    "TestingWorkflowService",
 ]

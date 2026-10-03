@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-03",
                 "type": "development",
+                "title": "Automated Testing Workflow",
+                "summary": "Added caller-selected Python pytest execution against a separate temporary copy of a registered Task 79 workspace, with no shell, dependency installation, a 120-second process timeout, 64 KiB output cap, reduced environment, and immutable reports of actual status/output. Test code still runs with host permissions; this is not an OS sandbox.",
+            },
+            {
+                "date": "2026-10-03",
+                "type": "development",
                 "title": "Automated Patch Development",
                 "summary": "Added bounded application of caller-supplied unified diffs to explicitly selected existing files in a disposable temporary copy; source files remain unchanged, and no code, tests, Providers, Tasks, assignments, or Git operations are invoked. The temporary copy is not a security sandbox; testing, review, approval, and checkpoint workflows remain separate planned tasks.",
             },

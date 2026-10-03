@@ -17,6 +17,7 @@ from .failure_detection import (
 from .maintenance_proposals import MaintenanceProposal, MaintenanceProposalService
 from .patch_development import PatchDevelopmentService, PatchWorkspace
 from .system_monitoring import SystemMonitoringReport
+from .testing_workflow import TestRunReport, TestingWorkflowService
 
 
 @dataclass(frozen=True)
@@ -125,6 +126,7 @@ class CorporationApplicationService:
         self._task_collaboration = None
         self._maintenance_proposals = MaintenanceProposalService()
         self._patch_development = PatchDevelopmentService()
+        self._testing_workflow = TestingWorkflowService()
         self._resource_manager = None
         self._controlled_execution = None
         self._corporation = corporation
@@ -240,6 +242,14 @@ class CorporationApplicationService:
 
     def dispose_patch_workspace(self, workspace_id: str) -> None:
         self._patch_development.dispose(workspace_id)
+
+    def run_selected_tests(
+        self,
+        workspace_id: str,
+        selected_tests: tuple[str, ...],
+    ) -> TestRunReport:
+        workspace = self._patch_development.get(workspace_id)
+        return self._testing_workflow.run(workspace, selected_tests)
 
     def execute_controlled_task(self, task_id):
         self.resource_manager()  # Reject missing configuration before touching Tasks.

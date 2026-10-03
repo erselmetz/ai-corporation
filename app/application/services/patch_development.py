@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
+import os
 import re
 import stat
 import tempfile
@@ -177,11 +178,19 @@ def _source_file(root: Path, relative_path: str) -> Path:
             metadata = current.lstat()
         except OSError as exc:
             raise ValueError("Selected source file is unavailable") from exc
-        if stat.S_ISLNK(metadata.st_mode):
+        if _is_symlink_or_reparse_point(metadata):
             raise ValueError("Selected source paths must not include symlinks")
     if not stat.S_ISREG(metadata.st_mode):
         raise ValueError("Selected source path must be a regular file")
     return current
+
+
+def _is_symlink_or_reparse_point(metadata: os.stat_result) -> bool:
+    if stat.S_ISLNK(metadata.st_mode):
+        return True
+    reparse_point = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    file_attributes = getattr(metadata, "st_file_attributes", 0)
+    return bool(reparse_point and file_attributes & reparse_point)
 
 
 def _parse_unified_diff(
