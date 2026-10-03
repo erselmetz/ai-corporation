@@ -113,7 +113,10 @@ Depends on validated local access; planned scope:
 
 ## Remaining roadmap relationship
 
-Task numbering after 104 is deferred until these first checkpoints are validated.
+Tasks 101-128 are now numbered in docs/tasks-data.mjs and displayed on docs/tasks.html.
+Read those authoritative contracts and shared handoff rules before each implementation;
+this readiness record is historical evidence and supplementary context. Tasks 104-128
+are planned and their unresolved decisions are not approved by publication.
 P04/P05/P15 online onboarding and positions follow usable local chat; P06/P07
 actual delegation and maps follow validated execution contracts. P08/P09 memory
 and hardware/resource policy must preserve ownership and truthful unknowns.

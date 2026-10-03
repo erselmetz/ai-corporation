@@ -654,3 +654,13 @@ Replies are rendered as plain text, including any HTML. No tools, Task creation/
 execution, assignment changes, cloud fallback, automatic retries, deployment, or
 maintenance action is triggered. Keep API credentials out of ordinary chat.
 The CEO label/hierarchy, workforce delegation and richer onboarding remain planned.
+
+
+The shared post-100 implementation checklist is authoritative in
+`docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
+public `docs/tasks.html`: Tasks 101-103 are verified complete, Task 104 is next,
+and Tasks 104-128 are planned. Every task has dependencies, acceptance checks,
+exclusions and explicit unresolved decision gates; completed post-100 records
+include checkpoint and validation evidence. The P00-P15 Markdown plan is
+supplementary. Use the same contracts for any implementing AI, preserve concurrent
+work, and do not treat a published plan as approval to implement future actions.

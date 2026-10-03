@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 import { createDocumentationServer } from "../server.mjs";
-import { taskGroups, tasks } from "../tasks-data.mjs";
+import { taskGroups, tasks, foundationTasks, post100Tasks, nextTask, roadmapRules } from "../tasks-data.mjs";
 
 const pages = [
   "index.html",
@@ -57,15 +57,16 @@ describe("documentation site", () => {
     assert.equal((await fetch(`${baseUrl}/README.md`)).status, 404);
   });
 
-  it("contains exactly tasks 1–100 in the requested category ranges", () => {
-    assert.equal(tasks.length, 100);
-    assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 100 }, (_, i) => i + 1));
-    assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5]);
+  it("preserves foundation tasks 1–100 and adds contiguous post-100 contracts", () => {
+    assert.equal(tasks.length, 128);
+    assert.equal(foundationTasks.length, 100);
+    assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 128 }, (_, i) => i + 1));
+    assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 28]);
   });
 
-  it("marks exactly tasks 1–100 complete and all later tasks planned", () => {
-    assert.ok(tasks.slice(0, 100).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(100).every((task) => task.status === "planned"));
+  it("marks only verified tasks 1–103 complete and tasks 104–128 planned", () => {
+    assert.ok(tasks.slice(0, 103).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(103).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -140,7 +141,33 @@ describe("documentation site", () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
     assert.match(html, /Milestones 1–100 are completed foundations/);
-    assert.match(html, /Post-100 roadmap areas remain planned/);
+    assert.match(html, /Tasks 101–103 are verified post-100 checkpoints/);
+    assert.match(html, /Tasks 104–128 are planned/);
+    assert.match(html, /id="next-task"/);
+    assert.match(html, /id="roadmap-rules"/);
+  });
+
+  it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {
+    assert.equal(nextTask.number, 104);
+    assert.deepEqual(post100Tasks.filter(task => task.status === "completed").map(task => task.checkpoint), ["f4e5b54", "1552893", "d1ca364"]);
+    for (const task of post100Tasks) {
+      assert.ok(task.acceptance.length > 0 && task.outOfScope.length > 0);
+      assert.ok(Array.isArray(task.decisions));
+      assert.ok(task.dependsOn.length > 0);
+      assert.equal(new Set(task.dependsOn).size, task.dependsOn.length);
+      assert.ok(task.dependsOn.every(number => Number.isInteger(number) && number >= 1 && number < task.number));
+      if (task.status === "completed") {
+        assert.match(task.checkpoint, /^[a-f0-9]{7,40}$/);
+        assert.ok(task.validation.length > 0 && task.limitations.length > 0);
+      } else {
+        assert.equal(task.checkpoint, null);
+        assert.deepEqual(task.validation, []);
+      }
+    }
+    assert.match(roadmapRules.completion, /acceptance evidence/);
+    assert.match(roadmapRules.decisions, /owner approval/);
+    assert.match(roadmapRules.handoff, /Identical|identical/);
+    assert.match(roadmapRules.boundaries, /file-based\/read-only/);
   });
 
   it("serves only read methods", async () => {

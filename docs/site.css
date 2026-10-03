@@ -95,3 +95,11 @@ th { color: var(--ink); font-size: .9rem; }
   .task-description { grid-column: 2; }
   th, td { min-width: 120px; }
 }
+
+.task-contract { grid-column: 2 / -1; font-size: .9rem; margin-top: .5rem; overflow-wrap: anywhere; }
+.task-contract summary, .panel > summary { cursor: pointer; color: var(--blue); font-weight: 650; }
+.task-contract h3 { margin-top: 1rem; font-size: .95rem; }
+.task-item { scroll-margin-top: 1rem; }
+#next-task > a { font-weight: 700; font-size: 1.1rem; }
+#roadmap-rules p { overflow-wrap: anywhere; }
+@media (max-width: 650px) { .task-contract { grid-column: 1 / -1; } }

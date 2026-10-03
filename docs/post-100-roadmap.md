@@ -7,19 +7,22 @@ Planning date: 2026-10-03 (Asia/Manila).
 
 ## Relationship to the current roadmap
 
-Tasks 1-100 retain their authoritative definitions in `docs/tasks-data.mjs`
-and their public presentation in `docs/tasks.html`. This document is a separate
-product plan, not a change to their scope, numbering, status, or completion gates.
+Tasks 1-100 retain their original definitions and completed foundation scope.
+The numbered Tasks 101-128, their explicit statuses, dependencies, acceptance
+checks, exclusions, decision gates and verified checkpoint records now live in
+`docs/tasks-data.mjs` (`post100Tasks`) and appear on the public `docs/tasks.html`.
+Those records are the authoritative implementation contracts; this P00-P15 file
+is supplementary product context, not a competing status/numbering source.
 
-Implement this plan only after Task 100 and the P00 readiness review. P01-P15 are
-provisional planning IDs, not Tasks 101-115. Assign final task numbers and refine
-scope only after checking the completed implementation. Reuse existing services;
-do not duplicate capabilities delivered by Tasks 1-100. Public roadmap integration
-is a separate later edit once the existing roadmap owner's work is checkpointed.
+Tasks 101-103 are complete; Task 104 is next and Tasks 104-128 remain planned.
+Publishing this list does not implement those tasks or approve their unresolved
+architecture/product/authority decisions. Read the shared `roadmapRules` before
+coding, preserve uncommitted work, and record exact validation and handoff evidence.
+Use one scoped checkpoint at a time and recheck for other contributors' changes.
 
-This Markdown file is a repository planning document. It is not currently served
-by the public docs site's explicit asset allowlist. It does not change that site,
-the Corporation runtime, or the internal Documentation Portal.
+This Markdown context remains repository-only and outside the public asset
+allowlist. Public contracts are served as existing static task data; public docs
+remain separate from runtime and the Task 53 portal remains file-based/read-only.
 
 ## Product goal
 
