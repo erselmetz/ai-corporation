@@ -47,6 +47,15 @@ from .diagnostics import (
     DiagnosticResponseError,
     DiagnosticService,
 )
+from .code_review import (
+    CodeReviewFinding,
+    CodeReviewProviderError,
+    CodeReviewReport,
+    CodeReviewResponseError,
+    CodeReviewService,
+    ReviewArea,
+    ReviewSeverity,
+)
 from .maintenance_proposals import MaintenanceProposal, MaintenanceProposalService
 from .patch_development import PatchDevelopmentService, PatchWorkspace
 from .testing_workflow import RunStatus, TestRunReport, TestingWorkflowService
@@ -89,6 +98,13 @@ __all__ = [
     "DiagnosticReport",
     "DiagnosticResponseError",
     "DiagnosticService",
+    "CodeReviewFinding",
+    "CodeReviewProviderError",
+    "CodeReviewReport",
+    "CodeReviewResponseError",
+    "CodeReviewService",
+    "ReviewArea",
+    "ReviewSeverity",
     "MaintenanceProposal",
     "MaintenanceProposalService",
     "PatchDevelopmentService",

@@ -8,6 +8,7 @@ from app.node import Node
 from app.orchestrator import Orchestrator, Project, Task
 from app.orchestrator.dry_run import DryRunResult
 from app.providers import ProviderManagement
+from .code_review import CodeReviewReport, CodeReviewService
 from .diagnostics import DiagnosticEvidence, DiagnosticReport, DiagnosticService
 from .failure_detection import (
     DetectedFailure,
@@ -195,6 +196,20 @@ class CorporationApplicationService:
             agents=self._orchestrator.agents,
             orchestrator=self._orchestrator,
         ).diagnose(agent_id, failure, evidence)
+
+    def review_proposed_changes(
+        self,
+        agent_id: str,
+        evidence: tuple[DiagnosticEvidence, ...],
+    ) -> CodeReviewReport:
+        """Review supplied evidence through the selected Agent's configured Provider.
+
+        Callers must sanitize the evidence and authorize its disclosure.
+        """
+        return CodeReviewService(
+            agents=self._orchestrator.agents,
+            orchestrator=self._orchestrator,
+        ).review(agent_id, evidence)
 
     def create_maintenance_proposal(
         self,
