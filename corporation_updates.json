@@ -1,10 +1,16 @@
 {
   "items": [
     {
+      "date": "2026-10-04",
+      "type": "development",
+      "title": "Capability Discovery",
+      "summary": "Added bounded, immutable intake of up to 100 explicitly caller-supplied capability candidates with retained source references and explicit caller-supplied provenance. Candidates are not independently verified. Discovery performs no external lookup, evaluation, ranking, registration, permission grant, activation, persistence, Provider call, or Task execution; Tasks 94–100 remain planned."
+    },
+    {
       "date": "2026-10-03",
       "type": "development",
       "title": "Capability Registry",
-      "summary": "Added a read-only, bounded capability inventory aggregated from existing Agent declarations, registered Tool metadata, non-granting IntegrationCapability scopes, and optional caller-supplied Gemini catalog snapshots. Immutable records distinguish declared, registered, scope-only, and service-reported evidence, identify source owners, retain known requirements and policy boundaries, and preserve Gemini snapshot time/count/completeness. Missing requirements remain unknown. Reads are sequential across independent registries; the registry does not call Gemini, persist/register capabilities, grant access, execute Tools/Tasks, rank/select models, or mutate assignments. Tasks 93–100 remain planned."
+      "summary": "Added a read-only, bounded capability inventory aggregated from existing Agent declarations, registered Tool metadata, non-granting IntegrationCapability scopes, and optional caller-supplied Gemini catalog snapshots. Immutable records distinguish declared, registered, scope-only, and service-reported evidence, identify source owners, retain known requirements and policy boundaries, and preserve Gemini snapshot time/count/completeness. Missing requirements remain unknown. Reads are sequential across independent registries; the registry does not call Gemini, persist/register capabilities, grant access, execute Tools/Tasks, rank/select models, or mutate assignments. At Task 92 completion, Tasks 93–100 remained planned."
     },
     {
       "date": "2026-10-03",

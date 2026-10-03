@@ -93,6 +93,12 @@ from .github_inspection import (
     GitHubRepositoryScope,
     GitHubRepositoryScopeDenied,
 )
+from app.capability_discovery import (
+    CapabilityCandidate,
+    CapabilityCandidateSource,
+    CapabilityDiscoveryReport,
+    CapabilityDiscoveryService,
+)
 
 __all__ = [
     "ActivitySummary",
@@ -170,4 +176,8 @@ __all__ = [
     "GitHubRepositoryNotFound",
     "GitHubRepositoryScope",
     "GitHubRepositoryScopeDenied",
+    "CapabilityCandidate",
+    "CapabilityCandidateSource",
+    "CapabilityDiscoveryReport",
+    "CapabilityDiscoveryService",
 ]

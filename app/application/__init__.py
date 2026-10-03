@@ -74,6 +74,10 @@ from .services import (
     TaskSummary,
     SystemMonitoringReport,
     SystemMonitoringService,
+    CapabilityCandidate,
+    CapabilityCandidateSource,
+    CapabilityDiscoveryReport,
+    CapabilityDiscoveryService,
 )
 
 __all__ = [
@@ -152,4 +156,8 @@ __all__ = [
     "TaskSummary",
     "SystemMonitoringReport",
     "SystemMonitoringService",
+    "CapabilityCandidate",
+    "CapabilityCandidateSource",
+    "CapabilityDiscoveryReport",
+    "CapabilityDiscoveryService",
 ]

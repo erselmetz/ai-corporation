@@ -9,6 +9,10 @@ from app.orchestrator import Orchestrator, Project, Task
 from app.orchestrator.dry_run import DryRunResult
 from app.providers import ProviderManagement
 from app.integrations import DockerSandboxBackend, SandboxImagePolicy
+from app.capability_discovery import (
+    CapabilityCandidate,
+    CapabilityDiscoveryReport,
+)
 from .code_review import CodeReviewReport, CodeReviewService
 from .diagnostics import DiagnosticEvidence, DiagnosticReport, DiagnosticService
 from .failure_detection import (
@@ -206,6 +210,14 @@ class CorporationApplicationService:
             providers=self._orchestrator.providers,
             resource_manager=self._resource_manager,
         ).report()
+
+    def discover_capabilities(
+        self,
+        candidates: tuple[CapabilityCandidate, ...],
+    ) -> CapabilityDiscoveryReport:
+        """Record caller-supplied candidates without external discovery or activation."""
+        from app.capability_discovery import CapabilityDiscoveryService
+        return CapabilityDiscoveryService().discover(candidates)
 
     def detect_failures(self) -> FailureDetectionReport:
         """Return bounded Task failure categories without exception details."""
