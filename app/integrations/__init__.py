@@ -109,6 +109,17 @@ from .execution_preparation import (
     ExecutionPreparationRequest,
     ExecutionPreparationStatus,
 )
+from .web_research import (
+    InvalidResearchURL,
+    ResearchClassification,
+    ResearchDomainNotAllowed,
+    UnsupportedResearchContentType,
+    WebResearchClient,
+    WebResearchDocument,
+    WebResearchError,
+    WebResearchFetchError,
+    WebResearchResponseTooLarge,
+)
 
 __all__ = [
     "IntegrationCapability",
@@ -200,4 +211,13 @@ __all__ = [
     "ExecutionPreparationRegistry",
     "ExecutionPreparationRequest",
     "ExecutionPreparationStatus",
+    "InvalidResearchURL",
+    "ResearchClassification",
+    "ResearchDomainNotAllowed",
+    "UnsupportedResearchContentType",
+    "WebResearchClient",
+    "WebResearchDocument",
+    "WebResearchError",
+    "WebResearchFetchError",
+    "WebResearchResponseTooLarge",
 ]
