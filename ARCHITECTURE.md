@@ -4,7 +4,7 @@
 
 **ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
-This document separates the implemented Tasks 1–77 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
+This document separates the implemented Tasks 1–79 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
@@ -260,9 +260,9 @@ The preparation request has no entrypoint/command, host environment, or credenti
 
 Pipeline distinction: **Source Staging** prepares controlled source material → **Sandbox Source Binding** associates it with a sandbox → **Execution Preparation** validates that a future experiment can be requested → **Sandbox Executor** remains the execution boundary → **Docker Backend** provides isolation when a future execution backend is enabled.
 
-## Tasks 1–77 completion scope
+## Tasks 1–79 completion scope
 
-Tasks 1–77 are complete as the current foundation. Their implemented areas include:
+Tasks 1–79 are complete as the current foundation. Their implemented areas include:
 
 - Task and Project domain/registry foundations.
 - Task lifecycle, orchestration, logging, and SQLite persistence.
@@ -308,6 +308,10 @@ Tasks 1–77 are complete as the current foundation. Their implemented areas inc
 - On-demand immutable monitoring reports over local Task, Provider-registration, and configured resource-capacity snapshots, with bounded factual failure/capacity signals and no Provider probes or runtime changes.
 - Persisted routing/execution-stage failure categories, UNKNOWN for legacy unclassified failures, and bounded failure summaries without raw exception text.
 - One-call caller-selected Agent diagnostics over bounded caller-supplied sanitized evidence, with citations validated against supplied references.
+- Caller-authored in-memory maintenance proposals linked to Task 77 diagnostics, with explicit bounded change, scope, and risk fields.
+- Bounded application of caller-supplied unified diffs to explicitly selected existing UTF-8 files inside a disposable temporary copy, with patch/source digests and explicit cleanup; no source or test execution, Provider call, Task creation/execution, assignment change, or Git operation.
+
+Task 79's temporary copy is not a security sandbox. It accepts no file additions/deletions/renames and does not implement test execution, code review, maintenance sandboxing, human approval, or Git checkpoint workflows; those remain planned Tasks 80 and later.
 
 This is a grouped capability summary, not a claim that every long-term capability is production-complete. See limitations above; particularly, historical Task project associations may be unknown, registry/configuration persistence is limited, tools and approvals are not wired to task execution, integration proposals are not persisted, there is no integration executor, and only Ollama is implemented as a provider.
 

@@ -48,6 +48,7 @@ from .diagnostics import (
     DiagnosticService,
 )
 from .maintenance_proposals import MaintenanceProposal, MaintenanceProposalService
+from .patch_development import PatchDevelopmentService, PatchWorkspace
 
 __all__ = [
     "ActivitySummary",
@@ -89,4 +90,6 @@ __all__ = [
     "DiagnosticService",
     "MaintenanceProposal",
     "MaintenanceProposalService",
+    "PatchDevelopmentService",
+    "PatchWorkspace",
 ]

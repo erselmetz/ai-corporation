@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from uuid import uuid4
 
 from app.agents import Agent, Employee, EmployeeManagement, ModelManagement
@@ -14,6 +15,7 @@ from .failure_detection import (
     FailureDetectionService,
 )
 from .maintenance_proposals import MaintenanceProposal, MaintenanceProposalService
+from .patch_development import PatchDevelopmentService, PatchWorkspace
 from .system_monitoring import SystemMonitoringReport
 
 
@@ -122,6 +124,7 @@ class CorporationApplicationService:
         self._corporation_chat = None
         self._task_collaboration = None
         self._maintenance_proposals = MaintenanceProposalService()
+        self._patch_development = PatchDevelopmentService()
         self._resource_manager = None
         self._controlled_execution = None
         self._corporation = corporation
@@ -216,6 +219,27 @@ class CorporationApplicationService:
 
     def list_maintenance_proposals(self) -> tuple[MaintenanceProposal, ...]:
         return self._maintenance_proposals.all()
+
+    def develop_patch(
+        self,
+        proposal_id: str,
+        source_root: str | Path,
+        selected_files: tuple[str, ...],
+        unified_diff: str,
+    ) -> PatchWorkspace:
+        proposal = self._maintenance_proposals.get(proposal_id)
+        return self._patch_development.develop(
+            proposal,
+            source_root,
+            selected_files,
+            unified_diff,
+        )
+
+    def get_patch_workspace(self, workspace_id: str) -> PatchWorkspace:
+        return self._patch_development.get(workspace_id)
+
+    def dispose_patch_workspace(self, workspace_id: str) -> None:
+        self._patch_development.dispose(workspace_id)
 
     def execute_controlled_task(self, task_id):
         self.resource_manager()  # Reject missing configuration before touching Tasks.
