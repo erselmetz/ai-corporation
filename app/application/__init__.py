@@ -78,6 +78,13 @@ from .services import (
     CapabilityCandidateSource,
     CapabilityDiscoveryReport,
     CapabilityDiscoveryService,
+    CallerReportedAssessment,
+    CapabilityEvaluationCoverage,
+    CapabilityEvaluationDimension,
+    CapabilityEvaluationEvidence,
+    CapabilityEvaluationReport,
+    CapabilityEvaluationService,
+    EvidenceCoverageStatus,
 )
 
 __all__ = [
@@ -160,4 +167,11 @@ __all__ = [
     "CapabilityCandidateSource",
     "CapabilityDiscoveryReport",
     "CapabilityDiscoveryService",
+    "CallerReportedAssessment",
+    "CapabilityEvaluationCoverage",
+    "CapabilityEvaluationDimension",
+    "CapabilityEvaluationEvidence",
+    "CapabilityEvaluationReport",
+    "CapabilityEvaluationService",
+    "EvidenceCoverageStatus",
 ]

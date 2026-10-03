@@ -180,8 +180,14 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-04",
                 "type": "development",
+                "title": "Capability Evaluation",
+                "summary": "Added deterministic, bounded evidence-coverage reports for caller-supplied capability candidates across fit, risk, and operational-requirement dimensions. Caller-reported assessments and source references are preserved but not independently verified; missing dimensions remain UNKNOWN. Evaluation does not score, rank, recommend, approve, authorize, register, or activate candidates, and makes no Provider call or runtime change. Tasks 95–100 remain planned.",
+            },
+            {
+                "date": "2026-10-04",
+                "type": "development",
                 "title": "Capability Discovery",
-                "summary": "Added bounded, immutable intake of up to 100 explicitly caller-supplied capability candidates with retained source references and explicit caller-supplied provenance. Candidates are not independently verified. Discovery performs no external lookup, evaluation, ranking, registration, permission grant, activation, persistence, Provider call, or Task execution; Tasks 94–100 remain planned.",
+                "summary": "Added bounded, immutable intake of up to 100 explicitly caller-supplied capability candidates with retained source references and explicit caller-supplied provenance. Candidates are not independently verified. Discovery performs no external lookup, evaluation, ranking, registration, permission grant, activation, persistence, Provider call, or Task execution. At Task 93 completion, Tasks 94–100 remained planned.",
             },
             {
                 "date": "2026-10-03",

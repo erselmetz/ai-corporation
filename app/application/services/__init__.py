@@ -99,6 +99,15 @@ from app.capability_discovery import (
     CapabilityDiscoveryReport,
     CapabilityDiscoveryService,
 )
+from app.capability_evaluation import (
+    CallerReportedAssessment,
+    CapabilityEvaluationCoverage,
+    CapabilityEvaluationDimension,
+    CapabilityEvaluationEvidence,
+    CapabilityEvaluationReport,
+    CapabilityEvaluationService,
+    EvidenceCoverageStatus,
+)
 
 __all__ = [
     "ActivitySummary",
@@ -180,4 +189,11 @@ __all__ = [
     "CapabilityCandidateSource",
     "CapabilityDiscoveryReport",
     "CapabilityDiscoveryService",
+    "CallerReportedAssessment",
+    "CapabilityEvaluationCoverage",
+    "CapabilityEvaluationDimension",
+    "CapabilityEvaluationEvidence",
+    "CapabilityEvaluationReport",
+    "CapabilityEvaluationService",
+    "EvidenceCoverageStatus",
 ]

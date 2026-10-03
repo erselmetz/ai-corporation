@@ -385,7 +385,13 @@ This is a grouped capability summary, not a claim that every long-term capabilit
 
 `CorporationApplicationService.discover_capabilities()` accepts an immutable tuple of up to 100 caller-supplied `CapabilityCandidate` records and returns a bounded immutable report. Candidates include caller-provided identifiers, descriptions, and source references; references are retained as text and are never followed or fetched. The report identifies its input as caller-supplied and labels its limitations explicitly. Empty candidate tuples are valid, candidate identifiers must be unique, and the input order is preserved without ranking.
 
-This is manual candidate intake, not autonomous search: candidates and source references are not independently verified. Discovery does not evaluate fit or risk, select or register capabilities, grant permissions, activate tools or services, call Providers, modify runtime registries, or execute Tasks. It is in-memory only and has no API/UI or persistence. Task 94 owns capability evaluation; Tasks 94–100 remain planned.
+This is manual candidate intake, not autonomous search: candidates and source references are not independently verified. Discovery does not evaluate fit or risk, select or register capabilities, grant permissions, activate tools or services, call Providers, modify runtime registries, or execute Tasks. It is in-memory only and has no API/UI or persistence. At Task 93 completion, Tasks 94–100 remained planned.
+
+## Capability Evaluation (Task 94)
+
+`CorporationApplicationService.evaluate_capability()` accepts one Task 93 candidate and up to 30 immutable caller-supplied evidence items. Each item is linked to a fixed dimension—capability fit, risk, or operational requirements—with a caller-reported assessment, bounded statement, and source reference. The immutable report preserves evidence order and reports, for each dimension, whether evidence was supplied or remains UNKNOWN. Combined evidence is bounded to 32 KiB; source references are retained as text and never fetched.
+
+This is a deterministic evidence-coverage review, not independent validation: caller statements and assessments are not verified, and DOCUMENTED coverage only means information was supplied. No score, rank, recommendation, approval, authorization, registration, or activation is produced. The operation is in-memory only and makes no Provider/Agent call, Task execution, external request, API/UI addition, or runtime-state change. Tasks 95–100 remain planned.
 
 ## Future / planned roadmap
 

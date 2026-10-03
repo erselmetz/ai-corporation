@@ -13,6 +13,10 @@ from app.capability_discovery import (
     CapabilityCandidate,
     CapabilityDiscoveryReport,
 )
+from app.capability_evaluation import (
+    CapabilityEvaluationEvidence,
+    CapabilityEvaluationReport,
+)
 from .code_review import CodeReviewReport, CodeReviewService
 from .diagnostics import DiagnosticEvidence, DiagnosticReport, DiagnosticService
 from .failure_detection import (
@@ -218,6 +222,15 @@ class CorporationApplicationService:
         """Record caller-supplied candidates without external discovery or activation."""
         from app.capability_discovery import CapabilityDiscoveryService
         return CapabilityDiscoveryService().discover(candidates)
+
+    def evaluate_capability(
+        self,
+        candidate: CapabilityCandidate,
+        evidence: tuple[CapabilityEvaluationEvidence, ...],
+    ) -> CapabilityEvaluationReport:
+        """Group caller-supplied evaluation evidence without validating its claims."""
+        from app.capability_evaluation import CapabilityEvaluationService
+        return CapabilityEvaluationService().evaluate(candidate, evidence)
 
     def detect_failures(self) -> FailureDetectionReport:
         """Return bounded Task failure categories without exception details."""
