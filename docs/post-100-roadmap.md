@@ -9,8 +9,8 @@ Tasks 1-100 retain their authoritative definitions in `docs/tasks-data.mjs`
 and their public presentation in `docs/tasks.html`. This document is a separate
 product plan, not a change to their scope, numbering, status, or completion gates.
 
-Implement this plan only after Task 100 and the P00 readiness review. P01-P14 are
-provisional planning IDs, not Tasks 101-114. Assign final task numbers and refine
+Implement this plan only after Task 100 and the P00 readiness review. P01-P15 are
+provisional planning IDs, not Tasks 101-115. Assign final task numbers and refine
 scope only after checking the completed implementation. Reuse existing services;
 do not duplicate capabilities delivered by Tasks 1-100. Public roadmap integration
 is a separate later edit once the existing roadmap owner's work is checkpointed.
@@ -95,6 +95,52 @@ Rejection or a request for more information is also a valid outcome.
 - Validate references and authority; a title such as CEO grants no permissions.
 - Provide individual chat entry points and a corporation structure map backed by
   actual records. Do not fabricate organizational relationships.
+
+#### Editable default positions
+
+Provide these initial role templates in the future UI; they are planned defaults,
+not a claim that these Employees or Agents are already installed or configured.
+
+| Position | Initial responsibility |
+| --- | --- |
+| Architect | System design, integration fit, and architecture proposals |
+| Developer | Implement approved changes within assigned scope |
+| Researcher | Source discovery, research, and evidence gathering |
+| Reasoning Analyst | Analyze alternatives, assumptions, and tradeoffs |
+| QA Engineer | Test planning, validation, and result evidence |
+| Security | Review permissions, external inputs, and security boundaries |
+| Code Reviewer | Inspect changes against scope, quality, and correctness |
+| Project Manager | Track plans, assignments, dependencies, and blockers |
+| Technical Writer | Maintain approved documentation and user guidance |
+| UI/UX | Design usable interfaces and evaluate user flows |
+
+- Allow authorized add, edit, rename, deactivate/remove, and role assignment.
+- Before removal or reassignment, show affected active jobs and references; require
+  explicit resolution instead of silently dropping work or erasing history.
+- Editing responsibilities must not automatically grant tool permissions.
+- Preserve the CEO/coordinator and planner/dispatcher workflows independently of
+  these templates. Organizational titles do not override execution authority.
+
+#### Configurable model connections and reassignment
+
+- Support a sample installation with two offline/local models and three supported
+  online connections, such as Gemini, OpenAI models, and GitHub Copilot where the
+  provider's official integration and account access permit it.
+- These are configurable connection/model entries, not five required providers,
+  five model copies, or a guarantee that all models run concurrently.
+- Offer automatic initial role-to-model assignment under an owner-approved policy,
+  using supported capabilities, access, and capacity checks; allow manual overrides.
+  Show the reason for each assignment and leave unsupported roles unassigned rather
+  than inventing compatibility. Automatic setup must not enable cloud use without consent.
+- Several Employees/Agents may share a connection; each retains separate context,
+  access scope, and instructions. Connections do not own organizational positions.
+- Let authorized users move a position/Agent to another connection/model through
+  the UI. Check compatibility and permissions and define the effective boundary;
+  do not silently switch providers mid-job or move private context to the cloud.
+- Keep prior job provenance and model identity after reassignment. Connection
+  removal must expose affected assignments and unresolved work.
+- Make local-only, online, and explicit fallback policy visible; hardware capacity,
+  provider availability, and execution eligibility remain separate checks.
 
 ### P06 - CEO-to-worker orchestration
 
@@ -192,6 +238,27 @@ Rejection or a request for more information is also a valid outcome.
 - Document local/cloud speech processing, consent, costs, and retention.
 - Keep typed chat fully usable when voice is disabled or unavailable.
 
+### P15 - Configurable automatic deployment
+
+- Provide deployment profiles for supported local installations, servers, or
+  hosting platforms; do not hardcode one destination or provider.
+- Let the owner select automatic deployment after approved changes pass the
+  required tests/review, or manual deployment. Automatic mode operates only within
+  an explicitly authorized profile and policy, including production approval rules.
+- Show artifact/revision, environment, target, progress, health checks, and verified
+  outcome. A successful build or push does not by itself prove a healthy deployment.
+- Define least-privilege credentials, allowed targets, migration rules, and recovery
+  before enabling a profile; never expose credentials in chat or frontend assets.
+- Support an explicit destination change/migration plan: validate the new target,
+  preserve required state, verify the result, and require separate authorization for
+  retiring the old destination. Do not copy credentials blindly between targets.
+- Keep public documentation deployment separate from Corporation runtime delivery.
+- Stop and surface test/review/health failures; no blind retries, automatic approval
+  of material architecture changes, or claims of rollback for irreversible actions.
+- Initial deterministic tests use fake deployment adapters; any actual deployment
+  requires an explicitly configured and authorized target. This planning document
+  authorizes no deployment, account connection, or credential change now.
+
 ## Priority and release shape
 
 1. P00/P01 readiness and local access, then P02/P03 usable chat with a local model.
@@ -199,7 +266,8 @@ Rejection or a request for more information is also a valid outcome.
 3. P06/P07 task delegation, review, owner reporting, and truthful workflow maps.
 4. P08/P09 memory controls and measured resource management as needed by these flows.
 5. P10/P11 research-to-adaptation and controlled self-maintenance.
-6. P12 supported software management, P13 desktop delivery, then optional P14 voice.
+6. P12 supported software management and P15 policy-controlled deployment.
+7. P13 desktop delivery, then optional P14 voice.
 
 This ordering is a proposal. P00 must refine dependencies and identify what can be
 reused, split, or omitted. Chat is the first user-facing priority; autonomous
