@@ -4,7 +4,7 @@ const container = document.querySelector("#roadmap-groups");
 const summary = document.querySelector("#roadmap-summary");
 const categoryIndex = document.querySelector("#category-index");
 
-for (const group of taskGroups) {
+for (const group of [...taskGroups].reverse()) {
   const sectionId = `tasks-${group.range.replace("–", "-")}`;
   const categoryLink = document.createElement("a");
   categoryLink.href = `#${sectionId}`;
@@ -22,7 +22,7 @@ for (const group of taskGroups) {
   const list = document.createElement("ol");
   list.className = "task-list";
 
-  for (const task of tasks.filter((item) => item.category === group.name)) {
+  for (const task of tasks.filter((item) => item.category === group.name).sort((a, b) => b.number - a.number)) {
     const item = document.createElement("li");
     item.className = "task-item";
     const number = document.createElement("span");
