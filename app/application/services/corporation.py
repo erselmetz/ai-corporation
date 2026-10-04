@@ -181,6 +181,8 @@ class CorporationApplicationService:
         self._owned_chat = None
         self._owned_employee_chat = None
         self._owned_chat_lock = Lock()
+        self._assignment_policy = None
+        self._assignment_policy_lock = Lock()
         self._task_collaboration = None
         self._capability_integration_workflow: CapabilityIntegrationWorkflowService | None = None
         self._maintenance_proposals = MaintenanceProposalService()
@@ -204,6 +206,14 @@ class CorporationApplicationService:
         snapshot = self._resource_manager.snapshot() if self._resource_manager is not None else None
         return assess_model_resources(candidates, snapshot=snapshot,
                                       registered_providers=self._orchestrator.providers.all())
+
+    def assignment_policy(self):
+        """Return the process-local, non-mutating owner assignment policy service."""
+        with self._assignment_policy_lock:
+            if self._assignment_policy is None:
+                from .assignment_policy import AssignmentPolicyService
+                self._assignment_policy = AssignmentPolicyService(self)
+            return self._assignment_policy
 
     def check_provider_availability(self, provider_id):
         """Explicitly check a registered provider without changing runtime state."""

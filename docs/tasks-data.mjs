@@ -437,7 +437,7 @@ export const post100Tasks = [
     "title": "Capability-based assignment policy",
     "description": "Suggest or apply eligible role-to-model assignments under a separately enabled owner-approved policy.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       106,
       108
@@ -452,12 +452,23 @@ export const post100Tasks = [
       "Model size/name or installed status as proof of job competence; automatic cloud consent."
     ],
     "decisions": [
-      "Approve capability evidence, evaluation budgets, reassignment/undo and automatic policy boundaries."
+      "Resolved conservatively: provide review-only recommendations, disabled by default and enabled only by an explicit local-owner policy save/confirmation. Require fresh traceable inventory references (24 hours), fresh positive tested capability references (30 days), registered/explicitly allowed providers, fully configured Task 71 admission capacity, and explicit owner-unit budgets. Treat declarations, stale evidence, provider health, model compatibility, hardware feasibility and execution readiness as unknown; no model name or installation proves competence. Online candidates require a separate policy opt-in and never connect, send data, or imply chat consent. Preserve manual assignments as authoritative; manual override continues through Task 108's existing preview/confirmation flow. Undo is disabling the non-mutating policy, which also clears its stored configuration; there is no assignment rollback because policy never applies one."
     ],
     "area": "P15",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-109-capability-based-assignment-policy",
+    "validation": [
+      "Focused assignment-policy/API/local-owner/Web UI Python regressions: 30 passed; one existing Starlette deprecation warning.",
+      "Expanded assignment, dispatch, owned-chat, local-model, Gemini, resource-capacity and routing Python regressions: 184 passed, no skips; one existing Starlette deprecation warning.",
+      "Assignment-policy and directly affected local-model/Gemini browser-module tests: 13 passed with deterministic fakes and no provider-generation calls.",
+      "Public documentation JavaScript tests: 13 passed.",
+      "Pylance reported no problems in changed Python files; diff whitespace and JSON validation passed. No live/paid provider calls were made."
+    ],
+    "limitations": [
+      "Policy configuration, evidence, and recommendations are bounded process-local records, scoped by authenticated principal, and are lost on restart. Inventory, evidence references, and cost estimates are owner-supplied and not independently verified.",
+      "Only tested positive capability evidence no older than 30 days qualifies; declarations are shown as unknown. Inventory records are limited to 24 hours and caller-reported timestamps do not prove live availability.",
+      "All Task 71 admission dimensions must be configured and eligible; capacity reports are non-reserving and do not establish hardware feasibility, provider health, compatibility, performance, or execution readiness.",
+      "Suggestions never modify assignments, reserve capacity, call Providers, connect online models, transfer data, or grant cloud consent. Manual assignments remain authoritative; online access and billing estimates are not independently verified."
+    ]
   },
   {
     "number": 110,

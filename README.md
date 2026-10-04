@@ -337,8 +337,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-108 are verified complete, Task 109 is next,
-and Tasks 109-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-109 are verified complete, Task 110 is next,
+and Tasks 110-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -406,8 +406,9 @@ and spend limitations remain unchanged.
 Validation: 13 focused Python tests, 10 coordinator-chat/online-setup JavaScript
 tests, and 13 public-docs tests passed. New provider tests use deterministic fakes.
 Task 107 completed the bounded ephemeral positions foundation. Task 108 adds
-manual connection previews and owner-scoped individual Employee chat; Tasks
-109-128 remain planned and Task 109 is next.
+manual connection previews and owner-scoped individual Employee chat. Task 109
+adds disabled-by-default, review-only model assignment recommendations; Tasks
+110-128 remain planned and Task 110 is next.
 
 ## Task 107 - Editable corporation positions
 
@@ -456,3 +457,35 @@ Python regressions and 150 expanded directly affected Python regressions passed
 with one existing Starlette deprecation warning; no tests were skipped. Twelve
 browser-module tests and 13 public-docs tests passed with deterministic fakes.
 Pylance reported no problems in changed Python files.
+
+## Task 109 - Capability-based assignment policy
+
+The explicit local-owner page at `/ui/assignment-policy` configures a
+principal-scoped, process-local recommendation policy. It is disabled by
+default and requires a separate `assignment-policy:manage` permission, an
+explicit save/enable action, provider allowlists, a budget limit and a
+caller-defined unit. Preview is read-only and deterministic in owner-supplied
+candidate order. It requires a registered provider, candidate membership in a
+fresh owner-recorded inventory, fully configured eligible Task 71 capacity,
+and fresh positive tested evidence for every capability declared by an Agent.
+Positive declarations alone, absent evidence, stale evidence, unknown budget,
+and capacity/access failures are surfaced with reasons and unknowns rather
+than generating recommendations. Model names and installed state never count
+as competence proof.
+
+Inventory is limited to 24 hours and tested evidence to 30 days. Provider
+inventory and evidence references, capability outcomes, and cost estimates are
+owner-supplied and not independently verified. Estimates use the policy's
+owner-defined unit and are not provider billing quotes. Hardware feasibility,
+provider health, compatibility, performance and execution readiness remain
+unknown. Online candidates require a separate policy opt-in; recommendations
+do not connect providers, call a model, transfer data, reserve capacity or
+grant Gemini consent.
+
+Manual assignments always remain authoritative. To override a suggestion,
+use the existing local-model/Gemini setup flow and its Task 108 preview and
+confirmation. Disabling the policy clears its stored configuration and is its
+complete undo because it never applies assignments; any separately confirmed manual change must be reversed
+through the existing manual setup flow. Policy state disappears on restart.
+Focused validation and checkpoint evidence are recorded in
+`docs/tasks-data.mjs`.

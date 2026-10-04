@@ -862,7 +862,7 @@ def local_model_setup_page():
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Local model setup - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
     <script type="module" src="/ui/static/local-models.mjs"></script></head><body>
-    <main class="content"><nav><a href="/ui/chat">Coordinator chat</a> | <a href="/ui/employee-chat">Individual Employee chat</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <main class="content"><nav><a href="/ui/chat">Coordinator chat</a> | <a href="/ui/employee-chat">Individual Employee chat</a> | <a href="/ui/assignment-policy">Assignment recommendations</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
     <h1>Local Agent model setup</h1><p>Available only with explicit local-owner access. Refresh checks the
     configured supported loopback provider without downloading or generating anything.</p>
     <label for="model-agent">Existing Agent</label><select id="model-agent"></select>
@@ -878,13 +878,57 @@ def local_model_setup_page():
     </main></body></html>""")
 
 
+@router.get("/ui/assignment-policy", response_class=HTMLResponse)
+def assignment_policy_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Assignment policy - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/assignment-policy.mjs"></script></head><body>
+    <main class="content"><nav><a href="/ui">Dashboard</a> | <a href="/ui/local-models">Manual Agent model setup</a> | <a href="/ui/online-provider">Gemini setup</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <h1>Capability-based assignment recommendations</h1>
+    <p>Available only through explicit local-owner access. Recommendations are disabled until you save an owner-approved policy. They never change an Agent assignment, connect a provider, send data, or grant online consent.</p>
+    <p>Supply a fresh inventory snapshot (at most 24 hours old), traceable capability evidence (tested evidence must be at most 30 days old), registered provider IDs, and an explicit budget in one owner-defined unit. A declaration is shown as unknown and never qualifies a model.</p>
+    <details><summary>Policy JSON shape</summary><pre>{
+  "enabled": true,
+  "allowed_provider_ids": ["YOUR_REGISTERED_PROVIDER"],
+  "online_enabled": false,
+  "budget_limit": "1",
+  "budget_unit": "owner-defined units per request",
+  "candidates": [{
+    "provider_id": "YOUR_REGISTERED_PROVIDER",
+    "model_id": "YOUR_INVENTORIED_MODEL",
+    "inventory_kind": "local",
+    "inventory_models": ["YOUR_INVENTORIED_MODEL"],
+    "inventory_reference": "source-reference",
+    "inventory_observed_at": "2026-10-04T12:00:00+00:00",
+    "estimated_cost": "0",
+    "evidence": [{
+      "capability": "EXACT_AGENT_CAPABILITY",
+      "kind": "tested",
+      "supports": true,
+      "reference": "test-report-reference",
+      "observed_at": "2026-10-04T12:00:00+00:00"
+    }]
+  }]
+}</pre><p>Replace every example identifier and timestamp with current owner-reviewed facts. The example is not evidence of an installed model, tested competence, provider access, zero cost, or available capacity. Do not paste credentials.</p></details>
+    <label for="assignment-policy-config">Owner-approved policy JSON</label>
+    <textarea id="assignment-policy-config" rows="22" spellcheck="false" autocomplete="off"></textarea>
+    <p><button id="assignment-policy-save" type="button">Save and enable recommendations</button>
+    <button id="assignment-policy-disable" type="button">Disable recommendations</button>
+    <button id="assignment-policy-preview" type="button">Refresh preview</button></p>
+    <p id="assignment-policy-state" role="status" aria-live="polite"></p>
+    <pre id="assignment-policy-results" aria-live="polite"></pre>
+    <p>Manual assignments always remain authoritative. Use Manual Agent model setup to override a recommendation with its impact preview and confirmation. Disabling clears the saved policy data and is the complete undo because this policy never applies assignments; any separately confirmed manual change can be reversed only through the existing manual setup flow.</p>
+    </main></body></html>""")
+
+
 @router.get("/ui/online-provider", response_class=HTMLResponse)
 def local_online_provider_page():
     return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Gemini online setup - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
     <script type="module" src="/ui/static/online-provider.mjs"></script></head><body>
-    <main class="content"><nav><a href="/ui/chat">Coordinator chat</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <main class="content"><nav><a href="/ui/chat">Coordinator chat</a> | <a href="/ui/assignment-policy">Assignment recommendations</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
     <h1>Gemini online setup</h1>
     <p>Google receives the message, recent conversation history, and configured chat context only
     when you check the separate consent box for a chat turn. Setup sends a key only to the fixed

@@ -38,6 +38,8 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                              authentication_backend=backend)
     from app.api.local_models import router as local_models_router
     application.include_router(local_models_router)
+    from app.api.assignment_policy import router as assignment_policy_router
+    application.include_router(assignment_policy_router)
     from app.api.local_online_provider import create_local_online_provider_router
     from app.integrations.gemini_chat import GeminiConnectionManager
     connection_manager = GeminiConnectionManager()

@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-108 are verified complete, Task 109 is next,
-and Tasks 109-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-109 are verified complete, Task 110 is next,
+and Tasks 110-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -801,3 +801,33 @@ Execution/configuration guards cover supported in-process service paths only;
 direct registry mutation, external processes, and multiple app instances remain
 outside that synchronization boundary. Checkpoint tag
 `task-108-manual-ai-connection-assignment-individual-chat`.
+
+Task 109 adds a separately enabled, disabled-by-default local-owner assignment
+policy at `/ui/assignment-policy` and `/api/local/assignment-policy`. Separate
+`assignment-policy:read` and `assignment-policy:manage` permissions protect
+policy status, preview, configuration and disable operations; only explicit
+local-owner mode grants them, and default API authentication remains
+fail-closed. Policy state is bounded, per-principal and process-local.
+
+The policy only recommends; it never changes assignments, executes a model,
+calls a Provider, reserves Task capacity, connects an online model or transfers
+data. Candidate order is the deterministic tie-break. Every candidate needs an
+explicitly allowed registered provider, a fresh (24-hour) owner-recorded
+inventory reference containing the model, eligible configured Task 71
+admission capacity, an explicit budget and comparable owner-defined cost unit,
+and fresh positive tested evidence (30 days) for each Agent-declared
+capability. Declarations, stale or missing facts, and failures remain unknown
+or ineligible with rationale. Model names and installation are not competence
+evidence.
+
+All inventory, evidence references/outcomes and cost estimates are
+caller-supplied and not independently verified. Admission snapshots are
+non-reserving; provider health, hardware feasibility, compatibility,
+performance and execution readiness remain unknown. Online suggestions need a
+separate policy opt-in but do not grant Gemini chat consent or change the
+single-Agent connection boundary. Manual assignments remain authoritative;
+Task 108's explicit preview/confirmation flow is the override path. Disabling
+the recommendation policy clears its stored configuration and is the undo for
+policy state; no assignment rollback is needed because recommendations never
+mutate assignments. State is lost on restart. Focused validation and checkpoint tag
+`task-109-capability-based-assignment-policy`.
