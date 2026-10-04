@@ -7,6 +7,7 @@ export function mountChat({ documentRef = document, fetchImpl = fetch } = {}) {
   const input = element("chat-input");
   const cloudPanel = element("cloud-consent-panel");
   const cloudConsent = element("cloud-consent");
+  const geminiKeyPattern = /\bAIza[A-Za-z0-9_-]{20,}\b|\b(?:GEMINI|GOOGLE)_API_KEY\s*=\s*\S+/i;
   const buttons = ["chat-start", "chat-send", "chat-close", "chat-refresh"].map(element);
   let busy = false;
   let selected = null;
@@ -119,6 +120,10 @@ export function mountChat({ documentRef = document, fetchImpl = fetch } = {}) {
       const text = input.value;
       if (!selected || !canSend) throw new Error("Start or select an open conversation first.");
       if (!text.trim() || new TextEncoder().encode(text).length > 8192) throw new Error("Enter a message of at most 8192 UTF-8 bytes.");
+      if (geminiKeyPattern.test(text)) {
+        input.value = "";
+        throw new Error("This message looks like it contains a Gemini API key. It was not saved or sent. Use the Gemini online setup page to connect a key.");
+      }
       if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Consent to send this message and chat context to Google Gemini before continuing.");
       const identifier = selected;
       input.disabled = true;

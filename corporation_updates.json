@@ -3,6 +3,12 @@
     {
       "date": "2026-10-04",
       "type": "development",
+      "title": "Secure chat-driven connection onboarding",
+      "summary": "Completed Task 106 with browser and API blocking for recognized Google AIza API-key tokens and GEMINI_API_KEY/GOOGLE_API_KEY assignment pastes before any chat history persistence or provider call; the secret is cleared from the chat field and never echoed. Chat directs owners to the existing separate Gemini setup form. Online setup accepts only the standard Google AIza key shape and rejects unsupported formats before catalog/network calls. Detection is best-effort; rotating a connected key requires explicit disconnect/erase followed by rediscovery/reconnect. Existing per-turn consent, five generation attempts per key per run, 1,024 output tokens, no retries and no app-enforced dollar cap remain unchanged. Focused validation: 13 Python tests, 10 coordinator-chat/online-setup JavaScript tests and 13 public-docs tests passed. Tasks 107–128 remain planned."
+    },
+    {
+      "date": "2026-10-04",
+      "type": "development",
       "title": "First official online chat provider",
       "summary": "Completed Task 105 with explicit, per-turn cloud consent for Gemini coordinator chat through the existing Provider and Orchestrator. The restricted API key is held only in process memory for at most one hour; discovery uses the fixed official catalog, generation is bounded to five attempts per key per app run and 1,024 output tokens, with a 20-second timeout, bounded input/response, no retries and no fallback. A separate local-owner setup page supports model discovery, explicit assignment, staged-key erasure, status and disconnect/restore; the default API remains unchanged and fail-closed. No dollar cap is claimed; owners must set Google billing limits and alerts. Credentials are not persisted, chat permission does not imply consent, and external key use is not counted. Tasks 106–128 remain planned."
     },

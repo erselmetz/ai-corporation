@@ -16,7 +16,7 @@ from app.runtime.factory import create_corporation_runtime
 
 PASSWORD = "test-owner-passphrase"
 ORIGIN = "http://127.0.0.1:8000"
-KEY = "test-only-gemini-key"
+KEY = "AIza" + "A" * 35
 MODEL = "gemini-test-flash"
 
 
@@ -118,6 +118,23 @@ def test_staged_key_can_be_explicitly_erased_and_default_api_exposes_no_setup(mo
         assert default.get("/api/local/online-provider").status_code == 404
         assert default.post("/api/chat/conversations/anything/messages",
                             json={"text": "hello", "cloud_consent": True}).status_code == 401
+
+
+def test_unsupported_gemini_key_is_rejected_before_catalog_call(monkeypatch):
+    catalog_calls = []
+    monkeypatch.setattr(
+        "app.integrations.gemini_catalog.GeminiModelCatalogAdapter.list_models",
+        lambda _self: catalog_calls.append(True),
+    )
+    runtime = create_corporation_runtime()
+    app = create_local_app(password=PASSWORD, application_service=runtime.application_service)
+    with TestClient(app, base_url=ORIGIN, client=("127.0.0.1", 50003)) as client:
+        headers = login(client)
+        response = client.post("/api/local/online-provider/catalog",
+                               headers=headers, json={"api_key": "unsupported-secret-format"})
+    assert response.status_code == 422
+    assert "unsupported-secret-format" not in response.text
+    assert catalog_calls == []
 
 
 def test_api_key_never_appears_in_provider_repr_errors_or_chat_history(monkeypatch):

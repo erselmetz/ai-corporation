@@ -773,6 +773,10 @@ def local_online_provider_page():
     <p>Google receives the message, recent conversation history, and configured chat context only
     when you check the separate consent box for a chat turn. Setup sends a key only to the fixed
     Google Gemini API endpoint to list models; it never enters ordinary chat history.</p>
+    <p>Only the standard Google AIza API-key format is accepted. Model discovery is an explicit
+    connection check; unsupported formats are rejected before any provider call. To rotate a
+    connected key, disconnect and erase it first, then enter and explicitly reconnect the new key.
+    Per-turn cloud consent and the request limits below remain in force.</p>
     <label for="gemini-key">Restricted Gemini API key</label><input id="gemini-key" type="password" autocomplete="off" maxlength="4096">
     <button id="gemini-discover" type="button">Verify key and list models</button>
     <p id="gemini-state" role="status" aria-live="polite"></p><p id="gemini-usage"></p>

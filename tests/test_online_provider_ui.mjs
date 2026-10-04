@@ -34,11 +34,12 @@ test("Gemini key is used only for the dedicated catalog request and is cleared i
     throw new Error(`Unexpected request ${path} ${options.method}`);
   });
   await ui.controller.initialLoad;
-  ui.elements["gemini-key"].value = "secret-key";
+  const key = `AIza${"A".repeat(35)}`;
+  ui.elements["gemini-key"].value = key;
   await ui.controller.discover();
   assert.equal(ui.elements["gemini-key"].value, "");
   const catalog = ui.calls.find(item => item.path.endsWith("/catalog"));
-  assert.deepEqual(JSON.parse(catalog.options.body), { api_key: "secret-key" });
+  assert.deepEqual(JSON.parse(catalog.options.body), { api_key: key });
   assert.equal(catalog.options.headers["X-Local-CSRF"], "csrf");
   assert.equal(ui.calls.some(item => item.path.includes("/chat/")), false);
   assert.match(ui.elements["gemini-state"].textContent, /Key verified/);
@@ -55,7 +56,7 @@ test("staged credential erase uses same-origin CSRF protected local endpoint", a
     throw new Error(`Unexpected request ${path} ${options.method}`);
   });
   await ui.controller.initialLoad;
-  ui.elements["gemini-key"].value = "secret-key";
+  ui.elements["gemini-key"].value = `AIza${"A".repeat(35)}`;
   await ui.controller.discover();
   await ui.controller.eraseStaged();
   const deletion = ui.calls.find(item => item.path.endsWith("/credential"));

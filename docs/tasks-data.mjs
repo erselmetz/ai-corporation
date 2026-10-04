@@ -336,7 +336,7 @@ export const post100Tasks = [
     "title": "Secure chat-driven connection onboarding",
     "description": "Offer a secure connection form from chat and guide supported provider/model setup without putting keys into transcripts.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       105
     ],
@@ -350,12 +350,18 @@ export const post100Tasks = [
       "Perfect secret detection; ordinary chat text granting unrestricted paid work or cloud access."
     ],
     "decisions": [
-      "Approve supported secret formats and provider-specific recovery/credential retention behavior."
+      "Resolved for Task 106 under the owner's 2026-10-04 instruction: accept only the standard Google AIza key shape and reject unsupported formats before catalog/network calls; detect the same key shape plus GEMINI_API_KEY/GOOGLE_API_KEY assignments in chat, with explicit best-effort limits. Keep the dedicated local setup form as the only credential path and do not expand credential retention. Connection testing remains explicit model discovery; rotating a connected credential requires disconnect/erase and a fresh explicit connection. Per-turn consent, Task 105 request limits and owner-managed Google billing limits remain unchanged."
     ],
     "area": "P04b",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-106-secure-chat-onboarding",
+    "validation": [
+      "Focused chat, Gemini setup and API Python regressions: 13 passed; coordinator-chat and online-setup JavaScript tests: 10 passed.",
+      "Public documentation JavaScript tests: 13 passed; new provider tests use deterministic fakes and made no live calls."
+    ],
+    "limitations": [
+      "Only the standard Google AIza key shape is accepted by online setup. Chat detection also recognizes common Gemini/Google environment-variable assignments but remains best-effort; other formats must not be entered in chat.",
+      "The existing dedicated Gemini form performs explicit model discovery and connection; connected-key rotation requires explicit disconnect/erase followed by rediscovery and reconnect. No editable dollar cap is available; owners must configure Google billing limits/alerts."
+    ]
   },
   {
     "number": 107,

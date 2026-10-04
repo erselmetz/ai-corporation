@@ -110,6 +110,18 @@ test("blank and UTF-8 oversized messages never submit", async () => {
   assert.equal(ui.calls.filter(call => call.path.endsWith("/messages")).length, 0);
 });
 
+test("recognized Gemini key paste is blocked with setup guidance before submission", async () => {
+  const ui = setup();
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  const key = `AIza${"A".repeat(35)}`;
+  ui.elements["chat-input"].value = `GEMINI_API_KEY=${key}`;
+  assert.equal(await ui.controller.send(), false);
+  assert.equal(ui.calls.filter(call => call.path.endsWith("/messages")).length, 0);
+  assert.equal(ui.elements["chat-input"].value, "");
+  assert.match(ui.elements["chat-state"].textContent, /not saved or sent.*Gemini online setup/);
+});
+
 test("authorization and empty data are distinct and failed refresh removes stale data", async () => {
   let denied = false;
   const ui = setup(path => path === "/api/agents" && denied ? response({}, 401) : null);

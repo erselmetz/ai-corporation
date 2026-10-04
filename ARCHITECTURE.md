@@ -658,8 +658,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-105 are verified complete, Task 106 is next,
-and Tasks 106-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-106 are verified complete, Task 107 is next,
+and Tasks 107-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -742,5 +742,18 @@ passed; 115 browser and public-docs JavaScript tests passed; the full Python
 suite passed 911 tests with 3 skips. New tests use deterministic fakes and make
 no live Gemini or Ollama calls. Python compilation and `git diff --check` passed;
 Pylance/pyright was unavailable. Checkpoint tag `task-105-gemini-online-chat`
-identifies the reviewed task commit. Tasks 106-128 remain planned; Task 106 is
-next.
+identifies the reviewed task commit.
+
+Task 106 blocks recognized Gemini API-key pastes in browser chat and rechecks
+them at the API boundary before the owned-chat service persists or submits a
+message. The separate Gemini setup page remains the credential path and
+accepts only the standard Google AIza key shape, rejecting unsupported formats
+before catalog/network calls. Chat detection is intentionally best-effort for
+that key shape and common `GEMINI_API_KEY` / `GOOGLE_API_KEY` assignments; it is
+not a general secret scanner. Key rotation requires explicit disconnect/erase
+and a fresh discovery/reconnection. Per-turn cloud consent, bounded generation
+and the existing owner-managed billing requirement are unchanged. Validation: 13
+focused Python tests, 10 coordinator-chat/online-setup JavaScript tests, and 13
+public-docs tests passed. New provider tests use deterministic fakes. Checkpoint
+tag `task-106-secure-chat-onboarding` identifies this task commit. Tasks 107-128
+remain planned; Task 107 is next.

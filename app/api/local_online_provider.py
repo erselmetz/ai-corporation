@@ -1,5 +1,6 @@
 """Credential-bearing Gemini controls mounted only in explicit local-owner mode."""
 from contextlib import contextmanager
+import re
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
@@ -19,6 +20,9 @@ class ConnectRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     agent_id: str = Field(min_length=1, max_length=256)
     model_id: str = Field(min_length=1, max_length=256)
+
+
+_SUPPORTED_GEMINI_KEY = re.compile(r"AIza[A-Za-z0-9_-]{35}\Z")
 
 
 def create_local_online_provider_router(connection_manager):
@@ -61,6 +65,9 @@ def create_local_online_provider_router(connection_manager):
             raise HTTPException(422, "Invalid Gemini setup fields") from None
         finally:
             payload[:] = b"\0" * len(payload)
+        if _SUPPORTED_GEMINI_KEY.fullmatch(body.api_key) is None:
+            del body
+            raise HTTPException(422, "Unsupported Gemini API key format; use a standard Google AIza key.")
         with safe_operation():
             try:
                 return setup.discover(body.api_key)

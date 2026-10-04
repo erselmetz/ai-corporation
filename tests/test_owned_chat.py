@@ -143,6 +143,23 @@ def test_input_bounds_missing_configuration_and_assignment_change(setup):
     assert provider.calls == []
 
 
+def test_recognized_gemini_key_paste_is_rejected_before_history_or_provider(setup):
+    runtime, provider = setup
+    key = "AIza" + "A" * 35
+    with client_for(runtime) as client:
+        identifier = start(client).json()["conversation"]["id"]
+        path = f"/api/chat/conversations/{identifier}"
+        for text in (key, f"GEMINI_API_KEY={key}"):
+            response = client.post(path + "/messages", json={"text": text},
+                                   headers={"x-test-owner": "alice"})
+            assert response.status_code == 422
+            assert key not in response.text
+            assert "not saved or sent" in response.text
+            assert "Gemini online setup" in response.text
+            assert client.get(path, headers={"x-test-owner": "alice"}).json()["conversation"]["messages"] == []
+    assert provider.calls == []
+
+
 def test_overlapping_requests_rejected_and_lock_released(setup):
     runtime, provider = setup
     chat = runtime.application_service.owned_chat()

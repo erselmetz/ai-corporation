@@ -337,8 +337,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-105 are verified complete, Task 106 is next,
-and Tasks 106-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-106 are verified complete, Task 107 is next,
+and Tasks 107-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -392,5 +392,17 @@ setup exists only in explicit local-owner mode; the default API remains fail-clo
 Validation for Task 105: 911 Python tests passed / 3 skipped; 115 browser and
 public-docs JavaScript tests passed. New tests used deterministic fakes only.
 Pylance/pyright availability and compilation/diff checks are recorded in
-`docs/tasks-data.mjs`. Tasks 106-128 remain planned; Task 106 is secure
-chat-driven connection onboarding.
+`docs/tasks-data.mjs`.
+
+Task 106 blocks recognized Gemini API-key pastes in coordinator chat both in
+the browser and at the API boundary, before message history or provider
+submission. It guides the owner to the existing separate Gemini setup page.
+Online setup accepts only the standard Google AIza key shape and rejects
+unsupported formats before catalog/network calls. Chat detection is best-effort for that key shape and common
+`GEMINI_API_KEY` / `GOOGLE_API_KEY` assignments; it is not a general secret
+scanner. Rotating a connected key requires disconnect/erase and explicit
+rediscovery/reconnection. Existing per-turn cloud consent and Task 105 request
+and spend limitations remain unchanged.
+Validation: 13 focused Python tests, 10 coordinator-chat/online-setup JavaScript
+tests, and 13 public-docs tests passed. New provider tests use deterministic fakes.
+Tasks 107-128 remain planned; Task 107 is next.

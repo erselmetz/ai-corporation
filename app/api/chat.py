@@ -1,4 +1,5 @@
 """Authorized owned chat; routes depend only on application services."""
+import re
 from contextlib import contextmanager
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -8,6 +9,21 @@ from app.application.services.owned_chat import ChatConflict, ChatLimit, ChatNot
 from .security import require_permission
 
 router = APIRouter(prefix="/api/chat/conversations")
+_GEMINI_KEY_PATTERN = re.compile(r"\bAIza[A-Za-z0-9_-]{35}\b")
+_GEMINI_KEY_ASSIGNMENT_PATTERN = re.compile(
+    r"\b(?:GEMINI|GOOGLE)_API_KEY\s*=\s*\S+", re.IGNORECASE
+)
+SECRET_PASTE_GUIDANCE = (
+    "This message looks like it contains a Gemini API key. It was not saved or sent. "
+    "Use the Gemini online setup page to connect a key."
+)
+
+
+def contains_gemini_key(text: str) -> bool:
+    return bool(
+        _GEMINI_KEY_PATTERN.search(text)
+        or _GEMINI_KEY_ASSIGNMENT_PATTERN.search(text)
+    )
 
 
 def get_application_service(request: Request):
@@ -87,6 +103,8 @@ def send_message(identifier: str, payload=Depends(bounded_body),
                  principal=Depends(require_permission("chat:send")),
                  service=Depends(get_application_service)):
     body = parse(SendRequest, payload)
+    if contains_gemini_key(body.text):
+        raise HTTPException(422, SECRET_PASTE_GUIDANCE)
     with chat_errors():
         current = service.owned_chat().get(principal.identity, identifier)
         if current["coordinator"].provider == "gemini" and body.cloud_consent is not True:
