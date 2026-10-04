@@ -204,6 +204,23 @@ describe("documentation site", () => {
     assert.match(roadmapRules.boundaries, /file-based\/read-only/);
   });
 
+  it("records approved future multi-provider, self-maintenance, voice and desktop direction without reopening completed work", () => {
+    const byNumber = new Map(post100Tasks.map(task => [task.number, task]));
+    assert.equal(byNumber.get(109).status, "completed");
+    assert.match(byNumber.get(109).decisions.join(" "), /review-only/);
+    assert.match(byNumber.get(112).acceptance.join(" "), /local-first/);
+    assert.match(byNumber.get(112).acceptance.join(" "), /pre-authorized destination/);
+    assert.match(byNumber.get(112).acceptance.join(" "), /two-local\/three-online/);
+    assert.match(byNumber.get(115).description, /Three\.js 3D-first/);
+    assert.match(byNumber.get(118).acceptance.join(" "), /share a configured provider\/model/);
+    assert.match(byNumber.get(121).acceptance.join(" "), /independent review/);
+    assert.match(byNumber.get(122).acceptance.join(" "), /owner-approved artifact/);
+    assert.match(byNumber.get(125).acceptance.join(" "), /GUI first-run owner setup/);
+    assert.match(byNumber.get(126).decisions.join(" "), /Electron.*Next\.js static export/);
+    assert.match(byNumber.get(127).acceptance.join(" "), /interrupt capture, playback and speech requests/);
+    assert.match(byNumber.get(128).acceptance.join(" "), /concurrent local\/online work/);
+  });
+
   it("serves only read methods", async () => {
     const response = await fetch(baseUrl, { method: "POST" });
     assert.equal(response.status, 405);

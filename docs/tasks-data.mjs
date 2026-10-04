@@ -561,13 +561,18 @@ export const post100Tasks = [
       "Model workflow lifecycle separately from Task lifecycle and acceptance evidence.",
       "Show waiting/running/blocked/failed/review states and source-linked handoffs.",
       "Review does not substitute for owner approval; success requires actual verification evidence.",
-      "Test pause/resume/interruption/recovery and unsupported cancellation truthfully."
+      "Test pause/resume/interruption/recovery and unsupported cancellation truthfully.",
+      "Route among multiple separately configured local/online providers and Agents; bound delegation to depth 3 and 10 child work items per workflow, with configured lower limits allowed.",
+      "Use at most one automatic retry, only when the provider confirms that work did not start; never auto-retry quota rejection, timeout or an uncertain outcome. Reviewers must be a different Agent from the worker and cannot approve their own work.",
+      "Default routing preference to local-first and allow the owner to choose online-first. Require an enforceable per-run/provider spend ceiling before paid calls; if cost or quota cannot be verified, block and report UNKNOWN.",
+      "Keep fallback disabled by default; permit it only to a specifically pre-authorized destination with its own capacity, budget and cloud-data consent. Surface quota exhaustion without silent switching.",
+      "Use deterministic two-local/three-online scenarios to verify shared-model concurrency, preference order, budget limits, quota exhaustion, bounded delegation/retry and explicitly authorized fallback without live or paid providers."
     ],
     "outOfScope": [
       "Changing legacy execution semantics or dependency enforcement without an approved contract."
     ],
     "decisions": [
-      "Decide whether/how workflow dependencies enforce admission, and define bounded autonomous dispatch, pause/cancel/resume and approval rules."
+      "Keep dependency admission, dispatch bounds, pause/cancel/resume and approval rules explicit. This planned multi-provider workflow extends Task 108 without rewriting its completed one-Gemini-Agent limitation; apply bounded role/delegation/retry rules, local-first by default, owner-selectable online-first, explicit spend ceilings and quota handling, and pre-authorized fallback only."
     ],
     "area": "P06c",
     "checkpoint": null,
@@ -627,7 +632,7 @@ export const post100Tasks = [
   {
     "number": 115,
     "title": "Accessible Jarvis-style visualization",
-    "description": "Add optional Three.js-style corporation/workflow presentation over the validated maps.",
+    "description": "Add a Three.js 3D-first corporation/workflow presentation over the validated maps.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
@@ -635,15 +640,15 @@ export const post100Tasks = [
       114
     ],
     "acceptance": [
-      "Preserve usable standard chat/forms and equivalent 2D/list views.",
-      "Use restrained real-state animation, reduced-motion controls and graphics fallback.",
+      "Make the Three.js 3D corporation/workflow map the primary visual experience; keep an accessible 2D/list equivalent only as a user-selectable, reduced-motion or WebGL fallback.",
+      "Use animation only for verified live state changes; provide reduced-motion controls and graceful graphics fallback.",
       "Measure rendering cost alongside local inference; cap scene size and allow disabling effects."
     ],
     "outOfScope": [
       "Decorative activity presented as real work; UI effects acquiring execution authority."
     ],
     "decisions": [
-      "Approve rendering dependency only after compatibility and measured performance review; Three.js remains a candidate."
+      "Owner approved Three.js for a 3D-first primary map; retain accessible 2D/list and reduced-motion alternatives and validate performance before enabling effects by default."
     ],
     "area": "P07c",
     "checkpoint": null,
@@ -715,7 +720,9 @@ export const post100Tasks = [
     "acceptance": [
       "Keep slot eligibility, provider health, installed/loaded model and measured hardware feasibility distinct.",
       "Authorized load/unload/settings changes respect active work and actual provider support.",
-      "Show measured/unknown memory and latency; test capacity and unavailable telemetry with fakes."
+      "Show measured/unknown memory and latency; test capacity and unavailable telemetry with fakes.",
+      "Allow multiple Employees/Agents to share a configured provider/model without treating each assignment as a separate loaded copy; account for shared loaded-model memory once and each actual concurrent request against provider/model slots.",
+      "Admit or load models concurrently only within configured slot budgets and fresh provider/runtime hardware evidence; when physical capacity is unknown, label it UNKNOWN and do not claim the model fits."
     ],
     "outOfScope": [
       "Extracting only a job-specific part of a dense LLM; configured slots as proof of GPU/VRAM fit."
@@ -795,7 +802,9 @@ export const post100Tasks = [
       "Bind exact source/patch identity, allowed files/actions and time/resource limits.",
       "Use an actually enforced supported isolation backend; report unsupported isolation explicitly.",
       "Run scoped tests and code/security review, then present diff, evidence and recovery limits.",
-      "Test malicious source, denied scope, failing tests and interrupted experiments."
+      "Test malicious source, denied scope, failing tests and interrupted experiments.",
+      "Require traceable test evidence and an independent review record for proposed changes; preserve the active installation and runtime while experiments run.",
+      "Treat proposed software, workflow and approved memory improvements as controlled artifacts; do not train or rewrite model weights."
     ],
     "outOfScope": [
       "Editing active source/runtime or approving/integrating a proposed patch automatically."
@@ -821,7 +830,9 @@ export const post100Tasks = [
       "Revalidate source/patch/test/review/approval links before applying the change.",
       "Show affected code/configuration/dependencies/data and create supported checkpoints.",
       "Verify actual activation; show failure/uncertainty and tested recovery scope.",
-      "Test stale approvals, partial failures and inability to reverse external actions."
+      "Test stale approvals, partial failures and inability to reverse external actions.",
+      "Activate only the exact owner-approved artifact after passing scoped tests and independent review; verify restart/health and offer only recovery steps that were actually tested.",
+      "Self-maintenance may improve software, workflows or explicitly approved memory; it never automatically trains or changes model weights."
     ],
     "outOfScope": [
       "Self-expanding authority, unrestricted self-modification or universal rollback guarantees."
@@ -897,6 +908,7 @@ export const post100Tasks = [
     ],
     "acceptance": [
       "Open the local UI without routine CMD use and preserve explicit owner authentication.",
+      "Provide a GUI first-run owner setup flow and subsequent GUI startup; do not require command-line password creation on every run.",
       "Handle port conflicts, startup failure, service ownership, shutdown and redacted logs.",
       "Test clean start/stop/restart and prevent accidental remote exposure or duplicate unmanaged services."
     ],
@@ -921,15 +933,16 @@ export const post100Tasks = [
       125
     ],
     "acceptance": [
-      "Choose a compatible shell/bundling approach and document runtime/dependency versions.",
-      "A clean supported Windows installation can launch, authenticate, use chat, stop and restart without routine CMD.",
+      "Package the owner-approved Electron desktop shell with a Next.js static-export UI and the existing Python backend/API/AI control services; serve the UI and API from the same loopback origin without a separate production Next.js server.",
+      "Keep Node privileges in Electron main/preload, with context isolation, renderer sandboxing and a narrow desktop bridge; document supported runtime/dependency versions.",
+      "A clean supported Windows installation can complete GUI first-run owner setup, configure supported local/online providers, launch, authenticate, use chat, stop and restart without routine CMD.",
       "Define updates, credential storage, logs, uninstall and user-data preservation; validate packaging and recovery."
     ],
     "outOfScope": [
-      "Assuming Electron/Tauri is selected or that public Vercel docs host the Python runtime."
+      "Using the public Vercel documentation site as the Python runtime host."
     ],
     "decisions": [
-      "Approve Electron/Tauri/other shell, licensing/dependency footprint, signing/update trust and installer/data lifecycle."
+      "Owner selected Electron as the Windows shell and Next.js static export for the JavaScript/TypeScript UI; Python remains the backend and AI orchestration layer. Define licensing, signing/update trust, credential storage and installer/data lifecycle before release."
     ],
     "area": "P13b",
     "checkpoint": null,
@@ -947,15 +960,17 @@ export const post100Tasks = [
     ],
     "acceptance": [
       "Visible microphone/recording controls and clear start/stop behavior.",
-      "Declare local/cloud speech processing, consent, spend and retention.",
+      "Offer explicit local or cloud speech processing choices with per-use consent, an enforced cloud spend ceiling and configured retention; local processing is the default where supported.",
       "Spoken requests use identical authorization/approval checks; typed chat remains fully usable.",
-      "Test microphone denial, disabled voice, errors and sensitive-content handling."
+      "Test microphone denial, disabled voice, errors and sensitive-content handling.",
+      "Let the owner interrupt capture, playback and speech requests; distinguish stopping local recording/audio from confirmed provider cancellation, and never report unconfirmed remote cancellation as successful.",
+      "Test interruption at capture, transcription, model generation and playback stages, including providers without cancellation support and quota/budget exhaustion."
     ],
     "outOfScope": [
       "Always-on recording or voice bypassing action approval."
     ],
     "decisions": [
-      "Approve speech provider/runtime and recording, cloud-use and retention policy."
+      "Resolve supported speech adapters and interruption/cancellation semantics per provider; never enable always-on recording or cloud speech without explicit consent and a configured ceiling."
     ],
     "area": "P14",
     "checkpoint": null,
@@ -996,7 +1011,8 @@ export const post100Tasks = [
     ],
     "acceptance": [
       "Exercise supported onboarding, local/approved online chat, positions, reviewed dispatch, evidence/maps, approved adaptation, software management and desktop lifecycle.",
-      "Test unauthorized access, isolation, resource exhaustion, restart/recovery, secret handling and accessible fallback.",
+      "Test the Electron/Next.js desktop build, 3D-first maps with accessible fallback, unauthorized access, isolation, resource exhaustion, restart/recovery and secret handling.",
+      "Verify multiple Employees sharing models and concurrent local/online work under configured provider/model slots and measured hardware limits; report UNKNOWN when capacity evidence is absent.",
       "Report tested providers/models/platforms, budgets, skipped/unsupported capabilities and unresolved decisions.",
       "Update docs/status only for demonstrated outcomes and checkpoint the verified release."
     ],
