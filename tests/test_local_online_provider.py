@@ -63,8 +63,22 @@ def test_local_gemini_setup_consent_disconnect_and_assignment_restoration(monkey
         assert discovery.status_code == 200
         assert discovery.json()["models"] == [MODEL]
         assert KEY not in discovery.text
+        stale_assignment = client.put(
+            "/api/local/online-provider/connection",
+            headers=headers,
+            json={
+                "agent_id": "local_worker",
+                "model_id": MODEL,
+                "expected_provider_id": "changed-provider",
+                "expected_model_id": original.model_id,
+            },
+        )
+        assert stale_assignment.status_code == 409
+        assert service.get_model_assignment("local_worker") == original
         assert client.put("/api/local/online-provider/connection", headers=headers,
-                          json={"agent_id": "local_worker", "model_id": MODEL}).status_code == 200
+                          json={"agent_id": "local_worker", "model_id": MODEL,
+                                "expected_provider_id": original.provider_id,
+                                "expected_model_id": original.model_id}).status_code == 200
         assignment = service.get_model_assignment("local_worker")
         assert (assignment.provider_id, assignment.model_id) == ("gemini", MODEL)
 

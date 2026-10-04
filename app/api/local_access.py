@@ -22,6 +22,10 @@ CHAT_PERMISSIONS = frozenset({"chat:read", "chat:start", "chat:send", "chat:clos
 LOCAL_MODEL_PERMISSIONS = frozenset({"local-model:select"})
 ONLINE_PROVIDER_PERMISSIONS = frozenset({"online-provider:connect", "online-provider:disconnect"})
 POSITION_MANAGEMENT_PERMISSIONS = frozenset({"position:manage"})
+EMPLOYEE_CHAT_PERMISSIONS = frozenset({
+    "employee-chat:read", "employee-chat:start",
+    "employee-chat:send", "employee-chat:close",
+})
 
 
 @dataclass(frozen=True)
@@ -56,7 +60,7 @@ class LocalOwnerAuthentication:
         self.principal = AuthenticatedPrincipal(
             "local-owner", READ_PERMISSIONS | CHAT_PERMISSIONS
             | LOCAL_MODEL_PERMISSIONS | ONLINE_PROVIDER_PERMISSIONS
-            | POSITION_MANAGEMENT_PERMISSIONS)
+            | POSITION_MANAGEMENT_PERMISSIONS | EMPLOYEE_CHAT_PERMISSIONS)
 
     def _hash(self, password: str) -> bytes:
         return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), self._salt, 600_000)

@@ -32,6 +32,7 @@ from app.application import (
 )
 from app.documentation import MarkdownDocumentationSource
 from app.updates import CuratedUpdatesManifest
+from app.application.services.owned_chat import ChatConflict
 from app.runtime import create_corporation_runtime
 from app.webui import web_ui_router
 from app.positions import (
@@ -707,6 +708,11 @@ def replace_model_assignment(
             assignment.provider_id,
             assignment.model_id,
         )
+    except ChatConflict as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -1013,6 +1019,8 @@ def create_app(
     application.include_router(github_router)
     from .chat import router as chat_router
     application.include_router(chat_router)
+    from .employee_chat import router as employee_chat_router
+    application.include_router(employee_chat_router)
     application.include_router(web_ui_router)
     return application
 

@@ -2,15 +2,17 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from threading import Lock, RLock
 from typing import TYPE_CHECKING, Callable
 from uuid import uuid4
 
+from app.agents.registry import AgentAssignmentBusy
+
 from .corporation_chat import CorporationChatService
 
 if TYPE_CHECKING:
-    from .corporation import AgentSummary, ProviderSummary
+    from .corporation import AgentSummary
 
 
 class ChatNotFound(ValueError):
@@ -25,6 +27,10 @@ class ChatUnavailable(ValueError):
     pass
 
 
+class ChatConsentRequired(ValueError):
+    pass
+
+
 class ChatLimit(ValueError):
     pass
 
@@ -33,6 +39,7 @@ class ChatLimit(ValueError):
 class _OwnedConversation:
     owner: str
     coordinator: AgentSummary
+    provider: object = field(repr=False, compare=False)
     lock: Lock
 
 
@@ -48,10 +55,12 @@ class OwnedChatService:
 
     def __init__(self, chat: CorporationChatService,
                  get_agent: Callable[[str], AgentSummary],
-                 get_provider: Callable[[str], ProviderSummary]):
+                 get_provider: Callable[[str], object],
+                 agent_execution: Callable[[str], object]):
         self._chat = chat
         self._get_agent = get_agent
         self._get_provider = get_provider
+        self._agent_execution = agent_execution
         self._entries: dict[str, _OwnedConversation] = {}
         self._catalog_lock = RLock()
         self._active_agents: dict[str, int] = {}
@@ -85,12 +94,12 @@ class OwnedChatService:
     def _coordinator(self, agent_id):
         try:
             agent = self._get_agent(agent_id)
-            self._get_provider(agent.provider)
+            provider = self._get_provider(agent.provider)
         except ValueError:
             raise ChatUnavailable("Coordinator or configured provider is missing") from None
         if not agent.model or not agent.model.strip():
             raise ChatUnavailable("Coordinator has no configured model")
-        return agent
+        return agent, provider
 
     def start(self, owner: str, agent_id: str):
         if not isinstance(owner, str) or not owner.strip():
@@ -98,13 +107,14 @@ class OwnedChatService:
         with self._catalog_lock:
             if len(self._entries) >= self.MAX_CONVERSATIONS:
                 raise ChatLimit("Conversation limit reached for this app run")
-            agent = self._coordinator(agent_id)
-            if agent_id in self._configuring_agents:
-                raise ChatConflict("Coordinator model selection is busy; try again later")
-            identifier = uuid4().hex
-            record = self._chat.start(identifier, agent_id)
-            self._entries[identifier] = _OwnedConversation(owner, agent, Lock())
-            return {"conversation": record, "coordinator": agent}
+            with self.agent_request(agent_id):
+                agent, provider = self._coordinator(agent_id)
+                identifier = uuid4().hex
+                record = self._chat.start(identifier, agent_id)
+                self._entries[identifier] = _OwnedConversation(
+                    owner, agent, provider, Lock()
+                )
+                return {"conversation": record, "coordinator": agent}
 
     def list(self, owner: str):
         with self._catalog_lock:
@@ -130,13 +140,15 @@ class OwnedChatService:
 
     def send(self, owner, identifier, text):
         with self._access(owner, identifier) as entry:
-            with self._agent_request(entry.coordinator.id):
+            with self.agent_request(entry.coordinator.id):
                 return self._send(entry, identifier, text)
 
     def _send(self, entry, identifier, text):
-        current = self._coordinator(entry.coordinator.id)
+        current, provider = self._coordinator(entry.coordinator.id)
         if (current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model):
             raise ChatConflict("Coordinator assignment changed; start a new conversation")
+        if provider is not entry.provider:
+            raise ChatConflict("Coordinator connection changed; start a new conversation")
         if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
             raise ChatLimit("Conversation message limit reached; start a new conversation")
         record = self._chat.send(identifier, text)
@@ -145,3 +157,15 @@ class OwnedChatService:
     def close(self, owner, identifier):
         with self._access(owner, identifier) as entry:
             return {"conversation": self._chat.close(identifier), "coordinator": entry.coordinator}
+
+    @contextmanager
+    def agent_request(self, agent_id: str):
+        """Share admission guards across owned chat scopes and Agent executions."""
+        with self._agent_request(agent_id):
+            try:
+                with self._agent_execution(agent_id):
+                    yield
+            except AgentAssignmentBusy:
+                raise ChatConflict(
+                    "Agent has active work or its connection is changing; retry shortly"
+                ) from None

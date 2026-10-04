@@ -182,6 +182,52 @@ class PositionTemplatesResponse(BaseModel):
     items: list[str]
 
 
+class EmployeeChatMessageResponse(BaseModel):
+    id: str
+    role: Literal["user", "assistant", "system"]
+    content: str
+    status: Literal["pending", "completed", "failed"]
+
+
+class EmployeeChatConversationResponse(BaseModel):
+    id: str
+    employee_id: str
+    agent_id: str
+    status: Literal["open", "closed"]
+    messages: list[EmployeeChatMessageResponse]
+
+
+class EmployeeChatIdentityResponse(BaseModel):
+    id: str
+    name: str
+    role: str
+
+
+class EmployeeChatAgentResponse(BaseModel):
+    id: str
+    name: str
+    role: str
+    provider_id: str
+    model_id: str
+
+
+class EmployeeChatResponse(BaseModel):
+    conversation: EmployeeChatConversationResponse
+    employee: EmployeeChatIdentityResponse
+    agent: EmployeeChatAgentResponse
+
+
+class EmployeeChatListItemResponse(BaseModel):
+    conversation_id: str
+    employee: EmployeeChatIdentityResponse
+    agent: EmployeeChatAgentResponse
+    status: Literal["open", "closed"]
+
+
+class EmployeeChatListResponse(BaseModel):
+    items: list[EmployeeChatListItemResponse]
+
+
 class AgentResponse(BaseModel):
     id: str
     name: str

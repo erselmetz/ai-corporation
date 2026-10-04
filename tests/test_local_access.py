@@ -34,6 +34,13 @@ def test_login_session_cookie_and_logout_revocation():
         assert "maintenance:approve" not in record.json()["permissions"]
         assert "task:create" not in record.json()["permissions"]
         assert "employee:read" in record.json()["permissions"]
+        assert {
+            "employee-chat:read",
+            "employee-chat:start",
+            "employee-chat:send",
+            "employee-chat:close",
+        }.issubset(record.json()["permissions"])
+        assert "employee:manage" not in record.json()["permissions"]
         assert client.post("/api/local/logout", json={}, headers={"Origin": ORIGIN}).status_code == 403
         from starlette.requests import Request
         malformed = Request({"type": "http", "method": "POST", "scheme": "http",

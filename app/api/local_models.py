@@ -15,6 +15,7 @@ class SelectionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     provider_id: str = Field(min_length=1, max_length=256)
     model_id: str = Field(min_length=1, max_length=256)
+    expected_model_id: str | None = Field(default=None, max_length=256)
 
 
 @contextmanager
@@ -52,4 +53,9 @@ def select(agent_id: str, payload=Depends(bounded_body),
     except ValueError:
         raise HTTPException(422, "Invalid local model selection fields") from None
     with model_errors():
-        return service.select_local_model(agent_id, body.provider_id, body.model_id)
+        return service.select_local_model(
+            agent_id,
+            body.provider_id,
+            body.model_id,
+            expected_model_id=body.expected_model_id,
+        )

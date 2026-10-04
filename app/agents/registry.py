@@ -1,9 +1,47 @@
+from contextlib import contextmanager
+from threading import RLock
+
 from .agent import Agent
+
+
+class AgentAssignmentBusy(RuntimeError):
+    """An Agent is executing or another assignment change is in progress."""
 
 
 class AgentRegistry:
     def __init__(self):
         self._agents: dict[str, Agent] = {}
+        self._execution_lock = RLock()
+        self._active_runs: dict[str, int] = {}
+        self._configuring: set[str] = set()
+
+    @contextmanager
+    def execution(self, agent_id: str):
+        with self._execution_lock:
+            if agent_id in self._configuring:
+                raise AgentAssignmentBusy("Agent connection is changing")
+            self._active_runs[agent_id] = self._active_runs.get(agent_id, 0) + 1
+        try:
+            yield
+        finally:
+            with self._execution_lock:
+                active = self._active_runs[agent_id] - 1
+                if active:
+                    self._active_runs[agent_id] = active
+                else:
+                    del self._active_runs[agent_id]
+
+    @contextmanager
+    def assignment_change(self, agent_id: str):
+        with self._execution_lock:
+            if self._active_runs.get(agent_id, 0) or agent_id in self._configuring:
+                raise AgentAssignmentBusy("Agent has active work; wait before changing its connection")
+            self._configuring.add(agent_id)
+        try:
+            yield
+        finally:
+            with self._execution_lock:
+                self._configuring.remove(agent_id)
 
     def register(self, agent: Agent) -> None:
         if not isinstance(agent, Agent):

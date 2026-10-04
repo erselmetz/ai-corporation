@@ -337,8 +337,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-107 are verified complete, Task 108 is next,
-and Tasks 108-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-108 are verified complete, Task 109 is next,
+and Tasks 109-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -405,8 +405,9 @@ rediscovery/reconnection. Existing per-turn cloud consent and Task 105 request
 and spend limitations remain unchanged.
 Validation: 13 focused Python tests, 10 coordinator-chat/online-setup JavaScript
 tests, and 13 public-docs tests passed. New provider tests use deterministic fakes.
-Task 107 completed the bounded ephemeral positions foundation; Tasks 108-128
-remain planned and Task 108 is next.
+Task 107 completed the bounded ephemeral positions foundation. Task 108 adds
+manual connection previews and owner-scoped individual Employee chat; Tasks
+109-128 remain planned and Task 109 is next.
 
 ## Task 107 - Editable corporation positions
 
@@ -424,3 +425,34 @@ Employee references remain intact, but Employee choices are unavailable.
 Validation: 45 focused Python regressions, 3 position UI tests, and 13 public
 documentation tests passed; the evidence and limitations are recorded in
 `docs/tasks-data.mjs`.
+
+## Task 108 - Manual connection assignment and individual Employee chat
+
+Local owners preview the affected Agent identity, old/new model, privacy boundary,
+assigned Tasks, coordinator conversations, and individual Employee conversations
+before confirming a local-model or Gemini assignment. Missing preview data blocks
+the change. Supported application-service paths reject assignment while the Agent
+is executing; Task execution also verifies the assignment selected at dispatch
+before sending it to a Provider, so a race fails the Task rather than changing its
+connection silently. Existing Task Agent IDs and conversation identity/history
+remain fixed. Stale individual chats reject sends and require a new conversation.
+
+The `/ui/employee-chat` page and `/api/employee-chat/conversations` endpoints
+provide bounded, process-local conversations scoped to the authenticated
+principal. Separate `employee-chat:read/start/send/close` permissions are
+available only in explicit local-owner mode; the default API remains rejecting.
+Chats require a registered Employee with an assigned registered Agent, isolate
+conversation histories, and send only the current request plus recent chat
+history. Employee profiles and Task context are not included automatically.
+Gemini chat retains per-turn consent and rejects recognized key pastes before
+saving or sending them. Replies render as plain text, and failed replies are not
+automatically retried.
+
+The existing single-Gemini-Agent lifecycle remains: disconnect before switching
+Agents. Conversations and their histories are lost on restart. Assignment guards
+cover the supported in-process application-service paths, not direct registry
+mutations, external processes, or multiple app instances. Validation: 62 focused
+Python regressions and 150 expanded directly affected Python regressions passed
+with one existing Starlette deprecation warning; no tests were skipped. Twelve
+browser-module tests and 13 public-docs tests passed with deterministic fakes.
+Pylance reported no problems in changed Python files.

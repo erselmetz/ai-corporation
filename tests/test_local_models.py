@@ -99,6 +99,17 @@ def test_stale_missing_unsupported_and_permission_denial_do_not_mutate():
     original = runtime.application_service.get_model_assignment("local_worker")
     with local_client(runtime) as client:
         headers = sign_in(client)
+        stale_preview = client.put(
+            "/api/local/models/local_worker",
+            headers=headers,
+            json={
+                "provider_id": "ollama",
+                "model_id": "second:local",
+                "expected_model_id": "stale-model",
+            },
+        )
+        assert stale_preview.status_code == 409
+        assert runtime.application_service.get_model_assignment("local_worker") == original
         provider.models = ()
         assert client.get("/api/local/models/local_worker").json()["configured_installed"] is False
         body = {"provider_id": "ollama", "model_id": "second:local"}

@@ -33,12 +33,26 @@ class Orchestrator:
         from .execution_queue import ExecutionQueue
         return ExecutionQueue(corporation_id)
 
-    def run_agent(self, agent_id: str, prompt: str) -> str:
-        agent = self.agents.get(agent_id)
+    def run_agent(
+        self,
+        agent_id: str,
+        prompt: str,
+        *,
+        expected_assignment: tuple[str, str] | None = None,
+    ) -> str:
+        with self.agents.execution(agent_id):
+            agent = self.agents.get(agent_id)
+            if expected_assignment is not None and (
+                agent.provider,
+                agent.model,
+            ) != expected_assignment:
+                raise RuntimeError(
+                    "Agent assignment changed before execution; task was not sent"
+                )
 
-        provider = agent.resolve_provider(self.providers)
+            provider = agent.resolve_provider(self.providers)
 
-        return provider.generate(agent.model, prompt)
+            return provider.generate(agent.model, prompt)
 
     def run_employee(self, employee: "Employee", prompt: str) -> str:
         """
@@ -57,6 +71,7 @@ class Orchestrator:
         dry_run: bool = False,
         agent_id: str | None = None,
     ) -> Task | DryRunResult:
+        expected_assignment = None
         try:
             routing_task = task
             if agent_id:
@@ -76,6 +91,7 @@ class Orchestrator:
 
             routing_request = RoutingRequest(task=routing_task, role=role, capability=capability)
             agent, routing_method = self.router.route_with_method(routing_request)
+            expected_assignment = (agent.provider, agent.model)
             
             if not dry_run and task.assigned_agent != agent.id:
                 task.assigned_agent = agent.id
@@ -133,6 +149,7 @@ class Orchestrator:
             result = self.run_agent(
                 task.assigned_agent,
                 task.description,
+                expected_assignment=expected_assignment,
             )
 
             task.result = result

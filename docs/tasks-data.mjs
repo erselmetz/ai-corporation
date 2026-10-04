@@ -401,7 +401,7 @@ export const post100Tasks = [
     "title": "Manual AI connection assignment and individual chat",
     "description": "Assign supported connections/models to organizational Agents and open isolated individual Employee chats.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       105,
       107
@@ -416,12 +416,21 @@ export const post100Tasks = [
       "Automatic role-fit claims, live-job rerouting or unapproved cloud context transfer."
     ],
     "decisions": [
-      "Define effective reassignment boundaries and authority for Employee-associated conversations."
+      "Resolved under the Task 108 owner instruction: keep connection assignment manual and require an explicit preview/confirmation; preserve existing Task Agent IDs and conversation assignment snapshots, reject stale in-flight task assignments rather than silently switching providers, and require new conversations after a connection change. Keep individual chat in explicitly configured local-owner mode under separate employee-chat permissions, with no profile/Task context transfer and per-turn Gemini consent. Preserve the existing one-Gemini-Agent connection flow; disconnect and reconnect to switch Agents rather than expanding provider lifecycle or authority."
     ],
     "area": "P05b / P02b",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-108-manual-ai-connection-assignment-individual-chat",
+    "validation": [
+      "Focused Employee chat API/service, assignment/concurrency, coordinator chat, local model, Gemini setup, Employee/Agent API, and local-owner Python regressions: 62 passed; one existing Starlette deprecation warning.",
+      "Expanded directly affected Python integration/regression suite: 150 passed, no skips; one existing Starlette deprecation warning.",
+      "Employee chat, local model assignment, and Gemini setup browser-module tests: 12 passed; public documentation tests: 13 passed. New behavior used deterministic same-origin API/provider fakes and no live/paid provider calls.",
+      "Pylance reported no problems in changed Python files."
+    ],
+    "limitations": [
+      "Individual conversations are bounded, owner-scoped, process-local records (maximum 100 conversations and 200 messages per conversation); restart loses history. A changed or removed Employee/Agent/provider assignment prevents sending on the old snapshot; the owner must start a new conversation.",
+      "The Gemini setup retains its existing single-Agent connection and five generation-attempts-per-key-per-run limit. Switching Agents requires explicit disconnect/reconnect. Each Gemini turn still needs consent; only recent chat history and the current request are sent, never Employee profiles or Task content automatically.",
+      "Task/Agent execution and assignment guards coordinate through the in-process AgentRegistry and supported application-service paths only. Direct registry/Agent mutation, external processes and multiple application instances are not synchronized. Failed pre-provider task assignment checks fail the Task rather than rerouting it."
+    ]
   },
   {
     "number": 109,

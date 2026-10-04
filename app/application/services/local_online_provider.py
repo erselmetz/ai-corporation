@@ -1,5 +1,6 @@
 """One-owner Gemini assignment path; general model management stays separate."""
 import time
+from threading import RLock
 
 from app.integrations.gemini_chat import (
     GeminiConnectionError,
@@ -9,6 +10,7 @@ from app.integrations.gemini_chat import (
 
 class LocalOnlineProviderService:
     PROVIDER_ID = "gemini"
+    _assignment_lock = RLock()
 
     def __init__(self, corporation, connection: GeminiConnectionManager):
         self._corporation = corporation
@@ -51,10 +53,43 @@ class LocalOnlineProviderService:
         return {"models": list(connection.models), "checked_at": connection.checked_at.isoformat(),
                 "expires_in_seconds": max(0, int(connection.expires_at - time.monotonic()))}
 
-    def connect(self, agent_id: str, model_id: str):
+    def connect(
+        self,
+        agent_id: str,
+        model_id: str,
+        *,
+        expected_provider_id: str | None = None,
+        expected_model_id: str | None = None,
+    ):
+        with self._assignment_lock:
+            return self._connect(
+                agent_id,
+                model_id,
+                expected_provider_id=expected_provider_id,
+                expected_model_id=expected_model_id,
+            )
+
+    def _connect(
+        self,
+        agent_id: str,
+        model_id: str,
+        *,
+        expected_provider_id: str | None = None,
+        expected_model_id: str | None = None,
+    ):
         # Refresh immediately before mutation; inventory shown earlier is only a hint.
-        with self._corporation.owned_chat().configuration_change(agent_id):
+        with self._corporation.agent_assignment_change(agent_id):
             agent = self._corporation.get_agent(agent_id)
+            if (
+                expected_provider_id is not None
+                and agent.provider != expected_provider_id
+            ) or (
+                expected_model_id is not None
+                and agent.model != expected_model_id
+            ):
+                raise GeminiConnectionError(
+                    "Agent assignment changed; refresh before connecting Gemini."
+                )
             if self._connection.selected(agent_id):
                 raise GeminiConnectionError("This coordinator is already connected; disconnect before changing its model.")
             if any(self._connection.selected(item.id) for item in self._corporation.list_agents()):
@@ -69,11 +104,15 @@ class LocalOnlineProviderService:
             self._connection.select_model(
                 agent.id, agent.name, agent.provider, agent.model, model_id)
             target = self._connection.selected(agent.id)
+            registered = False
             try:
                 self._corporation.register_local_provider(self.PROVIDER_ID, provider)
-                result = self._corporation.replace_model(agent.id, self.PROVIDER_ID, model_id)
+                registered = True
+                result = self._corporation._replace_model_unchecked(
+                    agent.id, self.PROVIDER_ID, model_id
+                )
             except Exception:
-                if self._corporation.provider_exists(self.PROVIDER_ID):
+                if registered and self._corporation.provider_exists(self.PROVIDER_ID):
                     self._corporation.remove_local_provider(self.PROVIDER_ID)
                 self._connection.disconnect(agent.id)
                 raise GeminiConnectionError("Gemini could not be connected to this coordinator.") from None
@@ -81,14 +120,20 @@ class LocalOnlineProviderService:
                     "model_id": result.model_id, "previous_provider": target[2]}
 
     def disconnect(self, agent_id: str):
-        with self._corporation.owned_chat().configuration_change(agent_id):
+        with self._assignment_lock:
+            return self._disconnect(agent_id)
+
+    def _disconnect(self, agent_id: str):
+        with self._corporation.agent_assignment_change(agent_id):
             target = self._connection.selected(agent_id)
             if target is None:
                 raise GeminiConnectionError("This coordinator is not connected to Gemini.")
             agent = self._corporation.get_agent(agent_id)
             if agent.provider != self.PROVIDER_ID or agent.model != target[4]:
                 raise GeminiConnectionError("Coordinator assignment changed outside local setup; resolve it before disconnecting.")
-            self._corporation.replace_model(agent_id, target[2], target[3])
+            self._corporation._replace_model_unchecked(
+                agent_id, target[2], target[3]
+            )
             self._corporation.remove_local_provider(self.PROVIDER_ID)
             self._connection.disconnect(agent_id)
             return {"agent_id": agent_id, "provider_id": target[2],

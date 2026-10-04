@@ -404,3 +404,18 @@ def test_activity_progress_shell_and_asset_preserve_fail_closed_task_reads():
     assert protected.status_code == 401
     orchestrator.run_agent.assert_not_called()
     orchestrator.execute_task.assert_not_called()
+
+
+def test_employee_chat_page_and_assignment_preview_modules_are_served():
+    service = CorporationApplicationService(MagicMock(spec=Orchestrator))
+    with TestClient(create_app(service)) as client:
+        page = client.get("/ui/employee-chat")
+        chat_module = client.get("/ui/static/employee-chat.mjs")
+        preview_module = client.get("/ui/static/assignment-preview.mjs")
+
+    assert page.status_code == 200
+    assert 'src="/ui/static/employee-chat.mjs"' in page.text
+    assert "/api/employee-chat/conversations" not in page.text
+    assert chat_module.status_code == preview_module.status_code == 200
+    assert chat_module.headers["content-type"].startswith("text/javascript")
+    assert preview_module.headers["content-type"].startswith("text/javascript")

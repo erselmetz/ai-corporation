@@ -344,6 +344,7 @@ def employee_management_page() -> HTMLResponse:
                 <li><a href="/ui">Dashboard</a></li>
                 <li><a href="/ui/login">Local sign-in / sign-out</a></li>
                 <li><a href="/ui/chat">Coordinator chat</a></li>
+                <li><a href="/ui/employee-chat">Individual Employee chat</a></li>
                 <li><a href="/ui/employees" aria-current="page">Employee management</a></li>
                 <li><a href="/ui/positions">Organizational positions</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
@@ -797,7 +798,7 @@ def coordinator_chat_page():
     <title>Coordinator chat - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
     <script type="module" src="/ui/static/chat.mjs"></script></head><body>
     <main class="content chat-content"><nav aria-label="Chat navigation">
-    <a href="/ui">Dashboard</a> | <a href="/ui/login">Local sign-in / sign-out</a> | <a href="/ui/local-models">Local model setup</a> | <a href="/ui/online-provider">Gemini online setup</a></nav>
+    <a href="/ui">Dashboard</a> | <a href="/ui/login">Local sign-in / sign-out</a> | <a href="/ui/employee-chat">Individual Employee chat</a> | <a href="/ui/local-models">Agent model setup</a> | <a href="/ui/online-provider">Gemini online setup</a></nav>
     <h1>Corporation coordinator chat</h1>
     <p>Talk to a selected registered Agent. Replies are conversation text; they do not create Tasks,
     execute tools, or change the corporation. This is the first step toward the planned CEO workspace.</p>
@@ -819,24 +820,61 @@ def coordinator_chat_page():
     </main></body></html>""")
 
 
+@router.get("/ui/employee-chat", response_class=HTMLResponse)
+def employee_chat_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Individual Employee chat - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/employee-chat.mjs"></script></head><body>
+    <main class="content chat-content"><nav aria-label="Chat navigation">
+    <a href="/ui">Dashboard</a> | <a href="/ui/login">Local sign-in / sign-out</a> |
+    <a href="/ui/employees">Employees</a> | <a href="/ui/chat">Coordinator chat</a></nav>
+    <h1>Individual Employee chat</h1>
+    <p>Each conversation captures one registered Employee and the Agent assigned when it starts.
+    Messages and history are isolated per conversation and owner. Reassignments do not move an
+    existing conversation; start a new one to use a changed Agent connection. Chats do not create
+    Tasks, execute tools, or include Employee profiles or Task content automatically.</p>
+    <label for="individual-employee">Employee with an assigned Agent</label>
+    <select id="individual-employee"></select>
+    <button id="individual-chat-new" type="button">Start individual conversation</button>
+    <label for="individual-conversation">Your individual conversations for this app run</label>
+    <select id="individual-conversation"></select>
+    <button id="individual-chat-refresh" type="button">Refresh</button>
+    <button id="individual-chat-close" type="button" disabled>Close conversation</button>
+    <p id="individual-chat-identity"></p>
+    <p id="individual-chat-state" role="status" aria-live="polite"></p>
+    <section id="individual-chat-history" aria-label="Individual conversation messages" aria-live="polite"></section>
+    <form id="individual-chat-form">
+      <label for="individual-chat-input">Message (up to 8192 UTF-8 bytes)</label>
+      <textarea id="individual-chat-input" rows="4" maxlength="8192" required></textarea>
+      <button id="individual-chat-send" type="submit" disabled>Send</button>
+    </form>
+    <p id="individual-cloud-consent-panel" hidden><label><input id="individual-cloud-consent" type="checkbox">
+    I consent to send this message and recent history from this individual conversation to Google Gemini for this reply.</label></p>
+    <p>History is held in memory for this app run only. Gemini requires per-turn consent and remains
+    subject to its connection expiry, request limit, and owner-managed billing controls.</p>
+    </main></body></html>""")
+
+
 @router.get("/ui/local-models", response_class=HTMLResponse)
 def local_model_setup_page():
     return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Local model setup - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
     <script type="module" src="/ui/static/local-models.mjs"></script></head><body>
-    <main class="content"><nav><a href="/ui/chat">Coordinator chat</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
-    <h1>Local model setup</h1><p>Available only with explicit local-owner access. Refresh checks the
+    <main class="content"><nav><a href="/ui/chat">Coordinator chat</a> | <a href="/ui/employee-chat">Individual Employee chat</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <h1>Local Agent model setup</h1><p>Available only with explicit local-owner access. Refresh checks the
     configured supported loopback provider without downloading or generating anything.</p>
-    <label for="model-agent">Existing coordinator</label><select id="model-agent"></select>
+    <label for="model-agent">Existing Agent</label><select id="model-agent"></select>
     <button id="model-refresh" type="button">Refresh installed models</button>
     <p id="model-state" role="status" aria-live="polite"></p><p id="model-evidence"></p>
     <label for="model-installed">Installed model</label><select id="model-installed" disabled></select>
-    <button id="model-select" type="button" disabled>Select for coordinator</button>
+    <button id="model-select" type="button" disabled>Preview and select for Agent</button>
     <p>Installation and service availability do not prove hardware capacity, compatibility or future
-    execution success. Selection is rechecked, and rejected while this coordinator has an active
-    browser chat request. After a changed assignment, start a new conversation; old history remains.
-    Changes apply to this app run only. Other management actions remain unavailable.</p>
+    execution success. Selection is rechecked and rejected while the Agent has active work. The
+    confirmation previews assigned Tasks and owner conversations. A changed assignment affects only
+    future calls; old conversation history and Task ownership remain unchanged. Changes apply to this
+    app run only.</p>
     </main></body></html>""")
 
 
@@ -858,9 +896,9 @@ def local_online_provider_page():
     <label for="gemini-key">Restricted Gemini API key</label><input id="gemini-key" type="password" autocomplete="off" maxlength="4096">
     <button id="gemini-discover" type="button">Verify key and list models</button>
     <p id="gemini-state" role="status" aria-live="polite"></p><p id="gemini-usage"></p>
-    <label for="gemini-agent">Coordinator</label><select id="gemini-agent"></select>
+    <label for="gemini-agent">Agent</label><select id="gemini-agent"></select>
     <label for="gemini-model">Model with generation support</label><select id="gemini-model" disabled></select>
-    <button id="gemini-connect" type="button" disabled>Connect Gemini to coordinator</button>
+    <button id="gemini-connect" type="button" disabled>Preview and connect Gemini to Agent</button>
     <button id="gemini-refresh" type="button" disabled>Refresh models</button>
     <button id="gemini-disconnect" type="button" disabled>Disconnect and erase key</button>
     <button id="gemini-clear" type="button" disabled>Erase staged key</button>

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.application.services.local_online_provider import LocalOnlineProviderService
+from app.application.services.owned_chat import ChatConflict
 from app.integrations.gemini_chat import GeminiConnectionError
 from .chat import get_application_service
 from .security import require_permission
@@ -20,6 +21,8 @@ class ConnectRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     agent_id: str = Field(min_length=1, max_length=256)
     model_id: str = Field(min_length=1, max_length=256)
+    expected_provider_id: str | None = Field(default=None, max_length=256)
+    expected_model_id: str | None = Field(default=None, max_length=256)
 
 
 _SUPPORTED_GEMINI_KEY = re.compile(r"AIza[A-Za-z0-9_-]{35}\Z")
@@ -33,6 +36,8 @@ def create_local_online_provider_router(connection_manager):
         try:
             yield
         except GeminiConnectionError as error:
+            raise HTTPException(409, str(error)) from None
+        except ChatConflict as error:
             raise HTTPException(409, str(error)) from None
         except ValueError:
             raise HTTPException(422, "Gemini connection or model selection is invalid") from None
@@ -89,7 +94,12 @@ def create_local_online_provider_router(connection_manager):
         except ValueError:
             raise HTTPException(422, "Invalid Gemini connection fields") from None
         with safe_operation():
-            return setup.connect(body.agent_id, body.model_id)
+            return setup.connect(
+                body.agent_id,
+                body.model_id,
+                expected_provider_id=body.expected_provider_id,
+                expected_model_id=body.expected_model_id,
+            )
 
     @router.delete("/connection/{agent_id}")
     def disconnect(agent_id: str, _principal=Depends(require_permission("online-provider:disconnect")),

@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock
@@ -5,6 +6,7 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from app.agents import Agent, Employee, EmployeeManagement, EmployeeRegistry, ModelManagement
+from app.agents.registry import AgentAssignmentBusy
 from app.corporation import Corporation
 from app.node import Node
 from app.orchestrator import Orchestrator, Project, Task
@@ -177,6 +179,7 @@ class CorporationApplicationService:
         self._tool_registry = tool_registry
         self._corporation_chat = None
         self._owned_chat = None
+        self._owned_employee_chat = None
         self._owned_chat_lock = Lock()
         self._task_collaboration = None
         self._capability_integration_workflow: CapabilityIntegrationWorkflowService | None = None
@@ -710,8 +713,29 @@ class CorporationApplicationService:
                 from .owned_chat import OwnedChatService
                 self._owned_chat = OwnedChatService(
                     CorporationChatService(self._corporation.id, self._orchestrator),
-                    self.get_agent, self.get_provider)
+                    self.get_agent,
+                    self._orchestrator.providers.get,
+                    self._orchestrator.agents.execution,
+                )
             return self._owned_chat
+
+    def owned_employee_chat(self):
+        """Return the principal-owned Employee chat facade for this app run."""
+        employees = self._orchestrator.employees
+        if employees is None:
+            raise RuntimeError("Employee chat is not configured")
+        owned_chat = self.owned_chat()
+        with self._owned_chat_lock:
+            if self._owned_employee_chat is None:
+                from .owned_employee_chat import OwnedEmployeeChatService
+                self._owned_employee_chat = OwnedEmployeeChatService(
+                    employees,
+                    self._orchestrator.agents,
+                    self._orchestrator.providers,
+                    self._orchestrator,
+                    owned_chat.agent_request,
+                )
+            return self._owned_employee_chat
 
     def corporation_chat(self):
         """Local-only facade; no HTTP exposure or new permission grant."""
@@ -931,18 +955,50 @@ class CorporationApplicationService:
     def remove_local_provider(self, provider_id: str) -> None:
         self._orchestrator.providers.remove(provider_id)
 
-    def select_local_model(self, agent_id: str, provider_id: str, model_id: str):
+    def select_local_model(
+        self,
+        agent_id: str,
+        provider_id: str,
+        model_id: str,
+        *,
+        expected_model_id: str | None = None,
+    ):
         from .owned_chat import ChatConflict, ChatUnavailable
-        with self.owned_chat().configuration_change(agent_id):
+        with self.agent_assignment_change(agent_id):
             agent = self.get_agent(agent_id)
             if agent.provider != provider_id:
-                raise ChatConflict("Coordinator provider changed; refresh inventory")
+                raise ChatConflict("Agent provider changed; refresh assignment")
+            if expected_model_id is not None and agent.model != expected_model_id:
+                raise ChatConflict("Agent assignment changed; refresh before selecting")
             inventory = self.local_model_inventory(provider_id)
             if not inventory.supported or inventory.state != "available":
                 raise ChatUnavailable("Installed-model inventory unavailable; check the local provider")
             if model_id not in inventory.models:
                 raise ChatConflict("Selected model is no longer installed; refresh inventory")
-            return self.replace_model(agent_id, provider_id, model_id)
+            return self._replace_model_unchecked(agent_id, provider_id, model_id)
+
+    @contextmanager
+    def agent_assignment_change(self, agent_id: str):
+        """Keep all Agent generation idle while an authorized assignment changes."""
+        from .owned_chat import ChatConflict
+        try:
+            with self._orchestrator.agents.assignment_change(agent_id):
+                with self.owned_chat().configuration_change(agent_id):
+                    yield
+        except AgentAssignmentBusy:
+            raise ChatConflict(
+                "Agent is busy with active work; wait before changing its connection"
+            ) from None
+
+    def _replace_model_unchecked(
+        self, agent_id: str, provider_id: str, model: str
+    ) -> ModelAssignmentSummary:
+        agent = self._model_management().replace_model(agent_id, provider_id, model)
+        return ModelAssignmentSummary(
+            agent_id=agent.id,
+            provider_id=agent.provider,
+            model_id=agent.model,
+        )
 
     def replace_model(
         self,
@@ -950,16 +1006,8 @@ class CorporationApplicationService:
         provider_id: str,
         model: str,
     ) -> ModelAssignmentSummary:
-        agent = self._model_management().replace_model(
-            agent_id,
-            provider_id,
-            model,
-        )
-        return ModelAssignmentSummary(
-            agent_id=agent.id,
-            provider_id=agent.provider,
-            model_id=agent.model,
-        )
+        with self.agent_assignment_change(agent_id):
+            return self._replace_model_unchecked(agent_id, provider_id, model)
 
     def assign_model(
         self,
@@ -967,15 +1015,16 @@ class CorporationApplicationService:
         provider_id: str,
         model: str,
     ) -> AgentSummary:
-        agent = self._model_management().assign_model(agent_id, provider_id, model)
-        return AgentSummary(
-            id=agent.id,
-            name=agent.name,
-            role=agent.role,
-            provider=agent.provider,
-            model=agent.model,
-            capabilities=tuple(agent.capabilities),
-        )
+        with self.agent_assignment_change(agent_id):
+            agent = self._model_management().assign_model(agent_id, provider_id, model)
+            return AgentSummary(
+                id=agent.id,
+                name=agent.name,
+                role=agent.role,
+                provider=agent.provider,
+                model=agent.model,
+                capabilities=tuple(agent.capabilities),
+            )
 
     def list_tasks(self) -> list[TaskSummary]:
         return [
