@@ -3,6 +3,12 @@
     {
       "date": "2026-10-04",
       "type": "development",
+      "title": "Local installed-model discovery and selection",
+      "summary": "Completed Task 104 with explicit bounded loopback Ollama inventory through the Provider abstraction, truthful unknown/unavailable states, safe source/time evidence and a local model-setup page. Separate local-model:select authority freshly rechecks installed IDs and rejects active owned-chat requests; changed assignments require new conversations while preserving old identity/history. Selection is per-run and guarded within one service instance only; external configuration and direct paths remain unsynchronized. No download, provider switch, Task execution, slot reservation, cloud fallback or Task 105 behavior is added."
+    },
+    {
+      "date": "2026-10-04",
+      "type": "development",
       "title": "Documentation consistency and Copilot handoff audit",
       "summary": "Reconciled public documentation with Task 63 project-association persistence and Tasks 102-103 local login/chat boundaries. Clarified Task 101 as an initial source-review slice, historical update limitations, and the unresolved Task 104 model-selection authority gate. Preserved all Task 1-100 definitions and Tasks 104-128 planned status; runtime behavior and permissions are unchanged."
     },

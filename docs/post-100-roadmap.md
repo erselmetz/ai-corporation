@@ -1,6 +1,6 @@
 # Post-100 Product Roadmap: ERSELMETZ AI Command Center
 
-Status: Task 101 completed the initial P00 source-review slice; Tasks 102 and 103 completed P01a local-owner access and P02a owned coordinator chat. Broader product readiness, remaining P01/P02 work and P03-P15 remain planned.
+Status: Task 101 completed the initial P00 source-review slice; Tasks 102 and 103 completed P01a local-owner access and P02a owned coordinator chat. Task 104 completed bounded P03a local inventory/model selection. Broader product readiness, remaining P01/P02/P03 work and P04-P15 remain planned.
 See [Task 101 readiness review](post-100-readiness.md) for evidence, gaps, and the
 first proposed implementation checkpoints. The readiness record distinguishes validated checkpoints from remaining planned capabilities.
 Planning date: 2026-10-03 (Asia/Manila).
@@ -14,7 +14,7 @@ checks, exclusions, decision gates and verified checkpoint records now live in
 Those records are the authoritative implementation contracts; this P00-P15 file
 is supplementary product context, not a competing status/numbering source.
 
-Tasks 101-103 are complete; Task 104 is next and Tasks 104-128 remain planned.
+Tasks 101-104 are complete; Task 105 is next and Tasks 105-128 remain planned.
 Publishing this list does not implement those tasks or approve their unresolved
 architecture/product/authority decisions. Read the shared `roadmapRules` before
 coding, preserve uncommitted work, and record exact validation and handoff evidence.
@@ -86,6 +86,11 @@ and autonomous CEO delegation remain planned. See the readiness record.
 - Initially expose only supported operations; no hidden autonomous execution loop.
 
 ### P03 - Local provider and model setup through the UI
+
+P03a completed as Task 104: explicit supported loopback inventory refresh and
+separately authorized installed-model selection, freshly revalidated and guarded
+against active owned-chat calls. Assignment is per-run; other providers, download,
+automatic assignment and hardware/execution feasibility remain outside this slice.
 
 - Start with one supported local provider using existing abstractions, then expand.
 - Show configured connection, selected model, check results, and unknown states.

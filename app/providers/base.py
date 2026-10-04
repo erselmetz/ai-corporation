@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from .availability import AvailabilityResult
+from .inventory import LocalModelInventory
 
 
 class AIProvider(ABC):
@@ -12,3 +13,7 @@ class AIProvider(ABC):
     def check_availability(self) -> AvailabilityResult:
         """Return UNKNOWN unless this provider implements a truthful health check."""
         return AvailabilityResult()
+
+    def local_model_inventory(self) -> LocalModelInventory:
+        """Explicit observation; unsupported providers truthfully return UNKNOWN."""
+        return LocalModelInventory()

@@ -263,7 +263,7 @@ export const post100Tasks = [
     "title": "Local model discovery and coordinator selection",
     "description": "Show supported local provider inventory and let an authorized owner explicitly select an installed coordinator model.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       102,
       103
@@ -278,12 +278,21 @@ export const post100Tasks = [
       "Model downloads, arbitrary file/network scans, cloud fallback or capability-fit claims."
     ],
     "decisions": [
-      "Approve the local model-selection permission and the effective boundary for assignment changes before coding."
+      "Owner approved local-model:select in explicit local mode, busy-request rejection and new conversations after assignment changes on 2026-10-04."
     ],
     "area": "P03a",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-104-local-model-setup",
+    "validation": [
+      "20 focused and 91 affected Python tests passed; full Python suite 896 passed / 3 Windows symlink skips.",
+      "99 browser-module tests and 12 docs tests passed; real Chromium login, inventory refresh, selection, new-model chat and mobile layout passed with a fake provider.",
+      "Compilation/import, JavaScript syntax and diff checks passed; Pylance/pyright unavailable."
+    ],
+    "limitations": [
+      "Ollama loopback inventory only; explicit refresh; 256 KiB response / 100 models / 256 UTF-8 bytes per identifier. HTTP operations have 2-second timeouts and a 3-second elapsed deadline checked between chunks, not a hard interrupt guarantee.",
+      "Installed and service-available do not prove hardware feasibility, compatibility or future execution; execution readiness stays unknown.",
+      "Selection persists only for this app run. Guard coordinates one owned-chat service instance; CLI, direct management, external registry mutation and other processes remain unsynchronized.",
+      "No downloads, generation during inventory/selection, Task/resource reservation, cloud fallback or Task 105 behavior."
+    ]
   },
   {
     "number": 105,

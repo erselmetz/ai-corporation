@@ -87,9 +87,9 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 28]);
   });
 
-  it("marks only verified tasks 1–103 complete and tasks 104–128 planned", () => {
-    assert.ok(tasks.slice(0, 103).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(103).every((task) => task.status === "planned"));
+  it("marks only verified tasks 1–104 complete and tasks 105–128 planned", () => {
+    assert.ok(tasks.slice(0, 104).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(104).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -164,15 +164,15 @@ describe("documentation site", () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
     assert.match(html, /Milestones 1–100 are completed foundations/);
-    assert.match(html, /Tasks 101–103 are verified post-100 checkpoints/);
-    assert.match(html, /Tasks 104–128 are planned/);
+    assert.match(html, /Tasks 101–104 are verified post-100 checkpoints/);
+    assert.match(html, /Tasks 105–128 are planned/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
   });
 
   it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {
-    assert.equal(nextTask.number, 104);
-    assert.deepEqual(post100Tasks.filter(task => task.status === "completed").map(task => task.checkpoint), ["f4e5b54", "1552893", "d1ca364"]);
+    assert.equal(nextTask.number, 105);
+    assert.deepEqual(post100Tasks.filter(task => task.status === "completed").map(task => task.checkpoint), ["f4e5b54", "1552893", "d1ca364", "task-104-local-model-setup"]);
     for (const task of post100Tasks) {
       assert.ok(task.acceptance.length > 0 && task.outOfScope.length > 0);
       assert.ok(Array.isArray(task.decisions));
@@ -180,7 +180,7 @@ describe("documentation site", () => {
       assert.equal(new Set(task.dependsOn).size, task.dependsOn.length);
       assert.ok(task.dependsOn.every(number => Number.isInteger(number) && number >= 1 && number < task.number));
       if (task.status === "completed") {
-        assert.match(task.checkpoint, /^[a-f0-9]{7,40}$/);
+        assert.match(task.checkpoint, /^(?:[a-f0-9]{7,40}|task-[1-9][0-9]*-[a-z][a-z0-9-]*)$/);
         assert.ok(task.validation.length > 0 && task.limitations.length > 0);
       } else {
         assert.equal(task.checkpoint, null);

@@ -76,7 +76,7 @@ for (const group of [...taskGroups].reverse()) {
       contractList(details, "Owner decisions before dependent code", task.decisions);
       if (task.checkpoint) {
         const link = textNode("a", `Verified checkpoint: ${task.checkpoint}`, details);
-        link.href = `https://github.com/erselmetz/ai-corporation/commit/${task.checkpoint}`;
+        link.href = `https://github.com/erselmetz/ai-corporation/${task.checkpoint.startsWith("task-") ? "tree" : "commit"}/${encodeURIComponent(task.checkpoint)}`;
       }
       contractList(details, "Recorded validation", task.validation);
       contractList(details, "Known limitations", task.limitations);

@@ -18,6 +18,7 @@ READ_PERMISSIONS = frozenset({
 })
 
 CHAT_PERMISSIONS = frozenset({"chat:read", "chat:start", "chat:send", "chat:close"})
+LOCAL_MODEL_PERMISSIONS = frozenset({"local-model:select"})
 
 
 @dataclass(frozen=True)
@@ -49,7 +50,7 @@ class LocalOwnerAuthentication:
         self._sessions: dict[str, LocalSession] = {}
         self._failures: list[float] = []
         self._lock = threading.RLock()
-        self.principal = AuthenticatedPrincipal("local-owner", READ_PERMISSIONS | CHAT_PERMISSIONS)
+        self.principal = AuthenticatedPrincipal("local-owner", READ_PERMISSIONS | CHAT_PERMISSIONS | LOCAL_MODEL_PERMISSIONS)
 
     def _hash(self, password: str) -> bytes:
         return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), self._salt, 600_000)

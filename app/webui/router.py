@@ -719,7 +719,7 @@ def coordinator_chat_page():
     <title>Coordinator chat - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
     <script type="module" src="/ui/static/chat.mjs"></script></head><body>
     <main class="content chat-content"><nav aria-label="Chat navigation">
-    <a href="/ui">Dashboard</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <a href="/ui">Dashboard</a> | <a href="/ui/login">Local sign-in / sign-out</a> | <a href="/ui/local-models">Local model setup</a></nav>
     <h1>Corporation coordinator chat</h1>
     <p>Talk to a selected registered Agent. Replies are conversation text; they do not create Tasks,
     execute tools, or change the corporation. This is the first step toward the planned CEO workspace.</p>
@@ -735,5 +735,26 @@ def coordinator_chat_page():
     <p>History is in memory and is lost when the app restarts. Up to 100 conversations and 200 messages
     per conversation are retained for this run. The current provider contract does not stream or
     cancel requests. For the default local Agent, Ollama and llama3.2:3b must already be available;
-    model discovery and selection through this UI are planned next. Do not paste API keys here.</p>
+    use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here.</p>
+    </main></body></html>""")
+
+
+@router.get("/ui/local-models", response_class=HTMLResponse)
+def local_model_setup_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Local model setup - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/local-models.mjs"></script></head><body>
+    <main class="content"><nav><a href="/ui/chat">Coordinator chat</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <h1>Local model setup</h1><p>Available only with explicit local-owner access. Refresh checks the
+    configured supported loopback provider without downloading or generating anything.</p>
+    <label for="model-agent">Existing coordinator</label><select id="model-agent"></select>
+    <button id="model-refresh" type="button">Refresh installed models</button>
+    <p id="model-state" role="status" aria-live="polite"></p><p id="model-evidence"></p>
+    <label for="model-installed">Installed model</label><select id="model-installed" disabled></select>
+    <button id="model-select" type="button" disabled>Select for coordinator</button>
+    <p>Installation and service availability do not prove hardware capacity, compatibility or future
+    execution success. Selection is rechecked, and rejected while this coordinator has an active
+    browser chat request. After a changed assignment, start a new conversation; old history remains.
+    Changes apply to this app run only. Other management actions remain unavailable.</p>
     </main></body></html>""")

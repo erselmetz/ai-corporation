@@ -27,7 +27,7 @@ LOGIN_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <button type="submit">Sign in</button></form>
 <p id="login-state" role="status" aria-live="polite"></p>
 <a href="/ui">Dashboard</a> <a href="/ui/chat">Coordinator chat</a> <button id="local-logout" type="button">Sign out</button>
-<p>Local mode provides read access and separately authorized coordinator chat. Management actions remain unavailable.</p>
+<p>Local mode provides read access and separately authorized coordinator chat. Local installed-model selection is separately authorized; other management actions remain unavailable.</p>
 </main><script type="module" src="/ui/static/local-login.mjs"></script></body></html>"""
 
 
@@ -36,6 +36,8 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
     backend = LocalOwnerAuthentication(password, origin, **({"clock": clock} if clock else {}))
     application = create_app(application_service=application_service,
                              authentication_backend=backend)
+    from app.api.local_models import router as local_models_router
+    application.include_router(local_models_router)
 
     @application.middleware("http")
     async def protect_local_request(request: Request, call_next):

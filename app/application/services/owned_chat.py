@@ -54,6 +54,33 @@ class OwnedChatService:
         self._get_provider = get_provider
         self._entries: dict[str, _OwnedConversation] = {}
         self._catalog_lock = RLock()
+        self._active_agents: dict[str, int] = {}
+        self._configuring_agents: set[str] = set()
+
+    @contextmanager
+    def configuration_change(self, agent_id):
+        """Only this owned-chat instance coordinates; external mutations are unsynchronized."""
+        with self._catalog_lock:
+            if self._active_agents.get(agent_id, 0) or agent_id in self._configuring_agents:
+                raise ChatConflict("Coordinator is busy; wait before changing its model")
+            self._configuring_agents.add(agent_id)
+        try:
+            yield
+        finally:
+            with self._catalog_lock:
+                self._configuring_agents.remove(agent_id)
+
+    @contextmanager
+    def _agent_request(self, agent_id):
+        with self._catalog_lock:
+            if agent_id in self._configuring_agents:
+                raise ChatConflict("Coordinator model selection is busy; try again later")
+            self._active_agents[agent_id] = self._active_agents.get(agent_id, 0) + 1
+        try:
+            yield
+        finally:
+            with self._catalog_lock:
+                self._active_agents[agent_id] -= 1
 
     def _coordinator(self, agent_id):
         try:
@@ -72,6 +99,8 @@ class OwnedChatService:
             if len(self._entries) >= self.MAX_CONVERSATIONS:
                 raise ChatLimit("Conversation limit reached for this app run")
             agent = self._coordinator(agent_id)
+            if agent_id in self._configuring_agents:
+                raise ChatConflict("Coordinator model selection is busy; try again later")
             identifier = uuid4().hex
             record = self._chat.start(identifier, agent_id)
             self._entries[identifier] = _OwnedConversation(owner, agent, Lock())
@@ -101,13 +130,17 @@ class OwnedChatService:
 
     def send(self, owner, identifier, text):
         with self._access(owner, identifier) as entry:
-            current = self._coordinator(entry.coordinator.id)
-            if (current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model):
-                raise ChatConflict("Coordinator assignment changed; start a new conversation")
-            if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
-                raise ChatLimit("Conversation message limit reached; start a new conversation")
-            record = self._chat.send(identifier, text)
-            return {"conversation": record, "coordinator": entry.coordinator}
+            with self._agent_request(entry.coordinator.id):
+                return self._send(entry, identifier, text)
+
+    def _send(self, entry, identifier, text):
+        current = self._coordinator(entry.coordinator.id)
+        if (current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model):
+            raise ChatConflict("Coordinator assignment changed; start a new conversation")
+        if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
+            raise ChatLimit("Conversation message limit reached; start a new conversation")
+        record = self._chat.send(identifier, text)
+        return {"conversation": record, "coordinator": entry.coordinator}
 
     def close(self, owner, identifier):
         with self._access(owner, identifier) as entry:

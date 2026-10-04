@@ -337,9 +337,51 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-103 are verified complete, Task 104 is next,
-and Tasks 104-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-104 are verified complete, Task 105 is next,
+and Tasks 105-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
 work, and do not treat a published plan as approval to implement future actions.
+
+## Task 104 - Local installed-model setup
+
+After explicit local login, open `/ui/local-models` (also linked from coordinator
+chat), choose an existing coordinator and click Refresh installed models. The
+provider abstraction currently supports bounded Ollama `/api/tags` inventory for
+configured loopback HTTP only; unsupported providers return UNKNOWN. Missing or
+unavailable inventory has safe guidance. Installation and service availability
+are distinct from hardware feasibility, compatibility and execution readiness.
+
+The owner approved a separate `local-model:select` permission; general
+`model:manage` and other management writes stay denied. Local GET inventory uses
+`model:read`; local PUT selection requires that separate permission plus session
+CSRF/Origin protection. These routes exist only in `create_local_app`; the default
+API stays rejecting and has no local setup routes. Selection freshly rechecks the
+installed identifier for the coordinator's existing provider. No provider switch,
+download, automatic assignment, generation, Task execution or capacity reservation
+is performed by setup. Changes persist for this app run only.
+
+Inventory disables redirects/environment proxies, uses 2-second HTTP timeouts,
+and checks a 3-second elapsed deadline between response chunks (not a hard
+interrupt guarantee). Responses are capped at 256 KiB decoded bytes, 100 models
+and 256 UTF-8 bytes per model identifier; malformed/oversized observations are
+UNKNOWN, and provider failures are sanitized. Refresh is explicit, without polling.
+
+A shared admission guard rejects selection while an owned browser-chat request
+for that coordinator is active, and rejects new sends/starts during selection.
+Independent conversations can still send concurrently. Cleanup releases the guard
+after provider failure. Existing conversation history and model identity remain
+intact; after an assignment change, start new chat. This coordinates only one
+process/service instance; CLI/direct execution, general management and external
+registry changes remain unsynchronized and must not mutate config concurrently.
+
+Task 104 validation: 20 focused / 91 affected Python tests; full Python suite
+896 passed / 3 Windows symlink skips; 99 browser-module tests; 12 public-docs
+tests; real Chromium login/refresh/select/new-model chat/mobile checks with a
+fake provider; compilation/import, JavaScript syntax and diff checks passed.
+Pylance/pyright unavailable. New tests use no live Ollama; the full suite retained
+its existing optional provider integration checks. Checkpoint tag
+`task-104-local-model-setup` identifies this single reviewed Task 104 commit.
+Tasks 105-128 remain planned; Task 105 needs provider/credential/consent/budget
+decisions before implementation.

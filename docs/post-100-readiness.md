@@ -2,7 +2,7 @@
 
 Review date: 2026-10-04 (Asia/Manila).
 Baseline: Task 100 commit `2f5db63d7d471964949027365a2fa8b435b42ae6`.
-Status: Tasks 101-103 complete; Task 104 and remaining product work remain planned.
+Status: Tasks 101-104 complete; Task 105 and remaining product work remain planned.
 The reviewed baseline had a clean working tree and HEAD matching origin/main.
 This review is source inspection, not a fresh execution or full-suite validation.
 
@@ -106,7 +106,7 @@ discovery, autonomous delegation, tool execution and installer work remain plann
 
 ### Task 104 / P03a - Local model discovery and explicit coordinator configuration
 
-Depends on validated local access; planned scope:
+Initial Task 104 proposal (subsequently completed; see verified receipt below):
 
 - Bounded supported Ollama inventory through provider abstractions, explicit refresh,
   safe errors, and installed-versus-ready distinctions.
@@ -119,7 +119,7 @@ Depends on validated local access; planned scope:
 
 Tasks 101-128 are now numbered in docs/tasks-data.mjs and displayed on docs/tasks.html.
 Read those authoritative contracts and shared handoff rules before each implementation;
-this readiness record is historical evidence and supplementary context. Tasks 104-128
+this readiness record is historical evidence and supplementary context. Tasks 105-128
 are planned and their unresolved decisions are not approved by publication.
 P04/P05/P15 online onboarding and positions follow usable local chat; P06/P07
 actual delegation and maps follow validated execution contracts. P08/P09 memory
@@ -133,9 +133,9 @@ planned. Existing Tasks 1-100 are not reopened or renumbered by this review.
 The first runnable goal is: start explicitly configured local app, sign in, see
 existing authorized records, and exchange a message with a selected local Agent.
 That goal requires Task 102, Task 103, and an available compatible local model;
-Tasks 102-103 now provide the validated sign-in/chat path. Model discovery and
-selection remain Task 104; the owner must already have the configured local service
-and model. The first chat does not constitute autonomous CEO orchestration.
+Tasks 102-103 provide the validated sign-in/chat path. Task 104 subsequently
+adds installed-model discovery and explicit selection; the owner must still have
+the local service and an installed model. The first chat does not constitute autonomous CEO orchestration.
 
 Preserve the full regression requirements for runtime changes. Reuse still-valid
 inspection findings, run focused tests before affected regressions/full suite,
@@ -144,7 +144,7 @@ Do not modify public docs deployment or the Task 53 file-based/read-only portal
 as part of local authentication/chat. Inspect concurrent changes before each
 checkpoint and commit only the current task's reviewed files.
 
-## Copilot handoff after the documentation audit
+## Historical Copilot handoff at the documentation audit (before Task 104)
 
 Tasks 101-103 remain complete only within their recorded scope; Task 101 is a
 source review, not fresh runtime or production certification. Tasks 104-128
@@ -172,3 +172,30 @@ match the pre-post-100 checkpoint, and all recorded Task 101-103 commits exist.
 Full Python and runtime browser suites were not rerun for this documentation-only
 change; no runtime, security policy or provider execution behavior changed.
 The audit verifies repository documentation, not the deployed Vercel revision.
+
+## Verified Task 104 receipt and next handoff
+
+Owner approved the narrow policy on 2026-10-04. Task 104 now provides explicit
+local inventory refresh and installed-model selection at `/ui/local-models`,
+with separate `local-model:select` authority, fresh selection revalidation and
+a coordinator admission guard shared with owned browser chat. It rejects active
+chat/selection conflicts, preserves old identities/history and requires new chat
+after reassignment. Selection is per-run and coordinates only one service instance;
+external configuration/CLI/direct mutations and other processes are unsynchronized.
+No download, provider switch, cloud fallback, Task execution or slot reservation.
+
+Validation: 20 focused / 91 affected Python tests; full suite 896 passed /
+3 Windows symlink skips; 99 browser-module and 12 public-docs tests; real Chromium
+login/refresh/selection/new-model chat/mobile checks with a fake provider; Python
+compilation/import, JavaScript syntax and diff review. Pylance/pyright unavailable.
+Initial new test harness issues (UTC suffix expectation, Windows test-ID length,
+CSP-sensitive browser wait and login redirect expectation) were corrected without
+weakening runtime/security contracts. Existing optional Ollama integration checks
+remain in the full suite; new tests are deterministic.
+
+The checkpoint tag `task-104-local-model-setup` resolves to the single reviewed
+Task 104 commit, allowing its receipt to live in that same commit. Tasks 105-128
+remain planned. Next is Task 105: choose the first official online provider and
+approve credential storage, cloud-data consent and request/spend policy before
+dependent implementation. The public docs site and Task 53 read-only portal
+remain separate and unchanged in their access boundary.

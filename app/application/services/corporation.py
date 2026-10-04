@@ -863,6 +863,23 @@ class CorporationApplicationService:
             model=assignment["model"],
         )
 
+    def local_model_inventory(self, provider_id: str):
+        """Provider abstraction supplies bounded local installed-model evidence."""
+        return self._orchestrator.providers.get(provider_id).local_model_inventory()
+
+    def select_local_model(self, agent_id: str, provider_id: str, model_id: str):
+        from .owned_chat import ChatConflict, ChatUnavailable
+        with self.owned_chat().configuration_change(agent_id):
+            agent = self.get_agent(agent_id)
+            if agent.provider != provider_id:
+                raise ChatConflict("Coordinator provider changed; refresh inventory")
+            inventory = self.local_model_inventory(provider_id)
+            if not inventory.supported or inventory.state != "available":
+                raise ChatUnavailable("Installed-model inventory unavailable; check the local provider")
+            if model_id not in inventory.models:
+                raise ChatConflict("Selected model is no longer installed; refresh inventory")
+            return self.replace_model(agent_id, provider_id, model_id)
+
     def replace_model(
         self,
         agent_id: str,
