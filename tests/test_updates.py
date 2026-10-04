@@ -180,6 +180,12 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
             {
                 "date": "2026-10-04",
                 "type": "development",
+                "title": "First official online chat provider",
+                "summary": "Completed Task 105 with explicit, per-turn cloud consent for Gemini coordinator chat through the existing Provider and Orchestrator. The restricted API key is held only in process memory for at most one hour; discovery uses the fixed official catalog, generation is bounded to five attempts per key per app run and 1,024 output tokens, with a 20-second timeout, bounded input/response, no retries and no fallback. A separate local-owner setup page supports model discovery, explicit assignment, staged-key erasure, status and disconnect/restore; the default API remains unchanged and fail-closed. No dollar cap is claimed; owners must set Google billing limits and alerts. Credentials are not persisted, chat permission does not imply consent, and external key use is not counted. Tasks 106–128 remain planned."
+            },
+            {
+                "date": "2026-10-04",
+                "type": "development",
                 "title": "Local installed-model discovery and selection",
                 "summary": "Completed Task 104 with explicit bounded loopback Ollama inventory through the Provider abstraction, truthful unknown/unavailable states, safe source/time evidence and a local model-setup page. Separate local-model:select authority freshly rechecks installed IDs and rejects active owned-chat requests; changed assignments require new conversations while preserving old identity/history. Selection is per-run and guarded within one service instance only; external configuration and direct paths remain unsynchronized. No download, provider switch, Task execution, slot reservation, cloud fallback or Task 105 behavior is added."
             },

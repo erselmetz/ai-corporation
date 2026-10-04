@@ -658,8 +658,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-104 are verified complete, Task 105 is next,
-and Tasks 105-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-105 are verified complete, Task 106 is next,
+and Tasks 106-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -704,5 +704,43 @@ fake provider; compilation/import, JavaScript syntax and diff checks passed.
 Pylance/pyright unavailable. New tests use no live Ollama; the full suite retained
 its existing optional provider integration checks. Checkpoint tag
 `task-104-local-model-setup` identifies this single reviewed Task 104 commit.
-Tasks 105-128 remain planned; Task 105 needs provider/credential/consent/budget
-decisions before implementation.
+## Task 105 - Gemini online coordinator chat
+
+The first online provider is the official Gemini API, implemented behind the
+existing `AIProvider` and Gemini model-catalog abstractions. The credential is
+submitted only through `/api/local/online-provider/catalog`, used in the fixed
+Google API header, and retained in an expiring in-memory connection for at most
+one hour. The registered provider retains only a credential digest; disconnect,
+explicit staged-key erasure, expiry, or process restart removes the cleartext key.
+Local mode adds separate `online-provider:connect` and
+`online-provider:disconnect` permissions; the default API does not mount these
+routes and continues to reject unauthenticated access.
+
+The owner must consent separately for every Gemini chat turn. That turn sends
+the new message, recent conversation history, and configured chat context through
+the existing Orchestrator. Model listing is explicit, and the selected model is
+refreshed before assignment. Requests use a fixed HTTPS endpoint, no redirects or
+environment proxies, a 20-second timeout, at most 32 KiB input, 512 KiB response,
+8 KiB reply and 1,024 output tokens. One request is allowed at a time; each unique
+key is limited to five generation attempts per local app run, including failures.
+No retries or fallback occur. The app cannot impose a reliable dollar cap or
+count key use outside this process; owners must configure Google billing limits
+and alerts separately. The request cap is not a spend guarantee.
+
+Credentials are not written to disk or transcripts. Provider failures and setup
+errors are sanitized. The same Gemini coordinator assignment is local to this
+process and remains unusable after its credential expires until the owner
+disconnects it (which restores the prior assignment) and reconnects. Existing
+conversation snapshots retain their old provider/model identity and require a
+new conversation after assignment changes. This controller does not coordinate
+external registry/configuration changes or other processes. No Task execution,
+resource-slot reservation, tool use, streaming, silent cloud transfer, automatic
+retry, or second provider is added.
+
+Task 105 validation: 94 focused Task 105/provider/model/chat/update Python tests
+passed; 115 browser and public-docs JavaScript tests passed; the full Python
+suite passed 911 tests with 3 skips. New tests use deterministic fakes and make
+no live Gemini or Ollama calls. Python compilation and `git diff --check` passed;
+Pylance/pyright was unavailable. Checkpoint tag `task-105-gemini-online-chat`
+identifies the reviewed task commit. Tasks 106-128 remain planned; Task 106 is
+next.

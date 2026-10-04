@@ -719,7 +719,7 @@ def coordinator_chat_page():
     <title>Coordinator chat - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
     <script type="module" src="/ui/static/chat.mjs"></script></head><body>
     <main class="content chat-content"><nav aria-label="Chat navigation">
-    <a href="/ui">Dashboard</a> | <a href="/ui/login">Local sign-in / sign-out</a> | <a href="/ui/local-models">Local model setup</a></nav>
+    <a href="/ui">Dashboard</a> | <a href="/ui/login">Local sign-in / sign-out</a> | <a href="/ui/local-models">Local model setup</a> | <a href="/ui/online-provider">Gemini online setup</a></nav>
     <h1>Corporation coordinator chat</h1>
     <p>Talk to a selected registered Agent. Replies are conversation text; they do not create Tasks,
     execute tools, or change the corporation. This is the first step toward the planned CEO workspace.</p>
@@ -735,7 +735,9 @@ def coordinator_chat_page():
     <p>History is in memory and is lost when the app restarts. Up to 100 conversations and 200 messages
     per conversation are retained for this run. The current provider contract does not stream or
     cancel requests. For the default local Agent, Ollama and llama3.2:3b must already be available;
-    use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here.</p>
+    use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here; configure Gemini in its separate online setup page.</p>
+    <p id="cloud-consent-panel" hidden><label><input id="cloud-consent" type="checkbox">
+    I consent to send this message, recent conversation history, and configured chat context to Google Gemini for this reply.</label></p>
     </main></body></html>""")
 
 
@@ -757,4 +759,32 @@ def local_model_setup_page():
     execution success. Selection is rechecked, and rejected while this coordinator has an active
     browser chat request. After a changed assignment, start a new conversation; old history remains.
     Changes apply to this app run only. Other management actions remain unavailable.</p>
+    </main></body></html>""")
+
+
+@router.get("/ui/online-provider", response_class=HTMLResponse)
+def local_online_provider_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gemini online setup - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/online-provider.mjs"></script></head><body>
+    <main class="content"><nav><a href="/ui/chat">Coordinator chat</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <h1>Gemini online setup</h1>
+    <p>Google receives the message, recent conversation history, and configured chat context only
+    when you check the separate consent box for a chat turn. Setup sends a key only to the fixed
+    Google Gemini API endpoint to list models; it never enters ordinary chat history.</p>
+    <label for="gemini-key">Restricted Gemini API key</label><input id="gemini-key" type="password" autocomplete="off" maxlength="4096">
+    <button id="gemini-discover" type="button">Verify key and list models</button>
+    <p id="gemini-state" role="status" aria-live="polite"></p><p id="gemini-usage"></p>
+    <label for="gemini-agent">Coordinator</label><select id="gemini-agent"></select>
+    <label for="gemini-model">Model with generation support</label><select id="gemini-model" disabled></select>
+    <button id="gemini-connect" type="button" disabled>Connect Gemini to coordinator</button>
+    <button id="gemini-refresh" type="button" disabled>Refresh models</button>
+    <button id="gemini-disconnect" type="button" disabled>Disconnect and erase key</button>
+    <button id="gemini-clear" type="button" disabled>Erase staged key</button>
+    <p>API calls can incur Google account charges. This app limits generation to five requests per
+    API key per app run, one at a time, with at most 1,024 output tokens per request and no retries.
+    That is a request/output cap, not a dollar cap. Set account billing limits and alerts in Google
+    AI Studio / Cloud; outside use of the same key is not counted here. The key stays in memory for
+    up to one hour or until disconnect/app restart. Restrict it to the Gemini API before use.</p>
     </main></body></html>""")

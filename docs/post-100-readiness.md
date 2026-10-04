@@ -2,7 +2,7 @@
 
 Review date: 2026-10-04 (Asia/Manila).
 Baseline: Task 100 commit `2f5db63d7d471964949027365a2fa8b435b42ae6`.
-Status: Tasks 101-104 complete; Task 105 and remaining product work remain planned.
+At the time of this Task 101 review, Tasks 101-104 were the reviewed checkpoints.
 The reviewed baseline had a clean working tree and HEAD matching origin/main.
 This review is source inspection, not a fresh execution or full-suite validation.
 
@@ -173,7 +173,7 @@ Full Python and runtime browser suites were not rerun for this documentation-onl
 change; no runtime, security policy or provider execution behavior changed.
 The audit verifies repository documentation, not the deployed Vercel revision.
 
-## Verified Task 104 receipt and next handoff
+## Verified Task 104 receipt (historical)
 
 Owner approved the narrow policy on 2026-10-04. Task 104 now provides explicit
 local inventory refresh and installed-model selection at `/ui/local-models`,
@@ -194,8 +194,19 @@ weakening runtime/security contracts. Existing optional Ollama integration check
 remain in the full suite; new tests are deterministic.
 
 The checkpoint tag `task-104-local-model-setup` resolves to the single reviewed
-Task 104 commit, allowing its receipt to live in that same commit. Tasks 105-128
-remain planned. Next is Task 105: choose the first official online provider and
-approve credential storage, cloud-data consent and request/spend policy before
-dependent implementation. The public docs site and Task 53 read-only portal
-remain separate and unchanged in their access boundary.
+Task 104 commit. Task 105 subsequently completed the first official online chat
+provider; its implementation evidence and limitations are recorded in the
+authoritative task list. Task 106 is next. The public docs site and Task 53
+read-only portal remain separate from runtime and unchanged in their access boundary.
+
+## Verified Task 105 receipt
+
+Task 105 adds explicitly consented Gemini chat in local-owner mode, reusing the
+Provider, model-catalog and Orchestrator abstractions. The restricted API key
+stays in process memory for at most one hour, never enters chat, and is erased on
+disconnect, explicit staged-key removal, expiry or process restart. Each chat
+turn requires consent to send its message, recent history and configured context.
+Generation allows five attempts per key per app run, up to 1,024 output tokens,
+one request at a time, a bounded timeout/response, and no retries or fallback.
+No dollar cap is claimed; owners must set Google account billing limits/alerts.
+The default API remains fail-closed. Task 106 is the next planned task.

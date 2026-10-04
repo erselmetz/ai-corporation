@@ -867,6 +867,15 @@ class CorporationApplicationService:
         """Provider abstraction supplies bounded local installed-model evidence."""
         return self._orchestrator.providers.get(provider_id).local_model_inventory()
 
+    def provider_exists(self, provider_id: str) -> bool:
+        return self._orchestrator.providers.exists(provider_id)
+
+    def register_local_provider(self, provider_id: str, provider) -> None:
+        self._orchestrator.providers.register(provider_id, provider)
+
+    def remove_local_provider(self, provider_id: str) -> None:
+        self._orchestrator.providers.remove(provider_id)
+
     def select_local_model(self, agent_id: str, provider_id: str, model_id: str):
         from .owned_chat import ChatConflict, ChatUnavailable
         with self.owned_chat().configuration_change(agent_id):

@@ -5,12 +5,15 @@ export function mountChat({ documentRef = document, fetchImpl = fetch } = {}) {
   const agents = element("chat-agent");
   const conversations = element("chat-conversation");
   const input = element("chat-input");
+  const cloudPanel = element("cloud-consent-panel");
+  const cloudConsent = element("cloud-consent");
   const buttons = ["chat-start", "chat-send", "chat-close", "chat-refresh"].map(element);
   let busy = false;
   let selected = null;
   let canSend = false;
+  let requiresCloudConsent = false;
   const base = "/api/chat/conversations";
-  function clear() { history.replaceChildren(); element("chat-identity").textContent = ""; selected = null; canSend = false; input.disabled = true; }
+  function clear() { history.replaceChildren(); element("chat-identity").textContent = ""; selected = null; canSend = false; requiresCloudConsent = false; cloudPanel.hidden = true; cloudConsent.checked = false; input.disabled = true; }
   async function request(path, body) {
     const options = { credentials: "same-origin" };
     if (body !== undefined) {
@@ -41,6 +44,9 @@ export function mountChat({ documentRef = document, fetchImpl = fetch } = {}) {
     if (!record || !agent || typeof record.id !== "string" || !Array.isArray(record.messages)
         || !["open", "closed"].includes(record.status)) throw new Error("Invalid conversation response.");
     selected = record.id;
+    requiresCloudConsent = agent.provider === "gemini";
+    cloudPanel.hidden = !requiresCloudConsent;
+    cloudConsent.checked = false;
     conversations.value = record.id;
     element("chat-identity").textContent = `${agent.name} (${agent.role}) | ${agent.provider} / ${agent.model} | ${record.status}`;
     history.replaceChildren();
@@ -113,11 +119,13 @@ export function mountChat({ documentRef = document, fetchImpl = fetch } = {}) {
       const text = input.value;
       if (!selected || !canSend) throw new Error("Start or select an open conversation first.");
       if (!text.trim() || new TextEncoder().encode(text).length > 8192) throw new Error("Enter a message of at most 8192 UTF-8 bytes.");
+      if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Consent to send this message and chat context to Google Gemini before continuing.");
       const identifier = selected;
       input.disabled = true;
       state.textContent = "Pending: waiting for the configured model. Closing this page does not cancel its request.";
       try {
-        const result = await request(`${base}/${encodeURIComponent(identifier)}/messages`, { text });
+        const body = requiresCloudConsent ? { text, cloud_consent: true } : { text };
+        const result = await request(`${base}/${encodeURIComponent(identifier)}/messages`, body);
         input.value = "";
         render(result);
       } catch (error) {

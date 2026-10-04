@@ -299,7 +299,7 @@ export const post100Tasks = [
     "title": "First official online chat provider",
     "description": "Integrate one owner-selected official provider for explicitly permitted online generation.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       104
     ],
@@ -313,13 +313,23 @@ export const post100Tasks = [
       "Consumer website login as API access; assuming ChatGPT or Copilot subscriptions include generic API access."
     ],
     "decisions": [
-      "Owner selects the first provider and approves credential storage, cloud consent and request/spend policy.",
+      "Resolved for Task 105: Gemini is the first official online provider. Its restricted API key stays in process memory for at most one hour, is never persisted, and can be erased explicitly; the default API remains unchanged.",
+      "Resolved for Task 105: each Gemini chat turn requires explicit consent to send that message, recent history and configured context. Five generation attempts per key per app run, at most 1,024 output tokens per call, one request at a time, a 20-second timeout and no retries are the supported local limits. No dollar cap is claimed; owners must configure Google billing limits and alerts.",
       "Each additional provider needs its own supported contract; Gemini, OpenAI and Copilot are candidates, not guaranteed integrations."
     ],
     "area": "P04a",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-105-gemini-online-chat",
+    "validation": [
+      "Focused Task 105/provider/model/owned-chat regressions and update-manifest checks: 94 passed; deterministic chat/setup UI plus all browser and public-docs JavaScript tests: 115 passed.",
+      "Full Python suite: 911 passed, 3 skipped. No live Gemini or Ollama calls were required by new tests.",
+      "Python compilation and git diff --check passed; Pylance/pyright was not available in the environment."
+    ],
+    "limitations": [
+      "The restricted key exists only in one local app process for up to one hour; per-key attempt counts reset on app restart. The app cannot count usage from other applications or enforce a dollar spend cap.",
+      "Gemini coordinator configuration and the connection manager coordinate only one process/service instance. External registry/configuration changes and other processes are unsynchronized.",
+      "After credential expiry, the coordinator retains its selected assignment but cannot generate until the owner explicitly disconnects to restore its prior assignment and reconnects.",
+      "Only the official Gemini API is implemented. Consumer website subscriptions, other cloud providers, automatic assignment, fallback and production identity configuration are not included."
+    ]
   },
   {
     "number": 106,

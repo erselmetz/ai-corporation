@@ -25,23 +25,26 @@ test("shows all tasks in descending order and highlights the actual next planned
   assert.equal(groups[0].id, "tasks-101-128");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 128 }, (_, index) => 128 - index));
-  assert.match(elements["roadmap-summary"].textContent, /128 roadmap tasks.*104 completed.*24 planned/);
-  assert.equal(elements["next-task"].children[0].href, "#task-105");
-  assert.match(elements["next-task"].textContent, /Next: Task 105/);
-  assert.match(elements["next-task"].textContent, /first provider/);
+  assert.match(elements["roadmap-summary"].textContent, /128 roadmap tasks.*105 completed.*23 planned/);
+  assert.equal(elements["next-task"].children[0].href, "#task-106");
+  assert.match(elements["next-task"].textContent, /Next: Task 106/);
+  assert.match(elements["next-task"].textContent, /Secure chat-driven connection onboarding/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
   const elements = render();
   const items = elements["roadmap-groups"].children[0].children[1].children;
   const completed = items.find(item => item.id === "task-103");
-  const planned = items.find(item => item.id === "task-105");
+  const planned = items.find(item => item.id === "task-106");
   assert.equal(completed.children[2].textContent, "Completed");
   assert.match(completed.textContent, /Verified checkpoint: d1ca364/);
   assert.match(completed.textContent, /876 Python passed/);
   const localSetup = items.find(item => item.id === "task-104");
   assert.match(localSetup.textContent, /Verified checkpoint: task-104-local-model-setup/);
   assert.ok(localSetup.children[4].children.some(node => node.href === "https://github.com/erselmetz/ai-corporation/tree/task-104-local-model-setup"));
+  const onlineProvider = items.find(item => item.id === "task-105");
+  assert.equal(onlineProvider.children[2].textContent, "Completed");
+  assert.match(onlineProvider.textContent, /task-105-gemini-online-chat/);
   assert.equal(planned.children[2].textContent, "Planned");
   assert.match(planned.textContent, /Acceptance checks/);
   assert.match(planned.textContent, /Out of scope/);

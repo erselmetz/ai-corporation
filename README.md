@@ -337,8 +337,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-104 are verified complete, Task 105 is next,
-and Tasks 105-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-105 are verified complete, Task 106 is next,
+and Tasks 106-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -383,5 +383,14 @@ fake provider; compilation/import, JavaScript syntax and diff checks passed.
 Pylance/pyright unavailable. New tests use no live Ollama; the full suite retained
 its existing optional provider integration checks. Checkpoint tag
 `task-104-local-model-setup` identifies this single reviewed Task 104 commit.
-Tasks 105-128 remain planned; Task 105 needs provider/credential/consent/budget
-decisions before implementation.
+Task 105 adds explicitly consented Gemini coordinator chat through the existing
+Provider/Orchestrator path. The restricted key is held only in process memory for
+up to one hour, generation is limited to five attempts per key per app run and
+1,024 output tokens per request, and no retries occur. There is no app-enforced
+dollar cap; owners must set Google account billing limits and alerts. The online
+setup exists only in explicit local-owner mode; the default API remains fail-closed.
+Validation for Task 105: 911 Python tests passed / 3 skipped; 115 browser and
+public-docs JavaScript tests passed. New tests used deterministic fakes only.
+Pylance/pyright availability and compilation/diff checks are recorded in
+`docs/tasks-data.mjs`. Tasks 106-128 remain planned; Task 106 is secure
+chat-driven connection onboarding.

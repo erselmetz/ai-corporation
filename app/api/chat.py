@@ -22,6 +22,7 @@ class StartRequest(BaseModel):
 class SendRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     text: str = Field(min_length=1, max_length=8192)
+    cloud_consent: bool = False
 
 
 async def bounded_body(request: Request):
@@ -87,6 +88,9 @@ def send_message(identifier: str, payload=Depends(bounded_body),
                  service=Depends(get_application_service)):
     body = parse(SendRequest, payload)
     with chat_errors():
+        current = service.owned_chat().get(principal.identity, identifier)
+        if current["coordinator"].provider == "gemini" and body.cloud_consent is not True:
+            raise HTTPException(403, "Explicit consent is required before sending this turn and recent chat context to Gemini.")
         return service.owned_chat().send(principal.identity, identifier, body.text)
 
 

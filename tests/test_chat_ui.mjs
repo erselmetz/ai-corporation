@@ -12,11 +12,11 @@ class Element {
   addEventListener(event, handler) { this.listeners[event] = handler; }
 }
 const agent = { id: "worker", name: "Actual Worker", role: "Worker", provider: "fake", model: "configured-model" };
-const snapshot = (messages = [], status = "open") => ({ coordinator: agent, conversation: { id: "conversation", status, messages } });
+const snapshot = (messages = [], status = "open", coordinator = agent) => ({ coordinator, conversation: { id: "conversation", status, messages } });
 const message = (role, status, content) => ({ id: role, role, status, content });
 const response = (payload, status = 200) => ({ ok: status === 200, status, json: async () => payload });
 function setup(handler = null) {
-  const ids = ["chat-state", "chat-history", "chat-agent", "chat-conversation", "chat-input", "chat-start", "chat-send", "chat-close", "chat-refresh", "chat-identity", "chat-form"];
+  const ids = ["chat-state", "chat-history", "chat-agent", "chat-conversation", "chat-input", "chat-start", "chat-send", "chat-close", "chat-refresh", "chat-identity", "chat-form", "cloud-consent-panel", "cloud-consent"];
   const elements = Object.fromEntries(ids.map(id => [id, new Element(id === "chat-agent" || id === "chat-conversation" ? "select" : "")]));
   const calls = [];
   const fetchImpl = async (path, options) => {
@@ -49,6 +49,28 @@ test("start and send use same-origin, session CSRF and actual coordinator identi
   assert.equal(post.options.credentials, "same-origin");
   assert.equal(post.options.headers["X-Local-CSRF"], "test-csrf");
   assert.deepEqual(JSON.parse(post.options.body), { text: "Hello" });
+});
+
+test("Gemini requires per-turn cloud consent and sends only an explicit consent flag", async () => {
+  const gemini = { ...agent, provider: "gemini", model: "gemini-test-flash" };
+  const ui = setup((path, options) => {
+    if (path === "/api/agents") return response({ items: [gemini] });
+    if (path === "/api/chat/conversations" && options.method === "POST") return response(snapshot([], "open", gemini));
+    if (path.endsWith("/messages")) return response(snapshot([message("assistant", "completed", "reply")], "open", gemini));
+    return null;
+  });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  assert.equal(ui.elements["cloud-consent-panel"].hidden, false);
+  ui.elements["chat-input"].value = "hello";
+  assert.equal(await ui.controller.send(), false);
+  assert.equal(ui.calls.filter(call => call.path.endsWith("/messages")).length, 0);
+  ui.elements["cloud-consent"].checked = true;
+  assert.equal(await ui.controller.send(), true);
+  const post = ui.calls.find(call => call.path.endsWith("/messages"));
+  assert.deepEqual(JSON.parse(post.options.body), { text: "hello", cloud_consent: true });
+  assert.equal(ui.elements["cloud-consent"].checked, false);
+  assert.equal(ui.elements["cloud-consent-panel"].hidden, false);
 });
 
 test("pending send prevents duplicate turns and selection changes; provider failure is inspected without replay", async () => {
