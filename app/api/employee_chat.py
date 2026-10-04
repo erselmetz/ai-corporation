@@ -11,6 +11,7 @@ from app.application.services.owned_chat import (
     ChatNotFound,
     ChatUnavailable,
 )
+from app.providers.base import ProviderCapacityError, ProviderCapacityUnknown
 from .chat import bounded_body, contains_gemini_key, get_application_service
 from .models import (
     EmployeeChatAgentResponse,
@@ -72,6 +73,10 @@ def _chat_errors():
         raise HTTPException(429, str(error)) from None
     except ChatUnavailable as error:
         raise HTTPException(503, str(error)) from None
+    except ProviderCapacityUnknown as error:
+        raise HTTPException(503, str(error)) from None
+    except ProviderCapacityError as error:
+        raise HTTPException(429, str(error)) from None
     except ValueError:
         raise HTTPException(422, "Chat input or conversation state is invalid") from None
     except RuntimeError:

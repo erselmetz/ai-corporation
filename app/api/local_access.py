@@ -13,6 +13,7 @@ from .security import AuthenticatedPrincipal
 COOKIE = "ersel_local_session"
 READ_PERMISSIONS = frozenset({
     "corporation:read", "employee:read", "agent:read", "provider:read",
+    "provider-connection:read",
     "model:read", "task:read", "project:read", "activity:read",
     "documentation:read", "updates:read", "memory:read",
     "position:read",
@@ -28,6 +29,7 @@ EMPLOYEE_CHAT_PERMISSIONS = frozenset({
     "employee-chat:send", "employee-chat:close",
 })
 ASSIGNMENT_POLICY_PERMISSIONS = frozenset({"assignment-policy:manage"})
+PROVIDER_CONNECTION_MANAGEMENT_PERMISSIONS = frozenset({"provider-connection:manage"})
 CHAT_TASK_PERMISSIONS = frozenset({"chat-task:create"})
 TASK_DISPATCH_PERMISSIONS = frozenset({"task:dispatch"})
 
@@ -66,7 +68,7 @@ class LocalOwnerAuthentication:
             | LOCAL_MODEL_PERMISSIONS | ONLINE_PROVIDER_PERMISSIONS
             | POSITION_MANAGEMENT_PERMISSIONS | EMPLOYEE_CHAT_PERMISSIONS
             | ASSIGNMENT_POLICY_PERMISSIONS | CHAT_TASK_PERMISSIONS
-            | TASK_DISPATCH_PERMISSIONS)
+            | TASK_DISPATCH_PERMISSIONS | PROVIDER_CONNECTION_MANAGEMENT_PERMISSIONS)
 
     def _hash(self, password: str) -> bytes:
         return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), self._salt, 600_000)

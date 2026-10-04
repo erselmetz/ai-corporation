@@ -126,7 +126,9 @@ class GeminiConnectionManager:
             self._expire_locked()
             return self._target if self._target and self._target[0] == agent_id else None
 
-    def provider(self, api_key: str, model_id: str) -> "GeminiProvider":
+    def provider(
+        self, api_key: str, model_id: str | None = None
+    ) -> "GeminiProvider":
         key_identity = hashlib.sha256(api_key.encode("utf-8")).digest()
         return GeminiProvider(model_id, key_identity, self)
 
@@ -238,18 +240,26 @@ class GeminiConnectionManager:
 
 
 class GeminiProvider(AIProvider):
-    """Single-model, bounded official generateContent adapter with no fallback."""
+    """Bounded verified-model generateContent adapter with no fallback."""
 
-    def __init__(self, model_id: str, key_identity: bytes,
+    requires_explicit_cloud_consent = True
+
+    def __init__(self, model_id: str | None, key_identity: bytes,
                  manager: GeminiConnectionManager):
-        if not _MODEL_ID.fullmatch(model_id):
+        if model_id is not None and not _MODEL_ID.fullmatch(model_id):
             raise ValueError("Gemini model identifier is invalid")
         self._model_id = model_id
         self._key_identity = key_identity
         self._manager = manager
 
     def generate(self, model: str, prompt: str) -> str:
-        if model != self._model_id or not isinstance(prompt, str) or not prompt.strip():
+        if (
+            (self._model_id is not None and model != self._model_id)
+            or not isinstance(model, str)
+            or not _MODEL_ID.fullmatch(model)
+            or not isinstance(prompt, str)
+            or not prompt.strip()
+        ):
             raise ValueError("Gemini request configuration is invalid")
         if len(prompt.encode("utf-8")) > _MAX_INPUT_BYTES:
             raise ValueError("Gemini input exceeds the byte limit")

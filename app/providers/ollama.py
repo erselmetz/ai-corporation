@@ -60,19 +60,19 @@ class OllamaProvider(AIProvider):
             return result("unknown", "Local provider inventory response is malformed.")
 
     def generate(self, model: str, prompt: str) -> str:
-        response = httpx.post(
-            f"{self.base_url}/api/generate",
-            json={
-                "model": model,
-                "prompt": prompt,
-                "stream": False,
-            },
-            timeout=120.0,
-        )
-
-        response.raise_for_status()
-
-        data = response.json()
+        with httpx.Client(
+            timeout=120.0, trust_env=False, follow_redirects=False
+        ) as client:
+            response = client.post(
+                f"{self.base_url}/api/generate",
+                json={
+                    "model": model,
+                    "prompt": prompt,
+                    "stream": False,
+                },
+            )
+            response.raise_for_status()
+            data = response.json()
 
         return data["response"]
 

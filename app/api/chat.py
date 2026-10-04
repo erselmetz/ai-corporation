@@ -12,6 +12,7 @@ from app.application.services.chat_task_proposals import (
     ChatTaskProposalNotFound,
 )
 from app.memory import MemoryScope
+from app.providers.base import ProviderCapacityError, ProviderCapacityUnknown
 from .security import require_permission
 
 router = APIRouter(prefix="/api/chat/conversations")
@@ -101,6 +102,10 @@ def chat_errors():
         raise HTTPException(429, str(error)) from None
     except ChatUnavailable as error:
         raise HTTPException(503, str(error)) from None
+    except ProviderCapacityUnknown as error:
+        raise HTTPException(503, str(error)) from None
+    except ProviderCapacityError as error:
+        raise HTTPException(429, str(error)) from None
     except ValueError:
         raise HTTPException(422, "Chat input or conversation state is invalid") from None
     except RuntimeError:
@@ -139,7 +144,12 @@ def send_message(identifier: str, payload=Depends(bounded_body),
         raise HTTPException(422, SECRET_PASTE_GUIDANCE)
     with chat_errors():
         current = service.owned_chat().get(principal.identity, identifier)
-        if current["coordinator"].provider == "gemini" and body.cloud_consent is not True:
+        if (
+            service.provider_requires_explicit_cloud_consent(
+                current["coordinator"].provider
+            )
+            and body.cloud_consent is not True
+        ):
             raise HTTPException(403, "Explicit consent is required before sending this turn and recent chat context to Gemini.")
         return service.owned_chat().send(principal.identity, identifier, body.text)
 

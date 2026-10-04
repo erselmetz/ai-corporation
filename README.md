@@ -340,8 +340,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-111 are verified complete, Task 112 is next,
-and Tasks 112-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-112 are verified complete, Task 113 is next,
+and Tasks 113-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -541,3 +541,36 @@ The standard local launcher does not configure ResourceManager budgets and has
 no budget setup UI, so dispatch remains unavailable there until the embedding
 host explicitly configures global, provider, and model capacity. Validation,
 limitations, and checkpoint tag are recorded in `docs/tasks-data.mjs`.
+
+## Task 112 - Multiple provider connections and explicit assignment
+
+The local-owner page at `/ui/provider-connections` supports independently named
+loopback Ollama and Gemini connections. Connection-scoped credentials remain in
+memory, and APIs/status never return the Gemini key. Ollama URLs must be
+loopback HTTP; Gemini catalog discovery is explicit and each chat turn still
+requires separate cloud consent. Owners preview and confirm Agent/model changes;
+Employees use their assigned Agent. Existing coordinator and Employee chats
+reject changed route snapshots rather than silently switching providers.
+
+Catalogs show their source, check time, state and software request-slot limits.
+Local catalogs older than five minutes report stale; missing/future timestamps
+remain UNKNOWN. Fresh empty catalogs report empty, and empty/stale catalogs
+cannot be assigned. Global, per-connection and per-model request admission is
+bounded;
+capacity errors are explicit and no fallback/retry occurs. Hardware feasibility
+remains UNKNOWN. Gemini retains the existing one-request and five-generation
+attempt/output-token bounds, which are not a dollar spend ceiling; owners must
+manage account billing externally. Paid workflow execution still requires a
+verified spend ceiling. Connections and credentials are process-local, only
+Ollama/Gemini are supported, and external registry/multi-process coordination
+is outside scope.
+
+Validation: 88 focused Python regressions, 6 corporation update-record tests,
+16 provider/chat browser tests, and 14 public documentation tests passed with
+deterministic fakes; the Python runs reported one existing Starlette
+deprecation warning each. Pylance reported no
+diagnostics in the new provider service/API; pre-existing unused-parameter/import
+warnings remain in unchanged lines of existing files. No live or paid provider
+calls were made. The full Python suite was not rerun; the Task 111 checkpoint
+documents two unrelated model-assignment failures. Checkpoint tag
+`task-112-multiple-provider-connections`.

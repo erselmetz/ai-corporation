@@ -1,3 +1,8 @@
+function isGeminiProvider(providerId) {
+  return typeof providerId === "string"
+    && (providerId === "gemini" || providerId.startsWith("gemini-"));
+}
+
 export function mountChat({
   documentRef = document,
   fetchImpl = fetch,
@@ -84,7 +89,7 @@ export function mountChat({
     if (!record || !agent || typeof record.id !== "string" || !Array.isArray(record.messages)
         || !["open", "closed"].includes(record.status)) throw new Error("Invalid conversation response.");
     selected = record.id;
-    requiresCloudConsent = agent.provider === "gemini";
+    requiresCloudConsent = isGeminiProvider(agent.provider);
     cloudPanel.hidden = !requiresCloudConsent;
     cloudConsent.checked = false;
     conversations.value = record.id;

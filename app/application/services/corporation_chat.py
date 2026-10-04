@@ -6,6 +6,7 @@ from app.agents import EmployeeRegistry
 from app.conversations import ChatMessageSummary, EmployeeChatService, MessageRole, MessageStatus, ConversationStatus
 from app.orchestrator import Orchestrator
 from app.orchestrator.task import TaskStatus
+from app.providers.base import ProviderCapacityError
 
 
 @dataclass(frozen=True)
@@ -144,6 +145,9 @@ class CorporationChatService:
                 raise ValueError("Provider returned no reply")
             if len(reply.encode("utf-8")) > 8192:
                 raise ValueError("Provider reply exceeds byte limit")
+        except ProviderCapacityError:
+            self._chat.transition_message(conversation_id, user_id, MessageStatus.FAILED)
+            raise
         except Exception:
             self._chat.transition_message(conversation_id, user_id, MessageStatus.FAILED)
             raise RuntimeError("Corporation chat response failed") from None

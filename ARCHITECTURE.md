@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-111 are verified complete, Task 112 is next,
-and Tasks 112-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-112 are verified complete, Task 113 is next,
+and Tasks 113-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -877,3 +877,41 @@ closed until the embedding host configures explicit global, provider, and
 model capacity. In-process locking does not coordinate multiple application
 instances or direct database/registry mutations. Focused validation and
 limitations are recorded in `docs/tasks-data.mjs`.
+
+## Multiple provider connections (Task 112)
+
+The explicitly local-owner API exposes connection management only in
+`create_local_app`; the default API remains without these routes. The owner UI
+supports separate process-local connections for loopback Ollama and Gemini.
+Provider IDs are type-prefixed and scoped to each connection. Gemini keys enter
+through the bounded setup request for catalog verification, remain in the
+connection's in-memory manager for explicitly consented generation, are
+excluded from status/API responses and cleared on removal or restart. No secret
+is stored in the public documentation site.
+
+Ollama endpoints are restricted to loopback HTTP with redirects and environment
+proxies disabled for inventory and generation. Catalog status includes its
+source and check timestamp; local observations older than five minutes are
+reported stale, missing or future timestamps remain unknown, and successful
+fresh empty inventories are distinct from unavailable and unknown observations.
+Stale/empty catalogs cannot be assigned; assignment
+refreshes the selected catalog and compares the owner-confirmed previous
+provider/model before mutation. Unsupported provider types are rejected.
+
+Owners explicitly preview and confirm Agent/model assignments. Employee
+conversations follow the Employee's Agent assignment. New conversations use the
+confirmed assignment; existing coordinator/Employee chats keep their captured
+provider/model/provider-instance identity and fail closed if the assignment or
+connection changes. No silent fallback, reassignment or retry is performed.
+
+Admission uses process-local global (32), per-connection (16 maximum) and
+per-connection/model software request-slot limits; Gemini is limited to one
+in-flight request per connection. Missing limits block with UNKNOWN, and
+exhausted capacity is surfaced as an explicit 429. These limits do not measure
+hardware feasibility. Gemini retains Task 105's explicit per-turn consent,
+five-generation-attempt bound and output-token limit. They do not guarantee a
+dollar spend ceiling; external billing controls remain the owner's
+responsibility, and later paid workflow execution still requires a verified
+ceiling. Locks do not coordinate multiple application instances or direct
+registry changes. Focused validation, checkpoint and remaining limitations are
+recorded in `docs/tasks-data.mjs`.

@@ -17,6 +17,7 @@ from app.conversations import (
 )
 from app.orchestrator import Orchestrator
 from app.providers import ProviderRegistry
+from app.providers.base import ProviderCapacityError
 
 from .owned_chat import (
     ChatConflict,
@@ -216,7 +217,12 @@ class OwnedEmployeeChatService:
                 if conversation.status is not ConversationStatus.OPEN:
                     raise ValueError("Cannot send to a closed conversation")
                 if (
-                    entry.agent.provider_id == "gemini"
+                    (
+                        entry.agent.provider_id == "gemini"
+                        or getattr(
+                            entry.provider, "requires_explicit_cloud_consent", False
+                        ) is True
+                    )
                     and cloud_consent is not True
                 ):
                     raise ChatConsentRequired(
@@ -244,6 +250,11 @@ class OwnedEmployeeChatService:
                         raise ValueError("Provider returned no reply")
                     if len(reply.encode("utf-8")) > self.MAX_MESSAGE_BYTES:
                         raise ValueError("Provider reply exceeds byte limit")
+                except ProviderCapacityError:
+                    self._chat.transition_message(
+                        identifier, user_id, MessageStatus.FAILED
+                    )
+                    raise
                 except Exception:
                     self._chat.transition_message(
                         identifier, user_id, MessageStatus.FAILED

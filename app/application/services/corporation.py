@@ -1021,6 +1021,17 @@ class CorporationApplicationService:
     def provider_exists(self, provider_id: str) -> bool:
         return self._orchestrator.providers.exists(provider_id)
 
+    def provider_requires_explicit_cloud_consent(self, provider_id: str) -> bool:
+        if provider_id == "gemini" or provider_id.startswith("gemini-"):
+            return True
+        try:
+            provider = self._orchestrator.providers.get(provider_id)
+        except ValueError:
+            return False
+        return (
+            getattr(provider, "requires_explicit_cloud_consent", False) is True
+        )
+
     def register_local_provider(self, provider_id: str, provider) -> None:
         self._orchestrator.providers.register(provider_id, provider)
 

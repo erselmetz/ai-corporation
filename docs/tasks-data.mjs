@@ -553,7 +553,7 @@ export const post100Tasks = [
     "title": "Multiple provider connections and explicit assignment",
     "description": "Support independently configured local/online provider connections, catalog/status visibility and explicit Agent/Employee assignments across supported providers.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       104,
       105,
@@ -574,13 +574,24 @@ export const post100Tasks = [
     ],
     "decisions": [
       "Use only explicitly owner-configured connections and assignments; keep existing assignments and conversations unchanged unless the owner confirms a new assignment.",
-      "Online connections remain opt-in and require connection-scoped credentials, explicit consent and enforceable configured spend limits before paid requests; never call live services in ordinary tests.",
+      "Online connections remain opt-in and require connection-scoped credentials, per-turn consent, and the existing bounded call/output behavior. These bounds are not a dollar spend ceiling; this task does not claim monetary spend enforcement, and future paid workflow execution remains gated on a verified ceiling.",
       "Do not infer health, model support, capacity or hardware feasibility from configuration alone. Missing or unsupported evidence remains UNKNOWN, and provider failures never trigger silent fallback."
     ],
     "area": "Provider connections",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-112-multiple-provider-connections",
+    "validation": [
+      "Focused Python provider-connection, local/online provider, consent, assignment, chat and Ollama regressions: 88 passed with one existing Starlette deprecation warning; no skips.",
+      "Corporation update-record regressions: 6 passed with one existing Starlette deprecation warning; no skips.",
+      "Provider, Employee chat and multi-provider browser-module regressions: 16 passed with deterministic API/session fakes; no skips.",
+      "Public documentation suite: 14 passed with no skips. Pylance reported no errors or diagnostics in the new provider service/API; only pre-existing unused-parameter/import warnings remain in unchanged lines of existing files. Tests made no live or paid provider calls."
+    ],
+    "limitations": [
+      "Provider connection records, online credentials and chat conversations are process-local; restart clears them. Only loopback Ollama and Gemini are supported; other provider types are rejected.",
+      "Catalog freshness for local connections expires after five minutes; stale and empty catalogs cannot be assigned. Gemini credentials expire after one hour, and the existing one-request and five-generation-attempt/output-token bounds remain in force.",
+      "Request slots bound software concurrency only; hardware feasibility and dollar spend remain unknown. Existing request/output caps are not a monetary guarantee; owners must manage billing externally, and paid workflow execution still requires a verified spend ceiling.",
+      "Assignments are owner-confirmed per Agent; Employee chat follows that Employee's assigned Agent. Existing chats fail closed when assignment/connection snapshots become stale and require a new conversation.",
+      "Locks and credentials are process-local and do not coordinate direct registry mutations, external processes or multiple application instances. The complete Python suite was not rerun; its last Task 111 checkpoint recorded two unrelated model-assignment failures."
+    ]
   },
   {
     "number": 113,

@@ -513,6 +513,7 @@ def provider_model_management_page() -> HTMLResponse:
                 <li><a href="/ui/chat">Coordinator chat</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers" aria-current="page">Provider &amp; Model management</a></li>
+                <li><a href="/ui/provider-connections">Local / online provider connections</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
@@ -982,4 +983,42 @@ def local_online_provider_page():
     That is a request/output cap, not a dollar cap. Set account billing limits and alerts in Google
     AI Studio / Cloud; outside use of the same key is not counted here. The key stays in memory for
     up to one hour or until disconnect/app restart. Restrict it to the Gemini API before use.</p>
+    </main></body></html>""")
+
+
+@router.get("/ui/provider-connections", response_class=HTMLResponse)
+def provider_connections_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Provider connections - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/provider-connections.mjs"></script></head><body>
+    <main class="content"><nav><a href="/ui/providers">Provider management</a> |
+    <a href="/ui/local-models">Local model setup</a> |
+    <a href="/ui/online-provider">Gemini setup</a> |
+    <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <h1>Provider connections</h1>
+    <p>Connections and credentials are held only in this app process. Ollama endpoints must be
+    loopback HTTP. Gemini model discovery is an explicit online request; each Gemini turn still
+    requires its own consent and uses the existing five-request/output-token caps. Those caps are
+    not a dollar ceiling. Set account billing limits outside this app. Hardware feasibility remains
+    UNKNOWN; request slots limit software concurrency only.</p>
+    <label for="connection-type">Provider type</label>
+    <select id="connection-type"><option value="ollama">Local Ollama</option><option value="gemini">Google Gemini</option></select>
+    <label for="connection-id">Connection ID</label><input id="connection-id" maxlength="48" autocomplete="off">
+    <label for="connection-name">Display name</label><input id="connection-name" maxlength="256" autocomplete="off">
+    <div id="connection-url-field"><label for="connection-url">Loopback Ollama URL</label>
+    <input id="connection-url" value="http://127.0.0.1:11434" maxlength="2048" autocomplete="off"></div>
+    <div id="connection-key-field" hidden><label for="connection-key">Restricted Gemini API key</label>
+    <input id="connection-key" type="password" maxlength="4096" autocomplete="off"></div>
+    <label for="connection-slots">In-flight request slots</label>
+    <input id="connection-slots" type="number" min="1" max="16" value="1">
+    <button id="connection-add" type="button">Add and verify connection</button>
+    <p id="connection-state" role="status" aria-live="polite"></p>
+    <h2>Configured connections</h2><ul id="connection-list"></ul>
+    <label for="assignment-provider">Connection</label><select id="assignment-provider"></select>
+    <button id="connection-refresh" type="button">Refresh catalog and status</button>
+    <button id="connection-remove" type="button">Remove connection</button>
+    <label for="assignment-agent">Agent</label><select id="assignment-agent"></select>
+    <label for="assignment-model">Supported model</label><select id="assignment-model"></select>
+    <button id="assignment-save" type="button">Preview and assign</button>
     </main></body></html>""")

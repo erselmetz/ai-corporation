@@ -105,7 +105,7 @@ def test_local_gemini_setup_consent_disconnect_and_assignment_restoration(monkey
         assert service.get_model_assignment("local_worker") == original
         stale = client.post(f"/api/chat/conversations/{conversation_id}/messages",
                             headers=headers, json={"text": "again", "cloud_consent": True})
-        assert stale.status_code == 409
+        assert stale.status_code == 409, stale.text
         assert len(network_calls) == 1
         assert service.list_tasks() == tasks_before
         assert client.get("/api/local/online-provider").json()["connected"] is False

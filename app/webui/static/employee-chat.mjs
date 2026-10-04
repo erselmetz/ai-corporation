@@ -3,6 +3,11 @@ function setState(element, message, kind = "") {
   element.className = `section-state ${kind}`.trim();
 }
 
+function isGeminiProvider(providerId) {
+  return typeof providerId === "string"
+    && (providerId === "gemini" || providerId.startsWith("gemini-"));
+}
+
 function validEmployee(item) {
   return Boolean(
     item &&
@@ -54,8 +59,9 @@ function errorMessage(status) {
   if (status === 409) return "The Employee or Agent assignment changed, or work is active. Refresh and start a new conversation.";
   if (status === 413) return "The individual chat request exceeded its size limit.";
   if (status === 422) return "The message or selected Employee is invalid. Gemini keys must use the separate setup page.";
-  if (status === 429) return "The conversation limit was reached for this app run.";
-  if (status === 502 || status === 503) return "The assigned provider is unavailable or the reply failed. No automatic retry occurred.";
+  if (status === 429) return "The conversation or configured provider/model request-slot limit was reached.";
+  if (status === 502) return "The assigned provider is unavailable or the reply failed. No automatic retry occurred.";
+  if (status === 503) return "Provider capacity is UNKNOWN or the assigned provider is unavailable; the request was not admitted.";
   return "Individual chat could not be completed. Refresh and try again.";
 }
 
@@ -91,7 +97,7 @@ export function mountEmployeeChat({
     closeButton.disabled = busy || !open;
     message.disabled = busy || !open;
     byId("individual-chat-send").disabled =
-      busy || !open || (current?.agent.provider_id === "gemini" && !consent.checked);
+      busy || !open || (isGeminiProvider(current?.agent.provider_id) && !consent.checked);
   }
 
   async function request(path, { method = "GET", body } = {}) {
@@ -144,7 +150,7 @@ export function mountEmployeeChat({
       `Agent ${snapshot.agent.name} (${snapshot.agent.id}) · ` +
       `${snapshot.agent.provider_id}/${snapshot.agent.model_id} · ` +
       `${snapshot.conversation.status}`;
-    consentPanel.hidden = snapshot.agent.provider_id !== "gemini";
+    consentPanel.hidden = !isGeminiProvider(snapshot.agent.provider_id);
     consent.checked = false;
     controls();
   }

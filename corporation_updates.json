@@ -3,6 +3,12 @@
     {
       "date": "2026-10-04",
       "type": "development",
+      "title": "Multiple provider connections and explicit assignment",
+      "summary": "Completed Task 112 with separate process-local Ollama/Gemini connections, truthful catalog freshness/status, local-owner-only management, per-connection secret handling, explicit Agent assignment previews and per-connection/model request-slot admission. Employees continue to use their assigned Agent; existing chats fail closed on changed assignment snapshots rather than silently switching. Deterministic fakes exercised two local and three online connections, secret non-disclosure, stale/empty/unknown catalogs, assignment conflicts, Gemini consent and capacity rejection. Validation: 88 focused Python provider/chat regressions, 6 corporation update-record tests, 16 provider/chat browser tests and 14 public documentation tests passed with deterministic fakes. Each Python run reported one existing Starlette deprecation warning; no tests were skipped. Pylance found no issues in the new provider service/API; pre-existing unused-parameter/import warnings remain in unchanged lines of existing files. No live or paid calls were made. Hardware feasibility and dollar spend remain unknown; existing Gemini request/output caps are not a monetary guarantee, and later paid workflow execution still requires a verified spend ceiling. Checkpoint tag: task-112-multiple-provider-connections."
+    },
+    {
+      "date": "2026-10-04",
+      "type": "development",
       "title": "Multi-provider roadmap contract",
       "summary": "Published a roadmap-only Task 112 contract for multiple independently configured local/online provider connections, truthful catalogs and health, explicit Agent/Employee assignment, and concurrency limited to configured request slots. Preserved completed Tasks 101?111 and moved the former Tasks 112?128 to Tasks 113?129, updating dependencies and public status. The conservative contract requires explicit owner configuration and assignment, connection-scoped secret handling, no silent fallback or retry, and UNKNOWN when support or capacity cannot be verified. Deterministic fakes are required for tests; no live or paid provider calls. Task 112 remains planned; no runtime capability or permission was added."
     },
