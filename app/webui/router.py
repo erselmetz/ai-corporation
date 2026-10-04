@@ -811,6 +811,27 @@ def coordinator_chat_page():
     <form id="chat-form"><label for="chat-input">Message (up to 8192 UTF-8 bytes)</label>
     <textarea id="chat-input" rows="4" maxlength="8192" required></textarea>
     <button id="chat-send" type="submit">Send</button></form>
+    <section class="panel" aria-labelledby="chat-task-proposal-heading">
+    <h2 id="chat-task-proposal-heading">Review a coordinator proposal</h2>
+    <p>Only an explicitly confirmed proposal creates a pending Task. It does not execute work.
+    The local-owner flow has a separate <code>chat-task:create</code> permission.</p>
+    <label for="chat-task-source">Completed coordinator proposal</label><select id="chat-task-source"></select>
+    <label for="chat-task-objective">Objective / Task title</label><input id="chat-task-objective" maxlength="1024">
+    <label for="chat-task-agent">Responsible Agent</label><select id="chat-task-agent"></select>
+    <label for="chat-task-project">Project ID</label><input id="chat-task-project" maxlength="256">
+    <label for="chat-task-context-query">Optional authorized context query</label><input id="chat-task-context-query" maxlength="1024">
+    <label for="chat-task-context-scope">Context scope</label><select id="chat-task-context-scope">
+    <option value="">No additional retained context</option><option value="conversation">Conversation</option>
+    <option value="project">Project</option><option value="corporation">Corporation</option></select>
+    <label for="chat-task-context-id">Context scope ID</label><input id="chat-task-context-id" maxlength="256">
+    <label for="chat-task-outcome">Expected outcome</label><textarea id="chat-task-outcome" maxlength="1024"></textarea>
+    <label for="chat-task-verification">Verification method</label><textarea id="chat-task-verification" maxlength="1024"></textarea>
+    <label for="chat-task-evidence">Expected evidence</label><textarea id="chat-task-evidence" maxlength="1024"></textarea>
+    <button id="chat-task-prepare" type="button">Prepare proposal for review</button>
+    <p id="chat-task-state" role="status" aria-live="polite"></p>
+    <pre id="chat-task-review" aria-live="polite"></pre>
+    <button id="chat-task-confirm" type="button" disabled>Confirm and create pending Task</button>
+    </section>
     <p>History is in memory and is lost when the app restarts. Up to 100 conversations and 200 messages
     per conversation are retained for this run. The current provider contract does not stream or
     cancel requests. For the default local Agent, Ollama and llama3.2:3b must already be available;

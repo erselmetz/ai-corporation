@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-109 are verified complete, Task 110 is next,
-and Tasks 110-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-110 are verified complete, Task 111 is next,
+and Tasks 111-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -831,3 +831,28 @@ the recommendation policy clears its stored configuration and is the undo for
 policy state; no assignment rollback is needed because recommendations never
 mutate assignments. State is lost on restart. Focused validation and checkpoint tag
 `task-109-capability-based-assignment-policy`.
+
+Task 110 adds `/api/chat/conversations/{id}/task-proposals` and a coordinator
+chat review panel. A proposal must reference a completed assistant message in
+the authenticated principal's open conversation and explicitly name its
+objective, Project, responsible Agent, expected outcome, verification method,
+and evidence. Optional retained-memory context is retrieved only for the
+principal and requested scope; it is displayed with provenance and
+re-retrieved during confirmation. The application builds canonical Task title
+and description fields and hashes the exact review snapshot. Confirmation
+requires that digest, explicit confirmation, the same authenticated principal,
+an unexpired 15-minute proposal, and unchanged conversation/source,
+coordinator, Agent, Project, and context state. Changed or mismatched proposals
+must be prepared again.
+
+The distinct `chat-task:create` permission is granted only in explicit
+local-owner mode and authorizes this proposal workflow, not the generic
+`task:create` route. Proposals are bounded and process-local; confirmation
+consumes a proposal before calling existing Task/Project persistence, creating
+at most one pending Task. The canonical Task description retains expected
+outcome/evidence and source/context references but not copied memory text.
+This path never runs Tasks or Tools. It does not add durable proposal records,
+structured outcome persistence, or a durable confirmer field; uncertain Task
+creation failures are not replayable and require inspection. Per-process
+deduplication and in-memory confirmation state do not coordinate across
+multiple app instances.

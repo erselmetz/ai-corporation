@@ -25,17 +25,17 @@ test("shows all tasks in descending order and highlights the actual next planned
   assert.equal(groups[0].id, "tasks-101-128");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 128 }, (_, index) => 128 - index));
-  assert.match(elements["roadmap-summary"].textContent, /128 roadmap tasks.*109 completed.*19 planned/);
-  assert.equal(elements["next-task"].children[0].href, "#task-110");
-  assert.match(elements["next-task"].textContent, /Next: Task 110/);
-  assert.match(elements["next-task"].textContent, /Chat proposals and pending Task review/);
+  assert.match(elements["roadmap-summary"].textContent, /128 roadmap tasks.*110 completed.*18 planned/);
+  assert.equal(elements["next-task"].children[0].href, "#task-111");
+  assert.match(elements["next-task"].textContent, /Next: Task 111/);
+  assert.match(elements["next-task"].textContent, /Controlled worker dispatch/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
   const elements = render();
   const items = elements["roadmap-groups"].children[0].children[1].children;
   const completed = items.find(item => item.id === "task-103");
-  const planned = items.find(item => item.id === "task-110");
+  const planned = items.find(item => item.id === "task-111");
   assert.equal(completed.children[2].textContent, "Completed");
   assert.match(completed.textContent, /Verified checkpoint: d1ca364/);
   assert.match(completed.textContent, /876 Python passed/);
@@ -63,6 +63,11 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.equal(assignmentPolicy.children[2].textContent, "Completed");
   assert.match(assignmentPolicy.textContent, /fresh positive tested capability references/);
   assert.match(assignmentPolicy.textContent, /task-109-capability-based-assignment-policy/);
+  const chatProposal = items.find(item => item.id === "task-110");
+  assert.equal(chatProposal.children[2].textContent, "Completed");
+  assert.match(chatProposal.textContent, /exact server-generated proposal digest/);
+  assert.match(chatProposal.textContent, /chat-task:create/);
+  assert.match(chatProposal.textContent, /task-110-chat-proposals-pending-task-review/);
   assert.match(elements["roadmap-rules"].textContent, /Do not infer approval/);
   assert.match(elements["roadmap-rules"].textContent, /identical generated code is not guaranteed/);
 });

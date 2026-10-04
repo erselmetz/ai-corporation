@@ -16,21 +16,32 @@ const snapshot = (messages = [], status = "open", coordinator = agent) => ({ coo
 const message = (role, status, content) => ({ id: role, role, status, content });
 const response = (payload, status = 200) => ({ ok: status === 200, status, json: async () => payload });
 function setup(handler = null) {
-  const ids = ["chat-state", "chat-history", "chat-agent", "chat-conversation", "chat-input", "chat-start", "chat-send", "chat-close", "chat-refresh", "chat-identity", "chat-form", "cloud-consent-panel", "cloud-consent"];
-  const elements = Object.fromEntries(ids.map(id => [id, new Element(id === "chat-agent" || id === "chat-conversation" ? "select" : "")]));
+  const ids = [
+    "chat-state", "chat-history", "chat-agent", "chat-conversation", "chat-input",
+    "chat-start", "chat-send", "chat-close", "chat-refresh", "chat-identity",
+    "chat-form", "cloud-consent-panel", "cloud-consent", "chat-task-source",
+    "chat-task-agent", "chat-task-prepare", "chat-task-confirm", "chat-task-review",
+    "chat-task-state", "chat-task-objective", "chat-task-project",
+    "chat-task-context-query", "chat-task-context-scope", "chat-task-context-id",
+    "chat-task-outcome", "chat-task-verification", "chat-task-evidence",
+  ];
+  const elements = Object.fromEntries(ids.map(id => [id, new Element(
+    ["chat-agent", "chat-conversation", "chat-task-source", "chat-task-agent",
+      "chat-task-context-scope"].includes(id) ? "select" : "",
+  )]));
   const calls = [];
   const fetchImpl = async (path, options) => {
     calls.push({ path, options });
     const custom = handler && await handler(path, options);
     if (custom) return custom;
     if (path === "/api/agents") return response({ items: [agent] });
-    if (path === "/api/local/session") return response({ csrf: "test-csrf" });
+    if (path === "/api/local/session") return response({ csrf: "test-csrf", permissions: ["chat-task:create"] });
     if (path === "/api/chat/conversations" && !options.method) return response({ items: [] });
     if (path.endsWith("/close")) return response(snapshot([], "closed"));
     return response(snapshot());
   };
   const documentRef = { getElementById: id => elements[id], createElement: tag => new Element(tag) };
-  const controller = mountChat({ documentRef, fetchImpl });
+  const controller = mountChat({ documentRef, fetchImpl, confirmImpl: () => true });
   return { controller, elements, calls };
 }
 
@@ -148,6 +159,50 @@ test("existing owner conversation can be selected after refresh and closed expli
   assert.equal(ui.elements["chat-input"].disabled, true);
 });
 
+test("coordinator proposal is shown before an explicit pending-Task confirmation", async () => {
+  const proposal = {
+    proposal_id: "proposal-1",
+    proposal_digest: "a".repeat(64),
+    objective: "Reviewed objective",
+    responsible_agent: { id: "worker", name: "Actual Worker" },
+    authorized_context: null,
+    outcome: { expected_outcome: "Expected result" },
+    task: { title: "Reviewed objective", description: "Canonical task fields" },
+  };
+  const ui = setup((path, options) => {
+    if (path.endsWith("/messages")) {
+      return response(snapshot([message("assistant", "completed", "Coordinator proposal")]));
+    }
+    if (path.endsWith("/confirm")) {
+      return response({ proposal_id: "proposal-1", task_id: "task-1", status: "pending" });
+    }
+    if (path.endsWith("/task-proposals")) return response(proposal);
+    return null;
+  });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-input"].value = "Please propose work";
+  await ui.controller.send();
+  ui.elements["chat-task-source"].value = "assistant";
+  ui.elements["chat-task-objective"].value = "Reviewed objective";
+  ui.elements["chat-task-agent"].value = "worker";
+  ui.elements["chat-task-project"].value = "project-1";
+  ui.elements["chat-task-outcome"].value = "Expected result";
+  ui.elements["chat-task-verification"].value = "Owner checks result";
+  ui.elements["chat-task-evidence"].value = "Review record";
+
+  assert.equal(await ui.controller.prepareTaskProposal(), true);
+  assert.match(ui.elements["chat-task-review"].textContent, /Canonical task fields/);
+  assert.equal(ui.calls.some(call => call.path.endsWith("/task-proposals/confirm")), false);
+  assert.equal(await ui.controller.confirmTaskProposal(), true);
+  assert.match(ui.elements["chat-task-review"].textContent, /pending/);
+  const confirmation = ui.calls.find(call => call.path.endsWith("/confirm"));
+  assert.equal(confirmation.options.headers["X-Local-CSRF"], "test-csrf");
+  assert.deepEqual(JSON.parse(confirmation.options.body), {
+    proposal_digest: "a".repeat(64),
+    confirmed: true,
+  });
+});
 
 test("a failed send that discovers closure keeps input disabled and never replays", async () => {
   const ui = setup(path => {

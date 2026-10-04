@@ -27,7 +27,7 @@ LOGIN_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <button type="submit">Sign in</button></form>
 <p id="login-state" role="status" aria-live="polite"></p>
 <a href="/ui">Dashboard</a> <a href="/ui/chat">Coordinator chat</a> <button id="local-logout" type="button">Sign out</button>
-<p>Local mode provides read access and separately authorized coordinator chat. Local installed-model selection is separately authorized; other management actions remain unavailable.</p>
+<p>Local mode provides read access and separately authorized coordinator chat. The separate chat-task:create permission supports reviewed pending-Task proposals; general task:create remains unavailable. Other management actions remain separately authorized.</p>
 </main><script type="module" src="/ui/static/local-login.mjs"></script></body></html>"""
 
 

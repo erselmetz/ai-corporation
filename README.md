@@ -329,16 +329,19 @@ The current provider contract has no streaming or true cancellation; closing the
 or signing out does not cancel a request already admitted. Failures record a failed
 user message and expose a safe error; network failures can leave an uncertain outcome,
 so the UI reads the current conversation without automatically replaying the turn.
-Replies are rendered as plain text, including any HTML. No tools, Task creation/
-execution, assignment changes, cloud fallback, automatic retries, deployment, or
-maintenance action is triggered. Keep API credentials out of ordinary chat.
+Replies are rendered as plain text, including any HTML. Replies alone do not
+create Tasks, execute tools, change assignments, use cloud fallback, retry
+automatically, deploy, or trigger maintenance. A separate, permission-gated
+review flow can turn a completed coordinator message into a canonical proposal;
+only explicit owner confirmation creates a pending Task, and it never executes.
+Keep API credentials out of ordinary chat.
 The CEO label/hierarchy, workforce delegation and richer onboarding remain planned.
 
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-109 are verified complete, Task 110 is next,
-and Tasks 110-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-110 are verified complete, Task 111 is next,
+and Tasks 111-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -408,7 +411,8 @@ tests, and 13 public-docs tests passed. New provider tests use deterministic fak
 Task 107 completed the bounded ephemeral positions foundation. Task 108 adds
 manual connection previews and owner-scoped individual Employee chat. Task 109
 adds disabled-by-default, review-only model assignment recommendations; Tasks
-110-128 remain planned and Task 110 is next.
+Task 110 adds a separate, permission-gated coordinator-proposal review flow;
+Tasks 111-128 remain planned and Task 111 is next.
 
 ## Task 107 - Editable corporation positions
 
@@ -489,3 +493,25 @@ complete undo because it never applies assignments; any separately confirmed man
 through the existing manual setup flow. Policy state disappears on restart.
 Focused validation and checkpoint evidence are recorded in
 `docs/tasks-data.mjs`.
+
+## Task 110 - Chat proposals and pending Task review
+
+In explicit local-owner mode, the coordinator chat page can prepare a
+principal-scoped proposal from a completed coordinator message. Before
+confirmation, it displays the objective, responsible Agent, Project, the
+authorized retained-memory context (or that none was selected), expected
+outcome, verification method, expected evidence, and canonical Task fields.
+Optional context retrieval is owner-filtered to the selected scope and is
+repeated before confirmation. The application rechecks the source conversation
+and message, coordinator, Agent, Project, context, and a 15-minute expiry.
+
+The exact server-generated proposal digest must be explicitly confirmed by the
+same authenticated principal. A distinct `chat-task:create` permission
+authorizes only this flow; local-owner mode does not gain general
+`task:create`. Confirmation consumes the proposal before creating one pending
+Task through existing Task persistence. It never executes a Task or tool.
+Proposals are bounded, in-memory records and are lost on restart. Duplicate,
+edited, stale, expired, cross-owner, and replayed confirmations fail closed.
+The Task description keeps outcome/evidence and provenance references, not a
+copy of retained-memory content. See `docs/tasks-data.mjs` for validation,
+limitations, and the checkpoint tag.

@@ -181,6 +181,8 @@ class CorporationApplicationService:
         self._owned_chat = None
         self._owned_employee_chat = None
         self._owned_chat_lock = Lock()
+        self._chat_task_proposals = None
+        self._chat_task_proposal_lock = Lock()
         self._assignment_policy = None
         self._assignment_policy_lock = Lock()
         self._task_collaboration = None
@@ -728,6 +730,15 @@ class CorporationApplicationService:
                     self._orchestrator.agents.execution,
                 )
             return self._owned_chat
+
+    def chat_task_proposals(self):
+        """Return the bounded owner-scoped review service for coordinator proposals."""
+        self.owned_chat()
+        with self._chat_task_proposal_lock:
+            if self._chat_task_proposals is None:
+                from .chat_task_proposals import ChatTaskProposalService
+                self._chat_task_proposals = ChatTaskProposalService(self)
+            return self._chat_task_proposals
 
     def owned_employee_chat(self):
         """Return the principal-owned Employee chat facade for this app run."""

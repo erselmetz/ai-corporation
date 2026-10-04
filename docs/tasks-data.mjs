@@ -475,7 +475,7 @@ export const post100Tasks = [
     "title": "Chat proposals and pending Task review",
     "description": "Turn a coordinator proposal into an owner-reviewed pending Task using existing planning/review services.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       103,
       109
@@ -490,12 +490,23 @@ export const post100Tasks = [
       "Generated text directly executing tools, running Tasks or approving itself."
     ],
     "decisions": [
-      "Approve proposal persistence, confirmation identity and task-creation permission contract."
+      "Resolved conservatively: proposals are bounded, principal-scoped in-memory records with a 15-minute expiry; no separate durable proposal store or migration is added. Confirmation is bound to the authenticated principal and exact server-generated proposal digest, and rechecks the open source conversation/message, coordinator, responsible Agent, Project, and any explicitly retrieved owner-authorized memory context. A dedicated chat-task:create permission authorizes only this proposal flow; explicit local-owner mode grants it while general task:create remains denied. Successful confirmation consumes the proposal before creating a pending Task, preventing retries after uncertain creation outcomes; no Task or tool execution occurs."
     ],
     "area": "P06a",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-110-chat-proposals-pending-task-review",
+    "validation": [
+      "Focused Task proposal, local access, legacy chat-task review, owned-chat and default updates-manifest regressions: 36 passed, one existing Starlette deprecation warning.",
+      "Coordinator chat browser-module tests: 9 passed with deterministic request fakes.",
+      "Public documentation JavaScript tests: 13 passed, none skipped.",
+      "Full Python suite: 937 passed, 2 failed, 3 skipped. The unrelated model-assignment tests test_model_set_command and test_model_replacement_uses_existing_assignment_service also fail when run in isolation; neither test or its implementation files are changed by Task 110.",
+      "Proposal API tests cover exact-digest mismatch, confirmation replay, duplicate proposal creation, stale closed conversations, cross-owner denial, mismatched Project context scope, default permission denial, and pending-only creation with no additional provider call."
+    ],
+    "limitations": [
+      "Unconfirmed proposals are process-local, principal-scoped and expire after 15 minutes; they are lost on restart. At most 100 pending proposals per owner and 8 owners are retained, and 1,000 distinct proposal creations are allowed per app run.",
+      "Authorized memory context is optional; the completed coordinator message is the required source. Selected context is owner-filtered, displayed with provenance and re-retrieved at confirmation. The durable Task description retains context references, not copied memory text.",
+      "Task creation uses the existing Task/Project persistence and does not store a structured outcome record or add a durable confirmer field; the authenticated confirmation identity and reviewed outcomes/evidence are included in the proposal response and canonical Task description.",
+      "Only the new chat-task:create permission authorizes this path in local-owner mode; it does not grant general task:create. Proposal state and confirmation deduplication are process-local and do not synchronize across multiple app instances or direct registry/database mutations."
+    ]
   },
   {
     "number": 111,
