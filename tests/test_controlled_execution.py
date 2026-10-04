@@ -116,6 +116,24 @@ def test_missing_task_and_route_error_do_not_consume_capacity():
     assert runtime.tasks.get("a").status is TaskStatus.PENDING
     assert provider.calls == 0
 
+
+def test_controlled_dispatch_rejects_a_route_changed_after_review():
+    provider = Provider()
+    runtime, application = setup(provider, capacity=1)
+
+    with pytest.raises(ValueError, match="route changed"):
+        application.execute_controlled_task(
+            "a",
+            expected_agent_id="another-agent",
+            expected_provider="ollama",
+            expected_model="llama3.2:3b",
+        )
+
+    assert runtime.tasks.get("a").status is TaskStatus.PENDING
+    assert provider.calls == 0
+    assert application.resource_manager().snapshot().global_capacity.allocated == 0
+
+
 @pytest.mark.parametrize("provider_slots,model_slots", [(1, 2), (2, 1)])
 def test_provider_and_model_limits_apply_to_controlled_calls(provider_slots, model_slots):
     provider = Provider(blocking=True)

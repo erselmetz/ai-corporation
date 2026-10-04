@@ -183,6 +183,8 @@ class CorporationApplicationService:
         self._owned_chat_lock = Lock()
         self._chat_task_proposals = None
         self._chat_task_proposal_lock = Lock()
+        self._task_dispatch = None
+        self._task_dispatch_lock = Lock()
         self._assignment_policy = None
         self._assignment_policy_lock = Lock()
         self._task_collaboration = None
@@ -642,14 +644,63 @@ class CorporationApplicationService:
             timeout_seconds=timeout_seconds,
         )
 
-    def execute_controlled_task(self, task_id):
+    def execute_controlled_task(
+        self,
+        task_id,
+        *,
+        expected_agent_id=None,
+        expected_provider=None,
+        expected_model=None,
+    ):
         self.resource_manager()  # Reject missing configuration before touching Tasks.
-        return self._task_summary(self._controlled_execution.execute(task_id))
+        return self._task_summary(
+            self._controlled_execution.execute(
+                task_id,
+                expected_agent_id=expected_agent_id,
+                expected_provider=expected_provider,
+                expected_model=expected_model,
+            )
+        )
 
     def execution_queue(self):
         if self._corporation is None:
             raise RuntimeError("Corporation identity is not configured")
         return self._orchestrator.execution_queue(self._corporation.id)
+
+    def task_dispatch(self):
+        with self._task_dispatch_lock:
+            if self._task_dispatch is None:
+                from .task_dispatch import TaskDispatchService
+                self._task_dispatch = TaskDispatchService(self)
+            return self._task_dispatch
+
+    def is_loopback_ollama_provider(self, provider_id):
+        from urllib.parse import urlsplit
+        from app.providers import OllamaProvider
+
+        if provider_id != "ollama":
+            return False
+        try:
+            provider = self._orchestrator.providers.get(provider_id)
+        except ValueError:
+            return False
+        if not isinstance(provider, OllamaProvider):
+            return False
+        try:
+            endpoint = urlsplit(provider.base_url)
+            port = endpoint.port
+        except (TypeError, ValueError):
+            return False
+        return (
+            endpoint.scheme == "http"
+            and endpoint.hostname in {"localhost", "127.0.0.1", "::1"}
+            and endpoint.username is None
+            and endpoint.password is None
+            and endpoint.path == ""
+            and endpoint.query == ""
+            and endpoint.fragment == ""
+            and (port is None or 1 <= port <= 65535)
+        )
 
     def resource_manager(self, limits=None):
         from app.resources import ResourceManager

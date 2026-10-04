@@ -61,6 +61,35 @@ function validDryRun(payload, taskId) {
   );
 }
 
+function validDispatchEntry(entry) {
+  return Boolean(
+    entry &&
+    Number.isInteger(entry.sequence) &&
+    typeof entry.id === "string" &&
+    typeof entry.task_id === "string" &&
+    ["queued", "claimed", "completed", "failed", "abandoned"].includes(entry.state) &&
+    (entry.worker_id === null || typeof entry.worker_id === "string") &&
+    (entry.claim_id === null || typeof entry.claim_id === "string") &&
+    (entry.resolution === null || typeof entry.resolution === "string") &&
+    typeof entry.created_at === "string" &&
+    typeof entry.updated_at === "string" &&
+    entry.task &&
+    typeof entry.task.title === "string" &&
+    typeof entry.task.status === "string" &&
+    typeof entry.task.result_recorded === "boolean" &&
+    typeof entry.task.error_recorded === "boolean"
+  );
+}
+
+function validDispatchQueue(payload) {
+  return Boolean(
+    payload &&
+    Array.isArray(payload.items) &&
+    payload.items.every(validDispatchEntry) &&
+    typeof payload.history_limit_reached === "boolean"
+  );
+}
+
 function setState(element, message, kind = "") {
   element.textContent = message;
   element.className = `section-state ${kind}`.trim();
@@ -73,6 +102,15 @@ function errorMessage(status, action) {
     return action === "task-create"
       ? "The referenced Project was not found. Check the Project ID and retry."
       : "This Task no longer exists.";
+  }
+  if (status === 409 && action === "task-dispatch") {
+    return "Dispatch is blocked by the current Task or queue state. Inspect the queue; no automatic retry occurred.";
+  }
+  if (status === 503 && action === "task-dispatch") {
+    return "Dispatch is unavailable until explicit provider and model slot budgets are configured.";
+  }
+  if (status === 502 && action === "task-dispatch") {
+    return "The dispatch outcome may be uncertain. Inspect the queue before taking further action.";
   }
   if (status === 409) return "The Task request conflicts with current data.";
   if (status === 422) return "The API rejected the Task fields. Review the form and retry.";
@@ -130,6 +168,11 @@ export function mountTaskPage({
   const form = documentRef.getElementById("task-create-form");
   const createButton = documentRef.getElementById("task-create-submit");
   const createState = documentRef.getElementById("task-create-state");
+  const dispatchState = documentRef.getElementById("task-dispatch-state");
+  const dispatchQueue = documentRef.getElementById("task-dispatch-queue");
+  const dispatchRefresh = documentRef.getElementById("task-dispatch-refresh");
+  const dispatchResolution = documentRef.getElementById("task-dispatch-resolution");
+  const dispatchResolve = documentRef.getElementById("task-dispatch-resolve");
 
   let tasks = [];
   let selectedTaskId = null;
@@ -137,6 +180,11 @@ export function mountTaskPage({
   let detailRequest = 0;
   let previewRequest = 0;
   let isCreating = false;
+  let dispatchAllowed = false;
+  let dispatchCsrf = null;
+  let selectedQueueEntryId = null;
+  let isDispatching = false;
+  let isResolvingDispatch = false;
 
   const formFields = Object.fromEntries(
     taskFieldsForCreation.map((field) => [
@@ -203,7 +251,219 @@ export function mountTaskPage({
     previewButton.textContent = "Preview routing (dry-run)";
     previewButton.addEventListener("click", () => void runDryRun(task.id));
     detail.append(definitions, previewButton);
+    if (dispatchAllowed && task.status === "pending") {
+      const dispatchButton = documentRef.createElement("button");
+      dispatchButton.type = "button";
+      dispatchButton.textContent = "Confirm and dispatch this Task";
+      dispatchButton.disabled = isDispatching;
+      dispatchButton.addEventListener("click", () => void dispatchTask(task));
+      detail.append(dispatchButton);
+    }
     detail.hidden = false;
+  }
+
+  function renderDispatchQueue(payload) {
+    dispatchQueue.replaceChildren();
+    selectedQueueEntryId = null;
+    dispatchResolution.value = "";
+    dispatchResolution.disabled = true;
+    dispatchResolve.disabled = true;
+    if (payload.items.length === 0) {
+      setState(dispatchState, "No queued or historical dispatch entries.", "empty-state");
+      return;
+    }
+    for (const entry of payload.items) {
+      const item = documentRef.createElement("li");
+      const label = documentRef.createElement("p");
+      label.textContent = `${entry.state} · ${entry.task_id} · ${entry.task.title} · Task ${entry.task.status} · result ${entry.task.result_recorded ? "recorded" : "not recorded"} · error ${entry.task.error_recorded ? "recorded" : "not recorded"}${entry.resolution ? ` · resolution: ${entry.resolution}` : ""}`;
+      item.append(label);
+      if (entry.state === "queued" || entry.state === "claimed") {
+        const select = documentRef.createElement("button");
+        select.type = "button";
+        select.textContent = "Select for explicit resolution";
+        select.addEventListener("click", () => {
+          selectedQueueEntryId = entry.id;
+          dispatchResolution.disabled = false;
+          dispatchResolve.disabled = false;
+          setState(
+            dispatchState,
+            `Selected ${entry.state} entry ${entry.id}. Resolution abandons queue membership; it does not alter the Task or replay work.`,
+          );
+        });
+        item.append(select);
+      }
+      dispatchQueue.append(item);
+    }
+    setState(
+      dispatchState,
+      payload.history_limit_reached
+        ? "Showing the oldest 100 dispatch records. Queue state is actual; recorded results are not outcome verification."
+        : "Queue state is actual; recorded results are not outcome verification.",
+      "success-state",
+    );
+  }
+
+  async function refreshDispatchQueue() {
+    try {
+      const sessionResponse = await fetchImpl("/api/local/session", {
+        ...readOptions,
+      });
+      if (!sessionResponse.ok) {
+        dispatchAllowed = false;
+        dispatchCsrf = null;
+        dispatchQueue.replaceChildren();
+        selectedQueueEntryId = null;
+        dispatchResolution.value = "";
+        dispatchResolution.disabled = true;
+        dispatchResolve.disabled = true;
+        setState(
+          dispatchState,
+          "Controlled dispatch is unavailable without an authenticated local task:dispatch permission.",
+          "error-state",
+        );
+        if (selectedTaskId) {
+          const current = tasks.find(({ id }) => id === selectedTaskId);
+          if (current) renderTaskDetail(current);
+        }
+        return false;
+      }
+      const session = await sessionResponse.json();
+      dispatchAllowed = Array.isArray(session.permissions)
+        && session.permissions.includes("task:dispatch")
+        && typeof session.csrf === "string";
+      dispatchCsrf = dispatchAllowed ? session.csrf : null;
+      if (!dispatchAllowed) {
+        dispatchQueue.replaceChildren();
+        selectedQueueEntryId = null;
+        dispatchResolution.value = "";
+        dispatchResolution.disabled = true;
+        dispatchResolve.disabled = true;
+        setState(
+          dispatchState,
+          "Controlled dispatch is unavailable: this session lacks task:dispatch permission.",
+          "error-state",
+        );
+        return false;
+      }
+      const response = await fetchImpl("/api/task-dispatch/queue", {
+        ...readOptions,
+      });
+      if (!response.ok) {
+        dispatchQueue.replaceChildren();
+        setState(dispatchState, errorMessage(response.status, "task-dispatch"), "error-state");
+        return false;
+      }
+      const payload = await response.json();
+      if (!validDispatchQueue(payload)) {
+        setState(dispatchState, "Dispatch queue response was invalid.", "error-state");
+        return false;
+      }
+      renderDispatchQueue(payload);
+      if (selectedTaskId) {
+        const current = tasks.find(({ id }) => id === selectedTaskId);
+        if (current) renderTaskDetail(current);
+      }
+      return true;
+    } catch {
+      setState(dispatchState, "Dispatch queue could not be inspected. No work was run.", "error-state");
+      return false;
+    }
+  }
+
+  async function dispatchTask(task) {
+    if (isDispatching || !dispatchAllowed || !dispatchCsrf) return;
+    if (typeof confirmImpl !== "function" || !confirmImpl(
+      `Dispatch "${task.title}" through the configured loopback Ollama worker? Only this pending Task will be run; no Tools or cloud Providers are used. A completed run does not verify its expected outcomes.`,
+    )) {
+      setState(dispatchState, "Dispatch cancelled. No work was run.");
+      return;
+    }
+    isDispatching = true;
+    setState(dispatchState, "Queueing and running one explicitly confirmed Task…");
+    try {
+      const response = await fetchImpl(`/api/tasks/${encodeURIComponent(task.id)}/dispatch`, {
+        credentials: "same-origin",
+        method: "POST",
+        headers: {
+          ...writeHeaders,
+          "X-Local-CSRF": dispatchCsrf,
+        },
+        body: JSON.stringify({ confirmed: true }),
+      });
+      if (!response.ok) {
+        const message = errorMessage(response.status, "task-dispatch");
+        await refreshDispatchQueue();
+        setState(dispatchState, message, "error-state");
+        return;
+      }
+      const entry = await response.json();
+      if (!validDispatchEntry(entry)) {
+        await refreshDispatchQueue();
+        setState(dispatchState, "Dispatch response was invalid; inspect the queue before any further action.", "error-state");
+        return;
+      }
+      setState(
+        dispatchState,
+        `Queue entry ${entry.id} is ${entry.state}; Task is ${entry.task.status}. Result recorded: ${entry.task.result_recorded}. Outcome remains unverified.`,
+        "success-state",
+      );
+      await refreshDispatchQueue();
+      const refreshed = await loadTasks();
+      if (refreshed && tasks.some(({ id }) => id === task.id)) {
+        await loadTaskDetail(task.id);
+      }
+    } catch {
+      await refreshDispatchQueue();
+      setState(dispatchState, "Dispatch outcome could be uncertain. Inspect the queue before any further action; do not retry automatically.", "error-state");
+    } finally {
+      isDispatching = false;
+      if (selectedTaskId) {
+        const current = tasks.find(({ id }) => id === selectedTaskId);
+        if (current) renderTaskDetail(current);
+      }
+    }
+  }
+
+  async function resolveDispatchEntry() {
+    if (isResolvingDispatch || !dispatchAllowed || !dispatchCsrf || !selectedQueueEntryId) return;
+    const resolution = dispatchResolution.value.trim();
+    if (!resolution) {
+      setState(dispatchState, "Enter the human inspection and resolution before continuing.", "error-state");
+      return;
+    }
+    if (typeof confirmImpl !== "function" || !confirmImpl(
+      "Abandon this queue entry with the recorded resolution? This does not change the Task or replay work.",
+    )) {
+      setState(dispatchState, "Queue resolution cancelled.");
+      return;
+    }
+    isResolvingDispatch = true;
+    dispatchResolve.disabled = true;
+    try {
+      const response = await fetchImpl(
+        `/api/task-dispatch/${encodeURIComponent(selectedQueueEntryId)}/resolve`,
+        {
+          credentials: "same-origin",
+          method: "POST",
+          headers: {
+            ...writeHeaders,
+            "X-Local-CSRF": dispatchCsrf,
+          },
+          body: JSON.stringify({ resolution, confirmed: true }),
+        },
+      );
+      if (!response.ok) {
+        setState(dispatchState, errorMessage(response.status, "task-dispatch"), "error-state");
+        return;
+      }
+      setState(dispatchState, "Queue entry was explicitly abandoned. Task state was not changed.", "success-state");
+      await refreshDispatchQueue();
+    } catch {
+      setState(dispatchState, "Resolution outcome could not be confirmed. Refresh the queue before another action.", "error-state");
+    } finally {
+      isResolvingDispatch = false;
+      dispatchResolve.disabled = !selectedQueueEntryId;
+    }
   }
 
   function renderDryRun(result) {
@@ -420,8 +680,10 @@ export function mountTaskPage({
   }
 
   refreshButton.addEventListener("click", () => void loadTasks());
+  dispatchRefresh.addEventListener("click", () => void refreshDispatchQueue());
+  dispatchResolve.addEventListener("click", () => void resolveDispatchEntry());
   form.addEventListener("submit", (event) => void createTask(event));
-  const initialLoad = loadTasks();
+  const initialLoad = Promise.all([loadTasks(), refreshDispatchQueue()]);
   return {
     initialLoad,
     loadTasks,
@@ -429,6 +691,9 @@ export function mountTaskPage({
     runDryRun,
     createTask,
     buildCreateRequest,
+    refreshDispatchQueue,
+    dispatchTask,
+    resolveDispatchEntry,
   };
 }
 

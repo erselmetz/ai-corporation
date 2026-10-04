@@ -340,8 +340,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-110 are verified complete, Task 111 is next,
-and Tasks 111-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-111 are verified complete, Task 112 is next,
+and Tasks 112-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -410,9 +410,10 @@ Validation: 13 focused Python tests, 10 coordinator-chat/online-setup JavaScript
 tests, and 13 public-docs tests passed. New provider tests use deterministic fakes.
 Task 107 completed the bounded ephemeral positions foundation. Task 108 adds
 manual connection previews and owner-scoped individual Employee chat. Task 109
-adds disabled-by-default, review-only model assignment recommendations; Tasks
-Task 110 adds a separate, permission-gated coordinator-proposal review flow;
-Tasks 111-128 remain planned and Task 111 is next.
+adds disabled-by-default, review-only model assignment recommendations.
+Task 110 adds a separate, permission-gated coordinator-proposal review flow.
+Task 111 adds explicitly confirmed, bounded local worker dispatch, and Task 112
+is next.
 
 ## Task 107 - Editable corporation positions
 
@@ -515,3 +516,26 @@ edited, stale, expired, cross-owner, and replayed confirmations fail closed.
 The Task description keeps outcome/evidence and provenance references, not a
 copy of retained-memory content. See `docs/tasks-data.mjs` for validation,
 limitations, and the checkpoint tag.
+
+## Task 111 - Controlled worker dispatch
+
+In explicit local-owner mode, Task Management exposes a separate
+`task:dispatch` permission-gated path to dispatch one pending Task. Each run
+requires explicit confirmation, a valid current Agent route, an existing
+Project when associated, and available global/provider/model slots from the
+existing Task 68 `ResourceManager`. It reuses the durable FIFO queue and
+controlled execution path; route changes, invalid queue state, and exhausted
+capacity fail closed. Only a configured loopback Ollama Provider is supported.
+Cloud Providers, Tools, dependent Tasks, autonomous workflows, automatic
+retries, and queue replay are not part of this task.
+
+The UI shows actual queue claim/execution states and whether a Task result or
+error was recorded, not whether its expected outcome or evidence was verified.
+Queued or interrupted claims require an explicit human resolution; abandoning
+an entry does not alter the Task or re-run work. The queue is durable, but
+does not provide cross-process coordination or exactly-once execution.
+
+The standard local launcher does not configure ResourceManager budgets and has
+no budget setup UI, so dispatch remains unavailable there until the embedding
+host explicitly configures global, provider, and model capacity. Validation,
+limitations, and checkpoint tag are recorded in `docs/tasks-data.mjs`.

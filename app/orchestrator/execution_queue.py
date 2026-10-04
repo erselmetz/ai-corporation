@@ -96,6 +96,18 @@ class ExecutionQueue:
         finally:
             connection.close()
 
+    def list_active(self, *, limit=100):
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError("Queue list limit must be 1 to 100")
+        connection = get_connection()
+        try:
+            return tuple(self._entry(row) for row in connection.execute(
+                "SELECT * FROM execution_queue WHERE corporation_id=? "
+                "AND state IN ('queued','claimed') ORDER BY sequence LIMIT ?",
+                (self._corporation_id, limit)).fetchall())
+        finally:
+            connection.close()
+
     @staticmethod
     def _task_state(connection, task_id):
         row = connection.execute("SELECT status FROM tasks WHERE id=?", (task_id,)).fetchone()
@@ -121,15 +133,19 @@ class ExecutionQueue:
         finally:
             connection.close()
 
-    def claim_next(self, *, worker_id, claim_id, now):
+    def claim_next(self, *, worker_id, claim_id, now, expected_entry_id=None):
         identifier(worker_id); identifier(claim_id); time(now)
+        if expected_entry_id is not None:
+            identifier(expected_entry_id)
         connection = get_connection()
         try:
             with connection:
                 connection.execute("BEGIN IMMEDIATE")
                 row = connection.execute("SELECT * FROM execution_queue WHERE corporation_id=? AND state='queued' ORDER BY sequence LIMIT 1",
                                          (self._corporation_id,)).fetchone()
-                if row is None:
+                if row is None or (
+                    expected_entry_id is not None and row["id"] != expected_entry_id
+                ):
                     return None
                 entry = self._entry(row)
                 if now < entry.updated_at:

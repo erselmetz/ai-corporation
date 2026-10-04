@@ -13,7 +13,14 @@ class ControlledExecution:
         self._active = set()
         self._lock = RLock()
 
-    def execute(self, task_id):
+    def execute(
+        self,
+        task_id,
+        *,
+        expected_agent_id=None,
+        expected_provider=None,
+        expected_model=None,
+    ):
         identifier(task_id)
         allocation_id = None
         with self._lock:
@@ -23,6 +30,17 @@ class ControlledExecution:
             if task.status is not TaskStatus.PENDING:
                 raise ValueError("Controlled execution requires a pending Task")
             route = self._orchestrator.execute_task(task, dry_run=True)
+            if (
+                expected_agent_id is not None
+                and route.selected_agent.id != expected_agent_id
+            ) or (
+                expected_provider is not None
+                and route.provider != expected_provider
+            ) or (
+                expected_model is not None
+                and route.model != expected_model
+            ):
+                raise ValueError("Task route changed after dispatch review")
             allocation_id = uuid4().hex
             self._resources.allocate(allocation_id, provider_id=route.provider, model_id=route.model)
             self._active.add(task_id)

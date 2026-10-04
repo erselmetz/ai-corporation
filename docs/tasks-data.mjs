@@ -513,7 +513,7 @@ export const post100Tasks = [
     "title": "Controlled worker dispatch",
     "description": "Allow an authorized owner to dispatch approved pending work through the existing queue and controlled-execution services.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       110
     ],
@@ -527,12 +527,26 @@ export const post100Tasks = [
       "Silent replay, unlimited recursive delegation or distributed/exactly-once guarantees."
     ],
     "decisions": [
-      "Approve worker lifecycle, dispatch authorization, cloud/tool budgets and recovery contract."
+      "Resolved conservatively: only a principal with task:dispatch can explicitly dispatch one pending Task, after route/context and existing Task 68 budgets pass preflight. Dispatch is loopback Ollama only; cloud Providers and Tools remain unavailable. There is no automatic retry or replay. A queued or interrupted claim requires explicit human resolution, and recorded execution state is not outcome verification."
     ],
     "area": "P06b",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-111-controlled-worker-dispatch",
+    "validation": [
+      "Focused dispatch API, durable queue, controlled-execution and local-access regressions: 38 passed with one existing Starlette deprecation warning.",
+      "Task Management browser-module tests: 13 passed with deterministic API/session fakes and no skips.",
+      "Public documentation tests: 14 passed with no skips; the shared-worktree run also exercised the pending later-roadmap direction test.",
+      "Full Python suite: 943 passed, 2 failed, and 6 skipped. The failures are the same unrelated model-assignment tests documented in Task 110; neither their tests nor implementation files changed in Task 111.",
+      "Pylance reported no problems in the nine changed Python files checked. No live or paid Provider calls were made."
+    ],
+    "limitations": [
+      "The default local launcher does not configure Task 68 slot budgets or expose a budget setup UI. Dispatch fails closed until an embedding host configures the existing ResourceManager with explicit global, provider and model capacity.",
+      "Dispatch supports only a configured loopback Ollama provider and does not execute Tools, cloud Providers, dependent Tasks or autonomous workflows.",
+      "Queue claims survive restart, but uncertain or interrupted work is never resumed or replayed automatically. Human resolution abandons queue membership and does not alter Task state.",
+      "The UI displays at most the oldest 100 queue records. Queue and Task outcomes indicate execution state only; acceptance criteria and evidence remain unverified.",
+      "The queue and application locks do not provide cross-process coordination or exactly-once execution. Direct registry/database mutations and multiple application instances are outside the supported dispatch boundary.",
+      "The full Python suite retains two unrelated failures from the Task 110 checkpoint: test_model_set_command and test_model_replacement_uses_existing_assignment_service. Both were previously reproduced in isolation.",
+      "Concurrent planned-roadmap edits for Task 112 and later remain unstaged and are preserved for their separate roadmap checkpoint."
+    ]
   },
   {
     "number": 112,

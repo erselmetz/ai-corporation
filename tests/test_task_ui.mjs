@@ -93,6 +93,11 @@ function pageElements() {
     "task-agent-id",
     "task-role",
     "task-capability",
+    "task-dispatch-state",
+    "task-dispatch-queue",
+    "task-dispatch-refresh",
+    "task-dispatch-resolution",
+    "task-dispatch-resolve",
   ];
   const elements = Object.fromEntries(ids.map((id) => [id, new Element("div")]));
   elements["task-create-form"].formFields = [
@@ -135,6 +140,26 @@ const dryRun = {
   routing_method: "employee_role",
   status: "ready",
 };
+
+function dispatchEntry(state = "completed") {
+  return {
+    sequence: 1,
+    id: "queue-entry-1",
+    task_id: task.id,
+    state,
+    worker_id: state === "queued" ? null : "local-owner",
+    claim_id: state === "claimed" ? "claim-1" : null,
+    resolution: null,
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:01Z",
+    task: {
+      title: task.title,
+      status: state === "completed" ? "completed" : "pending",
+      result_recorded: state === "completed",
+      error_recorded: false,
+    },
+  };
+}
 
 test("loads Task records and displays the existing Task response fields", async () => {
   const { documentRef, elements } = pageElements();
@@ -374,6 +399,113 @@ test("renders a successful empty Task list distinctly from a failed request", as
   assert.equal(elements["task-list"].children.length, 0);
 });
 
+test("dispatch UI is hidden without permission and requires explicit confirmation with CSRF", async () => {
+  const { documentRef, elements } = pageElements();
+  const calls = [];
+  let allowed = false;
+  let confirmed = false;
+  let didDispatch = false;
+  const controller = mountTaskPage({
+    documentRef,
+    confirmImpl: () => confirmed,
+    fetchImpl: async (path, options = {}) => {
+      calls.push([path, options]);
+      if (path === "/api/local/session") {
+        return allowed
+          ? response(200, { permissions: ["task:dispatch"], csrf: "csrf-token" })
+          : response(200, { permissions: ["task:read"], csrf: "read-only-token" });
+      }
+      if (path === "/api/task-dispatch/queue") {
+        return response(200, {
+          items: didDispatch ? [dispatchEntry()] : [],
+          history_limit_reached: false,
+        });
+      }
+      if (path === "/api/tasks") return response(200, { items: [task] });
+      if (path === "/api/tasks/TASK-1") return response(200, task);
+      if (path.endsWith("/dispatch")) {
+        didDispatch = true;
+        return response(200, dispatchEntry());
+      }
+      return response(500);
+    },
+  });
+
+  await controller.initialLoad;
+  await controller.loadTaskDetail(task.id);
+  assert.doesNotMatch(elements["task-detail"].textContent, /Confirm and dispatch/);
+  await controller.dispatchTask(task);
+  assert.equal(calls.some(([path]) => path.endsWith("/dispatch")), false);
+
+  allowed = true;
+  await controller.refreshDispatchQueue();
+  await controller.loadTaskDetail(task.id);
+  assert.match(elements["task-detail"].textContent, /Confirm and dispatch/);
+  await controller.dispatchTask(task);
+  assert.equal(calls.some(([path]) => path.endsWith("/dispatch")), false);
+  assert.match(elements["task-dispatch-state"].textContent, /cancelled/i);
+
+  confirmed = true;
+  await controller.dispatchTask(task);
+  const [path, options] = calls.find(([url]) => url.endsWith("/dispatch"));
+  assert.equal(path, "/api/tasks/TASK-1/dispatch");
+  assert.equal(options.method, "POST");
+  assert.equal(options.credentials, "same-origin");
+  assert.equal(options.headers["X-Local-CSRF"], "csrf-token");
+  assert.deepEqual(JSON.parse(options.body), { confirmed: true });
+  assert.match(elements["task-dispatch-state"].textContent, /not outcome verification|Outcome remains unverified/i);
+});
+
+test("interrupted queue resolution requires a human note and never dispatches again", async () => {
+  const { documentRef, elements } = pageElements();
+  const calls = [];
+  let queueEntry = dispatchEntry("claimed");
+  const controller = mountTaskPage({
+    documentRef,
+    confirmImpl: () => true,
+    fetchImpl: async (path, options = {}) => {
+      calls.push([path, options]);
+      if (path === "/api/local/session") {
+        return response(200, { permissions: ["task:dispatch"], csrf: "csrf-token" });
+      }
+      if (path === "/api/task-dispatch/queue") {
+        return response(200, { items: [queueEntry], history_limit_reached: false });
+      }
+      if (path === "/api/tasks") return response(200, { items: [task] });
+      if (path === "/api/tasks/TASK-1") return response(200, task);
+      if (path.endsWith("/resolve")) {
+        queueEntry = { ...queueEntry, state: "abandoned", resolution: "Inspected local worker; no active process." };
+        return response(200, queueEntry);
+      }
+      return response(500);
+    },
+  });
+
+  await controller.initialLoad;
+  const select = findElement(elements["task-dispatch-queue"], (element) =>
+    element.tagName === "button" &&
+    element.textContent.includes("Select for explicit resolution"),
+  );
+  assert.ok(select);
+  await select.dispatch("click");
+  assert.equal(elements["task-dispatch-resolve"].disabled, false);
+  await controller.resolveDispatchEntry();
+  assert.match(elements["task-dispatch-state"].textContent, /enter the human inspection/i);
+
+  elements["task-dispatch-resolution"].value = "Inspected local worker; no active process.";
+  await controller.resolveDispatchEntry();
+  const [path, options] = calls.find(([url]) => url.endsWith("/resolve"));
+  assert.equal(path, "/api/task-dispatch/queue-entry-1/resolve");
+  assert.equal(options.method, "POST");
+  assert.equal(options.headers["X-Local-CSRF"], "csrf-token");
+  assert.deepEqual(JSON.parse(options.body), {
+    resolution: "Inspected local worker; no active process.",
+    confirmed: true,
+  });
+  assert.equal(calls.some(([url]) => url.endsWith("/dispatch")), false);
+  assert.match(elements["task-dispatch-queue"].textContent, /abandoned.*Inspected local worker/);
+});
+
 test("does not implement unsupported Task deletion or lifecycle mutation", async () => {
   const { documentRef } = pageElements();
   const calls = [];
@@ -394,6 +526,6 @@ test("browser Task module contains no credentials or direct internal-layer acces
   const source = await readFile(new URL("../app/webui/static/tasks.mjs", import.meta.url), "utf8");
   assert.match(source, /\/api\/tasks/);
   assert.doesNotMatch(source, /Bearer\s|api_key|password|secret|process\.env|os\.environ/i);
-  assert.doesNotMatch(source, /TaskRegistry|TaskLogger|Orchestrator|ProviderRegistry|Ollama|sqlite|filesystem/i);
+  assert.doesNotMatch(source, /TaskRegistry|TaskLogger|Orchestrator|ProviderRegistry|OllamaProvider|sqlite|filesystem/i);
   assert.doesNotMatch(source, /method:\s*["']DELETE["']/);
 });

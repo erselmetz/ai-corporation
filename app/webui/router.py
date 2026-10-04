@@ -650,6 +650,16 @@ def task_management_page() -> HTMLResponse:
                     <p id="task-preview-state" class="section-state" role="status" aria-live="polite">Select a task to preview routing.</p>
                     <div id="task-preview" hidden></div>
                   </section>
+                  <section class="management-detail" aria-labelledby="task-dispatch-title">
+                    <h3 id="task-dispatch-title">Controlled worker dispatch</h3>
+                    <p class="muted">Each dispatch requires a separate owner confirmation and configured Task 68 slot budgets. This path uses loopback Ollama only, does not execute Tools, and never retries. Completed execution is not proof that expected outcomes were verified.</p>
+                    <p id="task-dispatch-state" class="section-state" role="status" aria-live="polite">Checking dispatch permission…</p>
+                    <button id="task-dispatch-refresh" type="button">Refresh dispatch queue</button>
+                    <ul id="task-dispatch-queue" class="record-list" aria-label="Dispatch queue and execution states"></ul>
+                    <label for="task-dispatch-resolution">Human resolution for a queued or interrupted claim</label>
+                    <textarea id="task-dispatch-resolution" rows="3" maxlength="1024" disabled></textarea>
+                    <button id="task-dispatch-resolve" type="button" disabled>Resolve selected entry without replay</button>
+                  </section>
                 </section>
                 <section class="management-card" aria-labelledby="task-create-title">
                   <h2 id="task-create-title">Create task</h2>

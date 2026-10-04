@@ -25,17 +25,16 @@ test("shows all tasks in descending order and highlights the actual next planned
   assert.equal(groups[0].id, "tasks-101-128");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 128 }, (_, index) => 128 - index));
-  assert.match(elements["roadmap-summary"].textContent, /128 roadmap tasks.*110 completed.*18 planned/);
-  assert.equal(elements["next-task"].children[0].href, "#task-111");
-  assert.match(elements["next-task"].textContent, /Next: Task 111/);
-  assert.match(elements["next-task"].textContent, /Controlled worker dispatch/);
+  assert.match(elements["roadmap-summary"].textContent, /128 roadmap tasks.*111 completed.*17 planned/);
+  assert.equal(elements["next-task"].children[0].href, "#task-112");
+  assert.match(elements["next-task"].textContent, /Next: Task 112/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
   const elements = render();
   const items = elements["roadmap-groups"].children[0].children[1].children;
   const completed = items.find(item => item.id === "task-103");
-  const planned = items.find(item => item.id === "task-111");
+  const dispatch = items.find(item => item.id === "task-111");
   assert.equal(completed.children[2].textContent, "Completed");
   assert.match(completed.textContent, /Verified checkpoint: d1ca364/);
   assert.match(completed.textContent, /876 Python passed/);
@@ -49,11 +48,12 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.equal(secureChatOnboarding.children[2].textContent, "Completed");
   assert.match(secureChatOnboarding.textContent, /task-106-secure-chat-onboarding/);
   assert.match(secureChatOnboarding.textContent, /best-effort/);
-  assert.equal(planned.children[2].textContent, "Planned");
-  assert.match(planned.textContent, /Acceptance checks/);
-  assert.match(planned.textContent, /Out of scope/);
-  assert.match(planned.textContent, /Owner decisions/);
-  assert.ok(!planned.textContent.includes("Verified checkpoint"));
+  assert.equal(dispatch.children[2].textContent, "Completed");
+  assert.match(dispatch.textContent, /task-111-controlled-worker-dispatch/);
+  assert.match(dispatch.textContent, /Focused dispatch API.*38 passed/);
+  assert.match(dispatch.textContent, /fails closed until an embedding host/);
+  assert.match(dispatch.textContent, /Acceptance checks/);
+  assert.match(dispatch.textContent, /Out of scope/);
   const individualChat = items.find(item => item.id === "task-108");
   assert.equal(individualChat.children[2].textContent, "Completed");
   assert.match(individualChat.textContent, /manual and require an explicit preview\/confirmation/);

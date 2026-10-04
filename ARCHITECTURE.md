@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-110 are verified complete, Task 111 is next,
-and Tasks 111-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-111 are verified complete, Task 112 is next,
+and Tasks 112-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -856,3 +856,24 @@ structured outcome persistence, or a durable confirmer field; uncertain Task
 creation failures are not replayable and require inspection. Per-process
 deduplication and in-memory confirmation state do not coordinate across
 multiple app instances.
+
+Task 111 adds a `task:dispatch`-protected owner action for one pending Task.
+Every dispatch requires strict explicit confirmation and preflights the Task,
+associated Project, current routing result, loopback Ollama Provider, and
+available global/provider/model slots from the existing Task 68
+`ResourceManager`. It uses the Task 69 durable FIFO queue and Task 70 controlled
+execution allocation/cleanup rather than a second executor. The route snapshot
+is checked again before Provider invocation so changed assignments fail closed.
+Cloud Providers and Tools are not invoked; the path has no autonomous
+delegation, automatic retry, replay, or exactly-once guarantee.
+
+Claims persist across restarts and are not resumed. Queued or interrupted
+entries require an explicit human resolution that abandons queue membership
+without changing Task state. Queue state and recorded Task results/errors
+describe execution bookkeeping only; they are not acceptance verification.
+Queue display is bounded to the oldest 100 records. The default local launcher
+does not configure slot budgets or expose a setup UI, so this feature fails
+closed until the embedding host configures explicit global, provider, and
+model capacity. In-process locking does not coordinate multiple application
+instances or direct database/registry mutations. Focused validation and
+limitations are recorded in `docs/tasks-data.mjs`.

@@ -93,6 +93,30 @@ def test_duplicate_membership_and_claim_id_roll_back(setup):
     assert queue.get("second").state is QueueState.QUEUED
 
 
+def test_active_entries_and_expected_head_guard_preserve_fifo(setup):
+    _, queue = setup
+    first = queue.enqueue("first", "a", now=NOW)
+    second = queue.enqueue("second", "b", now=NOW)
+
+    assert queue.list_active() == (first, second)
+    assert queue.claim_next(
+        worker_id="worker",
+        claim_id="wrong-head",
+        now=NOW,
+        expected_entry_id="second",
+    ) is None
+    assert queue.list_active() == (first, second)
+
+    claim = queue.claim_next(
+        worker_id="worker",
+        claim_id="first-claim",
+        now=NOW,
+        expected_entry_id="first",
+    )
+    assert claim is not None and claim.task_id == "a"
+    assert queue.list_active() == (claim, second)
+
+
 def test_atomic_competing_claims_no_duplicate_claim(setup):
     _, queue = setup
     queue.enqueue("entry", "a", now=NOW)

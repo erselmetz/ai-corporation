@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator
 
 
 class CorporationIdentityResponse(BaseModel):
@@ -373,3 +373,45 @@ class TaskDryRunResponse(BaseModel):
     model: str | None
     routing_method: str | None
     status: str
+
+
+class TaskDispatchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirmed: StrictBool
+
+
+class TaskDispatchResolutionRequest(TaskDispatchRequest):
+    resolution: str = Field(min_length=1, max_length=1024)
+
+    @field_validator("resolution")
+    @classmethod
+    def require_non_blank_resolution(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Resolution cannot be blank")
+        return value
+
+
+class TaskDispatchTaskStateResponse(BaseModel):
+    title: str
+    status: str
+    result_recorded: bool
+    error_recorded: bool
+
+
+class TaskDispatchQueueEntryResponse(BaseModel):
+    sequence: int
+    id: str
+    task_id: str
+    state: Literal["queued", "claimed", "completed", "failed", "abandoned"]
+    worker_id: str | None
+    claim_id: str | None
+    resolution: str | None
+    created_at: str
+    updated_at: str
+    task: TaskDispatchTaskStateResponse
+
+
+class TaskDispatchQueueResponse(BaseModel):
+    items: list[TaskDispatchQueueEntryResponse]
+    history_limit_reached: bool
