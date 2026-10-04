@@ -345,6 +345,7 @@ def employee_management_page() -> HTMLResponse:
                 <li><a href="/ui/login">Local sign-in / sign-out</a></li>
                 <li><a href="/ui/chat">Coordinator chat</a></li>
                 <li><a href="/ui/employees" aria-current="page">Employee management</a></li>
+                <li><a href="/ui/positions">Organizational positions</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
@@ -398,6 +399,83 @@ def employee_management_page() -> HTMLResponse:
                   </form>
                 </section>
               </div>
+            </main>
+          </div>
+        </body>
+        </html>
+        """
+    )
+
+
+@router.get("/ui/positions", response_class=HTMLResponse, include_in_schema=False)
+def position_management_page() -> HTMLResponse:
+    return HTMLResponse(
+        """
+        <!doctype html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta name="description" content="ERSELMETZ AI CORPORATION position management">
+          <title>Organizational Positions — ERSELMETZ AI CORPORATION</title>
+          <link rel="stylesheet" href="/ui/static/style.css">
+          <script type="module" src="/ui/static/positions.mjs"></script>
+        </head>
+        <body>
+          <header class="site-header">
+            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
+            <span class="product-label">Corporation Web UI</span>
+          </header>
+          <div class="layout">
+            <nav class="navigation" aria-label="Corporation navigation">
+              <h2>Navigation</h2>
+              <ul>
+                <li><a href="/ui">Dashboard</a></li>
+                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
+                <li><a href="/ui/employees">Employee management</a></li>
+                <li><a href="/ui/positions" aria-current="page">Organizational positions</a></li>
+                <li><a href="/ui/chat">Coordinator chat</a></li>
+              </ul>
+            </nav>
+            <main class="content">
+              <div class="dashboard-heading">
+                <div><p class="eyebrow">Organization</p><h1>Organizational positions</h1></div>
+                <a class="back-link" href="/ui/employees">Employee management</a>
+              </div>
+              <p>Positions are separate from Employee identity and technical Agent/model assignment.
+              Position titles do not grant permissions. Records and revision history are in memory for
+              this app run only.</p>
+              <p id="position-state" role="status" aria-live="polite"></p>
+              <section aria-labelledby="position-list-heading">
+                <h2 id="position-list-heading">Positions</h2>
+                <button id="position-new" type="button">Add position</button>
+                <ul id="position-list" aria-label="Organizational position records"></ul>
+              </section>
+              <section aria-labelledby="position-editor-heading">
+                <h2 id="position-editor-heading">Position details and editor</h2>
+                <p id="position-detail-state" role="status" aria-live="polite">Select a position or add one.</p>
+                <dl id="position-detail"></dl>
+                <h3>Revision history</h3>
+                <ol id="position-history" aria-label="Historical position revisions"></ol>
+                <form id="position-form">
+                  <label for="position-title">Template</label>
+                  <select id="position-title" required></select>
+                  <label for="position-responsibilities">Responsibilities (one per line)</label>
+                  <textarea id="position-responsibilities" rows="4" required></textarea>
+                  <label for="position-reports-to">Reports to (position)</label>
+                  <select id="position-reports-to"></select>
+                  <label for="position-employee">Occupying Employee (optional)</label>
+                  <select id="position-employee"></select>
+                  <button id="position-save" type="submit">Create position</button>
+                  <button id="position-deactivate" type="button" hidden>Deactivate</button>
+                  <button id="position-remove" type="button" hidden>Remove position</button>
+                  <p id="position-form-state" role="status" aria-live="polite"></p>
+                </form>
+              </section>
+              <p>Deactivation preserves a position and its revision history. Removal is blocked while
+              reporting positions, an Employee assignment, or revision history still references it.
+              Resolve those references explicitly before removal. Data is lost when this app process
+              restarts; no durable organizational store is configured.</p>
             </main>
           </div>
         </body>

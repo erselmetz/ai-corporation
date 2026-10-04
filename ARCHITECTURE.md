@@ -22,6 +22,7 @@ FastAPI
                                      ├── TaskRegistry ─ SQLite tasks
                                      ├── ProjectRegistry ─ SQLite projects
                                      ├── EmployeeChatService ─ Conversation / Message records (in-memory)
+                                     ├── PositionRegistry ─ organization positions (in-memory)
                                      └── TaskRouter
                                            ├── explicit Agent assignment
                                            ├── required Employee role ─ Employee ─ Agent
@@ -658,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-106 are verified complete, Task 107 is next,
-and Tasks 107-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-107 are verified complete, Task 108 is next,
+and Tasks 108-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -755,5 +756,17 @@ and a fresh discovery/reconnection. Per-turn cloud consent, bounded generation
 and the existing owner-managed billing requirement are unchanged. Validation: 13
 focused Python tests, 10 coordinator-chat/online-setup JavaScript tests, and 13
 public-docs tests passed. New provider tests use deterministic fakes. Checkpoint
-tag `task-106-secure-chat-onboarding` identifies this task commit. Tasks 107-128
-remain planned; Task 107 is next.
+tag `task-106-secure-chat-onboarding` identifies this task commit.
+
+Task 107 adds `/ui/positions` and protected position routes backed by a separate,
+bounded in-memory registry. Explicit local-owner mode grants distinct
+`position:read` and `position:manage` permissions; the default API remains
+fail-closed. Position roles confer no permission and do not change Employee
+roles, Agent/model assignments or Task routing. Position updates retain bounded
+revision provenance, reject cycles and stale revisions, and block removal while
+references or history remain. A principal with `position:read` but without
+`employee:read` can still view positions; employee choices are omitted and an
+existing Employee reference is preserved in edits. Records are not persisted,
+and Tasks/workflows do not yet reference positions. Focused validation: 45
+Python regressions, 3 position UI tests and 13 public documentation tests.
+Checkpoint tag `task-107-editable-corporation-positions`.

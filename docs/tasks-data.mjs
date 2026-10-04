@@ -368,7 +368,7 @@ export const post100Tasks = [
     "title": "Editable corporation positions",
     "description": "Manage actual organizational positions, responsibilities and reporting references through authorized UI operations.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       104
     ],
@@ -382,12 +382,19 @@ export const post100Tasks = [
       "Automatic permission grants, fabricated CEO hierarchy or silent deletion of active-job references."
     ],
     "decisions": [
-      "Approve organizational persistence and separate read/manage permissions before schema or authority changes."
+      "Resolved under the owner's 2026-10-04 instruction: keep position records ephemeral (no schema or migration), grant only separate position:read and position:manage permissions in explicit local-owner mode, and never derive Agent/model or other authority from a position title. Keep Employee IDs separate from Agent identity; reject cycles and stale revisions, preserve revisions, and prevent deletion while an Employee, reporting position or revision history references the position. Existing Task/workflow records remain unlinked."
     ],
     "area": "P05a",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-107-editable-corporation-positions",
+    "validation": [
+      "Focused position, Employee, local-authentication and Web UI Python regressions: 45 passed.",
+      "Position-management UI tests: 3 passed; public documentation JavaScript tests: 13 passed. New UI behavior was tested with deterministic same-origin API fakes."
+    ],
+    "limitations": [
+      "Positions and up to 100 revisions per record exist only in one application-service process; restart loses them. The registry is capped at 100 positions.",
+      "Position records are not linked to Task/workflow execution. Removal guards protect position-tree references, Employee occupancy and retained revisions, but cannot report unrelated active jobs.",
+      "Employee IDs are referenced without changing Employee role/responsibilities or Agent/model assignment. Position titles grant no permissions."
+    ]
   },
   {
     "number": 108,

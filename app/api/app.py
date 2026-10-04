@@ -34,6 +34,13 @@ from app.documentation import MarkdownDocumentationSource
 from app.updates import CuratedUpdatesManifest
 from app.runtime import create_corporation_runtime
 from app.webui import web_ui_router
+from app.positions import (
+    POSITION_TEMPLATES,
+    CorporationPosition,
+    PositionConflictError,
+    PositionNotFoundError,
+    PositionValidationError,
+)
 from .models import (
     ActivityListResponse,
     ActivityResponse,
@@ -57,6 +64,13 @@ from .models import (
     ProjectCreateRequest,
     ProjectListResponse,
     ProjectResponse,
+    PositionCreateRequest,
+    PositionDeactivateRequest,
+    PositionListResponse,
+    PositionResponse,
+    PositionRevisionResponse,
+    PositionTemplatesResponse,
+    PositionUpdateRequest,
     TaskCreateRequest,
     TaskDryRunResponse,
     TaskListResponse,
@@ -313,11 +327,183 @@ def remove_employee(
 ) -> Response:
     try:
         application_service.remove_employee(employee_id)
+    except PositionConflictError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Employee is referenced by an organizational position",
+        ) from None
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Employee not found",
         ) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+def _position_response(position: CorporationPosition) -> PositionResponse:
+    return PositionResponse(
+        id=position.id,
+        title=position.title,
+        responsibilities=list(position.responsibilities),
+        reports_to_position_id=position.reports_to_position_id,
+        employee_id=position.employee_id,
+        active=position.active,
+        revision=position.revision,
+        history=[
+            PositionRevisionResponse(
+                revision=item.revision,
+                title=item.title,
+                responsibilities=list(item.responsibilities),
+                reports_to_position_id=item.reports_to_position_id,
+                employee_id=item.employee_id,
+                active=item.active,
+                recorded_at=item.recorded_at,
+            )
+            for item in position.history
+        ],
+    )
+
+
+@corporation_router.get(
+    "/positions/templates",
+    response_model=PositionTemplatesResponse,
+    dependencies=[Depends(require_permission("position:read"))],
+)
+def list_position_templates() -> PositionTemplatesResponse:
+    return PositionTemplatesResponse(items=list(POSITION_TEMPLATES))
+
+
+@corporation_router.get(
+    "/positions",
+    response_model=PositionListResponse,
+    dependencies=[Depends(require_permission("position:read"))],
+)
+def list_positions(
+    application_service: CorporationApplicationService = Depends(
+        get_application_service
+    ),
+) -> PositionListResponse:
+    return PositionListResponse(
+        items=[
+            _position_response(item)
+            for item in application_service.list_positions()
+        ]
+    )
+
+
+@corporation_router.get(
+    "/positions/{position_id}",
+    response_model=PositionResponse,
+    dependencies=[Depends(require_permission("position:read"))],
+)
+def get_position(
+    position_id: str,
+    application_service: CorporationApplicationService = Depends(
+        get_application_service
+    ),
+) -> PositionResponse:
+    try:
+        return _position_response(application_service.get_position(position_id))
+    except PositionNotFoundError:
+        raise HTTPException(status_code=404, detail="Position not found") from None
+
+
+@corporation_router.post(
+    "/positions",
+    response_model=PositionResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_permission("position:manage"))],
+)
+def create_position(
+    body: PositionCreateRequest,
+    application_service: CorporationApplicationService = Depends(
+        get_application_service
+    ),
+) -> PositionResponse:
+    try:
+        position = application_service.create_position(
+            body.title,
+            body.responsibilities,
+            body.reports_to_position_id,
+            body.employee_id,
+        )
+    except PositionValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
+    except PositionConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from None
+    return _position_response(position)
+
+
+@corporation_router.put(
+    "/positions/{position_id}",
+    response_model=PositionResponse,
+    dependencies=[Depends(require_permission("position:manage"))],
+)
+def update_position(
+    position_id: str,
+    body: PositionUpdateRequest,
+    application_service: CorporationApplicationService = Depends(
+        get_application_service
+    ),
+) -> PositionResponse:
+    try:
+        position = application_service.update_position(
+            position_id,
+            body.expected_revision,
+            body.title,
+            body.responsibilities,
+            body.reports_to_position_id,
+            body.employee_id,
+        )
+    except PositionNotFoundError:
+        raise HTTPException(status_code=404, detail="Position not found") from None
+    except PositionValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
+    except PositionConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from None
+    return _position_response(position)
+
+
+@corporation_router.post(
+    "/positions/{position_id}/deactivate",
+    response_model=PositionResponse,
+    dependencies=[Depends(require_permission("position:manage"))],
+)
+def deactivate_position(
+    position_id: str,
+    body: PositionDeactivateRequest,
+    application_service: CorporationApplicationService = Depends(
+        get_application_service
+    ),
+) -> PositionResponse:
+    try:
+        position = application_service.deactivate_position(
+            position_id, body.expected_revision
+        )
+    except PositionNotFoundError:
+        raise HTTPException(status_code=404, detail="Position not found") from None
+    except PositionConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from None
+    return _position_response(position)
+
+
+@corporation_router.delete(
+    "/positions/{position_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_permission("position:manage"))],
+)
+def remove_position(
+    position_id: str,
+    application_service: CorporationApplicationService = Depends(
+        get_application_service
+    ),
+) -> Response:
+    try:
+        application_service.remove_position(position_id)
+    except PositionNotFoundError:
+        raise HTTPException(status_code=404, detail="Position not found") from None
+    except PositionConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from None
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

@@ -4,7 +4,7 @@ from threading import Lock
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from app.agents import Agent, Employee, EmployeeManagement, ModelManagement
+from app.agents import Agent, Employee, EmployeeManagement, EmployeeRegistry, ModelManagement
 from app.corporation import Corporation
 from app.node import Node
 from app.orchestrator import Orchestrator, Project, Task
@@ -12,6 +12,10 @@ from app.orchestrator.dry_run import DryRunResult
 from app.providers import ProviderManagement
 from app.integrations import DockerSandboxBackend, SandboxImagePolicy
 from app.tools import ToolRegistry
+from app.positions import (
+    CorporationPosition,
+    PositionRegistry,
+)
 from app.capability_discovery import (
     CapabilityCandidate,
     CapabilityDiscoveryReport,
@@ -166,6 +170,10 @@ class CorporationApplicationService:
         if tool_registry is not None and not isinstance(tool_registry, ToolRegistry):
             raise TypeError("tool_registry must be a ToolRegistry or None")
         self._orchestrator = orchestrator
+        employees = getattr(orchestrator, "employees", None)
+        self._positions = PositionRegistry(
+            employees if isinstance(employees, EmployeeRegistry) else None
+        )
         self._tool_registry = tool_registry
         self._corporation_chat = None
         self._owned_chat = None
@@ -771,7 +779,54 @@ class CorporationApplicationService:
         return self._employee_summary(employee)
 
     def remove_employee(self, employee_id: str) -> None:
-        self._employee_management().remove_employee(employee_id)
+        with self._positions.employee_reference_guard(employee_id):
+            self._employee_management().remove_employee(employee_id)
+
+    def list_positions(self) -> tuple[CorporationPosition, ...]:
+        return self._positions.list()
+
+    def get_position(self, position_id: str) -> CorporationPosition:
+        return self._positions.get(position_id)
+
+    def create_position(
+        self,
+        title: str,
+        responsibilities: list[str],
+        reports_to_position_id: str | None = None,
+        employee_id: str | None = None,
+    ) -> CorporationPosition:
+        return self._positions.create(
+            title,
+            responsibilities,
+            reports_to_position_id,
+            employee_id,
+        )
+
+    def update_position(
+        self,
+        position_id: str,
+        expected_revision: int,
+        title: str,
+        responsibilities: list[str],
+        reports_to_position_id: str | None,
+        employee_id: str | None,
+    ) -> CorporationPosition:
+        return self._positions.update(
+            position_id,
+            expected_revision,
+            title,
+            responsibilities,
+            reports_to_position_id,
+            employee_id,
+        )
+
+    def deactivate_position(
+        self, position_id: str, expected_revision: int
+    ) -> CorporationPosition:
+        return self._positions.deactivate(position_id, expected_revision)
+
+    def remove_position(self, position_id: str) -> None:
+        self._positions.remove(position_id)
 
     def list_projects(self) -> list[ProjectSummary]:
         return [

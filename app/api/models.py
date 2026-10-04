@@ -109,6 +109,79 @@ class EmployeeCreateRequest(BaseModel):
         return responsibilities
 
 
+class PositionRevisionResponse(BaseModel):
+    revision: int
+    title: str
+    responsibilities: list[str]
+    reports_to_position_id: str | None
+    employee_id: str | None
+    active: bool
+    recorded_at: datetime
+
+
+class PositionResponse(BaseModel):
+    id: str
+    title: str
+    responsibilities: list[str]
+    reports_to_position_id: str | None
+    employee_id: str | None
+    active: bool
+    revision: int
+    history: list[PositionRevisionResponse]
+
+
+class PositionListResponse(BaseModel):
+    items: list[PositionResponse]
+
+
+class PositionFieldsRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: str = Field(min_length=1, max_length=64)
+    responsibilities: list[str] = Field(min_length=1, max_length=20)
+    reports_to_position_id: str | None = Field(default=None, max_length=256)
+    employee_id: str | None = Field(default=None, max_length=256)
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def require_non_blank_title(cls, value: str) -> str:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError("Title cannot be blank")
+        return value.strip()
+
+    @field_validator("reports_to_position_id", "employee_id", mode="before")
+    @classmethod
+    def normalize_optional_reference(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError("References cannot be blank")
+        return value.strip()
+
+    @field_validator("responsibilities")
+    @classmethod
+    def validate_responsibilities(cls, values: list[str]) -> list[str]:
+        if any(not isinstance(item, str) or not item.strip() for item in values):
+            raise ValueError("Responsibilities cannot be blank")
+        return [item.strip() for item in values]
+
+
+class PositionCreateRequest(PositionFieldsRequest):
+    pass
+
+
+class PositionUpdateRequest(PositionFieldsRequest):
+    expected_revision: int = Field(ge=1)
+
+
+class PositionDeactivateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    expected_revision: int = Field(ge=1)
+
+
+class PositionTemplatesResponse(BaseModel):
+    items: list[str]
+
+
 class AgentResponse(BaseModel):
     id: str
     name: str

@@ -337,8 +337,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-106 are verified complete, Task 107 is next,
-and Tasks 107-128 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-107 are verified complete, Task 108 is next,
+and Tasks 108-128 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -405,4 +405,22 @@ rediscovery/reconnection. Existing per-turn cloud consent and Task 105 request
 and spend limitations remain unchanged.
 Validation: 13 focused Python tests, 10 coordinator-chat/online-setup JavaScript
 tests, and 13 public-docs tests passed. New provider tests use deterministic fakes.
-Tasks 107-128 remain planned; Task 107 is next.
+Task 107 completed the bounded ephemeral positions foundation; Tasks 108-128
+remain planned and Task 108 is next.
+
+## Task 107 - Editable corporation positions
+
+The local-owner UI at `/ui/positions` manages a bounded in-memory registry of
+organization positions, responsibilities, Employee references, reporting
+relationships, activation state, and revision history. The default API remains
+rejecting. Position reads and writes have separate `position:read` and
+`position:manage` permissions, granted only in explicit local-owner mode; a
+position title grants no authority. Position data is not persisted and is lost
+on process restart. Employee IDs remain distinct from Agent/model assignment,
+and position records are not linked to Tasks or workflow execution. Cycles,
+stale revisions, and deletion of referenced/history-bearing positions are
+rejected. A reader without `employee:read` can still view positions; existing
+Employee references remain intact, but Employee choices are unavailable.
+Validation: 45 focused Python regressions, 3 position UI tests, and 13 public
+documentation tests passed; the evidence and limitations are recorded in
+`docs/tasks-data.mjs`.

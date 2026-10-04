@@ -1,6 +1,6 @@
 # Post-100 Product Roadmap: ERSELMETZ AI Command Center
 
-Status: Tasks 101–106 are verified foundations. Task 105 adds explicitly consented Gemini coordinator chat with an in-memory restricted API key and bounded generation. Task 106 adds best-effort Gemini key-paste blocking before chat persistence/submission. Task 107 is next. Broader product readiness, remaining P01/P02/P03 work and P04-P15 remain planned.
+Status: Tasks 101–107 are verified foundations. Task 105 adds explicitly consented Gemini coordinator chat with an in-memory restricted API key and bounded generation. Task 106 adds best-effort Gemini key-paste blocking before chat persistence/submission. Task 107 adds ephemeral editable position records with independent read/manage permissions and provenance-preserving removal guards. Task 108 is next. Broader product readiness, remaining P01/P02/P03 work and P04-P15 remain planned.
 See [Task 101 readiness review](post-100-readiness.md) for evidence, gaps, and the
 first proposed implementation checkpoints. The readiness record distinguishes validated checkpoints from remaining planned capabilities.
 Planning date: 2026-10-03 (Asia/Manila).
@@ -14,7 +14,7 @@ checks, exclusions, decision gates and verified checkpoint records now live in
 Those records are the authoritative implementation contracts; this P00-P15 file
 is supplementary product context, not a competing status/numbering source.
 
-Tasks 101-106 are complete; Task 107 is next and Tasks 107-128 remain planned.
+Tasks 101-107 are complete; Task 108 is next and Tasks 108-128 remain planned.
 Publishing this list does not implement those tasks or approve their unresolved
 architecture/product/authority decisions. Read the shared `roadmapRules` before
 coding, preserve uncommitted work, and record exact validation and handoff evidence.

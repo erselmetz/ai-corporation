@@ -3,6 +3,12 @@
     {
       "date": "2026-10-04",
       "type": "development",
+      "title": "Editable corporation positions",
+      "summary": "Completed Task 107 with an authorized /ui/positions page and protected position API backed by a bounded, per-application-service in-memory registry. Explicit local-owner mode grants distinct position:read and position:manage permissions; the default API remains fail-closed. Ten supported role templates, responsibilities, optional Employee references, reporting relationships, activation state and revision provenance are managed independently of Employee roles and Agent/model assignments. Updates reject stale revisions and reporting cycles; removal rejects records with Employee/reporting references or revision history. Position titles grant no authority, and Task/workflow records are not linked. Records are lost at restart. A position reader without employee:read still sees positions; employee choices are withheld while existing references are preserved. Validation: 45 focused Python regressions, 3 position UI tests and 13 public documentation tests passed. Tasks 108–128 remain planned; Task 108 is next."
+    },
+    {
+      "date": "2026-10-04",
+      "type": "development",
       "title": "Secure chat-driven connection onboarding",
       "summary": "Completed Task 106 with browser and API blocking for recognized Google AIza API-key tokens and GEMINI_API_KEY/GOOGLE_API_KEY assignment pastes before any chat history persistence or provider call; the secret is cleared from the chat field and never echoed. Chat directs owners to the existing separate Gemini setup form. Online setup accepts only the standard Google AIza key shape and rejects unsupported formats before catalog/network calls. Detection is best-effort; rotating a connected key requires explicit disconnect/erase followed by rediscovery/reconnect. Existing per-turn consent, five generation attempts per key per run, 1,024 output tokens, no retries and no app-enforced dollar cap remain unchanged. Focused validation: 13 Python tests, 10 coordinator-chat/online-setup JavaScript tests and 13 public-docs tests passed. Tasks 107–128 remain planned."
     },
