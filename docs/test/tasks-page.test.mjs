@@ -22,10 +22,10 @@ function render() {
 test("shows all tasks in descending order and highlights the actual next planned task", () => {
   const elements = render();
   const groups = elements["roadmap-groups"].children;
-  assert.equal(groups[0].id, "tasks-101-128");
+  assert.equal(groups[0].id, "tasks-101-129");
   const items = groups.flatMap(group => group.children[1].children);
-  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 128 }, (_, index) => 128 - index));
-  assert.match(elements["roadmap-summary"].textContent, /128 roadmap tasks.*111 completed.*17 planned/);
+  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 129 }, (_, index) => 129 - index));
+  assert.match(elements["roadmap-summary"].textContent, /129 roadmap tasks.*111 completed.*18 planned/);
   assert.equal(elements["next-task"].children[0].href, "#task-112");
   assert.match(elements["next-task"].textContent, /Next: Task 112/);
 });

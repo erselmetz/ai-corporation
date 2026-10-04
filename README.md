@@ -341,7 +341,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
 public `docs/tasks.html`: Tasks 101-111 are verified complete, Task 112 is next,
-and Tasks 112-128 are planned. Every task has dependencies, acceptance checks,
+and Tasks 112-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -412,8 +412,10 @@ Task 107 completed the bounded ephemeral positions foundation. Task 108 adds
 manual connection previews and owner-scoped individual Employee chat. Task 109
 adds disabled-by-default, review-only model assignment recommendations.
 Task 110 adds a separate, permission-gated coordinator-proposal review flow.
-Task 111 adds explicitly confirmed, bounded local worker dispatch, and Task 112
-is next.
+Task 111 adds explicitly confirmed, bounded local worker dispatch. Planned Task
+112 adds independently configured local/online provider connections, provider
+catalog/status visibility, explicit Agent/Employee assignments, and concurrency
+limited to configured request slots; it is next.
 
 ## Task 107 - Editable corporation positions
 

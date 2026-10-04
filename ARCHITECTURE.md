@@ -660,7 +660,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
 public `docs/tasks.html`: Tasks 101-111 are verified complete, Task 112 is next,
-and Tasks 112-128 are planned. Every task has dependencies, acceptance checks,
+and Tasks 112-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent

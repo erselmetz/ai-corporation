@@ -8,13 +8,13 @@ Planning date: 2026-10-03 (Asia/Manila).
 ## Relationship to the current roadmap
 
 Tasks 1-100 retain their original definitions and completed foundation scope.
-The numbered Tasks 101-128, their explicit statuses, dependencies, acceptance
+The numbered Tasks 101-129, their explicit statuses, dependencies, acceptance
 checks, exclusions, decision gates and verified checkpoint records now live in
 `docs/tasks-data.mjs` (`post100Tasks`) and appear on the public `docs/tasks.html`.
 Those records are the authoritative implementation contracts; this P00-P15 file
 is supplementary product context, not a competing status/numbering source.
 
-Tasks 101-111 are complete; Task 112 is next and Tasks 112-128 remain planned.
+Tasks 101-111 are complete; Task 112 is next and Tasks 112-129 remain planned.
 Publishing this list does not implement those tasks or approve their unresolved
 architecture/product/authority decisions. Read the shared `roadmapRules` before
 coding, preserve uncommitted work, and record exact validation and handoff evidence.

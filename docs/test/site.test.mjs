@@ -81,13 +81,13 @@ describe("documentation site", () => {
   });
 
   it("preserves foundation tasks 1–100 and adds contiguous post-100 contracts", () => {
-    assert.equal(tasks.length, 128);
+    assert.equal(tasks.length, 129);
     assert.equal(foundationTasks.length, 100);
-    assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 128 }, (_, i) => i + 1));
-    assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 28]);
+    assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 129 }, (_, i) => i + 1));
+    assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 29]);
   });
 
-  it("marks only verified tasks 1–111 complete and tasks 112–128 planned", () => {
+  it("marks only verified tasks 1–111 complete and tasks 112–129 planned", () => {
     assert.ok(tasks.slice(0, 111).every((task) => task.status === "completed"));
     assert.ok(tasks.slice(111).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
@@ -165,7 +165,7 @@ describe("documentation site", () => {
     const html = await response.text();
     assert.match(html, /Milestones 1–100 are completed foundations/);
     assert.match(html, /Tasks 101–111 are verified post-100 checkpoints/);
-    assert.match(html, /Tasks 112–128 are planned/);
+    assert.match(html, /Tasks 112–129 are planned/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
   });
@@ -177,8 +177,8 @@ describe("documentation site", () => {
     assert.match(home, /Verified Tasks 101–111/);
     assert.match(documentation, /Tasks 101–111 are verified post-100 checkpoints/);
     assert.match(architecture, /Task 105 adds explicitly consented Gemini coordinator chat/);
-    assert.match(architecture, /Tasks 112–128/);
-    for (const page of [home, documentation, architecture]) assert.match(page, /Tasks 112–128/);
+    assert.match(architecture, /Tasks 112–129/);
+    for (const page of [home, documentation, architecture]) assert.match(page, /Tasks 112–129/);
   });
 
   it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {
@@ -208,17 +208,19 @@ describe("documentation site", () => {
     const byNumber = new Map(post100Tasks.map(task => [task.number, task]));
     assert.equal(byNumber.get(109).status, "completed");
     assert.match(byNumber.get(109).decisions.join(" "), /review-only/);
-    assert.match(byNumber.get(112).acceptance.join(" "), /local-first/);
-    assert.match(byNumber.get(112).acceptance.join(" "), /pre-authorized destination/);
-    assert.match(byNumber.get(112).acceptance.join(" "), /two-local\/three-online/);
-    assert.match(byNumber.get(115).description, /Three\.js 3D-first/);
-    assert.match(byNumber.get(118).acceptance.join(" "), /share a configured provider\/model/);
-    assert.match(byNumber.get(121).acceptance.join(" "), /independent review/);
-    assert.match(byNumber.get(122).acceptance.join(" "), /owner-approved artifact/);
-    assert.match(byNumber.get(125).acceptance.join(" "), /GUI first-run owner setup/);
-    assert.match(byNumber.get(126).decisions.join(" "), /Electron.*Next\.js static export/);
-    assert.match(byNumber.get(127).acceptance.join(" "), /interrupt capture, playback and speech requests/);
-    assert.match(byNumber.get(128).acceptance.join(" "), /concurrent local\/online work/);
+    assert.match(byNumber.get(112).acceptance.join(" "), /multiple independently identified connections/);
+    assert.match(byNumber.get(112).acceptance.join(" "), /configured global\/provider\/model request-slot limits/);
+    assert.match(byNumber.get(113).acceptance.join(" "), /local-first/);
+    assert.match(byNumber.get(113).acceptance.join(" "), /pre-authorized destination/);
+    assert.match(byNumber.get(113).acceptance.join(" "), /two-local\/three-online/);
+    assert.match(byNumber.get(116).description, /Three\.js 3D-first/);
+    assert.match(byNumber.get(119).acceptance.join(" "), /share a configured provider\/model/);
+    assert.match(byNumber.get(122).acceptance.join(" "), /independent review/);
+    assert.match(byNumber.get(123).acceptance.join(" "), /owner-approved artifact/);
+    assert.match(byNumber.get(126).acceptance.join(" "), /GUI first-run owner setup/);
+    assert.match(byNumber.get(127).decisions.join(" "), /Electron.*Next\.js static export/);
+    assert.match(byNumber.get(128).acceptance.join(" "), /interrupt capture, playback and speech requests/);
+    assert.match(byNumber.get(129).acceptance.join(" "), /concurrent local\/online work/);
   });
 
   it("serves only read methods", async () => {

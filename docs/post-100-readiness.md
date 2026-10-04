@@ -117,7 +117,7 @@ Initial Task 104 proposal (subsequently completed; see verified receipt below):
 
 ## Remaining roadmap relationship
 
-Tasks 101-128 are now numbered in docs/tasks-data.mjs and displayed on docs/tasks.html.
+Tasks 101-129 are now numbered in docs/tasks-data.mjs and displayed on docs/tasks.html.
 Read those authoritative contracts and shared handoff rules before each implementation;
 this readiness record is historical evidence and supplementary context. Tasks 105-128
 are planned and their unresolved decisions are not approved by publication.

@@ -550,12 +550,47 @@ export const post100Tasks = [
   },
   {
     "number": 112,
+    "title": "Multiple provider connections and explicit assignment",
+    "description": "Support independently configured local/online provider connections, catalog/status visibility and explicit Agent/Employee assignments across supported providers.",
+    "category": "Post-100 Usable Command Center",
+    "status": "planned",
+    "dependsOn": [
+      104,
+      105,
+      108,
+      109,
+      111
+    ],
+    "acceptance": [
+      "Allow multiple independently identified connections, including multiple connections for one provider; scope each endpoint and credential to its connection and never expose secrets through APIs, UI, logs or errors.",
+      "Show connection health and provider-supported model catalogs with source/freshness; distinguish unsupported, stale, empty, unavailable, unknown and not-configured states without inferring readiness.",
+      "Let the owner preview and explicitly confirm a supported provider/model assignment for an Agent/Employee; new conversations use the selected connection while existing conversations retain their route snapshots and authorization checks.",
+      "Permit concurrent requests across assigned Employees/Agents only within configured global/provider/model request-slot limits; when applicable capacity is absent or unverifiable, block admission and report UNKNOWN rather than assuming capacity.",
+      "Route only to the explicitly selected connection; surface safe unavailable/over-capacity errors without automatic fallback, reassignment, retry or silent provider switching.",
+      "Use deterministic fakes for two local and three online connections to verify catalogs, distinct models, authorization, assignment snapshots, concurrency limits and secret non-disclosure without live or paid calls."
+    ],
+    "outOfScope": [
+      "Provider-side model downloads, automatic routing/fallback/round-robin, delegated workflows, autonomous Agent execution or self-adaptation."
+    ],
+    "decisions": [
+      "Use only explicitly owner-configured connections and assignments; keep existing assignments and conversations unchanged unless the owner confirms a new assignment.",
+      "Online connections remain opt-in and require connection-scoped credentials, explicit consent and enforceable configured spend limits before paid requests; never call live services in ordinary tests.",
+      "Do not infer health, model support, capacity or hardware feasibility from configuration alone. Missing or unsupported evidence remains UNKNOWN, and provider failures never trigger silent fallback."
+    ],
+    "area": "Provider connections",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 113,
     "title": "Workflow review and owner reporting",
     "description": "Coordinate bounded planner/worker/reviewer handoffs and display verified outcomes to the owner.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
-      111
+      111,
+      112
     ],
     "acceptance": [
       "Model workflow lifecycle separately from Task lifecycle and acceptance evidence.",
@@ -580,7 +615,7 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 113,
+    "number": 114,
     "title": "Corporation structure map",
     "description": "Show actual positions, reporting relationships and Agent/model assignments with authorized detail views.",
     "category": "Post-100 Usable Command Center",
@@ -604,13 +639,13 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 114,
+    "number": 115,
     "title": "Workflow map and progress evidence",
     "description": "Visualize actual workflow dependencies, handoffs, status and linked evidence.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
-      112
+      113
     ],
     "acceptance": [
       "Separate operational workflow edges from organizational reporting edges.",
@@ -630,14 +665,14 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 115,
+    "number": 116,
     "title": "Accessible Jarvis-style visualization",
     "description": "Add a Three.js 3D-first corporation/workflow presentation over the validated maps.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
-      113,
-      114
+      114,
+      115
     ],
     "acceptance": [
       "Make the Three.js 3D corporation/workflow map the primary visual experience; keep an accessible 2D/list equivalent only as a user-selectable, reduced-motion or WebGL fallback.",
@@ -656,7 +691,7 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 116,
+    "number": 117,
     "title": "Owned knowledge and chat context controls",
     "description": "Expose supported knowledge retention/retrieval controls and source traces in owner-scoped conversations.",
     "category": "Post-100 Usable Command Center",
@@ -683,13 +718,13 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 117,
+    "number": 118,
     "title": "Durable conversation history and recovery",
     "description": "Add explicitly consented durable conversation history with truthful restart and interrupted-turn behavior.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
-      116
+      117
     ],
     "acceptance": [
       "Owner controls retention/deletion; schema migrations preserve provenance and isolate readers.",
@@ -708,7 +743,7 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 118,
+    "number": 119,
     "title": "Local model resource and loading controls",
     "description": "Expose configured budgets and supported model loading controls with actual hardware/runtime evidence.",
     "category": "Post-100 Usable Command Center",
@@ -736,14 +771,14 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 119,
+    "number": 120,
     "title": "Supported streaming and truthful Stop controls",
     "description": "Extend provider/chat contracts only where validated streaming or cancellation is supported.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
       103,
-      118
+      119
     ],
     "acceptance": [
       "Show token/chunk progress only from actual streamed output and handle partial/final failure.",
@@ -763,14 +798,14 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 120,
+    "number": 121,
     "title": "Chat-driven GitHub study and research",
     "description": "Accept a scoped repository request and produce a source-linked adoption assessment through existing discovery/research services.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
       103,
-      112
+      113
     ],
     "acceptance": [
       "Pin inspected revision and explicit repository/host scope; bound retrieval and research.",
@@ -790,13 +825,13 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 121,
+    "number": 122,
     "title": "Isolated adaptation workspace and validation",
     "description": "Develop a selected authorized adaptation in a disposable isolated work area using existing maintenance stages.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
-      120
+      121
     ],
     "acceptance": [
       "Bind exact source/patch identity, allowed files/actions and time/resource limits.",
@@ -818,13 +853,13 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 122,
+    "number": 123,
     "title": "Approved integration and verified recovery",
     "description": "Apply an exact owner-approved adaptation through bounded change control and verify the active result.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
-      121
+      122
     ],
     "acceptance": [
       "Revalidate source/patch/test/review/approval links before applying the change.",
@@ -846,13 +881,13 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 123,
+    "number": 124,
     "title": "Software and integration inventory panel",
     "description": "Show supported installed applications, repository checkouts, integrations and service versions as separate records.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
-      122
+      123
     ],
     "acceptance": [
       "Use bounded supported inventory adapters and show source, version/revision, status and dependent workflows.",
@@ -871,13 +906,13 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 124,
+    "number": 125,
     "title": "Managed install update version and remove",
     "description": "Manage one explicitly supported software adapter with preview, permission checks and data-preserving recovery.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
-      123
+      124
     ],
     "acceptance": [
       "Preview source/version and affected dependents before install/update/pin/change/remove.",
@@ -897,7 +932,7 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 125,
+    "number": 126,
     "title": "One-click local application lifecycle",
     "description": "Provide a supported startup/health/stop/restart flow for the existing Python backend and Web UI.",
     "category": "Post-100 Usable Command Center",
@@ -924,13 +959,13 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 126,
+    "number": 127,
     "title": "Windows executable and installer",
     "description": "Package the shared Web UI and Python backend into an owner-approved desktop distribution.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
-      125
+      126
     ],
     "acceptance": [
       "Package the owner-approved Electron desktop shell with a Next.js static-export UI and the existing Python backend/API/AI control services; serve the UI and API from the same loopback origin without a separate production Next.js server.",
@@ -950,13 +985,13 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 127,
+    "number": 128,
     "title": "Optional voice interaction",
     "description": "Add explicitly enabled speech input/output while preserving typed chat and the same action gates.",
     "category": "Post-100 Usable Command Center",
     "status": "planned",
     "dependsOn": [
-      126
+      127
     ],
     "acceptance": [
       "Visible microphone/recording controls and clear start/stop behavior.",
@@ -978,7 +1013,7 @@ export const post100Tasks = [
     "limitations": []
   },
   {
-    "number": 128,
+    "number": 129,
     "title": "Command center usability and release acceptance",
     "description": "Verify the supported owner workflows on a clean local installation and publish actual readiness evidence.",
     "category": "Post-100 Usable Command Center",
@@ -1007,7 +1042,8 @@ export const post100Tasks = [
       124,
       125,
       126,
-      127
+      127,
+      128
     ],
     "acceptance": [
       "Exercise supported onboarding, local/approved online chat, positions, reviewed dispatch, evidence/maps, approved adaptation, software management and desktop lifecycle.",
@@ -1043,7 +1079,7 @@ export const roadmapRules = {
 
 export const taskGroups = [...foundationTaskGroups, {
   name: "Post-100 Usable Command Center",
-  range: "101–128",
+  range: "101–129",
   tasks: post100Tasks.map(({ title, description }) => [title, description]),
 }];
 export const tasks = [...foundationTasks, ...post100Tasks];
