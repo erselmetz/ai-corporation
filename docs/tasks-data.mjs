@@ -937,7 +937,7 @@ export const post100Tasks = [
 ];
 
 export const roadmapRules = {
-  "scope": "This request publishes task contracts only. It does not implement Tasks 104-128 or authorize live credentials, installations, model calls or deployment actions.",
+  "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
   "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; broader P00-P15 material is supplementary.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",

@@ -57,6 +57,29 @@ describe("documentation site", () => {
     assert.equal((await fetch(`${baseUrl}/README.md`)).status, 404);
   });
 
+  it("resolves local public links including generated task and category anchors", async () => {
+    const generatedIds = new Set([
+      ...tasks.map(task => `task-${task.number}`),
+      ...taskGroups.map(group => `tasks-${group.range.replace("–", "-")}`),
+    ]);
+    const contents = new Map();
+    for (const page of pages) contents.set(page, await (await fetch(`${baseUrl}/${page}`)).text());
+    for (const [page, html] of contents) {
+      for (const [, link] of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
+        if (/^[a-z][a-z0-9+.-]*:/i.test(link)) continue;
+        const [filename, anchor] = link.split("#");
+        const target = filename || page;
+        const response = await fetch(`${baseUrl}/${target}`);
+        assert.equal(response.status, 200, `${page}: ${link}`);
+        if (anchor) {
+          const destination = contents.get(target) ?? await response.text();
+          assert.ok(destination.includes(`id="${anchor}"`) ||
+            (target === "tasks.html" && generatedIds.has(anchor)), `${page}: missing ${link}`);
+        }
+      }
+    }
+  });
+
   it("preserves foundation tasks 1–100 and adds contiguous post-100 contracts", () => {
     assert.equal(tasks.length, 128);
     assert.equal(foundationTasks.length, 100);

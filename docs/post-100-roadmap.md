@@ -1,6 +1,6 @@
 # Post-100 Product Roadmap: ERSELMETZ AI Command Center
 
-Status: P00 source-readiness review and P01a local-owner access and P02a owned coordinator chat completed (Tasks 101-103); remaining P01/P02 work and P03-P15 remain planned.
+Status: Task 101 completed the initial P00 source-review slice; Tasks 102 and 103 completed P01a local-owner access and P02a owned coordinator chat. Broader product readiness, remaining P01/P02 work and P03-P15 remain planned.
 See [Task 101 readiness review](post-100-readiness.md) for evidence, gaps, and the
 first proposed implementation checkpoints. The readiness record distinguishes validated checkpoints from remaining planned capabilities.
 Planning date: 2026-10-03 (Asia/Manila).
@@ -48,8 +48,8 @@ Rejection or a request for more information is also a valid outcome.
 
 ### P00 - Review the completed Task 100 baseline
 
-Completed as Task 101 source review on 2026-10-04; see
-[the readiness record](post-100-readiness.md). No fresh runtime validation claimed.
+The initial source-review slice completed as Task 101 on 2026-10-04; see
+[the readiness record](post-100-readiness.md). Task 101 mapped the baseline and scoped the first local checkpoints; it did not certify every future feature or complete operational acceptance. The numbered contracts subsequently published Tasks 104-128. The broader goals below remain context, not additional Task 101 completion claims. No fresh runtime validation claimed.
 
 - Inspect the authoritative roadmap, code, tests, and limitations after Task 100.
 - Map each proposed feature to implemented services, missing interfaces, and

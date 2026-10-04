@@ -3,6 +3,12 @@
     {
       "date": "2026-10-04",
       "type": "development",
+      "title": "Documentation consistency and Copilot handoff audit",
+      "summary": "Reconciled public documentation with Task 63 project-association persistence and Tasks 102-103 local login/chat boundaries. Clarified Task 101 as an initial source-review slice, historical update limitations, and the unresolved Task 104 model-selection authority gate. Preserved all Task 1-100 definitions and Tasks 104-128 planned status; runtime behavior and permissions are unchanged."
+    },
+    {
+      "date": "2026-10-04",
+      "type": "development",
       "title": "Shared post-100 task contracts",
       "summary": "Published Tasks 101–128 on the public documentation Tasks page, preserving all Task 1–100 foundation definitions. Tasks 101–103 carry verified checkpoint, validation and limitation records; Tasks 104–128 remain planned with dependencies, acceptance checks, exclusions and unresolved owner decision gates. Added next-task navigation and shared engineering/handoff rules so implementing AIs use one authoritative contract. This documentation change implements no future runtime capability and grants no new permissions."
     },

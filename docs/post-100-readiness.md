@@ -13,7 +13,11 @@ that the owner can operate an autonomous organization through the browser.
 The current roadmap truthfully marks all 100 foundations complete, while the
 reviewed Task 100 runtime lacked a supported browser authentication and conversation flow.
 
-| Existing foundation | Reuse path | Gap for usable local operation |
+The following table describes gaps at the Task 100 baseline, before Tasks 102
+and 103. Their verified outcomes below supersede the login and owned-chat gaps;
+other limitations remain unless a later numbered checkpoint supplies evidence.
+
+| Existing foundation at Task 100 | Reuse path | Gap at that baseline |
 | --- | --- | --- |
 | AuthenticationBackend and permission dependencies | app/api/security.py | Default rejects all requests; no browser login/session flow |
 | create_app with injected authentication backend | app/api/app.py | Need explicit local-owner mode without weakening default app |
@@ -139,3 +143,32 @@ and repeat only when edits, failures, or unresolved concerns justify it.
 Do not modify public docs deployment or the Task 53 file-based/read-only portal
 as part of local authentication/chat. Inspect concurrent changes before each
 checkpoint and commit only the current task's reviewed files.
+
+## Copilot handoff after the documentation audit
+
+Tasks 101-103 remain complete only within their recorded scope; Task 101 is a
+source review, not fresh runtime or production certification. Tasks 104-128
+remain planned. Start with the exact Task 104 contract in `docs/tasks-data.mjs`
+and its public presentation in `docs/tasks.html`. Its model-selection permission
+and assignment-change boundary still require owner approval before dependent code.
+
+Inspect current Git status and checkpoint rather than assuming a clean tree or
+resetting concurrent work. Read the shared `roadmapRules`, existing provider,
+model, chat and authorization contracts. After resolving the decision, implement
+only Task 104, validate its acceptance checks and affected regressions, update
+its public task evidence and required documentation, and create one reviewed,
+pushed checkpoint before continuing. Do not infer cloud, installation, autonomous
+execution or management authority from permission to inspect documentation.
+
+Audit validation (2026-10-04): `node --test` in `docs/` passed 12 tests,
+including all local public links, generated task/category anchors, task statuses,
+completion evidence, static asset allowlisting and Vercel read-only handling.
+`python -m pytest tests/test_updates.py -q` passed all 6 update-manifest tests.
+The first Python collection attempts lacked existing pinned Playwright/MCP
+dependencies; restoring `requirements.txt` in the local virtual environment
+resolved collection, and `pip check` passed. No requirements were added or changed.
+JavaScript syntax and `git diff --check` passed. Original Task 1-100 definitions
+match the pre-post-100 checkpoint, and all recorded Task 101-103 commits exist.
+Full Python and runtime browser suites were not rerun for this documentation-only
+change; no runtime, security policy or provider execution behavior changed.
+The audit verifies repository documentation, not the deployed Vercel revision.
