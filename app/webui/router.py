@@ -1002,6 +1002,24 @@ def workflows_page():
     <div id="workflow-list"></div></main></body></html>""")
 
 
+@router.get("/ui/structure", response_class=HTMLResponse)
+def structure_map_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Corporation structure - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/structure.mjs"></script></head><body>
+    <main class="content"><nav><a href="/ui/positions">Positions</a> |
+    <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <h1>Corporation structure</h1>
+    <p>Shows only recorded positions, reporting links and Agent/model assignments. Missing,
+    unassigned, forbidden and stale records are labelled; nothing here indicates live activity.</p>
+    <p id="structure-status" role="status">Loading structure...</p>
+    <button id="structure-refresh" type="button">Refresh</button>
+    <nav aria-label="Reporting structure"><ul id="structure-tree"></ul></nav>
+    <section aria-live="polite"><h2>Details</h2><div id="structure-detail">Select a position.</div></section>
+    </main></body></html>""")
+
+
 @router.get("/ui/provider-connections", response_class=HTMLResponse)
 def provider_connections_page():
     return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">

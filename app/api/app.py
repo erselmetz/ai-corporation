@@ -1023,6 +1023,8 @@ def create_app(
     application.include_router(employee_chat_router)
     from .task_dispatch import router as task_dispatch_router
     application.include_router(task_dispatch_router)
+    from .structure_map import router as structure_map_router
+    application.include_router(structure_map_router)
     application.include_router(web_ui_router)
     return application
 

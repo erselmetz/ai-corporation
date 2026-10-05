@@ -640,7 +640,7 @@ export const post100Tasks = [
     "title": "Corporation structure map",
     "description": "Show actual positions, reporting relationships and Agent/model assignments with authorized detail views.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       107,
       108
@@ -653,11 +653,20 @@ export const post100Tasks = [
     "outOfScope": [
       "Invented reporting relationships or animated nodes implying actual activity."
     ],
-    "decisions": [],
+    "decisions": [
+      "Resolved conservatively: a keyboard-accessible tree with an equivalent flat detail view is implemented over actual position, employee and Agent records. A graph or 3D visualization is deferred to the later visualization tasks; nothing is animated and no reporting relationship is inferred."
+    ],
     "area": "P07a",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-114-corporation-structure-map",
+    "validation": [
+      "New structure-map Python tests: 5 passed, covering recorded root/linked/missing reporting, unassigned/missing/assigned employee and Agent states, unavailable Provider, forbidden sections, 401/403 and permission-limited responses.",
+      "Structure browser-module tests: 3 passed, plus all 106 browser-module tests passed; public documentation suite passed.",
+      "Full Python suite: 972 passed, 3 skipped (pre-existing conditional skips), and the same 2 unrelated pre-existing model-assignment failures (test_model_set_command, test_model_replacement_uses_existing_assignment_service). No live or paid calls."
+    ],
+    "limitations": [
+      "Read-only, point-in-time tree of recorded positions; there is no graph, 3D view, live updates or activity indication. Staleness is detected only on refresh or selection by revision comparison.",
+      "Employee and Agent detail is shown only with employee:read and agent:read; otherwise those sections are labelled forbidden. Missing parents or records are labelled, never inferred."
+    ]
   },
   {
     "number": 115,

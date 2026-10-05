@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-10-06",
+      "type": "development",
+      "title": "Corporation structure map",
+      "summary": "Completed Task 114 with a read-only, keyboard-accessible tree of recorded positions (GET /api/structure-map and /ui/structure). Reporting links, employees and Agent/model assignments come only from actual records; missing parents or records, unassigned identities, unavailable Providers and sections the session lacks permission for are labelled rather than hidden, and selecting a node refetches current details and flags stale or vanished positions. Nothing is inferred or animated; a graph or 3D view is deferred. Validation: 5 structure Python tests, 3 structure browser tests, 106 browser-module tests and the public documentation suite passed; the full Python suite had 972 passed, 3 skipped and 2 unrelated pre-existing model-assignment failures. No live or paid calls were made. Checkpoint tag: task-114-corporation-structure-map. Tasks 101–114 are verified complete; Task 115 is next and Tasks 115–129 remain planned."
+    },
+    {
       "date": "2026-10-05",
       "type": "development",
       "title": "Workflow review and owner reporting",

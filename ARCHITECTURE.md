@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-113 are verified complete, Task 114 is next,
-and Tasks 114-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-114 are verified complete, Task 115 is next,
+and Tasks 115-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -915,6 +915,10 @@ responsibility, and later paid workflow execution still requires a verified
 ceiling. Locks do not coordinate multiple application instances or direct
 registry changes. Focused validation, checkpoint and remaining limitations are
 recorded in `docs/tasks-data.mjs`.
+
+## Corporation structure map (Task 114)
+
+`build_structure_map` (`app/application/services/structure_map.py`) composes positions, employees and Agents into a read-only tree for `GET /api/structure-map` (`position:read`; employee/Agent sections need `employee:read`/`agent:read`). Unreadable sections are labelled forbidden, absent parents/records missing, and no relationship is inferred. `/ui/structure` renders it as text-only nested buttons. Graph/3D visualization is deferred.
 
 ## Workflow review (Task 113)
 
