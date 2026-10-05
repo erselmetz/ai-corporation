@@ -986,6 +986,22 @@ def local_online_provider_page():
     </main></body></html>""")
 
 
+@router.get("/ui/workflows", response_class=HTMLResponse)
+def workflows_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Workflow review - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/workflows.mjs"></script></head><body>
+    <main class="content"><nav><a href="/ui/provider-connections">Provider connections</a> |
+    <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <h1>Workflow review and owner report</h1>
+    <p>Workflow state is separate from Task state. Agent review is advisory and never replaces
+    owner approval. Cancellation is unsupported once a provider call has started. State is held
+    in this app process only. Spend figures are owner-declared ceilings, not provider billing.</p>
+    <p id="workflow-status" role="status">Loading workflows...</p>
+    <div id="workflow-list"></div></main></body></html>""")
+
+
 @router.get("/ui/provider-connections", response_class=HTMLResponse)
 def provider_connections_page():
     return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">

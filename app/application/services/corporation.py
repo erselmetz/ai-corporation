@@ -185,6 +185,8 @@ class CorporationApplicationService:
         self._chat_task_proposal_lock = Lock()
         self._task_dispatch = None
         self._task_dispatch_lock = Lock()
+        self._workflow_review = None
+        self._workflow_review_lock = Lock()
         self._assignment_policy = None
         self._assignment_policy_lock = Lock()
         self._task_collaboration = None
@@ -666,6 +668,17 @@ class CorporationApplicationService:
         if self._corporation is None:
             raise RuntimeError("Corporation identity is not configured")
         return self._orchestrator.execution_queue(self._corporation.id)
+
+    def workflow_review(self):
+        with self._workflow_review_lock:
+            if self._workflow_review is None:
+                from .workflow_review import WorkflowReviewService
+                self._workflow_review = WorkflowReviewService(self._run_workflow_destination)
+            return self._workflow_review
+
+    def _run_workflow_destination(self, destination, prompt):
+        provider = self._orchestrator.providers.get(destination.provider_id)
+        return provider.generate(destination.model_id, prompt)
 
     def task_dispatch(self):
         with self._task_dispatch_lock:

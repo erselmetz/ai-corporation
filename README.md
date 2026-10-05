@@ -340,8 +340,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-112 are verified complete, Task 113 is next,
-and Tasks 113-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-113 are verified complete, Task 114 is next,
+and Tasks 114-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -574,3 +574,32 @@ warnings remain in unchanged lines of existing files. No live or paid provider
 calls were made. The full Python suite was not rerun; the Task 111 checkpoint
 documents two unrelated model-assignment failures. Checkpoint tag
 `task-112-multiple-provider-connections`.
+## Task 113 - Workflow review and owner reporting
+
+`/api/local/workflows` (local-owner mode only; separate `workflow:read` and
+`workflow:manage` permissions) manages process-local workflows that are
+separate from Task lifecycle and only reference a Task id. Items are planner,
+worker or reviewer work with source-linked handoffs and states waiting, running,
+blocked, failed, review, reviewed, approved and interrupted. Delegation is
+bounded to depth 3 and 10 child items (lower limits allowed). A reviewer must be
+a different Agent, and review never replaces owner approval, which requires
+explicit confirmation and verification evidence.
+
+Routing is local-first by default and owner-selectable online-first; it picks
+the first eligible destination and never skips a busy one. Online work needs
+per-turn cloud consent plus an owner-declared request cost and workflow spend
+ceiling; otherwise it is blocked and reported UNKNOWN. These figures are
+owner-declared, not provider-verified billing. Fallback is off by default and
+only goes to a pre-authorized destination that passes its own consent, budget and
+capacity checks. Quota rejection is surfaced without retry. One retry occurs
+only when the provider confirms work did not start; timeouts and uncertain
+outcomes are never retried. Pause blocks new starts, interruption leaves an
+unknown outcome until the owner requeues, and cancellation of a started call is
+unsupported. `/ui/workflows` is a read-only report.
+
+Validation: 14 workflow Python tests (deterministic two-local/three-online
+fakes), 2 workflow browser tests, all 103 browser-module tests and the public
+documentation suite passed; the full Python suite had 967 passed, 3 skipped and
+2 unrelated pre-existing model-assignment failures. No live or paid calls.
+Limitations: state is process-local and the Agent-to-destination mapping is not
+independently verified. Checkpoint tag `task-113-workflow-review-reporting`.

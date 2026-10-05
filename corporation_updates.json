@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-10-05",
+      "type": "development",
+      "title": "Workflow review and owner reporting",
+      "summary": "Completed Task 113 with a separate process-local workflow lifecycle: planner/worker/reviewer items, source-linked handoffs, depth-3 and 10-child delegation bounds, local-first (or owner-selected online-first) routing, owner-declared spend ceilings that block online work as UNKNOWN when absent, per-turn cloud consent, at most one retry only when the provider confirms work did not start, and fallback disabled unless pre-authorized. Reviewers must be a different Agent and review never replaces owner approval with verification evidence. Cancellation of started calls is reported unsupported; pause, interruption and explicit recovery are tested. Validation: 14 workflow Python tests, 2 workflow browser tests, 103 browser-module tests and the public documentation suite passed with deterministic two-local/three-online fakes; the full Python suite had 967 passed, 3 skipped and 2 unrelated pre-existing model-assignment failures. No live or paid calls were made. State and costs are process-local and owner-declared. Checkpoint tag: task-113-workflow-review-reporting."
+    },
+    {
       "date": "2026-10-04",
       "type": "development",
       "title": "Multiple provider connections and explicit assignment",

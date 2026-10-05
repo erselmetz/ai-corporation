@@ -598,7 +598,7 @@ export const post100Tasks = [
     "title": "Workflow review and owner reporting",
     "description": "Coordinate bounded planner/worker/reviewer handoffs and display verified outcomes to the owner.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       111,
       112
@@ -618,12 +618,22 @@ export const post100Tasks = [
       "Changing legacy execution semantics or dependency enforcement without an approved contract."
     ],
     "decisions": [
-      "Keep dependency admission, dispatch bounds, pause/cancel/resume and approval rules explicit. This planned multi-provider workflow extends Task 108 without rewriting its completed one-Gemini-Agent limitation; apply bounded role/delegation/retry rules, local-first by default, owner-selectable online-first, explicit spend ceilings and quota handling, and pre-authorized fallback only."
+      "Keep dependency admission, dispatch bounds, pause/cancel/resume and approval rules explicit. This planned multi-provider workflow extends Task 108 without rewriting its completed one-Gemini-Agent limitation; apply bounded role/delegation/retry rules, local-first by default, owner-selectable online-first, explicit spend ceilings and quota handling, and pre-authorized fallback only.",
+      "Resolved conservatively: workflow state is a separate process-local service that only references a Task id, never mutating Task lifecycle. A configured request cost and per-workflow spend ceiling are owner-declared; because the provider cannot verify billing, online work is blocked and reported UNKNOWN unless both are declared. Routing picks the first eligible destination by preference and never skips a busy one; cancellation is reported unsupported."
     ],
     "area": "P06c",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-113-workflow-review-reporting",
+    "validation": [
+      "New workflow service/API/permission tests: 14 passed, covering two-local/three-online fakes, shared-model concurrency, preference order, spend ceilings, quota exhaustion, bounded delegation, single retry, uncertain outcomes, authorized fallback, pause/resume/interruption/recovery, reviewer separation, unsupported cancellation and owner approval; no live or paid calls.",
+      "Workflow report browser-module tests: 2 passed, plus all 103 browser-module tests passed. Public documentation suite passed. Pylance reported no diagnostics in the new service, API and tests.",
+      "Full Python suite: 967 passed, 3 skipped (pre-existing conditional skips), and the same 2 unrelated pre-existing model-assignment failures (test_model_set_command, test_model_replacement_uses_existing_assignment_service)."
+    ],
+    "limitations": [
+      "Workflows are process-local and cleared on restart; there is no durable recovery. Interrupted work is only marked interrupted with an unknown outcome and requires explicit owner requeue.",
+      "Destinations, per-request costs and spend ceilings are owner-declared and are not verified against provider billing; no Task lifecycle, queue or dependency state is changed by workflows.",
+      "Cancellation of a started provider call is unsupported. Pause only prevents new items from starting. Workflows are driven through the local-owner API; the owner page is a read-only report, and Agent-to-destination mapping is not independently verified.",
+      "Limited to loopback Ollama and Gemini connections registered by Task 112; hardware feasibility remains unknown and multi-instance coordination is out of scope."
+    ]
   },
   {
     "number": 114,

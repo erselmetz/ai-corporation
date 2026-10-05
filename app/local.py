@@ -48,6 +48,8 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
     application.include_router(create_local_online_provider_router(connection_manager))
     from app.api.provider_connections import router as provider_connections_router
     application.include_router(provider_connections_router)
+    from app.api.workflows import router as workflows_router
+    application.include_router(workflows_router)
 
     @application.middleware("http")
     async def protect_local_request(request: Request, call_next):

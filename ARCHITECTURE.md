@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-112 are verified complete, Task 113 is next,
-and Tasks 113-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-113 are verified complete, Task 114 is next,
+and Tasks 114-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -915,3 +915,16 @@ responsibility, and later paid workflow execution still requires a verified
 ceiling. Locks do not coordinate multiple application instances or direct
 registry changes. Focused validation, checkpoint and remaining limitations are
 recorded in `docs/tasks-data.mjs`.
+
+## Workflow review (Task 113)
+
+`WorkflowReviewService` (`app/application/services/workflow_review.py`) is a
+process-local lifecycle separate from Tasks and the Task 69 queue. It routes to
+owner-declared destinations that are Task 112 connection providers, so the
+request-slot gate still enforces global/provider/model capacity. The
+local-owner-only `app/api/workflows.py` routes require `workflow:read` or
+`workflow:manage`; the default API does not mount them. Delegation is capped at
+depth 3 and 10 child items, review is advisory and separate from owner approval,
+online destinations need consent plus a declared spend ceiling (otherwise
+UNKNOWN), fallback is off unless pre-authorized, and started calls cannot be
+cancelled.
