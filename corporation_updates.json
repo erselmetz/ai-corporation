@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-10-09",
+      "type": "development",
+      "title": "Owned knowledge and chat context controls",
+      "summary": "Completed Task 117. Owner-scoped chat can now use retained knowledge only on explicit request. A completed message is retained only with explicit consent and an expiry of 1 minute to 30 days (POST /api/chat/conversations/{id}/retained); nothing is retained automatically. A send may carry an explicit context request (query, scope, limit up to 3); matching authorized records are added to that turn as untrusted reference data and the reply carries a source trace (memory id, scope, revision, expiry, origin, matched terms). Conversation GET re-checks each trace as current, changed, expired or unavailable without caching content. Withdrawal (DELETE) deletes the stored record and states that text already sent to a provider, earlier replies and prepared Task proposals are not recalled. Conversation-scope context cannot cross conversations; cloud consent still applies to the whole turn including retrieved context. Limitations: API only: no browser controls yet; retained records are lexically matched (no semantic search); traces are process-local and cleared on restart; retained records use the existing local database and are not encrypted; no automatic retention, injection, retries or fallback."
+    },
+    {
       "date": "2026-10-08",
       "type": "development",
       "title": "Accessible 3D visualization",

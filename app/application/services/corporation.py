@@ -795,6 +795,13 @@ class CorporationApplicationService:
                 )
             return self._owned_chat
 
+    def chat_knowledge(self):
+        with self._owned_chat_lock:
+            if getattr(self, "_chat_knowledge", None) is None:
+                from .chat_knowledge import ChatKnowledgeService
+                self._chat_knowledge = ChatKnowledgeService(self)
+            return self._chat_knowledge
+
     def chat_task_proposals(self):
         """Return the bounded owner-scoped review service for coordinator proposals."""
         self.owned_chat()

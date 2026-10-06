@@ -723,7 +723,7 @@ export const post100Tasks = [
     "title": "Owned knowledge and chat context controls",
     "description": "Expose supported knowledge retention/retrieval controls and source traces in owner-scoped conversations.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       103,
       108
@@ -741,9 +741,9 @@ export const post100Tasks = [
       "Approve any new chat-context injection and retention defaults before implementation."
     ],
     "area": "P08",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-117-owned-chat-knowledge",
+    "validation": ["tests/test_chat_knowledge.py: 7 passed (no automatic retention or injection; consent and bounded expiry; explicit traced untrusted context creating no Tasks; expiry, withdrawal and changed-revision freshness; cross-conversation and foreign-owner boundaries; permissions and secret-paste guard).","Full Python suite 988 passed, 3 skipped, 2 unrelated pre-existing failures (test_model_set_command, test_model_replacement_uses_existing_assignment_service); docs tests passed."],
+    "limitations": ["API only: there are no browser controls yet.","Lexical matching only; traces are process-local and cleared on restart; retained records use the existing local database and are not encrypted.","Withdrawal cannot recall text already sent to a provider, earlier replies or prepared Task proposals."]
   },
   {
     "number": 118,

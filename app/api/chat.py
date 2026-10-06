@@ -1,10 +1,12 @@
 """Authorized owned chat; routes depend only on application services."""
 import re
 from contextlib import contextmanager
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
+from app.application.services.chat_knowledge import ContextRequest, KnowledgeNotFound
 from app.application.services.owned_chat import ChatConflict, ChatLimit, ChatNotFound, ChatUnavailable
 from app.application.services.chat_task_proposals import (
     ChatTaskProposalConflict,
@@ -42,10 +44,30 @@ class StartRequest(BaseModel):
     agent_id: str = Field(min_length=1, max_length=256)
 
 
+class ChatContextBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    query: str = Field(min_length=1, max_length=1024)
+    scope: MemoryScope
+    scope_id: str = Field(min_length=1, max_length=256)
+    limit: int = Field(default=3, ge=1, le=3)
+
+
 class SendRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     text: str = Field(min_length=1, max_length=8192)
     cloud_consent: bool = False
+    context: ChatContextBody | None = None
+
+
+class RetainRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    message_id: str = Field(min_length=1, max_length=256)
+    expires_at: datetime
+    retention_opt_in: StrictBool
+
+
+def get_chat_now():
+    return datetime.now(timezone.utc)
 
 
 class TaskProposalRequest(BaseModel):
@@ -94,6 +116,10 @@ def chat_errors():
         raise HTTPException(410, str(error)) from None
     except ChatTaskProposalConflict as error:
         raise HTTPException(409, str(error)) from None
+    except KnowledgeNotFound:
+        raise HTTPException(404, "Retained knowledge not found") from None
+    except PermissionError:
+        raise HTTPException(403, "Context scope is not authorized for this conversation") from None
     except ChatNotFound:
         raise HTTPException(404, "Conversation not found") from None
     except ChatConflict as error:
@@ -130,17 +156,18 @@ def start_conversation(payload=Depends(bounded_body),
 
 @router.get("/{identifier}")
 def get_conversation(identifier: str, principal=Depends(require_permission("chat:read")),
-                     service=Depends(get_application_service)):
+                     service=Depends(get_application_service), now=Depends(get_chat_now)):
     with chat_errors():
-        return service.owned_chat().get(principal.identity, identifier)
+        record = service.owned_chat().get(principal.identity, identifier)
+        return {**record, "context_traces": service.chat_knowledge().traces(principal.identity, identifier, now)}
 
 
 @router.post("/{identifier}/messages")
 def send_message(identifier: str, payload=Depends(bounded_body),
                  principal=Depends(require_permission("chat:send")),
-                 service=Depends(get_application_service)):
+                 service=Depends(get_application_service), now=Depends(get_chat_now)):
     body = parse(SendRequest, payload)
-    if contains_gemini_key(body.text):
+    if contains_gemini_key(body.text) or (body.context and contains_gemini_key(body.context.query)):
         raise HTTPException(422, SECRET_PASTE_GUIDANCE)
     with chat_errors():
         current = service.owned_chat().get(principal.identity, identifier)
@@ -151,7 +178,44 @@ def send_message(identifier: str, payload=Depends(bounded_body),
             and body.cloud_consent is not True
         ):
             raise HTTPException(403, "Explicit consent is required before sending this turn and recent chat context to Gemini.")
-        return service.owned_chat().send(principal.identity, identifier, body.text)
+        knowledge = service.chat_knowledge()
+        retrieved = trace_request = None
+        if body.context is not None:
+            retrieved, trace_request = knowledge.retrieve(principal.identity, identifier, ContextRequest(
+                body.context.query, body.context.scope, body.context.scope_id, body.context.limit), now)
+        result = service.owned_chat().send(principal.identity, identifier, body.text,
+                                           knowledge.prompt_context(retrieved) if retrieved else None)
+        if retrieved is not None:
+            reply = result["conversation"].messages[-1]
+            result = {**result, "context_trace": knowledge.record_trace(
+                principal.identity, identifier, reply.id, retrieved, trace_request, now)}
+        return result
+
+
+@router.get("/{identifier}/retained")
+def list_retained(identifier: str, principal=Depends(require_permission("chat:read")),
+                  service=Depends(get_application_service), now=Depends(get_chat_now)):
+    with chat_errors():
+        return service.chat_knowledge().list_retained(principal.identity, identifier, now)
+
+
+@router.post("/{identifier}/retained")
+def retain_message(identifier: str, payload=Depends(bounded_body),
+                   principal=Depends(require_permission("chat-knowledge:retain")),
+                   service=Depends(get_application_service), now=Depends(get_chat_now)):
+    body = parse(RetainRequest, payload)
+    with chat_errors():
+        return service.chat_knowledge().retain(
+            principal.identity, identifier, body.message_id, expires_at=body.expires_at,
+            retention_opt_in=body.retention_opt_in, now=now)
+
+
+@router.delete("/{identifier}/retained/{memory_id}")
+def withdraw_retained(identifier: str, memory_id: str,
+                      principal=Depends(require_permission("chat-knowledge:withdraw")),
+                      service=Depends(get_application_service)):
+    with chat_errors():
+        return service.chat_knowledge().withdraw(principal.identity, identifier, memory_id)
 
 
 @router.post("/{identifier}/close")

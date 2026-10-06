@@ -122,7 +122,7 @@ class CorporationChatService:
         return ChatTaskCreation(task.id, task.status, review.project_id,
                                 review.agent_id, review.id)
 
-    def send(self, conversation_id: str, text: str):
+    def send(self, conversation_id: str, text: str, retrieved_context=None):
         record = self.get(conversation_id)
         if record.status is not ConversationStatus.OPEN:
             raise ValueError("Cannot send to a closed conversation")
@@ -132,9 +132,12 @@ class CorporationChatService:
             raise ValueError("Message exceeds byte limit")
         history = [{"role": m.role.value, "content": m.content}
                    for m in record.messages[-16:] if m.status is MessageStatus.COMPLETED]
-        prompt = json.dumps({"corporation_id": self._corporation_id,
-                             "context": self._chat.get_context(conversation_id),
-                             "history": history, "request": text}, ensure_ascii=True)
+        payload = {"corporation_id": self._corporation_id,
+                   "context": self._chat.get_context(conversation_id),
+                   "history": history, "request": text}
+        if retrieved_context is not None:
+            payload["retrieved_context"] = retrieved_context
+        prompt = json.dumps(payload, ensure_ascii=True)
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
             raise ValueError("Prompt exceeds byte limit")
         user_id, reply_id = uuid4().hex, uuid4().hex

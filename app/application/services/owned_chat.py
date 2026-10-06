@@ -138,12 +138,12 @@ class OwnedChatService:
         with self._access(owner, identifier) as entry:
             return {"conversation": self._chat.get(identifier), "coordinator": entry.coordinator}
 
-    def send(self, owner, identifier, text):
+    def send(self, owner, identifier, text, retrieved_context=None):
         with self._access(owner, identifier) as entry:
             with self.agent_request(entry.coordinator.id):
-                return self._send(entry, identifier, text)
+                return self._send(entry, identifier, text, retrieved_context)
 
-    def _send(self, entry, identifier, text):
+    def _send(self, entry, identifier, text, retrieved_context=None):
         current, provider = self._coordinator(entry.coordinator.id)
         if (current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model):
             raise ChatConflict("Coordinator assignment changed; start a new conversation")
@@ -151,7 +151,7 @@ class OwnedChatService:
             raise ChatConflict("Coordinator connection changed; start a new conversation")
         if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
             raise ChatLimit("Conversation message limit reached; start a new conversation")
-        record = self._chat.send(identifier, text)
+        record = self._chat.send(identifier, text, retrieved_context)
         return {"conversation": record, "coordinator": entry.coordinator}
 
     def close(self, owner, identifier):
