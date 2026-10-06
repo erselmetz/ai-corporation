@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-114 are verified complete, Task 115 is next,
-and Tasks 115-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-115 are verified complete, Task 116 is next,
+and Tasks 116-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -915,6 +915,10 @@ responsibility, and later paid workflow execution still requires a verified
 ceiling. Locks do not coordinate multiple application instances or direct
 registry changes. Focused validation, checkpoint and remaining limitations are
 recorded in `docs/tasks-data.mjs`.
+
+## Workflow map (Task 115)
+
+`build_workflow_map` (`app/application/services/workflow_map.py`) snapshots `WorkflowReviewService` state for `GET /api/local/workflows/map` (registered before `/{workflow_id}`). Operational edges (delegation, handoff) and organizational reporting edges are separate lists. The freshness contract is a point-in-time snapshot with `generated_at` and `stale_after_seconds` (60); retention is the existing process-local state, with no event infrastructure. Prompts, outputs and raw error text are omitted, and identifiers are masked without `agent:read`/`position:read`. `/ui/workflow-map` renders text only.
 
 ## Corporation structure map (Task 114)
 

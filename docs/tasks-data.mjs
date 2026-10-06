@@ -673,7 +673,7 @@ export const post100Tasks = [
     "title": "Workflow map and progress evidence",
     "description": "Visualize actual workflow dependencies, handoffs, status and linked evidence.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       113
     ],
@@ -686,13 +686,11 @@ export const post100Tasks = [
     "outOfScope": [
       "Fabricated progress percentages, queue positions or agent activity."
     ],
-    "decisions": [
-      "Choose snapshot/event freshness and retention contracts before introducing live event infrastructure."
-    ],
+    "decisions": ["Resolved conservatively: freshness is a point-in-time snapshot contract. The map carries a server generated_at and a 60-second stale_after_seconds; the page refetches only on explicit refresh or node selection, marks a snapshot stale after 60 seconds, and keeps the last snapshot labelled stale if the connection drops. Retention is the existing process-local workflow state and event list; no event stream, push channel or persistence was introduced. Operational delegation/handoff edges are returned separately from organizational reporting edges, and no link between a work item and a position is inferred."],
     "area": "P07b",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-115-workflow-map-progress-evidence",
+    "validation": ["New workflow-map Python tests: 7 passed, covering separate operational and reporting edges, content/raw-error/secret omission, outcome evidence, state changes, forbidden Agent/position masking, empty data, the freshness contract and the local API 401/403 paths.","Workflow-map browser-module tests: 5 passed, covering separate lists, stale and empty snapshots, selection and state changes, forbidden labels, disconnect retaining a stale snapshot and 401/403/500 errors; all 111 browser-module tests passed and the public documentation suite passed. Pylance reported no diagnostics in the new service and tests.","Full Python suite: 979 passed, 3 skipped (pre-existing conditional skips), and the same 2 unrelated pre-existing model-assignment failures (test_model_set_command, test_model_replacement_uses_existing_assignment_service). No live or paid calls."],
+    "limitations": ["Read-only list/tree rendering of point-in-time snapshots; there is no graph, 3D view, event stream or live push, and workflow state remains process-local and cleared on restart.","Prompts and outputs are never returned; only whether output exists, bounded reasons, and reviewer/owner evidence text are shown. Agent and destination identifiers are masked without agent:read, and reporting links without position:read.","Work items are not linked to positions or employees because no recorded relationship exists; staleness is a client-side age check against the snapshot timestamp."]
   },
   {
     "number": 116,

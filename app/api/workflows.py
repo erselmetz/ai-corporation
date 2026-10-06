@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt
 
 from app.application.services.workflow_review import WorkflowConflict, WorkflowNotFound
+from app.application.services.workflow_map import build_workflow_map
 from .chat import get_application_service
 from .security import require_permission
 
@@ -88,6 +89,11 @@ def _service(application):
 def list_workflows(application=Depends(get_application_service)):
     return {"workflows": _service(application).list()}
 
+
+@router.get("/map")
+def workflow_map(principal=Depends(require_permission("workflow:read")),
+                 application=Depends(get_application_service)):
+    return build_workflow_map(application, principal.permissions)
 
 @router.get("/{workflow_id}", dependencies=_READ)
 def get_workflow(workflow_id: str, application=Depends(get_application_service)):

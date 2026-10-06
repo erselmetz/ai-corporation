@@ -25,9 +25,9 @@ test("shows all tasks in descending order and highlights the actual next planned
   assert.equal(groups[0].id, "tasks-101-129");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 129 }, (_, index) => 129 - index));
-  assert.match(elements["roadmap-summary"].textContent, /129 roadmap tasks.*114 completed.*15 planned/);
-  assert.equal(elements["next-task"].children[0].href, "#task-115");
-  assert.match(elements["next-task"].textContent, /Next: Task 115/);
+  assert.match(elements["roadmap-summary"].textContent, /129 roadmap tasks.*115 completed.*14 planned/);
+  assert.equal(elements["next-task"].children[0].href, "#task-116");
+  assert.match(elements["next-task"].textContent, /Next: Task 116/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {

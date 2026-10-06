@@ -1020,6 +1020,26 @@ def structure_map_page():
     </main></body></html>""")
 
 
+@router.get("/ui/workflow-map", response_class=HTMLResponse)
+def workflow_map_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Workflow map - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/workflow-map.mjs"></script></head><body>
+    <main class="content"><nav><a href="/ui/workflows">Workflows</a> |
+    <a href="/ui/structure">Corporation structure</a> |
+    <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <h1>Workflow map</h1>
+    <p>Operational handoff and delegation links are listed separately from organizational reporting
+    links. Only recorded state and evidence are shown; there is no progress estimate or live activity.</p>
+    <p id="workflow-map-status" role="status">Loading workflow map...</p>
+    <button id="workflow-map-refresh" type="button">Refresh</button>
+    <section aria-label="Workflow work items"><div id="workflow-map-list"></div></section>
+    <section aria-label="Organizational reporting links"><h2>Organizational reporting links</h2>
+    <ul id="workflow-map-org"></ul></section>
+    <section aria-live="polite"><h2>Details</h2><div id="workflow-map-detail">Select a work item.</div></section>
+    </main></body></html>""")
+
 @router.get("/ui/provider-connections", response_class=HTMLResponse)
 def provider_connections_page():
     return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
