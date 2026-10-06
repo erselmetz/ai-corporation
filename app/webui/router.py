@@ -1040,6 +1040,35 @@ def workflow_map_page():
     <section aria-live="polite"><h2>Details</h2><div id="workflow-map-detail">Select a work item.</div></section>
     </main></body></html>""")
 
+@router.get("/ui/visualization", response_class=HTMLResponse)
+def visualization_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Corporation visualization - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/visualization.mjs"></script></head><body>
+    <main class="content viz-content"><nav><a href="/ui/chat">Coordinator chat</a> |
+    <a href="/ui/providers">Provider &amp; model setup</a> |
+    <a href="/ui/structure">Structure list</a> | <a href="/ui/workflow-map">Workflow list</a> |
+    <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <h1>Corporation visualization</h1>
+    <p>A 3D view of recorded positions, reporting links and workflow items. Only recorded state is drawn;
+    a node pulses once only when a refresh finds its recorded state changed. Nothing here can start or
+    approve work.</p>
+    <p id="viz-status" role="status">Loading...</p>
+    <div role="group" aria-label="View controls">
+    <button id="viz-mode-3d" type="button" aria-pressed="true">3D view</button>
+    <button id="viz-mode-list" type="button" aria-pressed="false">List view</button>
+    <button id="viz-refresh" type="button">Refresh</button>
+    <button id="viz-rotate-left" type="button">Rotate left</button>
+    <button id="viz-rotate-right" type="button">Rotate right</button>
+    <label><input id="viz-effects" type="checkbox" checked> Visual effects</label>
+    <label><input id="viz-reduce-motion" type="checkbox"> Reduce motion</label></div>
+    <canvas id="viz-canvas" class="viz-canvas" tabindex="0" role="img" aria-label="3D map"></canvas>
+    <section id="viz-list" aria-label="List view" hidden></section>
+    <p id="viz-cost" role="status"></p>
+    <section aria-live="polite"><h2>Details</h2><div id="viz-detail">Select a node.</div></section>
+    </main></body></html>""")
+
 @router.get("/ui/provider-connections", response_class=HTMLResponse)
 def provider_connections_page():
     return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">

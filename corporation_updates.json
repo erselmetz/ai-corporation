@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-10-08",
+      "type": "development",
+      "title": "Accessible 3D visualization",
+      "summary": "Completed Task 116. The /ui/visualization page renders the verified structure and workflow maps as a 3D-first Three.js scene (vendored three 0.186.1, MIT, served same-origin). Scene size is capped at 60 nodes, rendering is on demand, only recorded positions, assignments, states and edges are drawn, and a node pulses only when a refresh shows a recorded state change. An accessible list view is user-selectable and is used automatically for reduced motion or when WebGL fails. Effects can be disabled and render cost is displayed. The scene is read-only with no execution authority. Limitations: Render cost is measured on the user device only (no CI benchmark against local inference); real WebGL is not exercised in Node tests; the map updates on refresh only, with no live event stream; data is process-local."
+    },
+    {
       "date": "2026-10-07",
       "type": "development",
       "title": "Workflow map and progress evidence",

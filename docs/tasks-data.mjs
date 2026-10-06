@@ -697,7 +697,7 @@ export const post100Tasks = [
     "title": "Accessible Jarvis-style visualization",
     "description": "Add a Three.js 3D-first corporation/workflow presentation over the validated maps.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       114,
       115
@@ -714,9 +714,9 @@ export const post100Tasks = [
       "Owner approved Three.js for a 3D-first primary map; retain accessible 2D/list and reduced-motion alternatives and validate performance before enabling effects by default."
     ],
     "area": "P07c",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-116-accessible-3d-visualization",
+    "validation": ["tests/test_visualization_ui.mjs: 9 passed (scene model cap/edges/layout, changed-state detection, real Three.js scene build without a renderer, render-cost sampling, default 3D, reduced-motion and WebGL-failure list fallback, pulse only on verified change, keyboard selection, 403/disconnected sections).","tests/test_visualization_page.py: 2 passed (page, CSP and same-origin vendored Three.js with license).","All browser-module tests 120 passed; docs tests passed; full Python suite 981 passed, 3 skipped, 2 unrelated pre-existing failures (test_model_set_command, test_model_replacement_uses_existing_assignment_service)."],
+    "limitations": ["Rendering cost is measured only on the user device and shown in the page; no benchmark against local inference was run in CI. Real WebGL is not exercised in Node tests.","The map updates only on explicit refresh; there is no live event stream, so pulses reflect changes between refreshes. Data remains process-local.","The 3D scene is read-only and carries no execution authority."]
   },
   {
     "number": 117,

@@ -340,8 +340,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-115 are verified complete, Task 116 is next,
-and Tasks 116-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-116 are verified complete, Task 117 is next,
+and Tasks 117-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -574,6 +574,12 @@ warnings remain in unchanged lines of existing files. No live or paid provider
 calls were made. The full Python suite was not rerun; the Task 111 checkpoint
 documents two unrelated model-assignment failures. Checkpoint tag
 `task-112-multiple-provider-connections`.
+## Task 116 - Accessible 3D visualization
+
+The `/ui/visualization` page renders the verified structure and workflow maps as a 3D-first Three.js scene (vendored three 0.186.1, MIT, served same-origin). Scene size is capped at 60 nodes, rendering is on demand, only recorded positions, assignments, states and edges are drawn, and a node pulses only when a refresh shows a recorded state change. An accessible list view is user-selectable and is used automatically for reduced motion or when WebGL fails. Effects can be disabled and render cost is displayed. The scene is read-only with no execution authority.
+
+Limitations: Render cost is measured on the user device only (no CI benchmark against local inference); real WebGL is not exercised in Node tests; the map updates on refresh only, with no live event stream; data is process-local.
+
 ## Task 115 - Workflow map and progress evidence
 
 A read-only snapshot map is at `/ui/workflow-map` (`GET /api/local/workflows/map`, local-owner `workflow:read`). Operational delegation/handoff links are listed apart from organizational reporting links; snapshots are timestamped and marked stale after 60 seconds; disconnects keep the last snapshot labelled stale. Selecting a work item shows recorded review and owner-approval evidence. Prompts, outputs, secrets and raw errors are omitted; Agent ids need `agent:read`. There are no progress percentages or live event streams. Validation: 7 Python and 5 browser tests, 111 browser-module tests and the public docs suite passed; the full Python suite had 979 passed, 3 skipped and 2 unrelated pre-existing failures. Checkpoint tag `task-115-workflow-map-progress-evidence`.

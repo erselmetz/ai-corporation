@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-115 are verified complete, Task 116 is next,
-and Tasks 116-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-116 are verified complete, Task 117 is next,
+and Tasks 117-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -915,6 +915,12 @@ responsibility, and later paid workflow execution still requires a verified
 ceiling. Locks do not coordinate multiple application instances or direct
 registry changes. Focused validation, checkpoint and remaining limitations are
 recorded in `docs/tasks-data.mjs`.
+
+## 3D visualization (Task 116)
+
+The `/ui/visualization` page renders the verified structure and workflow maps as a 3D-first Three.js scene (vendored three 0.186.1, MIT, served same-origin). Scene size is capped at 60 nodes, rendering is on demand, only recorded positions, assignments, states and edges are drawn, and a node pulses only when a refresh shows a recorded state change. An accessible list view is user-selectable and is used automatically for reduced motion or when WebGL fails. Effects can be disabled and render cost is displayed. The scene is read-only with no execution authority.
+
+Limitations: Render cost is measured on the user device only (no CI benchmark against local inference); real WebGL is not exercised in Node tests; the map updates on refresh only, with no live event stream; data is process-local.
 
 ## Workflow map (Task 115)
 
