@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from threading import Lock
+from threading import Lock, RLock
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
@@ -180,7 +180,7 @@ class CorporationApplicationService:
         self._corporation_chat = None
         self._owned_chat = None
         self._owned_employee_chat = None
-        self._owned_chat_lock = Lock()
+        self._owned_chat_lock = RLock()
         self._chat_task_proposals = None
         self._chat_task_proposal_lock = Lock()
         self._task_dispatch = None
@@ -787,13 +787,24 @@ class CorporationApplicationService:
                     raise ValueError("Corporation identity is required")
                 from .corporation_chat import CorporationChatService
                 from .owned_chat import OwnedChatService
+                chat = CorporationChatService(self._corporation.id, self._orchestrator)
+                chat.history = self.chat_history()
                 self._owned_chat = OwnedChatService(
-                    CorporationChatService(self._corporation.id, self._orchestrator),
+                    chat,
                     self.get_agent,
                     self._orchestrator.providers.get,
                     self._orchestrator.agents.execution,
                 )
             return self._owned_chat
+
+    def chat_history(self):
+        with self._owned_chat_lock:
+            if getattr(self, "_chat_history", None) is None:
+                if self._corporation is None:
+                    raise ValueError("Corporation identity is required")
+                from .chat_history import ChatHistoryService
+                self._chat_history = ChatHistoryService(self._corporation.id)
+            return self._chat_history
 
     def chat_knowledge(self):
         with self._owned_chat_lock:

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import json
 from uuid import uuid4
 
@@ -7,6 +8,7 @@ from app.conversations import ChatMessageSummary, EmployeeChatService, MessageRo
 from app.orchestrator import Orchestrator
 from app.orchestrator.task import TaskStatus
 from app.providers.base import ProviderCapacityError
+from .chat_history import ChatHistoryError
 
 
 @dataclass(frozen=True)
@@ -51,6 +53,24 @@ class CorporationChatService:
         self._reviews: dict[str, ChatTaskReview] = {}
         self._used_reviews: set[str] = set()
         self._chat = EmployeeChatService(EmployeeRegistry(), orchestrator.agents)
+        self.history = None
+
+    def _durable(self, conversation_id):
+        return self.history is not None and self.history.is_active(conversation_id)
+
+    def _remember(self, conversation_id, message_id, role, content, status):
+        if self._durable(conversation_id):
+            self.history.record_message(conversation_id, message_id, role.value, content, status.value,
+                                        datetime.now(timezone.utc))
+
+    def _remember_status(self, conversation_id, message_id, status, *, strict):
+        if not self._durable(conversation_id):
+            return
+        try:
+            self.history.update_status(conversation_id, message_id, status.value)
+        except ChatHistoryError:
+            if strict:
+                raise
 
     def start(self, conversation_id: str, coordinator_agent_id: str):
         self._chat.start_conversation(conversation_id, agent_id=coordinator_agent_id)
@@ -65,6 +85,8 @@ class CorporationChatService:
 
     def close(self, conversation_id: str):
         self._chat.close_conversation(conversation_id)
+        if self._durable(conversation_id):
+            self.history.close(conversation_id)
         return self.get(conversation_id)
 
     def retain_message(self, conversation_id: str, message_id: str, *, memory_id: str,
@@ -143,6 +165,11 @@ class CorporationChatService:
         user_id, reply_id = uuid4().hex, uuid4().hex
         self._chat.add_message(conversation_id, user_id, MessageRole.USER, text)
         try:
+            self._remember(conversation_id, user_id, MessageRole.USER, text, MessageStatus.PENDING)
+        except ChatHistoryError:
+            self._chat.transition_message(conversation_id, user_id, MessageStatus.FAILED)
+            raise
+        try:
             reply = self._orchestrator.run_agent(record.coordinator_agent_id, prompt)
             if not isinstance(reply, str) or not reply.strip():
                 raise ValueError("Provider returned no reply")
@@ -150,11 +177,15 @@ class CorporationChatService:
                 raise ValueError("Provider reply exceeds byte limit")
         except ProviderCapacityError:
             self._chat.transition_message(conversation_id, user_id, MessageStatus.FAILED)
+            self._remember_status(conversation_id, user_id, MessageStatus.FAILED, strict=False)
             raise
         except Exception:
             self._chat.transition_message(conversation_id, user_id, MessageStatus.FAILED)
+            self._remember_status(conversation_id, user_id, MessageStatus.FAILED, strict=False)
             raise RuntimeError("Corporation chat response failed") from None
         self._chat.transition_message(conversation_id, user_id, MessageStatus.COMPLETED)
         self._chat.add_message(conversation_id, reply_id, MessageRole.ASSISTANT, reply)
         self._chat.transition_message(conversation_id, reply_id, MessageStatus.COMPLETED)
+        self._remember(conversation_id, reply_id, MessageRole.ASSISTANT, reply, MessageStatus.COMPLETED)
+        self._remember_status(conversation_id, user_id, MessageStatus.COMPLETED, strict=True)
         return self.get(conversation_id)

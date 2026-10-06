@@ -340,8 +340,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-117 are verified complete, Task 118 is next,
-and Tasks 118-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-118 are verified complete, Task 119 is next,
+and Tasks 119-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -574,6 +574,10 @@ warnings remain in unchanged lines of existing files. No live or paid provider
 calls were made. The full Python suite was not rerun; the Task 111 checkpoint
 documents two unrelated model-assignment failures. Checkpoint tag
 `task-112-multiple-provider-connections`.
+## Task 118 - Durable chat history
+
+Owners can opt a conversation into local durable history (/api/chat/history) with a 1 hour to 90 day expiry, review uncertain turns after a restart and delete stored history. Recovered conversations are read-only, interrupted turns are never replayed, and stored text is unencrypted at rest.
+
 ## Task 117 - Owned knowledge and chat context controls
 
 Owner-scoped chat can now use retained knowledge only on explicit request. A completed message is retained only with explicit consent and an expiry of 1 minute to 30 days (POST /api/chat/conversations/{id}/retained); nothing is retained automatically. A send may carry an explicit context request (query, scope, limit up to 3); matching authorized records are added to that turn as untrusted reference data and the reply carries a source trace (memory id, scope, revision, expiry, origin, matched terms). Conversation GET re-checks each trace as current, changed, expired or unavailable without caching content. Withdrawal (DELETE) deletes the stored record and states that text already sent to a provider, earlier replies and prepared Task proposals are not recalled. Conversation-scope context cannot cross conversations; cloud consent still applies to the whole turn including retrieved context.

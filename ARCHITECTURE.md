@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-117 are verified complete, Task 118 is next,
-and Tasks 118-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-118 are verified complete, Task 119 is next,
+and Tasks 119-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -915,6 +915,10 @@ responsibility, and later paid workflow execution still requires a verified
 ceiling. Locks do not coordinate multiple application instances or direct
 registry changes. Focused validation, checkpoint and remaining limitations are
 recorded in `docs/tasks-data.mjs`.
+
+## Chat history (Task 118)
+
+`ChatHistoryService` stores opted-in conversations in SQLite with versioned migrations (v1 to v2), owner-scoped reads and expiry purging. After a restart, conversations are read-only; pending turns are reported as uncertain and must be reviewed, never replayed. A storage failure before a provider call aborts the turn.
 
 ## Chat knowledge (Task 117)
 

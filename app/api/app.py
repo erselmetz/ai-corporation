@@ -1017,6 +1017,8 @@ def create_app(
     application.include_router(maintenance_checkpoints_router)
     from .github import router as github_router
     application.include_router(github_router)
+    from .chat_history import router as chat_history_router
+    application.include_router(chat_history_router)
     from .chat import router as chat_router
     application.include_router(chat_router)
     from .employee_chat import router as employee_chat_router

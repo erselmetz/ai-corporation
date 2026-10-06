@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
+from app.application.services.chat_history import ChatHistoryError
 from app.application.services.chat_knowledge import ContextRequest, KnowledgeNotFound
 from app.application.services.owned_chat import ChatConflict, ChatLimit, ChatNotFound, ChatUnavailable
 from app.application.services.chat_task_proposals import (
@@ -134,6 +135,8 @@ def chat_errors():
         raise HTTPException(429, str(error)) from None
     except ValueError:
         raise HTTPException(422, "Chat input or conversation state is invalid") from None
+    except ChatHistoryError as error:
+        raise HTTPException(503, str(error)) from None
     except RuntimeError:
         raise HTTPException(502, "Chat response failed; check the configured provider and model. No automatic retry occurred.") from None
 

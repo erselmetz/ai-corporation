@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-10-11",
+      "type": "development",
+      "title": "Durable conversation history and recovery",
+      "summary": "Task 118 adds opt-in local chat history with bounded expiry, read-only restart recovery, owner review of uncertain turns and no automatic replay."
+    },
+    {
       "date": "2026-10-09",
       "type": "development",
       "title": "Owned knowledge and chat context controls",

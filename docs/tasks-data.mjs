@@ -750,7 +750,7 @@ export const post100Tasks = [
     "title": "Durable conversation history and recovery",
     "description": "Add explicitly consented durable conversation history with truthful restart and interrupted-turn behavior.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       117
     ],
@@ -763,12 +763,19 @@ export const post100Tasks = [
       "Persisting credentials or silently re-executing an interrupted request."
     ],
     "decisions": [
-      "Approve storage, retention/expiry, encryption needs, migrations and uncertain-outcome recovery contract."
+      "Resolved conservatively: storage is the existing local SQLite database; history is per-conversation opt-in (default off) with an owner-chosen expiry of 1 hour to 90 days, at most 200 stored conversations per owner; stored text is not encrypted at rest (documented) and credentials are never stored; versioned migrations v1 to v2 preserve rows and provenance; restart recovery is read-only, pending turns show as uncertain and must be reviewed (becoming interrupted), never replayed."
     ],
     "area": "P02c / P08",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-118-durable-chat-history",
+    "validation": [
+      "tests/test_chat_history.py (10 tests): opt-out default, consent and bounded expiry, restart read-only recovery without replay, uncertain-turn review, expiry purge, deletion scope and owner isolation, pre-call persistence failure fails closed, post-call failure leaves an uncertain turn, v1 to v2 migration, permission denial.",
+      "Full Python suite: 998 passed, 3 skipped, 2 unrelated pre-existing failures (test_model_set_command, test_model_replacement_uses_existing_assignment_service); 120 browser tests and 14 docs tests passed."
+    ],
+    "limitations": [
+      "Stored text is unencrypted at rest; history is API-only with no browser panel yet.",
+      "Single process: live versus uncertain is decided from in-process state, so a second process sharing the database would see live turns as uncertain.",
+      "Recovered conversations are read-only; deleting history does not remove Task 117 retained knowledge or recall text already sent to a provider."
+    ]
   },
   {
     "number": 119,

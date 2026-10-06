@@ -31,6 +31,7 @@ EMPLOYEE_CHAT_PERMISSIONS = frozenset({
 ASSIGNMENT_POLICY_PERMISSIONS = frozenset({"assignment-policy:manage"})
 PROVIDER_CONNECTION_MANAGEMENT_PERMISSIONS = frozenset({"provider-connection:manage"})
 CHAT_TASK_PERMISSIONS = frozenset({"chat-task:create"})
+CHAT_HISTORY_PERMISSIONS = frozenset({"chat-history:manage"})
 CHAT_KNOWLEDGE_PERMISSIONS = frozenset({"chat-knowledge:retain", "chat-knowledge:withdraw"})
 TASK_DISPATCH_PERMISSIONS = frozenset({"task:dispatch"})
 WORKFLOW_PERMISSIONS = frozenset({"workflow:read", "workflow:manage"})
@@ -69,7 +70,7 @@ class LocalOwnerAuthentication:
             "local-owner", READ_PERMISSIONS | CHAT_PERMISSIONS
             | LOCAL_MODEL_PERMISSIONS | ONLINE_PROVIDER_PERMISSIONS
             | POSITION_MANAGEMENT_PERMISSIONS | EMPLOYEE_CHAT_PERMISSIONS
-            | ASSIGNMENT_POLICY_PERMISSIONS | CHAT_TASK_PERMISSIONS | CHAT_KNOWLEDGE_PERMISSIONS
+            | ASSIGNMENT_POLICY_PERMISSIONS | CHAT_TASK_PERMISSIONS | CHAT_KNOWLEDGE_PERMISSIONS | CHAT_HISTORY_PERMISSIONS
             | TASK_DISPATCH_PERMISSIONS | PROVIDER_CONNECTION_MANAGEMENT_PERMISSIONS
             | WORKFLOW_PERMISSIONS)
 
