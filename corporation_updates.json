@@ -21,6 +21,12 @@
     {
       "date": "2026-10-07",
       "type": "development",
+      "title": "Local model resource and loading controls",
+      "summary": "Task 119 adds Ollama-reported loaded-model memory/VRAM and confirmed load/unload controls guarded by fresh runtime evidence, configured request slots and active-work checks. Hardware fit and inference latency remain unknown."
+    },
+    {
+      "date": "2026-10-07",
+      "type": "development",
       "title": "Workflow map and progress evidence",
       "summary": "Completed Task 115 with a read-only workflow map (GET /api/local/workflows/map and /ui/workflow-map). Operational delegation and handoff edges are kept separate from organizational reporting edges; snapshots carry a timestamp, are marked stale after 60 seconds, and the last snapshot stays labelled stale on disconnect, with empty, forbidden, signed-out and failed states distinguished. Selecting a work item shows recorded review and owner-approval evidence; prompts, outputs, secrets and raw provider errors are omitted and Agent identifiers are masked without agent:read. No progress percentages, queue positions, event stream or activity animation were added. Validation: 7 workflow-map Python tests, 5 browser tests, 111 browser-module tests and the public documentation suite passed; the full Python suite had 979 passed, 3 skipped and 2 unrelated pre-existing model-assignment failures. No live or paid calls were made. Checkpoint tag: task-115-workflow-map-progress-evidence. Tasks 101–115 are verified complete; Task 116 is next and Tasks 116–129 remain planned."
     },

@@ -782,7 +782,7 @@ export const post100Tasks = [
     "title": "Local model resource and loading controls",
     "description": "Expose configured budgets and supported model loading controls with actual hardware/runtime evidence.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       104,
       111
@@ -798,12 +798,23 @@ export const post100Tasks = [
       "Extracting only a job-specific part of a dense LLM; configured slots as proof of GPU/VRAM fit."
     ],
     "decisions": [
-      "Approve telemetry access, load/unload semantics and any runtime/resource contract extension."
+      "Resolved conservatively: query Ollama's supported /api/ps telemetry and keep memory/VRAM measurements distinct from unknown physical capacity and fit; probe latency and operation latency are measured but inference latency stays unknown. Expose load/unload only for configured loopback Ollama, only after fresh installed-catalog and loaded-runtime checks, and only through a separate model-runtime:manage permission. Operations send an empty prompt solely to invoke Ollama's load/unload semantics, use a bounded owner-selected keep-alive, are capped at five minutes, consume configured provider/global/model request slots, and are rejected while the model has active work. Count loaded models once per provider/model, irrespective of Agent assignments. Other providers report lifecycle controls unsupported; no third-party system telemetry, model-part extraction, or unsupported quantization/offload is claimed."
     ],
     "area": "P09",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-119-local-model-resource-controls",
+    "validation": [
+      "tests/test_local_models.py: Ollama runtime memory/VRAM/context telemetry, bounded explicit load/unload request semantics, and malformed or unavailable evidence with deterministic HTTP fakes.",
+      "tests/test_provider_connections.py: runtime and load/unload behavior, shared model accounting, slot admission, active-work rejection, connection responsiveness during model operations, unavailable telemetry, unsupported Gemini operations, and authenticated API permissions.",
+      "tests/test_provider_connections_ui.mjs: 4 tests covering runtime evidence, UNKNOWN hardware/inference claims, CSRF-protected load/unload, confirmation, and distinct permission gating.",
+      "Full Python suite: 1001 passed, 6 skipped, 2 unrelated pre-existing failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service).",
+      "All browser-module tests: 139 passed; public docs suite: 14 passed. Pylance reported no diagnostics in changed production Python files. No live or paid provider calls."
+    ],
+    "limitations": [
+      "Physical total/available memory and pre-load hardware fit remain UNKNOWN; Ollama-reported loaded-model memory and VRAM are post-load runtime measurements only.",
+      "The measured probe and operation durations are not inference latency. No inference benchmark, quality tradeoff, CPU/GPU offload, quantization control, or dense-model part loading is provided.",
+      "Load/unload is available only for configured loopback Ollama connections and requests time out after five minutes; other providers expose UNKNOWN runtime telemetry and no lifecycle controls.",
+      "Provider request-slot settings are process-local software limits. They do not reserve physical memory, and direct registry changes or multiple app instances are outside the coordination guarantee."
+    ]
   },
   {
     "number": 120,

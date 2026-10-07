@@ -38,13 +38,18 @@ class Element {
   }
 }
 
-function setup({ permissions = ["provider-connection:read", "provider-connection:manage"] } = {}) {
+function setup({
+  permissions = ["provider-connection:read", "provider-connection:manage", "model-runtime:manage"],
+  initialConnections = [],
+} = {}) {
   const ids = [
     "connection-type", "assignment-provider", "assignment-model", "assignment-agent",
     "connection-state", "connection-key", "connection-url", "connection-slots",
     "connection-url-field", "connection-key-field", "connection-add", "connection-refresh",
     "connection-remove", "connection-list", "connection-id", "connection-name",
     "assignment-save",
+    "model-runtime-state", "model-runtime-evidence", "model-runtime-refresh",
+    "model-load", "model-unload", "model-keep-alive",
   ];
   const elements = Object.fromEntries(ids.map(id => [
     id,
@@ -53,8 +58,10 @@ function setup({ permissions = ["provider-connection:read", "provider-connection
   ]));
   elements["connection-type"].value = "ollama";
   elements["connection-slots"].value = "2";
+  elements["model-keep-alive"].value = "90";
   const calls = [];
-  let connections = [];
+  let connections = initialConnections;
+  let loadedModels = [];
   const fetchImpl = async (path, options = {}) => {
     calls.push({ path, options });
     if (path === "/api/local/session") {
@@ -65,6 +72,36 @@ function setup({ permissions = ["provider-connection:read", "provider-connection
     }
     if (path === "/api/local/provider-connections") {
       return response({ items: connections, capacity: { global_request_slots: 1, hardware_feasibility: "unknown" } });
+    }
+    if (path.endsWith("/runtime")) {
+      return response({
+        provider_id: "ollama-work",
+        hardware_feasibility: "unknown",
+        inference_latency: "unknown",
+        request_capacity: { state: "configured", global_slots: 2, provider_slots: 2, active_requests: 0 },
+        runtime: {
+          state: "available", supported: true, models: loadedModels,
+          probe_latency_ms: 1.25, reason: null,
+        },
+      });
+    }
+    if (path.endsWith("/models/load") && options.method === "POST") {
+      loadedModels = [{ name: "local-model", size_bytes: 1234, vram_bytes: 1024, context_length: 2048 }];
+      return response({
+        action: "load", operation_latency_ms: 4.5,
+        hardware_feasibility: "unknown", inference_latency: "unknown",
+        request_capacity: { state: "configured", global_slots: 2, provider_slots: 2, active_requests: 0 },
+        runtime: { state: "available", supported: true, models: loadedModels, probe_latency_ms: 1.2, reason: null },
+      });
+    }
+    if (path.endsWith("/models/unload") && options.method === "POST") {
+      loadedModels = [];
+      return response({
+        action: "unload", operation_latency_ms: 3.5,
+        hardware_feasibility: "unknown", inference_latency: "unknown",
+        request_capacity: { state: "configured", global_slots: 2, provider_slots: 2, active_requests: 0 },
+        runtime: { state: "available", supported: true, models: [], probe_latency_ms: 1.2, reason: null },
+      });
     }
     if (["/api/tasks", "/api/chat/conversations", "/api/employee-chat/conversations"].includes(path)) {
       return response({ items: [] });
@@ -149,4 +186,56 @@ test("read-only owner session cannot add or assign provider connections", async 
   await ui.ui.initialLoad;
   assert.equal(ui.elements["connection-add"].disabled, true);
   assert.equal(ui.elements["assignment-save"].disabled, true);
+});
+
+test("local runtime controls show provider evidence and confirm bounded load and unload", async () => {
+  const ui = setup({
+    initialConnections: [
+      {
+        provider_id: "ollama-work", name: "Workstation", provider_type: "ollama",
+        state: "available", models: ["local-model"], source: "fake",
+        request_capacity: { state: "configured", provider_slots: 2 },
+      },
+      {
+        provider_id: "ollama-alt", name: "Alternate", provider_type: "ollama",
+        state: "available", models: ["local-model"], source: "fake",
+        request_capacity: { state: "configured", provider_slots: 2 },
+      },
+    ],
+  });
+  await ui.ui.initialLoad;
+  await ui.elements["model-runtime-refresh"].listeners.click();
+  assert.match(ui.elements["model-runtime-evidence"].textContent, /Loaded models \(available\): none reported/);
+  assert.match(ui.elements["model-runtime-evidence"].textContent, /not inference latency/);
+  assert.match(ui.elements["model-runtime-evidence"].textContent, /Hardware feasibility: unknown/);
+  ui.elements["assignment-provider"].value = "ollama-alt";
+  ui.elements["assignment-provider"].listeners.change();
+  assert.equal(ui.elements["model-runtime-evidence"].textContent, "");
+  assert.equal(ui.elements["model-runtime-state"].textContent, "");
+  await ui.elements["model-load"].listeners.click();
+  const load = ui.calls.find(call => call.path?.endsWith("/models/load"));
+  assert.equal(load.options.credentials, "same-origin");
+  assert.equal(load.options.headers["X-Local-CSRF"], "local-csrf");
+  assert.deepEqual(JSON.parse(load.options.body), {
+    model_id: "local-model", keep_alive_seconds: 90,
+  });
+  assert.match(ui.elements["model-runtime-evidence"].textContent, /memory 1234 bytes.*VRAM 1024 bytes/);
+  assert.match(ui.calls.find(call => call.confirmation)?.confirmation, /Hardware fit is UNKNOWN/);
+  assert.match(ui.elements["model-runtime-state"].textContent, /Hardware feasibility remains UNKNOWN/);
+  await ui.elements["model-unload"].listeners.click();
+  assert.ok(ui.calls.some(call => call.path?.endsWith("/models/unload")));
+});
+
+test("model lifecycle controls require their distinct permission", async () => {
+  const ui = setup({
+    permissions: ["provider-connection:read", "provider-connection:manage"],
+    initialConnections: [{
+      provider_id: "ollama-work", name: "Workstation", provider_type: "ollama",
+      state: "available", models: ["local-model"], source: "fake",
+      request_capacity: { state: "configured", provider_slots: 2 },
+    }],
+  });
+  await ui.ui.initialLoad;
+  assert.equal(ui.elements["model-load"].disabled, true);
+  assert.equal(ui.elements["model-unload"].disabled, true);
 });

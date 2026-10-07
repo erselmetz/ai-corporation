@@ -16,8 +16,12 @@ from app.application.services.provider_connections import (
 from app.integrations.gemini_chat import GeminiConnectionError
 from app.local import create_local_app
 from app.providers import AIProvider
-from app.providers.base import ProviderCapacityError, ProviderCapacityUnknown
-from app.providers.inventory import LocalModelInventory
+from app.providers.base import (
+    ProviderCapacityError,
+    ProviderCapacityUnknown,
+    ProviderModelOperationUnsupported,
+)
+from app.providers.inventory import LoadedLocalModel, LocalModelInventory, LocalModelRuntime
 from app.runtime.factory import create_corporation_runtime
 
 
@@ -31,6 +35,8 @@ class FakeOllama(AIProvider):
         self.base_url = base_url
         self.model = f"local-{base_url.rsplit(':', 1)[-1]}"
         self.calls = []
+        self.loaded = {}
+        self.operations = []
 
     def local_model_inventory(self):
         return LocalModelInventory(
@@ -40,6 +46,24 @@ class FakeOllama(AIProvider):
     def generate(self, model, prompt):
         self.calls.append((model, prompt))
         return "local fake reply"
+
+    def local_model_runtime(self):
+        return LocalModelRuntime(
+            state="available",
+            models=tuple(self.loaded.values()),
+            supported=True,
+            source="deterministic-runtime",
+            probe_latency_ms=1.25,
+            reason=None,
+        )
+
+    def load_model(self, model, *, keep_alive_seconds=300):
+        self.operations.append(("load", model, keep_alive_seconds))
+        self.loaded[model] = LoadedLocalModel(model, 1024, 512, context_length=2048)
+
+    def unload_model(self, model):
+        self.operations.append(("unload", model))
+        self.loaded.pop(model, None)
 
 
 class StaleFakeOllama(FakeOllama):
@@ -269,6 +293,102 @@ def test_loopback_validation_and_request_capacity_fail_closed():
             with gate.reserve("local-one", "model"):
                 pytest.fail("The configured request-slot limit must be enforced")
     assert gate.capacity("local-one")["active_requests"] == 0
+    with gate.reserve("local-one", "another-model"):
+        with pytest.raises(ProviderConnectionConflict, match="global/provider"):
+            with gate.model_operation("local-one", "model"):
+                pytest.fail("Model lifecycle operations must consume configured request capacity")
+    with gate.model_operation("local-one", "model"):
+        assert gate.capacity("local-one")["active_requests"] == 0
+        assert gate.capacity("local-one")["active_model_operations"] == 1
+
+
+def test_model_runtime_and_lifecycle_are_provider_reported_and_shared_once():
+    runtime = create_corporation_runtime()
+    service = make_connections(runtime)
+    added = service.add_ollama("workstation", "Workstation", "http://localhost:11440", 2)
+    provider = service._connections[added["provider_id"]].provider
+
+    initial = service.model_runtime(added["provider_id"])
+    assert initial["runtime"].supported
+    assert initial["runtime"].models == ()
+    assert initial["hardware_feasibility"] == "unknown"
+    assert initial["inference_latency"] == "unknown"
+    assert initial["request_capacity"]["provider_slots"] == 2
+
+    loaded = service.manage_model(
+        added["provider_id"], provider.model, action="load", keep_alive_seconds=90
+    )
+    assert loaded["runtime"].models == (
+        LoadedLocalModel(provider.model, 1024, 512, context_length=2048),
+    )
+    assert loaded["runtime"].probe_latency_ms == 1.25
+    assert loaded["operation_latency_ms"] >= 0
+    assert provider.operations == [("load", provider.model, 90)]
+    assert len(loaded["runtime"].models) == 1
+
+    already_loaded = service.manage_model(
+        added["provider_id"], provider.model, action="load"
+    )
+    assert already_loaded["already_in_requested_state"]
+    assert provider.operations == [("load", provider.model, 90)]
+    unloaded = service.manage_model(
+        added["provider_id"], provider.model, action="unload"
+    )
+    assert unloaded["runtime"].models == ()
+    assert provider.operations[-1] == ("unload", provider.model)
+
+
+def test_model_lifecycle_requires_fresh_catalog_runtime_and_idle_capacity():
+    runtime = create_corporation_runtime()
+    service = make_connections(runtime)
+    added = service.add_ollama("busy", "Busy", "http://localhost:11441", 1)
+    provider_id = added["provider_id"]
+    provider = service._connections[provider_id].provider
+    with service._gate.reserve(provider_id, provider.model):
+        with pytest.raises(ProviderConnectionConflict, match="active work"):
+            service.manage_model(provider_id, provider.model, action="load")
+    with pytest.raises(ProviderConnectionConflict, match="currently loaded"):
+        service.manage_model(provider_id, provider.model, action="unload")
+    assert provider.operations == []
+    provider.local_model_runtime = lambda: LocalModelRuntime(
+        state="unavailable", supported=True, reason="fake runtime unavailable"
+    )
+    with pytest.raises(ProviderConnectionConflict, match="fake runtime unavailable"):
+        service.manage_model(provider_id, provider.model, action="load")
+
+    service.add_gemini("online", "Online", API_KEY, 1)
+    with pytest.raises(ProviderModelOperationUnsupported, match="unsupported"):
+        service.manage_model("gemini-online", "remote-model-1", action="load")
+
+
+def test_model_operation_does_not_hold_connection_lock_while_provider_loads():
+    runtime = create_corporation_runtime()
+    service = make_connections(runtime)
+    added = service.add_ollama("loading", "Loading", "http://localhost:11443", 2)
+    provider_id = added["provider_id"]
+    provider = service._connections[provider_id].provider
+    entered = Event()
+    release = Event()
+    original_load = provider.load_model
+
+    def blocking_load(model, *, keep_alive_seconds=300):
+        entered.set()
+        assert release.wait(3)
+        original_load(model, keep_alive_seconds=keep_alive_seconds)
+
+    provider.load_model = blocking_load
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        pending = executor.submit(
+            service.manage_model,
+            provider_id,
+            provider.model,
+            action="load",
+        )
+        assert entered.wait(3)
+        status = service.list()
+        assert status[0]["provider_id"] == provider_id
+        release.set()
+        assert pending.result(timeout=5)["runtime"].models[0].name == provider.model
 
 
 def test_stale_and_empty_catalogs_are_truthful_and_cannot_be_assigned():
@@ -577,3 +697,64 @@ def test_provider_slot_exhaustion_is_reported_without_fallback():
 
 def factory_not_called(service):
     return not any(record["provider_type"] == "ollama" for record in service.list())
+
+
+def test_model_runtime_api_is_authorized_and_lifecycle_uses_provider_gate():
+    runtime = create_corporation_runtime()
+    service = make_connections(runtime)
+    local = service.add_ollama("runtime", "Runtime", "http://localhost:11442", 2)
+    app = create_local_app(password=PASSWORD, application_service=runtime.application_service)
+    app.state.provider_connections_service = service
+    with TestClient(app, base_url=ORIGIN, client=("127.0.0.1", 50000)) as client:
+        runtime_path = f"/api/local/provider-connections/{local['provider_id']}/runtime"
+        assert client.get(runtime_path).status_code == 401
+        headers = sign_in(client)
+        client.app.state.authentication_backend.principal = AuthenticatedPrincipal(
+            "local-owner", frozenset({"model:read"})
+        )
+        observed = client.get(runtime_path, headers=headers)
+        assert observed.status_code == 200
+        assert observed.json()["runtime"]["state"] == "available"
+        assert observed.json()["runtime"]["models"] == []
+        assert observed.json()["hardware_feasibility"] == "unknown"
+        denied = client.post(
+            f"/api/local/provider-connections/{local['provider_id']}/models/load",
+            headers=headers, json={"model_id": "local-11442"},
+        )
+        assert denied.status_code == 403
+
+        client.app.state.authentication_backend.principal = AuthenticatedPrincipal(
+            "local-owner", frozenset({"model:read", "model-runtime:manage"})
+        )
+        loaded = client.post(
+            f"/api/local/provider-connections/{local['provider_id']}/models/load",
+            headers=headers,
+            json={"model_id": "local-11442", "keep_alive_seconds": 75},
+        )
+        assert loaded.status_code == 200
+        assert loaded.json()["runtime"]["models"][0]["name"] == "local-11442"
+        assert loaded.json()["runtime"]["models"][0]["size_bytes"] == 1024
+        assert loaded.json()["request_capacity"]["active_requests"] == 0
+        assert client.post(
+            f"/api/local/provider-connections/{local['provider_id']}/models/load",
+            headers=headers,
+            json={"model_id": "local-11442", "keep_alive_seconds": 0},
+        ).status_code == 422
+        unloaded = client.post(
+            f"/api/local/provider-connections/{local['provider_id']}/models/unload",
+            headers=headers, json={"model_id": "local-11442"},
+        )
+        assert unloaded.status_code == 200
+        assert unloaded.json()["runtime"]["models"] == []
+
+        gemini = service.add_gemini("remote", "Remote", API_KEY, 1)
+        unsupported = client.get(
+            f"/api/local/provider-connections/{gemini['provider_id']}/runtime",
+            headers=headers,
+        ).json()
+        assert unsupported["runtime"]["state"] == "unknown"
+        assert unsupported["runtime"]["supported"] is False
+        assert client.post(
+            f"/api/local/provider-connections/{gemini['provider_id']}/models/load",
+            headers=headers, json={"model_id": "remote-model-1"},
+        ).status_code == 409

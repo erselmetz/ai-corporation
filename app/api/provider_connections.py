@@ -10,6 +10,7 @@ from app.application.services.provider_connections import (
     ProviderConnectionUnavailable,
     ProviderConnectionsService,
 )
+from app.providers.base import ProviderModelOperationUnsupported
 from .chat import bounded_body, get_application_service
 from .security import require_permission
 
@@ -46,6 +47,13 @@ class ProviderAssignmentRequest(BaseModel):
     expected_model_id: str = Field(min_length=1, max_length=256)
 
 
+class ModelOperationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    model_id: str = Field(min_length=1, max_length=256)
+    keep_alive_seconds: StrictInt = Field(default=300, ge=1, le=86400)
+
+
 def _connection_service(request: Request, application=Depends(get_application_service)):
     service = getattr(request.app.state, "provider_connections_service", None)
     if service is None:
@@ -62,6 +70,8 @@ def _safe_operation():
         raise HTTPException(409, str(error)) from None
     except ProviderConnectionUnavailable as error:
         raise HTTPException(503, str(error)) from None
+    except ProviderModelOperationUnsupported as error:
+        raise HTTPException(409, str(error)) from None
     except ValueError:
         raise HTTPException(422, "Provider connection or assignment is invalid") from None
 
@@ -126,6 +136,44 @@ async def add_gemini_connection(
 def refresh_connection(provider_id: str, service=Depends(_connection_service)):
     with _safe_operation():
         return service.refresh(provider_id)
+
+
+@router.get("/{provider_id}/runtime",
+            dependencies=[Depends(require_permission("model:read"))])
+def model_runtime(provider_id: str, service=Depends(_connection_service)):
+    with _safe_operation():
+        return service.model_runtime(provider_id)
+
+
+@router.post("/{provider_id}/models/load",
+             dependencies=[Depends(require_permission("model-runtime:manage"))])
+def load_model(provider_id: str, payload=Depends(bounded_body),
+               service=Depends(_connection_service)):
+    try:
+        body = ModelOperationRequest.model_validate_json(payload)
+    except ValueError:
+        raise HTTPException(422, "Invalid model operation fields") from None
+    with _safe_operation():
+        return service.manage_model(
+            provider_id,
+            body.model_id,
+            action="load",
+            keep_alive_seconds=body.keep_alive_seconds,
+        )
+
+
+@router.post("/{provider_id}/models/unload",
+             dependencies=[Depends(require_permission("model-runtime:manage"))])
+def unload_model(provider_id: str, payload=Depends(bounded_body),
+                 service=Depends(_connection_service)):
+    try:
+        body = ModelOperationRequest.model_validate_json(payload)
+    except ValueError:
+        raise HTTPException(422, "Invalid model operation fields") from None
+    with _safe_operation():
+        return service.manage_model(
+            provider_id, body.model_id, action="unload"
+        )
 
 
 @router.put("/assignment",

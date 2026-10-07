@@ -11,7 +11,13 @@ from urllib.parse import urlsplit
 
 from app.integrations.gemini_chat import GeminiConnectionError, GeminiConnectionManager
 from app.providers import AIProvider, OllamaProvider
-from app.providers.base import ProviderCapacityError, ProviderCapacityUnknown
+from app.providers.base import (
+    ProviderCapacityError,
+    ProviderCapacityUnknown,
+    ProviderModelOperationFailed,
+    ProviderModelOperationUnsupported,
+)
+from app.providers.inventory import LocalModelRuntime
 
 
 _CONNECTION_ID = re.compile(r"^[a-z0-9][a-z0-9_-]{0,47}$")
@@ -37,6 +43,7 @@ class ProviderRequestGate:
         self._limits: dict[str, int] = {}
         self._active: dict[str, int] = {}
         self._active_models: dict[tuple[str, str], int] = {}
+        self._model_operations: set[tuple[str, str]] = set()
         self._lock = RLock()
 
     def validate_configuration(self, provider_id: str, request_slots: int) -> None:
@@ -70,6 +77,7 @@ class ProviderRequestGate:
                 sum(self._active.values()) >= total_slots
                 or self._active.get(provider_id, 0) >= slots
                 or self._active_models.get(model_key, 0) >= slots
+                or model_key in self._model_operations
             ):
                 raise ProviderCapacityError(
                     "Configured provider/model request-slot capacity is exhausted"
@@ -82,6 +90,35 @@ class ProviderRequestGate:
             with self._lock:
                 self._active[provider_id] -= 1
                 self._active_models[model_key] -= 1
+
+    @contextmanager
+    def model_operation(self, provider_id: str, model_id: str):
+        with self._lock:
+            slots = self._limits.get(provider_id)
+            if slots is None:
+                raise ProviderCapacityUnknown(
+                    "UNKNOWN provider request capacity; configure this connection before loading a model"
+                )
+            model_key = (provider_id, model_id)
+            if model_key in self._model_operations or self._active_models.get(model_key, 0):
+                raise ProviderConnectionConflict(
+                    "Model has active work; wait before changing its loaded state"
+                )
+            if (sum(self._active.values()) >= sum(self._limits.values())
+                    or self._active.get(provider_id, 0) >= slots):
+                raise ProviderConnectionConflict(
+                    "Configured global/provider request-slot capacity is exhausted"
+                )
+            self._model_operations.add(model_key)
+            self._active[provider_id] = self._active.get(provider_id, 0) + 1
+            self._active_models[model_key] = self._active_models.get(model_key, 0) + 1
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._active[provider_id] -= 1
+                self._active_models[model_key] -= 1
+                self._model_operations.remove(model_key)
 
     def remove(self, provider_id: str) -> None:
         with self._lock:
@@ -102,7 +139,12 @@ class ProviderRequestGate:
                 "state": "configured",
                 "global_slots": sum(self._limits.values()),
                 "provider_slots": slots,
-                "active_requests": self._active.get(provider_id, 0),
+                "active_requests": self._active.get(provider_id, 0) - sum(
+                    key[0] == provider_id for key in self._model_operations
+                ),
+                "active_model_operations": sum(
+                    key[0] == provider_id for key in self._model_operations
+                ),
                 "model_slots": slots,
             }
 
@@ -126,6 +168,17 @@ class _ConnectionProvider(AIProvider):
 
     def local_model_inventory(self):
         return self._provider.local_model_inventory()
+
+    def local_model_runtime(self) -> LocalModelRuntime:
+        return self._provider.local_model_runtime()
+
+    def load_model(self, model: str, *, keep_alive_seconds: int = 300) -> None:
+        with self._gate.model_operation(self._provider_id, model):
+            self._provider.load_model(model, keep_alive_seconds=keep_alive_seconds)
+
+    def unload_model(self, model: str) -> None:
+        with self._gate.model_operation(self._provider_id, model):
+            self._provider.unload_model(model)
 
 
 @dataclass(frozen=True, slots=True)
@@ -377,6 +430,107 @@ class ProviderConnectionsService:
                 raise ProviderConnectionConflict("Provider connection changed during refresh")
             self._connections[provider_id] = updated
             return self._status(updated)
+
+    def model_runtime(self, provider_id: str) -> dict:
+        with self._lock:
+            record = self._connections.get(provider_id)
+            if record is None:
+                raise ProviderConnectionUnavailable("Provider connection is not configured")
+        runtime = record.provider.local_model_runtime()
+        with self._lock:
+            current = self._connections.get(provider_id)
+            if current is None or current.provider is not record.provider:
+                raise ProviderConnectionConflict(
+                    "Provider connection changed during runtime check"
+                )
+        return {
+            "provider_id": record.id,
+            "provider_type": record.provider_type,
+            "runtime": runtime,
+            "request_capacity": self._gate.capacity(record.id),
+            "hardware_feasibility": "unknown",
+            "inference_latency": "unknown",
+        }
+
+    def manage_model(
+        self,
+        provider_id: str,
+        model_id: str,
+        *,
+        action: str,
+        keep_alive_seconds: int = 300,
+    ) -> dict:
+        if action not in {"load", "unload"}:
+            raise ValueError("Unsupported model operation")
+        with self._lock:
+            record = self._connections.get(provider_id)
+            if record is None:
+                raise ProviderConnectionUnavailable("Provider connection is not configured")
+            if record.provider_type != "ollama":
+                raise ProviderModelOperationUnsupported(
+                    "Model loading and unloading are unsupported by this provider"
+                )
+        catalog = self.refresh(provider_id)
+        if catalog["state"] != "available" or model_id not in catalog["models"]:
+            raise ProviderConnectionConflict(
+                "Model is not in the freshly verified local provider catalog"
+            )
+        with self._lock:
+            current = self._connections.get(provider_id)
+            if current is None or current.provider is not record.provider:
+                raise ProviderConnectionConflict(
+                    "Provider connection changed during model operation setup"
+                )
+            record = current
+        before = record.provider.local_model_runtime()
+        if not before.supported or before.state != "available":
+            raise ProviderConnectionConflict(
+                before.reason or "Loaded-model runtime evidence is unavailable"
+            )
+        loaded = model_id in {model.name for model in before.models}
+        if action == "load" and loaded:
+            return {
+                "action": action,
+                "already_in_requested_state": True,
+                "provider_id": provider_id,
+                "model_id": model_id,
+                "operation_latency_ms": 0,
+                **self.model_runtime(provider_id),
+            }
+        if action == "unload" and not loaded:
+            raise ProviderConnectionConflict(
+                "Model is not currently loaded; refresh runtime evidence before unloading"
+            )
+        with self._lock:
+            current = self._connections.get(provider_id)
+            if current is None or current.provider is not record.provider:
+                raise ProviderConnectionConflict(
+                    "Provider connection changed during model operation setup"
+                )
+        started = time.monotonic()
+        try:
+            with self._gate.model_operation(provider_id, model_id):
+                if action == "load":
+                    record.provider.load_model(
+                        model_id, keep_alive_seconds=keep_alive_seconds
+                    )
+                else:
+                    record.provider.unload_model(model_id)
+        except ProviderModelOperationUnsupported as error:
+            raise ProviderConnectionConflict(str(error)) from None
+        except ProviderCapacityUnknown as error:
+            raise ProviderConnectionConflict(str(error)) from None
+        except ProviderModelOperationFailed as error:
+            raise ProviderConnectionUnavailable(str(error)) from None
+        result = self.model_runtime(provider_id)
+        return {
+            "action": action,
+            "already_in_requested_state": False,
+            "provider_id": provider_id,
+            "model_id": model_id,
+            "operation_latency_ms": max(0.0, (time.monotonic() - started) * 1000),
+            **result,
+        }
 
     def assign(
         self,

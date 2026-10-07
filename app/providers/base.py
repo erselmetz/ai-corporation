@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from .availability import AvailabilityResult
-from .inventory import LocalModelInventory
+from .inventory import LocalModelInventory, LocalModelRuntime
 
 
 class ProviderCapacityError(RuntimeError):
@@ -10,6 +10,14 @@ class ProviderCapacityError(RuntimeError):
 
 class ProviderCapacityUnknown(ProviderCapacityError):
     """A request was denied because no applicable capacity limit is known."""
+
+
+class ProviderModelOperationUnsupported(RuntimeError):
+    """The provider does not implement explicit model lifecycle operations."""
+
+
+class ProviderModelOperationFailed(RuntimeError):
+    """A supported provider model lifecycle operation failed."""
 
 
 class AIProvider(ABC):
@@ -27,3 +35,13 @@ class AIProvider(ABC):
     def local_model_inventory(self) -> LocalModelInventory:
         """Explicit observation; unsupported providers truthfully return UNKNOWN."""
         return LocalModelInventory()
+
+    def local_model_runtime(self) -> LocalModelRuntime:
+        """Report loaded models only when the provider has authoritative telemetry."""
+        return LocalModelRuntime()
+
+    def load_model(self, model: str, *, keep_alive_seconds: int = 300) -> None:
+        raise ProviderModelOperationUnsupported("Model loading is unsupported by this provider")
+
+    def unload_model(self, model: str) -> None:
+        raise ProviderModelOperationUnsupported("Model unloading is unsupported by this provider")

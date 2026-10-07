@@ -340,8 +340,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-118 are verified complete, Task 119 is next,
-and Tasks 119-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-119 are verified complete, Task 120 is next,
+and Tasks 120-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -577,6 +577,10 @@ documents two unrelated model-assignment failures. Checkpoint tag
 ## Task 118 - Durable chat history
 
 Owners can opt a conversation into local durable history (/api/chat/history) with a 1 hour to 90 day expiry, review uncertain turns after a restart and delete stored history. Recovered conversations are read-only, interrupted turns are never replayed, and stored text is unencrypted at rest.
+
+## Task 119 - Local model resource and loading controls
+
+The local provider-connections UI reports Ollama's currently loaded models and runtime-reported memory/VRAM, and supports explicit load/unload with an owner confirmation. Load and unload require a fresh installed-model catalog and runtime snapshot, use the configured global/provider/model request-slot gate, and are blocked while that model has active work. Ollama load/unload requests have a five-minute timeout. Loaded models are keyed by provider/model, not Agent assignment count. Physical memory capacity and pre-load fit remain UNKNOWN; runtime-probe and operation duration are not inference latency. Non-Ollama lifecycle operations remain unsupported.
 
 ## Task 117 - Owned knowledge and chat context controls
 

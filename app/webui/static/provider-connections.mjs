@@ -20,6 +20,8 @@ export function mountProviderConnections({
   let agents = [];
   let busy = false;
   let canManage = false;
+  let canManageRuntime = false;
+  let runtimeEvidence = null;
 
   function option(select, value, label) {
     const item = documentRef.createElement("option");
@@ -43,6 +45,10 @@ export function mountProviderConnections({
     modelSelect.disabled = busy || !selected || !selected.models.length;
     agentSelect.disabled = busy || !agents.length;
     el("assignment-save").disabled = busy || !selected || !modelSelect.value || !agentSelect.value || !canManage;
+    const runtimeSupported = selected?.provider_type === "ollama";
+    el("model-runtime-refresh").disabled = busy || !selected;
+    el("model-load").disabled = busy || !canManageRuntime || !runtimeSupported || !modelSelect.value;
+    el("model-unload").disabled = busy || !canManageRuntime || !runtimeSupported || !modelSelect.value;
   }
 
   async function request(path, { method = "GET", body } = {}) {
@@ -96,6 +102,9 @@ export function mountProviderConnections({
 
   function renderModels() {
     const current = connections.find(item => item.provider_id === connectionSelect.value);
+    runtimeEvidence = null;
+    el("model-runtime-state").textContent = "";
+    el("model-runtime-evidence").textContent = "";
     modelSelect.replaceChildren();
     if (current) {
       for (const model of current.models) option(modelSelect, model, model);
@@ -105,6 +114,28 @@ export function mountProviderConnections({
       : connections.length
         ? "Choose a provider connection."
         : "No additional provider connections are configured.";
+    controls();
+  }
+
+  function showRuntime(observation) {
+    runtimeEvidence = observation;
+    const runtime = observation.runtime;
+    const loaded = Array.isArray(runtime.models) ? runtime.models : [];
+    const rows = loaded.map(model => {
+      const size = model.size_bytes === null ? "unknown" : `${model.size_bytes} bytes`;
+      const vram = model.vram_bytes === null ? "unknown" : `${model.vram_bytes} bytes`;
+      return `${model.name} · memory ${size} · VRAM ${vram} · context ${model.context_length ?? "unknown"}`;
+    });
+    el("model-runtime-evidence").textContent = [
+      `Loaded models (${runtime.state}): ${rows.length ? rows.join("; ") : "none reported"}`,
+      `Runtime probe latency: ${runtime.probe_latency_ms === null ? "unknown" : `${runtime.probe_latency_ms.toFixed(2)} ms`} (not inference latency)`,
+      `Request slots: ${observation.request_capacity.provider_slots ?? "UNKNOWN"} provider / ${observation.request_capacity.global_slots ?? "UNKNOWN"} global; active requests ${observation.request_capacity.active_requests ?? "unknown"}`,
+      `Hardware feasibility: ${observation.hardware_feasibility}; inference latency: ${observation.inference_latency}`,
+      runtime.reason ?? "",
+    ].filter(Boolean).join("\n");
+    el("model-runtime-state").textContent = runtime.supported
+      ? "Runtime status is provider-reported. A listed model is loaded once per provider/model, regardless of how many Agents share its assignment."
+      : "This provider does not expose supported loaded-model telemetry or lifecycle controls.";
     controls();
   }
 
@@ -120,6 +151,7 @@ export function mountProviderConnections({
     }
     agents = agentResult.items;
     connections = connectionResult.items;
+    canManageRuntime = sessionResponse.permissions.includes("model-runtime:manage");
     agentSelect.replaceChildren();
     for (const agent of agents) {
       option(agentSelect, agent.id, `${agent.name} · ${agent.provider}/${agent.model}`);
@@ -185,6 +217,43 @@ export function mountProviderConnections({
     });
   }
 
+  async function refreshRuntime() {
+    return run(async () => {
+      if (!connectionSelect.value) return;
+      el("model-runtime-state").textContent = "Checking provider-reported loaded-model status…";
+      const observation = await request(
+        `/api/local/provider-connections/${encodeURIComponent(connectionSelect.value)}/runtime`,
+      );
+      showRuntime(observation);
+    });
+  }
+
+  async function manageModel(action) {
+    return run(async () => {
+      const selected = connections.find(item => item.provider_id === connectionSelect.value);
+      const model = modelSelect.value;
+      if (!selected || !model) return;
+      if (action === "unload" && !runtimeEvidence) {
+        throw new Error("Refresh runtime status before unloading a model.");
+      }
+      const warning = action === "load"
+        ? `Load ${model} on ${selected.provider_id} for ${el("model-keep-alive").value} seconds of idle time? This model may be shared by multiple Agents. Hardware fit is UNKNOWN; the local runtime may reject the request. No prompt is sent.`
+        : `Unload shared model ${model} from ${selected.provider_id}? Active requests block unloading. Agents assigned this model may need it loaded again.`;
+      if (!confirmImpl(warning)) {
+        el("model-runtime-state").textContent = `Model ${action} cancelled; provider state is unchanged.`;
+        return;
+      }
+      const path = `/api/local/provider-connections/${encodeURIComponent(selected.provider_id)}/models/${action}`;
+      const result = await request(path, {
+        method: "POST",
+        body: { model_id: model, keep_alive_seconds: Number(el("model-keep-alive").value) },
+      });
+      showRuntime(result);
+      el("model-runtime-state").textContent =
+        `${action === "load" ? "Load" : "Unload"} requested for ${model}; operation took ${result.operation_latency_ms.toFixed(2)} ms. Hardware feasibility remains UNKNOWN.`;
+    });
+  }
+
   async function removeSelected() {
     return run(async () => {
       const selected = connections.find(item => item.provider_id === connectionSelect.value);
@@ -240,10 +309,13 @@ export function mountProviderConnections({
   agentSelect.addEventListener("change", controls);
   el("connection-add").addEventListener("click", add);
   el("connection-refresh").addEventListener("click", refreshSelected);
+  el("model-runtime-refresh").addEventListener("click", refreshRuntime);
+  el("model-load").addEventListener("click", () => manageModel("load"));
+  el("model-unload").addEventListener("click", () => manageModel("unload"));
   el("connection-remove").addEventListener("click", removeSelected);
   el("assignment-save").addEventListener("click", assign);
   controls();
-  return { initialLoad: run(refresh), add, assign, refresh, refreshSelected, removeSelected };
+  return { initialLoad: run(refresh), add, assign, refresh, refreshSelected, refreshRuntime, manageModel, removeSelected };
 }
 
 if (typeof document !== "undefined" && document.getElementById("connection-type")) {

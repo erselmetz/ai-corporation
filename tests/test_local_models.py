@@ -200,6 +200,63 @@ def test_ollama_inventory_is_bounded_and_deterministic(monkeypatch):
     assert len(requests) == 1 and requests[0].url.path == "/api/tags"
 
 
+def test_ollama_runtime_reports_loaded_memory_and_lifecycle_uses_supported_api(monkeypatch):
+    requests = []
+    timeouts = []
+
+    def handler(request):
+        requests.append(request)
+        if request.url.path == "/api/ps":
+            return httpx.Response(200, json={"models": [{
+                "name": "llama3.2:3b",
+                "size": 3_000_000_000,
+                "size_vram": 2_500_000_000,
+                "context_length": 4096,
+                "expires_at": "2026-10-07T14:00:00Z",
+            }]})
+        return httpx.Response(200, json={"response": "", "done": True})
+
+    real_client = httpx.Client
+
+    def factory(**kwargs):
+        assert kwargs["trust_env"] is False
+        assert kwargs["follow_redirects"] is False
+        timeouts.append(kwargs["timeout"])
+        return real_client(transport=httpx.MockTransport(handler), **kwargs)
+
+    monkeypatch.setattr("app.providers.ollama.httpx.Client", factory)
+    provider = OllamaProvider("http://127.0.0.1:11434")
+    runtime = provider.local_model_runtime()
+    assert runtime.state == "available" and runtime.supported
+    assert runtime.hardware_feasibility == "unknown"
+    assert runtime.probe_latency_ms is not None
+    assert runtime.models[0].name == "llama3.2:3b"
+    assert runtime.models[0].size_bytes == 3_000_000_000
+    assert runtime.models[0].vram_bytes == 2_500_000_000
+    assert runtime.models[0].context_length == 4096
+
+    provider.load_model("llama3.2:3b", keep_alive_seconds=90)
+    provider.unload_model("llama3.2:3b")
+    assert requests[0].url.path == "/api/ps"
+    assert requests[1].url.path == requests[2].url.path == "/api/generate"
+    assert timeouts == [5.0, 300.0, 300.0]
+    assert requests[1].read() == b'{"model":"llama3.2:3b","prompt":"","stream":false,"keep_alive":"90s"}'
+    assert requests[2].read() == b'{"model":"llama3.2:3b","prompt":"","stream":false,"keep_alive":0}'
+
+
+def test_ollama_runtime_malformed_or_unreachable_is_explicit_unknown(monkeypatch):
+    real_client = httpx.Client
+
+    def factory(**kwargs):
+        return real_client(transport=httpx.MockTransport(
+            lambda _: httpx.Response(200, json={"models": [{"name": "m", "size": "large"}]})
+        ), **kwargs)
+
+    monkeypatch.setattr("app.providers.ollama.httpx.Client", factory)
+    observed = OllamaProvider().local_model_runtime()
+    assert observed.state == "unknown" and not observed.models
+
+
 @pytest.mark.parametrize("body", [b"not-json", b"[]", b'{"models":null}',
     b'{"models":[{}]}', b'{"models":[{"name":"a"},{"name":"a"}]}',
     b'{"models":[{"name":""}]}', b"x" * 262145],

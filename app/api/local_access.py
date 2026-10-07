@@ -30,6 +30,7 @@ EMPLOYEE_CHAT_PERMISSIONS = frozenset({
 })
 ASSIGNMENT_POLICY_PERMISSIONS = frozenset({"assignment-policy:manage"})
 PROVIDER_CONNECTION_MANAGEMENT_PERMISSIONS = frozenset({"provider-connection:manage"})
+MODEL_RUNTIME_PERMISSIONS = frozenset({"model-runtime:manage"})
 CHAT_TASK_PERMISSIONS = frozenset({"chat-task:create"})
 CHAT_HISTORY_PERMISSIONS = frozenset({"chat-history:manage"})
 CHAT_KNOWLEDGE_PERMISSIONS = frozenset({"chat-knowledge:retain", "chat-knowledge:withdraw"})
@@ -72,7 +73,7 @@ class LocalOwnerAuthentication:
             | POSITION_MANAGEMENT_PERMISSIONS | EMPLOYEE_CHAT_PERMISSIONS
             | ASSIGNMENT_POLICY_PERMISSIONS | CHAT_TASK_PERMISSIONS | CHAT_KNOWLEDGE_PERMISSIONS | CHAT_HISTORY_PERMISSIONS
             | TASK_DISPATCH_PERMISSIONS | PROVIDER_CONNECTION_MANAGEMENT_PERMISSIONS
-            | WORKFLOW_PERMISSIONS)
+            | MODEL_RUNTIME_PERMISSIONS | WORKFLOW_PERMISSIONS)
 
     def _hash(self, password: str) -> bytes:
         return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), self._salt, 600_000)

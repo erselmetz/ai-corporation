@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-118 are verified complete, Task 119 is next,
-and Tasks 119-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-119 are verified complete, Task 120 is next,
+and Tasks 120-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -919,6 +919,10 @@ recorded in `docs/tasks-data.mjs`.
 ## Chat history (Task 118)
 
 `ChatHistoryService` stores opted-in conversations in SQLite with versioned migrations (v1 to v2), owner-scoped reads and expiry purging. After a restart, conversations are read-only; pending turns are reported as uncertain and must be reviewed, never replayed. A storage failure before a provider call aborts the turn.
+
+## Local model resource and loading controls (Task 119)
+
+Configured Ollama connections expose their provider-reported loaded-model list through `/api/ps`, including memory/VRAM where reported. Explicit load/unload is guarded by the connection's request-slot gate and a separate `model-runtime:manage` permission; a fresh installed catalog and runtime check is required, and matching active work blocks mutation. Ollama load/unload requests have a five-minute timeout. Assigning one provider/model to multiple Agents does not create duplicate loaded-model records. Ollama's probe/operation duration is not inference latency. Physical memory capacity and pre-load fit remain unknown; other providers do not claim loaded-model or lifecycle support.
 
 ## Chat knowledge (Task 117)
 

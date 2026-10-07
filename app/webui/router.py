@@ -1104,4 +1104,17 @@ def provider_connections_page():
     <label for="assignment-agent">Agent</label><select id="assignment-agent"></select>
     <label for="assignment-model">Supported model</label><select id="assignment-model"></select>
     <button id="assignment-save" type="button">Preview and assign</button>
+    <h2>Local model runtime</h2>
+    <p>Ollama reports loaded models and memory only after they are loaded. The check latency below
+    is not inference latency. Hardware capacity and whether an unloaded model fits remain UNKNOWN.
+    Loading sends no prompt; explicit load/unload is bounded by this connection's configured request
+    slots and blocked while that model has active work. Loaded memory is counted once per provider/model,
+    even when Agents share it.</p>
+    <label for="model-keep-alive">Load keep-alive seconds (1–86400)</label>
+    <input id="model-keep-alive" type="number" min="1" max="86400" value="300">
+    <p><button id="model-runtime-refresh" type="button">Refresh loaded-model status</button>
+    <button id="model-load" type="button" disabled>Load selected model</button>
+    <button id="model-unload" type="button" disabled>Unload selected model</button></p>
+    <p id="model-runtime-state" role="status" aria-live="polite"></p>
+    <pre id="model-runtime-evidence" aria-live="polite"></pre>
     </main></body></html>""")
