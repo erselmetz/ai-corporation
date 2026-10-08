@@ -42,6 +42,7 @@ class EmployeeChatAssignment:
     role: str
     provider_id: str
     model_id: str
+    supports_streaming: bool = False
 
 
 @dataclass(frozen=True)
@@ -101,7 +102,12 @@ class OwnedEmployeeChatService:
             raise ChatUnavailable("Assigned Agent has no configured model")
         return (
             EmployeeChatAssignment(
-                agent.id, agent.name, agent.role, agent.provider, agent.model
+                agent.id,
+                agent.name,
+                agent.role,
+                agent.provider,
+                agent.model,
+                getattr(provider, "supports_streaming", False) is True,
             ),
             provider,
         )
@@ -276,6 +282,93 @@ class OwnedEmployeeChatService:
                     entry.employee,
                     entry.agent,
                 )
+
+    def stream(
+        self,
+        owner: str,
+        identifier: str,
+        text: str,
+        *,
+        cloud_consent: bool = False,
+    ):
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("Message text is required")
+        if len(text.encode("utf-8")) > self.MAX_MESSAGE_BYTES:
+            raise ValueError("Message exceeds byte limit")
+        with self._access(owner, identifier) as entry:
+            if not entry.agent.supports_streaming:
+                raise ChatUnavailable("The assigned provider does not support response streaming")
+            with self._agent_request(entry.agent.id):
+                self._assert_assignment(entry)
+                conversation = self._chat.get_conversation(identifier)
+                if conversation.status is not ConversationStatus.OPEN:
+                    raise ValueError("Cannot send to a closed conversation")
+                if (
+                    entry.agent.provider_id == "gemini"
+                    or getattr(entry.provider, "requires_explicit_cloud_consent", False) is True
+                ) and cloud_consent is not True:
+                    raise ChatConsentRequired(
+                        "Explicit consent is required before sending this turn and recent chat history to Google Gemini."
+                    )
+                if len(conversation.messages) + 2 > self.MAX_MESSAGES:
+                    raise ChatLimit("Conversation message limit reached; start a new conversation")
+                history = [
+                    {"role": item.role.value, "content": item.content}
+                    for item in conversation.messages[-16:]
+                    if item.status is MessageStatus.COMPLETED
+                ]
+                prompt = json.dumps(
+                    {"history": history, "request": text}, ensure_ascii=True
+                )
+                if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
+                    raise ValueError("Prompt exceeds byte limit")
+                user_id, reply_id = uuid4().hex, uuid4().hex
+                self._chat.add_message(identifier, user_id, MessageRole.USER, text)
+                output = []
+                output_bytes = 0
+                try:
+                    for chunk in self._orchestrator.stream_agent(
+                        entry.agent.id,
+                        prompt,
+                        expected_assignment=(entry.agent.provider_id, entry.agent.model_id),
+                    ):
+                        if not isinstance(chunk, str):
+                            raise ValueError("Provider returned an invalid response chunk")
+                        output_bytes += len(chunk.encode("utf-8"))
+                        if output_bytes > self.MAX_MESSAGE_BYTES:
+                            raise ValueError("Provider reply exceeds byte limit")
+                        if chunk:
+                            output.append(chunk)
+                            yield {"type": "chunk", "text": chunk}
+                except ProviderCapacityError:
+                    self._chat.transition_message(
+                        identifier, user_id, MessageStatus.FAILED
+                    )
+                    raise
+                except Exception:
+                    raise RuntimeError(
+                        "Individual chat response stream failed; no automatic retry occurred"
+                    ) from None
+                reply = "".join(output)
+                if not reply.strip():
+                    raise RuntimeError("Individual chat response stream was empty")
+                self._chat.transition_message(
+                    identifier, user_id, MessageStatus.COMPLETED
+                )
+                self._chat.add_message(
+                    identifier, reply_id, MessageRole.ASSISTANT, reply
+                )
+                self._chat.transition_message(
+                    identifier, reply_id, MessageStatus.COMPLETED
+                )
+                yield {
+                    "type": "complete",
+                    "snapshot": EmployeeChatSnapshot(
+                        self._chat.get_conversation(identifier),
+                        entry.employee,
+                        entry.agent,
+                    ),
+                }
 
     def close(self, owner: str, identifier: str) -> EmployeeChatSnapshot:
         with self._access(owner, identifier) as entry:

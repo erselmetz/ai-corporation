@@ -7,13 +7,20 @@ from urllib.parse import urlsplit
 import httpx
 
 from .availability import AvailabilityResult, AvailabilityState
-from .base import AIProvider, ProviderModelOperationFailed
+from .base import (
+    AIProvider,
+    ProviderModelOperationFailed,
+    ProviderStreamingUnsupported,
+)
 from .inventory import LoadedLocalModel, LocalModelInventory, LocalModelRuntime
 
 
 _DEFAULT_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 _AVAILABILITY_TIMEOUT = 2.0
 _MODEL_OPERATION_TIMEOUT = 300.0
+_STREAM_TIMEOUT = 120.0
+_MAX_STREAM_RESPONSE_BYTES = 262144
+_MAX_STREAM_OUTPUT_BYTES = 8192
 
 
 class OllamaProvider(AIProvider):
@@ -22,6 +29,10 @@ class OllamaProvider(AIProvider):
         base_url: str = _DEFAULT_BASE_URL,
     ):
         self.base_url = base_url.rstrip("/")
+
+    @property
+    def supports_streaming(self) -> bool:
+        return self._is_loopback_endpoint()
 
     def local_model_inventory(self) -> LocalModelInventory:
         try:
@@ -141,6 +152,58 @@ class OllamaProvider(AIProvider):
             raise ProviderModelOperationFailed("Ollama could not unload the requested model.") from None
         except ValueError:
             raise ProviderModelOperationFailed("Ollama returned an invalid model-operation response.") from None
+
+    def generate_stream(self, model: str, prompt: str):
+        if not self.supports_streaming:
+            raise ProviderStreamingUnsupported(
+                "Ollama response streaming requires a configured loopback provider"
+            )
+        if not isinstance(model, str) or not model.strip() or len(model.encode("utf-8")) > 256:
+            raise ValueError("Invalid model identifier")
+        if not isinstance(prompt, str) or len(prompt.encode("utf-8")) > 32768:
+            raise ValueError("Prompt exceeds byte limit")
+        received_bytes = 0
+        output_bytes = 0
+        completed = False
+        try:
+            with httpx.Client(
+                timeout=_STREAM_TIMEOUT, trust_env=False, follow_redirects=False
+            ) as client:
+                with client.stream(
+                    "POST",
+                    f"{self.base_url}/api/generate",
+                    json={"model": model, "prompt": prompt, "stream": True},
+                ) as response:
+                    response.raise_for_status()
+                    for line in response.iter_lines():
+                        received_bytes += len(line.encode("utf-8")) + 1
+                        if received_bytes > _MAX_STREAM_RESPONSE_BYTES:
+                            raise ValueError("Provider stream exceeds byte limit")
+                        if not line:
+                            continue
+                        item = json.loads(line)
+                        if not isinstance(item, dict):
+                            raise ValueError("Malformed provider stream")
+                        if "error" in item:
+                            raise ValueError("Provider reported stream failure")
+                        chunk = item.get("response")
+                        done = item.get("done")
+                        if not isinstance(chunk, str) or type(done) is not bool:
+                            raise ValueError("Malformed provider stream")
+                        output_bytes += len(chunk.encode("utf-8"))
+                        if output_bytes > _MAX_STREAM_OUTPUT_BYTES:
+                            raise ValueError("Provider output exceeds byte limit")
+                        if chunk:
+                            yield chunk
+                        if done:
+                            completed = True
+                            break
+            if not completed:
+                raise ValueError("Provider stream ended without a final marker")
+        except httpx.HTTPError:
+            raise RuntimeError("Ollama response stream failed.") from None
+        except (ValueError, TypeError, KeyError, json.JSONDecodeError):
+            raise RuntimeError("Ollama returned an invalid or oversized response stream.") from None
 
     def _is_loopback_endpoint(self):
         try:

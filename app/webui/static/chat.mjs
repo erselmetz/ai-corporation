@@ -29,10 +29,13 @@ export function mountChat({
     element("chat-task-verification"), element("chat-task-evidence"),
   ];
   const geminiKeyPattern = /\bAIza[A-Za-z0-9_-]{20,}\b|\b(?:GEMINI|GOOGLE)_API_KEY\s*=\s*\S+/i;
-  const buttons = ["chat-start", "chat-send", "chat-close", "chat-refresh"].map(element);
+  const stopDisplayButton = element("chat-stop-display");
+  const buttons = ["chat-start", "chat-send", "chat-close", "chat-refresh", "chat-stop-display"].map(element);
   let busy = false;
   let selected = null;
   let canSend = false;
+  let streamingSupported = false;
+  let stopDisplay = null;
   let requiresCloudConsent = false;
   let canCreateTask = false;
   let currentProposal = null;
@@ -42,6 +45,10 @@ export function mountChat({
     element("chat-identity").textContent = "";
     selected = null;
     canSend = false;
+    streamingSupported = false;
+    stopDisplay = null;
+    stopDisplayButton.disabled = true;
+    stopDisplayButton.hidden = true;
     requiresCloudConsent = false;
     cloudPanel.hidden = true;
     cloudConsent.checked = false;
@@ -89,6 +96,7 @@ export function mountChat({
     if (!record || !agent || typeof record.id !== "string" || !Array.isArray(record.messages)
         || !["open", "closed"].includes(record.status)) throw new Error("Invalid conversation response.");
     selected = record.id;
+    streamingSupported = result.streaming_supported === true;
     requiresCloudConsent = isGeminiProvider(agent.provider);
     cloudPanel.hidden = !requiresCloudConsent;
     cloudConsent.checked = false;
@@ -112,8 +120,15 @@ export function mountChat({
         option(taskSource, message.id, `Coordinator proposal - ${message.content.slice(0, 100)}`);
       }
     }
-    state.textContent = record.status === "closed" ? "Conversation closed. Start a new conversation to send." : "Ready. Responses are complete messages; streaming is not available.";
-    canSend = record.status === "open";
+    const uncertain = record.messages.some(message => message.status === "pending");
+    state.textContent = record.status === "closed"
+      ? "Conversation closed. Start a new conversation to send."
+      : uncertain
+        ? "A turn is pending or uncertain. It is not replayed; inspect this conversation and start a new one before sending again."
+        : streamingSupported
+          ? "Ready. This provider supports bounded response streaming."
+          : "Ready. This provider returns complete responses; streaming and Stop display are unavailable.";
+    canSend = record.status === "open" && !uncertain;
     input.disabled = !canSend;
     clearTaskProposal();
     taskControls();
@@ -197,18 +212,144 @@ export function mountChat({
       if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Consent to send this message and chat context to Google Gemini before continuing.");
       const identifier = selected;
       input.disabled = true;
-      state.textContent = "Pending: waiting for the configured model. Closing this page does not cancel its request.";
       try {
         const body = requiresCloudConsent ? { text, cloud_consent: true } : { text };
-        const result = await request(`${base}/${encodeURIComponent(identifier)}/messages`, body);
-        input.value = "";
-        render(result);
+        if (streamingSupported) {
+          const outcome = await receiveStream(identifier, body);
+          if (outcome.complete) {
+            input.value = "";
+            render(outcome.complete);
+            state.textContent = outcome.displayStopped
+              ? "Display was stopped, but generation continued and completed. This did not cancel the provider request; the verified final response is shown."
+              : "Stream completed and the final response was saved.";
+          } else {
+            try { render(await request(`${base}/${encodeURIComponent(identifier)}`)); }
+            catch { clear(); }
+            if (outcome.partial && !outcome.displayStopped) {
+              const item = documentRef.createElement("article");
+              item.className = "chat-message";
+              const label = documentRef.createElement("strong");
+              label.textContent = "Partial streamed output - not saved as a completed reply";
+              const content = documentRef.createElement("p");
+              content.textContent = outcome.partial;
+              item.append(label, content);
+              history.append(item);
+            }
+            state.textContent = outcome.error
+              || "The stream ended before a verified final response. This turn may have reached the provider; do not resend it.";
+            canSend = false;
+            input.disabled = true;
+          }
+        } else {
+          state.textContent = "Pending: waiting for the configured model. Closing this page does not cancel its request.";
+          const result = await request(`${base}/${encodeURIComponent(identifier)}/messages`, body);
+          input.value = "";
+          render(result);
+        }
       } catch (error) {
         // Inspect recorded failure; never replay a possibly executed turn.
         try { render(await request(`${base}/${encodeURIComponent(identifier)}`)); } catch { clear(); }
         throw error;
       } finally { input.disabled = !canSend; }
     });
+  }
+  async function receiveStream(identifier, body) {
+    let displayStopped = false;
+    let partial = "";
+    let complete = null;
+    let streamError = null;
+    let buffered = "";
+    let receivedBytes = 0;
+    const response = await fetchImpl(
+      `${base}/${encodeURIComponent(identifier)}/messages/stream`,
+      {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Local-CSRF": (await request("/api/local/session")).csrf,
+        },
+        body: JSON.stringify(body),
+      },
+    );
+    if (!response.ok) {
+      const payload = await response.json();
+      throw new Error(typeof payload.detail === "string" ? payload.detail : "Chat stream request failed.");
+    }
+    if (!response.body || typeof response.body.getReader !== "function") {
+      throw new Error("The browser does not support response streaming.");
+    }
+    const article = documentRef.createElement("article");
+    article.className = "chat-message";
+    const label = documentRef.createElement("strong");
+    label.textContent = "assistant - streaming";
+    const output = documentRef.createElement("p");
+    article.append(label, output);
+    history.append(article);
+    stopDisplay = () => {
+      displayStopped = true;
+      stopDisplayButton.disabled = true;
+      output.textContent = "";
+      state.textContent =
+        "Stopped displaying chunks. The provider request continues; this control does not cancel generation.";
+    };
+    stopDisplayButton.hidden = false;
+    stopDisplayButton.disabled = false;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    function consumeLine(line) {
+      if (!line.trim()) return;
+      const event = JSON.parse(line);
+      if (event.type === "chunk" && typeof event.text === "string") {
+        partial += event.text;
+        receivedBytes += new TextEncoder().encode(event.text).length;
+        if (receivedBytes > 8192) throw new Error("Provider stream exceeded the response limit.");
+        if (!displayStopped) {
+          output.textContent = partial;
+          state.textContent = `Receiving actual provider output (${receivedBytes} bytes).`;
+        }
+      } else if (event.type === "complete" && event.streaming_supported === true
+          && event.conversation && event.coordinator) {
+        complete = {
+          conversation: event.conversation,
+          coordinator: event.coordinator,
+          streaming_supported: true,
+        };
+      } else if (event.type === "error" && typeof event.message === "string") {
+        streamError = event.message;
+      } else {
+        throw new Error("The provider returned an invalid stream event.");
+      }
+    }
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        buffered += decoder.decode(value || new Uint8Array(), { stream: !done });
+        if (new TextEncoder().encode(buffered).length > 65536) {
+          throw new Error("Provider stream event exceeded the response limit.");
+        }
+        let newline = buffered.indexOf("\n");
+        while (newline !== -1) {
+          consumeLine(buffered.slice(0, newline));
+          buffered = buffered.slice(newline + 1);
+          newline = buffered.indexOf("\n");
+        }
+        if (done) break;
+      }
+      if (buffered) consumeLine(buffered);
+    } finally {
+      stopDisplayButton.disabled = true;
+      stopDisplayButton.hidden = true;
+      stopDisplay = null;
+      reader.releaseLock();
+    }
+    if (complete && !streamError) return { complete, displayStopped };
+    return {
+      complete: null,
+      displayStopped,
+      partial,
+      error: streamError || "The stream ended before a verified final response. This turn may have reached the provider; do not resend it.",
+    };
   }
   async function close() {
     return action(async () => {
@@ -273,6 +414,7 @@ export function mountChat({
   element("chat-form").addEventListener("submit", send);
   element("chat-close").addEventListener("click", close);
   element("chat-refresh").addEventListener("click", refresh);
+  stopDisplayButton.addEventListener("click", () => stopDisplay?.());
   taskPrepare.addEventListener("click", prepareTaskProposal);
   taskConfirm.addEventListener("click", confirmTaskProposal);
   conversations.addEventListener("change", load);

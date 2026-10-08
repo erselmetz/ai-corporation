@@ -391,6 +391,34 @@ def test_model_operation_does_not_hold_connection_lock_while_provider_loads():
         assert pending.result(timeout=5)["runtime"].models[0].name == provider.model
 
 
+def test_streaming_holds_provider_slot_until_stream_is_closed():
+    runtime = create_corporation_runtime()
+    service = make_connections(runtime)
+    added = service.add_ollama("streaming", "Streaming", "http://localhost:11444", 1)
+    provider_id = added["provider_id"]
+    provider = service._connections[provider_id].provider
+    provider.supports_streaming = True
+    provider.generate_stream = lambda model, prompt: iter(("partial",))
+    assignment = runtime.application_service.get_model_assignment("local_worker")
+    service.assign(
+        "local_worker",
+        provider_id,
+        provider.model,
+        assignment.provider_id,
+        assignment.model_id,
+    )
+    chat = runtime.application_service.owned_chat()
+    identifier = chat.start("owner", "local_worker")["conversation"].id
+    stream = chat.stream("owner", identifier, "Hello")
+    assert next(stream) == {"type": "chunk", "text": "partial"}
+    assert service._gate.capacity(provider_id)["active_requests"] == 1
+    with pytest.raises(ProviderCapacityError, match="capacity is exhausted"):
+        runtime.providers.get(provider_id).generate(provider.model, "another request")
+    stream.close()
+    assert service._gate.capacity(provider_id)["active_requests"] == 0
+    assert chat.get("owner", identifier)["conversation"].messages[0].status.value == "pending"
+
+
 def test_stale_and_empty_catalogs_are_truthful_and_cannot_be_assigned():
     runtime = create_corporation_runtime()
     stale_service = ProviderConnectionsService(

@@ -87,9 +87,9 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 29]);
   });
 
-  it("marks only verified tasks 1–119 complete and tasks 120–129 planned", () => {
-    assert.ok(tasks.slice(0, 119).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(119).every((task) => task.status === "planned"));
+  it("marks only verified tasks 1–120 complete and tasks 121–129 planned", () => {
+    assert.ok(tasks.slice(0, 120).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(120).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -164,27 +164,29 @@ describe("documentation site", () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
     assert.match(html, /Milestones 1–100 are completed foundations/);
-    assert.match(html, /Tasks 101–119 are verified post-100 checkpoints/);
-    assert.match(html, /Tasks 120–129 are planned/);
+    assert.match(html, /Tasks 101–120 are verified post-100 checkpoints/);
+    assert.match(html, /Tasks 121–129 are planned/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
   });
 
-  it("keeps public overview pages aligned with Task 119 completion", async () => {
-    const [home, documentation, architecture] = await Promise.all(
-      ["index.html", "documentation.html", "architecture.html"].map(async page =>
+  it("keeps public overview pages aligned with Task 120 completion", async () => {
+    const [home, documentation, architecture, roadmap] = await Promise.all(
+      ["index.html", "documentation.html", "architecture.html", "roadmap.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
-    assert.match(home, /Verified Tasks 101–119/);
-    assert.match(documentation, /Tasks 101–119 are verified post-100 checkpoints/);
+    assert.match(home, /Verified Tasks 101–120/);
+    assert.match(documentation, /Tasks 101–120 are verified post-100 checkpoints/);
     assert.match(architecture, /Task 105 adds explicitly consented Gemini coordinator chat/);
-    assert.match(architecture, /Tasks 120–129/);
-    for (const page of [home, documentation, architecture]) assert.match(page, /Tasks 120–129/);
+    assert.match(architecture, /Tasks 121–129/);
+    assert.match(roadmap, /href="tasks.html#task-121">Next: Task 121/);
+    for (const page of [home, documentation, architecture]) assert.match(page, /Tasks 121–129/);
   });
 
   it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {
-    assert.equal(nextTask.number, 120);
+    assert.equal(nextTask.number, 121);
     assert.deepEqual(post100Tasks.filter(task => task.status === "completed").map(task => task.checkpoint), ["f4e5b54", "1552893", "d1ca364", "task-104-local-model-setup", "task-105-gemini-online-chat", "task-106-secure-chat-onboarding", "task-107-editable-corporation-positions", "task-108-manual-ai-connection-assignment-individual-chat", "task-109-capability-based-assignment-policy", "task-110-chat-proposals-pending-task-review", "task-111-controlled-worker-dispatch", "task-112-multiple-provider-connections", "task-113-workflow-review-reporting", "task-114-corporation-structure-map", "task-115-workflow-map-progress-evidence", "task-116-accessible-3d-visualization", "task-117-owned-chat-knowledge",
-      "task-118-durable-chat-history", "task-119-local-model-resource-controls"]);
+      "task-118-durable-chat-history", "task-119-local-model-resource-controls",
+      "task-120-supported-streaming-truthful-stop"]);
     for (const task of post100Tasks) {
       assert.ok(task.acceptance.length > 0 && task.outOfScope.length > 0);
       assert.ok(Array.isArray(task.decisions));

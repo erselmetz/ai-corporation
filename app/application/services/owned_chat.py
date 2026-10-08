@@ -114,7 +114,11 @@ class OwnedChatService:
                 self._entries[identifier] = _OwnedConversation(
                     owner, agent, provider, Lock()
                 )
-                return {"conversation": record, "coordinator": agent}
+                return {
+                    "conversation": record,
+                    "coordinator": agent,
+                    "streaming_supported": getattr(provider, "supports_streaming", False) is True,
+                }
 
     def list(self, owner: str):
         with self._catalog_lock:
@@ -136,12 +140,31 @@ class OwnedChatService:
 
     def get(self, owner, identifier):
         with self._access(owner, identifier) as entry:
-            return {"conversation": self._chat.get(identifier), "coordinator": entry.coordinator}
+            return {
+                "conversation": self._chat.get(identifier),
+                "coordinator": entry.coordinator,
+                "streaming_supported": getattr(entry.provider, "supports_streaming", False) is True,
+            }
 
     def send(self, owner, identifier, text, retrieved_context=None):
         with self._access(owner, identifier) as entry:
             with self.agent_request(entry.coordinator.id):
                 return self._send(entry, identifier, text, retrieved_context)
+
+    def stream(self, owner, identifier, text, retrieved_context=None):
+        with self._access(owner, identifier) as entry:
+            if getattr(entry.provider, "supports_streaming", False) is not True:
+                raise ChatUnavailable("The selected provider does not support response streaming")
+            with self.agent_request(entry.coordinator.id):
+                for event in self._chat.send_stream(identifier, text, retrieved_context):
+                    if event["type"] == "complete":
+                        yield {
+                            **event,
+                            "coordinator": entry.coordinator,
+                            "streaming_supported": True,
+                        }
+                    else:
+                        yield event
 
     def _send(self, entry, identifier, text, retrieved_context=None):
         current, provider = self._coordinator(entry.coordinator.id)

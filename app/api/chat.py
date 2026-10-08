@@ -2,9 +2,12 @@
 import re
 from contextlib import contextmanager
 from datetime import datetime, timezone
+import json
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from starlette.responses import StreamingResponse
 
 from app.application.services.chat_history import ChatHistoryError
 from app.application.services.chat_knowledge import ContextRequest, KnowledgeNotFound
@@ -193,6 +196,84 @@ def send_message(identifier: str, payload=Depends(bounded_body),
             result = {**result, "context_trace": knowledge.record_trace(
                 principal.identity, identifier, reply.id, retrieved, trace_request, now)}
         return result
+
+
+@router.post("/{identifier}/messages/stream")
+def stream_message(identifier: str, payload=Depends(bounded_body),
+                   principal=Depends(require_permission("chat:send")),
+                   service=Depends(get_application_service), now=Depends(get_chat_now)):
+    body = parse(SendRequest, payload)
+    if contains_gemini_key(body.text) or (body.context and contains_gemini_key(body.context.query)):
+        raise HTTPException(422, SECRET_PASTE_GUIDANCE)
+    with chat_errors():
+        owned = service.owned_chat()
+        current = owned.get(principal.identity, identifier)
+        if not current.get("streaming_supported"):
+            raise HTTPException(409, "The selected provider does not support response streaming.")
+        if (
+            service.provider_requires_explicit_cloud_consent(
+                current["coordinator"].provider
+            )
+            and body.cloud_consent is not True
+        ):
+            raise HTTPException(
+                403,
+                "Explicit consent is required before sending this turn and recent chat context to Gemini.",
+            )
+        knowledge = service.chat_knowledge()
+        retrieved = trace_request = None
+        if body.context is not None:
+            retrieved, trace_request = knowledge.retrieve(
+                principal.identity,
+                identifier,
+                ContextRequest(
+                    body.context.query,
+                    body.context.scope,
+                    body.context.scope_id,
+                    body.context.limit,
+                ),
+                now,
+            )
+
+    def events():
+        try:
+            for event in owned.stream(
+                principal.identity,
+                identifier,
+                body.text,
+                knowledge.prompt_context(retrieved) if retrieved else None,
+            ):
+                if event["type"] == "complete" and retrieved is not None:
+                    completed = event["conversation"]
+                    reply = completed.messages[-1]
+                    event = {
+                        **event,
+                        "context_trace": knowledge.record_trace(
+                            principal.identity, identifier, reply.id, retrieved, trace_request, now
+                        ),
+                    }
+                yield json.dumps(
+                    jsonable_encoder(event), ensure_ascii=True, separators=(",", ":")
+                ) + "\n"
+        except ProviderCapacityError:
+            yield json.dumps({
+                "type": "error",
+                "message": "Configured provider request-slot capacity is exhausted; no provider request was admitted.",
+            }) + "\n"
+        except Exception:
+            yield json.dumps({
+                "type": "error",
+                "message": (
+                    "The stream ended before a verified final response. The turn may have reached "
+                    "the provider; inspect its pending status and do not resend it."
+                ),
+            }) + "\n"
+
+    return StreamingResponse(
+        events(),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
+    )
 
 
 @router.get("/{identifier}/retained")

@@ -16,6 +16,7 @@ from app.providers.base import (
     ProviderCapacityUnknown,
     ProviderModelOperationFailed,
     ProviderModelOperationUnsupported,
+    ProviderStreamingUnsupported,
 )
 from app.providers.inventory import LocalModelRuntime
 
@@ -159,9 +160,21 @@ class _ConnectionProvider(AIProvider):
     def requires_explicit_cloud_consent(self) -> bool:
         return getattr(self._provider, "requires_explicit_cloud_consent", False) is True
 
+    @property
+    def supports_streaming(self) -> bool:
+        return getattr(self._provider, "supports_streaming", False) is True
+
     def generate(self, model: str, prompt: str) -> str:
         with self._gate.reserve(self._provider_id, model):
             return self._provider.generate(model, prompt)
+
+    def generate_stream(self, model: str, prompt: str):
+        if not self.supports_streaming:
+            raise ProviderStreamingUnsupported(
+                "Response streaming is unsupported by this provider"
+            )
+        with self._gate.reserve(self._provider_id, model):
+            yield from self._provider.generate_stream(model, prompt)
 
     def check_availability(self):
         return self._provider.check_availability()

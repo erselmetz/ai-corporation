@@ -24,13 +24,14 @@ class Element {
   addEventListener(event, fn) { this.listeners[event] = fn; }
 }
 
-function setup() {
+function setup({ supportsStreaming = false } = {}) {
   const ids = [
     "individual-employee", "individual-conversation", "individual-chat-state",
     "individual-chat-identity", "individual-chat-history", "individual-chat-form",
     "individual-chat-input", "individual-chat-send", "individual-cloud-consent-panel",
     "individual-cloud-consent", "individual-chat-new", "individual-chat-refresh",
     "individual-chat-close",
+    "individual-chat-stop-display",
   ];
   const elements = Object.fromEntries(ids.map((id) => [
     id,
@@ -47,6 +48,7 @@ function setup() {
   const agent = {
     id: "agent-1", name: "<script>Agent</script>", role: "Worker",
     provider_id: "gemini", model_id: "gemini-test",
+    supports_streaming: supportsStreaming,
   };
   const employee = { id: "employee-1", name: "<script>Employee</script>", role: "Worker" };
   let created = false;
@@ -78,6 +80,32 @@ function setup() {
         { id: "assistant-1", role: "assistant", content: "<script>reply</script>", status: "completed" },
       );
       body = snapshot();
+    } else if (path === "/api/employee-chat/conversations/conversation-1/messages/stream") {
+      const request = JSON.parse(options.body);
+      conversation.messages.push(
+        { id: "user-1", role: "user", content: request.text, status: "completed" },
+        { id: "assistant-1", role: "assistant", content: "actual reply", status: "completed" },
+      );
+      const event = {
+        type: "complete",
+        snapshot: snapshot(),
+      };
+      const encoder = new TextEncoder();
+      const bodyBytes = encoder.encode([
+        JSON.stringify({ type: "chunk", text: "actual " }),
+        JSON.stringify({ type: "chunk", text: "reply" }),
+        JSON.stringify(event),
+      ].join("\n") + "\n");
+      return {
+        ok: true,
+        status: 200,
+        body: new ReadableStream({
+          start(controller) {
+            controller.enqueue(bodyBytes);
+            controller.close();
+          },
+        }),
+      };
     } else {
       throw new Error(`Unexpected request ${path} ${options.method}`);
     }
@@ -121,4 +149,27 @@ test("Employee chat uses CSRF, inert rendering and explicit per-turn Gemini cons
   assert.match(ui.elements["individual-chat-identity"].textContent, /gemini\/gemini-test/);
   assert.equal(ui.elements["individual-cloud-consent"].checked, false);
   assert.equal(ui.elements["individual-chat-send"].disabled, true);
+});
+
+test("Employee chat streams only from an advertised provider and handles the final snapshot", async () => {
+  const ui = setup({ supportsStreaming: true });
+  await ui.controller.initialLoad;
+  assert.equal(await ui.controller.startConversation(), true);
+  ui.elements["individual-cloud-consent"].checked = true;
+  ui.elements["individual-cloud-consent"].listeners.change();
+  ui.elements["individual-chat-input"].value = "Hello";
+  assert.equal(await ui.controller.send(), true);
+  const post = ui.calls.find((call) => call.path.endsWith("/messages/stream"));
+  assert.equal(post.options.credentials, "same-origin");
+  assert.equal(post.options.headers["X-Local-CSRF"], "csrf-token");
+  assert.deepEqual(JSON.parse(post.options.body), {
+    text: "Hello",
+    cloud_consent: true,
+  });
+  assert.deepEqual(
+    ui.elements["individual-chat-history"].children.map((element) => element.textContent),
+    ["user (completed): Hello", "assistant (completed): actual reply"],
+  );
+  assert.match(ui.elements["individual-chat-state"].textContent, /Stream completed/);
+  assert.equal(ui.elements["individual-chat-stop-display"].hidden, true);
 });

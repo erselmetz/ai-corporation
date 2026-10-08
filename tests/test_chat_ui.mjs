@@ -3,7 +3,7 @@ import test from "node:test";
 import { mountChat } from "../app/webui/static/chat.mjs";
 
 class Element {
-  constructor(tag = "") { this.tag = tag; this.children = []; this.value = ""; this.text = ""; this.listeners = {}; this.disabled = false; }
+  constructor(tag = "") { this.tag = tag; this.children = []; this.value = ""; this.text = ""; this.listeners = {}; this.disabled = false; this.hidden = false; }
   get textContent() { return this.text + this.children.map(item => item.textContent).join(""); }
   set textContent(value) { this.text = value; this.children = []; }
   set innerHTML(_) { throw new Error("HTML injection is forbidden"); }
@@ -15,6 +15,33 @@ const agent = { id: "worker", name: "Actual Worker", role: "Worker", provider: "
 const snapshot = (messages = [], status = "open", coordinator = agent) => ({ coordinator, conversation: { id: "conversation", status, messages } });
 const message = (role, status, content) => ({ id: role, role, status, content });
 const response = (payload, status = 200) => ({ ok: status === 200, status, json: async () => payload });
+const streamEvent = event => `${JSON.stringify(event)}\n`;
+function streamResponse(events) {
+  const bytes = new TextEncoder().encode(events.map(streamEvent).join(""));
+  return {
+    ok: true,
+    status: 200,
+    body: new ReadableStream({
+      start(controller) {
+        controller.enqueue(bytes);
+        controller.close();
+      },
+    }),
+  };
+}
+const completedStreamEvent = {
+  type: "complete",
+  streaming_supported: true,
+  coordinator: agent,
+  conversation: {
+    id: "conversation",
+    status: "open",
+    messages: [
+      message("user", "completed", "Hello"),
+      message("assistant", "completed", "first reply"),
+    ],
+  },
+};
 function setup(handler = null) {
   const ids = [
     "chat-state", "chat-history", "chat-agent", "chat-conversation", "chat-input",
@@ -24,6 +51,7 @@ function setup(handler = null) {
     "chat-task-state", "chat-task-objective", "chat-task-project",
     "chat-task-context-query", "chat-task-context-scope", "chat-task-context-id",
     "chat-task-outcome", "chat-task-verification", "chat-task-evidence",
+    "chat-stop-display",
   ];
   const elements = Object.fromEntries(ids.map(id => [id, new Element(
     ["chat-agent", "chat-conversation", "chat-task-source", "chat-task-agent",
@@ -60,6 +88,73 @@ test("start and send use same-origin, session CSRF and actual coordinator identi
   assert.equal(post.options.credentials, "same-origin");
   assert.equal(post.options.headers["X-Local-CSRF"], "test-csrf");
   assert.deepEqual(JSON.parse(post.options.body), { text: "Hello" });
+});
+
+test("streaming chat renders provider chunks and verifies the completed response", async () => {
+  const ui = setup((path, options) => {
+    if (path === "/api/chat/conversations" && options.method === "POST") {
+      return response({ ...snapshot(), streaming_supported: true });
+    }
+    if (path.endsWith("/messages/stream")) {
+      return streamResponse([
+        { type: "chunk", text: "first " },
+        { type: "chunk", text: "reply" },
+        completedStreamEvent,
+      ]);
+    }
+    return null;
+  });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  assert.equal(ui.elements["chat-stop-display"].hidden, true);
+  ui.elements["chat-input"].value = "Hello";
+  assert.equal(await ui.controller.send(), true);
+  const post = ui.calls.find(call => call.path.endsWith("/messages/stream"));
+  assert.equal(post.options.credentials, "same-origin");
+  assert.equal(post.options.headers["X-Local-CSRF"], "test-csrf");
+  assert.deepEqual(JSON.parse(post.options.body), { text: "Hello" });
+  assert.match(ui.elements["chat-history"].textContent, /assistant - completedfirst reply/);
+  assert.match(ui.elements["chat-state"].textContent, /Stream completed/);
+  assert.equal(ui.elements["chat-stop-display"].hidden, true);
+});
+
+test("Stop display hides chunks but continues consuming the provider response", async () => {
+  let finishStream;
+  let cancelled = false;
+  const ui = setup((path, options) => {
+    if (path === "/api/chat/conversations" && options.method === "POST") {
+      return response({ ...snapshot(), streaming_supported: true });
+    }
+    if (path.endsWith("/messages/stream")) {
+      return {
+        ok: true,
+        status: 200,
+        body: new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(streamEvent({ type: "chunk", text: "partial " })));
+            finishStream = () => {
+              controller.enqueue(new TextEncoder().encode(streamEvent({ ...completedStreamEvent })));
+              controller.close();
+            };
+          },
+          cancel() { cancelled = true; },
+        }),
+      };
+    }
+    return null;
+  });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-input"].value = "Hello";
+  const pending = ui.controller.send();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(ui.elements["chat-stop-display"].hidden, false);
+  ui.elements["chat-stop-display"].listeners.click();
+  finishStream();
+  assert.equal(await pending, true);
+  assert.equal(cancelled, false);
+  assert.match(ui.elements["chat-history"].textContent, /assistant - completedfirst reply/);
+  assert.match(ui.elements["chat-state"].textContent, /generation continued and completed/);
 });
 
 test("Gemini requires per-turn cloud consent and sends only an explicit consent flag", async () => {

@@ -83,6 +83,8 @@ export function mountEmployeeChat({
   const newButton = byId("individual-chat-new");
   const refreshButton = byId("individual-chat-refresh");
   const closeButton = byId("individual-chat-close");
+  const stopDisplayButton = byId("individual-chat-stop-display");
+  let stopDisplay = null;
   let employees = [];
   let conversations = [];
   let current = null;
@@ -90,14 +92,16 @@ export function mountEmployeeChat({
 
   function controls() {
     const open = current?.conversation.status === "open";
+    const uncertain = current?.conversation.messages.some((item) => item.status === "pending");
     employeeSelect.disabled = busy;
     conversationSelect.disabled = busy || !conversations.length;
     newButton.disabled = busy || !employeeSelect.value;
     refreshButton.disabled = busy;
     closeButton.disabled = busy || !open;
-    message.disabled = busy || !open;
+    message.disabled = busy || !open || uncertain;
     byId("individual-chat-send").disabled =
-      busy || !open || (isGeminiProvider(current?.agent.provider_id) && !consent.checked);
+      busy || !open || uncertain
+      || (isGeminiProvider(current?.agent.provider_id) && !consent.checked);
   }
 
   async function request(path, { method = "GET", body } = {}) {
@@ -152,6 +156,12 @@ export function mountEmployeeChat({
       `${snapshot.conversation.status}`;
     consentPanel.hidden = !isGeminiProvider(snapshot.agent.provider_id);
     consent.checked = false;
+    if (snapshot.conversation.messages.some((item) => item.status === "pending")) {
+      setState(
+        state,
+        "A turn is pending or uncertain. It is not replayed; inspect this conversation and start a new one before sending again.",
+      );
+    }
     controls();
   }
 
@@ -302,9 +312,50 @@ export function mountEmployeeChat({
     }
     busy = true;
     controls();
+    const identifier = current.conversation.id;
+    const useStream = current.agent.supports_streaming === true;
     try {
+      if (useStream) {
+        const outcome = await receiveStream(identifier, {
+          text: message.value,
+          cloud_consent: consent.checked,
+        });
+        if (outcome.snapshot) {
+          if (!validSnapshot(outcome.snapshot)) throw new Error("Invalid conversation response.");
+          current = outcome.snapshot;
+          message.value = "";
+          renderHistory(outcome.snapshot);
+          await refreshAfterMutation();
+          renderHistory(outcome.snapshot);
+          setState(
+            state,
+            outcome.displayStopped
+              ? "Display was stopped, but generation continued and completed. This did not cancel the provider request; the verified final response is shown."
+              : "Stream completed and the final response was saved.",
+          );
+          return true;
+        }
+        try {
+          current = await request(`/api/employee-chat/conversations/${encodeURIComponent(identifier)}`);
+          if (validSnapshot(current)) renderHistory(current);
+        } catch {
+          current = null;
+        }
+        if (outcome.partial && !outcome.displayStopped) {
+          const row = documentRef.createElement("p");
+          row.textContent = `Partial streamed output - not saved as a completed reply: ${outcome.partial}`;
+          history.append(row);
+        }
+        setState(
+          state,
+          outcome.error
+            || "The stream ended before a verified final response. This turn may have reached the provider; do not resend it.",
+          "error-state",
+        );
+        return false;
+      }
       const snapshot = await request(
-        `/api/employee-chat/conversations/${encodeURIComponent(current.conversation.id)}/messages`,
+        `/api/employee-chat/conversations/${encodeURIComponent(identifier)}/messages`,
         {
           method: "POST",
           body: { text: message.value, cloud_consent: consent.checked },
@@ -331,6 +382,103 @@ export function mountEmployeeChat({
       busy = false;
       controls();
     }
+  }
+
+  async function receiveStream(identifier, body) {
+    let displayStopped = false;
+    let partial = "";
+    let receivedBytes = 0;
+    let buffered = "";
+    let snapshot = null;
+    let error = null;
+    const sessionResponse = await fetchImpl("/api/local/session", {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+    if (!sessionResponse.ok) throw Object.assign(new Error(), { status: sessionResponse.status });
+    const session = await sessionResponse.json();
+    const response = await fetchImpl(
+      `/api/employee-chat/conversations/${encodeURIComponent(identifier)}/messages/stream`,
+      {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/x-ndjson",
+          "Content-Type": "application/json",
+          "X-Local-CSRF": session.csrf,
+        },
+        body: JSON.stringify(body),
+      },
+    );
+    if (!response.ok) {
+      let payload = {};
+      try { payload = await response.json(); } catch { /* Keep status-based guidance. */ }
+      throw Object.assign(new Error(), {
+        status: response.status,
+        detail: typeof payload.detail === "string" ? payload.detail : "",
+      });
+    }
+    if (!response.body || typeof response.body.getReader !== "function") {
+      throw new Error("The browser does not support response streaming.");
+    }
+    const row = documentRef.createElement("p");
+    row.textContent = "assistant (streaming): ";
+    history.append(row);
+    stopDisplay = () => {
+      displayStopped = true;
+      stopDisplayButton.disabled = true;
+      row.textContent = "";
+      setState(
+        state,
+        "Stopped displaying chunks. The provider request continues; this control does not cancel generation.",
+      );
+    };
+    stopDisplayButton.hidden = false;
+    stopDisplayButton.disabled = false;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    function consumeLine(line) {
+      if (!line.trim()) return;
+      const event = JSON.parse(line);
+      if (event.type === "chunk" && typeof event.text === "string") {
+        partial += event.text;
+        receivedBytes += new TextEncoder().encode(event.text).length;
+        if (receivedBytes > 8192) throw new Error("Provider stream exceeded the response limit.");
+        if (!displayStopped) {
+          row.textContent = `assistant (streaming): ${partial}`;
+          setState(state, `Receiving actual provider output (${receivedBytes} bytes).`);
+        }
+      } else if (event.type === "complete" && validSnapshot(event.snapshot)) {
+        snapshot = event.snapshot;
+      } else if (event.type === "error" && typeof event.message === "string") {
+        error = event.message;
+      } else {
+        throw new Error("The provider returned an invalid stream event.");
+      }
+    }
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        buffered += decoder.decode(value || new Uint8Array(), { stream: !done });
+        if (new TextEncoder().encode(buffered).length > 65536) {
+          throw new Error("Provider stream event exceeded the response limit.");
+        }
+        let newline = buffered.indexOf("\n");
+        while (newline !== -1) {
+          consumeLine(buffered.slice(0, newline));
+          buffered = buffered.slice(newline + 1);
+          newline = buffered.indexOf("\n");
+        }
+        if (done) break;
+      }
+      if (buffered) consumeLine(buffered);
+    } finally {
+      stopDisplayButton.disabled = true;
+      stopDisplayButton.hidden = true;
+      stopDisplay = null;
+      reader.releaseLock();
+    }
+    return { snapshot: error ? null : snapshot, error, partial, displayStopped };
   }
 
   async function closeConversation() {
@@ -376,6 +524,7 @@ export function mountEmployeeChat({
   refreshButton.addEventListener("click", refresh);
   closeButton.addEventListener("click", closeConversation);
   form.addEventListener("submit", send);
+  stopDisplayButton.addEventListener("click", () => stopDisplay?.());
   consent.addEventListener("change", controls);
   controls();
   const initialLoad = refresh();

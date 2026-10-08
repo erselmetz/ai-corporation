@@ -819,29 +819,40 @@ export const post100Tasks = [
   {
     "number": 120,
     "title": "Supported streaming and truthful Stop controls",
-    "description": "Extend provider/chat contracts only where validated streaming or cancellation is supported.",
+    "description": "Stream verified provider output into coordinator and Employee chat while keeping interruption and Stop semantics truthful.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       103,
       119
     ],
     "acceptance": [
-      "Show token/chunk progress only from actual streamed output and handle partial/final failure.",
-      "Distinguish stopping UI display from confirmed provider/tool cancellation.",
-      "Preserve history/lifecycle, ownership and bounded buffers on disconnect or timeout.",
-      "Test partial streams, unsupported providers and cancellation races with deterministic fakes."
+      "Show chunk progress only from actual Ollama output; unsupported providers retain buffered chat and cannot use streaming routes.",
+      "Label Stop as display-only; keep consuming the stream and never claim that provider generation was cancelled.",
+      "Persist only the verified final assistant reply; interrupted streams leave user input pending/uncertain without persisting partial assistant text or automatic replay.",
+      "Keep streaming within authenticated owner/conversation/Agent boundaries, request-slot limits, bounded protocol/output buffers and provider timeouts."
     ],
     "outOfScope": [
-      "Calling a timeout or closed browser tab proof that external execution stopped."
+      "Provider cancellation, stopping generation, replay/retry, saving partial assistant output, or enabling streaming for an unvalidated provider."
     ],
     "decisions": [
-      "Approve provider streaming/cancellation interfaces and partial-turn persistence before coding."
+      "Conservative implementation: only the explicitly validated loopback Ollama provider streams. Stop suppresses displayed chunks while draining to a verified completion; it is not cancellation. On disconnect/error, partial assistant text remains transient and the user turn stays pending/uncertain for explicit owner recovery. Unsupported providers keep buffered behavior."
     ],
     "area": "P02d",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-120-supported-streaming-truthful-stop",
+    "validation": [
+      "Focused provider, streaming, chat ownership and history regressions: 79 passed.",
+      "Focused coordinator/Employee/provider chat UI tests: 17 passed.",
+      "All browser-module tests: 142 passed; public documentation tests: 14 passed.",
+      "Full Python suite: 1014 passed, 6 skipped, 2 known unrelated pre-existing failures: test_model_set_command and test_model_replacement_uses_existing_assignment_service.",
+      "Pylance reported no diagnostics in the checked Ollama provider, owned Employee chat service and Employee chat API files. No live or paid provider calls."
+    ],
+    "limitations": [
+      "Only configured loopback Ollama is validated for streaming. Gemini and other providers remain buffered; this task does not add cancellation.",
+      "Stop only hides later chunks in the UI while the provider stream continues to be consumed; a successful completion is still persisted.",
+      "A stream that errors or disconnects leaves a pending/uncertain user turn and no persisted partial assistant response; there is no automatic replay.",
+      "The full Python suite retains two unrelated pre-existing model-assignment test failures."
+    ]
   },
   {
     "number": 121,

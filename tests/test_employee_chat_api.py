@@ -21,6 +21,15 @@ class Provider(AIProvider):
         return self.reply
 
 
+class StreamingProvider(Provider):
+    supports_streaming = True
+
+    def generate_stream(self, model, prompt):
+        self.calls.append((model, prompt))
+        yield "actual "
+        yield "reply"
+
+
 class Authentication:
     def authenticate(self, request: Request):
         owner = request.headers.get("x-test-owner")
@@ -97,6 +106,57 @@ def test_employee_chat_is_owned_isolated_and_does_not_send_profile_or_task_conte
     }
     assert client.post(path + "/close", headers=headers()).json()["conversation"]["status"] == "closed"
     assert client.post(path + "/messages", json={"text": "closed"}, headers=headers()).status_code == 422
+
+
+def test_employee_chat_streaming_uses_assigned_provider_and_saves_only_final_reply(setup):
+    runtime, original, client = setup
+    provider = StreamingProvider()
+    runtime.providers.remove("ollama")
+    runtime.providers.register("ollama", provider)
+    started = client.post(
+        "/api/employee-chat/conversations",
+        json={"employee_id": "private-employee"},
+        headers=headers(),
+    )
+    assert started.status_code == 201
+    assert started.json()["agent"]["supports_streaming"] is True
+    path = f"/api/employee-chat/conversations/{started.json()['conversation']['id']}"
+    streamed = client.post(
+        path + "/messages/stream",
+        json={"text": "Hello"},
+        headers=headers(),
+    )
+    events = [json.loads(line) for line in streamed.text.splitlines()]
+    assert streamed.status_code == 200
+    assert [(event["type"], event.get("text")) for event in events] == [
+        ("chunk", "actual "),
+        ("chunk", "reply"),
+        ("complete", None),
+    ]
+    assert [item["status"] for item in events[-1]["snapshot"]["conversation"]["messages"]] == [
+        "completed", "completed",
+    ]
+    assert provider.calls and "Hello" in provider.calls[0][1]
+    assert original.calls == []
+
+
+def test_employee_chat_rejects_streaming_for_unvalidated_provider(setup):
+    _, provider, client = setup
+    started = client.post(
+        "/api/employee-chat/conversations",
+        json={"employee_id": "private-employee"},
+        headers=headers(),
+    )
+    path = f"/api/employee-chat/conversations/{started.json()['conversation']['id']}"
+    response = client.post(
+        path + "/messages/stream",
+        json={"text": "Hello"},
+        headers=headers(),
+    )
+    assert response.status_code == 409
+    assert "does not support response streaming" in response.text
+    assert client.get(path, headers=headers()).json()["conversation"]["messages"] == []
+    assert provider.calls == []
 
 
 def test_gemini_requires_per_turn_consent_and_rejects_key_paste_before_saving(setup):

@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from threading import Event
+import json
 
 import httpx
 import pytest
@@ -255,6 +256,63 @@ def test_ollama_runtime_malformed_or_unreachable_is_explicit_unknown(monkeypatch
     monkeypatch.setattr("app.providers.ollama.httpx.Client", factory)
     observed = OllamaProvider().local_model_runtime()
     assert observed.state == "unknown" and not observed.models
+
+
+def test_ollama_stream_yields_only_real_bounded_chunks_until_final_marker(monkeypatch):
+    requests = []
+    stream = b'{"response":"first ","done":false}\n{"response":"reply","done":false}\n{"response":"","done":true}\n'
+    real_client = httpx.Client
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200, content=stream)
+
+    def factory(**kwargs):
+        assert kwargs == {
+            "timeout": 120.0,
+            "trust_env": False,
+            "follow_redirects": False,
+        }
+        return real_client(transport=httpx.MockTransport(handler), **kwargs)
+
+    monkeypatch.setattr("app.providers.ollama.httpx.Client", factory)
+    provider = OllamaProvider("http://127.0.0.1:11434")
+    assert list(provider.generate_stream("model", "prompt")) == ["first ", "reply"]
+    assert requests[0].url.path == "/api/generate"
+    assert json.loads(requests[0].read()) == {
+        "model": "model", "prompt": "prompt", "stream": True,
+    }
+
+
+def test_ollama_streaming_is_not_advertised_or_used_for_non_loopback_provider():
+    provider = OllamaProvider("https://provider.example")
+    assert provider.supports_streaming is False
+    with pytest.raises(RuntimeError, match="requires a configured loopback provider"):
+        next(provider.generate_stream("model", "prompt"))
+
+
+@pytest.mark.parametrize(
+    "stream",
+    [
+        b'{"response":"partial","done":false}\n',
+        b'{"response":"x","done":"yes"}\n',
+        b'{"response":"' + b"x" * 8193 + b'","done":true}\n',
+        b'{"error":"provider detail"}\n',
+    ],
+    ids=["missing-final-marker", "invalid-final-marker", "output-limit", "provider-error"],
+)
+def test_ollama_stream_rejects_partial_or_invalid_completion(monkeypatch, stream):
+    real_client = httpx.Client
+
+    def factory(**kwargs):
+        return real_client(
+            transport=httpx.MockTransport(lambda _: httpx.Response(200, content=stream)),
+            **kwargs,
+        )
+
+    monkeypatch.setattr("app.providers.ollama.httpx.Client", factory)
+    with pytest.raises(RuntimeError, match="Ollama returned an invalid or oversized response stream"):
+        list(OllamaProvider().generate_stream("model", "prompt"))
 
 
 @pytest.mark.parametrize("body", [b"not-json", b"[]", b'{"models":null}',

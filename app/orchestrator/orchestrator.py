@@ -54,6 +54,27 @@ class Orchestrator:
 
             return provider.generate(agent.model, prompt)
 
+    def stream_agent(
+        self,
+        agent_id: str,
+        prompt: str,
+        *,
+        expected_assignment: tuple[str, str] | None = None,
+    ):
+        with self.agents.execution(agent_id):
+            agent = self.agents.get(agent_id)
+            if expected_assignment is not None and (
+                agent.provider,
+                agent.model,
+            ) != expected_assignment:
+                raise RuntimeError(
+                    "Agent assignment changed before execution; task was not sent"
+                )
+            provider = agent.resolve_provider(self.providers)
+            if getattr(provider, "supports_streaming", False) is not True:
+                raise RuntimeError("Selected provider does not support response streaming")
+            yield from provider.generate_stream(agent.model, prompt)
+
     def run_employee(self, employee: "Employee", prompt: str) -> str:
         """
         Execute a prompt using the AI agent assigned to the employee.

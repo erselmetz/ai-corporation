@@ -2,6 +2,7 @@ from .base import (
     AIProvider,
     ProviderModelOperationFailed,
     ProviderModelOperationUnsupported,
+    ProviderStreamingUnsupported,
 )
 from .availability import AvailabilityResult, AvailabilityState
 from .inventory import LoadedLocalModel, LocalModelInventory, LocalModelRuntime
@@ -13,6 +14,7 @@ __all__ = [
     "AIProvider",
     "ProviderModelOperationFailed",
     "ProviderModelOperationUnsupported",
+    "ProviderStreamingUnsupported",
     "AvailabilityResult",
     "AvailabilityState",
     "LocalModelInventory",

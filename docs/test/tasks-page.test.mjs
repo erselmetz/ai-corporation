@@ -25,9 +25,9 @@ test("shows all tasks in descending order and highlights the actual next planned
   assert.equal(groups[0].id, "tasks-101-129");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 129 }, (_, index) => 129 - index));
-  assert.match(elements["roadmap-summary"].textContent, /129 roadmap tasks.*119 completed.*10 planned/);
-  assert.equal(elements["next-task"].children[0].href, "#task-120");
-  assert.match(elements["next-task"].textContent, /Next: Task 120/);
+  assert.match(elements["roadmap-summary"].textContent, /129 roadmap tasks.*120 completed.*9 planned/);
+  assert.equal(elements["next-task"].children[0].href, "#task-121");
+  assert.match(elements["next-task"].textContent, /Next: Task 121/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -74,6 +74,12 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.match(chatProposal.textContent, /exact server-generated proposal digest/);
   assert.match(chatProposal.textContent, /chat-task:create/);
   assert.match(chatProposal.textContent, /task-110-chat-proposals-pending-task-review/);
+  const streaming = items.find(item => item.id === "task-120");
+  assert.equal(streaming.children[2].textContent, "Completed");
+  assert.match(streaming.textContent, /task-120-supported-streaming-truthful-stop/);
+  assert.match(streaming.textContent, /79 passed/);
+  assert.match(streaming.textContent, /Stop only hides later chunks/);
+  assert.match(streaming.textContent, /known unrelated pre-existing failures/);
   assert.match(elements["roadmap-rules"].textContent, /Do not infer approval/);
   assert.match(elements["roadmap-rules"].textContent, /identical generated code is not guaranteed/);
 });

@@ -821,7 +821,8 @@ def coordinator_chat_page():
     <section id="chat-history" aria-label="Conversation messages" aria-live="polite"></section>
     <form id="chat-form"><label for="chat-input">Message (up to 8192 UTF-8 bytes)</label>
     <textarea id="chat-input" rows="4" maxlength="8192" required></textarea>
-    <button id="chat-send" type="submit">Send</button></form>
+    <button id="chat-send" type="submit">Send</button>
+    <button id="chat-stop-display" type="button" disabled hidden>Stop display (generation continues)</button></form>
     <section class="panel" aria-labelledby="chat-task-proposal-heading">
     <h2 id="chat-task-proposal-heading">Review a coordinator proposal</h2>
     <p>Only an explicitly confirmed proposal creates a pending Task. It does not execute work.
@@ -880,6 +881,7 @@ def employee_chat_page():
       <label for="individual-chat-input">Message (up to 8192 UTF-8 bytes)</label>
       <textarea id="individual-chat-input" rows="4" maxlength="8192" required></textarea>
       <button id="individual-chat-send" type="submit" disabled>Send</button>
+      <button id="individual-chat-stop-display" type="button" disabled hidden>Stop display (generation continues)</button>
     </form>
     <p id="individual-cloud-consent-panel" hidden><label><input id="individual-cloud-consent" type="checkbox">
     I consent to send this message and recent history from this individual conversation to Google Gemini for this reply.</label></p>

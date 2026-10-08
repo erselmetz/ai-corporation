@@ -1,8 +1,11 @@
 """Authorized principal-owned chats associated with registered Employees."""
 from contextlib import contextmanager
+import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from starlette.responses import StreamingResponse
 
 from app.application.services.owned_chat import (
     ChatConflict,
@@ -115,6 +118,7 @@ def _snapshot_response(snapshot) -> EmployeeChatResponse:
             role=snapshot.agent.role,
             provider_id=snapshot.agent.provider_id,
             model_id=snapshot.agent.model_id,
+            supports_streaming=snapshot.agent.supports_streaming,
         ),
     )
 
@@ -133,6 +137,7 @@ def _list_item_response(item) -> EmployeeChatListItemResponse:
             role=item.agent.role,
             provider_id=item.agent.provider_id,
             model_id=item.agent.model_id,
+            supports_streaming=item.agent.supports_streaming,
         ),
         status=item.status.value,
     )
@@ -206,6 +211,64 @@ def send_message(
                 cloud_consent=body.cloud_consent,
             )
         )
+
+
+@router.post("/{identifier}/messages/stream")
+def stream_message(
+    identifier: str,
+    payload=Depends(bounded_body),
+    principal=Depends(require_permission("employee-chat:send")),
+    service=Depends(get_application_service),
+):
+    body = _parse(SendRequest, payload)
+    if contains_gemini_key(body.text):
+        raise HTTPException(
+            422,
+            "This message looks like it contains a Gemini API key. It was not saved or sent. "
+            "Use the Gemini online setup page to connect a key.",
+        )
+    owned = service.owned_employee_chat()
+    with _chat_errors():
+        current = owned.get(principal.identity, identifier)
+        if not current.agent.supports_streaming:
+            raise HTTPException(409, "The assigned provider does not support response streaming.")
+
+    def events():
+        try:
+            for event in owned.stream(
+                principal.identity,
+                identifier,
+                body.text,
+                cloud_consent=body.cloud_consent,
+            ):
+                if event["type"] == "complete":
+                    yield json.dumps({
+                        "type": "complete",
+                        "snapshot": jsonable_encoder(_snapshot_response(event["snapshot"])),
+                    }, ensure_ascii=True, separators=(",", ":")) + "\n"
+                else:
+                    yield json.dumps(
+                        event, ensure_ascii=True, separators=(",", ":")
+                    ) + "\n"
+        except ProviderCapacityError:
+            yield json.dumps({
+                "type": "error",
+                "message": "Configured provider request-slot capacity is exhausted; no provider request was admitted.",
+            }) + "\n"
+        except Exception:
+            yield json.dumps({
+                "type": "error",
+                "message": (
+                    "The stream ended before a verified final response. The turn may have reached "
+                    "the provider; inspect its pending status and do not resend it."
+                ),
+            }) + "\n"
+
+    return StreamingResponse(
+        events(),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
+    )
 
 
 @router.post("/{identifier}/close", response_model=EmployeeChatResponse)

@@ -189,3 +189,75 @@ class CorporationChatService:
         self._remember(conversation_id, reply_id, MessageRole.ASSISTANT, reply, MessageStatus.COMPLETED)
         self._remember_status(conversation_id, user_id, MessageStatus.COMPLETED, strict=True)
         return self.get(conversation_id)
+
+    def send_stream(self, conversation_id: str, text: str, retrieved_context=None):
+        record = self.get(conversation_id)
+        if record.status is not ConversationStatus.OPEN:
+            raise ValueError("Cannot send to a closed conversation")
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("Message text is required")
+        if len(text.encode("utf-8")) > 8192:
+            raise ValueError("Message exceeds byte limit")
+        history = [
+            {"role": message.role.value, "content": message.content}
+            for message in record.messages[-16:]
+            if message.status is MessageStatus.COMPLETED
+        ]
+        payload = {
+            "corporation_id": self._corporation_id,
+            "context": self._chat.get_context(conversation_id),
+            "history": history,
+            "request": text,
+        }
+        if retrieved_context is not None:
+            payload["retrieved_context"] = retrieved_context
+        prompt = json.dumps(payload, ensure_ascii=True)
+        if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
+            raise ValueError("Prompt exceeds byte limit")
+        user_id, reply_id = uuid4().hex, uuid4().hex
+        self._chat.add_message(conversation_id, user_id, MessageRole.USER, text)
+        try:
+            self._remember(
+                conversation_id, user_id, MessageRole.USER, text, MessageStatus.PENDING
+            )
+        except ChatHistoryError:
+            self._chat.transition_message(conversation_id, user_id, MessageStatus.FAILED)
+            raise
+
+        output = []
+        output_bytes = 0
+        try:
+            for chunk in self._orchestrator.stream_agent(
+                record.coordinator_agent_id, prompt
+            ):
+                if not isinstance(chunk, str):
+                    raise ValueError("Provider returned an invalid response chunk")
+                output_bytes += len(chunk.encode("utf-8"))
+                if output_bytes > 8192:
+                    raise ValueError("Provider reply exceeds byte limit")
+                if chunk:
+                    output.append(chunk)
+                    yield {"type": "chunk", "text": chunk}
+        except ProviderCapacityError:
+            self._chat.transition_message(conversation_id, user_id, MessageStatus.FAILED)
+            self._remember_status(
+                conversation_id, user_id, MessageStatus.FAILED, strict=False
+            )
+            raise
+        except Exception:
+            raise RuntimeError("Corporation chat response stream failed") from None
+
+        reply = "".join(output)
+        if not reply.strip():
+            raise RuntimeError("Corporation chat response stream was empty")
+        self._chat.transition_message(conversation_id, user_id, MessageStatus.COMPLETED)
+        self._chat.add_message(conversation_id, reply_id, MessageRole.ASSISTANT, reply)
+        self._chat.transition_message(conversation_id, reply_id, MessageStatus.COMPLETED)
+        self._remember(
+            conversation_id, reply_id, MessageRole.ASSISTANT, reply, MessageStatus.COMPLETED
+        )
+        self._remember_status(conversation_id, user_id, MessageStatus.COMPLETED, strict=True)
+        yield {
+            "type": "complete",
+            "conversation": self.get(conversation_id),
+        }

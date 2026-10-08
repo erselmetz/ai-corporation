@@ -20,13 +20,21 @@ class ProviderModelOperationFailed(RuntimeError):
     """A supported provider model lifecycle operation failed."""
 
 
+class ProviderStreamingUnsupported(RuntimeError):
+    """The provider does not implement validated response streaming."""
+
+
 class AIProvider(ABC):
     requires_explicit_cloud_consent = False
+    supports_streaming = False
 
     @abstractmethod
     def generate(self, model: str, prompt: str) -> str:
         """Generate a response from the AI provider."""
         raise NotImplementedError
+
+    def generate_stream(self, model: str, prompt: str):
+        raise ProviderStreamingUnsupported("Response streaming is unsupported by this provider")
 
     def check_availability(self) -> AvailabilityResult:
         """Return UNKNOWN unless this provider implements a truthful health check."""

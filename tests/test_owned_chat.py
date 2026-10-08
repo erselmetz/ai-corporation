@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+import json
 from threading import Event
 
 import pytest
@@ -29,6 +30,27 @@ class Provider(AIProvider):
         if self.fail:
             raise RuntimeError("secret-provider-credential")
         return "<script>alert('untrusted')</script> deterministic reply"
+
+
+class StreamingProvider(Provider):
+    supports_streaming = True
+
+    def __init__(self):
+        super().__init__()
+        self.stream_closed = False
+
+    def generate_stream(self, model, prompt):
+        self.calls.append((model, prompt))
+        try:
+            yield "partial "
+            self.entered.set()
+            if self.block and not self.finish.wait(5):
+                raise RuntimeError("Test stream was not released")
+            if self.fail:
+                raise RuntimeError("secret-provider-credential")
+            yield "reply"
+        finally:
+            self.stream_closed = True
 
 
 @pytest.fixture
@@ -91,6 +113,93 @@ def test_owned_chat_roundtrip_and_no_execution_or_capacity_side_effect(setup):
     assert runtime.application_service.list_agents() == agents
     assert runtime.application_service.list_tasks() == tasks
     assert len(provider.calls) == 1
+
+
+def test_streaming_endpoint_returns_real_chunks_and_persists_only_final_reply():
+    runtime = create_corporation_runtime()
+    provider = StreamingProvider()
+    runtime.providers.remove("ollama")
+    runtime.providers.register("ollama", provider)
+    with client_for(runtime) as client:
+        identifier = start(client).json()["conversation"]["id"]
+        path = f"/api/chat/conversations/{identifier}"
+        assert client.get(path, headers={"x-test-owner": "alice"}).json()["streaming_supported"]
+        response = client.post(
+            path + "/messages/stream",
+            json={"text": "Hello"},
+            headers={"x-test-owner": "alice"},
+        )
+        assert response.status_code == 200
+        events = [json.loads(line) for line in response.text.splitlines()]
+        assert [(event["type"], event.get("text")) for event in events] == [
+            ("chunk", "partial "),
+            ("chunk", "reply"),
+            ("complete", None),
+        ]
+        messages = events[-1]["conversation"]["messages"]
+        assert [(message["role"], message["status"], message["content"]) for message in messages] == [
+            ("user", "completed", "Hello"),
+            ("assistant", "completed", "partial reply"),
+        ]
+        assert events[-1]["streaming_supported"] is True
+        assert provider.calls and "Hello" in provider.calls[0][1]
+
+
+def test_unsupported_provider_streaming_is_rejected_before_recording_turn(setup):
+    runtime, provider = setup
+    with client_for(runtime) as client:
+        identifier = start(client).json()["conversation"]["id"]
+        response = client.post(
+            f"/api/chat/conversations/{identifier}/messages/stream",
+            json={"text": "Hello"},
+            headers={"x-test-owner": "alice"},
+        )
+        assert response.status_code == 409
+        assert "does not support response streaming" in response.text
+        assert client.get(
+            f"/api/chat/conversations/{identifier}",
+            headers={"x-test-owner": "alice"},
+        ).json()["conversation"]["messages"] == []
+    assert provider.calls == []
+
+
+def test_stream_failure_keeps_turn_pending_and_does_not_expose_provider_error():
+    runtime = create_corporation_runtime()
+    provider = StreamingProvider()
+    provider.fail = True
+    runtime.providers.remove("ollama")
+    runtime.providers.register("ollama", provider)
+    with client_for(runtime) as client:
+        identifier = start(client).json()["conversation"]["id"]
+        path = f"/api/chat/conversations/{identifier}"
+        response = client.post(
+            path + "/messages/stream",
+            json={"text": "Hello"},
+            headers={"x-test-owner": "alice"},
+        )
+        events = [json.loads(line) for line in response.text.splitlines()]
+        assert response.status_code == 200
+        assert events[0] == {"type": "chunk", "text": "partial "}
+        assert events[-1]["type"] == "error"
+        assert "secret-provider-credential" not in response.text
+        messages = client.get(path, headers={"x-test-owner": "alice"}).json()["conversation"]["messages"]
+        assert len(messages) == 1
+        assert messages[0]["status"] == "pending"
+
+
+def test_closing_stream_releases_provider_and_keeps_interrupted_turn_pending(setup):
+    runtime = create_corporation_runtime()
+    provider = StreamingProvider()
+    provider.block = True
+    runtime.providers.remove("ollama")
+    runtime.providers.register("ollama", provider)
+    chat = runtime.application_service.owned_chat()
+    identifier = chat.start("alice", "local_worker")["conversation"].id
+    stream = chat.stream("alice", identifier, "Hello")
+    assert next(stream) == {"type": "chunk", "text": "partial "}
+    stream.close()
+    assert provider.stream_closed
+    assert chat.get("alice", identifier)["conversation"].messages[0].status.value == "pending"
 
 
 def test_owner_isolation_permissions_and_default_rejecting(setup):

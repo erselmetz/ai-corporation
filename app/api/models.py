@@ -209,6 +209,7 @@ class EmployeeChatAgentResponse(BaseModel):
     role: str
     provider_id: str
     model_id: str
+    supports_streaming: bool = False
 
 
 class EmployeeChatResponse(BaseModel):
