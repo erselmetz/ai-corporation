@@ -22,6 +22,15 @@ export function mountChat({
   const taskConfirm = element("chat-task-confirm");
   const taskReview = element("chat-task-review");
   const taskState = element("chat-task-state");
+  const repositoryStudyForm = element("repository-study-form");
+  const repositoryStudyButton = element("repository-study-submit");
+  const repositoryStudyState = element("repository-study-state");
+  const repositoryStudyResult = element("repository-study-result");
+  const repositoryStudyFields = [
+    element("repository-study-objective"),
+    element("repository-study-owner"),
+    element("repository-study-name"),
+  ];
   const taskFields = [
     taskSource, taskAgent, element("chat-task-objective"), element("chat-task-project"),
     element("chat-task-context-query"), element("chat-task-context-scope"),
@@ -30,7 +39,10 @@ export function mountChat({
   ];
   const geminiKeyPattern = /\bAIza[A-Za-z0-9_-]{20,}\b|\b(?:GEMINI|GOOGLE)_API_KEY\s*=\s*\S+/i;
   const stopDisplayButton = element("chat-stop-display");
-  const buttons = ["chat-start", "chat-send", "chat-close", "chat-refresh", "chat-stop-display"].map(element);
+  const buttons = [
+    "chat-start", "chat-send", "chat-close", "chat-refresh",
+    "chat-stop-display", "repository-study-submit",
+  ].map(element);
   let busy = false;
   let selected = null;
   let canSend = false;
@@ -38,6 +50,7 @@ export function mountChat({
   let stopDisplay = null;
   let requiresCloudConsent = false;
   let canCreateTask = false;
+  let canStudyRepositories = false;
   let currentProposal = null;
   const base = "/api/chat/conversations";
   function clear() {
@@ -53,8 +66,11 @@ export function mountChat({
     cloudPanel.hidden = true;
     cloudConsent.checked = false;
     input.disabled = true;
+    repositoryStudyResult.textContent = "";
+    repositoryStudyState.textContent = "";
     clearTaskProposal();
     taskControls();
+    repositoryStudyControls();
   }
   function clearTaskProposal() {
     currentProposal = null;
@@ -65,6 +81,13 @@ export function mountChat({
     taskFields.forEach(field => { field.disabled = busy || !canCreateTask; });
     taskPrepare.disabled = busy || !canCreateTask || !selected || !canSend;
     taskConfirm.disabled = busy || !canCreateTask || !currentProposal;
+  }
+  function repositoryStudyControls() {
+    repositoryStudyFields.forEach(field => {
+      field.disabled = busy || !canStudyRepositories || !selected || !canSend;
+    });
+    repositoryStudyButton.disabled =
+      busy || !canStudyRepositories || !selected || !canSend;
   }
   async function request(path, body) {
     const options = { credentials: "same-origin" };
@@ -132,6 +155,7 @@ export function mountChat({
     input.disabled = !canSend;
     clearTaskProposal();
     taskControls();
+    repositoryStudyControls();
   }
   async function action(operation) {
     if (busy) return false;
@@ -146,6 +170,7 @@ export function mountChat({
       buttons.forEach(button => { button.disabled = false; });
       agents.disabled = false; conversations.disabled = false;
       taskControls();
+      repositoryStudyControls();
     }
   }
   async function refresh() {
@@ -158,12 +183,19 @@ export function mountChat({
         const session = await request("/api/local/session");
         canCreateTask = Array.isArray(session.permissions)
           && session.permissions.includes("chat-task:create");
+        canStudyRepositories = Array.isArray(session.permissions)
+          && session.permissions.includes("github:read");
       } catch {
         canCreateTask = false;
+        canStudyRepositories = false;
       }
       taskState.textContent = canCreateTask
         ? "Prepare and inspect a proposal before explicit confirmation."
         : "Task proposal review is unavailable: this session lacks chat-task:create permission.";
+      repositoryStudyState.textContent = canStudyRepositories
+        ? "Repository study is limited to repositories already in the configured allowlist."
+        : "Repository study is unavailable: this session lacks github:read permission.";
+      repositoryStudyControls();
       const agentList = await request("/api/agents");
       const list = await request(base);
       if (!Array.isArray(agentList.items) || !Array.isArray(list.items)) throw new Error("Invalid chat list response.");
@@ -392,6 +424,29 @@ export function mountChat({
       taskControls();
     });
   }
+  async function studyRepository(event) {
+    event?.preventDefault();
+    return action(async () => {
+      if (!selected || !canSend || !canStudyRepositories) {
+        throw new Error("An open conversation and github:read permission are required.");
+      }
+      const [objective, owner, repository] = repositoryStudyFields.map(field => field.value.trim());
+      if (!objective || !owner || !repository) {
+        throw new Error("Enter a study goal and an explicit GitHub owner/repository.");
+      }
+      repositoryStudyState.textContent =
+        "Studying the allowlisted repository with bounded read-only GitHub requests…";
+      repositoryStudyResult.textContent = "";
+      const report = await request(
+        `${base}/${encodeURIComponent(selected)}/repository-studies`,
+        { objective, owner, repository },
+      );
+      repositoryStudyResult.textContent = JSON.stringify(report, null, 2);
+      repositoryStudyState.textContent = report.decision === "proposal_for_human_review"
+        ? "Evidence-backed proposal prepared for human review; nothing was installed or executed."
+        : "More information is needed before this evidence can support a review proposal.";
+    });
+  }
   async function confirmTaskProposal() {
     return action(async () => {
       if (!currentProposal || !selected || !canCreateTask) {
@@ -412,6 +467,7 @@ export function mountChat({
   }
   element("chat-start").addEventListener("click", start);
   element("chat-form").addEventListener("submit", send);
+  repositoryStudyForm.addEventListener("submit", studyRepository);
   element("chat-close").addEventListener("click", close);
   element("chat-refresh").addEventListener("click", refresh);
   stopDisplayButton.addEventListener("click", () => stopDisplay?.());

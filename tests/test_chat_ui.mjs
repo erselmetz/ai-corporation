@@ -51,7 +51,9 @@ function setup(handler = null) {
     "chat-task-state", "chat-task-objective", "chat-task-project",
     "chat-task-context-query", "chat-task-context-scope", "chat-task-context-id",
     "chat-task-outcome", "chat-task-verification", "chat-task-evidence",
-    "chat-stop-display",
+    "chat-stop-display", "repository-study-form", "repository-study-objective",
+    "repository-study-owner", "repository-study-name", "repository-study-submit",
+    "repository-study-state", "repository-study-result",
   ];
   const elements = Object.fromEntries(ids.map(id => [id, new Element(
     ["chat-agent", "chat-conversation", "chat-task-source", "chat-task-agent",
@@ -63,7 +65,10 @@ function setup(handler = null) {
     const custom = handler && await handler(path, options);
     if (custom) return custom;
     if (path === "/api/agents") return response({ items: [agent] });
-    if (path === "/api/local/session") return response({ csrf: "test-csrf", permissions: ["chat-task:create"] });
+    if (path === "/api/local/session") return response({
+      csrf: "test-csrf",
+      permissions: ["chat-task:create", "github:read"],
+    });
     if (path === "/api/chat/conversations" && !options.method) return response({ items: [] });
     if (path.endsWith("/close")) return response(snapshot([], "closed"));
     return response(snapshot());
@@ -155,6 +160,55 @@ test("Stop display hides chunks but continues consuming the provider response", 
   assert.equal(cancelled, false);
   assert.match(ui.elements["chat-history"].textContent, /assistant - completedfirst reply/);
   assert.match(ui.elements["chat-state"].textContent, /generation continued and completed/);
+});
+
+test("repository study sends explicit scope with CSRF and renders untrusted report as text", async () => {
+  const report = {
+    decision: "proposal_for_human_review",
+    repository: { revision_sha: "a".repeat(40) },
+    proposal: { requested_purpose: "<script>untrusted</script>" },
+  };
+  const ui = setup(path => (
+    path.endsWith("/repository-studies") ? response(report) : null
+  ));
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["repository-study-objective"].value = "Assess local integration";
+  ui.elements["repository-study-owner"].value = "example";
+  ui.elements["repository-study-name"].value = "project";
+  assert.equal(
+    await ui.elements["repository-study-form"].listeners.submit({ preventDefault() {} }),
+    true,
+  );
+  const post = ui.calls.find(call => call.path.endsWith("/repository-studies"));
+  assert.equal(post.options.credentials, "same-origin");
+  assert.equal(post.options.headers["X-Local-CSRF"], "test-csrf");
+  assert.deepEqual(JSON.parse(post.options.body), {
+    objective: "Assess local integration",
+    owner: "example",
+    repository: "project",
+  });
+  assert.match(ui.elements["repository-study-result"].textContent, /<script>untrusted<\/script>/);
+  assert.match(ui.elements["repository-study-state"].textContent, /human review/);
+});
+
+test("repository study is unavailable without the separate GitHub read permission", async () => {
+  const ui = setup(path => (
+    path === "/api/local/session"
+      ? response({ csrf: "test-csrf", permissions: [] })
+      : null
+  ));
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  assert.equal(ui.elements["repository-study-submit"].disabled, true);
+  ui.elements["repository-study-objective"].value = "Assess";
+  ui.elements["repository-study-owner"].value = "example";
+  ui.elements["repository-study-name"].value = "project";
+  assert.equal(
+    await ui.elements["repository-study-form"].listeners.submit({ preventDefault() {} }),
+    false,
+  );
+  assert.equal(ui.calls.some(call => call.path.endsWith("/repository-studies")), false);
 });
 
 test("Gemini requires per-turn cloud consent and sends only an explicit consent flag", async () => {

@@ -88,6 +88,9 @@ class EmployeeChatService:
     def get_conversation(self, conversation_id: str) -> ChatConversationSummary:
         return self._summary(self._get_session(conversation_id))
 
+    def get_conversation_status(self, conversation_id: str) -> ConversationStatus:
+        return self._get_session(conversation_id).conversation.status
+
     def set_context(self, conversation_id: str, content: str) -> None:
         """Replace caller-authorized context for this conversation only.
 

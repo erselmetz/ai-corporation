@@ -25,6 +25,7 @@ from app.application import (
     DocumentationSourceUnavailable,
     GitHubRepositoryInspectionService,
     ProjectSummary,
+    RepositoryStudyService,
     TaskSummary,
     UpdatesApplicationService,
     UpdatesSource,
@@ -961,6 +962,7 @@ def create_app(
     documentation_source: DocumentationSource | None = None,
     updates_source: UpdatesSource | None = None,
     github_repository_inspection_service: GitHubRepositoryInspectionService | None = None,
+    repository_study_service: RepositoryStudyService | None = None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
@@ -983,10 +985,16 @@ def create_app(
                 Path(__file__).resolve().parents[2] / "corporation_updates.json"
             )
         application.state.updates_service = UpdatesApplicationService(source_updates)
-        application.state.github_repository_inspection_service = (
+        inspection_service = (
             GitHubRepositoryInspectionService()
             if github_repository_inspection_service is None
             else github_repository_inspection_service
+        )
+        application.state.github_repository_inspection_service = inspection_service
+        application.state.repository_study_service = (
+            RepositoryStudyService(inspection_service)
+            if repository_study_service is None
+            else repository_study_service
         )
         yield
 

@@ -16,7 +16,7 @@ READ_PERMISSIONS = frozenset({
     "provider-connection:read",
     "model:read", "task:read", "project:read", "activity:read",
     "documentation:read", "updates:read", "memory:read",
-    "position:read",
+    "position:read", "github:read",
     "assignment-policy:read",
 })
 

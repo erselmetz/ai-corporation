@@ -3,6 +3,12 @@
     {
       "date": "2026-10-11",
       "type": "development",
+      "title": "Chat-driven GitHub study and research",
+      "summary": "Completed Task 121 with an explicit coordinator-chat repository-study request guarded by an open owned conversation, chat:send, github:read and the existing exact-repository allowlist. GitHub source is analyzed at its resolved commit; deterministic evaluation and unapproved proposal generation provide source-linked decision support. Untrusted results render as text; the transcript and source are not sent to an AI Provider, and source is never installed or executed. Validation: 90 focused Python tests, 13 chat UI tests, all 144 browser-module tests and 14 public documentation tests passed. The full Python suite had 1028 passed, 6 skipped and 2 pre-existing model-assignment failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service). No live GitHub or paid/provider calls. The app allowlist remains empty unless configured by the embedding host; repository metadata is timestamped separately from pinned source. Checkpoint tag: task-121-chat-driven-github-study."
+    },
+    {
+      "date": "2026-10-11",
+      "type": "development",
       "title": "Supported chat streaming and truthful Stop controls",
       "summary": "Completed Task 120 with bounded streaming from configured loopback Ollama for coordinator and Employee chat. Chunk progress reflects actual provider output. Stop suppresses displayed chunks but continues consuming the stream and does not claim cancellation; successful final replies are persisted, while interrupted turns remain pending/uncertain without partial assistant persistence or automatic replay. Gemini and unsupported providers remain buffered. Validation: 79 focused Python tests, 17 focused chat UI tests, all 142 browser-module tests and 14 public docs tests passed. The full Python suite had 1014 passed, 6 skipped and 2 unrelated pre-existing model-assignment failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service). No live or paid provider calls. Checkpoint tag: task-120-supported-streaming-truthful-stop."
     },

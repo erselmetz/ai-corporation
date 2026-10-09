@@ -124,6 +124,12 @@ from .github_inspection import (
     GitHubRepositoryScope,
     GitHubRepositoryScopeDenied,
 )
+from .repository_study import (
+    RepositoryStudyCitation,
+    RepositoryStudyDecision,
+    RepositoryStudyReport,
+    RepositoryStudyService,
+)
 from .capability_integration import (
     CapabilityArtifactCheck,
     CapabilityArtifactCheckStatus,
@@ -251,6 +257,10 @@ __all__ = [
     "GitHubRepositoryNotFound",
     "GitHubRepositoryScope",
     "GitHubRepositoryScopeDenied",
+    "RepositoryStudyCitation",
+    "RepositoryStudyDecision",
+    "RepositoryStudyReport",
+    "RepositoryStudyService",
     "CapabilityCandidate",
     "CapabilityCandidateSource",
     "CapabilityDiscoveryReport",

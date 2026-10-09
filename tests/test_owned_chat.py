@@ -274,21 +274,27 @@ def test_overlapping_requests_rejected_and_lock_released(setup):
     chat = runtime.application_service.owned_chat()
     assert chat is runtime.application_service.owned_chat()
     identifier = chat.start("alice", "local_worker")["conversation"].id
+    assert chat.get_status("alice", identifier).value == "open"
     provider.block = True
     with ThreadPoolExecutor(max_workers=1) as executor:
         pending = executor.submit(chat.send, "alice", identifier, "First")
         try:
             assert provider.entered.wait(3)
             for operation in [lambda: chat.send("alice", identifier, "Duplicate"),
-                              lambda: chat.get("alice", identifier), lambda: chat.close("alice", identifier)]:
+                              lambda: chat.get("alice", identifier),
+                              lambda: chat.get_status("alice", identifier),
+                              lambda: chat.close("alice", identifier)]:
                 with pytest.raises(ChatConflict, match="busy"):
                     operation()
             with pytest.raises(ChatNotFound):
                 chat.get("bob", identifier)
+            with pytest.raises(ChatNotFound):
+                chat.get_status("bob", identifier)
         finally:
             provider.finish.set()
         assert len(pending.result(timeout=3)["conversation"].messages) == 2
     assert chat.close("alice", identifier)["conversation"].status.value == "closed"
+    assert chat.get_status("alice", identifier).value == "closed"
     assert len(provider.calls) == 1
 
 

@@ -857,29 +857,39 @@ export const post100Tasks = [
   {
     "number": 121,
     "title": "Chat-driven GitHub study and research",
-    "description": "Accept a scoped repository request and produce a source-linked adoption assessment through existing discovery/research services.",
+    "description": "Accept an explicit repository study request in coordinator chat and return a bounded, source-linked adoption assessment.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       103,
       113
     ],
     "acceptance": [
-      "Pin inspected revision and explicit repository/host scope; bound retrieval and research.",
-      "Report license, dependencies, fit, risks and unknowns with traceable evidence.",
-      "External code/docs are untrusted and cannot expand permissions or override policy.",
-      "Return proposal, separate-tool option, rejection or information request without installation."
+      "Coordinator chat exposes an explicit objective and owner/repository form; the API requires an open conversation owned by the authenticated principal plus chat:send and github:read.",
+      "Preserve the configured exact-repository allowlist; resolve the default branch once to a commit and analyze its immutable tree SHA.",
+      "Reuse bounded GitHub discovery, repository analysis, evaluation, and proposal services; report license, dependency manifests, detected languages/frameworks, maintenance metadata, fit, risks, unknowns, and source citations.",
+      "Render untrusted source-derived results as text, return a proposal for human review or request more information, and never install, execute, or send source content to an AI provider."
     ],
     "outOfScope": [
-      "Automatic downloads/execution, source instructions authorizing actions or model retraining claims."
+      "Search/discovery outside configured repository scope, arbitrary-host research, automatic downloads/install/execution, AI-provider synthesis, or source instructions authorizing actions."
     ],
     "decisions": [
-      "Approve any new external retrieval/search adapters and their allowed scope before use."
+      "Reuse only the existing explicit GitHub repository allowlist, official GitHub API discovery/analyzer, evaluator, and unapproved proposal generator. Do not add search or arbitrary-host retrieval. Require both chat:send and github:read; study an open owned conversation without reading, persisting, or forwarding its transcript. The analyzer resolves the default branch to a commit and queries its immutable tree. Propose only for complete pinned analysis with a known license; otherwise request more information. All proposals remain unapproved."
     ],
     "area": "P10",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-121-chat-driven-github-study",
+    "validation": [
+      "Focused repository study, pinned source analysis, evaluator, GitHub inspection and local-owner permission regressions: 90 passed using deterministic fakes.",
+      "Coordinator chat UI tests: 13 passed, including same-origin CSRF, explicit scope, inert untrusted output, and denial without github:read.",
+      "All 144 browser-module tests and all 14 public documentation tests passed.",
+      "Full Python suite: 1025 passed, 6 skipped, and 2 pre-existing model-assignment failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service). No live GitHub or paid/provider calls."
+    ],
+    "limitations": [
+      "The installed app has an empty GitHub repository allowlist unless the embedding host configures the existing GitHub inspection service; no allowlist management UI or environment setting is added.",
+      "Only GitHub repositories are analyzed. Arbitrary external-host documentation research and search are excluded.",
+      "Commit-pinned source analysis is paired with separately timestamped repository metadata; GitHub metadata is not itself a commit snapshot.",
+      "Evaluation and proposals are deterministic decision support, not a semantic AI recommendation, verified compatibility result, human approval, or installation."
+    ]
   },
   {
     "number": 122,

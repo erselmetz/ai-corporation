@@ -156,6 +156,82 @@ def test_analyzes_repository_structure_documentation_and_metadata(monkeypatch):
     assert all(kwargs["follow_redirects"] is False for _, _, kwargs in requests)
 
 
+def test_pinned_analysis_resolves_commit_then_reads_immutable_tree(monkeypatch):
+    revision = "a" * 40
+    tree_sha = "b" * 40
+    requests = install_responses(
+        monkeypatch,
+        [
+            FakeResponse(
+                payload={
+                    "sha": revision,
+                    "commit": {"tree": {"sha": tree_sha}},
+                }
+            ),
+            FakeResponse(payload={"truncated": False, "tree": []}),
+        ],
+    )
+
+    result = GitHubRepositoryAnalyzer().analyze_pinned(make_discovery())
+
+    assert result.revision_sha == revision
+    assert "/commits/main" in requests[0][1]
+    assert f"/git/trees/{tree_sha}?recursive=1" in requests[1][1]
+    assert "git/trees/main" not in requests[1][1]
+
+
+def test_pinned_analysis_reads_documentation_at_commit_not_discovery_branch(monkeypatch):
+    revision = "a" * 40
+    tree_sha = "b" * 40
+    requests = install_responses(
+        monkeypatch,
+        [
+            FakeResponse(
+                payload={
+                    "sha": revision,
+                    "commit": {"tree": {"sha": tree_sha}},
+                }
+            ),
+            FakeResponse(
+                payload={
+                    "truncated": False,
+                    "tree": [tree_entry("README.md", sha="readme-blob")],
+                }
+            ),
+            FakeResponse(
+                payload=contents_payload("# Overview\nCommit-specific purpose for pinned data.")
+            ),
+        ],
+    )
+
+    result = GitHubRepositoryAnalyzer().analyze_pinned(
+        make_discovery(readme_excerpt="UNPINNED BRANCH CONTENT")
+    )
+
+    assert result.revision_sha == revision
+    assert result.project_purpose is not None
+    assert "Commit-specific purpose" in result.project_purpose.statement
+    assert "UNPINNED" not in result.project_purpose.statement
+    assert f"/contents/README.md?ref={revision}" in requests[2][1]
+
+
+def test_pinned_analysis_rejects_malformed_commit_identity(monkeypatch):
+    install_responses(
+        monkeypatch,
+        [
+            FakeResponse(
+                payload={
+                    "sha": "not-a-commit",
+                    "commit": {"tree": {"sha": "b" * 40}},
+                }
+            )
+        ],
+    )
+
+    with pytest.raises(MalformedSourceAnalysisResponseError, match="pinned commit"):
+        GitHubRepositoryAnalyzer().analyze_pinned(make_discovery())
+
+
 def test_analysis_handles_missing_files(monkeypatch):
     install_responses(
         monkeypatch,

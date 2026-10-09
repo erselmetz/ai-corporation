@@ -6,9 +6,17 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator
 from starlette.responses import StreamingResponse
 
+from app.application.services.github_inspection import (
+    GitHubInspectionRateLimited,
+    GitHubInspectionRequestError,
+    GitHubInspectionUnavailable,
+    GitHubRepositoryNotFound,
+    GitHubRepositoryScopeDenied,
+)
+from app.application.services.repository_study import RepositoryStudyService
 from app.application.services.chat_history import ChatHistoryError
 from app.application.services.chat_knowledge import ContextRequest, KnowledgeNotFound
 from app.application.services.owned_chat import ChatConflict, ChatLimit, ChatNotFound, ChatUnavailable
@@ -18,6 +26,12 @@ from app.application.services.chat_task_proposals import (
     ChatTaskProposalNotFound,
 )
 from app.memory import MemoryScope
+from app.conversations import ConversationStatus
+from app.integrations import (
+    GitHubRateLimitError,
+    ProposalGenerationError,
+    SourceAnalysisError,
+)
 from app.providers.base import ProviderCapacityError, ProviderCapacityUnknown
 from .security import require_permission
 
@@ -94,6 +108,26 @@ class TaskProposalConfirmation(BaseModel):
     confirmed: StrictBool
 
 
+class RepositoryStudyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    objective: str = Field(min_length=1, max_length=1024)
+    owner: str = Field(min_length=1, max_length=100)
+    repository: str = Field(min_length=1, max_length=100)
+
+    @field_validator("objective")
+    @classmethod
+    def objective_must_fit_utf8_limit(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Study objective is required")
+        try:
+            encoded = value.encode("utf-8")
+        except UnicodeEncodeError as error:
+            raise ValueError("Study objective must be valid UTF-8 text") from error
+        if len(encoded) > RepositoryStudyService.MAX_OBJECTIVE_BYTES:
+            raise ValueError("Study objective exceeds the UTF-8 byte limit")
+        return value
+
+
 async def bounded_body(request: Request):
     payload = bytearray()
     async for chunk in request.stream():
@@ -108,6 +142,10 @@ def parse(model, payload):
         return model.model_validate_json(payload)
     except ValueError:
         raise HTTPException(422, "Invalid chat request fields") from None
+
+
+def get_repository_study_service(request: Request) -> RepositoryStudyService:
+    return request.app.state.repository_study_service
 
 
 @contextmanager
@@ -274,6 +312,118 @@ def stream_message(identifier: str, payload=Depends(bounded_body),
         media_type="application/x-ndjson",
         headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
     )
+
+
+@router.post(
+    "/{identifier}/repository-studies",
+    dependencies=[Depends(require_permission("github:read"))],
+)
+def study_repository(
+    identifier: str,
+    payload=Depends(bounded_body),
+    principal=Depends(require_permission("chat:send")),
+    service=Depends(get_application_service),
+    study_service=Depends(get_repository_study_service),
+):
+    body = parse(RepositoryStudyRequest, payload)
+    with chat_errors():
+        conversation_status = service.owned_chat().get_status(
+            principal.identity, identifier
+        )
+    if conversation_status is not ConversationStatus.OPEN:
+        raise HTTPException(409, "Repository studies require an open owned conversation")
+    try:
+        report = study_service.study(body.objective, body.owner, body.repository)
+    except GitHubInspectionRequestError:
+        raise HTTPException(422, "GitHub repository identifier is invalid") from None
+    except (GitHubRepositoryScopeDenied, GitHubRepositoryNotFound):
+        raise HTTPException(
+            404, "GitHub repository was not found or is not in scope"
+        ) from None
+    except (GitHubInspectionRateLimited, GitHubRateLimitError):
+        raise HTTPException(429, "GitHub API rate limit exceeded") from None
+    except GitHubInspectionUnavailable:
+        raise HTTPException(503, "GitHub repository inspection is unavailable") from None
+    except (SourceAnalysisError, ProposalGenerationError):
+        raise HTTPException(503, "Repository study could not be completed") from None
+
+    analysis = report.analysis
+    discovery = report.discovery
+    project_purpose = analysis.project_purpose
+    response = {
+        "objective": report.objective,
+        "decision": report.decision.value,
+        "studied_at": report.studied_at,
+        "repository": {
+            "owner": discovery.owner,
+            "name": discovery.repository_name,
+            "url": discovery.repository_url,
+            "discovered_at": discovery.discovered_at,
+            "description": discovery.description,
+            "default_branch": discovery.default_branch,
+            "license": {
+                "name": discovery.license_name,
+                "spdx_id": discovery.license_spdx_id,
+            },
+            "last_pushed_at": discovery.pushed_at,
+            "revision_sha": analysis.revision_sha,
+            "revision_url": (
+                f"{discovery.repository_url}/tree/{analysis.revision_sha}"
+                if analysis.revision_sha is not None
+                else None
+            ),
+        },
+        "analysis": {
+            "complete": analysis.is_complete,
+            "languages": list(analysis.detected_languages),
+            "top_level_directories": list(analysis.top_level_directories),
+            "dependency_manifests": list(analysis.dependency_manifests),
+            "documentation_files": list(analysis.documentation_files),
+            "test_paths": list(analysis.test_paths),
+            "project_purpose": (
+                None
+                if project_purpose is None
+                else {
+                    "statement": project_purpose.statement,
+                    "evidence_paths": list(project_purpose.evidence_paths),
+                }
+            ),
+            "potential_capabilities": [
+                {
+                    "statement": observation.statement,
+                    "evidence_paths": list(observation.evidence_paths),
+                }
+                for observation in analysis.potential_capabilities
+            ],
+            "notes": list(analysis.analysis_notes),
+            "source_bytes_inspected": analysis.source_bytes_inspected,
+        },
+        "findings": jsonable_encoder(report.evaluation.findings),
+        "strengths": list(report.evaluation.key_strengths),
+        "concerns": list(report.evaluation.key_concerns),
+        "unknowns": list(report.evaluation.unknowns),
+        "integration_requirements": list(report.evaluation.integration_requirements),
+        "proposal": {
+            "id": report.proposal.id,
+            "status": report.proposal.status.value,
+            "requested_purpose": report.proposal.requested_purpose,
+            "proposed_approach": report.proposal.proposed_approach,
+            "risk_information": report.proposal.risk_information,
+            "intended_capabilities": list(report.proposal.intended_capabilities),
+            "key_strengths": list(report.proposal.key_strengths),
+            "key_concerns": list(report.proposal.key_concerns),
+            "unknowns": list(report.proposal.unknowns),
+            "integration_requirements": list(
+                report.proposal.integration_requirements
+            ),
+            "evidence_references": list(report.proposal.evidence_references),
+        },
+        "citations": jsonable_encoder(report.citations),
+        "limitations": list(report.limitations),
+    }
+    if len(json.dumps(jsonable_encoder(response), ensure_ascii=True).encode("utf-8")) > 131072:
+        raise HTTPException(502, "Repository study report exceeded its response limit")
+    return response
 
 
 @router.get("/{identifier}/retained")

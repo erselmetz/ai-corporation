@@ -126,6 +126,7 @@ class SourceAnalysisResult:
     analysis_notes: tuple[str, ...]
     is_complete: bool
     source_bytes_inspected: int
+    revision_sha: str | None = None
 
 
 class SourceAnalyzer(ABC):
@@ -152,6 +153,15 @@ class GitHubRepositoryAnalyzer(SourceAnalyzer):
     """Inspect bounded GitHub tree, documentation, and dependency metadata."""
 
     def analyze(self, discovery: SourceDiscoveryResult) -> SourceAnalysisResult:
+        return self._analyze(discovery, pin_revision=False)
+
+    def analyze_pinned(self, discovery: SourceDiscoveryResult) -> SourceAnalysisResult:
+        """Analyze a commit resolved once from the discovered default branch."""
+        return self._analyze(discovery, pin_revision=True)
+
+    def _analyze(
+        self, discovery: SourceDiscoveryResult, *, pin_revision: bool
+    ) -> SourceAnalysisResult:
         if not isinstance(discovery, SourceDiscoveryResult):
             raise TypeError("discovery must be a SourceDiscoveryResult")
         if discovery.source.source_type != GITHUB_REPOSITORY_SOURCE_TYPE:
@@ -187,6 +197,8 @@ class GitHubRepositoryAnalyzer(SourceAnalyzer):
 
         notes: list[str] = []
         total_bytes = [0]
+        revision_sha = None
+        tree_reference = discovery.default_branch
         if discovery.default_branch is None:
             notes.append("Analysis is incomplete because no default branch was discovered.")
             return self._result(
@@ -204,9 +216,42 @@ class GitHubRepositoryAnalyzer(SourceAnalyzer):
                 notes,
                 False,
             )
+        if pin_revision:
+            commit_payload, revision_limited, _ = self._request_json(
+                f"/repos/{quote(owner, safe='')}/{quote(repository, safe='')}"
+                f"/commits/{quote(discovery.default_branch, safe='')}",
+                max_bytes=64 * 1024,
+                total_bytes=total_bytes,
+            )
+            commit_details = (
+                commit_payload.get("commit") if commit_payload is not None else None
+            )
+            tree_details = (
+                commit_details.get("tree")
+                if isinstance(commit_details, dict)
+                else None
+            )
+            candidate_revision = (
+                commit_payload.get("sha") if commit_payload is not None else None
+            )
+            candidate_tree = (
+                tree_details.get("sha") if isinstance(tree_details, dict) else None
+            )
+            if (
+                revision_limited
+                or not isinstance(candidate_revision, str)
+                or re.fullmatch(r"[0-9a-fA-F]{40}", candidate_revision) is None
+                or not isinstance(candidate_tree, str)
+                or re.fullmatch(r"[0-9a-fA-F]{40}", candidate_tree) is None
+            ):
+                raise MalformedSourceAnalysisResponseError(
+                    "GitHub did not return a valid pinned commit and tree"
+                )
+            revision_sha = candidate_revision.lower()
+            tree_reference = candidate_tree.lower()
         tree_payload, tree_limited, _ = self._request_json(
             f"/repos/{quote(owner, safe='')}/{quote(repository, safe='')}"
-            f"/git/trees/{quote(discovery.default_branch, safe='')}?recursive=1",
+            f"/git/trees/{quote(tree_reference, safe='')}?recursive=1",
             max_bytes=MAX_TREE_RESPONSE_BYTES,
             total_bytes=total_bytes,
             allow_limit=True,
@@ -227,6 +272,7 @@ class GitHubRepositoryAnalyzer(SourceAnalyzer):
                 (),
                 notes,
                 False,
+                revision_sha=revision_sha,
             )
 
         tree_entries = tree_payload.get("tree")
@@ -304,11 +350,11 @@ class GitHubRepositoryAnalyzer(SourceAnalyzer):
             notes.append("No project language could be identified from repository metadata or file extensions.")
 
         content_by_path: dict[str, str] = {}
-        if discovery.readme_excerpt:
+        if discovery.readme_excerpt and not pin_revision:
             content_by_path["README (discovery excerpt)"] = discovery.readme_excerpt
         downloaded_source_bytes = (
             len(discovery.readme_excerpt.encode("utf-8"))
-            if discovery.readme_excerpt is not None
+            if discovery.readme_excerpt is not None and not pin_revision
             else 0
         )
         documentation_count = 0
@@ -333,7 +379,11 @@ class GitHubRepositoryAnalyzer(SourceAnalyzer):
             is_readme = file.path.casefold().split("/")[-1].startswith("readme")
             should_read = file.category == "dependency_manifest"
             if file.category == "documentation" and documentation_count < MAX_DOCUMENTATION_FILES:
-                should_read = not (is_readme and discovery.readme_excerpt is not None)
+                should_read = not (
+                    is_readme
+                    and discovery.readme_excerpt is not None
+                    and not pin_revision
+                )
                 documentation_count += 1
             if not should_read:
                 continue
@@ -348,9 +398,10 @@ class GitHubRepositoryAnalyzer(SourceAnalyzer):
                 break
             byte_limit = min(MAX_FILE_BYTES, remaining_budget)
             path = quote(file.path, safe="/")
+            content_ref = revision_sha if pin_revision else discovery.default_branch
             file_payload, limited, _ = self._request_json(
                 f"/repos/{quote(owner, safe='')}/{quote(repository, safe='')}"
-                f"/contents/{path}?ref={quote(discovery.default_branch or '', safe='')}",
+                f"/contents/{path}?ref={quote(content_ref or '', safe='')}",
                 max_bytes=(byte_limit * 4 // 3) + 4096,
                 total_bytes=total_bytes,
                 allow_limit=True,
@@ -377,7 +428,9 @@ class GitHubRepositoryAnalyzer(SourceAnalyzer):
                 complete = False
 
         frameworks = self._detect_frameworks(content_by_path)
-        purpose = self._infer_purpose(discovery, content_by_path)
+        purpose = self._infer_purpose(
+            discovery, content_by_path, include_metadata=not pin_revision
+        )
         documentation_content = {
             path: content
             for path, content in content_by_path.items()
@@ -410,6 +463,7 @@ class GitHubRepositoryAnalyzer(SourceAnalyzer):
             tuple(dict.fromkeys(notes)),
             complete,
             source_bytes_inspected=downloaded_source_bytes,
+            revision_sha=revision_sha,
         )
 
     @staticmethod
@@ -610,16 +664,18 @@ class GitHubRepositoryAnalyzer(SourceAnalyzer):
     def _infer_purpose(
         discovery: SourceDiscoveryResult,
         content_by_path: dict[str, str],
+        *,
+        include_metadata: bool = True,
     ) -> AnalysisObservation | None:
         sources: list[tuple[str, str]] = []
-        if discovery.readme_excerpt:
+        if include_metadata and discovery.readme_excerpt:
             sources.append(("README (discovery excerpt)", discovery.readme_excerpt))
         sources.extend(
             (path, content)
             for path, content in content_by_path.items()
             if path.casefold().split("/")[-1].startswith("readme")
         )
-        if discovery.description:
+        if include_metadata and discovery.description:
             sources.append(("repository description", discovery.description))
         for path, content in sources:
             for line in content.splitlines():
@@ -687,6 +743,7 @@ class GitHubRepositoryAnalyzer(SourceAnalyzer):
         is_complete: bool,
         *,
         source_bytes_inspected: int = 0,
+        revision_sha: str | None = None,
     ) -> SourceAnalysisResult:
         return SourceAnalysisResult(
             id=str(uuid4()),
@@ -706,4 +763,5 @@ class GitHubRepositoryAnalyzer(SourceAnalyzer):
             analysis_notes=tuple(notes),
             is_complete=is_complete,
             source_bytes_inspected=source_bytes_inspected,
+            revision_sha=revision_sha,
         )

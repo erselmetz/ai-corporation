@@ -340,8 +340,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-120 are verified complete, Task 121 is next,
-and Tasks 121-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-121 are verified complete, Task 122 is next,
+and Tasks 122-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit unresolved decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -574,6 +574,29 @@ warnings remain in unchanged lines of existing files. No live or paid provider
 calls were made. The full Python suite was not rerun; the Task 111 checkpoint
 documents two unrelated model-assignment failures. Checkpoint tag
 `task-112-multiple-provider-connections`.
+## Task 121 - Chat-driven GitHub study
+
+Coordinator chat can request a bounded repository study only for an exact
+repository already allowed by the embedding host, with an open conversation
+owned by the caller and both `chat:send` and `github:read`. The study resolves
+the default branch to a commit and analyzes source from that immutable revision.
+It reuses existing discovery, source analysis, evaluation and unapproved
+proposal services; untrusted report content is rendered as text. Repository
+source is not sent to an AI Provider, installed or executed, and the chat
+transcript is not read or stored by the study. Incomplete evidence or an unknown
+license requests more information; otherwise the result remains a proposal for
+human review, not approval.
+
+Validation: 90 focused Python regressions, 13 coordinator chat UI tests, all 144
+browser-module tests and all 14 public documentation tests passed. The full
+Python suite had 1025 passed, 6 skipped and 2 pre-existing model-assignment
+failures (`test_model_set_command` and
+`test_model_replacement_uses_existing_assignment_service`). No live GitHub or
+paid/provider calls. Limitations: the app's repository allowlist is empty unless
+configured by its embedding host; GitHub metadata is timestamped separately
+from the commit-pinned source analysis. Checkpoint tag
+`task-121-chat-driven-github-study`.
+
 ## Task 118 - Durable chat history
 
 Owners can opt a conversation into local durable history (/api/chat/history) with a 1 hour to 90 day expiry, review uncertain turns after a restart and delete stored history. Recovered conversations are read-only, interrupted turns are never replayed, and stored text is unencrypted at rest.

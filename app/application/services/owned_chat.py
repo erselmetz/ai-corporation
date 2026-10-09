@@ -146,6 +146,10 @@ class OwnedChatService:
                 "streaming_supported": getattr(entry.provider, "supports_streaming", False) is True,
             }
 
+    def get_status(self, owner, identifier):
+        with self._access(owner, identifier):
+            return self._chat.get_status(identifier)
+
     def send(self, owner, identifier, text, retrieved_context=None):
         with self._access(owner, identifier) as entry:
             with self.agent_request(entry.coordinator.id):

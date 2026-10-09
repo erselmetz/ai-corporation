@@ -823,6 +823,20 @@ def coordinator_chat_page():
     <textarea id="chat-input" rows="4" maxlength="8192" required></textarea>
     <button id="chat-send" type="submit">Send</button>
     <button id="chat-stop-display" type="button" disabled hidden>Stop display (generation continues)</button></form>
+    <section class="panel" aria-labelledby="repository-study-heading">
+    <h2 id="repository-study-heading">Study an approved GitHub repository</h2>
+    <p>Uses only the configured repository allowlist and bounded GitHub reads. Source content is untrusted;
+    it is not sent to a chat model, installed, or executed. Results are evidence for human review, not approval.</p>
+    <form id="repository-study-form">
+    <label for="repository-study-objective">Capability or integration goal</label>
+    <textarea id="repository-study-objective" maxlength="1024" required></textarea>
+    <label for="repository-study-owner">GitHub owner</label><input id="repository-study-owner" maxlength="100" required>
+    <label for="repository-study-name">Repository</label><input id="repository-study-name" maxlength="100" required>
+    <button id="repository-study-submit" type="submit" disabled>Study repository</button>
+    </form>
+    <p id="repository-study-state" role="status" aria-live="polite"></p>
+    <pre id="repository-study-result" aria-live="polite"></pre>
+    </section>
     <section class="panel" aria-labelledby="chat-task-proposal-heading">
     <h2 id="chat-task-proposal-heading">Review a coordinator proposal</h2>
     <p>Only an explicitly confirmed proposal creates a pending Task. It does not execute work.
@@ -845,8 +859,8 @@ def coordinator_chat_page():
     <button id="chat-task-confirm" type="button" disabled>Confirm and create pending Task</button>
     </section>
     <p>History is in memory and is lost when the app restarts. Up to 100 conversations and 200 messages
-    per conversation are retained for this run. The current provider contract does not stream or
-    cancel requests. For the default local Agent, Ollama and llama3.2:3b must already be available;
+    per conversation are retained for this run. Configured loopback Ollama can stream responses;
+    the Stop control only stops display and does not cancel provider generation. For the default local Agent, Ollama and llama3.2:3b must already be available;
     use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here; configure Gemini in its separate online setup page.</p>
     <p id="cloud-consent-panel" hidden><label><input id="cloud-consent" type="checkbox">
     I consent to send this message, recent conversation history, and configured chat context to Google Gemini for this reply.</label></p>

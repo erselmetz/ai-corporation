@@ -83,6 +83,9 @@ class CorporationChatService:
             record.status, record.messages,
         )
 
+    def get_status(self, conversation_id: str) -> ConversationStatus:
+        return self._chat.get_conversation_status(conversation_id)
+
     def close(self, conversation_id: str):
         self._chat.close_conversation(conversation_id)
         if self._durable(conversation_id):
