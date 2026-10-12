@@ -5,8 +5,6 @@ from __future__ import annotations
 from collections import deque
 from datetime import datetime, timezone
 import logging
-import os
-from pathlib import Path
 import socket
 import threading
 import time
@@ -16,6 +14,7 @@ import webbrowser
 
 from app.local import create_local_app
 from app.local_owner_credential import LocalOwnerCredentialStore, OwnerCredentialError
+from app.desktop_lock import CurrentUserLease
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8000
@@ -35,60 +34,11 @@ class _NullLease:
         return None
 
 
-class _SingleInstanceLease:
-    """Hold a nonblocking current-user file lock for the controller lifetime."""
+class _SingleInstanceLease(CurrentUserLease):
+    """Task 126 compatibility adapter for the shared desktop lease."""
 
-    def __init__(self, path: Path | None = None):
-        local_app_data = os.environ.get("LOCALAPPDATA")
-        if path is None and not local_app_data:
-            raise LifecycleError("The current-user application data folder is unavailable")
-        self.path = path or Path(local_app_data) / "ERSELMETZ AI" / "launcher.lock"
-        self._file = None
-        self._locking = None
-
-    def acquire(self):
-        import msvcrt
-
-        try:
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            handle = self.path.open("a+b")
-            if self.path.stat().st_size == 0:
-                handle.write(b"\0")
-                handle.flush()
-            handle.seek(0)
-        except Exception:
-            try:
-                handle.close()
-            except (UnboundLocalError, OSError):
-                pass
-            raise LifecycleError("Exclusive launcher ownership could not be established") from None
-        try:
-            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
-        except OSError:
-            handle.close()
-            raise LifecycleError("Another managed launcher already owns the local backend") from None
-        except Exception:
-            handle.close()
-            raise LifecycleError("Exclusive launcher ownership could not be established") from None
-        self._file = handle
-        self._locking = msvcrt
-
-    def release(self):
-        if self._file is None:
-            return
-        handle, self._file = self._file, None
-        try:
-            handle.seek(0)
-            self._locking.locking(handle.fileno(), self._locking.LK_UNLCK, 1)
-        except OSError:
-            pass
-        finally:
-            try:
-                handle.close()
-            except OSError:
-                pass
-            finally:
-                self._locking = None
+    def __init__(self, path=None):
+        super().__init__(path, error_type=LifecycleError)
 
 
 class LocalApplicationController:

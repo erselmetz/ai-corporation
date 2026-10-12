@@ -1078,7 +1078,7 @@ export const post100Tasks = [
     "title": "Windows executable and installer",
     "description": "Package the shared Web UI and Python backend into an owner-approved desktop distribution.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       126
     ],
@@ -1092,12 +1092,22 @@ export const post100Tasks = [
       "Using the public Vercel documentation site as the Python runtime host."
     ],
     "decisions": [
-      "Owner selected Electron as the Windows shell and Next.js static export for the JavaScript/TypeScript UI; Python remains the backend and AI orchestration layer. Define licensing, signing/update trust, credential storage and installer/data lifecycle before release."
+      "Electron 44.7.0 is the Windows shell; Next.js 16.4.0/React 19.3.0 is exported statically under /desktop/ and served by the existing FastAPI app. Python 3.14 x64 is packaged as a PyInstaller sidecar. The installer is per-user, unsigned, has no elevation helper, no auto-updater, and preserves %LOCALAPPDATA% data when uninstalled. Owner credentials use the existing current-user DPAPI verifier; startup secrets travel over a private child-process stdin pipe."
     ],
     "area": "P13b",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-127-windows-electron-installer",
+    "validation": [
+      "Built the Next.js static export and Windows x64 NSIS package; installed it into a fresh temporary per-user profile. The real installer smoke passed first-run owner setup, owner browser sign-in, existing chat/provider page access, graceful stop, restart with owner verification and session invalidation, uninstall preserving DPAPI owner data, and reinstall recovery. No provider credentials or live model response were used.",
+      "The frozen Python sidecar smoke passed setup, loopback health, static UI/API origin, local login, existing chat/provider routes, stop/restart, and retained DPAPI verifier. Focused desktop/runtime/launcher/local-access and existing chat browser regressions passed 28 tests; all 148 existing browser-module tests passed; Electron security tests passed 4; public docs tests passed 14. Full Python suite: 1083 passed, 3 skipped, and the same two pre-existing unrelated failures in test_model_set_command and test_model_replacement_uses_existing_assignment_service.",
+      "Electron security checks confirm context isolation, renderer sandboxing, disabled Node integration, a three-operation preload bridge, denied permissions and new windows, and owned local navigation. Installer inspection confirms per-user NSIS, no elevation helper, no auto-update configuration, and unsigned output. Python compilation/import and git diff --check passed. Pylance/pyright were unavailable."
+    ],
+    "limitations": [
+      "This is an unsigned local Windows x64 installer, not a signed public release. Updates are manual reinstallations; no update feed or background updater exists. Uninstall intentionally preserves %LOCALAPPDATA%\\ERSELMETZ AI, including the DPAPI owner verifier and application data.",
+      "The desktop controller uses only 127.0.0.1:8765 and coordinates its own managed service instance. It fails closed on port/ownership conflicts and does not adopt, terminate, or coordinate with direct Python CLI, Task 126 launcher, another process, or other ports. Existing web/API routes and provider capabilities are reused; this task adds no provider, model, self-maintenance, voice, queue, or orchestration behavior.",
+      "Automated packaging verification used temporary credentials and deterministic page/service checks. No Ollama/Gemini credential was configured, and no live provider/model generation was attempted. The installer smoke visited chat and provider pages but does not establish production readiness or AI response quality.",
+      "Building requires the existing Python 3.14 x64 project environment, Node.js 22.12 or newer, network access to pinned package registries, Windows, and the repository checkout. The current installer is development-only and is not a production signed or auto-updating distribution.",
+      "npm audit reports no vulnerabilities in either runtime dependency set. The Electron build-tool dependency graph reports 8 moderate advisories in its transitive sprintf-js/roarr/@electron/get chain; these are build-only dependencies and are not packaged into the installed app. The pinned toolchain was retained and the finding is recorded for a separate dependency update."
+    ]
   },
   {
     "number": 128,

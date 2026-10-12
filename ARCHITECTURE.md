@@ -616,7 +616,7 @@ create/change/delete and maintenance actions are denied. The normal
 reverse proxy or expose it remotely. Startup still uses the existing runtime and
 SQLite initialization; do not treat reads as proof of a configured provider/model.
 The launcher requires Windows, the repository checkout, and a Python environment
-with Tkinter and project dependencies; Task 127 owns Electron packaging and the
+with Tkinter and project dependencies; Task 127 adds a separate Electron
 installer. Port conflicts fail closed without adopting or terminating the
 existing listener. Graceful stop is requested on Stop/window close; no force
 termination is attempted. The UI shows bounded lifecycle events only, not raw
@@ -672,8 +672,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-126 are verified complete, Task 127 is next,
-and Tasks 127-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-127 are verified complete, Task 128 is next,
+and Tasks 128-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -1104,8 +1104,36 @@ fails closed. The verifier and backend password do not grant remote access:
 `LocalOwnerAuthentication` still requires an exact loopback peer, Host, Origin,
 session cookie and CSRF checks. The GUI launcher is not an installer and
 requires Windows, Tkinter, the repository checkout and Python dependencies.
-Task 127 handles Electron, backend/runtime packaging and installation. The
-legacy CLI startup remains unchanged and is not managed by the GUI controller. Lost/corrupt credential recovery requires explicitly deleting only `%LOCALAPPDATA%\ERSELMETZ AI\owner-credential.dpapi` before repeating owner setup; application data is preserved.
+Electron packaging and installation are now available in Task 127. The legacy
+CLI startup remains unchanged and is not managed by the GUI controller.
+Lost/corrupt credential recovery requires explicitly deleting only
+`%LOCALAPPDATA%\ERSELMETZ AI\owner-credential.dpapi` before repeating owner
+setup; application data is preserved.
+
+## Windows Electron distribution (Task 127)
+
+The per-user Windows x64 installer packages Electron 44.7.0, a Next.js
+16.4.0/React 19.3.0 static export, and the existing Python 3.14 x64 runtime/API
+as a PyInstaller sidecar. FastAPI serves the static UI under `/desktop/` and
+existing API routes from one `127.0.0.1:8765` origin; production does not run a
+Next.js server. The frozen backend owns an exclusive current-user lease and
+loopback socket; port conflicts fail closed. Electron context isolation,
+renderer sandboxing, disabled Node integration, denied permissions/new windows,
+fixed local navigation, and a three-operation preload bridge constrain the
+renderer. Password setup data travels over the child stdin pipe and uses the
+existing DPAPI verifier store; the installer does not add credential persistence
+or provider behavior.
+
+The installer is unsigned and per-user, requests no elevation, has no updater,
+and leaves `%LOCALAPPDATA%\ERSELMETZ AI` intact on uninstall. Updates are manual
+trusted reinstalls. Uvicorn request/error logging is disabled; no persistent
+desktop log is created. Chat/provider APIs and pages are reused as-is. The
+packaging check opened these pages with deterministic temporary profiles but did
+not configure a provider or request a live model response. It does not establish
+production signing, update authenticity, provider availability, or release
+readiness; Task 129 remains the acceptance milestone. Build and user recovery
+instructions are in [desktop/README.md](desktop/README.md). The Task 126 GUI and
+legacy CLI are independent and are not managed by Electron.
 
 ## Software and integration inventory (Task 124)
 

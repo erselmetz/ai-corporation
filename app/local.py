@@ -32,7 +32,7 @@ LOGIN_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 
 
 def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
-                     application_service=None, clock=None):
+                     application_service=None, clock=None, desktop_ui_dir=None):
     backend = LocalOwnerAuthentication(password, origin, **({"clock": clock} if clock else {}))
     application = create_app(application_service=application_service,
                              authentication_backend=backend)
@@ -118,6 +118,54 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
         response = JSONResponse({"signed_in": False})
         response.delete_cookie(COOKIE, path="/", httponly=True, samesite="strict")
         return response
+
+    if desktop_ui_dir is not None:
+        from pathlib import Path
+        import base64
+        import hashlib
+        import re
+        from fastapi.staticfiles import StaticFiles
+
+        static_root = Path(desktop_ui_dir).resolve(strict=True)
+        if not static_root.is_dir() or not (static_root / "index.html").is_file():
+            raise ValueError("The exported desktop UI is unavailable")
+        script_hashes = {}
+        script_pattern = re.compile(rb"<script\b([^>]*)>(.*?)</script\s*>", re.I | re.S)
+        for page in static_root.rglob("*.html"):
+            relative = page.relative_to(static_root).as_posix()
+            route = "/desktop/" if relative == "index.html" else "/desktop/" + relative[:-10].rstrip("/") + "/"
+            hashes = []
+            try:
+                source = page.read_bytes()
+            except OSError:
+                raise ValueError("The exported desktop UI could not be read") from None
+            for match in script_pattern.finditer(source):
+                if re.search(rb"\bsrc\s*=", match.group(1), re.I):
+                    continue
+                digest = base64.b64encode(hashlib.sha256(match.group(2)).digest()).decode("ascii")
+                hashes.append(f"'sha256-{digest}'")
+            script_hashes[route] = " ".join(hashes)
+
+        application.mount("/desktop", StaticFiles(directory=str(static_root), html=True),
+                          name="desktop-static-ui")
+
+        # Keep Next's statically generated bootstrap scripts under strict CSP by
+        # authorizing only the exact hashes from the packaged HTML documents.
+        @application.middleware("http")
+        async def desktop_static_script_csp(request: Request, call_next):
+            response = await call_next(request)
+            route = request.url.path
+            if route == "/desktop":
+                route = "/desktop/"
+            elif route.startswith("/desktop/") and not route.endswith("/") and "." not in route.rsplit("/", 1)[-1]:
+                route += "/"
+            hashes = script_hashes.get(route)
+            if hashes:
+                response.headers["Content-Security-Policy"] = (
+                    "default-src 'self'; script-src 'self' " + hashes + "; "
+                    "style-src 'self'; img-src 'self' data:; object-src 'none'; "
+                    "base-uri 'none'; frame-ancestors 'none'")
+            return response
 
     return application
 

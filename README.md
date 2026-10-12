@@ -275,8 +275,9 @@ the current Windows account. It opens the browser at the existing local sign-in
 page after the backend passes its health check; browser authentication is still
 required. Use the GUI to check health, stop or restart the managed backend.
 The launcher requires Windows, the repository checkout, and a Python environment
-with Tkinter and the project dependencies. Task 127 will package the app as an
-installer/executable.
+with Tkinter and the project dependencies. Task 127 adds a per-user Windows
+Electron installer; see [desktop/README.md](desktop/README.md) for installation,
+owner setup, update, data-preservation, and recovery details.
 
 The existing command-line fallback remains available from the repository root:
 
@@ -356,8 +357,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-126 are verified complete, Task 127 is next,
-and Tasks 127-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-127 are verified complete, Task 128 is next,
+and Tasks 128-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -714,9 +715,43 @@ and the Web UI still requires its separate explicit sign-in. Browser sessions
 remain in memory and are invalidated on backend restart. The GUI displays only
 a bounded list of redacted lifecycle events. If the saved owner verifier is lost or corrupt, remove only `%LOCALAPPDATA%\ERSELMETZ AI\owner-credential.dpapi` to repeat GUI setup; app data remains. This is a repository launcher,
 not an installed executable; it requires a Windows Python environment with
-Tkinter and project dependencies. Electron packaging, runtime bundling, and
-installer lifecycle belong to Task 127. Existing CLI startup remains available.
-Checkpoint tag `task-126-local-application-lifecycle`.
+Tkinter and project dependencies. Task 127 now packages an Electron 44.7 shell
+and Next.js 16.4 static export with the Python 3.14 x64 backend. FastAPI serves
+the exported UI at `/desktop/` on the same `127.0.0.1:8765` origin as its APIs;
+there is no production Next.js server. The per-user installer is unsigned,
+does not elevate, has no auto-updater, and preserves
+`%LOCALAPPDATA%\ERSELMETZ AI` on uninstall. Owner setup uses the existing
+current-user DPAPI verifier; the raw password travels to the sidecar through a
+private stdin pipe. Request/error logs are suppressed and no persistent desktop
+logs are written. Updates use manual trusted reinstalls. Provider/model and AI
+behavior remain the existing Python application's behavior; package validation
+did not make live model calls. See [desktop/README.md](desktop/README.md) for
+build, install, and recovery instructions. Existing CLI startup and the Task 126
+Python launcher remain separate and are not managed by Electron.
+Checkpoint tag `task-127-windows-electron-installer`.
+
+## Windows Electron executable and installer (Task 127)
+
+`desktop/release/ERSELMETZ-AI-Setup-0.1.0-win-x64.exe` is a per-user NSIS
+installer with desktop and Start Menu shortcuts. The installed Electron main
+process launches a frozen Python sidecar and serves a static Next.js export from
+the FastAPI app. Electron enables context isolation and renderer sandboxing,
+disables renderer Node integration, exposes only setup/start/status through the
+preload bridge, denies permissions and new windows, and keeps application
+navigation on the owned loopback origin. The sidecar binds exclusively to
+`127.0.0.1:8765`; port conflicts fail closed. Closing the Electron window
+requests graceful service shutdown. The Python CLI and `.pyw` launcher retain
+their existing independent behavior.
+
+The current installer is unsigned and is intended for local development and
+testing. It has no auto-updater and makes no release-signing claim. Install
+updates manually from a trusted installer. Uninstall preserves
+`%LOCALAPPDATA%\ERSELMETZ AI`, including the DPAPI owner verifier and application
+data; reinstall recovers the same owner profile. Raw startup passwords are sent
+only over the private Electron-to-Python stdin pipe, not command arguments,
+environment variables or logs. Browser sessions are cleared on exit, provider
+credentials keep their existing in-memory lifecycle, and Uvicorn logs are
+suppressed. See [desktop/README.md](desktop/README.md).
 
 ## Task 118 - Durable chat history
 
