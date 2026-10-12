@@ -4,7 +4,7 @@ from app.runtime import create_corporation_runtime
 def main(interactive: bool = True) -> None:
     runtime = create_corporation_runtime()
 
-    print("ERSELMETZ AI CORPORATION")
+    print("ERSELMETZ AI")
     print(
         f"Corporation: {runtime.corporation.name} "
         f"({runtime.corporation.id})"

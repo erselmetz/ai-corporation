@@ -115,7 +115,7 @@ def _owner_setup(page, playwright, debug_port: int, *, first_run: bool):
 
 
 def _verify_app(page, *, must_sign_in: bool):
-    page.get_by_role("heading", name="Your AI corporation").wait_for(timeout=15_000)
+    page.get_by_role("heading", name="Your AI organization").wait_for(timeout=15_000)
     session_status = page.evaluate("fetch('/api/local/session').then(response => response.status)")
     if must_sign_in and session_status != 401:
         raise RuntimeError("A prior owner session survived application restart")

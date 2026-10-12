@@ -6,7 +6,7 @@ def main():
 
     response = provider.generate(
         "llama3.2:3b",
-        "Say hello to Erselmetz AI Corporation in one sentence."
+        "Say hello to ERSELMETZ AI in one sentence."
     )
 
     print("🤖 Ollama Response:")

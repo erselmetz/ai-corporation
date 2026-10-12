@@ -33,8 +33,8 @@ def test_dashboard_shell_and_assets_are_served_without_runtime_execution():
 
     assert shell.status_code == 200
     assert shell.headers["content-type"].startswith("text/html")
-    assert "ERSELMETZ AI CORPORATION" in shell.text
-    assert "Corporation Web UI" in shell.text
+    assert "ERSELMETZ AI" in shell.text
+    assert "ERSELMETZ AI · Local App" in shell.text
     assert "Corporation dashboard" in shell.text
     assert "aria-label=\"Corporation navigation\"" in shell.text
     for section in (
@@ -96,7 +96,7 @@ def test_employee_management_page_and_script_keep_employee_api_protected():
 
     assert page.status_code == 200
     assert page.headers["content-type"].startswith("text/html")
-    assert "ERSELMETZ AI CORPORATION" in page.text
+    assert "ERSELMETZ AI" in page.text
     assert "Employee Management" in page.text
     assert 'href="/ui"' in page.text
     assert 'src="/ui/static/employees.mjs"' in page.text
@@ -143,7 +143,7 @@ def test_provider_model_management_page_uses_protected_apis_and_safe_assets():
 
     assert page.status_code == 200
     assert page.headers["content-type"].startswith("text/html")
-    assert "ERSELMETZ AI CORPORATION" in page.text
+    assert "ERSELMETZ AI" in page.text
     assert "Provider &amp; Model Management" in page.text
     assert 'href="/ui"' in page.text
     assert 'href="/ui/employees"' in page.text
@@ -199,7 +199,7 @@ def test_task_management_page_uses_existing_protected_task_contract():
 
     assert page.status_code == 200
     assert page.headers["content-type"].startswith("text/html")
-    assert "ERSELMETZ AI CORPORATION" in page.text
+    assert "ERSELMETZ AI" in page.text
     assert "Task Management" in page.text
     assert 'href="/ui"' in page.text
     assert 'src="/ui/static/tasks.mjs"' in page.text

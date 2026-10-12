@@ -14,7 +14,7 @@ class RoutingRequest:
 
 class TaskRouter:
     """
-    Deterministic task router for ERSELMETZ AI CORPORATION.
+    Deterministic task router for ERSELMETZ AI.
     Decides WHO should handle the task based on priority rules.
     """
     def __init__(self, agent_registry: AgentRegistry, employee_registry: EmployeeRegistry | None = None):

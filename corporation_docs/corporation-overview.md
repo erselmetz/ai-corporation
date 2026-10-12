@@ -1,6 +1,6 @@
 # Corporation Overview
 
-ERSELMETZ AI CORPORATION is an actual software system implementing a
+ERSELMETZ AI is an actual software system implementing a
 virtual/simulated AI organization. The organization is the system's domain
 model and operating concept.
 

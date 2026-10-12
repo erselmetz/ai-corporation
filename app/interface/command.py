@@ -35,7 +35,7 @@ class CorporationContext:
 
 class CommandInterface:
     """
-    Interactive command interface for ERSELMETZ AI CORPORATION.
+    Interactive command interface for ERSELMETZ AI.
     """
     def __init__(
         self,
@@ -51,7 +51,7 @@ class CommandInterface:
     def run(self):
         """Starts the interactive command loop."""
         self._running = True
-        print("\n--- ERSELMETZ AI CORPORATION Interactive Shell ---")
+        print("\n--- ERSELMETZ AI Interactive Shell ---")
         print("Type 'help' for available commands.")
         
         while self._running:

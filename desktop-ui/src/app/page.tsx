@@ -1,6 +1,6 @@
 const workspaces = [
   { title: "Talk to your CEO", detail: "Start with a request, review the plan, and follow the work.", href: "/ui/chat", label: "Open coordinator chat", tone: "violet" },
-  { title: "AI corporation", detail: "Review employees, positions, models, and provider connections.", href: "/ui/structure", label: "View corporation", tone: "cyan" },
+  { title: "AI organization", detail: "Review employees, positions, models, and provider connections.", href: "/ui/structure", label: "View corporation", tone: "cyan" },
   { title: "Workflow map", detail: "See recorded handoffs and the current review state.", href: "/ui/workflow-map", label: "Open workflow map", tone: "amber" },
 ];
 
@@ -21,7 +21,7 @@ export default function Home() {
       <header className="topbar"><span>LOCAL COMMAND CENTER</span><a className="login-link" href="/ui/login">Owner sign in <span aria-hidden="true">↗</span></a></header>
       <div className="hero">
         <div className="eyebrow"><span className="eyebrow-line" /> AI OPERATIONS · YOUR MACHINE</div>
-        <h1>Your AI corporation,<br /><span>ready when you are.</span></h1>
+        <h1>Your AI organization,<br /><span>ready when you are.</span></h1>
         <p>Talk with the coordinator. Review how work is assigned. Keep control of every action.</p>
         <a className="primary-action" href="/ui/chat">Open coordinator chat <span aria-hidden="true">→</span></a>
         <div className="orbital" aria-hidden="true"><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="core">E<span>AI</span></div><i className="node node-one"/><i className="node node-two"/><i className="node node-three"/></div>

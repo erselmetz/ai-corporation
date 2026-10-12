@@ -1,4 +1,4 @@
-﻿# ERSELMETZ AI CORPORATION
+﻿# ERSELMETZ AI
 # Local-first Docker image — Python application only.
 # Ollama runs on the Windows host; SQLite data is persisted via a bind mount.
 

@@ -102,7 +102,7 @@ class WebUIStaticFiles(StaticFiles):
 
 @api_router.get("/")
 def root() -> dict[str, str]:
-    return {"application": "ERSELMETZ AI CORPORATION API"}
+    return {"application": "ERSELMETZ AI API"}
 
 
 @api_router.get("/health")
@@ -1022,7 +1022,7 @@ def create_app(
             experiment_service.close()
 
     application = FastAPI(
-        title="ERSELMETZ AI CORPORATION API",
+        title="ERSELMETZ AI API",
         version="1.0.0",
         lifespan=lifespan,
     )

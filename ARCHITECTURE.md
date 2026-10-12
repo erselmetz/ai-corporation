@@ -1,8 +1,8 @@
-# ERSELMETZ AI CORPORATION — Current Architecture and Roadmap
+# ERSELMETZ AI — Current Architecture and Roadmap
 
 ## Product definition
 
-**ERSELMETZ AI CORPORATION is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
+**ERSELMETZ AI is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
 This document separates the implemented Tasks 1–100 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
@@ -426,7 +426,7 @@ This is a proposal snapshot, not an automatically generated recommendation, appr
 
 The report is a progress and recorded-artifact consistency snapshot, not a recommendation or claim that a candidate is suitable or ready for adoption. A `CHECKPOINTED` workflow means the exact patch was approved and checkpointed; it does not adopt or activate a capability. Reads across workflow, workspace, approval, and checkpoint registries are sequential, not atomic. The review does not invoke pipeline stages, call Providers, create or execute Tasks, change assignments, mutate workflow state, persist results, or add API/UI. At Task 99 completion, Task 100 remained planned.
 
-## ERSELMETZ AI CORPORATION Platform (Task 100)
+## ERSELMETZ AI Platform (Task 100)
 
 `CorporationApplicationService.platform_overview()` returns a separate immutable, on-demand report containing configured Corporation/Node identity when both are available, counts for the existing Employee, Agent, Provider, Project, and Task registries, and a bounded Task 92 capability catalog. Missing identity or registry configuration is reported as `UNAVAILABLE`, not as an empty source. Capability source states distinguish configured Agent/Tool registries, an unavailable ToolRegistry, and `UNKNOWN` Gemini metadata when no existing catalog snapshot was supplied. No ToolRegistry or Gemini catalog is created or fetched for the report.
 
@@ -455,7 +455,7 @@ None of the following should be represented as implemented until code provides i
 
 ### Open-source ecosystem direction
 
-ERSELMETZ AI CORPORATION should not unnecessarily recreate mature open-source agent and coding infrastructure. Its intended role is the **governance + organization + orchestration + identity + task management + routing + approval + coordination layer**. Suitable existing projects, protocols, and tools may be integrated for specialized coding/editing, repository mapping, terminal execution, browser/computer interaction, MCP/tool integration, voice/computer control, and Git/GitHub workflows. Such examples describe a direction only; no such integration is implied to exist today.
+ERSELMETZ AI should not unnecessarily recreate mature open-source agent and coding infrastructure. Its intended role is the **governance + organization + orchestration + identity + task management + routing + approval + coordination layer**. Suitable existing projects, protocols, and tools may be integrated for specialized coding/editing, repository mapping, terminal execution, browser/computer interaction, MCP/tool integration, voice/computer control, and Git/GitHub workflows. Such examples describe a direction only; no such integration is implied to exist today.
 
 ### Controlled self-improvement
 

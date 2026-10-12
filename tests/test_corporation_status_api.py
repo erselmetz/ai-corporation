@@ -143,5 +143,5 @@ def test_health_remains_public_and_separate_from_corporation_status():
     assert health.json() == {"status": "ok"}
     assert root.status_code == 200
     assert root.json() == {
-        "application": "ERSELMETZ AI CORPORATION API",
+        "application": "ERSELMETZ AI API",
     }

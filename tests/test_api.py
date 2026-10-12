@@ -53,12 +53,13 @@ def test_api_root_and_health_return_json_without_runtime_calls():
     application = create_app(service)
 
     with TestClient(application) as client:
+        assert application.title == "ERSELMETZ AI API"
         root = client.get("/")
         health = client.get("/health")
 
         assert root.status_code == 200
         assert root.json() == {
-            "application": "ERSELMETZ AI CORPORATION API",
+            "application": "ERSELMETZ AI API",
         }
         assert health.status_code == 200
         assert health.json() == {"status": "ok"}
@@ -136,7 +137,7 @@ def test_api_default_lifespan_uses_shared_runtime_factory(monkeypatch):
 def test_api_default_runtime_starts_without_ollama_network_access():
     with TestClient(create_app()) as client:
         assert client.get("/").json() == {
-            "application": "ERSELMETZ AI CORPORATION API",
+            "application": "ERSELMETZ AI API",
         }
         service = client.app.state.application_service
 

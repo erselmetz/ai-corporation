@@ -1,4 +1,4 @@
-﻿# ERSELMETZ AI CORPORATION - Docker Compose
+﻿# ERSELMETZ AI - Docker Compose
 # Local-first: single container, host Ollama, persisted SQLite via bind mount.
 # Designed with future multi-corporation/distributed expansion in mind.
 

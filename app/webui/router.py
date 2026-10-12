@@ -13,15 +13,15 @@ def corporation_dashboard() -> HTMLResponse:
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
-          <meta name="description" content="ERSELMETZ AI CORPORATION executive dashboard">
-          <title>Dashboard — ERSELMETZ AI CORPORATION</title>
+          <meta name="description" content="ERSELMETZ AI executive dashboard">
+          <title>Dashboard — ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/dashboard.mjs"></script>
         </head>
         <body>
           <header class="site-header">
-            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
-            <span class="product-label">Corporation Web UI</span>
+            <a class="brand" href="/ui">ERSELMETZ AI</a>
+            <span class="product-label">ERSELMETZ AI · Local App</span>
           </header>
           <div class="layout">
             <nav class="navigation" aria-label="Corporation navigation">
@@ -104,14 +104,14 @@ def documentation_portal_page() -> HTMLResponse:
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <meta name="description" content="Internal Corporation Documentation Portal">
-          <title>Documentation Portal — ERSELMETZ AI CORPORATION</title>
+          <title>Documentation Portal — ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/documentation.mjs"></script>
         </head>
         <body>
           <header class="site-header">
-            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
-            <span class="product-label">Corporation Web UI</span>
+            <a class="brand" href="/ui">ERSELMETZ AI</a>
+            <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
             <nav class="navigation" aria-label="Corporation navigation">
@@ -178,15 +178,15 @@ def activity_page() -> HTMLResponse:
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
-          <meta name="description" content="ERSELMETZ AI CORPORATION Activity and logs">
-          <title>Activity &amp; Logs — ERSELMETZ AI CORPORATION</title>
+          <meta name="description" content="ERSELMETZ AI Activity and logs">
+          <title>Activity &amp; Logs — ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/activity.mjs"></script>
         </head>
         <body>
           <header class="site-header">
-            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
-            <span class="product-label">Corporation Web UI</span>
+            <a class="brand" href="/ui">ERSELMETZ AI</a>
+            <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
             <nav class="navigation" aria-label="Corporation navigation">
@@ -264,14 +264,14 @@ def updates_page() -> HTMLResponse:
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <meta name="description" content="Curated Corporation software updates">
-          <title>Updates / Changelog — ERSELMETZ AI CORPORATION</title>
+          <title>Updates / Changelog — ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/updates.mjs"></script>
         </head>
         <body>
           <header class="site-header">
-            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
-            <span class="product-label">Corporation Web UI</span>
+            <a class="brand" href="/ui">ERSELMETZ AI</a>
+            <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
             <nav class="navigation" aria-label="Corporation navigation">
@@ -328,15 +328,15 @@ def employee_management_page() -> HTMLResponse:
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
-          <meta name="description" content="ERSELMETZ AI CORPORATION employee management">
-          <title>Employee Management — ERSELMETZ AI CORPORATION</title>
+          <meta name="description" content="ERSELMETZ AI employee management">
+          <title>Employee Management — ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/employees.mjs"></script>
         </head>
         <body>
           <header class="site-header">
-            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
-            <span class="product-label">Corporation Web UI</span>
+            <a class="brand" href="/ui">ERSELMETZ AI</a>
+            <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
             <nav class="navigation" aria-label="Corporation navigation">
@@ -418,15 +418,15 @@ def position_management_page() -> HTMLResponse:
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
-          <meta name="description" content="ERSELMETZ AI CORPORATION position management">
-          <title>Organizational Positions — ERSELMETZ AI CORPORATION</title>
+          <meta name="description" content="ERSELMETZ AI position management">
+          <title>Organizational Positions — ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/positions.mjs"></script>
         </head>
         <body>
           <header class="site-header">
-            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
-            <span class="product-label">Corporation Web UI</span>
+            <a class="brand" href="/ui">ERSELMETZ AI</a>
+            <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
             <nav class="navigation" aria-label="Corporation navigation">
@@ -495,15 +495,15 @@ def provider_model_management_page() -> HTMLResponse:
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
-          <meta name="description" content="ERSELMETZ AI CORPORATION Provider and Model management">
-          <title>Provider &amp; Model Management — ERSELMETZ AI CORPORATION</title>
+          <meta name="description" content="ERSELMETZ AI Provider and Model management">
+          <title>Provider &amp; Model Management — ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/providers.mjs"></script>
         </head>
         <body>
           <header class="site-header">
-            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
-            <span class="product-label">Corporation Web UI</span>
+            <a class="brand" href="/ui">ERSELMETZ AI</a>
+            <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
             <nav class="navigation" aria-label="Corporation navigation">
@@ -594,15 +594,15 @@ def task_management_page() -> HTMLResponse:
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
-          <meta name="description" content="ERSELMETZ AI CORPORATION Task management">
-          <title>Task Management — ERSELMETZ AI CORPORATION</title>
+          <meta name="description" content="ERSELMETZ AI Task management">
+          <title>Task Management — ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/tasks.mjs"></script>
         </head>
         <body>
           <header class="site-header">
-            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
-            <span class="product-label">Corporation Web UI</span>
+            <a class="brand" href="/ui">ERSELMETZ AI</a>
+            <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
             <nav class="navigation" aria-label="Corporation navigation">
@@ -705,15 +705,15 @@ def project_management_page() -> HTMLResponse:
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
-          <meta name="description" content="ERSELMETZ AI CORPORATION Project management">
-          <title>Project Management — ERSELMETZ AI CORPORATION</title>
+          <meta name="description" content="ERSELMETZ AI Project management">
+          <title>Project Management — ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/projects.mjs"></script>
         </head>
         <body>
           <header class="site-header">
-            <a class="brand" href="/ui">ERSELMETZ AI CORPORATION</a>
-            <span class="product-label">Corporation Web UI</span>
+            <a class="brand" href="/ui">ERSELMETZ AI</a>
+            <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
             <nav class="navigation" aria-label="Corporation navigation">
@@ -784,7 +784,7 @@ def project_management_page() -> HTMLResponse:
 def memory_page() -> HTMLResponse:
     return HTMLResponse("""<!doctype html><html lang="en"><head>
       <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Memory — ERSELMETZ AI CORPORATION</title><link rel="stylesheet" href="/ui/static/style.css">
+      <title>Memory — ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
       <script type="module" src="/ui/static/memory.mjs"></script></head><body>
       <main class="content"><a href="/ui">Back to dashboard</a><h1>Memory management</h1>
       <p>In default API mode, browser sign-in is not configured. Reads require memory:read; changes require memory:manage and owner authority. Owner identity comes from the authenticated session.</p>
