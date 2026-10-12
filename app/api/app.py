@@ -966,6 +966,7 @@ def create_app(
     repository_study_service: RepositoryStudyService | None = None,
     maintenance_sandbox_image_policy: SandboxImagePolicy | None = None,
     maintenance_activation_root: Path | None = None,
+    semantic_memory_service=None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
@@ -1031,6 +1032,9 @@ def create_app(
         if authentication_backend is None
         else authentication_backend
     )
+    application.state.semantic_memory_service = semantic_memory_service
+    if semantic_memory_service is not None and hasattr(application_service, "configure_semantic_memory"):
+        application_service.configure_semantic_memory(semantic_memory_service)
     application.mount(
         "/ui/static",
         WebUIStaticFiles(

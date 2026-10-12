@@ -9,9 +9,10 @@ from .project_knowledge import ProjectKnowledgeService
 
 
 class MemoryManagementService:
-    def __init__(self, orchestrator, corporation_id: str | None):
+    def __init__(self, orchestrator, corporation_id: str | None, *, semantic_invalidator=None):
         self._orchestrator = orchestrator
         self._corporation_id = corporation_id
+        self._semantic_invalidator = semantic_invalidator
 
     def _store(self, scope, scope_id):
         if scope is MemoryScope.CONVERSATION:
@@ -66,6 +67,8 @@ class MemoryManagementService:
         update_private_memory(memory_id, actor_id=actor_id, scope=scope, scope_id=scope_id,
                               revision=revision, content=content, expires_at=expires_at,
                               retention_opt_in=retention_opt_in, now=now)
+        if self._semantic_invalidator is not None:
+            self._semantic_invalidator(memory_id, scope=scope, scope_id=scope_id)
         return self.inspect(memory_id, actor_id=actor_id, scope=scope, scope_id=scope_id, now=now)
 
     def remove(self, memory_id, *, actor_id, scope, scope_id):
@@ -76,3 +79,5 @@ class MemoryManagementService:
             store.forget(memory_id, owner_id=actor_id, project_id=scope_id)
         else:
             store.forget(memory_id, owner_id=actor_id, conversation_id=scope_id)
+        if self._semantic_invalidator is not None:
+            self._semantic_invalidator(memory_id, scope=scope, scope_id=scope_id)

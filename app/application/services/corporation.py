@@ -204,6 +204,8 @@ class CorporationApplicationService:
         self._testing_workflow = TestingWorkflowService()
         self._resource_manager = None
         self._controlled_execution = None
+        self._semantic_memory_index = None
+        self._semantic_memory_lock = Lock()
         self._corporation = corporation
         self._node = node
 
@@ -782,21 +784,77 @@ class CorporationApplicationService:
 
     def context_retrieval(self):
         from .context_retrieval import ContextRetrievalService
-        return ContextRetrievalService(self.memory_management())
+        return ContextRetrievalService(self.memory_management(), semantic_provider=self.semantic_memory)
 
     def memory_management(self):
         from .memory_management import MemoryManagementService
-        return MemoryManagementService(self._orchestrator, self._corporation.id if self._corporation else None)
+        return MemoryManagementService(self._orchestrator, self._corporation.id if self._corporation else None,
+                                       semantic_invalidator=self.invalidate_semantic_memory)
+
+    def invalidate_semantic_memory(self, memory_id, *, scope, scope_id):
+        service = self._semantic_memory_index
+        if service is not None:
+            service.invalidate_all_owners(memory_id, scope=scope, scope_id=scope_id)
+
+    def semantic_memory(self):
+        """Return the optional local semantic capability; it never downloads a model."""
+        with self._semantic_memory_lock:
+            if self._semantic_memory_index is not None:
+                return self._semantic_memory_index
+            from app.knowledge import SemanticMemoryService
+            import importlib.util
+            import os
+            from pathlib import Path
+
+            model_path = os.environ.get("ERSELMETZ_KNOWLEDGE_EMBEDDING_MODEL", "").strip()
+            vector_path = os.environ.get("ERSELMETZ_KNOWLEDGE_VECTOR_DIR", "").strip()
+            manager = self.memory_management()
+            if not model_path or not vector_path:
+                self._semantic_memory_index = SemanticMemoryService(manager)
+                return self._semantic_memory_index
+            if not Path(model_path).expanduser().is_dir():
+                self._semantic_memory_index = SemanticMemoryService(
+                    manager, unavailable_reason="The configured local embedding model directory is unavailable.")
+                return self._semantic_memory_index
+            if importlib.util.find_spec("sentence_transformers") is None or importlib.util.find_spec("chromadb") is None:
+                self._semantic_memory_index = SemanticMemoryService(
+                    manager, unavailable_reason="Install the optional knowledge requirements to enable local semantic retrieval.")
+                return self._semantic_memory_index
+
+            from app.knowledge.providers import SentenceTransformerEmbeddingProvider
+            from app.knowledge.vector_store import ChromaVectorStore
+            try:
+                provider = SentenceTransformerEmbeddingProvider(model_path)
+                store = ChromaVectorStore(vector_path)
+            except Exception:
+                self._semantic_memory_index = SemanticMemoryService(
+                    manager, unavailable_reason="The configured local semantic capability could not be initialized.")
+                return self._semantic_memory_index
+            self._semantic_memory_index = SemanticMemoryService(manager, provider, store)
+            return self._semantic_memory_index
+
+    def configure_semantic_memory(self, service):
+        """Install an explicitly configured semantic adapter for deterministic hosts/tests."""
+        from app.knowledge import SemanticMemoryService
+        if not isinstance(service, SemanticMemoryService):
+            raise TypeError("Expected a SemanticMemoryService")
+        with self._semantic_memory_lock:
+            if self._semantic_memory_index is not None and self._semantic_memory_index is not service:
+                raise RuntimeError("Semantic memory is already configured for this application run")
+            self._semantic_memory_index = service
+        return service
 
     def corporation_knowledge(self):
         if self._corporation is None:
             raise RuntimeError("Corporation runtime identity is not configured")
         from .corporation_knowledge import CorporationKnowledgeService
-        return CorporationKnowledgeService(self._corporation.id, self._orchestrator)
+        return CorporationKnowledgeService(self._corporation.id, self._orchestrator,
+                                           semantic_invalidator=self.invalidate_semantic_memory)
 
     def project_knowledge(self):
         from .project_knowledge import ProjectKnowledgeService
-        return ProjectKnowledgeService(self._orchestrator)
+        return ProjectKnowledgeService(self._orchestrator,
+                                       semantic_invalidator=self.invalidate_semantic_memory)
 
     def owned_chat(self):
         """Separate principal-owned HTTP chat facade, safely constructed once."""

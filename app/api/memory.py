@@ -3,11 +3,13 @@ from typing import Annotated
 import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 
 from app.memory import MemoryScope, MemoryExpiredError
 from app.memory.models import MemoryDataError
 from app.memory.management import MemoryConflictError
+from app.knowledge import SemanticMemoryService
+from app.knowledge.service import SemanticCapabilityUnavailable
 from .security import AuthenticatedPrincipal, require_permission
 
 router = APIRouter(prefix="/api/memory")
@@ -45,12 +47,38 @@ class MemoryEdit(BaseModel):
     revision: str = Field(min_length=64, max_length=64)
 
 
+class SemanticIndexRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    scope: MemoryScope
+    scope_id: StrictStr = Field(min_length=1, max_length=256)
+    memory_id: StrictStr = Field(min_length=1, max_length=256)
+
+
+class SemanticSearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    query: StrictStr = Field(min_length=1, max_length=1024)
+    scope: MemoryScope
+    scope_id: StrictStr = Field(min_length=1, max_length=256)
+    limit: StrictInt = Field(default=5, ge=1, le=10)
+
+
 def get_memory_now():
     return datetime.now(timezone.utc)
 
 
 def service(request: Request):
     return request.app.state.application_service.memory_management()
+
+
+def semantic_service(request: Request):
+    configured = getattr(request.app.state, "semantic_memory_service", None)
+    if configured is not None:
+        return configured
+    application = request.app.state.application_service
+    factory = getattr(application, "semantic_memory", None)
+    if factory is None:
+        return SemanticMemoryService(application.memory_management())
+    return factory()
 
 
 def invoke(operation):
@@ -102,3 +130,66 @@ def delete_memory(scope: MemoryScope, scope_id: Identifier, memory_id: Identifie
                   manager=Depends(service)):
     invoke(lambda: manager.remove(memory_id, actor_id=principal.identity, scope=scope, scope_id=scope_id))
     return Response(status_code=204)
+
+
+@router.get("/semantic/status")
+def semantic_status(principal: AuthenticatedPrincipal = Depends(require_permission("memory:read")),
+                    index=Depends(semantic_service)):
+    del principal
+    return index.status()
+
+
+@router.post("/semantic/index")
+def index_memory(body: SemanticIndexRequest,
+                 principal: AuthenticatedPrincipal = Depends(require_permission("memory:index")),
+                 index=Depends(semantic_service), now=Depends(get_memory_now)):
+    try:
+        chunks = index.index(body.memory_id, actor_id=principal.identity, scope=body.scope,
+                             scope_id=body.scope_id, now=now)
+    except SemanticCapabilityUnavailable:
+        raise HTTPException(503, "Semantic indexing is unavailable") from None
+    except MemoryExpiredError:
+        raise HTTPException(410, "Memory has expired") from None
+    except PermissionError:
+        raise HTTPException(403, "Only the memory owner may index this record") from None
+    except KeyError:
+        raise HTTPException(404, "Memory unavailable") from None
+    except MemoryDataError:
+        raise HTTPException(503, "Stored memory is invalid") from None
+    except ValueError:
+        raise HTTPException(422, "Memory indexing request is invalid") from None
+    except (RuntimeError, sqlite3.Error, TypeError):
+        raise HTTPException(503, "Local semantic indexing failed") from None
+    except Exception:
+        raise HTTPException(503, "Local semantic indexing failed") from None
+    return {"indexed": True, "memory_id": body.memory_id, "scope": body.scope.value,
+            "scope_id": body.scope_id, "chunk_count": len(chunks),
+            "model": index.status().get("model")}
+
+
+@router.post("/semantic/search")
+def search_memory(body: SemanticSearchRequest,
+                  principal: AuthenticatedPrincipal = Depends(require_permission("memory:read")),
+                  index=Depends(semantic_service), now=Depends(get_memory_now)):
+    try:
+        result = index.search(body.query, actor_id=principal.identity, scope=body.scope,
+                              scope_id=body.scope_id, now=now, limit=body.limit)
+    except SemanticCapabilityUnavailable:
+        raise HTTPException(503, "Semantic search is unavailable") from None
+    except MemoryDataError:
+        raise HTTPException(503, "Stored memory is invalid") from None
+    except ValueError:
+        raise HTTPException(422, "Semantic search request is invalid") from None
+    except (RuntimeError, sqlite3.Error, TypeError):
+        raise HTTPException(503, "Local semantic search failed") from None
+    except Exception:
+        raise HTTPException(503, "Local semantic search failed") from None
+    return {"items": [{"memory_id": hit.memory_id, "scope": hit.scope.value,
+                       "scope_id": hit.scope_id, "source_reference": hit.source_reference,
+                       "revision": hit.revision, "excerpt": hit.excerpt,
+                       "chunk_position": hit.chunk_position, "relevance": hit.relevance,
+                       "expires_at": hit.expires_at}
+                      for hit in result.hits],
+            "capability": result.capability,
+            "candidate_limit_reached": result.candidate_limit_reached,
+            "note": "Similarity orders candidates; it does not prove correctness."}

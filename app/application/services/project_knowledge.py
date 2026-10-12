@@ -8,9 +8,10 @@ from app.orchestrator import Orchestrator
 class ProjectKnowledgeService:
     """Private, explicitly retained project knowledge linked to an existing Task."""
 
-    def __init__(self, orchestrator: Orchestrator):
+    def __init__(self, orchestrator: Orchestrator, *, semantic_invalidator=None):
         self._orchestrator = orchestrator
         self._store = ProjectKnowledgeStore()
+        self._semantic_invalidator = semantic_invalidator
 
     def _validate_link(self, record: MemoryRecord):
         if record.scope is not MemoryScope.PROJECT:
@@ -34,3 +35,5 @@ class ProjectKnowledgeService:
 
     def forget(self, memory_id: str, *, owner_id: str, project_id: str):
         self._store.forget(memory_id, owner_id=owner_id, project_id=project_id)
+        if self._semantic_invalidator is not None:
+            self._semantic_invalidator(memory_id, scope=MemoryScope.PROJECT, scope_id=project_id)

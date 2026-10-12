@@ -22,10 +22,10 @@ function render() {
 test("shows all tasks in descending order and reports no unplanned follow-up", () => {
   const elements = render();
   const groups = elements["roadmap-groups"].children;
-  assert.equal(groups[0].id, "tasks-101-129");
+  assert.equal(groups[0].id, "tasks-101-130");
   const items = groups.flatMap(group => group.children[1].children);
-  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 129 }, (_, index) => 129 - index));
-  assert.match(elements["roadmap-summary"].textContent, /129 roadmap tasks.*129 completed.*0 planned/);
+  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 130 }, (_, index) => 130 - index));
+  assert.match(elements["roadmap-summary"].textContent, /130 roadmap tasks.*130 completed.*0 planned/);
   assert.match(elements["next-task"].textContent, /No remaining planned task/);
 });
 
@@ -36,10 +36,14 @@ test("renders completion evidence separately from planned decision gates and exp
   const dispatch = items.find(item => item.id === "task-111");
   const multiProvider = items.find(item => item.id === "task-112");
   const release = items.find(item => item.id === "task-129");
+  const semanticMemory = items.find(item => item.id === "task-130");
   assert.equal(release.children[2].textContent, "Completed");
   assert.match(release.textContent, /task-129-command-center-release-acceptance/);
   assert.match(release.textContent, /206A36D5C94FD76B2696C01F95CD842C24E3A79FD05FEB7FDB45F3DA101DC091/);
   assert.match(release.textContent, /capacity remain UNKNOWN/);
+  assert.equal(semanticMemory.children[2].textContent, "Completed");
+  assert.match(semanticMemory.textContent, /task-130-semantic-memory-rag-foundation/);
+  assert.match(semanticMemory.textContent, /104 passed/);
   assert.equal(completed.children[2].textContent, "Completed");
   assert.match(completed.textContent, /Verified checkpoint: d1ca364/);
   assert.match(completed.textContent, /876 Python passed/);

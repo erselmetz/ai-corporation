@@ -50,8 +50,18 @@ class ContextRetrievalService:
     MAX_CANDIDATES = 100
     MAX_RESULT_BYTES = 32768
 
-    def __init__(self, memory_manager):
+    def __init__(self, memory_manager, *, semantic_provider=None):
         self._memory_manager = memory_manager
+        self._semantic_provider = semantic_provider
+
+    def retrieve_semantic(self, query: str, *, actor_id: str, scope: MemoryScope,
+                          scope_id: str, now: datetime, limit: int = 5):
+        """Explicit optional semantic search; lexical ``retrieve`` remains unchanged."""
+        if self._semantic_provider is None:
+            from app.knowledge.service import SemanticCapabilityUnavailable
+            raise SemanticCapabilityUnavailable("Semantic retrieval is unavailable")
+        return self._semantic_provider().search(query, actor_id=actor_id, scope=scope,
+                                                scope_id=scope_id, now=now, limit=limit)
 
     def retrieve(self, query: str, *, actor_id: str, scope: MemoryScope,
                  scope_id: str, now: datetime, limit: int = 5):

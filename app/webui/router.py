@@ -697,6 +697,14 @@ def memory_page() -> HTMLResponse:
       <label><input id="memory-consent" type="checkbox">I explicitly consent to retaining this corrected memory until the stated expiry.</label>
       <button id="memory-save" type="button" disabled>Save correction / retention</button><button id="memory-remove" type="button" disabled>Remove memory</button>
       <p>Expired content cannot be restored through this page. Publications preserve their source expiry and stay immutable; owners may withdraw them. Removing a private source does not withdraw an independently published copy. Caller-held copies and backups cannot be revoked by this interface.</p>
+      </section>
+      <section class="management-card" aria-labelledby="semantic-memory-title"><h2 id="semantic-memory-title">Local semantic memory</h2>
+      <p id="semantic-memory-status" role="status" aria-live="polite">Checking local capability...</p>
+      <p>Semantic indexing is optional and happens only when you explicitly index an owned retained record. Search is limited to the selected scope. Similarity is a relevance hint, not proof. The Task 53 Documentation Portal remains read-only and is not indexed automatically.</p>
+      <button id="semantic-index" type="button" disabled>Index selected owned record</button>
+      <label for="semantic-query">Search this selected scope</label><input id="semantic-query" maxlength="1024">
+      <button id="semantic-search" type="button">Search</button>
+      <p id="semantic-search-state" role="status" aria-live="polite"></p><ol id="semantic-results" aria-label="Semantic retrieval results"></ol>
       </section></main></body></html>""")
 
 

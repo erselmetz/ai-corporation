@@ -1212,12 +1212,47 @@ export const post100Tasks = [
       "The full Python suite retains the same two previously recorded model-assignment failures; 3 tests were skipped. Eight moderate advisories were reported for the build-time Electron dependency tree.",
       "This checkpoint does not claim production completeness, unrestricted autonomous operation, or unrestricted self-maintenance."
     ]
+  },
+  {
+    "number": 130,
+    "title": "Optional vector memory and RAG foundation",
+    "description": "Add explicit, local semantic indexing and scoped retrieval over already-approved memory while preserving deterministic context behavior.",
+    "category": "Post-100 Usable Command Center",
+    "status": "completed",
+    "dependsOn": [117, 129],
+    "acceptance": [
+      "Add replaceable embedding and vector-store abstractions with an optional local implementation; missing optional dependencies do not prevent core startup and models are never downloaded automatically.",
+      "Chunk explicitly selected retained conversation, Project, or Corporation knowledge with deterministic bounded chunks and safe provenance metadata; never scan arbitrary files, all database records, transcripts, credentials or generated responses.",
+      "Require explicit owner indexing, enforce exact scope on search, recheck current owner/reader access, revision and expiry before returning any chunk, and invalidate derived vectors on source correction, deletion, withdrawal or reader revocation.",
+      "Preserve existing lexical retrieval and provide bounded provenance-tagged RAG context as untrusted reference data; do not call Providers or inject context automatically.",
+      "Expose truthful capability state and explicit indexing/scoped search through existing authenticated application/API/UI boundaries; default API authentication remains fail-closed.",
+      "Use deterministic fake embedding/vector adapters in tests. Verify chunking, indexing, retrieval, limits, provenance, scope isolation, stale/revoked/expired sources, unavailable backend, auth, and no provider/task side effects.",
+      "Document optional installation/configuration, local storage/privacy limits, supported scopes, provenance, limitations and the separate read-only Task 53 documentation portal."
+    ],
+    "outOfScope": [
+      "Automatic transcript retention or generated-answer learning; arbitrary filesystem or automatic whole-database indexing; editing or publishing documentation; automatic chat/planning injection; Provider generation; model selection/routing; Voice, Vision, Automation or 3D Brain work."
+    ],
+    "decisions": [],
+    "area": "P16",
+    "checkpoint": "task-130-semantic-memory-rag-foundation",
+    "validation": [
+      "Focused semantic-memory and directly affected context, conversation, Project, Corporation-knowledge and memory-management regressions: 104 passed. New deterministic semantic tests: 12 passed; memory UI browser-module tests: 12 passed.",
+      "Full Python suite: 1107 passed, 3 skipped, and the same two pre-existing model-assignment failures in test_model_set_command and test_model_replacement_uses_existing_assignment_service.",
+      "The optional Sentence Transformers and Chroma adapters were contract-tested with deterministic stubs. No model download, internet use by the feature, live Ollama, GPU, or Provider generation was used.",
+      "Public documentation site tests: 14 passed, including task-count, completion-state, overview-page and link checks."
+    ],
+    "limitations": [
+      "The desktop installer does not bundle optional semantic dependencies; actual Chroma/Sentence Transformers package integration and installed-model performance were not tested in this checkpoint.",
+      "Indexing is explicit and limited to retained conversation, Project, and Corporation memory. Documentation files, arbitrary paths, whole-database scans and automatic chat/planning injection are not supported.",
+      "SQLite content and local derived vectors are unencrypted at rest. Owners must manage the configured vector directory alongside SQLite; physical secure erasure and backup deletion are not guaranteed.",
+      "The deterministic fake embedding provider validates ranking/scope contracts but is not a substitute for evaluating a production embedding model's relevance quality."
+    ]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; broader P00-P15 material is supplementary.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; broader P00-P16 material is supplementary.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
@@ -1229,7 +1264,7 @@ export const roadmapRules = {
 
 export const taskGroups = [...foundationTaskGroups, {
   name: "Post-100 Usable Command Center",
-  range: "101–129",
+  range: "101–130",
   tasks: post100Tasks.map(({ title, description }) => [title, description]),
 }];
 export const tasks = [...foundationTasks, ...post100Tasks];

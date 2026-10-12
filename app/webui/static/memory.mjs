@@ -12,6 +12,7 @@ function failure(status) {
     : status === 409 ? "Memory changed or publication is immutable. Reload before retrying."
     : status === 410 ? "Memory has expired. Its content is unavailable."
     : status === 422 ? "Memory validation failed. Check content, consent, and expiry."
+    : status === 503 ? "The optional local semantic capability is unavailable or could not complete the request."
     : "Memory service failed. Please retry.";
 }
 export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl = globalThis.fetch,
@@ -19,6 +20,7 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
   const el = id => documentRef.getElementById(id);
   const list = el("memory-list"), state = el("memory-state"), detail = el("memory-detail-state");
   let selected = null, revision = 0, busy = false;
+  let semanticConfigured = false;
   function clearDetail() {
     selected = null;
     el("memory-content").value = "";
@@ -27,6 +29,7 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
     for (const id of ["memory-content", "memory-expiry", "memory-consent"]) el(id).disabled = true;
     el("memory-save").disabled = true;
     el("memory-remove").disabled = true;
+    if (el("semantic-index")) el("semantic-index").disabled = true;
     detail.textContent = "Select a memory record.";
   }
   function query(item, withId = true) {
@@ -66,6 +69,7 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
       el("memory-consent").disabled = !editable;
       el("memory-save").disabled = !editable;
       el("memory-remove").disabled = !data.can_manage;
+      if (el("semantic-index")) el("semantic-index").disabled = !semanticConfigured || !data.can_manage || data.expired;
       detail.textContent = `Source memory/reference: ${data.source_id}; scope resource: ${data.source_scope_id}; original reference: ${data.source_reference}. `
         + (data.scope === "corporation" ? "Published snapshot: correction or new retention requires withdrawal and explicit republication through the application service." : "Owner correction preserves source IDs; explicit consent and expiry are required.");
       return true;
@@ -130,14 +134,94 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
     detail.textContent = error ?? "Memory removed.";
     return !error;
   }
+  async function localCsrf() {
+    const response = await fetchImpl("/api/local/session", { credentials: "same-origin", cache: "no-store" });
+    if (!response.ok) throw new Error("Owner session is unavailable");
+    const session = await response.json();
+    if (!session || typeof session.csrf !== "string" || !session.csrf) throw new Error("Owner session is unavailable");
+    return session.csrf;
+  }
+  async function refreshSemantic() {
+    const status = el("semantic-memory-status");
+    if (!status) return false;
+    status.textContent = "Checking local semantic capability…";
+    try {
+      const response = await fetchImpl("/api/memory/semantic/status", { credentials: "same-origin", headers: { Accept: "application/json" } });
+      if (!response.ok) { status.textContent = failure(response.status); semanticConfigured = false; return false; }
+      const data = await response.json();
+      if (!data || !["disabled", "unavailable", "configured"].includes(data.state) || typeof data.detail !== "string") {
+        status.textContent = "Semantic capability response was invalid."; semanticConfigured = false; return false;
+      }
+      semanticConfigured = data.state === "configured";
+      status.textContent = `${data.state === "configured" ? `Configured locally${data.model ? ` (${data.model})` : ""}.` : `${data.state}.`} ${data.detail}`;
+      if (el("semantic-index")) el("semantic-index").disabled = !semanticConfigured || !selected?.can_manage || selected.expired;
+      if (el("semantic-search")) el("semantic-search").disabled = !semanticConfigured;
+      return true;
+    } catch { status.textContent = "Could not check the local semantic capability."; semanticConfigured = false; return false; }
+  }
+  async function indexSelected() {
+    if (!semanticConfigured || !selected?.can_manage || selected.expired || busy) return false;
+    const item = selected, state = el("semantic-search-state");
+    state.textContent = "Indexing this selected record locally…";
+    try {
+      const csrf = await localCsrf();
+      const response = await fetchImpl("/api/memory/semantic/index", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-Local-CSRF": csrf, Accept: "application/json" },
+        body: JSON.stringify({ scope: item.scope, scope_id: item.scope_id, memory_id: item.id }),
+      });
+      if (!response.ok) { state.textContent = failure(response.status); return false; }
+      const data = await response.json();
+      if (selected?.id !== item.id || data?.indexed !== true || !Number.isInteger(data.chunk_count)) return false;
+      state.textContent = `Indexed ${data.chunk_count} chunk${data.chunk_count === 1 ? "" : "s"} locally. No generation or Task execution occurred.`;
+      return true;
+    } catch { state.textContent = "Local indexing failed. Check the optional model setup and retry."; return false; }
+  }
+  async function searchSemantic() {
+    if (!semanticConfigured || busy) return false;
+    const scope = el("memory-scope").value, scopeId = el("memory-scope-id").value.trim();
+    const queryText = el("semantic-query").value.trim(), state = el("semantic-search-state"), results = el("semantic-results");
+    results.replaceChildren();
+    if (!scopes.has(scope) || !scopeId || !queryText) { state.textContent = "Enter a query and choose the exact scope to search."; return false; }
+    state.textContent = "Searching the selected scope…";
+    try {
+      const csrf = await localCsrf();
+      const response = await fetchImpl("/api/memory/semantic/search", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-Local-CSRF": csrf, Accept: "application/json" },
+        body: JSON.stringify({ query: queryText, scope, scope_id: scopeId, limit: 5 }),
+      });
+      if (!response.ok) { state.textContent = failure(response.status); return false; }
+      const data = await response.json();
+      if (!data || !Array.isArray(data.items) || !data.items.every(hit => hit && typeof hit.memory_id === "string"
+          && hit.scope === scope && hit.scope_id === scopeId && typeof hit.excerpt === "string"
+          && typeof hit.source_reference === "string" && Number.isFinite(hit.relevance))) {
+        state.textContent = "Semantic search response was invalid."; return false;
+      }
+      for (const hit of data.items) {
+        const row = documentRef.createElement("li");
+        row.textContent = `${hit.memory_id} · ${hit.source_reference} · chunk ${hit.chunk_position + 1} · relevance ${hit.relevance.toFixed(3)} — ${hit.excerpt}`;
+        results.append(row);
+      }
+      state.textContent = data.items.length
+        ? `${data.items.length} authorized results${data.candidate_limit_reached ? " (candidate limit reached; more results may exist)" : ""}. Similarity is a relevance hint, not a confidence guarantee.`
+        : `No current result in the bounded candidate set${data.candidate_limit_reached ? " (candidate limit reached; more results may exist)" : ""}.`;
+      return true;
+    } catch { state.textContent = "Local semantic search failed."; return false; }
+  }
   el("memory-refresh").addEventListener("click", () => void load());
   el("memory-save").addEventListener("click", () => void save());
   el("memory-remove").addEventListener("click", () => void remove());
   for (const id of ["memory-scope", "memory-scope-id"]) el(id).addEventListener("input", () => {
     if (busy) return;
     ++revision; list.replaceChildren(); clearDetail(); state.textContent = "Scope changed. Refresh to load current records.";
+    if (el("semantic-results")) el("semantic-results").replaceChildren();
+    if (el("semantic-search-state")) el("semantic-search-state").textContent = "Scope changed. Search results cleared.";
   });
+  if (el("semantic-index")) el("semantic-index").addEventListener("click", () => void indexSelected());
+  if (el("semantic-search")) el("semantic-search").addEventListener("click", () => void searchSemantic());
+  if (el("semantic-memory-status")) void refreshSemantic();
   clearDetail();
-  return { load, select, save, remove };
+  return { load, select, save, remove, refreshSemantic, indexSelected, searchSemantic };
 }
 if (typeof document !== "undefined") mountMemoryPage();

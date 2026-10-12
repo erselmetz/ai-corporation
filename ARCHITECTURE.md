@@ -523,7 +523,7 @@ CorporationApplicationService.corporation_knowledge requires configured Corporat
 
 Added authorized memory inspection, owner correction and explicit retention, revision-conflict protection, expired-record removal, and owner withdrawal of immutable published knowledge through scoped API services and a browser page; default authentication remains fail-closed.
 
-The /ui/memory page uses protected /api/memory services. memory:read permits scoped inspection; memory:manage also requires record ownership for mutations. The server binds owners/readers to authenticated identity and denies access by default. Lists contain metadata only (50 records by default, maximum 100), including expired records whose content cannot be read or restored. Active private notes can be corrected or retained with explicit consent and a future timezone-aware expiry; source references remain intact and stale revisions are rejected. Published knowledge is an immutable snapshot: named readers can inspect it, while its owner can withdraw it. Removing a private source does not withdraw separately consented publication; deletion cannot revoke caller-held copies or backups. This page adds no automatic capture, provider execution, semantic retrieval, or changes to the file-based read-only Documentation Portal. Browser authentication remains unconfigured.
+The /ui/memory page uses protected /api/memory services. memory:read permits scoped inspection; memory:manage also requires record ownership for mutations. The server binds owners/readers to authenticated identity and denies access by default. Lists contain metadata only (50 records by default, maximum 100), including expired records whose content cannot be read or restored. Active private notes can be corrected or retained with explicit consent and a future timezone-aware expiry; source references remain intact and stale revisions are rejected. Published knowledge is an immutable snapshot: named readers can inspect it, while its owner can withdraw it. Removing a private source does not withdraw separately consented publication; deletion cannot revoke caller-held copies or backups. This page adds explicit owner-selected local semantic indexing and scoped search only when the optional capability is configured. It adds no automatic capture, Provider execution, or changes to the file-based read-only Documentation Portal. Browser authentication remains unconfigured.
 
 ## Context Retrieval (Task 66)
 
@@ -672,7 +672,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-129 are verified complete, and no follow-up
+public `docs/tasks.html`: Tasks 101-130 are verified complete, and no follow-up
 task is currently planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
@@ -943,7 +943,65 @@ Configured Ollama connections expose their provider-reported loaded-model list t
 
 Owner-scoped chat can now use retained knowledge only on explicit request. A completed message is retained only with explicit consent and an expiry of 1 minute to 30 days (POST /api/chat/conversations/{id}/retained); nothing is retained automatically. A send may carry an explicit context request (query, scope, limit up to 3); matching authorized records are added to that turn as untrusted reference data and the reply carries a source trace (memory id, scope, revision, expiry, origin, matched terms). Conversation GET re-checks each trace as current, changed, expired or unavailable without caching content. Withdrawal (DELETE) deletes the stored record and states that text already sent to a provider, earlier replies and prepared Task proposals are not recalled. Conversation-scope context cannot cross conversations; cloud consent still applies to the whole turn including retrieved context.
 
-Limitations: API only: no browser controls yet; retained records are lexically matched (no semantic search); traces are process-local and cleared on restart; retained records use the existing local database and are not encrypted; no automatic retention, injection, retries or fallback.
+Task 117 chat context remains explicitly requested and lexically retrieved; semantic indexing/search is a separate optional path introduced in Task 130. Traces remain process-local; retained content and derived local embeddings are not encrypted. Neither path automatically retains transcripts or injects context into chat.
+
+## Optional semantic memory and RAG (Task 130)
+
+The optional `app.knowledge` layer augments Tasks 61–67 and Task 117 without
+replacing their stores or deterministic lexical retrieval. The only ingestion
+source currently supported is a single explicitly selected, already-retained
+conversation, Project, or Corporation memory record fetched through
+`MemoryManagementService`. Its exact owner/scope access is checked before
+indexing; Project provenance continues to be verified through the existing
+Project knowledge service, and Corporation readers are checked again at search
+time. Indexing is owner-only; a named reader may search an already-indexed
+Corporation publication only while current read authorization remains valid.
+
+`EmbeddingProvider` separates batched local embedding from `VectorStore`.
+`SentenceTransformerEmbeddingProvider` uses an explicitly configured local
+model directory with `local_files_only`; no model is automatically downloaded.
+`ChromaVectorStore` is optional, persistent, uses no Chroma embedding function,
+and has anonymized telemetry disabled. Core startup and deterministic tests do
+not import or require these optional packages. Configuration requires both
+`ERSELMETZ_KNOWLEDGE_EMBEDDING_MODEL` and
+`ERSELMETZ_KNOWLEDGE_VECTOR_DIR`; missing configuration disables the feature
+truthfully. Install the optional group from `requirements-knowledge.txt` only
+in an environment suitable for its local ML dependencies. The Windows desktop
+installer intentionally does not bundle this dependency group.
+
+Chunking normalizes line endings deterministically and caps sources at 8,192
+UTF-8 bytes, chunks at 1,200 characters, overlap at 120 characters, and total
+chunks at 16. Embedding batches cap at 32; search queries cap at 1,024 UTF-8
+bytes, candidates at 40, results at 10, and serialized RAG context at 8,192
+bytes by default (maximum configurable budget 32,768 bytes). Vector metadata
+contains exact owner/scope/source identifiers and revision, but no content,
+credentials, or filesystem paths. Search applies exact scope filters and then
+re-reads each candidate from the authoritative store to reject expired,
+changed, deleted, or unauthorized sources. Source mutation, withdrawal,
+Corporation-reader revocation, and deletion invalidate derived vectors through
+the application boundary. Search exposes a bounded relevance value only as an
+ordering hint; stale content is never returned.
+
+`ContextRetrievalService.retrieve_semantic()` makes semantic search an explicit
+optional retrieval path; `retrieve()` remains lexical and unchanged.
+`RagContextBuilder` prepares a bounded, provenance-tagged, immutable context
+snapshot and marks retrieved text as untrusted reference data. It does not call
+a Provider, alter memory, write Tasks, or inject content automatically.
+Conversation history, ephemeral context, approved retained memory, and indexed
+vectors remain distinct layers. No full transcript or generated model response
+is automatically retained or indexed.
+
+The protected Memory page exposes capability state, explicit selected-record
+indexing, and scoped semantic search. Search uses `memory:read`; indexing uses
+separate `memory:index` authority, granted only in explicit single-owner local
+mode by default. Existing default API authentication remains rejecting. The
+index is local and unencrypted at rest; derived embeddings may retain
+information about their source. The configured vector directory must be
+managed alongside the authoritative SQLite data. This milestone does not index
+Documentation Portal Markdown, arbitrary files, all stored rows, or raw vectors;
+does not add a managed index inventory/rebuild UI; and does not integrate
+semantic retrieval automatically with chat generation, planning, Voice,
+Vision, Automation, or a 3D Brain.
 
 ## 3D visualization (Task 116)
 

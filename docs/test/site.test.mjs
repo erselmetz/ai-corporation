@@ -81,13 +81,13 @@ describe("documentation site", () => {
   });
 
   it("preserves foundation tasks 1–100 and adds contiguous post-100 contracts", () => {
-    assert.equal(tasks.length, 129);
+    assert.equal(tasks.length, 130);
     assert.equal(foundationTasks.length, 100);
-    assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 129 }, (_, i) => i + 1));
-    assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 29]);
+    assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 130 }, (_, i) => i + 1));
+    assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 30]);
   });
 
-  it("marks all published tasks 1–129 complete after release acceptance", () => {
+  it("marks all published tasks 1-130 complete after semantic memory foundation", () => {
     assert.ok(tasks.every((task) => task.status === "completed"));
     assert.equal(nextTask, undefined);
     assert.equal(tasks[51].number, 52);
@@ -158,30 +158,35 @@ describe("documentation site", () => {
     assert.equal(tasks[99].title, "ERSELMETZ AI CORPORATION Platform");
     assert.equal(tasks[99].description, "Develop a coherent, governed platform for operating a virtual/simulated AI organization.");
     assert.equal(tasks[99].status, "completed");
+    assert.equal(tasks[129].title, "Optional vector memory and RAG foundation");
+    assert.equal(tasks[129].status, "completed");
+    assert.equal(tasks[129].title, "Optional vector memory and RAG foundation");
+    assert.equal(tasks[129].status, "completed");
   });
 
   it("describes the completed roadmap and final release-acceptance checkpoint", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
     assert.match(html, /Milestones 1–100 are completed foundations/);
-    assert.match(html, /Tasks 101-129 are verified post-100 checkpoints/);
-    assert.match(html, /no follow-up task is currently planned/);
+    assert.match(html, /Tasks 101-130 are verified post-100 checkpoints/);
+    assert.match(html, /no later follow-up task is currently planned/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
   });
 
-  it("keeps public overview pages aligned with Task 129 release acceptance", async () => {
+  it("keeps public overview pages aligned with Task 130 semantic memory", async () => {
     const [home, documentation, architecture, roadmap] = await Promise.all(
       ["index.html", "documentation.html", "architecture.html", "roadmap.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
-    assert.match(home, /Verified Tasks 101-129/);
-    assert.match(documentation, /Tasks 101-129 are verified post-100 checkpoints/);
+    assert.match(home, /Verified Tasks 101-130/);
+    assert.match(documentation, /Tasks 101-130 are verified post-100 checkpoints/);
     assert.match(architecture, /Task 105 adds explicitly consented Gemini coordinator chat/);
-    assert.match(architecture, /Task 129/);
+    assert.match(architecture, /Task 130/);
     assert.match(architecture, /Chat-driven GitHub study and research — Task 121/);
-    assert.match(roadmap, /href="tasks.html#task-129">Task 129.*Command center usability/);
+    assert.match(roadmap, /href="tasks.html#task-130">Task 130.*memory/i);
     assert.match(roadmap, /no follow-up task is currently planned/);
-    for (const page of [home, documentation, architecture]) assert.match(page, /Task 129/);
+    assert.match(architecture, /Task 130.*semantic/i);
+    for (const page of [home, documentation]) assert.match(page, /Task 130/);
   });
 
   it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {
@@ -198,7 +203,7 @@ describe("documentation site", () => {
       "task-123-approved-local-activation", "task-124-read-only-software-inventory",
       "task-125-managed-vscode-user-lifecycle", "task-126-local-application-lifecycle",
       "task-127-windows-electron-installer", "task-128-optional-voice-interaction",
-      "task-129-command-center-release-acceptance"]);
+      "task-129-command-center-release-acceptance", "task-130-semantic-memory-rag-foundation"]);
     const task127 = post100Tasks.find(task => task.number === 127);
     assert.equal(task127.status, "completed");
     assert.equal(task127.checkpoint, "task-127-windows-electron-installer");

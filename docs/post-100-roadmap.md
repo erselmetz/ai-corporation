@@ -1,6 +1,6 @@
 # Post-100 Product Roadmap: ERSELMETZ AI Command Center
 
-Status: Tasks 101-129 are verified foundations, including local Windows 11 x64 installer acceptance; no follow-up task is currently planned.. Task 105 adds explicitly consented Gemini coordinator chat with an in-memory restricted API key and bounded generation. Task 106 adds best-effort Gemini key-paste blocking before chat persistence/submission. Task 107 adds ephemeral editable position records with independent read/manage permissions and provenance-preserving removal guards. Task 108 adds manual connection previews, fixed Task/conversation assignment snapshots, and bounded principal-owned individual Employee chat. Task 109 adds disabled-by-default review-only model assignment recommendations under fresh tested evidence, explicit access, capacity and budget constraints. Task 110 adds short-lived, principal-scoped coordinator proposals and exact-digest confirmation for pending Tasks; it does not execute work. Task 111 adds explicitly confirmed, budget-gated local worker dispatch through the existing queue; it does not provide cloud/Tool execution, replay, or outcome verification. Task 112 adds owner-configured local Ollama/Gemini connections, truthful catalogs/status and explicit Agent assignment under software request-slot limits. Task 120 adds bounded Ollama chat streaming with display-only Stop behavior; interrupted turns remain pending/uncertain without persisted partial assistant text or automatic replay. Task 121 adds chat-driven, allowlist-gated, commit-pinned GitHub study and an evidence-backed unapproved proposal; incomplete evidence requests more information, with no provider synthesis, installation, or execution. Task 122 adds owner-authorized, disposable adaptation experiments with bounded source/patch identity, Docker-only scoped tests, advisory independent review and no automatic integration. Task 123 adds exact owner-approved local Git activation with expiring approval and tested revert recovery; runtime restart and website deployment remain separate. Task 124 adds a protected read-only inventory for the running app, Python runtime, fixed checkout, and configured provider integrations; it performs no OS-wide scan. Task 125 adds a separate owner-confirmed WinGet adapter for Microsoft VS Code user installs. Task 126 adds a Windows loopback-only GUI lifecycle controller with DPAPI-protected owner-verifier storage. Task 127 packages that existing Python service with an Electron 44.7 shell, a Next.js static export, a frozen Python 3.14 sidecar and a per-user unsigned Windows installer. Task 128 adds optional local on-device speech and consented Gemini transcription with in-memory audio only, reviewed transcripts, an app-side request budget and truthful provider-retention/cancellation limits. Updates are manual; uninstall preserves user data and DPAPI credentials. The package does not add autonomous speech actions or claim live generation. Task 129 release acceptance is complete. Broader product readiness, remaining P01/P02/P03 work and P04-P15 remain planned.
+Status: Tasks 101-130 are verified foundations, including local Windows 11 x64 installer acceptance and optional semantic memory/RAG; no follow-up task is currently planned. Task 130 adds explicit local semantic indexing over retained conversation, Project, or Corporation knowledge, with scoped live-authorized retrieval and no automatic chat injection. Task 105 adds explicitly consented Gemini coordinator chat with an in-memory restricted API key and bounded generation. Task 106 adds best-effort Gemini key-paste blocking before chat persistence/submission. Task 107 adds ephemeral editable position records with independent read/manage permissions and provenance-preserving removal guards. Task 108 adds manual connection previews, fixed Task/conversation assignment snapshots, and bounded principal-owned individual Employee chat. Task 109 adds disabled-by-default review-only model assignment recommendations under fresh tested evidence, explicit access, capacity and budget constraints. Task 110 adds short-lived, principal-scoped coordinator proposals and exact-digest confirmation for pending Tasks; it does not execute work. Task 111 adds explicitly confirmed, budget-gated local worker dispatch through the existing queue; it does not provide cloud/Tool execution, replay, or outcome verification. Task 112 adds owner-configured local Ollama/Gemini connections, truthful catalogs/status and explicit Agent assignment under software request-slot limits. Task 120 adds bounded Ollama chat streaming with display-only Stop behavior; interrupted turns remain pending/uncertain without persisted partial assistant text or automatic replay. Task 121 adds chat-driven, allowlist-gated, commit-pinned GitHub study and an evidence-backed unapproved proposal; incomplete evidence requests more information, with no provider synthesis, installation, or execution. Task 122 adds owner-authorized, disposable adaptation experiments with bounded source/patch identity, Docker-only scoped tests, advisory independent review and no automatic integration. Task 123 adds exact owner-approved local Git activation with expiring approval and tested revert recovery; runtime restart and website deployment remain separate. Task 124 adds a protected read-only inventory for the running app, Python runtime, fixed checkout, and configured provider integrations; it performs no OS-wide scan. Task 125 adds a separate owner-confirmed WinGet adapter for Microsoft VS Code user installs. Task 126 adds a Windows loopback-only GUI lifecycle controller with DPAPI-protected owner-verifier storage. Task 127 packages that existing Python service with an Electron 44.7 shell, a Next.js static export, a frozen Python 3.14 sidecar and a per-user unsigned Windows installer. Task 128 adds optional local on-device speech and consented Gemini transcription with in-memory audio only, reviewed transcripts, an app-side request budget and truthful provider-retention/cancellation limits. Updates are manual; uninstall preserves user data and DPAPI credentials. The package does not add autonomous speech actions or claim live generation. Task 129 release acceptance and Task 130 semantic memory/RAG are complete. Broader product readiness, remaining P01/P02/P03 work, and unfinished acceptance beyond these scoped tasks remain planned.
 See [Task 101 readiness review](post-100-readiness.md) for evidence, gaps, and the
 first proposed implementation checkpoints. The readiness record distinguishes validated checkpoints from remaining planned capabilities.
 Planning date: 2026-10-03 (Asia/Manila).
@@ -8,17 +8,19 @@ Planning date: 2026-10-03 (Asia/Manila).
 ## Relationship to the current roadmap
 
 Tasks 1-100 retain their original definitions and completed foundation scope.
-The numbered Tasks 101-129, their explicit statuses, dependencies, acceptance
+The numbered Tasks 101-130, their explicit statuses, dependencies, acceptance
 checks, exclusions, decision gates and verified checkpoint records now live in
 `docs/tasks-data.mjs` (`post100Tasks`) and appear on the public `docs/tasks.html`.
 Those records are the authoritative implementation contracts; this P00-P15 file
 is supplementary product context, not a competing status/numbering source.
 
-Tasks 101-129 have verified completion evidence; no follow-up task is currently planned.
+Tasks 101-130 have verified completion evidence; no follow-up task is currently planned.
 Publishing this list does not implement those tasks or approve their unresolved
 architecture/product/authority decisions. Read the shared `roadmapRules` before
 coding, preserve uncommitted work, and record exact validation and handoff evidence.
 Use one scoped checkpoint at a time and recheck for other contributors' changes.
+
+P16 now records the optional semantic-memory/RAG foundation delivered by Task 130; it does not alter the read-only Task 53 Documentation Portal contract.
 
 This Markdown context remains repository-only and outside the public asset
 allowlist. Public contracts are served as existing static task data; public docs
@@ -44,12 +46,26 @@ The desired result is a traced evaluation and, if approved and supported, an
 isolated adaptation, validated integration, and verification with recovery.
 Rejection or a request for more information is also a valid outcome.
 
+## P16 - Optional semantic memory and RAG (Task 130 complete)
+
+Task 130 adds an optional local embedding/vector-store path over one explicitly
+selected, already-retained conversation, Project, or Corporation knowledge record.
+It preserves the existing lexical retrieval behavior and requires explicit
+owner indexing plus an exact-scope search. Current reader authorization,
+revision, and expiry are rechecked before source text is returned. Bounded
+provenance-tagged results are untrusted reference data; automatic transcript
+retention, chat/planning injection, Provider generation, arbitrary-file indexing,
+and documentation-file indexing are excluded. The Task 53 Documentation Portal
+remains file-based and read-only. Optional model/store dependencies are installed
+separately and models are never downloaded automatically. See the authoritative
+Task 130 acceptance and limitation record in `docs/tasks-data.mjs`.
+
 ## Planned tasks and acceptance criteria
 
 ### P00 - Review the completed Task 100 baseline
 
 The initial source-review slice completed as Task 101 on 2026-10-04; see
-[the readiness record](post-100-readiness.md). Task 101 mapped the baseline and scoped the first local checkpoints; it did not certify every future feature or complete operational acceptance. The numbered contracts subsequently published Tasks 104-128. The broader goals below remain context, not additional Task 101 completion claims. No fresh runtime validation claimed.
+[the readiness record](post-100-readiness.md). Task 101 mapped the baseline and scoped the first local checkpoints; it did not certify every future feature or complete operational acceptance. The numbered contracts subsequently published Tasks 104-130. The broader goals below remain context, not additional Task 101 completion claims. No fresh runtime validation claimed.
 
 - Inspect the authoritative roadmap, code, tests, and limitations after Task 100.
 - Map each proposed feature to implemented services, missing interfaces, and

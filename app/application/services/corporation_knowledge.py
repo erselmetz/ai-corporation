@@ -9,10 +9,11 @@ from .project_knowledge import ProjectKnowledgeService
 class CorporationKnowledgeService:
     """Trusted application callers supply identity; no automatic membership grants."""
 
-    def __init__(self, corporation_id: str, orchestrator):
+    def __init__(self, corporation_id: str, orchestrator, *, semantic_invalidator=None):
         _identifier(corporation_id, "corporation_id")
         self._corporation_id = corporation_id
         self._orchestrator = orchestrator
+        self._semantic_invalidator = semantic_invalidator
         self._store = CorporationKnowledgeStore()
 
     def publish(self, knowledge_id: str, *, actor_id: str, source_scope: MemoryScope,
@@ -39,6 +40,12 @@ class CorporationKnowledgeService:
     def revoke_reader(self, knowledge_id: str, *, actor_id: str, reader_id: str):
         self._store.revoke_reader(knowledge_id, actor_id=actor_id,
                                   corporation_id=self._corporation_id, reader_id=reader_id)
+        if self._semantic_invalidator is not None:
+            self._semantic_invalidator(knowledge_id, scope=MemoryScope.CORPORATION,
+                                       scope_id=self._corporation_id)
 
     def withdraw(self, knowledge_id: str, *, actor_id: str):
         self._store.withdraw(knowledge_id, actor_id=actor_id, corporation_id=self._corporation_id)
+        if self._semantic_invalidator is not None:
+            self._semantic_invalidator(knowledge_id, scope=MemoryScope.CORPORATION,
+                                       scope_id=self._corporation_id)
