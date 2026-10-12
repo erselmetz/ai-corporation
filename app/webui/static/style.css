@@ -757,6 +757,246 @@ button:disabled {
   }
 }
 
+/* Shared ERSELMETZ desktop visual system. Keep every Python-served workspace
+   on the same dark, low-glare palette as the Electron command center. */
+:root {
+  color-scheme: dark;
+  --ui-bg: #080c13;
+  --ui-panel: #0e1520;
+  --ui-panel-raised: #121d2b;
+  --ui-line: #223245;
+  --ui-line-soft: rgba(130, 157, 184, 0.15);
+  --ui-text: #eaf1fa;
+  --ui-muted: #91a0b2;
+  --ui-dim: #647488;
+  --ui-cyan: #68d8e5;
+  --ui-violet: #b39bff;
+  --ui-amber: #ffc976;
+  font-family: "Segoe UI", Inter, ui-sans-serif, system-ui, sans-serif;
+  color: var(--ui-text);
+  background: var(--ui-bg);
+}
+
+html,
+body {
+  min-height: 100%;
+  background: var(--ui-bg);
+  color: var(--ui-text);
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 72% 0%, rgba(47, 95, 133, 0.14), transparent 42%),
+    var(--ui-bg);
+}
+
+a { color: var(--ui-cyan); }
+a:hover { color: #b4f5fb; }
+
+.site-header {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  min-height: 4.25rem;
+  padding: 0.85rem clamp(1rem, 4vw, 3rem);
+  border-bottom: 1px solid var(--ui-line-soft);
+  background: rgba(9, 14, 22, 0.92);
+  backdrop-filter: blur(16px);
+}
+
+.brand {
+  color: var(--ui-text);
+  letter-spacing: 0.1em;
+  font-size: 0.78rem;
+}
+
+.product-label { color: var(--ui-muted); font-size: 0.76rem; }
+
+.layout {
+  grid-template-columns: 14rem minmax(0, 1fr);
+  gap: 1.1rem;
+  max-width: 110rem;
+  padding: 1.25rem clamp(0.75rem, 3vw, 2.5rem);
+}
+
+.navigation,
+.content,
+.dashboard-card,
+.employee-card,
+.management-card,
+.update-entry,
+.activity-entry {
+  border: 1px solid var(--ui-line);
+  border-radius: 0.75rem;
+  background: linear-gradient(155deg, rgba(19, 31, 46, 0.96), rgba(12, 18, 28, 0.94));
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.12);
+}
+
+.navigation {
+  position: sticky;
+  top: 5.25rem;
+  max-height: calc(100vh - 6.5rem);
+  overflow-y: auto;
+  padding: 1rem 0.75rem;
+  background: rgba(9, 14, 22, 0.84);
+}
+
+.navigation h2,
+.eyebrow {
+  color: var(--ui-cyan);
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.navigation h2 { margin: 0 0 0.65rem 0.6rem; }
+.navigation ul { gap: 0.18rem; }
+
+.navigation a,
+.navigation [aria-current="page"],
+.navigation [aria-disabled="true"] {
+  display: block;
+  padding: 0.64rem 0.68rem;
+  border-radius: 0.5rem;
+  color: #9aa8b8;
+  font-size: 0.82rem;
+  text-decoration: none;
+  transition: color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.navigation a:hover,
+.navigation [aria-current="page"] {
+  color: #effaff;
+  background: linear-gradient(90deg, rgba(91, 192, 219, 0.16), rgba(91, 192, 219, 0.035));
+  box-shadow: inset 2px 0 var(--ui-cyan);
+}
+
+.navigation [aria-disabled="true"] { color: #667487; }
+
+.content {
+  min-height: calc(100vh - 7.5rem);
+  padding: clamp(1rem, 2vw, 1.75rem);
+}
+
+.dashboard-heading { margin-bottom: 1.15rem; }
+h1, h2, h3 { color: var(--ui-text); }
+h1 { font-size: clamp(1.65rem, 3vw, 2.35rem); letter-spacing: -0.045em; }
+h2 { font-size: 1.02rem; letter-spacing: -0.02em; }
+h3 { font-size: 0.9rem; }
+.eyebrow { margin-bottom: 0.55rem; }
+.muted, .section-state, .empty-state { color: var(--ui-muted); }
+.back-link { color: var(--ui-cyan); }
+
+.dashboard-grid,
+.employee-layout,
+.management-grid,
+.task-layout,
+.project-layout,
+.documentation-layout { gap: 0.9rem; }
+
+.dashboard-card,
+.employee-card,
+.management-card { padding: 1rem; }
+
+.dashboard-card:hover,
+.employee-card:hover,
+.management-card:hover,
+.update-entry:hover,
+.activity-entry:hover {
+  border-color: #38516a;
+}
+
+.auth-boundary {
+  border: 1px solid rgba(104, 216, 229, 0.16);
+  border-left: 3px solid var(--ui-cyan);
+  border-radius: 0.5rem;
+  color: #a8bacb;
+  background: rgba(104, 216, 229, 0.055);
+}
+
+button,
+.employee-select,
+.record-select {
+  min-height: 2.5rem;
+  border: 1px solid #33485e;
+  border-radius: 0.5rem;
+  color: var(--ui-text);
+  background: #111c29;
+  font: inherit;
+  font-size: 0.84rem;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+button:hover:not(:disabled),
+.employee-select:hover,
+.record-select:hover {
+  border-color: #52738d;
+  background: #172638;
+}
+
+button:active:not(:disabled) { transform: translateY(1px); }
+button:disabled { color: #667487; }
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--ui-cyan);
+  outline-offset: 3px;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+textarea,
+select {
+  border: 1px solid #33485e !important;
+  border-radius: 0.5rem !important;
+  color: var(--ui-text) !important;
+  background: #0a111b !important;
+  accent-color: var(--ui-cyan);
+}
+
+input::placeholder,
+textarea::placeholder { color: #718196; }
+
+.status-counts .list-entry,
+.activity-entry,
+.update-entry,
+.documentation-content,
+.task-form fieldset,
+.data-group + .data-group,
+.management-detail,
+.management-form {
+  border-color: var(--ui-line);
+}
+
+.status-counts .list-entry { background: rgba(104, 216, 229, 0.055); }
+.documentation-content { color: #d5e2ef; background: #09111b; }
+.update-kind { color: #b6ecf1; background: rgba(104, 216, 229, 0.12); }
+.update-kind-release { color: #a2e4c9; background: rgba(98, 223, 180, 0.12); }
+.danger-button { border-color: rgba(255, 130, 130, 0.35); color: #ffaaaa; background: rgba(132, 42, 47, 0.18); }
+.danger-button:hover:not(:disabled) { background: rgba(160, 50, 57, 0.28); }
+.success-state { color: #8fe0bd; }
+.error-state { color: #ff9696; }
+
+@media (max-width: 48rem) {
+  .site-header { position: relative; }
+  .layout { grid-template-columns: 1fr; padding: 0.75rem; }
+  .navigation { position: static; max-height: none; }
+  .navigation ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .content { min-height: 0; padding: 1rem; }
+}
+
+@media (max-width: 28rem) {
+  .navigation ul { grid-template-columns: 1fr; }
+  .content { padding: 0.85rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
+
 .chat-content { max-width: 60rem; margin: 1rem auto; }
 .chat-content label { display: block; margin-top: 1rem; }
 .chat-content select, .chat-content textarea { width: 100%; margin: .4rem 0; }
