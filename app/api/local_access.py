@@ -36,7 +36,10 @@ CHAT_HISTORY_PERMISSIONS = frozenset({"chat-history:manage"})
 CHAT_KNOWLEDGE_PERMISSIONS = frozenset({"chat-knowledge:retain", "chat-knowledge:withdraw"})
 TASK_DISPATCH_PERMISSIONS = frozenset({"task:dispatch"})
 WORKFLOW_PERMISSIONS = frozenset({"workflow:read", "workflow:manage"})
-MAINTENANCE_EXPERIMENT_PERMISSIONS = frozenset({"maintenance:experiment"})
+MAINTENANCE_EXPERIMENT_PERMISSIONS = frozenset({
+    "maintenance:experiment", "maintenance:approve", "maintenance:checkpoint",
+    "maintenance:activate",
+})
 
 
 @dataclass(frozen=True)

@@ -965,6 +965,7 @@ def create_app(
     github_repository_inspection_service: GitHubRepositoryInspectionService | None = None,
     repository_study_service: RepositoryStudyService | None = None,
     maintenance_sandbox_image_policy: SandboxImagePolicy | None = None,
+    maintenance_activation_root: Path | None = None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
@@ -1008,6 +1009,11 @@ def create_app(
         experiment_service = MaintenanceExperimentService(
             application.state.application_service,
             image_policy,
+            activation_root=(
+                Path(__file__).resolve().parents[2]
+                if maintenance_activation_root is None
+                else maintenance_activation_root
+            ),
         )
         application.state.maintenance_experiment_service = experiment_service
         try:

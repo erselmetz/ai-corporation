@@ -1,6 +1,6 @@
 """Create local Git checkpoint commits from exactly approved maintenance patches."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 import os
 from pathlib import Path, PurePosixPath
@@ -103,7 +103,14 @@ class GitCheckpointService:
         self._workspace_records: dict[str, str] = {}
         self._lock = RLock()
 
-    def create(self, workspace_id: str, *, created_by: str) -> GitCheckpoint:
+    def create(
+        self,
+        workspace_id: str,
+        *,
+        created_by: str,
+        source_root: Path | None = None,
+        approval_request_id: str | None = None,
+    ) -> GitCheckpoint:
         _validate_creator_identity(created_by)
         try:
             workspace = self._workspaces.get(workspace_id)
@@ -111,7 +118,20 @@ class GitCheckpointService:
             raise GitCheckpointNotFoundError(
                 "Maintenance workspace was not found"
             ) from None
-        approval = self._approvals.require_approved(workspace_id)
+        if source_root is not None:
+            try:
+                workspace = replace(
+                    workspace,
+                    source_root=Path(source_root).resolve(strict=True),
+                )
+            except (OSError, RuntimeError, TypeError, ValueError):
+                raise GitCheckpointBlockedError(
+                    "Maintenance activation source is unavailable"
+                ) from None
+        approval = self._approvals.require_approved(
+            workspace_id,
+            request_id=approval_request_id,
+        )
 
         with self._lock:
             existing_id = self._workspace_records.get(workspace.workspace_id)
@@ -140,6 +160,117 @@ class GitCheckpointService:
                 checkpoint.checkpoint_id
             )
             return checkpoint
+
+    def activate(self, checkpoint_id: str, *, source_root: Path) -> GitCheckpoint:
+        """Fast-forward the configured clean source checkout to an approved checkpoint."""
+        checkpoint = self.get(checkpoint_id)
+        if self._git_executable is None:
+            raise GitCheckpointError("Git is not available on this installation")
+        try:
+            root = Path(source_root).resolve(strict=True)
+        except (OSError, RuntimeError, TypeError, ValueError):
+            raise GitCheckpointBlockedError(
+                "Maintenance activation source is unavailable"
+            ) from None
+        if not root.is_dir():
+            raise GitCheckpointBlockedError(
+                "Maintenance activation source is unavailable"
+            )
+        with tempfile.TemporaryDirectory(prefix="ai-corp-activation-") as temporary:
+            hooks = Path(temporary) / "empty-hooks"
+            hooks.mkdir()
+            repository_root = self._repository_root(root, hooks)
+            if root != repository_root:
+                raise GitCheckpointBlockedError(
+                    "Maintenance activation must target the configured Git checkout root"
+                )
+            approval = self._approvals.require_approved(
+                checkpoint.workspace_id,
+                request_id=checkpoint.approval_request_id,
+            )
+            if (
+                approval.request_id != checkpoint.approval_request_id
+                or approval.patch_sha256 != checkpoint.patch_sha256
+                or approval.source_sha256 != checkpoint.source_sha256
+            ):
+                raise GitCheckpointBlockedError(
+                    "The approved maintenance artifact is no longer current"
+                )
+            if self._head(repository_root, hooks) != checkpoint.parent_sha.encode("ascii"):
+                raise GitCheckpointBlockedError(
+                    "The source checkout changed after the maintenance checkpoint"
+                )
+            self._require_clean_repository(repository_root, hooks)
+            branch_ref = f"refs/heads/{checkpoint.branch_name}"
+            try:
+                branch_sha = self._run_git(
+                    ("rev-parse", "--verify", branch_ref), repository_root, hooks
+                ).strip()
+            except _GitCommandFailure:
+                raise GitCheckpointBlockedError(
+                    "The maintenance checkpoint branch is unavailable"
+                ) from None
+            if branch_sha.decode("ascii") != checkpoint.commit_sha:
+                raise GitCheckpointBlockedError(
+                    "The maintenance checkpoint no longer matches its recorded artifact"
+                )
+            try:
+                self._run_git(
+                    ("merge", "--ff-only", branch_ref), repository_root, hooks
+                )
+            except _GitCommandFailure:
+                current = self._head(repository_root, hooks).decode("ascii")
+                if current != checkpoint.commit_sha:
+                    raise GitCheckpointBlockedError(
+                        "The approved patch was not activated; inspect the checkout before recovery"
+                    ) from None
+            if self._head(repository_root, hooks).decode("ascii") != checkpoint.commit_sha:
+                raise GitCheckpointBlockedError(
+                    "The source checkout did not reach the approved checkpoint"
+                )
+            self._require_clean_repository(repository_root, hooks)
+        return checkpoint
+
+    def recover_activation(self, checkpoint_id: str, *, source_root: Path) -> GitCheckpoint:
+        """Revert only the exact activation when it remains the clean checkout HEAD."""
+        checkpoint = self.get(checkpoint_id)
+        if self._git_executable is None:
+            raise GitCheckpointError("Git is not available on this installation")
+        try:
+            root = Path(source_root).resolve(strict=True)
+        except (OSError, RuntimeError, TypeError, ValueError):
+            raise GitCheckpointBlockedError(
+                "Maintenance recovery source is unavailable"
+            ) from None
+        with tempfile.TemporaryDirectory(prefix="ai-corp-recovery-") as temporary:
+            hooks = Path(temporary) / "empty-hooks"
+            hooks.mkdir()
+            repository_root = self._repository_root(root, hooks)
+            if root != repository_root:
+                raise GitCheckpointBlockedError(
+                    "Maintenance recovery must target the configured Git checkout root"
+                )
+            if self._head(repository_root, hooks).decode("ascii") != checkpoint.commit_sha:
+                raise GitCheckpointBlockedError(
+                    "Recovery is available only while the activation is the current HEAD"
+                )
+            self._require_clean_repository(repository_root, hooks)
+            try:
+                self._run_git(
+                    ("revert", "--no-edit", checkpoint.commit_sha),
+                    repository_root,
+                    hooks,
+                )
+            except _GitCommandFailure:
+                raise GitCheckpointBlockedError(
+                    "The exact activation could not be reverted automatically"
+                ) from None
+            if self._head(repository_root, hooks).decode("ascii") == checkpoint.commit_sha:
+                raise GitCheckpointBlockedError(
+                    "The source checkout did not record the recovery commit"
+                )
+            self._require_clean_repository(repository_root, hooks)
+        return checkpoint
 
     def list(self) -> tuple[GitCheckpoint, ...]:
         with self._lock:
@@ -301,7 +432,8 @@ class GitCheckpointService:
                 )
 
             current_approval = self._approvals.require_approved(
-                workspace.workspace_id
+                workspace.workspace_id,
+                request_id=approval.request_id,
             )
             if current_approval.request_id != approval.request_id:
                 raise GitCheckpointBlockedError(

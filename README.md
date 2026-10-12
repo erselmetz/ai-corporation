@@ -340,8 +340,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-122 are verified complete, Task 123 is next,
-and Tasks 123-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-123 are verified complete, Task 124 is next,
+and Tasks 124-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -612,6 +612,27 @@ lost on restart or disposal; source hashes do not attest a repository commit, an
 different Agents may share a provider/model. The default image policy is empty.
 Validation and baseline suite failures are recorded in the Task 122 contract.
 Checkpoint tag `task-122-isolated-adaptation-validation`.
+
+## Task 123 - Approved local activation and verified Git recovery
+
+After isolated tests and independent review, the local owner can activate only
+the exact approved patch through `POST /api/maintenance/experiments/{id}/activate`.
+The uploaded source files must still match the configured application checkout;
+the approval must bind the same source and patch hashes, follow the recorded test
+and review, and be no more than 24 hours old. Critical/high review findings block
+activation. The service requires a clean checkout at the checkpoint parent, makes
+the supported Git checkpoint, then fast-forwards the local checkout. The response
+records affected files, dependency/configuration/data classifications, hashes,
+test/review evidence, approval and checkpoint provenance.
+
+Owner-triggered recovery is available only while that exact activation remains
+clean `HEAD`; it creates a Git revert commit. Partial or uncertain activation
+preserves checkpoint provenance and requires checkout inspection. Coordination
+and evidence are process-local. Activation does not restart the running Python
+process, verify runtime health, install dependencies, migrate data, deploy the
+website, or reverse external side effects. No model weights are trained or
+changed. Validation and limitations are in `docs/tasks-data.mjs`; checkpoint
+tag `task-123-approved-local-activation`.
 
 ## Task 118 - Durable chat history
 

@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-122 are verified complete, Task 123 is next,
-and Tasks 123-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-123 are verified complete, Task 124 is next,
+and Tasks 124-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -984,3 +984,27 @@ Distinct Agent IDs may share a model/provider. No live Docker or provider calls
 were made in Task 122 tests; sandbox controls were tested with deterministic fakes.
 The full Python suite retained the two unrelated model-assignment failures recorded
 at Task 121. Checkpoint tag `task-122-isolated-adaptation-validation`.
+
+## Approved local activation (Task 123)
+
+The maintenance experiment API activates only an exact uploaded patch whose
+source files still hash to the configured application's Git checkout. Activation
+requires passed isolated tests, a recorded independent review without critical or
+high findings, and the exact owner approval created after that evidence and
+within 24 hours. The checkout must be clean at the approved checkpoint's parent
+commit. `GitCheckpointService` builds the patch checkpoint from the configured
+repository source, revalidates the approval, and fast-forwards the local checkout.
+A process-local activation lock prevents concurrent activations through that
+service instance; unrelated processes or manual Git/file changes remain outside
+that lock and are guarded by clean-worktree and parent checks.
+
+The API reports source/patch/approval/checkpoint hashes, changed files, test and
+review evidence, and dependency/configuration/data path classifications. If
+activation does not verify, the checkpoint and an uncertainty record are retained.
+Recovery is an explicit owner call that runs `git revert --no-edit` only when the
+exact activation commit remains clean `HEAD`; this was exercised in a disposable
+Git repository. It cannot reverse external effects. The current server has no
+supervised restart contract, so source activation does not restart the Python
+process or claim runtime health; dependency installation, data migrations, model
+weight changes and website deployment are not performed. Experiment/approval
+evidence remains process-local; Git commits remain in the checkout after restart.

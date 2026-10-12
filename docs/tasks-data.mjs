@@ -937,28 +937,38 @@ export const post100Tasks = [
     "title": "Approved integration and verified recovery",
     "description": "Apply an exact owner-approved adaptation through bounded change control and verify the active result.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       122
     ],
     "acceptance": [
-      "Revalidate source/patch/test/review/approval links before applying the change.",
-      "Show affected code/configuration/dependencies/data and create supported checkpoints.",
-      "Verify actual activation; show failure/uncertainty and tested recovery scope.",
-      "Test stale approvals, partial failures and inability to reverse external actions.",
-      "Activate only the exact owner-approved artifact after passing scoped tests and independent review; verify restart/health and offer only recovery steps that were actually tested.",
-      "Self-maintenance may improve software, workflows or explicitly approved memory; it never automatically trains or changes model weights."
+      "Revalidate source/patch/test/review/approval links before applying the change; source files must still match the configured local Git checkout.",
+      "Show changed files, dependency/configuration/data classifications, test/review evidence, and the supported Git checkpoint.",
+      "Verify the exact checkpoint is the local checkout HEAD after activation; record failure or uncertainty and expose only the tested local Git recovery operation.",
+      "Test expired or stale approvals, partial activation failure, and the boundary that external actions cannot be reversed.",
+      "Activate only the exact owner-approved artifact after passing scoped tests and independent review with no critical/high findings; require a clean checkout at the checkpoint parent and an approval made after test/review within 24 hours.",
+      "Report runtime restart/health and website deployment as not performed; these require a separate explicit operational path. Self-maintenance never automatically trains or changes model weights."
     ],
     "outOfScope": [
-      "Self-expanding authority, unrestricted self-modification or universal rollback guarantees."
+      "Self-expanding authority, unrestricted self-modification, runtime restart, website deployment, external side effects, or universal rollback guarantees."
     ],
     "decisions": [
-      "Approve activation/deployment scope, per-artifact gates and recovery ownership; website deployment is a separate explicit action."
+      "Resolved conservatively: activation is limited to a fast-forward of the configured local Git checkout after exact artifact gates; recovery is an owner-triggered Git revert only while that activation is clean HEAD. The running process and website are not restarted or deployed, and external effects are outside recovery scope."
     ],
     "area": "P11b",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-123-approved-local-activation",
+    "validation": [
+      "Focused Task 123 activation tests cover exact source/patch/test/review/approval binding, 24-hour approval expiry, stale-source rejection, checkpoint fast-forward, simulated Git failure, and tested Git revert recovery.",
+      "Focused maintenance, checkpoint, approval, workflow and local-owner authorization regressions: 57 passed.",
+      "Full Python suite: 1048 passed, 3 skipped, and 2 pre-existing unrelated model-assignment failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service), matching the Task 121 baseline.",
+      "All 14 public documentation tests passed; Python compilation and git diff --check passed. pyright/Pylance diagnostics were unavailable. No live Docker, Ollama, or cloud/provider calls; deterministic fakes were used."
+    ],
+    "limitations": [
+      "Activation and evidence coordination are process-local; evidence is lost when the API process restarts, while the Git checkpoint/activation commits remain in the repository.",
+      "Activation requires the configured source repository to be clean and at the checkpoint parent; external edits and separate processes are not coordinated by the process-local lock.",
+      "The API fast-forwards local source but does not restart the running Python process or verify post-restart runtime health. The owner must handle restart separately.",
+      "Git recovery is available only while the exact activation commit remains clean HEAD; it cannot reverse website deployment, data migrations, provider calls, or other external side effects."
+    ]
   },
   {
     "number": 124,

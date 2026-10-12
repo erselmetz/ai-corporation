@@ -488,8 +488,27 @@ class CorporationApplicationService:
         workspace_id: str,
         *,
         created_by: str,
+        source_root: Path | None = None,
+        approval_request_id: str | None = None,
     ) -> GitCheckpoint:
-        return self._git_checkpoints.create(workspace_id, created_by=created_by)
+        return self._git_checkpoints.create(
+            workspace_id,
+            created_by=created_by,
+            source_root=source_root,
+            approval_request_id=approval_request_id,
+        )
+
+    def activate_maintenance_checkpoint(
+        self, checkpoint_id: str, *, source_root: Path
+    ) -> GitCheckpoint:
+        return self._git_checkpoints.activate(checkpoint_id, source_root=source_root)
+
+    def recover_maintenance_activation(
+        self, checkpoint_id: str, *, source_root: Path
+    ) -> GitCheckpoint:
+        return self._git_checkpoints.recover_activation(
+            checkpoint_id, source_root=source_root
+        )
 
     def list_maintenance_checkpoints(self) -> tuple[GitCheckpoint, ...]:
         return self._git_checkpoints.list()

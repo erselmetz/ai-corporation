@@ -3,7 +3,7 @@
 import json
 import tempfile
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from pathlib import PurePosixPath
 from threading import RLock
@@ -25,10 +25,13 @@ from app.application.services.maintenance_sandbox import (
     MaintenanceSandboxService,
     MaintenanceSandboxStatus,
 )
+from app.approval import ApprovalStatus
 from app.application.services.patch_development import (
     PatchDevelopmentService,
     PatchWorkspace,
     _validate_relative_path,
+    _source_digest,
+    _source_file,
 )
 from app.integrations import SandboxImagePolicy
 from .security import AuthenticatedPrincipal, require_permission
@@ -36,6 +39,7 @@ from .security import AuthenticatedPrincipal, require_permission
 
 router = APIRouter(prefix="/api/maintenance/experiments")
 require_experiment = require_permission("maintenance:experiment")
+require_activation = require_permission("maintenance:activate")
 ExperimentIdentifier = Annotated[str, ApiPath(min_length=1, max_length=64)]
 
 
@@ -91,6 +95,11 @@ class ExperimentReviewRequest(BaseModel):
     cloud_consent: StrictBool = False
 
 
+class ExperimentActivationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    approval_request_id: str = Field(min_length=1, max_length=128)
+
+
 @dataclass(slots=True)
 class _ExperimentRecord:
     owner: str
@@ -99,6 +108,7 @@ class _ExperimentRecord:
     created_at: datetime
     test_report: MaintenanceSandboxReport | None = None
     review_report: CodeReviewReport | None = None
+    activation_result: dict | None = None
     active: bool = False
 
 
@@ -108,6 +118,7 @@ class MaintenanceExperimentService:
     MAX_EXPERIMENTS = PatchDevelopmentService.MAX_WORKSPACES
     MAX_REQUEST_BYTES = 24 * 1024 * 1024
     MAX_REVIEW_PATCH_BYTES = CodeReviewService.MAX_EVIDENCE_BYTES - 8 * 1024
+    APPROVAL_MAX_AGE = timedelta(hours=24)
     RECOVERY_LIMITS = (
         "The uploaded source and patch are isolated from the active installation.",
         "Experiments, test results, and review records are process-local and are lost on restart.",
@@ -138,13 +149,22 @@ class MaintenanceExperimentService:
         self,
         application_service,
         image_policy: SandboxImagePolicy,
+        *,
+        activation_root: Path,
     ):
         if not isinstance(image_policy, SandboxImagePolicy):
             raise TypeError("image_policy must be a SandboxImagePolicy")
         self._application = application_service
         self._image_policy = image_policy
+        try:
+            self._activation_root = Path(activation_root).resolve(strict=True)
+        except (OSError, RuntimeError, TypeError, ValueError):
+            raise ValueError("Maintenance activation checkout is unavailable") from None
+        if not self._activation_root.is_dir():
+            raise ValueError("Maintenance activation checkout is unavailable")
         self._records: dict[str, _ExperimentRecord] = {}
         self._lock = RLock()
+        self._activation_lock = RLock()
 
     def create(
         self,
@@ -240,7 +260,6 @@ class MaintenanceExperimentService:
             with self._lock:
                 record.active = False
             raise
-
         with self._lock:
             record.active = False
             record.test_report = report
@@ -321,17 +340,209 @@ class MaintenanceExperimentService:
             with self._lock:
                 record.active = False
             raise
-
         with self._lock:
             record.active = False
             record.review_report = report
             return self._snapshot(record)
+
+    def activate(
+        self,
+        owner: str,
+        workspace_id: str,
+        approval_request_id: str,
+    ) -> dict:
+        with self._lock:
+            record = self._owned_record(owner, workspace_id)
+            if record.active:
+                raise RuntimeError("Experiment already has an active operation")
+            if record.activation_result is not None:
+                raise RuntimeError("Experiment activation has already been recorded")
+            workspace = record.workspace
+            if (
+                record.test_report is None
+                or record.test_report.status is not MaintenanceSandboxStatus.PASSED
+                or record.test_report.workspace_id != workspace.workspace_id
+                or record.test_report.proposal_id != workspace.proposal_id
+            ):
+                raise PermissionError("Activation requires passing tests for this exact patch")
+            if record.review_report is None or not record.review_report.evidence_sha256:
+                raise PermissionError("Activation requires independent review of this exact patch")
+            if any(
+                finding.severity.value in {"critical", "high"}
+                for finding in record.review_report.findings
+            ):
+                raise PermissionError("Activation is blocked by critical or high review findings")
+            record.active = True
+
+        self._activation_lock.acquire()
+        try:
+            approval = self._application.get_maintenance_approval(approval_request_id)
+            if (
+                approval.workspace_id != workspace.workspace_id
+                or approval.proposal_id != workspace.proposal_id
+                or approval.patch_sha256 != workspace.patch_sha256
+                or approval.source_sha256 != workspace.source_sha256
+                or approval.status is not ApprovalStatus.APPROVED
+                or approval.decided_by is None
+                or approval.decided_at is None
+            ):
+                raise PermissionError("Approval does not match this exact tested patch")
+            approved_at = approval.decided_at
+            reviewed_at = record.review_report.generated_at
+            tested_at = record.test_report.finished_at
+            now = datetime.now(timezone.utc)
+            if (
+                approved_at.tzinfo is None
+                or approved_at < max(reviewed_at, tested_at)
+                or approved_at > now
+                or now - approved_at > self.APPROVAL_MAX_AGE
+            ):
+                raise PermissionError(
+                    "Approval is stale; re-review the current test evidence and approve again"
+                )
+
+            self._verify_target_source(workspace)
+            checkpoint = self._application.create_maintenance_checkpoint(
+                workspace.workspace_id,
+                created_by=owner,
+                source_root=self._activation_root,
+                approval_request_id=approval.request_id,
+            )
+            if (
+                checkpoint.approval_request_id != approval.request_id
+                or checkpoint.patch_sha256 != workspace.patch_sha256
+                or checkpoint.source_sha256 != workspace.source_sha256
+            ):
+                raise PermissionError("Checkpoint does not match the approved artifact")
+            with self._lock:
+                record.activation_result = {
+                    "status": "checkpointed_pending_activation",
+                    "workspace_id": workspace.workspace_id,
+                    "checkpoint_id": checkpoint.checkpoint_id,
+                    "commit_sha": checkpoint.commit_sha,
+                    "parent_sha": checkpoint.parent_sha,
+                    "patch_sha256": workspace.patch_sha256,
+                    "source_sha256": workspace.source_sha256,
+                }
+            self._verify_target_source(workspace)
+            self._application.activate_maintenance_checkpoint(
+                checkpoint.checkpoint_id,
+                source_root=self._activation_root,
+            )
+            result = {
+                "status": "activated",
+                "activation_mode": "local_git_fast_forward",
+                "workspace_id": workspace.workspace_id,
+                "proposal_id": workspace.proposal_id,
+                "source_sha256": workspace.source_sha256,
+                "patch_sha256": workspace.patch_sha256,
+                "approval_request_id": approval.request_id,
+                "approved_by": approval.decided_by,
+                "approved_at": approval.decided_at,
+                "checkpoint_id": checkpoint.checkpoint_id,
+                "commit_sha": checkpoint.commit_sha,
+                "parent_sha": checkpoint.parent_sha,
+                "changed_files": workspace.changed_files,
+                "impact_report": _impact_report(workspace.changed_files),
+                "test_run_id": record.test_report.run_id,
+                "test_status": record.test_report.status.value,
+                "reviewer_agent_id": record.review_report.agent_id,
+                "review_findings": tuple(
+                    {
+                        "severity": finding.severity.value,
+                        "summary": finding.summary,
+                    }
+                    for finding in record.review_report.findings
+                ),
+                "review_unknowns": record.review_report.unknowns,
+                "runtime_restart": "not_performed",
+                "runtime_health": "not_verified",
+                "website_deployment": "not_performed",
+                "recovery": {
+                    "available_only_when_activation_is_clean_HEAD": True,
+                    "action": f"POST /api/maintenance/experiments/{workspace.workspace_id}/recover",
+                    "external_actions_reversed": False,
+                },
+            }
+            with self._lock:
+                record.activation_result = result
+                record.active = False
+                return result
+        except BaseException:
+            with self._lock:
+                if record.activation_result is not None:
+                    record.activation_result = {
+                        **record.activation_result,
+                        "status": "activation_uncertain",
+                        "failure": (
+                            "Activation did not return verified. Inspect the local Git checkout "
+                            "and checkpoint before attempting recovery."
+                        ),
+                    }
+                record.active = False
+            raise
+        finally:
+            self._activation_lock.release()
+
+    def recover(self, owner: str, workspace_id: str) -> dict:
+        with self._lock:
+            record = self._owned_record(owner, workspace_id)
+            if record.active:
+                raise RuntimeError("Experiment already has an active operation")
+            if record.activation_result is None:
+                raise ValueError("Experiment has no recorded activation to recover")
+            if record.activation_result.get("recovered"):
+                raise RuntimeError("Experiment activation has already been recovered")
+            record.active = True
+            checkpoint_id = record.activation_result["checkpoint_id"]
+        self._activation_lock.acquire()
+        try:
+            checkpoint = self._application.recover_maintenance_activation(
+                checkpoint_id,
+                source_root=self._activation_root,
+            )
+            with self._lock:
+                record.activation_result = {
+                    **record.activation_result,
+                    "recovered": True,
+                    "recovery_commit_parent": checkpoint.commit_sha,
+                    "recovery_scope": "reverted only the exact local Git activation",
+                    "runtime_restart": "not_performed",
+                    "website_deployment": "not_performed",
+                }
+                record.active = False
+                return record.activation_result
+        except BaseException:
+            with self._lock:
+                record.active = False
+            raise
+        finally:
+            self._activation_lock.release()
+
+    def _verify_target_source(self, workspace: PatchWorkspace) -> None:
+        try:
+            contents = {}
+            for relative_path in workspace.files:
+                path = _source_file(self._activation_root, relative_path)
+                with path.open("rb") as stream:
+                    content = stream.read(PatchDevelopmentService.MAX_FILE_BYTES + 1)
+                if len(content) > PatchDevelopmentService.MAX_FILE_BYTES:
+                    raise ValueError("Source file exceeds the limit")
+                contents[relative_path] = content
+            if _source_digest(contents) != workspace.source_sha256:
+                raise ValueError("Source snapshot differs")
+        except (OSError, ValueError):
+            raise PermissionError(
+                "Activation source no longer matches the uploaded snapshot"
+            ) from None
 
     def dispose(self, owner: str, workspace_id: str) -> None:
         with self._lock:
             record = self._owned_record(owner, workspace_id)
             if record.active:
                 raise RuntimeError("Cannot dispose an active experiment")
+            if record.activation_result is not None:
+                raise RuntimeError("Activated experiment provenance must be retained until restart")
             del self._records[workspace_id]
         try:
             self._application.dispose_patch_workspace(workspace_id)
@@ -371,6 +582,7 @@ class MaintenanceExperimentService:
             "unified_diff": workspace.unified_diff,
             "test_report": record.test_report,
             "review_report": record.review_report,
+            "activation_result": record.activation_result,
             "execution_policy": self.EXECUTION_POLICY,
             "recovery_limits": self.RECOVERY_LIMITS,
         }
@@ -387,6 +599,40 @@ async def bounded_experiment_body(request: Request) -> bytes:
 
 def _service(request: Request) -> MaintenanceExperimentService:
     return request.app.state.maintenance_experiment_service
+
+
+def _impact_report(changed_files: tuple[str, ...]) -> dict:
+    dependency_names = {
+        "pyproject.toml", "poetry.lock", "uv.lock", "package.json",
+        "package-lock.json", "pnpm-lock.yaml", "yarn.lock",
+    }
+    dependencies = tuple(
+        path for path in changed_files
+        if Path(path).name in dependency_names or Path(path).name.startswith("requirements")
+    )
+    configuration = tuple(
+        path for path in changed_files
+        if Path(path).suffix.lower() in {".toml", ".ini", ".yaml", ".yml", ".json"}
+        or Path(path).name.startswith(".env")
+    )
+    data = tuple(
+        path for path in changed_files
+        if "migration" in path.lower()
+        or Path(path).suffix.lower() in {".db", ".sqlite", ".sqlite3"}
+        or path.lower().startswith(("data/", "database/"))
+    )
+    classified = set(dependencies) | set(configuration) | set(data)
+    return {
+        "changed_files": changed_files,
+        "source_or_other_files": tuple(
+            path for path in changed_files if path not in classified
+        ),
+        "dependency_manifests": dependencies,
+        "configuration_files": configuration,
+        "data_or_migration_files": data,
+        "dependency_installation": "not_performed",
+        "data_migration": "not_performed",
+    }
 
 
 def _parse(model, payload: bytes):
@@ -481,6 +727,42 @@ def review_experiment(
         RuntimeError,
         ValueError,
     ) as error:
+        _raise_service_error(error)
+
+
+@router.post(
+    "/{workspace_id}/activate",
+    status_code=201,
+    dependencies=[Depends(require_activation)],
+)
+def activate_experiment(
+    workspace_id: ExperimentIdentifier,
+    body: ExperimentActivationRequest,
+    principal: AuthenticatedPrincipal = Depends(require_activation),
+    service: MaintenanceExperimentService = Depends(_service),
+):
+    try:
+        return service.activate(
+            principal.identity,
+            workspace_id,
+            body.approval_request_id,
+        )
+    except (LookupError, PermissionError, RuntimeError, ValueError) as error:
+        _raise_service_error(error)
+
+
+@router.post(
+    "/{workspace_id}/recover",
+    dependencies=[Depends(require_activation)],
+)
+def recover_experiment_activation(
+    workspace_id: ExperimentIdentifier,
+    principal: AuthenticatedPrincipal = Depends(require_activation),
+    service: MaintenanceExperimentService = Depends(_service),
+):
+    try:
+        return service.recover(principal.identity, workspace_id)
+    except (LookupError, PermissionError, RuntimeError, ValueError) as error:
         _raise_service_error(error)
 
 

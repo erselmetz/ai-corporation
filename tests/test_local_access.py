@@ -31,7 +31,9 @@ def test_login_session_cookie_and_logout_revocation():
         token = client.cookies[COOKIE]
         record = client.get("/api/local/session")
         assert record.headers["cache-control"] == "no-store"
-        assert "maintenance:approve" not in record.json()["permissions"]
+        assert "maintenance:approve" in record.json()["permissions"]
+        assert "maintenance:checkpoint" in record.json()["permissions"]
+        assert "maintenance:activate" in record.json()["permissions"]
         assert "maintenance:experiment" in record.json()["permissions"]
         assert "task:create" not in record.json()["permissions"]
         assert "chat-task:create" in record.json()["permissions"]

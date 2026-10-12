@@ -136,7 +136,12 @@ class MaintenanceApprovalService:
             approve=False,
         )
 
-    def require_approved(self, workspace_id: str) -> MaintenanceApprovalReview:
+    def require_approved(
+        self,
+        workspace_id: str,
+        *,
+        request_id: str | None = None,
+    ) -> MaintenanceApprovalReview:
         try:
             workspace = self._workspaces.get(workspace_id)
         except ValueError:
@@ -148,6 +153,7 @@ class MaintenanceApprovalService:
                 record
                 for record in self._records.values()
                 if _same_workspace(record.workspace, workspace)
+                and (request_id is None or record.request.id == request_id)
                 and record.request.status is ApprovalStatus.APPROVED
                 and record.request.decided_by is not None
                 and record.request.decided_at is not None
