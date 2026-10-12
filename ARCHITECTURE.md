@@ -659,9 +659,9 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-119 are verified complete, Task 120 is next,
-and Tasks 120-129 are planned. Every task has dependencies, acceptance checks,
-exclusions and explicit unresolved decision gates; completed post-100 records
+public `docs/tasks.html`: Tasks 101-122 are verified complete, Task 123 is next,
+and Tasks 123-129 are planned. Every task has dependencies, acceptance checks,
+exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
 work, and do not treat a published plan as approval to implement future actions.
@@ -956,3 +956,31 @@ depth 3 and 10 child items, review is advisory and separate from owner approval,
 online destinations need consent plus a declared spend ceiling (otherwise
 UNKNOWN), fallback is off unless pre-authorized, and started calls cannot be
 cancelled.
+
+## Isolated adaptation experiments (Task 122)
+
+The local-owner-only `/api/maintenance/experiments` API requires the distinct
+`maintenance:experiment` permission. An owner supplies an existing proposal, a
+bounded set of source-file contents, and an exact unified diff. The resulting
+snapshot binds source and patch SHA-256 identities, allowed/changed files, test
+selection, execution limits, test evidence, advisory review evidence, and recovery
+limits. Patch changes stay in disposable temporary workspaces; the active source,
+installation, and runtime are not modified.
+
+Only explicitly selected Python files can run through the existing Docker sandbox
+and an embedding-host allowlist of locally available digest-pinned images. The
+container enforces disabled networking, no host mounts, a read-only root, dropped
+capabilities, resource bounds, bounded output/time, and no automatic image pulls.
+If an approved image or supported Docker isolation is unavailable, the report is
+BLOCKED and uploaded source is not executed. Review uses the exact patch and
+bounded experiment/test context. The reviewer Agent ID must differ from the
+proposal's diagnostic author; online review requires per-request cloud consent.
+Review is advisory and cannot approve, integrate, commit, or activate a patch.
+
+Experiments and evidence are process-local and removed on disposal or application
+shutdown; restart loses them, and no backup or rollback is created. Source identity
+is a digest of owner-supplied selected files, not an attested repository commit.
+Distinct Agent IDs may share a model/provider. No live Docker or provider calls
+were made in Task 122 tests; sandbox controls were tested with deterministic fakes.
+The full Python suite retained the two unrelated model-assignment failures recorded
+at Task 121. Checkpoint tag `task-122-isolated-adaptation-validation`.

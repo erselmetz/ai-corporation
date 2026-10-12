@@ -34,6 +34,7 @@ from app.application import (
 from app.documentation import MarkdownDocumentationSource
 from app.updates import CuratedUpdatesManifest
 from app.application.services.owned_chat import ChatConflict
+from app.integrations import SandboxImagePolicy
 from app.runtime import create_corporation_runtime
 from app.webui import web_ui_router
 from app.positions import (
@@ -963,6 +964,7 @@ def create_app(
     updates_source: UpdatesSource | None = None,
     github_repository_inspection_service: GitHubRepositoryInspectionService | None = None,
     repository_study_service: RepositoryStudyService | None = None,
+    maintenance_sandbox_image_policy: SandboxImagePolicy | None = None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
@@ -996,7 +998,22 @@ def create_app(
             if repository_study_service is None
             else repository_study_service
         )
-        yield
+        image_policy = (
+            SandboxImagePolicy()
+            if maintenance_sandbox_image_policy is None
+            else maintenance_sandbox_image_policy
+        )
+        from .maintenance_experiments import MaintenanceExperimentService
+
+        experiment_service = MaintenanceExperimentService(
+            application.state.application_service,
+            image_policy,
+        )
+        application.state.maintenance_experiment_service = experiment_service
+        try:
+            yield
+        finally:
+            experiment_service.close()
 
     application = FastAPI(
         title="ERSELMETZ AI CORPORATION API",
@@ -1023,6 +1040,8 @@ def create_app(
     application.include_router(maintenance_approvals_router)
     from .maintenance_checkpoints import router as maintenance_checkpoints_router
     application.include_router(maintenance_checkpoints_router)
+    from .maintenance_experiments import router as maintenance_experiments_router
+    application.include_router(maintenance_experiments_router)
     from .github import router as github_router
     application.include_router(github_router)
     from .chat_history import router as chat_history_router

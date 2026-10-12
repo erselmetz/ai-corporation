@@ -896,7 +896,7 @@ export const post100Tasks = [
     "title": "Isolated adaptation workspace and validation",
     "description": "Develop a selected authorized adaptation in a disposable isolated work area using existing maintenance stages.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       121
     ],
@@ -912,12 +912,25 @@ export const post100Tasks = [
       "Editing active source/runtime or approving/integrating a proposed patch automatically."
     ],
     "decisions": [
-      "Approve experiment tools, sandbox policy and source/patch authorization contract."
+      "Owner authorization is the separate local-owner maintenance:experiment permission. Source and exact patch are explicitly supplied and hashed; only selected Python files run through the existing Docker sandbox with an embedding-host approved digest-pinned image. Missing isolation is BLOCKED. Review uses a different Agent ID, requires per-request cloud consent when online, and never approves or integrates."
     ],
     "area": "P11a",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-122-isolated-adaptation-validation",
+    "validation": [
+      "Focused Task 122 experiment tests: 12 passed.",
+      "Directly affected maintenance, sandbox, authorization, and API regression tests: 166 passed.",
+      "Final focused experiment, code-review, and local-access tests after security-review prompt coverage: 33 passed.",
+      "Full Python suite: 1043 passed, 3 skipped, 2 known unrelated model-assignment failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service), matching the Task 121 baseline.",
+      "Public documentation tests and Python compilation checks passed; git diff --check passed.",
+      "No live Docker, Ollama, or paid/cloud provider calls; Docker behavior uses deterministic backend fakes."
+    ],
+    "limitations": [
+      "Default sandbox image policy is empty; the embedding host must configure an allowlisted, locally available digest-pinned image and supported Docker daemon or tests report BLOCKED.",
+      "Experiment workspaces, test/review reports, and ownership are process-local; disposal or restart removes them, with no automatic backup or rollback.",
+      "Source identity hashes explicitly uploaded selected files; it does not attest a repository commit or prove semantic alignment with proposal text.",
+      "Independent review means a distinct Agent ID from the diagnostic author; Agents may share an underlying model/provider. Review remains advisory.",
+      "The two full-suite model-assignment failures are pre-existing and unrelated to Task 122."
+    ]
   },
   {
     "number": 123,

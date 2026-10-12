@@ -340,9 +340,9 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-121 are verified complete, Task 122 is next,
-and Tasks 122-129 are planned. Every task has dependencies, acceptance checks,
-exclusions and explicit unresolved decision gates; completed post-100 records
+public `docs/tasks.html`: Tasks 101-122 are verified complete, Task 123 is next,
+and Tasks 123-129 are planned. Every task has dependencies, acceptance checks,
+exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
 work, and do not treat a published plan as approval to implement future actions.
@@ -596,6 +596,22 @@ paid/provider calls. Limitations: the app's repository allowlist is empty unless
 configured by its embedding host; GitHub metadata is timestamped separately
 from the commit-pinned source analysis. Checkpoint tag
 `task-121-chat-driven-github-study`.
+
+## Task 122 - Isolated adaptation workspace and validation
+
+The local-owner-only `POST /api/maintenance/experiments` path applies an exact,
+bounded unified diff only to explicitly supplied files in a disposable workspace.
+It binds source/patch hashes, file scope, time/resource limits, selected Python
+checks, test results, advisory review and recovery limits. Tests use the existing
+Docker sandbox with an embedding-host allowlisted, locally available digest-pinned
+image; missing isolation returns BLOCKED. Network, host mounts, automatic image
+pulls, arbitrary commands, active-install edits and automatic approval/integration
+are excluded. A reviewer must be a different Agent ID from the diagnostic author;
+online review requires per-request cloud consent. Records are process-local and
+lost on restart or disposal; source hashes do not attest a repository commit, and
+different Agents may share a provider/model. The default image policy is empty.
+Validation and baseline suite failures are recorded in the Task 122 contract.
+Checkpoint tag `task-122-isolated-adaptation-validation`.
 
 ## Task 118 - Durable chat history
 

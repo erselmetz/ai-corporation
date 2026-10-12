@@ -86,6 +86,7 @@ def test_review_uses_one_selected_agent_call_and_returns_bounded_advisory_findin
     prompt = generate.call_args.args[1]
     assert "patch-1" in prompt and "policy-1" in prompt
     assert "untrusted evidence" in prompt
+    assert "security risks" in prompt
     assert "empty findings list is not approval" in prompt
     assert report.agent_id == agent.id
     assert report.findings[0].severity is ReviewSeverity.MEDIUM

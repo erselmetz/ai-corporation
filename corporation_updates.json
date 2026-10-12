@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-10-12",
+      "type": "development",
+      "title": "Isolated adaptation workspace and validation",
+      "summary": "Completed Task 122 with an owner-authorized, process-local maintenance experiment API. It applies an exact bounded unified diff only to explicitly supplied files in a disposable workspace and records source/patch hashes, selected scope, test evidence, advisory independent-Agent review and recovery limits. Scoped Python tests run only through the existing Docker sandbox using an embedding-host allowlisted, locally available digest-pinned image; network, host mounts, automatic image pulls and arbitrary commands are excluded, and unsupported isolation reports BLOCKED. Review requires a different Agent ID from the diagnostic author; each online review needs explicit cloud consent. Experiments never edit the active installation, approve/integrate/commit patches, or change model weights. Validation: focused Task 122 tests 12 passed; 166 directly affected maintenance/sandbox/auth/API regressions passed; final focused experiment/code-review/local-access regressions 33 passed after adding security-review prompt coverage; full Python suite 1043 passed, 3 skipped, with the same 2 pre-existing unrelated model-assignment failures recorded at Task 121. Public docs tests, Python compilation and diff checks passed. No live Docker or provider calls. Limitations: default image policy is empty, experiment/evidence records are process-local and lost on restart/disposal, source identity is a digest of owner-supplied files rather than an attested repository commit, and distinct Agent IDs may share a model/provider. Checkpoint tag: task-122-isolated-adaptation-validation. Task 123 is next; Tasks 123?129 remain planned."
+    },
+    {
       "date": "2026-10-11",
       "type": "development",
       "title": "Chat-driven GitHub study and research",
