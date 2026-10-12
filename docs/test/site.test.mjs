@@ -81,15 +81,18 @@ describe("documentation site", () => {
   });
 
   it("preserves foundation tasks 1–100 and adds contiguous post-100 contracts", () => {
-    assert.equal(tasks.length, 130);
+    assert.equal(tasks.length, 170);
     assert.equal(foundationTasks.length, 100);
-    assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 130 }, (_, i) => i + 1));
-    assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 30]);
+    assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 170 }, (_, i) => i + 1));
+    assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 30, 4, 5, 5, 5, 6, 3, 4, 4, 4]);
   });
 
-  it("marks all published tasks 1-130 complete after semantic memory foundation", () => {
-    assert.ok(tasks.every((task) => task.status === "completed"));
-    assert.equal(nextTask, undefined);
+  it("preserves 130 completed tasks and marks the 40 future tasks planned", () => {
+    assert.equal(tasks.filter(task => task.status === "completed").length, 130);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 40);
+    assert.equal(nextTask.number, 131);
+    assert.ok(tasks.slice(0, 130).every(task => task.status === "completed"));
+    assert.ok(tasks.slice(130).every(task => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -168,29 +171,33 @@ describe("documentation site", () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
     assert.match(html, /Milestones 1–100 are completed foundations/);
-    assert.match(html, /Tasks 101-130 are verified post-100 checkpoints/);
-    assert.match(html, /no later follow-up task is currently planned/);
+    assert.match(html, /Tasks 101-130 are verified post-100 checkpoints; Tasks 131-170 are planned only/);
+    assert.match(html, /Tasks 131-170 are planned/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
   });
 
-  it("keeps public overview pages aligned with Task 130 semantic memory", async () => {
+  it("keeps public overview pages aligned with completed and planned roadmap scopes", async () => {
     const [home, documentation, architecture, roadmap] = await Promise.all(
       ["index.html", "documentation.html", "architecture.html", "roadmap.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
     assert.match(home, /Verified Tasks 101-130/);
-    assert.match(documentation, /Tasks 101-130 are verified post-100 checkpoints/);
+    assert.match(home, /Tasks 131-170 are planned expansions/);
+    assert.match(documentation, /Tasks 101-130 are verified post-100 checkpoints; Tasks 131-170 are planned only/);
     assert.match(architecture, /Task 105 adds explicitly consented Gemini coordinator chat/);
     assert.match(architecture, /Task 130/);
     assert.match(architecture, /Chat-driven GitHub study and research — Task 121/);
     assert.match(roadmap, /href="tasks.html#task-130">Task 130.*memory/i);
-    assert.match(roadmap, /no follow-up task is currently planned/);
+    assert.match(roadmap, /Tasks 131-170 are planned expansions/);
+    assert.match(roadmap, /tasks.html#tasks-131-134/);
+    assert.match(roadmap, /all 170 tasks/);
     assert.match(architecture, /Task 130.*semantic/i);
+    assert.match(architecture, /Tasks 131-170 are planned expansion work/);
     for (const page of [home, documentation]) assert.match(page, /Task 130/);
   });
 
   it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {
-    assert.equal(nextTask, undefined);
+    assert.equal(nextTask.number, 131);
     const task122 = post100Tasks.find(task => task.number === 122);
     assert.equal(task122.status, "completed");
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");

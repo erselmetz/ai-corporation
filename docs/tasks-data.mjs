@@ -1247,12 +1247,1077 @@ export const post100Tasks = [
       "SQLite content and local derived vectors are unencrypted at rest. Owners must manage the configured vector directory alongside SQLite; physical secure erasure and backup deletion are not guaranteed.",
       "The deterministic fake embedding provider validates ranking/scope contracts but is not a substitute for evaluating a production embedding model's relevance quality."
     ]
+  },
+  {
+    "number": 131,
+    "title": "Supported packaging and distribution strategy",
+    "description": "Define supported distribution targets, prerequisites, trust, and upgrade boundaries beyond the currently verified Windows installer.",
+    "category": "Phase A - Install and Onboarding",
+    "status": "planned",
+    "dependsOn": [
+      127,
+      129
+    ],
+    "acceptance": [
+      "Document supported and unsupported targets, install modes, prerequisites, update source, signature expectations, and recovery boundaries.",
+      "Keep Windows x64 evidence distinct from future platform support."
+    ],
+    "outOfScope": [
+      "Do not claim one-click installation or production readiness.",
+      "Do not install or change packages in this planning task."
+    ],
+    "decisions": [
+      "Choose additional release targets only after compatibility and maintenance evidence."
+    ],
+    "area": "P17",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 132,
+    "title": "Guided first-run setup and capability detection",
+    "description": "Guide a new owner through minimum setup while detecting supported providers, models, permissions, and optional capabilities truthfully.",
+    "category": "Phase A - Install and Onboarding",
+    "status": "planned",
+    "dependsOn": [
+      104,
+      112,
+      119,
+      124,
+      126,
+      131
+    ],
+    "acceptance": [
+      "Show install health, detected configuration, missing prerequisites, and UNKNOWN states from bounded supported checks.",
+      "Provide the shortest supported path from opening the app to usable chat without routine terminal commands."
+    ],
+    "outOfScope": [
+      "Do not download models, connect providers, or change assignments without explicit owner action.",
+      "Core startup remains usable when optional capabilities are absent."
+    ],
+    "decisions": [],
+    "area": "P17",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 133,
+    "title": "Provider and model setup guidance",
+    "description": "Explain supported provider/model setup and readiness using existing adapters and owner-managed credentials.",
+    "category": "Phase A - Install and Onboarding",
+    "status": "planned",
+    "dependsOn": [
+      72,
+      104,
+      112,
+      132
+    ],
+    "acceptance": [
+      "Distinguish registration, service availability, installed models, assignment, software capacity, and measured hardware evidence.",
+      "Give sanitized guidance without requesting secrets in ordinary chat."
+    ],
+    "outOfScope": [
+      "Do not add unsupported providers or equate availability with execution feasibility."
+    ],
+    "decisions": [],
+    "area": "P17",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 134,
+    "title": "Optional capability pack lifecycle",
+    "description": "Manage separately declared optional capability packs with versioned manifests, explicit preview/confirmation, and graceful unavailable states.",
+    "category": "Phase A - Install and Onboarding",
+    "status": "planned",
+    "dependsOn": [
+      131,
+      132,
+      133
+    ],
+    "acceptance": [
+      "Keep the base installation independent of heavy vision, speech, knowledge, and automation packages.",
+      "Show source, version, dependency impact, state, and removal/recovery behavior before changes."
+    ],
+    "outOfScope": [
+      "Do not install every candidate library or allow arbitrary package execution.",
+      "Package presence grants no capability permissions."
+    ],
+    "decisions": [
+      "Define package source trust and rollback guarantees during implementation review."
+    ],
+    "area": "P17",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 135,
+    "title": "Semantic retrieval quality evaluation",
+    "description": "Evaluate Task 130 semantic retrieval against a versioned, permission-safe test set with measurable relevance and failure reporting.",
+    "category": "Phase B - Knowledge and RAG",
+    "status": "planned",
+    "dependsOn": [
+      66,
+      117,
+      130
+    ],
+    "acceptance": [
+      "Use deterministic fixtures for lexical, semantic, stale, expired, and unauthorized records.",
+      "Report relevance and false-positive/negative examples without exposing private source content."
+    ],
+    "outOfScope": [
+      "Do not claim model quality from fake-provider contract tests.",
+      "Do not auto-change thresholds or index content."
+    ],
+    "decisions": [
+      "Select evaluation metrics and acceptance thresholds before implementation."
+    ],
+    "area": "P18",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 136,
+    "title": "Hybrid lexical and semantic retrieval",
+    "description": "Combine existing deterministic lexical retrieval with Task 130 semantic candidates under explicit, explainable ranking policy.",
+    "category": "Phase B - Knowledge and RAG",
+    "status": "planned",
+    "dependsOn": [
+      66,
+      117,
+      130,
+      135
+    ],
+    "acceptance": [
+      "Preserve exact ownership, scope, revision, expiry, provenance, and result-size checks.",
+      "Expose bounded ranking contributions; retain lexical-only operation when vectors are unavailable."
+    ],
+    "outOfScope": [
+      "Do not inject results into chat automatically or change routing."
+    ],
+    "decisions": [
+      "Choose fusion method from Task 135 evidence and require explicit owner policy for ranking changes."
+    ],
+    "area": "P18",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 137,
+    "title": "Semantic index lifecycle and observability",
+    "description": "Provide bounded rebuild, consistency inspection, cleanup, and recovery for derived Task 130 vectors.",
+    "category": "Phase B - Knowledge and RAG",
+    "status": "planned",
+    "dependsOn": [
+      65,
+      130,
+      135
+    ],
+    "acceptance": [
+      "Rebuild only explicitly retained authorized sources and show progress, failure, stale counts, and storage use.",
+      "Preserve authoritative memory if vector operations fail."
+    ],
+    "outOfScope": [
+      "Do not promise secure erasure of disk blocks/backups or scan arbitrary files/all database rows."
+    ],
+    "decisions": [
+      "Choose synchronous versus bounded-job operation after performance measurement."
+    ],
+    "area": "P18",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 138,
+    "title": "Owner-reviewed AI knowledge proposals",
+    "description": "Let an AI prepare provenance-bound knowledge proposals from an owner-selected source for explicit human review and acceptance.",
+    "category": "Phase B - Knowledge and RAG",
+    "status": "planned",
+    "dependsOn": [
+      121,
+      130,
+      135
+    ],
+    "acceptance": [
+      "Show source revision, claims/excerpts, confidence limits, destination scope, expiry, and exact changes.",
+      "Acceptance creates only explicitly retained/versioned knowledge; rejection or more-information is valid."
+    ],
+    "outOfScope": [
+      "Do not retain transcripts, ingest repositories, or train model weights automatically.",
+      "Untrusted source text cannot expand permissions."
+    ],
+    "decisions": [
+      "Define approved source types and model/provider consent requirements."
+    ],
+    "area": "P18",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 139,
+    "title": "Versioned documentation review workflow",
+    "description": "Add draft, review, approval, version history, and recovery for proposed documentation while preserving the Task 53 portal boundary until migration is approved.",
+    "category": "Phase B - Knowledge and RAG",
+    "status": "planned",
+    "dependsOn": [
+      53,
+      130,
+      138
+    ],
+    "acceptance": [
+      "Keep drafts separate from published documents and require approval of each exact version.",
+      "Record provenance, reviewer, approval time, diff, version, and recovery evidence."
+    ],
+    "outOfScope": [
+      "Do not give AI direct write access to published Markdown or auto-publish."
+    ],
+    "decisions": [
+      "Resolve storage, conflict, retention, and portal migration design before enabling writes."
+    ],
+    "area": "P18",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 140,
+    "title": "Central capability permission model",
+    "description": "Define and enforce centralized least-privilege authorization for existing and future optional capabilities.",
+    "category": "Phase C - Capability Governance",
+    "status": "planned",
+    "dependsOn": [
+      92,
+      102
+    ],
+    "acceptance": [
+      "Represent capability identity, scope, permissions, risk, and deny-by-default state independently from inventory.",
+      "Enforce authorization in application services as well as UI."
+    ],
+    "outOfScope": [
+      "Inventory declarations and organizational titles grant no authority.",
+      "Do not broaden default API authentication."
+    ],
+    "decisions": [
+      "Specify compatibility/migration behavior for existing permissions."
+    ],
+    "area": "P19",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 141,
+    "title": "Capability grants and enable/disable policy",
+    "description": "Add explicit per-capability enablement and revocable session-scoped grants under Task 140.",
+    "category": "Phase C - Capability Governance",
+    "status": "planned",
+    "dependsOn": [
+      140
+    ],
+    "acceptance": [
+      "Show grantor, capability scope, session/expiry, and revocation status.",
+      "Default to disabled unless the owner explicitly configures a safe policy."
+    ],
+    "outOfScope": [
+      "Do not create grants implicitly from login, title, Agent role, or installed package."
+    ],
+    "decisions": [],
+    "area": "P19",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 142,
+    "title": "Action risk levels and approval policy",
+    "description": "Classify capability actions by impact and require matching owner confirmation for protected or high-impact work.",
+    "category": "Phase C - Capability Governance",
+    "status": "planned",
+    "dependsOn": [
+      83,
+      140,
+      141
+    ],
+    "acceptance": [
+      "Bind approvals to exact action, target, scope, policy version, and expiry.",
+      "Recheck authorization and target state immediately before execution."
+    ],
+    "outOfScope": [
+      "A chat instruction, prior approval, or model output is not a reusable grant.",
+      "Never auto-approve irreversible actions."
+    ],
+    "decisions": [
+      "Define risk categories and expiry through threat-model review."
+    ],
+    "area": "P19",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 143,
+    "title": "Capability audit and sensitive-data controls",
+    "description": "Record bounded authorized audit events and minimize sensitive capability inputs, outputs, and retained evidence.",
+    "category": "Phase C - Capability Governance",
+    "status": "planned",
+    "dependsOn": [
+      140,
+      141
+    ],
+    "acceptance": [
+      "Audit actor, capability, permission decision, action/result state, timestamps, and safe references.",
+      "Redact credentials and bound retention and inspection access."
+    ],
+    "outOfScope": [
+      "Do not persist raw screenshots, audio, credentials, or prompts by default.",
+      "Do not claim tamper-proof audit without evidence."
+    ],
+    "decisions": [
+      "Select durable audit storage and retention policy after privacy/recovery review."
+    ],
+    "area": "P19",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 144,
+    "title": "Emergency stop, expiry, and capture indicators",
+    "description": "Provide visible stop/revoke controls and truthful activity indicators for screen, camera, microphone, and running actions.",
+    "category": "Phase C - Capability Governance",
+    "status": "planned",
+    "dependsOn": [
+      140,
+      141,
+      142,
+      143
+    ],
+    "acceptance": [
+      "Stop prevents new protected actions and interrupts local capture/playback within documented bounds.",
+      "Show active capability, grant expiry, capture state, and uncertain remote cancellation.",
+      "Enforce action timeouts and recheck revoked/expired grants."
+    ],
+    "outOfScope": [
+      "Do not claim remote work stopped without provider evidence.",
+      "No always-on screen, camera, or microphone by default."
+    ],
+    "decisions": [
+      "Define stop-state persistence and in-flight recovery behavior."
+    ],
+    "area": "P19",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 145,
+    "title": "Audio input and speech recognition contracts",
+    "description": "Define backend-neutral audio capture and speech-to-text interfaces with explicit microphone lifecycle, limits, and governance checks.",
+    "category": "Phase D - Voice and Speech",
+    "status": "planned",
+    "dependsOn": [
+      128,
+      140,
+      141,
+      144
+    ],
+    "acceptance": [
+      "Bound format, duration, sampling, memory lifetime, cancellation, and safe errors.",
+      "Require explicit grant and visible recording indicator."
+    ],
+    "outOfScope": [
+      "No always-on microphone or silent local-to-cloud fallback."
+    ],
+    "decisions": [
+      "Choose supported capture APIs after platform/accessibility review."
+    ],
+    "area": "P20",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 146,
+    "title": "Optional local speech-to-text backend",
+    "description": "Add one optional local speech-to-text backend, evaluating faster-whisper as the preferred candidate.",
+    "category": "Phase D - Voice and Speech",
+    "status": "planned",
+    "dependsOn": [
+      134,
+      145
+    ],
+    "acceptance": [
+      "Detect missing model/runtime and load only explicitly selected local models.",
+      "Keep dependencies optional and tests deterministic."
+    ],
+    "outOfScope": [
+      "Do not require faster-whisper and openai-whisper together.",
+      "Do not download models automatically."
+    ],
+    "decisions": [
+      "Confirm license, footprint, language support, hardware, and latency."
+    ],
+    "area": "P20",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 147,
+    "title": "Reviewed speech input in conversations",
+    "description": "Connect governed local transcription to chat with language/model configuration and mandatory review before sending.",
+    "category": "Phase D - Voice and Speech",
+    "status": "planned",
+    "dependsOn": [
+      128,
+      145,
+      146
+    ],
+    "acceptance": [
+      "Allow transcript correction and explicit Send while preserving typed chat and provenance.",
+      "Distinguish local from consented online transcription."
+    ],
+    "outOfScope": [
+      "Do not auto-submit transcripts or store raw audio.",
+      "Preserve existing Gemini consent semantics."
+    ],
+    "decisions": [],
+    "area": "P20",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 148,
+    "title": "Offline text-to-speech provider foundation",
+    "description": "Define a text-to-speech provider boundary with an offline backend and explicit voice/output configuration.",
+    "category": "Phase D - Voice and Speech",
+    "status": "planned",
+    "dependsOn": [
+      128,
+      140,
+      141,
+      144
+    ],
+    "acceptance": [
+      "Expose backend, voice, language, output state, and unavailable states.",
+      "Keep speech generation separate from action permissions."
+    ],
+    "outOfScope": [
+      "Do not silently fall back from local to online speech."
+    ],
+    "decisions": [
+      "Choose the offline backend after platform and distribution review."
+    ],
+    "area": "P20",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 149,
+    "title": "Optional natural voices and playback control",
+    "description": "Add explicitly selected optional local or online natural-voice adapters with bounded queue, playback, interruption, and stop controls.",
+    "category": "Phase D - Voice and Speech",
+    "status": "planned",
+    "dependsOn": [
+      134,
+      142,
+      143,
+      144,
+      148
+    ],
+    "acceptance": [
+      "Label local versus online and require consent before cloud text transfer.",
+      "Bound queued text/playback and report uncertain remote cancellation without retry."
+    ],
+    "outOfScope": [
+      "Do not require pyttsx3, Coqui, Kokoro, and edge-tts together.",
+      "Speech output grants no action authority."
+    ],
+    "decisions": [
+      "Evaluate license, model size, privacy, quality, and retention before adapter selection."
+    ],
+    "area": "P20",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 150,
+    "title": "Bounded image input and vision context",
+    "description": "Define authorized image records and explicit conversation attachment with bounded, provenance-aware lifecycle.",
+    "category": "Phase E - Vision",
+    "status": "planned",
+    "dependsOn": [
+      117,
+      128,
+      140,
+      141,
+      144
+    ],
+    "acceptance": [
+      "Validate type, dimensions, bytes, source, retention, and conversation scope.",
+      "Keep images ephemeral by default and require explicit provider transfer selection."
+    ],
+    "outOfScope": [
+      "No silent screen/camera capture or image indexing into Task 130."
+    ],
+    "decisions": [
+      "Decide image persistence/provider transfer policy before implementation."
+    ],
+    "area": "P21",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 151,
+    "title": "Explicit screen capture provider",
+    "description": "Add caller-triggered, permission-gated screen capture through a replaceable adapter such as optional mss.",
+    "category": "Phase E - Vision",
+    "status": "planned",
+    "dependsOn": [
+      144,
+      150
+    ],
+    "acceptance": [
+      "Show capture indicator and selected display/window/region.",
+      "Return bounded timestamped evidence; fail closed when permission/support is absent."
+    ],
+    "outOfScope": [
+      "Do not poll or capture in background."
+    ],
+    "decisions": [
+      "Choose platform API after permission and multi-monitor review."
+    ],
+    "area": "P21",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 152,
+    "title": "Optional image processing adapters",
+    "description": "Provide optional bounded image resize, conversion, and redaction adapters using an evaluated Pillow/OpenCV path.",
+    "category": "Phase E - Vision",
+    "status": "planned",
+    "dependsOn": [
+      134,
+      150
+    ],
+    "acceptance": [
+      "Cap dimensions, decoded bytes, processing time, and output size.",
+      "Keep processing optional and independent of core startup."
+    ],
+    "outOfScope": [
+      "Do not make Pillow/OpenCV mandatory or claim complete redaction without tests."
+    ],
+    "decisions": [
+      "Choose a library by measured need, compatibility, and license."
+    ],
+    "area": "P21",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 153,
+    "title": "OCR provider abstraction",
+    "description": "Define a replaceable OCR provider contract with language, confidence, bounding-box, and source-image provenance.",
+    "category": "Phase E - Vision",
+    "status": "planned",
+    "dependsOn": [
+      150,
+      152
+    ],
+    "acceptance": [
+      "Bound region count, output text, processing time, and errors.",
+      "Distinguish unsupported, unavailable, low-confidence, and success."
+    ],
+    "outOfScope": [
+      "OCR output is untrusted data, not an action instruction."
+    ],
+    "decisions": [],
+    "area": "P21",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 154,
+    "title": "Optional local OCR backend",
+    "description": "Implement an explicitly configured local OCR provider and report external Tesseract installation requirements.",
+    "category": "Phase E - Vision",
+    "status": "planned",
+    "dependsOn": [
+      134,
+      153
+    ],
+    "acceptance": [
+      "Detect missing engine/language packs without breaking core startup.",
+      "Keep pytesseract/Tesseract and EasyOCR optional alternatives.",
+      "Test permissions, malformed image, timeout, and sanitized failure."
+    ],
+    "outOfScope": [
+      "Do not silently download OCR models or binaries."
+    ],
+    "decisions": [
+      "Select initial backend by license, language, setup friction, and measured accuracy."
+    ],
+    "area": "P21",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 155,
+    "title": "Explicit camera input and vision chat integration",
+    "description": "Add one-use owner-authorized camera capture and attach selected imagery/OCR evidence within Task 150 limits.",
+    "category": "Phase E - Vision",
+    "status": "planned",
+    "dependsOn": [
+      144,
+      150,
+      153
+    ],
+    "acceptance": [
+      "Show a visible camera indicator and capture action; discard unretained image after use.",
+      "Require image/provider consent and label OCR as untrusted."
+    ],
+    "outOfScope": [
+      "No continuous camera access or automatic image retention."
+    ],
+    "decisions": [
+      "Review platform camera permission behavior before enabling."
+    ],
+    "area": "P21",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 156,
+    "title": "Scoped browser automation provider",
+    "description": "Add bounded Playwright browser actions extending Task 90 read-only inspection only under explicit grants and exact site policy.",
+    "category": "Phase F - Controlled Automation",
+    "status": "planned",
+    "dependsOn": [
+      90,
+      140,
+      141,
+      142,
+      144
+    ],
+    "acceptance": [
+      "Use deny-by-default origins, operation allowlists, action limits, and timeouts.",
+      "Preview targets; require confirmation for high-impact changes.",
+      "Preserve existing read-only behavior."
+    ],
+    "outOfScope": [
+      "No arbitrary browsing, downloads, local files, credentials, or unrestricted script execution."
+    ],
+    "decisions": [
+      "Evaluate Playwright first and Selenium only if separately justified."
+    ],
+    "area": "P22",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 157,
+    "title": "Scoped desktop automation provider",
+    "description": "Add an optional desktop action adapter for individually authorized operations with visible state and bounded recovery.",
+    "category": "Phase F - Controlled Automation",
+    "status": "planned",
+    "dependsOn": [
+      140,
+      141,
+      142,
+      144
+    ],
+    "acceptance": [
+      "Require per-action grant, target boundary, timeout, indicator, and stop handling.",
+      "Provide preview/dry-run where target state can be assessed safely."
+    ],
+    "outOfScope": [
+      "No unrestricted keyboard/mouse control by default.",
+      "open-interpreter requires separate capability/security evaluation."
+    ],
+    "decisions": [
+      "Choose platform API after isolation review; pyautogui is only a candidate."
+    ],
+    "area": "P22",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 158,
+    "title": "Automation review and debug traces",
+    "description": "Show bounded before/action/after traces for authorized actions with reviewable evidence and safe recovery guidance.",
+    "category": "Phase F - Controlled Automation",
+    "status": "planned",
+    "dependsOn": [
+      143,
+      144,
+      156,
+      157
+    ],
+    "acceptance": [
+      "Bind actor, grant, policy, target/action, result, timing, and permitted screenshot references.",
+      "Support inspection/replay simulation without repeating external side effects.",
+      "Redact secrets and obey capture-retention policy."
+    ],
+    "outOfScope": [
+      "Do not automatically replay uncertain/completed actions or persist raw media without consent."
+    ],
+    "decisions": [],
+    "area": "P22",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 159,
+    "title": "Shared visual design system",
+    "description": "Unify Python Web UI and Electron surfaces with reusable accessible visual tokens and interaction patterns.",
+    "category": "Phase G - Command Center UI and Visualization",
+    "status": "planned",
+    "dependsOn": [
+      47,
+      127,
+      129
+    ],
+    "acceptance": [
+      "Apply shared type, color, spacing, state, form, and navigation patterns to representative pages.",
+      "Preserve service boundaries, keyboard access, responsive layout, and reduced motion."
+    ],
+    "outOfScope": [
+      "No framework migration or decorative activity claims."
+    ],
+    "decisions": [],
+    "area": "P23",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 160,
+    "title": "Operational command-center dashboard",
+    "description": "Present authorized current chat, Task, Agent, Provider, resource, and approval state with timestamps and stale/unknown indicators.",
+    "category": "Phase G - Command Center UI and Visualization",
+    "status": "planned",
+    "dependsOn": [
+      113,
+      114,
+      115,
+      129,
+      159
+    ],
+    "acceptance": [
+      "Use protected APIs and show source/freshness.",
+      "Keep permissions distinct and provide empty, offline, denied, and error states."
+    ],
+    "outOfScope": [
+      "Do not invent activity or call Providers from presentation code."
+    ],
+    "decisions": [
+      "Choose polling or event delivery after load/freshness measurements."
+    ],
+    "area": "P23",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 161,
+    "title": "Knowledge and resource visualization",
+    "description": "Extend actual corporation/workflow maps with authorized knowledge provenance, provider/model assignment, and resource snapshots.",
+    "category": "Phase G - Command Center UI and Visualization",
+    "status": "planned",
+    "dependsOn": [
+      114,
+      115,
+      130,
+      160
+    ],
+    "acceptance": [
+      "Use only authorized records and distinguish association from inference.",
+      "Provide equivalent labeled 2D/list views, keyboard selection, and reduced motion."
+    ],
+    "outOfScope": [
+      "Do not expose private memory or equate slots with hardware readiness."
+    ],
+    "decisions": [],
+    "area": "P23",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 162,
+    "title": "Three-dimensional map architecture and performance review",
+    "description": "Assess the Task 116 Three.js layer before further 3D expansion and define data, performance, accessibility, and fallback limits.",
+    "category": "Phase G - Command Center UI and Visualization",
+    "status": "planned",
+    "dependsOn": [
+      116,
+      159,
+      160,
+      161
+    ],
+    "acceptance": [
+      "Review current use, supported hardware, data freshness, interaction, reduced motion, and 2D fallback.",
+      "Decide whether to extend Three.js or use another approach without assuming react-three-fiber/framework migration."
+    ],
+    "outOfScope": [
+      "Do not add a new 3D dependency before this review."
+    ],
+    "decisions": [
+      "Set measurable frame-time, memory, and accessibility thresholds before implementation."
+    ],
+    "area": "P23",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 163,
+    "title": "Original ERSELMETZ AI assistant identity",
+    "description": "Define an original central assistant profile that is calm, strategic, concise, trustworthy, and distinct from copyrighted identities.",
+    "category": "Phase H - ERSELMETZ AI Persona",
+    "status": "planned",
+    "dependsOn": [
+      103,
+      113,
+      159
+    ],
+    "acceptance": [
+      "Document identity, role boundaries, language, and disclosure independently from authorization.",
+      "Check examples for clarity, truthfulness, and language expectations."
+    ],
+    "outOfScope": [
+      "Do not copy any fictional character name, voice, dialogue, or protected identity."
+    ],
+    "decisions": [],
+    "area": "P24",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 164,
+    "title": "Response modes and owner preferences",
+    "description": "Allow owners to select bounded response styles and privacy-conscious preferences without changing capability permissions.",
+    "category": "Phase H - ERSELMETZ AI Persona",
+    "status": "planned",
+    "dependsOn": [
+      103,
+      118,
+      140,
+      163
+    ],
+    "acceptance": [
+      "Define modes, locale, detail level, reset/export, and retention behavior.",
+      "Keep presentation separate from routing, approval, and execution authority."
+    ],
+    "outOfScope": [
+      "Do not grant access or consent from persona selection."
+    ],
+    "decisions": [
+      "Choose preference storage and migration policy before persistence."
+    ],
+    "area": "P24",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 165,
+    "title": "Coordinator presence and orchestration presentation",
+    "description": "Present coordinator identity, worker assignments, handoffs, and verified outcomes through existing orchestration services.",
+    "category": "Phase H - ERSELMETZ AI Persona",
+    "status": "planned",
+    "dependsOn": [
+      113,
+      115,
+      160,
+      163
+    ],
+    "acceptance": [
+      "Show responding Agent, assignment reason, status, and evidence source.",
+      "Represent missing, uncertain, blocked, and failed states accurately."
+    ],
+    "outOfScope": [
+      "Do not simulate Agents or assert work without service evidence."
+    ],
+    "decisions": [],
+    "area": "P24",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 166,
+    "title": "Opt-in proactive suggestions",
+    "description": "Offer bounded recommendations from authorized current signals while requiring explicit owner action for protected operations.",
+    "category": "Phase H - ERSELMETZ AI Persona",
+    "status": "planned",
+    "dependsOn": [
+      140,
+      142,
+      143,
+      160,
+      163,
+      165
+    ],
+    "acceptance": [
+      "Let owners disable suggestions, configure quiet periods, inspect reasons, and dismiss.",
+      "Show source/freshness; no implicit tool, provider, Task, or system action."
+    ],
+    "outOfScope": [
+      "No background execution, unbounded polling, or self-granted authority."
+    ],
+    "decisions": [
+      "Set allowed sources and frequency during implementation review."
+    ],
+    "area": "P24",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 167,
+    "title": "Trusted updates and configuration migration",
+    "description": "Add an owner-visible, integrity-checked update path with versioned configuration migration and tested recovery.",
+    "category": "Phase I - Productization and Stable Release",
+    "status": "planned",
+    "dependsOn": [
+      126,
+      127,
+      129,
+      131
+    ],
+    "acceptance": [
+      "Verify origin/integrity, show release notes/migration preview, and preserve recoverable state.",
+      "Test interruption, incompatibility, rollback limits, and user-data preservation."
+    ],
+    "outOfScope": [
+      "No silent updates or destructive migration."
+    ],
+    "decisions": [
+      "Choose update signing/distribution and rollback contract."
+    ],
+    "area": "P25",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 168,
+    "title": "Diagnostics export backup and restore",
+    "description": "Provide explicit owner-controlled diagnostic export and backup/restore for supported configuration, memory, and app state.",
+    "category": "Phase I - Productization and Stable Release",
+    "status": "planned",
+    "dependsOn": [
+      118,
+      130,
+      143,
+      167
+    ],
+    "acceptance": [
+      "Preview included/excluded data, redact credentials, verify integrity, and test bounded restore.",
+      "Document data that cannot be restored, erased, or exported from providers."
+    ],
+    "outOfScope": [
+      "Do not export secrets/private data by default or claim success without restore verification."
+    ],
+    "decisions": [
+      "Define encryption, key recovery, retention, and destinations."
+    ],
+    "area": "P25",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 169,
+    "title": "Crash recovery and measured performance readiness",
+    "description": "Improve safe restart recovery and measure startup, memory, rendering, and model workloads before hardware-aware recommendations.",
+    "category": "Phase I - Productization and Stable Release",
+    "status": "planned",
+    "dependsOn": [
+      119,
+      126,
+      129,
+      160,
+      162
+    ],
+    "acceptance": [
+      "Detect interrupted local operations and report uncertain outcomes without replay.",
+      "Record platform/model/workload conditions and report UNKNOWN when evidence is absent."
+    ],
+    "outOfScope": [
+      "Do not infer guaranteed hardware fit from model labels, telemetry, or slots."
+    ],
+    "decisions": [
+      "Set hardware matrix and thresholds from actual measurements."
+    ],
+    "area": "P25",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 170,
+    "title": "Security audit and stable release acceptance",
+    "description": "Complete an independent security/privacy review, end-user documentation, and evidence-based release checklist for supported targets.",
+    "category": "Phase I - Productization and Stable Release",
+    "status": "planned",
+    "dependsOn": [
+      134,
+      139,
+      144,
+      149,
+      155,
+      158,
+      162,
+      166,
+      167,
+      168,
+      169
+    ],
+    "acceptance": [
+      "Validate onboarding, optional pack failures, permissions, update/recovery, privacy, and accessibility.",
+      "Publish tested platforms/providers, risks, skipped checks, limits, and recovery guidance.",
+      "Call stable only for demonstrated targets and capabilities."
+    ],
+    "outOfScope": [
+      "Do not mark unknown providers, hardware, autonomy, or platforms as ready."
+    ],
+    "decisions": [
+      "Set release gates after dependent evidence exists."
+    ],
+    "area": "P25",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; broader P00-P16 material is supplementary.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; Tasks 131-170 are planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
@@ -1262,10 +2327,22 @@ export const roadmapRules = {
   "handoff": "Record task number, base/current checkpoint, exact reviewed scope, touched files, commands/results/skips, remaining limitations/decisions, uncommitted work and next task. Different implementations must satisfy the same contract; identical generated code is not guaranteed."
 };
 
+const futureRoadmapGroups = [
+  { name: "Phase A - Install and Onboarding", range: "131-134", tasks: post100Tasks.filter(task => task.category === "Phase A - Install and Onboarding").map(({ title, description }) => [title, description]) },
+  { name: "Phase B - Knowledge and RAG", range: "135-139", tasks: post100Tasks.filter(task => task.category === "Phase B - Knowledge and RAG").map(({ title, description }) => [title, description]) },
+  { name: "Phase C - Capability Governance", range: "140-144", tasks: post100Tasks.filter(task => task.category === "Phase C - Capability Governance").map(({ title, description }) => [title, description]) },
+  { name: "Phase D - Voice and Speech", range: "145-149", tasks: post100Tasks.filter(task => task.category === "Phase D - Voice and Speech").map(({ title, description }) => [title, description]) },
+  { name: "Phase E - Vision", range: "150-155", tasks: post100Tasks.filter(task => task.category === "Phase E - Vision").map(({ title, description }) => [title, description]) },
+  { name: "Phase F - Controlled Automation", range: "156-158", tasks: post100Tasks.filter(task => task.category === "Phase F - Controlled Automation").map(({ title, description }) => [title, description]) },
+  { name: "Phase G - Command Center UI and Visualization", range: "159-162", tasks: post100Tasks.filter(task => task.category === "Phase G - Command Center UI and Visualization").map(({ title, description }) => [title, description]) },
+  { name: "Phase H - ERSELMETZ AI Persona", range: "163-166", tasks: post100Tasks.filter(task => task.category === "Phase H - ERSELMETZ AI Persona").map(({ title, description }) => [title, description]) },
+  { name: "Phase I - Productization and Stable Release", range: "167-170", tasks: post100Tasks.filter(task => task.category === "Phase I - Productization and Stable Release").map(({ title, description }) => [title, description]) }
+];
+
 export const taskGroups = [...foundationTaskGroups, {
   name: "Post-100 Usable Command Center",
-  range: "101–130",
-  tasks: post100Tasks.map(({ title, description }) => [title, description]),
-}];
+  range: "101-130",
+  tasks: post100Tasks.filter(task => task.number <= 130).map(({ title, description }) => [title, description]),
+}, ...futureRoadmapGroups];
 export const tasks = [...foundationTasks, ...post100Tasks];
 export const nextTask = post100Tasks.find((task) => task.status !== "completed");

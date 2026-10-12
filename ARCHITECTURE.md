@@ -672,8 +672,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-130 are verified complete, and no follow-up
-task is currently planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-130 are verified complete; Tasks 131-170 are planned expansion work. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.

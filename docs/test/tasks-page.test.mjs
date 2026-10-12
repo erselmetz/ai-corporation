@@ -19,24 +19,25 @@ function render() {
   return elements;
 }
 
-test("shows all tasks in descending order and reports no unplanned follow-up", () => {
+test("shows all tasks in descending order and reports the next planned task", () => {
   const elements = render();
   const groups = elements["roadmap-groups"].children;
-  assert.equal(groups[0].id, "tasks-101-130");
+  assert.equal(groups[0].id, "tasks-167-170");
   const items = groups.flatMap(group => group.children[1].children);
-  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 130 }, (_, index) => 130 - index));
-  assert.match(elements["roadmap-summary"].textContent, /130 roadmap tasks.*130 completed.*0 planned/);
-  assert.match(elements["next-task"].textContent, /No remaining planned task/);
+  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 170 }, (_, index) => 170 - index));
+  assert.match(elements["roadmap-summary"].textContent, /170 roadmap tasks.*130 completed.*40 planned/);
+  assert.match(elements["next-task"].textContent, /Next: Task 131/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
   const elements = render();
-  const items = elements["roadmap-groups"].children[0].children[1].children;
+  const items = elements["roadmap-groups"].children.flatMap(group => group.children[1].children);
   const completed = items.find(item => item.id === "task-103");
   const dispatch = items.find(item => item.id === "task-111");
   const multiProvider = items.find(item => item.id === "task-112");
   const release = items.find(item => item.id === "task-129");
   const semanticMemory = items.find(item => item.id === "task-130");
+  const firstPlanned = items.find(item => item.id === "task-131");
   assert.equal(release.children[2].textContent, "Completed");
   assert.match(release.textContent, /task-129-command-center-release-acceptance/);
   assert.match(release.textContent, /206A36D5C94FD76B2696C01F95CD842C24E3A79FD05FEB7FDB45F3DA101DC091/);
@@ -44,6 +45,8 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.equal(semanticMemory.children[2].textContent, "Completed");
   assert.match(semanticMemory.textContent, /task-130-semantic-memory-rag-foundation/);
   assert.match(semanticMemory.textContent, /104 passed/);
+  assert.equal(firstPlanned.children[2].textContent, "Planned");
+  assert.match(firstPlanned.textContent, /Task 131|Supported packaging/);
   assert.equal(completed.children[2].textContent, "Completed");
   assert.match(completed.textContent, /Verified checkpoint: d1ca364/);
   assert.match(completed.textContent, /876 Python passed/);
