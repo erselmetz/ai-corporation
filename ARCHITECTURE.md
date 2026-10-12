@@ -672,12 +672,14 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-128 are verified complete, Task 129 is next,
-and Task 129 is planned. Every task has dependencies, acceptance checks,
-exclusions and explicit decision gates; completed post-100 records
-include checkpoint and validation evidence. The P00-P15 Markdown plan is
-supplementary. Use the same contracts for any implementing AI, preserve concurrent
-work, and do not treat a published plan as approval to implement future actions.
+public `docs/tasks.html`: Tasks 101-129 are verified complete, and no follow-up
+task is currently planned. Task 129 provides clean-install evidence for the
+local Windows 11 x64 Electron package; it does not claim production completeness.
+Every task has dependencies, acceptance checks, exclusions and explicit decision
+gates; completed post-100 records include checkpoint and validation evidence.
+The P00-P15 Markdown plan is supplementary. Use the same contracts for any
+implementing AI, preserve concurrent work, and do not treat a published plan as
+approval to implement future actions.
 
 ## Task 104 - Local installed-model setup
 
@@ -1129,10 +1131,12 @@ and leaves `%LOCALAPPDATA%\ERSELMETZ AI` intact on uninstall. Updates are manual
 trusted reinstalls. Uvicorn request/error logging is disabled; no persistent
 desktop log is created. Chat/provider APIs and pages are reused as-is except for
 the Task 128 voice panel and one-use audio permission. The
-packaging check opened these pages with deterministic temporary profiles but did
-not configure a provider or request a live model response. It does not establish
-production signing, update authenticity, provider availability, or release
-readiness; Task 129 remains the acceptance milestone. Build and user recovery
+Task 129 subsequently rebuilt and installed a fresh package in a temporary
+profile, verifying first-run/restart owner access, chat/provider page availability,
+graceful shutdown, uninstall data retention and reinstall recovery. This accepts
+only the local Windows 11 x64 target: it does not establish live provider
+availability, hardware fit, production signing, update authenticity or broad
+production readiness. Build and user recovery
 instructions are in [desktop/README.md](desktop/README.md). The Task 126 GUI and
 legacy CLI are independent and are not managed by Electron.
 
@@ -1177,3 +1181,24 @@ sequential snapshots and can change immediately after observation. The default
 API remains fail-closed and does not mount this local-owner route. The panel has
 no lifecycle operations itself; Task 125 adds a separate fixed-package manager with
 owner-confirmed user-scope install, update, pin, version change and removal.
+
+## Command center release acceptance (Task 129)
+
+A fresh unsigned per-user installer was built and installed from a temporary
+profile on Windows 11 x64. The local acceptance artifact is
+`desktop/release/task129/ERSELMETZ-AI-Setup-0.1.0-win-x64.exe` (SHA-256
+`206A36D5C94FD76B2696C01F95CD842C24E3A79FD05FEB7FDB45F3DA101DC091`). The
+Next.js static export and frozen Python backend built successfully. Both the
+frozen-sidecar smoke and actual installer smoke passed first-run owner setup,
+owner sign-in, protected chat/provider page availability, restart, graceful
+shutdown, uninstall data retention and reinstall recovery. Browser-module (159),
+Electron security (5), and public docs (14) tests passed. The full Python suite
+reported 1093 passed, 3 skipped and the same two previously recorded
+model-assignment failures.
+
+No live provider/model requests or microphone capture were made. Hardware fit and
+concurrent multi-Employee mixed local/online capacity remain UNKNOWN; only local
+Windows 11 x64 was acceptance-tested. The package remains unsigned with manual
+updates; the build-time Electron dependency audit reported 8 moderate advisories
+and those `node_modules` are not packaged. This evidence does not claim production
+completeness or unrestricted autonomous operation.

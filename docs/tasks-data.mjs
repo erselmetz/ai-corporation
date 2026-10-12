@@ -1153,7 +1153,7 @@ export const post100Tasks = [
     "title": "Command center usability and release acceptance",
     "description": "Verify the supported owner workflows on a clean local installation and publish actual readiness evidence.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       104,
       105,
@@ -1192,12 +1192,26 @@ export const post100Tasks = [
       "Marking unresolved gates complete or claiming unrestricted autonomous Jarvis behavior."
     ],
     "decisions": [
-      "Owner agrees the release acceptance environment, supported capabilities and remaining deferred areas."
+      "Acceptance target: the documented local Windows 11 x64 installer. Other operating systems, live-provider execution, measured hardware capacity, production signing and automatic updates remain deferred."
     ],
     "area": "Release acceptance",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-129-command-center-release-acceptance",
+    "validation": [
+      "Release target: clean local Windows 11 x64 package built with Python 3.14.7, Node.js 24.19.0, Electron 44.7.0 and Next.js 16.4.0; the unsigned NSIS installer was installed from a fresh temporary profile.",
+      "Installer SHA-256: 206A36D5C94FD76B2696C01F95CD842C24E3A79FD05FEB7FDB45F3DA101DC091. The Task 129 local artifact is desktop/release/task129/ERSELMETZ-AI-Setup-0.1.0-win-x64.exe.",
+      "Next.js static production build and isolated PyInstaller backend build passed. Frozen-sidecar smoke passed first-run owner setup, HttpOnly owner session, chat/provider page availability, DPAPI verifier retention, restart and graceful shutdown.",
+      "Actual installed-Electron smoke passed first-run setup/sign-in, owner password verification on restart, protected chat/provider pages, graceful close, uninstall data retention and reinstall recovery.",
+      "Deterministic regressions: 159 browser-module tests, 5 Electron security tests and 14 public documentation tests passed. Full Python suite: 1093 passed, 3 skipped, and the two previously recorded failures in test_model_set_command and test_model_replacement_uses_existing_assignment_service.",
+      "npm ci reported 8 moderate advisories in the build-time Electron dependency tree; desktop packaging does not include node_modules."
+    ],
+    "limitations": [
+      "Only a local Windows 11 x64 install was release-tested. Linux, macOS, other Windows versions and public distribution were not tested.",
+      "No live Ollama/Gemini/provider request, API credential, microphone capture or model inference was used. Chat/provider pages and provider behavior were tested with existing deterministic fakes, not live services.",
+      "No physical GPU/VRAM/RAM measurement or concurrent multi-Employee mixed local/online inference benchmark was performed. Hardware feasibility and live execution capacity remain UNKNOWN; configured slots are not a hardware-capacity guarantee.",
+      "The installer is unsigned, has no automatic updater, and is a local acceptance artifact rather than a production-signed or publicly distributed release.",
+      "The full Python suite retains the same two previously recorded model-assignment failures; 3 tests were skipped. Eight moderate advisories were reported for the build-time Electron dependency tree.",
+      "This checkpoint does not claim production completeness, unrestricted autonomous operation, or unrestricted self-maintenance."
+    ]
   }
 ];
 

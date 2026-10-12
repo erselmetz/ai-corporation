@@ -19,15 +19,14 @@ function render() {
   return elements;
 }
 
-test("shows all tasks in descending order and highlights the actual next planned task", () => {
+test("shows all tasks in descending order and reports no unplanned follow-up", () => {
   const elements = render();
   const groups = elements["roadmap-groups"].children;
   assert.equal(groups[0].id, "tasks-101-129");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 129 }, (_, index) => 129 - index));
-  assert.match(elements["roadmap-summary"].textContent, /129 roadmap tasks.*128 completed.*1 planned/);
-  assert.equal(elements["next-task"].children[0].href, "#task-129");
-  assert.match(elements["next-task"].textContent, /Next: Task 129/);
+  assert.match(elements["roadmap-summary"].textContent, /129 roadmap tasks.*129 completed.*0 planned/);
+  assert.match(elements["next-task"].textContent, /No remaining planned task/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -36,6 +35,11 @@ test("renders completion evidence separately from planned decision gates and exp
   const completed = items.find(item => item.id === "task-103");
   const dispatch = items.find(item => item.id === "task-111");
   const multiProvider = items.find(item => item.id === "task-112");
+  const release = items.find(item => item.id === "task-129");
+  assert.equal(release.children[2].textContent, "Completed");
+  assert.match(release.textContent, /task-129-command-center-release-acceptance/);
+  assert.match(release.textContent, /206A36D5C94FD76B2696C01F95CD842C24E3A79FD05FEB7FDB45F3DA101DC091/);
+  assert.match(release.textContent, /capacity remain UNKNOWN/);
   assert.equal(completed.children[2].textContent, "Completed");
   assert.match(completed.textContent, /Verified checkpoint: d1ca364/);
   assert.match(completed.textContent, /876 Python passed/);

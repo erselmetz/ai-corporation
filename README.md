@@ -357,12 +357,14 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-128 are verified complete, Task 129 is next,
-and Task 129 is planned. Every task has dependencies, acceptance checks,
-exclusions and explicit decision gates; completed post-100 records
-include checkpoint and validation evidence. The P00-P15 Markdown plan is
-supplementary. Use the same contracts for any implementing AI, preserve concurrent
-work, and do not treat a published plan as approval to implement future actions.
+public `docs/tasks.html`: Tasks 101-129 are verified complete, and no follow-up
+task is currently planned. Task 129 provides clean-install evidence for the
+local Windows 11 x64 Electron package; it does not claim production completeness.
+Every task has dependencies, acceptance checks, exclusions and explicit decision
+gates; completed post-100 records include checkpoint and validation evidence.
+The P00-P15 Markdown plan is supplementary. Use the same contracts for any
+implementing AI, preserve concurrent work, and do not treat a published plan as
+approval to implement future actions.
 
 ## Task 104 - Local installed-model setup
 
@@ -833,3 +835,24 @@ documentation suite passed; the full Python suite had 967 passed, 3 skipped and
 2 unrelated pre-existing model-assignment failures. No live or paid calls.
 Limitations: state is process-local and the Agent-to-destination mapping is not
 independently verified. Checkpoint tag `task-113-workflow-review-reporting`.
+
+## Command center release acceptance (Task 129)
+
+A clean Windows 11 x64 build was installed from a fresh temporary profile. The
+Task 129 installer is available at
+`desktop/release/task129/ERSELMETZ-AI-Setup-0.1.0-win-x64.exe` (SHA-256
+`206A36D5C94FD76B2696C01F95CD842C24E3A79FD05FEB7FDB45F3DA101DC091`). The
+frozen-sidecar and actual Electron installer smokes passed owner setup/sign-in,
+restart, graceful shutdown, protected chat/provider page access, uninstall data
+retention and reinstall recovery. The Next.js static build passed. Validation also
+passed 159 browser-module tests, 5 Electron security tests and 14 public docs
+tests. The full Python suite had 1093 passed and 3 skipped, with the two
+previously recorded model-assignment failures.
+
+No live Ollama/Gemini/provider calls, model inference or microphone capture were
+used. Physical hardware capacity and concurrent mixed-provider inference remain
+UNKNOWN; only Windows 11 x64 was acceptance-tested. The installer is unsigned,
+manual-update only, and not publicly distributed. The build-time Electron
+dependency audit reported 8 moderate advisories; `node_modules` is not packaged.
+This checkpoint verifies a local install workflow, not production completeness or
+unrestricted autonomous behavior.

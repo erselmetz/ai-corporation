@@ -87,9 +87,9 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 29]);
   });
 
-  it("marks only verified tasks 1–128 complete and Task 129 planned", () => {
-    assert.ok(tasks.slice(0, 128).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(128).every((task) => task.status === "planned"));
+  it("marks all published tasks 1–129 complete after release acceptance", () => {
+    assert.ok(tasks.every((task) => task.status === "completed"));
+    assert.equal(nextTask, undefined);
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -160,32 +160,32 @@ describe("documentation site", () => {
     assert.equal(tasks[99].status, "completed");
   });
 
-  it("describes the current completed and planned ranges on the roadmap page", async () => {
+  it("describes the completed roadmap and final release-acceptance checkpoint", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
     assert.match(html, /Milestones 1–100 are completed foundations/);
-    assert.match(html, /Tasks 101-128 are verified post-100 checkpoints/);
-    assert.match(html, /Task 129 is planned/);
+    assert.match(html, /Tasks 101-129 are verified post-100 checkpoints/);
+    assert.match(html, /no follow-up task is currently planned/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
   });
 
-  it("keeps public overview pages aligned with Task 128 completion", async () => {
+  it("keeps public overview pages aligned with Task 129 release acceptance", async () => {
     const [home, documentation, architecture, roadmap] = await Promise.all(
       ["index.html", "documentation.html", "architecture.html", "roadmap.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
-    assert.match(home, /Verified Tasks 101-128/);
-    assert.match(documentation, /Tasks 101-128 are verified post-100 checkpoints/);
+    assert.match(home, /Verified Tasks 101-129/);
+    assert.match(documentation, /Tasks 101-129 are verified post-100 checkpoints/);
     assert.match(architecture, /Task 105 adds explicitly consented Gemini coordinator chat/);
     assert.match(architecture, /Task 129/);
     assert.match(architecture, /Chat-driven GitHub study and research — Task 121/);
-    assert.match(roadmap, /href="tasks.html#task-129">Next: Task 129/);
-    assert.match(roadmap, /Next: Task 129.*Command center usability/);
+    assert.match(roadmap, /href="tasks.html#task-129">Task 129.*Command center usability/);
+    assert.match(roadmap, /no follow-up task is currently planned/);
     for (const page of [home, documentation, architecture]) assert.match(page, /Task 129/);
   });
 
   it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {
-    assert.equal(nextTask.number, 129);
+    assert.equal(nextTask, undefined);
     const task122 = post100Tasks.find(task => task.number === 122);
     assert.equal(task122.status, "completed");
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");
@@ -197,7 +197,8 @@ describe("documentation site", () => {
       "task-121-chat-driven-github-study", "task-122-isolated-adaptation-validation",
       "task-123-approved-local-activation", "task-124-read-only-software-inventory",
       "task-125-managed-vscode-user-lifecycle", "task-126-local-application-lifecycle",
-      "task-127-windows-electron-installer", "task-128-optional-voice-interaction"]);
+      "task-127-windows-electron-installer", "task-128-optional-voice-interaction",
+      "task-129-command-center-release-acceptance"]);
     const task127 = post100Tasks.find(task => task.number === 127);
     assert.equal(task127.status, "completed");
     assert.equal(task127.checkpoint, "task-127-windows-electron-installer");
@@ -222,6 +223,13 @@ describe("documentation site", () => {
     assert.equal(task128.checkpoint, "task-128-optional-voice-interaction");
     assert.match(task128.validation.join(" "), /1093 passed, 3 skipped/);
     assert.match(task128.limitations.join(" "), /not an enforceable cap on Google's account billing/);
+    const task129 = post100Tasks.find(task => task.number === 129);
+    assert.equal(task129.status, "completed");
+    assert.equal(task129.checkpoint, "task-129-command-center-release-acceptance");
+    assert.match(task129.validation.join(" "), /Windows 11 x64/);
+    assert.match(task129.validation.join(" "), /206A36D5C94FD76B2696C01F95CD842C24E3A79FD05FEB7FDB45F3DA101DC091/);
+    assert.match(task129.limitations.join(" "), /capacity remain UNKNOWN/);
+    assert.match(task129.limitations.join(" "), /production completeness/);
     for (const task of post100Tasks) {
       assert.ok(task.acceptance.length > 0 && task.outOfScope.length > 0);
       assert.ok(Array.isArray(task.decisions));
