@@ -159,12 +159,70 @@ function errorMessage(error) {
   }[error];
 }
 
+function addSetupLink(container, label, href) {
+  const link = document.createElement("a");
+  link.href = href;
+  link.textContent = label;
+  container.append(link);
+}
+
+function renderSetup(results) {
+  const badge = document.getElementById("setup-state");
+  const detail = document.getElementById("setup-detail");
+  const links = document.querySelector(".setup-links");
+  const relevant = [results.status, results.agents, results.providers];
+  const auth = relevant.some((result) => result?.error === "authentication");
+  const forbidden = relevant.some((result) => result?.error === "forbidden");
+  const failed = relevant.some((result) => result?.error === "failed");
+  badge.className = "setup-badge";
+  links.replaceChildren();
+
+  if (auth) {
+    badge.textContent = "SIGN-IN REQUIRED";
+    detail.textContent = "Sign in with the local owner account to review your setup. The default API requires its own authentication backend.";
+    addSetupLink(links, "Sign in", "/ui/login");
+    return;
+  }
+  if (forbidden) {
+    badge.textContent = "ACCESS DENIED";
+    detail.textContent = "This session cannot read one or more setup records. Ask the local owner to review access.";
+    addSetupLink(links, "Owner sign-in", "/ui/login");
+    return;
+  }
+  if (failed) {
+    badge.textContent = "UNAVAILABLE";
+    badge.classList.add("state-unavailable");
+    detail.textContent = "Setup information could not be read. This does not report provider health; refresh to try again.";
+    return;
+  }
+
+  const agents = results.agents.data.items;
+  const providers = results.providers.data.items;
+  const providerIds = new Set(providers.map((provider) => provider.id));
+  const assigned = agents.some((agent) =>
+    typeof agent.provider === "string" && providerIds.has(agent.provider)
+    && typeof agent.model === "string" && agent.model.trim().length > 0);
+  if (!providers.length || !assigned) {
+    badge.textContent = "SETUP REQUIRED";
+    badge.classList.add("state-required");
+    detail.textContent = !providers.length
+      ? "No provider is registered yet. Review provider setup, then check that an AI team member has a model assigned."
+      : "No registered AI team member has a model assignment that matches a configured provider.";
+    addSetupLink(links, "Review providers & models", "/ui/providers");
+    addSetupLink(links, "Review AI team", "/ui/employees");
+    return;
+  }
+
+  badge.textContent = "PARTIALLY CONFIGURED";
+  badge.classList.add("state-partial");
+  detail.textContent = "Provider and model assignments are present. Availability has not been checked, so the first chat will confirm whether the selected service can reply.";
+  addSetupLink(links, "Review providers & models", "/ui/providers");
+}
+
 function renderStatus(container, payload) {
   const details = element("dl", "identity-list");
-  addDefinition(details, "Corporation", payload.corporation.name);
-  addDefinition(details, "Corporation ID", payload.corporation.id);
-  addDefinition(details, "Node", payload.node.name);
-  addDefinition(details, "Node ID", payload.node.id);
+  addDefinition(details, "Workspace", payload.corporation.name);
+  addDefinition(details, "Local node", payload.node.name);
   container.append(details);
 }
 
@@ -283,6 +341,7 @@ function renderActivity(container, payload) {
 }
 
 export function renderDashboard(results) {
+  renderSetup(results);
   setPanel("status-panel", results.status, "Loading status…", renderStatus);
   setCombinedPanel(
     "workforce-panel",
@@ -301,6 +360,9 @@ export function renderDashboard(results) {
 
 async function refreshDashboard() {
   const button = document.getElementById("dashboard-retry");
+  document.getElementById("setup-state").textContent = "CHECKING";
+  document.getElementById("setup-state").className = "setup-badge";
+  document.getElementById("setup-detail").textContent = "Checking the available setup information. No provider health check will run.";
   button.disabled = true;
   button.textContent = "Loading…";
   const panels = [
@@ -316,7 +378,7 @@ async function refreshDashboard() {
     renderDashboard(await loadDashboard());
   } finally {
     button.disabled = false;
-    button.textContent = "Retry data loading";
+    button.textContent = "Refresh status";
   }
 }
 

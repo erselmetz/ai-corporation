@@ -33,6 +33,9 @@ class TestElement {
     this.children = [];
     this.hidden = false;
     this._text = "";
+    this.href = "";
+    this.className = "";
+    this.classList = { add: (name) => { this.className += ` ${name}`; } };
   }
 
   get textContent() {
@@ -60,6 +63,11 @@ class TestElement {
 
 function dashboardDocument() {
   const panels = new Map();
+  const setup = new Map([
+    ["setup-state", new TestElement("span")],
+    ["setup-detail", new TestElement("p")],
+    ["setup-links", new TestElement("div")],
+  ]);
   for (const panelId of [
     "status-panel",
     "workforce-panel",
@@ -79,10 +87,57 @@ function dashboardDocument() {
     panels,
     document: {
       createElement: (tagName) => new TestElement(tagName),
-      getElementById: (id) => panels.get(id),
+      getElementById: (id) => setup.get(id) ?? panels.get(id),
+      querySelector: (selector) => selector === ".setup-links" ? setup.get("setup-links") : null,
     },
+    setup,
   };
 }
+
+function setupResults({ agents = [], providers = [], error } = {}) {
+  const result = (items) => error ? { error } : { data: { items } };
+  return {
+    status: error ? { error } : { data: { corporation: { id: "c", name: "AI" }, node: { id: "n", name: "Local" } } },
+    agents: result(agents), providers: result(providers),
+    employees: result([]), models: result([]), tasks: result([]), projects: result([]), activity: result([]),
+  };
+}
+
+test("setup guidance distinguishes sign-in, missing configuration, and unchecked availability", () => {
+  const { document, setup } = dashboardDocument();
+  globalThis.document = document;
+  try {
+    renderDashboard(setupResults({ error: "authentication" }));
+    assert.equal(setup.get("setup-state").textContent, "SIGN-IN REQUIRED");
+    assert.equal(setup.get("setup-links").children[0].href, "/ui/login");
+
+    renderDashboard(setupResults());
+    assert.equal(setup.get("setup-state").textContent, "SETUP REQUIRED");
+    assert.match(setup.get("setup-detail").textContent, /No provider is registered/);
+
+    renderDashboard(setupResults({
+      providers: [{ id: "ollama" }],
+      agents: [{ id: "worker", provider: "ollama", model: "llama3.2:3b" }],
+    }));
+    assert.equal(setup.get("setup-state").textContent, "PARTIALLY CONFIGURED");
+    assert.match(setup.get("setup-detail").textContent, /Availability has not been checked/);
+    assert.doesNotMatch(setup.get("setup-state").textContent, /READY/);
+  } finally {
+    delete globalThis.document;
+  }
+});
+
+test("setup read failure is unavailable, not an empty or healthy provider state", () => {
+  const { document, setup } = dashboardDocument();
+  globalThis.document = document;
+  try {
+    renderDashboard(setupResults({ error: "failed" }));
+    assert.equal(setup.get("setup-state").textContent, "UNAVAILABLE");
+    assert.match(setup.get("setup-detail").textContent, /does not report provider health/);
+  } finally {
+    delete globalThis.document;
+  }
+});
 
 test("loads the existing protected read resources with same-origin credentials", async () => {
   const calls = [];

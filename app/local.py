@@ -19,15 +19,14 @@ class LoginRequest(BaseModel):
 
 LOGIN_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Local sign-in - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
-</head><body><main class="content"><h1>ERSELMETZ AI - Local access</h1>
-<p>Sign in with the owner password entered when starting this local app.</p>
+<title>Owner sign-in — ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+</head><body><main class="content login-content"><p class="eyebrow">YOUR LOCAL WORKSPACE</p><h1>Sign in to ERSELMETZ AI</h1>
+<p>Use the owner password created when this app was first set up. Sign-in unlocks the pages and chat allowed for this local session.</p>
 <form id="local-login"><label for="password">Owner password</label>
 <input id="password" type="password" autocomplete="current-password" required maxlength="1024">
 <button type="submit">Sign in</button></form>
 <p id="login-state" role="status" aria-live="polite"></p>
-<a href="/ui">Dashboard</a> <a href="/ui/chat">Coordinator chat</a> <button id="local-logout" type="button">Sign out</button>
-<p>Local mode provides read access and separately authorized coordinator chat. Separate chat-task:create and task:dispatch permissions support reviewed Task proposals and owner-confirmed local dispatch; general task:create remains unavailable. Dispatch requires configured slot budgets and does not use cloud Providers or Tools. Other management actions remain separately authorized.</p>
+<p class="login-links"><a href="/ui">Home</a><a href="/ui/chat">Chat</a><button id="local-logout" type="button">Sign out</button></p>
 </main><script type="module" src="/ui/static/local-login.mjs"></script></body></html>"""
 
 

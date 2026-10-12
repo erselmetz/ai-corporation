@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./style.css";
 
 export const metadata: Metadata = {
-  title: "ERSELMETZ AI Command Center",
-  description: "Private local AI command center",
+  title: "ERSELMETZ AI",
+  description: "Your local AI workspace",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

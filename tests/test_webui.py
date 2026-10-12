@@ -34,14 +34,18 @@ def test_dashboard_shell_and_assets_are_served_without_runtime_execution():
     assert shell.status_code == 200
     assert shell.headers["content-type"].startswith("text/html")
     assert "ERSELMETZ AI" in shell.text
-    assert "ERSELMETZ AI · Local App" in shell.text
-    assert "Corporation dashboard" in shell.text
-    assert "aria-label=\"Corporation navigation\"" in shell.text
+    assert "Your local AI workspace" in shell.text
+    assert "Welcome to ERSELMETZ AI" in shell.text
+    assert "Start Chat" in shell.text
+    assert "Refresh status" in shell.text
+    assert "aria-label=\"Main navigation\"" in shell.text
+    assert "PARTIALLY CONFIGURED" not in shell.text
+    assert "Provider availability is not checked here" in shell.text
     for section in (
-        "Corporation overview",
-        "Workforce overview",
-        "Providers &amp; model assignments",
-        "Tasks overview",
+        "Workspace identity",
+        "AI team",
+        "Provider setup",
+        "Tasks</h2>",
         "Projects overview",
         "Recent activity",
     ):
@@ -73,6 +77,42 @@ def test_dashboard_shell_and_assets_are_served_without_runtime_execution():
     orchestrator.run_agent.assert_not_called()
     orchestrator.create_task.assert_not_called()
     assert orchestrator.method_calls == []
+
+
+def test_primary_pages_share_grouped_navigation_with_real_route_targets():
+    application = create_app(CorporationApplicationService(MagicMock(spec=Orchestrator)))
+    paths = (
+        "/ui", "/ui/documentation", "/ui/activity", "/ui/updates", "/ui/employees",
+        "/ui/positions", "/ui/providers", "/ui/tasks", "/ui/projects",
+    )
+    with TestClient(application) as client:
+        pages = {path: client.get(path) for path in paths}
+
+    for path, response in pages.items():
+        assert response.status_code == 200
+        assert 'aria-label="Main navigation"' in response.text
+        assert 'class="navigation-group"' in response.text
+        assert f'href="{path}" aria-current="page"' in response.text
+        for target in ("/ui/chat", "/ui/projects", "/ui/providers", "/ui/tasks", "/ui/documentation"):
+            assert f'href="{target}"' in response.text
+
+    assert 'href="/ui/local-models"' in pages["/ui/providers"].text
+    assert 'href="/ui/online-provider"' in pages["/ui/providers"].text
+
+
+def test_chat_page_keeps_advanced_actions_collapsed_by_default():
+    application = create_app(CorporationApplicationService(MagicMock(spec=Orchestrator)))
+    with TestClient(application) as client:
+        page = client.get("/ui/chat")
+        dashboard = client.get("/ui")
+
+    assert page.status_code == 200
+    assert "Chat with your AI team" in page.text
+    assert "Start Chat" in dashboard.text
+    assert '<details class="chat-advanced">' in page.text
+    assert "Optional voice input and reply audio" in page.text
+    assert "Study an approved GitHub repository" in page.text
+    assert "Review a chat proposal" in page.text
 
 
 def test_employee_management_page_and_script_keep_employee_api_protected():
@@ -107,7 +147,7 @@ def test_employee_management_page_and_script_keep_employee_api_protected():
     assert "employee:manage" not in script.text
     assert "Bearer " not in script.text
     assert "password" not in script.text.lower()
-    assert "Employee management" in dashboard.text
+    assert 'href="/ui/employees"' in dashboard.text
     assert list_response.status_code == 401
     assert create_response.status_code == 401
     assert delete_response.status_code == 401
@@ -164,7 +204,7 @@ def test_provider_model_management_page_uses_protected_apis_and_safe_assets():
     assert "Bearer " not in script.text
     assert "api_key" not in script.text.lower()
     assert "password" not in script.text.lower()
-    assert "Employee management" in dashboard.text
+    assert 'href="/ui/employees"' in dashboard.text
     assert 'href="/ui/providers"' in dashboard.text
     assert 'href="/ui/providers"' in employees.text
     assert [response.status_code for response in protected] == [401] * 7

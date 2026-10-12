@@ -4,85 +4,99 @@ from fastapi.responses import HTMLResponse
 router = APIRouter()
 
 
+def _navigation(active_path: str) -> str:
+    """Render the same concise, route-accurate navigation on every app page."""
+    groups = (
+        ("PRIMARY", (("Home", "/ui"), ("Chat", "/ui/chat"), ("Projects", "/ui/projects"))),
+        ("AI", (("Employees", "/ui/employees"), ("Positions", "/ui/positions"),
+                ("Organization map", "/ui/structure"), ("Providers &amp; models", "/ui/providers"),
+                ("Memory", "/ui/memory"))),
+        ("OPERATIONS", (("Tasks", "/ui/tasks"), ("Workflows", "/ui/workflows"),
+                        ("Workflow map", "/ui/workflow-map"), ("Activity", "/ui/activity"))),
+        ("SYSTEM", (("Software inventory", "/ui/inventory"), ("Documentation", "/ui/documentation"),
+                    ("Updates", "/ui/updates"), ("Owner sign-in", "/ui/login"))),
+    )
+    parts = ['<nav class="navigation" aria-label="Main navigation"><h2>Navigate</h2><ul>']
+    for label, links in groups:
+        parts.append(f'<li class="navigation-group"><span>{label}</span><ul>')
+        for text, href in links:
+            current = ' aria-current="page"' if href == active_path else ""
+            parts.append(f'<li><a href="{href}"{current}>{text}</a></li>')
+        parts.append("</ul></li>")
+    parts.append("</ul></nav>")
+    return "".join(parts)
+
+
 @router.get("/ui", response_class=HTMLResponse, include_in_schema=False)
 def corporation_dashboard() -> HTMLResponse:
-    return HTMLResponse(
-        """
+    return HTMLResponse(f"""
         <!doctype html>
         <html lang="en">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
-          <meta name="description" content="ERSELMETZ AI executive dashboard">
-          <title>Dashboard — ERSELMETZ AI</title>
+          <meta name="description" content="Start chatting and review the current ERSELMETZ AI setup.">
+          <title>Home — ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/dashboard.mjs"></script>
         </head>
         <body>
           <header class="site-header">
             <a class="brand" href="/ui">ERSELMETZ AI</a>
-            <span class="product-label">ERSELMETZ AI · Local App</span>
+            <span class="product-label">Your local AI workspace</span>
           </header>
           <div class="layout">
-            <nav class="navigation" aria-label="Corporation navigation">
-              <h2>Navigation</h2>
-              <ul>
-                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
-                <li><a href="/ui/chat">Coordinator chat</a></li>
-                <li><a href="#dashboard" aria-current="page">Dashboard</a></li>
-                <li><a href="/ui/employees">Employee management</a></li>
-                <li><a href="/ui/providers">Provider &amp; model management</a></li>
-                <li><a href="/ui/inventory">Software &amp; integration inventory</a></li>
-                <li><a href="/ui/tasks">Task management</a></li>
-                <li><a href="/ui/projects">Project management</a></li>
-                <li><a href="/ui/activity">Activity &amp; logs</a></li>
-                <li><a href="/ui/memory">Memory</a></li>
-                <li><a href="/ui/documentation">Documentation portal</a></li>
-                <li><a href="/ui/updates">Updates / changelog</a></li>
-              </ul>
-            </nav>
+            {_navigation("/ui")}
             <main id="dashboard" class="content">
               <div class="dashboard-heading">
                 <div>
-                  <p class="eyebrow">Executive overview</p>
-                  <h1>Corporation dashboard</h1>
+                  <p class="eyebrow">YOUR LOCAL AI WORKSPACE</p>
+                  <h1>Welcome to ERSELMETZ AI</h1>
+                  <p class="dashboard-lead">Start a conversation, then explore projects and your AI team when you need them.</p>
                 </div>
-                <button id="dashboard-retry" type="button">Retry data loading</button>
+                <div class="dashboard-actions">
+                  <a class="primary-action" href="/ui/chat">Start Chat <span aria-hidden="true">→</span></a>
+                  <button id="dashboard-retry" type="button">Refresh status</button>
+                </div>
               </div>
-              <p class="auth-boundary">
-                Dashboard data comes from protected Corporation APIs. Protected data requires an authenticated session with the relevant read
-                permissions. In explicitly configured local mode, use Local sign-in.
-                The default API still rejects access without an authentication backend.
-              </p>
+              <section class="setup-card" id="setup-panel" aria-labelledby="setup-title">
+                <div class="setup-heading"><div><p class="eyebrow">FIRST RUN</p><h2 id="setup-title">Before your first chat</h2></div>
+                  <span id="setup-state" class="setup-badge" role="status" aria-live="polite">Checking sign-in…</span></div>
+                <p id="setup-detail" class="setup-detail">Checking the available setup information. No provider health check will run.</p>
+                <div class="setup-links">
+                  <a href="/ui/login">Sign in</a><a href="/ui/providers">Review providers &amp; models</a><a href="/ui/employees">Review AI team</a>
+                </div>
+                <p class="setup-boundary">Provider registration and model assignments show configuration only. Provider availability is not checked here; no model is downloaded or reassigned.</p>
+              </section>
               <div class="dashboard-grid">
                 <section class="dashboard-card" id="status-panel" aria-labelledby="status-title">
-                  <h2 id="status-title">Corporation overview</h2>
-                  <p class="section-state" role="status" aria-live="polite">Loading status…</p>
+                  <h2 id="status-title">Workspace identity</h2>
+                  <p class="section-state" role="status" aria-live="polite">Loading statusâ€¦</p>
                   <div class="section-data" hidden></div>
                 </section>
                 <section class="dashboard-card" id="workforce-panel" aria-labelledby="workforce-title">
-                  <h2 id="workforce-title">Workforce overview</h2>
-                  <p class="section-state" role="status" aria-live="polite">Loading workforce…</p>
+                  <h2 id="workforce-title">AI team</h2>
+                  <p class="section-state" role="status" aria-live="polite">Loading workforceâ€¦</p>
                   <div class="section-data" hidden></div>
                 </section>
                 <section class="dashboard-card" id="providers-panel" aria-labelledby="providers-title">
-                  <h2 id="providers-title">Providers &amp; model assignments</h2>
-                  <p class="section-state" role="status" aria-live="polite">Loading provider information…</p>
+                  <h2 id="providers-title">Provider setup</h2>
+                  <p class="section-state" role="status" aria-live="polite">Loading provider informationâ€¦</p>
                   <div class="section-data" hidden></div>
                 </section>
                 <section class="dashboard-card" id="tasks-panel" aria-labelledby="tasks-title">
-                  <h2 id="tasks-title">Tasks overview</h2>
-                  <p class="section-state" role="status" aria-live="polite">Loading tasks…</p>
+                  <h2 id="tasks-title">Tasks</h2>
+                  <p class="section-state" role="status" aria-live="polite">Loading tasksâ€¦</p>
                   <div class="section-data" hidden></div>
                 </section>
                 <section class="dashboard-card" id="projects-panel" aria-labelledby="projects-title">
                   <h2 id="projects-title">Projects overview</h2>
-                  <p class="section-state" role="status" aria-live="polite">Loading projects…</p>
+                  <p class="section-state" role="status" aria-live="polite">Loading projectsâ€¦</p>
                   <div class="section-data" hidden></div>
                 </section>
                 <section class="dashboard-card" id="activity-panel" aria-labelledby="activity-title">
                   <h2 id="activity-title">Recent activity</h2>
-                  <p class="section-state" role="status" aria-live="polite">Loading activity…</p>
+                  <p class="section-state" role="status" aria-live="polite">Loading activityâ€¦</p>
                   <div class="section-data" hidden></div>
                 </section>
               </div>
@@ -96,15 +110,14 @@ def corporation_dashboard() -> HTMLResponse:
 
 @router.get("/ui/documentation", response_class=HTMLResponse, include_in_schema=False)
 def documentation_portal_page() -> HTMLResponse:
-    return HTMLResponse(
-        """
+    return HTMLResponse(f"""
         <!doctype html>
         <html lang="en">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <meta name="description" content="Internal Corporation Documentation Portal">
-          <title>Documentation Portal — ERSELMETZ AI</title>
+          <title>Documentation Portal â€” ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/documentation.mjs"></script>
         </head>
@@ -114,22 +127,7 @@ def documentation_portal_page() -> HTMLResponse:
             <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
-            <nav class="navigation" aria-label="Corporation navigation">
-              <h2>Navigation</h2>
-              <ul>
-                <li><a href="/ui">Dashboard</a></li>
-                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
-                <li><a href="/ui/chat">Coordinator chat</a></li>
-                <li><a href="/ui/employees">Employee management</a></li>
-                <li><a href="/ui/providers">Provider &amp; model management</a></li>
-                <li><a href="/ui/tasks">Task management</a></li>
-                <li><a href="/ui/projects">Project management</a></li>
-                <li><a href="/ui/activity">Activity &amp; logs</a></li>
-                <li><a href="/ui/memory">Memory</a></li>
-                <li><a href="/ui/documentation" aria-current="page">Documentation portal</a></li>
-                <li><a href="/ui/updates">Updates / changelog</a></li>
-              </ul>
-            </nav>
+            {_navigation("/ui/documentation")}
             <main class="content documentation-page">
               <div class="dashboard-heading">
                 <div>
@@ -151,7 +149,7 @@ def documentation_portal_page() -> HTMLResponse:
                     <h2 id="documentation-list-title">Documents</h2>
                     <button id="documentation-refresh" type="button">Refresh</button>
                   </div>
-                  <p id="documentation-list-state" class="section-state" role="status" aria-live="polite">Loading documents…</p>
+                  <p id="documentation-list-state" class="section-state" role="status" aria-live="polite">Loading documentsâ€¦</p>
                   <ul id="documentation-list" class="record-list" aria-label="Documentation records"></ul>
                 </section>
                 <section class="management-card" aria-labelledby="documentation-detail-heading">
@@ -171,15 +169,14 @@ def documentation_portal_page() -> HTMLResponse:
 
 @router.get("/ui/activity", response_class=HTMLResponse, include_in_schema=False)
 def activity_page() -> HTMLResponse:
-    return HTMLResponse(
-        """
+    return HTMLResponse(f"""
         <!doctype html>
         <html lang="en">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <meta name="description" content="ERSELMETZ AI Activity and logs">
-          <title>Activity &amp; Logs — ERSELMETZ AI</title>
+          <title>Activity &amp; Logs â€” ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/activity.mjs"></script>
         </head>
@@ -189,21 +186,7 @@ def activity_page() -> HTMLResponse:
             <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
-            <nav class="navigation" aria-label="Corporation navigation">
-              <h2>Navigation</h2>
-              <ul>
-                <li><a href="/ui">Dashboard</a></li>
-                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
-                <li><a href="/ui/chat">Coordinator chat</a></li>
-                <li><a href="/ui/employees">Employee management</a></li>
-                <li><a href="/ui/providers">Provider &amp; model management</a></li>
-                <li><a href="/ui/tasks">Task management</a></li>
-                <li><a href="/ui/projects">Project management</a></li>
-                <li><a href="/ui/activity" aria-current="page">Activity &amp; logs</a></li>
-                <li><a href="/ui/documentation">Documentation portal</a></li>
-                <li><a href="/ui/updates">Updates / changelog</a></li>
-              </ul>
-            </nav>
+            {_navigation("/ui/activity")}
             <main class="content activity-page">
               <div class="dashboard-heading">
                 <div>
@@ -237,7 +220,7 @@ def activity_page() -> HTMLResponse:
                   <label for="activity-task-id">Task ID (optional)</label>
                   <input id="activity-task-id" name="task_id" autocomplete="off">
                 </div>
-                <p id="activity-list-state" class="section-state" role="status" aria-live="polite">Loading activity…</p>
+                <p id="activity-list-state" class="section-state" role="status" aria-live="polite">Loading activityâ€¦</p>
                 <ol id="activity-list" class="activity-list" aria-label="Activity records"></ol>
               </section>
               <section class="management-card" aria-labelledby="task-progress-title">
@@ -256,15 +239,14 @@ def activity_page() -> HTMLResponse:
 
 @router.get("/ui/updates", response_class=HTMLResponse, include_in_schema=False)
 def updates_page() -> HTMLResponse:
-    return HTMLResponse(
-        """
+    return HTMLResponse(f"""
         <!doctype html>
         <html lang="en">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <meta name="description" content="Curated Corporation software updates">
-          <title>Updates / Changelog — ERSELMETZ AI</title>
+          <title>Updates / Changelog â€” ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/updates.mjs"></script>
         </head>
@@ -274,22 +256,7 @@ def updates_page() -> HTMLResponse:
             <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
-            <nav class="navigation" aria-label="Corporation navigation">
-              <h2>Navigation</h2>
-              <ul>
-                <li><a href="/ui">Dashboard</a></li>
-                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
-                <li><a href="/ui/chat">Coordinator chat</a></li>
-                <li><a href="/ui/employees">Employee management</a></li>
-                <li><a href="/ui/providers">Provider &amp; model management</a></li>
-                <li><a href="/ui/tasks">Task management</a></li>
-                <li><a href="/ui/projects">Project management</a></li>
-                <li><a href="/ui/activity">Activity &amp; logs</a></li>
-                <li><a href="/ui/memory">Memory</a></li>
-                <li><a href="/ui/documentation">Documentation portal</a></li>
-                <li><a href="/ui/updates" aria-current="page">Updates / changelog</a></li>
-              </ul>
-            </nav>
+            {_navigation("/ui/updates")}
             <main class="content updates-page">
               <div class="dashboard-heading">
                 <div>
@@ -308,7 +275,7 @@ def updates_page() -> HTMLResponse:
               </p>
               <section class="management-card" aria-labelledby="updates-list-title">
                 <h2 id="updates-list-title">Curated updates</h2>
-                <p id="updates-list-state" class="section-state" role="status" aria-live="polite">Loading updates…</p>
+                <p id="updates-list-state" class="section-state" role="status" aria-live="polite">Loading updatesâ€¦</p>
                 <ol id="updates-list" class="updates-list" aria-label="Corporation updates"></ol>
               </section>
             </main>
@@ -321,15 +288,14 @@ def updates_page() -> HTMLResponse:
 
 @router.get("/ui/employees", response_class=HTMLResponse, include_in_schema=False)
 def employee_management_page() -> HTMLResponse:
-    return HTMLResponse(
-        """
+    return HTMLResponse(f"""
         <!doctype html>
         <html lang="en">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <meta name="description" content="ERSELMETZ AI employee management">
-          <title>Employee Management — ERSELMETZ AI</title>
+          <title>Employee Management â€” ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/employees.mjs"></script>
         </head>
@@ -339,24 +305,7 @@ def employee_management_page() -> HTMLResponse:
             <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
-            <nav class="navigation" aria-label="Corporation navigation">
-              <h2>Navigation</h2>
-              <ul>
-                <li><a href="/ui">Dashboard</a></li>
-                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
-                <li><a href="/ui/chat">Coordinator chat</a></li>
-                <li><a href="/ui/employee-chat">Individual Employee chat</a></li>
-                <li><a href="/ui/employees" aria-current="page">Employee management</a></li>
-                <li><a href="/ui/positions">Organizational positions</a></li>
-                <li><a href="/ui/providers">Provider &amp; model management</a></li>
-                <li><a href="/ui/tasks">Task management</a></li>
-                <li><a href="/ui/projects">Project management</a></li>
-                <li><a href="/ui/activity">Activity &amp; logs</a></li>
-                <li><a href="/ui/memory">Memory</a></li>
-                <li><a href="/ui/documentation">Documentation portal</a></li>
-                <li><a href="/ui/updates">Updates / changelog</a></li>
-              </ul>
-            </nav>
+            {_navigation("/ui/employees")}
             <main class="content employee-page">
               <div class="dashboard-heading">
                 <div>
@@ -376,7 +325,7 @@ def employee_management_page() -> HTMLResponse:
                     <h2 id="employee-list-title">Employees</h2>
                     <button id="employee-refresh" type="button">Refresh</button>
                   </div>
-                  <p id="employee-list-state" class="section-state" role="status" aria-live="polite">Loading employees…</p>
+                  <p id="employee-list-state" class="section-state" role="status" aria-live="polite">Loading employeesâ€¦</p>
                   <ul id="employee-list" class="employee-list" aria-label="Employee records"></ul>
                 </section>
                 <section class="employee-card" aria-labelledby="employee-detail-title">
@@ -411,15 +360,14 @@ def employee_management_page() -> HTMLResponse:
 
 @router.get("/ui/positions", response_class=HTMLResponse, include_in_schema=False)
 def position_management_page() -> HTMLResponse:
-    return HTMLResponse(
-        """
+    return HTMLResponse(f"""
         <!doctype html>
         <html lang="en">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <meta name="description" content="ERSELMETZ AI position management">
-          <title>Organizational Positions — ERSELMETZ AI</title>
+          <title>Organizational Positions â€” ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/positions.mjs"></script>
         </head>
@@ -429,16 +377,7 @@ def position_management_page() -> HTMLResponse:
             <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
-            <nav class="navigation" aria-label="Corporation navigation">
-              <h2>Navigation</h2>
-              <ul>
-                <li><a href="/ui">Dashboard</a></li>
-                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
-                <li><a href="/ui/employees">Employee management</a></li>
-                <li><a href="/ui/positions" aria-current="page">Organizational positions</a></li>
-                <li><a href="/ui/chat">Coordinator chat</a></li>
-              </ul>
-            </nav>
+            {_navigation("/ui/positions")}
             <main class="content">
               <div class="dashboard-heading">
                 <div><p class="eyebrow">Organization</p><h1>Organizational positions</h1></div>
@@ -488,15 +427,14 @@ def position_management_page() -> HTMLResponse:
 
 @router.get("/ui/providers", response_class=HTMLResponse, include_in_schema=False)
 def provider_model_management_page() -> HTMLResponse:
-    return HTMLResponse(
-        """
+    return HTMLResponse(f"""
         <!doctype html>
         <html lang="en">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <meta name="description" content="ERSELMETZ AI Provider and Model management">
-          <title>Provider &amp; Model Management — ERSELMETZ AI</title>
+          <title>Provider &amp; Model Management â€” ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/providers.mjs"></script>
         </head>
@@ -506,23 +444,7 @@ def provider_model_management_page() -> HTMLResponse:
             <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
-            <nav class="navigation" aria-label="Corporation navigation">
-              <h2>Navigation</h2>
-              <ul>
-                <li><a href="/ui">Dashboard</a></li>
-                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
-                <li><a href="/ui/chat">Coordinator chat</a></li>
-                <li><a href="/ui/employees">Employee management</a></li>
-                <li><a href="/ui/providers" aria-current="page">Provider &amp; Model management</a></li>
-                <li><a href="/ui/provider-connections">Local / online provider connections</a></li>
-                <li><a href="/ui/tasks">Task management</a></li>
-                <li><a href="/ui/projects">Project management</a></li>
-                <li><a href="/ui/activity">Activity &amp; logs</a></li>
-                <li><a href="/ui/memory">Memory</a></li>
-                <li><a href="/ui/documentation">Documentation portal</a></li>
-                <li><a href="/ui/updates">Updates / changelog</a></li>
-              </ul>
-            </nav>
+            {_navigation("/ui/providers")}
             <main class="content provider-page">
               <div class="dashboard-heading">
                 <div>
@@ -542,7 +464,7 @@ def provider_model_management_page() -> HTMLResponse:
                     <h2 id="provider-section-title">Configured Providers</h2>
                     <button id="provider-refresh" type="button">Refresh</button>
                   </div>
-                  <p id="provider-list-state" class="section-state" role="status" aria-live="polite">Loading providers…</p>
+                  <p id="provider-list-state" class="section-state" role="status" aria-live="polite">Loading providersâ€¦</p>
                   <ul id="provider-list" class="record-list" aria-label="Configured providers"></ul>
                   <section class="management-detail" aria-labelledby="provider-detail-title">
                     <h3 id="provider-detail-title">Provider details</h3>
@@ -568,13 +490,20 @@ def provider_model_management_page() -> HTMLResponse:
                     <button id="model-refresh" type="button">Refresh</button>
                   </div>
                   <p class="muted">Assignments identify Agents by the ID returned by the Model API. No Employee/Agent details are modified here.</p>
-                  <p id="model-list-state" class="section-state" role="status" aria-live="polite">Loading model assignments…</p>
+                  <p id="model-list-state" class="section-state" role="status" aria-live="polite">Loading model assignmentsâ€¦</p>
                   <ul id="model-list" class="record-list" aria-label="Agent model assignments"></ul>
                   <section class="management-detail" aria-labelledby="model-detail-title">
                     <h3 id="model-detail-title">Assignment details</h3>
                     <p id="model-detail-state" class="section-state" role="status" aria-live="polite">Select an assignment to inspect or replace it.</p>
                     <div id="model-detail" hidden></div>
                   </section>
+                  <nav class="setup-shortcuts" aria-label="Additional provider setup pages">
+                    <h3>More setup</h3>
+                    <a href="/ui/local-models">Local models</a>
+                    <a href="/ui/provider-connections">Provider connections</a>
+                    <a href="/ui/online-provider">Gemini online setup</a>
+                    <a href="/ui/assignment-policy">Assignment recommendations</a>
+                  </nav>
                 </section>
               </div>
             </main>
@@ -587,15 +516,14 @@ def provider_model_management_page() -> HTMLResponse:
 
 @router.get("/ui/tasks", response_class=HTMLResponse, include_in_schema=False)
 def task_management_page() -> HTMLResponse:
-    return HTMLResponse(
-        """
+    return HTMLResponse(f"""
         <!doctype html>
         <html lang="en">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <meta name="description" content="ERSELMETZ AI Task management">
-          <title>Task Management — ERSELMETZ AI</title>
+          <title>Task Management â€” ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/tasks.mjs"></script>
         </head>
@@ -605,22 +533,7 @@ def task_management_page() -> HTMLResponse:
             <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
-            <nav class="navigation" aria-label="Corporation navigation">
-              <h2>Navigation</h2>
-              <ul>
-                <li><a href="/ui">Dashboard</a></li>
-                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
-                <li><a href="/ui/chat">Coordinator chat</a></li>
-                <li><a href="/ui/employees">Employee management</a></li>
-                <li><a href="/ui/providers">Provider &amp; model management</a></li>
-                <li><a href="/ui/tasks" aria-current="page">Task management</a></li>
-                <li><a href="/ui/projects">Project management</a></li>
-                <li><a href="/ui/activity">Activity &amp; logs</a></li>
-                <li><a href="/ui/memory">Memory</a></li>
-                <li><a href="/ui/documentation">Documentation portal</a></li>
-                <li><a href="/ui/updates">Updates / changelog</a></li>
-              </ul>
-            </nav>
+            {_navigation("/ui/tasks")}
             <main class="content task-page">
               <div class="dashboard-heading">
                 <div>
@@ -640,7 +553,7 @@ def task_management_page() -> HTMLResponse:
                     <h2 id="task-list-title">Tasks</h2>
                     <button id="task-refresh" type="button">Refresh</button>
                   </div>
-                  <p id="task-list-state" class="section-state" role="status" aria-live="polite">Loading tasks…</p>
+                  <p id="task-list-state" class="section-state" role="status" aria-live="polite">Loading tasksâ€¦</p>
                   <ul id="task-list" class="record-list" aria-label="Task records"></ul>
                   <section class="management-detail" aria-labelledby="task-detail-title">
                     <h3 id="task-detail-title">Task details</h3>
@@ -655,7 +568,7 @@ def task_management_page() -> HTMLResponse:
                   <section class="management-detail" aria-labelledby="task-dispatch-title">
                     <h3 id="task-dispatch-title">Controlled worker dispatch</h3>
                     <p class="muted">Each dispatch requires a separate owner confirmation and configured Task 68 slot budgets. This path uses loopback Ollama only, does not execute Tools, and never retries. Completed execution is not proof that expected outcomes were verified.</p>
-                    <p id="task-dispatch-state" class="section-state" role="status" aria-live="polite">Checking dispatch permission…</p>
+                    <p id="task-dispatch-state" class="section-state" role="status" aria-live="polite">Checking dispatch permissionâ€¦</p>
                     <button id="task-dispatch-refresh" type="button">Refresh dispatch queue</button>
                     <ul id="task-dispatch-queue" class="record-list" aria-label="Dispatch queue and execution states"></ul>
                     <label for="task-dispatch-resolution">Human resolution for a queued or interrupted claim</label>
@@ -698,15 +611,14 @@ def task_management_page() -> HTMLResponse:
 
 @router.get("/ui/projects", response_class=HTMLResponse, include_in_schema=False)
 def project_management_page() -> HTMLResponse:
-    return HTMLResponse(
-        """
+    return HTMLResponse(f"""
         <!doctype html>
         <html lang="en">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <meta name="description" content="ERSELMETZ AI Project management">
-          <title>Project Management — ERSELMETZ AI</title>
+          <title>Project Management â€” ERSELMETZ AI</title>
           <link rel="stylesheet" href="/ui/static/style.css">
           <script type="module" src="/ui/static/projects.mjs"></script>
         </head>
@@ -716,22 +628,7 @@ def project_management_page() -> HTMLResponse:
             <span class="product-label">ERSELMETZ AI Local App</span>
           </header>
           <div class="layout">
-            <nav class="navigation" aria-label="Corporation navigation">
-              <h2>Navigation</h2>
-              <ul>
-                <li><a href="/ui">Dashboard</a></li>
-                <li><a href="/ui/login">Local sign-in / sign-out</a></li>
-                <li><a href="/ui/chat">Coordinator chat</a></li>
-                <li><a href="/ui/employees">Employee management</a></li>
-                <li><a href="/ui/providers">Provider &amp; model management</a></li>
-                <li><a href="/ui/tasks">Task management</a></li>
-                <li><a href="/ui/projects" aria-current="page">Project management</a></li>
-                <li><a href="/ui/activity">Activity &amp; logs</a></li>
-                <li><a href="/ui/memory">Memory</a></li>
-                <li><a href="/ui/documentation">Documentation portal</a></li>
-                <li><a href="/ui/updates">Updates / changelog</a></li>
-              </ul>
-            </nav>
+            {_navigation("/ui/projects")}
             <main class="content project-page">
               <div class="dashboard-heading">
                 <div>
@@ -751,7 +648,7 @@ def project_management_page() -> HTMLResponse:
                     <h2 id="project-list-title">Projects</h2>
                     <button id="project-refresh" type="button">Refresh</button>
                   </div>
-                  <p id="project-list-state" class="section-state" role="status" aria-live="polite">Loading projects…</p>
+                  <p id="project-list-state" class="section-state" role="status" aria-live="polite">Loading projectsâ€¦</p>
                   <ul id="project-list" class="record-list" aria-label="Project records"></ul>
                   <section class="management-detail" aria-labelledby="project-detail-title">
                     <h3 id="project-detail-title">Project details</h3>
@@ -784,7 +681,7 @@ def project_management_page() -> HTMLResponse:
 def memory_page() -> HTMLResponse:
     return HTMLResponse("""<!doctype html><html lang="en"><head>
       <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Memory — ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+      <title>Memory â€” ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
       <script type="module" src="/ui/static/memory.mjs"></script></head><body>
       <main class="content"><a href="/ui">Back to dashboard</a><h1>Memory management</h1>
       <p>In default API mode, browser sign-in is not configured. Reads require memory:read; changes require memory:manage and owner authority. Owner identity comes from the authenticated session.</p>
@@ -807,14 +704,13 @@ def memory_page() -> HTMLResponse:
 def coordinator_chat_page():
     return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Coordinator chat - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <title>Chat - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
     <script type="module" src="/ui/static/chat.mjs"></script></head><body>
     <main class="content chat-content"><nav aria-label="Chat navigation">
-    <a href="/ui">Dashboard</a> | <a href="/ui/login">Local sign-in / sign-out</a> | <a href="/ui/employee-chat">Individual Employee chat</a> | <a href="/ui/local-models">Agent model setup</a> | <a href="/ui/online-provider">Gemini online setup</a></nav>
-    <h1>Corporation coordinator chat</h1>
-    <p>Talk to a selected registered Agent. Replies are conversation text; they do not create Tasks,
-    execute tools, or change the corporation. This is the first step toward the planned CEO workspace.</p>
-    <label for="chat-agent">Coordinator and configured model</label><select id="chat-agent"></select>
+    <a href="/ui">Home</a> | <a href="/ui/login">Owner sign-in</a> | <a href="/ui/employee-chat">Employee chat</a> | <a href="/ui/providers">Providers &amp; models</a></nav>
+    <p class="eyebrow">YOUR AI WORKSPACE</p><h1>Chat with your AI team</h1>
+    <p>Choose a registered AI team member, start a conversation, and send a message. The first reply checks whether its configured service can respond. Chat does not run generated instructions.</p>
+    <label for="chat-agent">AI team member and assigned model</label><select id="chat-agent"></select>
     <button id="chat-start" type="button">New conversation</button>
     <label for="chat-conversation">Your conversations for this app run</label><select id="chat-conversation"></select>
     <button id="chat-refresh" type="button">Refresh list</button><button id="chat-close" type="button">Close conversation</button>
@@ -825,6 +721,7 @@ def coordinator_chat_page():
     <button id="chat-send" type="submit">Send</button>
     <button id="chat-stop-request" type="button" disabled hidden>Stop waiting (remote outcome may be unknown)</button>
     <button id="chat-stop-display" type="button" disabled hidden>Stop display (generation continues)</button></form>
+    <details class="chat-advanced"><summary>Optional voice input and reply audio</summary>
     <section class="panel" id="voice-panel" aria-labelledby="voice-heading">
     <h2 id="voice-heading">Optional voice input and reply audio</h2>
     <p>Voice is off until you start it. Local speech uses on-device recognition only and never falls back to cloud.
@@ -844,14 +741,15 @@ def coordinator_chat_page():
     <p id="voice-cloud-consent-panel"><label><input id="voice-cloud-consent" type="checkbox">
     For this recording only, I consent to send the audio to Google Gemini for transcription. Google's account data practices are controlled by the connected account, not this app. A stopped request may still be processed remotely.</label></p>
     <form id="voice-budget-form">
-      <label for="voice-budget-cents">Cloud voice app-run budget (US cents; 1–100; not a provider billing cap)</label>
+      <label for="voice-budget-cents">Cloud voice app-run budget (US cents; 1â€“100; not a provider billing cap)</label>
       <input id="voice-budget-cents" type="number" min="1" max="100" step="1" value="5">
       <button id="voice-budget-save" type="submit">Set cloud ceiling</button>
     </form>
     <p id="voice-budget-state" role="status" aria-live="polite">Cloud transcription is off until you set a per-run spending ceiling.</p>
     <button id="voice-stop-playback" type="button" disabled>Stop local reply playback</button>
     <p id="voice-state" role="status" aria-live="polite">Typed chat remains available while voice is disabled.</p>
-    </section>
+    </section></details>
+    <details class="chat-advanced"><summary>Study an approved GitHub repository</summary>
     <section class="panel" aria-labelledby="repository-study-heading">
     <h2 id="repository-study-heading">Study an approved GitHub repository</h2>
     <p>Uses only the configured repository allowlist and bounded GitHub reads. Source content is untrusted;
@@ -865,9 +763,10 @@ def coordinator_chat_page():
     </form>
     <p id="repository-study-state" role="status" aria-live="polite"></p>
     <pre id="repository-study-result" aria-live="polite"></pre>
-    </section>
+    </section></details>
+    <details class="chat-advanced"><summary>Review a chat proposal</summary>
     <section class="panel" aria-labelledby="chat-task-proposal-heading">
-    <h2 id="chat-task-proposal-heading">Review a coordinator proposal</h2>
+    <h2 id="chat-task-proposal-heading">Review a chat proposal</h2>
     <p>Only an explicitly confirmed proposal creates a pending Task. It does not execute work.
     The local-owner flow has a separate <code>chat-task:create</code> permission.</p>
     <label for="chat-task-source">Completed coordinator proposal</label><select id="chat-task-source"></select>
@@ -886,11 +785,12 @@ def coordinator_chat_page():
     <p id="chat-task-state" role="status" aria-live="polite"></p>
     <pre id="chat-task-review" aria-live="polite"></pre>
     <button id="chat-task-confirm" type="button" disabled>Confirm and create pending Task</button>
-    </section>
+    </section></details>
+    <details class="chat-advanced"><summary>Conversation and provider details</summary>
     <p>History is in memory and is lost when the app restarts. Up to 100 conversations and 200 messages
     per conversation are retained for this run. Configured loopback Ollama can stream responses;
     the Stop display control does not cancel provider generation; Stop waiting interrupts this app's request but cannot confirm remote cancellation. For the default local Agent, Ollama and llama3.2:3b must already be available;
-    use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here; configure Gemini in its separate online setup page.</p>
+    use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here; configure Gemini in its separate online setup page.</p></details>
     <p id="cloud-consent-panel" hidden><label><input id="cloud-consent" type="checkbox">
     I consent to send this message, recent conversation history, and configured chat context to Google Gemini for this reply.</label></p>
     </main></body></html>""")
@@ -1194,7 +1094,7 @@ def provider_connections_page():
     Loading sends no prompt; explicit load/unload is bounded by this connection's configured request
     slots and blocked while that model has active work. Loaded memory is counted once per provider/model,
     even when Agents share it.</p>
-    <label for="model-keep-alive">Load keep-alive seconds (1–86400)</label>
+    <label for="model-keep-alive">Load keep-alive seconds (1â€“86400)</label>
     <input id="model-keep-alive" type="number" min="1" max="86400" value="300">
     <p><button id="model-runtime-refresh" type="button">Refresh loaded-model status</button>
     <button id="model-load" type="button" disabled>Load selected model</button>

@@ -135,7 +135,7 @@ export function mountChat({
     element("chat-identity").textContent = `${agent.name} (${agent.role}) | ${agent.provider} / ${agent.model} | ${record.status}`;
     history.replaceChildren();
     taskSource.replaceChildren();
-    option(taskSource, "", "Select a completed coordinator proposal");
+    option(taskSource, "", "Select a completed chat proposal");
     for (const message of record.messages) {
       if (typeof message.content !== "string" || !["user", "assistant", "system"].includes(message.role)
           || !["pending", "completed", "failed"].includes(message.status)) throw new Error("Invalid message response.");
@@ -226,12 +226,12 @@ export function mountChat({
         option(taskAgent, agent.id, `${agent.name} | ${agent.role}`);
       }
       for (const item of list.items) option(conversations, item.id, `${item.coordinator.name} - ${item.id.slice(0, 8)}`);
-      state.textContent = agentList.items.length ? "Choose a coordinator and start a conversation." : "No registered coordinator is available.";
+      state.textContent = agentList.items.length ? "Choose an AI team member and start a conversation." : "No registered AI team member is available.";
     });
   }
   async function start() {
     return action(async () => {
-      if (!agents.value) throw new Error("Choose a coordinator first.");
+      if (!agents.value) throw new Error("Choose an AI team member first.");
       state.textContent = "Starting conversation…";
       const result = await request(base, { agent_id: agents.value });
       option(conversations, result.conversation.id, `${result.coordinator.name} - ${result.conversation.id.slice(0, 8)}`);

@@ -325,7 +325,7 @@ test("authorization and empty data are distinct and failed refresh removes stale
   assert.equal(ui.elements["chat-agent"].children.length, 0);
   const empty = setup(path => path === "/api/agents" ? response({ items: [] }) : null);
   assert.equal(await empty.controller.initialLoad, true);
-  assert.match(empty.elements["chat-state"].textContent, /No registered coordinator/);
+  assert.match(empty.elements["chat-state"].textContent, /No registered AI team member/);
 });
 
 test("existing owner conversation can be selected after refresh and closed explicitly", async () => {
