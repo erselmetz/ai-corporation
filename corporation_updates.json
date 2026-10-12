@@ -1,5 +1,11 @@
 {
   "items": [
+{
+    "date": "2026-10-12",
+    "type": "development",
+    "title": "Managed Microsoft VS Code user installation",
+    "summary": "Completed Task 125 with a fixed Microsoft.VisualStudioCode WinGet adapter for current-user VS Code installations only. The local inventory page can install, forward-upgrade/change to an exact version, pin/unpin and remove only installs this app initiated and recorded. Every mutation requires a fresh five-minute owner preview bound to the exact source, version/hash, scope and current package state, followed by a separate same-origin CSRF-protected confirmation. Existing/untracked installs and external pins remain read-only; machine-scope copies, elevated app processes and unknown state block mutations. Bounded SQLite provenance and outcome records are retained. Partial/uncertain operations are never retried automatically. Removal previews the actual install directory and never asks WinGet to purge user data; the owner must move any work stored within that directory. Recovery is offered only after removal when the exact previous user installer remains source/hash-verified; downgrades after updates are not claimed. Validation: 11 managed-software tests and 18 inventory/local-access regressions passed; all 148 browser-module tests and 14 public docs tests passed; full Python suite 1065 passed, 3 skipped, with the same 2 unrelated pre-existing model-assignment failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service) recorded at Task 124. No live package mutations or provider/model calls. Read-only WinGet discovery confirmed the existing VS Code installation is external and successfully parsed the user installer manifest and hash. Task 125 checkpoint tag: task-125-managed-vscode-user-lifecycle. Task 126 is next; Tasks 126-129 remain planned."
+},
     {
       "date": "2026-10-12",
       "type": "development",

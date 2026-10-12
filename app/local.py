@@ -50,6 +50,8 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
     application.include_router(provider_connections_router)
     from app.api.inventory import router as inventory_router
     application.include_router(inventory_router)
+    from app.api.managed_software import router as managed_software_router
+    application.include_router(managed_software_router)
     from app.api.workflows import router as workflows_router
     application.include_router(workflows_router)
 

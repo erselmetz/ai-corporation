@@ -340,8 +340,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-124 are verified complete, Task 125 is next,
-and Tasks 125-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-125 are verified complete, Task 126 is next,
+and Tasks 126-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -652,8 +652,33 @@ or install/update/remove software. Python is externally managed; provider
 credentials remain in memory and are not serialized into inventory responses.
 Inventory records are bounded and sequential rather than an atomic snapshot.
 The default API stays fail-closed and does not mount the local-owner inventory
-route. Task 125 remains planned for any managed software lifecycle operations.
+route. Task 124 inventory remains read-only; Task 125 adds a separate fixed-package lifecycle adapter.
 Checkpoint tag `task-124-read-only-software-inventory`.
+
+## Task 125 - Managed software lifecycle
+
+The local-owner-only `/ui/inventory` page now includes a narrowly scoped
+Microsoft VS Code manager backed by the fixed `Microsoft.VisualStudioCode`
+WinGet ID and `winget` source. It supports only the current user's VS Code
+setup, never requests elevation, refuses to run from an elevated process, and
+keeps existing or untracked installs read-only. Each install, update, exact
+version change, pin/unpin, or removal requires a fresh five-minute preview and
+an explicit same-origin owner confirmation bound to the exact source, version,
+manifest installer hash, scope, and affected-data summary. The default API
+does not mount these routes and remains fail-closed.
+
+The app records only installs it initiated and a bounded audit of actual
+outcomes. Failed or uncertain operations are not retried automatically.
+Recovery is offered only for a previously recorded version still verified in
+the WinGet catalog, and requires a new preview and confirmation. Uninstall
+never requests purge or user-data cleanup; the preview shows the installation
+directory that will be removed and requires the owner to move any work stored
+there. VS Code settings, profiles and extensions are not read or removed.
+Package operations are Windows-only and coordinated within one app process;
+external package-manager changes and other app instances are outside that
+coordination. Tests use deterministic fake package managers; no install,
+upgrade, pin, or uninstall was performed during Task 125 validation. See
+`docs/tasks-data.mjs` for verified test evidence and remaining limitations.
 
 ## Task 118 - Durable chat history
 

@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-124 are verified complete, Task 125 is next,
-and Tasks 125-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-125 are verified complete, Task 126 is next,
+and Tasks 126-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -1031,8 +1031,44 @@ health checks, and credential-store access are excluded. Python is marked
 externally managed. Provider credentials are never included. Results are
 sequential snapshots and can change immediately after observation. The default
 API remains fail-closed and does not mount this local-owner route. The panel has
-no install, update, version-pin, or remove actions; those are separately planned
-under Task 125.
+no lifecycle operations itself; Task 125 adds a separate fixed-package manager with
+owner-confirmed user-scope install, update, pin, version change and removal.
+
+## Managed software lifecycle (Task 125)
+
+The explicit local-owner app mounts `/api/local/software` and adds a control
+section to `/ui/inventory`. Distinct `software:read` and `software:manage`
+permissions exist only in local-owner mode; writes also pass the existing
+same-origin and CSRF middleware. The default API does not mount this router.
+The adapter accepts only the exact Microsoft VS Code package ID from WinGet's
+`winget` source and verifies an exact user-setup manifest version and installer
+SHA-256 before displaying a preview. The preview binds operation, from/to
+versions, source, user scope, installer hash, recorded dependent workflows,
+installation-directory effects and the no-cleanup data policy. A five-minute
+one-use confirmation digest is revalidated against current package/catalog
+state before a fixed argument-vector command runs with `shell=False`, bounded
+timeouts, noninteractive WinGet behavior and no elevation. Mutations are
+blocked when the Python app process is elevated.
+
+The durable SQLite ledger records only installs completed by this app; existing
+or externally changed package installs remain read-only. WinGet machine-scope
+presence is checked because pin operations have no scope selector. Pins created
+by other tools cannot be removed here. A bounded audit records actual operation
+outcomes without raw process output. Nonzero, timed-out or unverifiable partial
+changes are surfaced as failed/uncertain and never retried automatically.
+Recovery only names an exact previous version whose current source manifest and
+hash were verified, and requires a new owner preview/confirmation.
+
+Removal is available only for a tracked user-scope install, after preview shows
+the exact install directory. The adapter does not request `--purge` or clean-up
+of `%APPDATA%\\Code`, `%USERPROFILE%\\.vscode`, or
+`%USERPROFILE%\\.vscode-shared`; it does not inspect those folders. Work files
+stored inside the displayed application directory must be moved by the owner
+before confirmation. Other packages, arbitrary GitHub installers, system-wide
+installs, dependency automation, and cross-process coordination are excluded.
+All package-manager tests use deterministic fakes; validation does not install,
+upgrade, pin, or remove software. The separate public documentation site and
+the Task 53 file-based/read-only Documentation Portal remain unchanged.
 
 ## Software and integration inventory (Task 124)
 
@@ -1056,5 +1092,5 @@ health checks, and credential-store access are excluded. Python is marked
 externally managed. Provider credentials are never included. Results are
 sequential snapshots and can change immediately after observation. The default
 API remains fail-closed and does not mount this local-owner route. The panel has
-no install, update, version-pin, or remove actions; those are separately planned
-under Task 125.
+no lifecycle operations itself; Task 125 adds a separate fixed-package manager with
+owner-confirmed user-scope install, update, pin, version change and removal.

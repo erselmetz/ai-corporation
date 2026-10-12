@@ -19,6 +19,7 @@ READ_PERMISSIONS = frozenset({
     "position:read", "github:read",
     "assignment-policy:read",
     "inventory:read",
+    "software:read",
 })
 
 CHAT_PERMISSIONS = frozenset({"chat:read", "chat:start", "chat:send", "chat:close"})
@@ -37,6 +38,7 @@ CHAT_HISTORY_PERMISSIONS = frozenset({"chat-history:manage"})
 CHAT_KNOWLEDGE_PERMISSIONS = frozenset({"chat-knowledge:retain", "chat-knowledge:withdraw"})
 TASK_DISPATCH_PERMISSIONS = frozenset({"task:dispatch"})
 WORKFLOW_PERMISSIONS = frozenset({"workflow:read", "workflow:manage"})
+SOFTWARE_MANAGEMENT_PERMISSIONS = frozenset({"software:manage"})
 MAINTENANCE_EXPERIMENT_PERMISSIONS = frozenset({
     "maintenance:experiment", "maintenance:approve", "maintenance:checkpoint",
     "maintenance:activate",
@@ -79,6 +81,7 @@ class LocalOwnerAuthentication:
             | ASSIGNMENT_POLICY_PERMISSIONS | CHAT_TASK_PERMISSIONS | CHAT_KNOWLEDGE_PERMISSIONS | CHAT_HISTORY_PERMISSIONS
             | TASK_DISPATCH_PERMISSIONS | PROVIDER_CONNECTION_MANAGEMENT_PERMISSIONS
             | MODEL_RUNTIME_PERMISSIONS | WORKFLOW_PERMISSIONS
+            | SOFTWARE_MANAGEMENT_PERMISSIONS
             | MAINTENANCE_EXPERIMENT_PERMISSIONS)
 
     def _hash(self, password: str) -> bytes:

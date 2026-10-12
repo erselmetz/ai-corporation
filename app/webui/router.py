@@ -877,13 +877,32 @@ def inventory_page():
     <script type="module" src="/ui/static/inventory.mjs"></script></head><body>
     <main class="content"><nav><a href="/ui">Dashboard</a> |
     <a href="/ui/providers">Providers</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
-    <p class="eyebrow">Read-only local inspection</p><h1>Software &amp; integration inventory</h1>
-    <p>This page reports the running ERSELMETZ AI app, its Python runtime, this source checkout,
-    and configured provider connections. It does not scan installed Windows apps or manage software.
+    <p class="eyebrow">Local software inventory</p><h1>Software &amp; integration inventory</h1>
+    <p>This page reports supported app/runtime/provider sources and provides a tightly scoped
+    owner-confirmed lifecycle for Microsoft VS Code through the user-scope WinGet adapter.
+    Existing installs not initiated by ERSELMETZ AI remain read-only.
     Unknown means the source could not verify a value.</p>
     <button id="inventory-refresh" type="button">Refresh inventory</button>
     <p id="inventory-status" role="status" aria-live="polite">Sign in, then load the inventory.</p>
     <div id="inventory-records" class="dashboard-grid" aria-live="polite"></div>
+    <section class="management-card" aria-labelledby="software-manager-title">
+      <h2 id="software-manager-title">Supported software lifecycle</h2>
+      <p id="software-manager-state" role="status" aria-live="polite">Sign in to inspect supported software.</p>
+      <dl id="software-manager-details"></dl>
+      <div id="software-manager-controls" hidden>
+        <label for="software-action">Operation</label>
+        <select id="software-action"><option value="install">Install</option><option value="update">Update</option><option value="version">Change target version (upgrade only)</option><option value="pin">Pin version</option><option value="unpin">Remove version pin</option><option value="remove">Remove software</option></select>
+        <label for="software-version">Exact version (required for install, update, change and pin)</label>
+        <input id="software-version" inputmode="decimal" maxlength="32" autocomplete="off">
+        <button id="software-preview" type="button">Preview operation</button>
+      </div>
+      <div id="software-preview-panel" hidden>
+        <h3>Review this exact operation</h3><dl id="software-preview-details"></dl>
+        <button id="software-confirm" type="button">Confirm this operation</button>
+      </div>
+      <p id="software-operation-result" role="status" aria-live="polite"></p>
+      <ul id="software-manager-limitations"></ul>
+    </section>
     <section class="management-card"><h2>Inspection limits</h2><ul id="inventory-limitations"></ul></section>
     </main></body></html>""")
 

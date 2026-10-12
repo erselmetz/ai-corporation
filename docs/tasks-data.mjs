@@ -1007,7 +1007,7 @@ export const post100Tasks = [
     "title": "Managed install update version and remove",
     "description": "Manage one explicitly supported software adapter with preview, permission checks and data-preserving recovery.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       124
     ],
@@ -1021,12 +1021,22 @@ export const post100Tasks = [
       "Running arbitrary GitHub installers or assuming every repository is an installable app."
     ],
     "decisions": [
-      "Select the first supported application/package manager; Git and VS Code are candidates. Approve install/update/removal and privilege boundaries."
+      "Resolved narrowly to Microsoft Visual Studio Code through the official WinGet source, exact Microsoft.VisualStudioCode package ID, user-setup installer only, and current-user scope. Existing/untracked installs remain read-only. Install, update, forward-only exact-version change, pin/unpin and removal each require a fresh five-minute preview bound to source, version/hash, scope and observed package state, then a separate local-owner confirmation. Elevated application processes are denied; no privilege escalation is requested. Removal never requests purge or user-data cleanup and presents the install directory for owner inspection. Only exact reinstall after removal is offered as recovery when the catalog still verifies the previous version; downgrade/rollback after update is not claimed."
     ],
     "area": "P12b",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-125-managed-vscode-user-lifecycle",
+    "validation": [
+      "Focused managed-software, inventory and local-owner authentication regressions: 29 passed; 11 new deterministic managed-software tests cover forward version change, denied external install/pin mutation, rejected downgrade, partial failure, confirmation expiry/replay, pin/unpin, removal data preservation and verified recovery.",
+      "All browser-module tests: 148 passed, including inert preview/confirmation UI and same-origin CSRF coverage. Public documentation tests: 14 passed.",
+      "Full Python suite: 1065 passed, 3 skipped, and 2 pre-existing unrelated failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service), matching the recorded Task 124 baseline. No live package changes, model calls or provider calls.",
+      "Python compile/import checks, JavaScript syntax checks and git diff --check passed. Read-only WinGet discovery on this machine identified the pre-existing VS Code as externally managed, verified its user-setup source manifest/hash and install directory, and performed no install/update/pin/remove action."
+    ],
+    "limitations": [
+      "Windows only; only Microsoft.VisualStudioCode from the WinGet source is supported. Existing installations, external pins and machine-scope copies are not adopted or modified. Other packages and arbitrary GitHub installers remain out of scope.",
+      "The app does not inspect user-data directories or files within the install directory. VS Code settings/profiles/extensions are not passed to cleanup; the owner must move any personal work stored inside the displayed application directory before removal. Other installer side effects remain package-controlled.",
+      "Managed-install provenance is durable in the existing SQLite database, but previews/confirmations and coordination are process-local. This does not coordinate separate app processes, WinGet calls or external package-manager changes; detected version/state conflicts fail closed.",
+      "Only forward upgrades are supported. WinGet downgrade/rollback after update is not treated as verified recovery. Exact prior-version reinstall is offered only after removal and still requires a new preview and owner confirmation."
+    ]
   },
   {
     "number": 126,
