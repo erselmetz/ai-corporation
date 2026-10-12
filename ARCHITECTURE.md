@@ -672,8 +672,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-127 are verified complete, Task 128 is next,
-and Tasks 128-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-128 are verified complete, Task 129 is next,
+and Task 129 is planned. Every task has dependencies, acceptance checks,
 exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -1119,7 +1119,7 @@ existing API routes from one `127.0.0.1:8765` origin; production does not run a
 Next.js server. The frozen backend owns an exclusive current-user lease and
 loopback socket; port conflicts fail closed. Electron context isolation,
 renderer sandboxing, disabled Node integration, denied permissions/new windows,
-fixed local navigation, and a three-operation preload bridge constrain the
+fixed local navigation, and a four-operation preload bridge constrain the
 renderer. Password setup data travels over the child stdin pipe and uses the
 existing DPAPI verifier store; the installer does not add credential persistence
 or provider behavior.
@@ -1127,13 +1127,31 @@ or provider behavior.
 The installer is unsigned and per-user, requests no elevation, has no updater,
 and leaves `%LOCALAPPDATA%\ERSELMETZ AI` intact on uninstall. Updates are manual
 trusted reinstalls. Uvicorn request/error logging is disabled; no persistent
-desktop log is created. Chat/provider APIs and pages are reused as-is. The
+desktop log is created. Chat/provider APIs and pages are reused as-is except for
+the Task 128 voice panel and one-use audio permission. The
 packaging check opened these pages with deterministic temporary profiles but did
 not configure a provider or request a live model response. It does not establish
 production signing, update authenticity, provider availability, or release
 readiness; Task 129 remains the acceptance milestone. Build and user recovery
 instructions are in [desktop/README.md](desktop/README.md). The Task 126 GUI and
 legacy CLI are independent and are not managed by Electron.
+
+## Optional voice interaction (Task 128)
+
+Voice is off until an owner starts it from an open coordinator conversation.
+Typed chat remains available. Local input requires browser-confirmed on-device
+recognition and does not fall back to a remote service; local reply speech uses
+an installed local voice. Optional Gemini 3.5 Transcribe accepts only 10-second
+mono 16 kHz PCM WAV audio, sent inline after one-use consent. No audio file or
+provider Files/Interactions object is created. App-side audio retention is none.
+The app reserves one cent per attempted transcription against a one-time
+1–100-cent process-local request budget. This bounds app requests, not the
+provider's final invoice. Gemini may retain requests under the connected account
+tier and settings; this app cannot configure or verify that retention. Cloud
+transcripts enter the message box for review and still use existing same-origin
+CSRF, chat permission, cloud-consent, and send/approval gates. A stopped cloud
+request can continue remotely; its outcome/charge is unknown and it is never
+replayed. Deterministic tests did not use live audio or provider credentials.
 
 ## Software and integration inventory (Task 124)
 

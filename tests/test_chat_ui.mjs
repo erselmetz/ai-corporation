@@ -42,7 +42,7 @@ const completedStreamEvent = {
     ],
   },
 };
-function setup(handler = null) {
+function setup(handler = null, windowRef = globalThis.window) {
   const ids = [
     "chat-state", "chat-history", "chat-agent", "chat-conversation", "chat-input",
     "chat-start", "chat-send", "chat-close", "chat-refresh", "chat-identity",
@@ -54,12 +54,19 @@ function setup(handler = null) {
     "chat-stop-display", "repository-study-form", "repository-study-objective",
     "repository-study-owner", "repository-study-name", "repository-study-submit",
     "repository-study-state", "repository-study-result",
+    "chat-stop-request", "voice-mode", "voice-language", "voice-start", "voice-stop",
+    "voice-transcribe", "voice-install-local", "voice-cloud-consent", "voice-budget-form",
+    "voice-budget-cents", "voice-budget-save", "voice-budget-state", "voice-state",
+    "voice-stop-playback",
   ];
   const elements = Object.fromEntries(ids.map(id => [id, new Element(
     ["chat-agent", "chat-conversation", "chat-task-source", "chat-task-agent",
       "chat-task-context-scope"].includes(id) ? "select" : "",
   )]));
   const calls = [];
+  elements["voice-mode"].value = "local";
+  elements["voice-language"].value = "en-US";
+  elements["voice-budget-cents"].value = "5";
   const fetchImpl = async (path, options) => {
     calls.push({ path, options });
     const custom = handler && await handler(path, options);
@@ -69,14 +76,38 @@ function setup(handler = null) {
       csrf: "test-csrf",
       permissions: ["chat-task:create", "github:read"],
     });
+    if (path === "/api/local/voice") return response({
+      cloud_budget: { configured: false, ceiling_cents: null, reserved_cents: 0,
+        remaining_cents: null, reservation_per_request_cents: 1, reset: "app_restart" },
+    });
     if (path === "/api/chat/conversations" && !options.method) return response({ items: [] });
     if (path.endsWith("/close")) return response(snapshot([], "closed"));
     return response(snapshot());
   };
   const documentRef = { getElementById: id => elements[id], createElement: tag => new Element(tag) };
-  const controller = mountChat({ documentRef, fetchImpl, confirmImpl: () => true });
+  const controller = mountChat({ documentRef, fetchImpl, confirmImpl: () => true, windowRef });
   return { controller, elements, calls };
 }
+
+test("local transcript is added after an unsent typed draft and never submits the chat", async () => {
+  let recognition;
+  class Recognition {
+    static async available() { return "available"; }
+    static async install() { return true; }
+    processLocally = false;
+    start() {}
+    abort() { this.onend?.(); }
+    constructor() { recognition = this; }
+  }
+  const ui = setup(null, { SpeechRecognition: Recognition });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-input"].value = "typed context";
+  await ui.elements["voice-start"].listeners.click();
+  recognition.onresult({ results: [[{ transcript: "spoken addition" }]] });
+  assert.equal(ui.elements["chat-input"].value, "typed context\nspoken addition");
+  assert.equal(ui.calls.some(call => call.path.endsWith("/messages") || call.path.endsWith("/messages/stream")), false);
+});
 
 test("start and send use same-origin, session CSRF and actual coordinator identity; text stays inert", async () => {
   const untrusted = "<script>alert('x')</script>";
@@ -366,4 +397,26 @@ test("a failed send that discovers closure keeps input disabled and never replay
   assert.equal(ui.elements["chat-input"].disabled, true);
   assert.equal(await ui.controller.send(), false);
   assert.equal(ui.calls.filter(call => call.path.endsWith("/messages")).length, 1);
+});
+
+test("stopping a model wait aborts local waiting but records an unknown remote outcome without replay", async () => {
+  let messageCalls = 0;
+  const ui = setup((path, options) => {
+    if (!path.endsWith("/messages")) return null;
+    messageCalls += 1;
+    return new Promise((_resolve, reject) => {
+      options.signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), { once: true });
+    });
+  });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-input"].value = "Hello";
+  const send = ui.controller.send();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(ui.elements["chat-stop-request"].hidden, false);
+  ui.elements["chat-stop-request"].listeners.click();
+  assert.equal(await send, true);
+  assert.equal(messageCalls, 1);
+  assert.equal(ui.elements["chat-input"].disabled, true);
+  assert.match(ui.elements["chat-state"].textContent, /remote outcome is unknown.*No resend/);
 });

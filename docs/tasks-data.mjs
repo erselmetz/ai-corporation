@@ -1112,15 +1112,15 @@ export const post100Tasks = [
   {
     "number": 128,
     "title": "Optional voice interaction",
-    "description": "Add explicitly enabled speech input/output while preserving typed chat and the same action gates.",
+    "description": "Add explicitly enabled speech input/output while preserving typed chat and the same action gates. Local app audio retention is set to none; optional Gemini cloud transcription requires per-use consent and a configured app-run request budget.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       127
     ],
     "acceptance": [
       "Visible microphone/recording controls and clear start/stop behavior.",
-      "Offer explicit local or cloud speech processing choices with per-use consent, an enforced cloud spend ceiling and configured retention; local processing is the default where supported.",
+      "Offer explicit local or cloud speech processing choices with per-use consent, a configured app-run request budget and an explicit zero app-side audio-retention policy; disclose that provider-side billing and retention are controlled externally. Local processing is the default where supported.",
       "Spoken requests use identical authorization/approval checks; typed chat remains fully usable.",
       "Test microphone denial, disabled voice, errors and sensitive-content handling.",
       "Let the owner interrupt capture, playback and speech requests; distinguish stopping local recording/audio from confirmed provider cancellation, and never report unconfirmed remote cancellation as successful.",
@@ -1130,12 +1130,23 @@ export const post100Tasks = [
       "Always-on recording or voice bypassing action approval."
     ],
     "decisions": [
-      "Resolve supported speech adapters and interruption/cancellation semantics per provider; never enable always-on recording or cloud speech without explicit consent and a configured ceiling."
+      "Use verified browser on-device speech recognition only; unsupported local recognition has no cloud fallback. Offer optional Gemini 3.5 Transcribe for 16 kHz mono PCM WAV clips up to 10 seconds, inline only (no Files API), after one-use consent and a 1–100 US-cent app-run budget reserving one cent per attempted provider request. This app-side ceiling bounds its own requests but cannot enforce the connected Google account's final invoice.",
+      "App-side audio retention is configured to none; captured audio stays in memory and is discarded after use or cancellation. Gemini API provider-side logging/retention depends on the connected account tier and settings and cannot be configured or verified by this app, so the consent notice discloses this boundary. Local reply audio uses an installed local speech voice only.",
+      "Stop interrupts local capture/playback and local waiting. Gemini transcription and model-generation requests have no confirmed provider cancellation; stopped remote outcomes remain unknown, consume the local request reservation and are never retried automatically."
     ],
     "area": "P14",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-128-optional-voice-interaction",
+    "validation": [
+      "Focused deterministic voice, owner-auth, Gemini setup, chat and context regressions: 45 passed. All 159 browser-module tests passed. Electron security suite: 5 passed. Static Next.js desktop build, Python compilation, and an isolated frozen-sidecar build/voice-route authentication smoke passed.",
+      "Full Python suite: 1093 passed, 3 skipped, and the same 2 pre-existing baseline failures recorded at Task 127 (test_model_set_command and test_model_replacement_uses_existing_assignment_service). No live Gemini/Ollama or microphone session was used.",
+      "Public documentation tests: 14 passed. git diff --check and reviewed security/scope diff passed. Pylance/pyright were unavailable."
+    ],
+    "limitations": [
+      "Cloud budget is a process-local app request ceiling with a one-cent reservation per attempt, not an enforceable cap on Google's account billing. Provider prices, account tier, quotas and retention are external and may change; Google request retention cannot be set or verified by this app. Only inline audio is sent; no provider Files/Interactions storage API is used.",
+      "On-device speech recognition and local speech output depend on browser/OS support and installed language/voice packs. Unsupported local recognition does not fall back to cloud. No live microphone or paid provider calls were used in tests.",
+      "Remote Gemini or chat provider cancellation is unsupported; stopping the local wait cannot establish whether a remote request completed or was charged.",
+      "The Task 127 installer artifact was not rebuilt; the frozen backend was rebuilt and smoke-tested in an isolated temporary directory. Clean-install/release verification remains Task 129."
+    ]
   },
   {
     "number": 129,

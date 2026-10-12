@@ -53,6 +53,21 @@ same profile. To reset owner setup, exit the application and remove only
 application data only as a separate, intentional Windows user action after
 backup; it may contain durable app records.
 
+Voice controls are available only after selecting a chat conversation. Local
+recognition requires a supported on-device Chromium language pack; it never
+falls back to a remote service. Installing a language pack is an explicit
+download action. Cloud transcription is disabled until the owner sets a
+one-run ceiling, requires a separate consent for each recording, sends only a
+maximum ten-second inline WAV request to Gemini, and reserves one cent per
+attempt against an in-memory cap. Google pricing and account billing remain
+outside the app's control; the local ceiling limits app-authorized requests,
+not the provider account as a whole. Google Gemini API retention depends on the
+connected account tier and settings; the app cannot configure or verify that
+provider-side retention. Recordings are not stored by the app, and
+the transcript is not sent to chat until the owner reviews and submits it.
+Stopping a cloud request stops local waiting only; the provider may continue.
+Reply audio uses an installed device-local speech voice when one is available.
+
 The packaged service suppresses Uvicorn request/error logs; Electron does not
 write passwords, requests, responses, or persistent application logs. Startup
 errors presented in the desktop window are fixed, bounded messages. Diagnostic

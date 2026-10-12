@@ -823,7 +823,35 @@ def coordinator_chat_page():
     <form id="chat-form"><label for="chat-input">Message (up to 8192 UTF-8 bytes)</label>
     <textarea id="chat-input" rows="4" maxlength="8192" required></textarea>
     <button id="chat-send" type="submit">Send</button>
+    <button id="chat-stop-request" type="button" disabled hidden>Stop waiting (remote outcome may be unknown)</button>
     <button id="chat-stop-display" type="button" disabled hidden>Stop display (generation continues)</button></form>
+    <section class="panel" id="voice-panel" aria-labelledby="voice-heading">
+    <h2 id="voice-heading">Optional voice input and reply audio</h2>
+    <p>Voice is off until you start it. Local speech uses on-device recognition only and never falls back to cloud.
+    Cloud transcription is optional, sends a recording to Google Gemini only after per-use consent, and is limited to 10 seconds.
+    The app keeps no audio after the request; transcripts go into the message box for review and are not sent to chat until you choose Send.
+    Gemini API may retain request data under Google's account tier and policy. This app cannot configure or verify provider retention, or cap Google's final invoice; its budget only limits this app's requests.
+    Check your Google account policy first. Do not record passwords, API keys, or other sensitive information.</p>
+    <label for="voice-mode">Speech processing</label><select id="voice-mode">
+      <option value="local" selected>Local on-device recognition (default; no cloud fallback)</option>
+      <option value="cloud">Cloud transcription through Google Gemini (consent and ceiling required)</option>
+    </select>
+    <label for="voice-language">Recognition language tag</label><input id="voice-language" value="en-US" maxlength="16">
+    <button id="voice-start" type="button" disabled>Start voice</button>
+    <button id="voice-install-local" type="button" hidden>Install local language pack</button>
+    <button id="voice-transcribe" type="button" hidden>Transcribe via Gemini (send recording)</button>
+    <button id="voice-stop" type="button" hidden>Stop / discard voice request</button>
+    <p id="voice-cloud-consent-panel"><label><input id="voice-cloud-consent" type="checkbox">
+    For this recording only, I consent to send the audio to Google Gemini for transcription. Google's account data practices are controlled by the connected account, not this app. A stopped request may still be processed remotely.</label></p>
+    <form id="voice-budget-form">
+      <label for="voice-budget-cents">Cloud voice app-run budget (US cents; 1–100; not a provider billing cap)</label>
+      <input id="voice-budget-cents" type="number" min="1" max="100" step="1" value="5">
+      <button id="voice-budget-save" type="submit">Set cloud ceiling</button>
+    </form>
+    <p id="voice-budget-state" role="status" aria-live="polite">Cloud transcription is off until you set a per-run spending ceiling.</p>
+    <button id="voice-stop-playback" type="button" disabled>Stop local reply playback</button>
+    <p id="voice-state" role="status" aria-live="polite">Typed chat remains available while voice is disabled.</p>
+    </section>
     <section class="panel" aria-labelledby="repository-study-heading">
     <h2 id="repository-study-heading">Study an approved GitHub repository</h2>
     <p>Uses only the configured repository allowlist and bounded GitHub reads. Source content is untrusted;
@@ -861,7 +889,7 @@ def coordinator_chat_page():
     </section>
     <p>History is in memory and is lost when the app restarts. Up to 100 conversations and 200 messages
     per conversation are retained for this run. Configured loopback Ollama can stream responses;
-    the Stop control only stops display and does not cancel provider generation. For the default local Agent, Ollama and llama3.2:3b must already be available;
+    the Stop display control does not cancel provider generation; Stop waiting interrupts this app's request but cannot confirm remote cancellation. For the default local Agent, Ollama and llama3.2:3b must already be available;
     use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here; configure Gemini in its separate online setup page.</p>
     <p id="cloud-consent-panel" hidden><label><input id="cloud-consent" type="checkbox">
     I consent to send this message, recent conversation history, and configured chat context to Google Gemini for this reply.</label></p>

@@ -1,3 +1,5 @@
+import { mountVoiceControls } from "./voice.mjs";
+
 function isGeminiProvider(providerId) {
   return typeof providerId === "string"
     && (providerId === "gemini" || providerId.startsWith("gemini-"));
@@ -7,6 +9,7 @@ export function mountChat({
   documentRef = document,
   fetchImpl = fetch,
   confirmImpl = globalThis.confirm ?? (() => false),
+  windowRef = globalThis.window,
 } = {}) {
   const element = (id) => documentRef.getElementById(id);
   const state = element("chat-state");
@@ -39,6 +42,7 @@ export function mountChat({
   ];
   const geminiKeyPattern = /\bAIza[A-Za-z0-9_-]{20,}\b|\b(?:GEMINI|GOOGLE)_API_KEY\s*=\s*\S+/i;
   const stopDisplayButton = element("chat-stop-display");
+  const stopRequestButton = element("chat-stop-request");
   const buttons = [
     "chat-start", "chat-send", "chat-close", "chat-refresh",
     "chat-stop-display", "repository-study-submit",
@@ -52,8 +56,11 @@ export function mountChat({
   let canCreateTask = false;
   let canStudyRepositories = false;
   let currentProposal = null;
+  let voiceController = null;
+  let requestController = null;
   const base = "/api/chat/conversations";
   function clear() {
+    voiceController?.clear();
     history.replaceChildren();
     element("chat-identity").textContent = "";
     selected = null;
@@ -89,8 +96,9 @@ export function mountChat({
     repositoryStudyButton.disabled =
       busy || !canStudyRepositories || !selected || !canSend;
   }
-  async function request(path, body) {
+  async function request(path, body, signal) {
     const options = { credentials: "same-origin" };
+    if (signal) options.signal = signal;
     if (body !== undefined) {
       const session = await request("/api/local/session");
       options.method = "POST";
@@ -138,6 +146,13 @@ export function mountChat({
       const content = documentRef.createElement("p");
       content.textContent = message.content;
       item.append(label, content);
+      if (message.role === "assistant" && message.status === "completed" && voiceController) {
+        const speak = documentRef.createElement("button");
+        speak.type = "button";
+        speak.textContent = "Speak reply locally";
+        speak.addEventListener("click", () => voiceController.speak(message.content));
+        item.append(speak);
+      }
       history.append(item);
       if (message.role === "assistant" && message.status === "completed" && typeof message.id === "string") {
         option(taskSource, message.id, `Coordinator proposal - ${message.content.slice(0, 100)}`);
@@ -156,6 +171,7 @@ export function mountChat({
     clearTaskProposal();
     taskControls();
     repositoryStudyControls();
+    voiceController?.updateControls();
   }
   async function action(operation) {
     if (busy) return false;
@@ -171,6 +187,7 @@ export function mountChat({
       agents.disabled = false; conversations.disabled = false;
       taskControls();
       repositoryStudyControls();
+      voiceController?.updateControls();
     }
   }
   async function refresh() {
@@ -243,11 +260,15 @@ export function mountChat({
       }
       if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Consent to send this message and chat context to Google Gemini before continuing.");
       const identifier = selected;
+      const controller = new AbortController();
+      requestController = controller;
+      stopRequestButton.hidden = false;
+      stopRequestButton.disabled = false;
       input.disabled = true;
       try {
         const body = requiresCloudConsent ? { text, cloud_consent: true } : { text };
         if (streamingSupported) {
-          const outcome = await receiveStream(identifier, body);
+          const outcome = await receiveStream(identifier, body, controller.signal);
           if (outcome.complete) {
             input.value = "";
             render(outcome.complete);
@@ -274,18 +295,30 @@ export function mountChat({
           }
         } else {
           state.textContent = "Pending: waiting for the configured model. Closing this page does not cancel its request.";
-          const result = await request(`${base}/${encodeURIComponent(identifier)}/messages`, body);
+          const result = await request(`${base}/${encodeURIComponent(identifier)}/messages`, body, controller.signal);
           input.value = "";
           render(result);
         }
       } catch (error) {
+        if (controller.signal.aborted) {
+          try { render(await request(`${base}/${encodeURIComponent(identifier)}`)); } catch { clear(); }
+          canSend = false;
+          input.disabled = true;
+          state.textContent = "Stopped waiting in this app. The model may still be processing and may have saved a reply; the remote outcome is unknown. No resend was attempted.";
+          return;
+        }
         // Inspect recorded failure; never replay a possibly executed turn.
         try { render(await request(`${base}/${encodeURIComponent(identifier)}`)); } catch { clear(); }
         throw error;
-      } finally { input.disabled = !canSend; }
+      } finally {
+        requestController = null;
+        stopRequestButton.hidden = true;
+        stopRequestButton.disabled = true;
+        input.disabled = !canSend;
+      }
     });
   }
-  async function receiveStream(identifier, body) {
+  async function receiveStream(identifier, body, signal) {
     let displayStopped = false;
     let partial = "";
     let complete = null;
@@ -297,6 +330,7 @@ export function mountChat({
       {
         method: "POST",
         credentials: "same-origin",
+        signal,
         headers: {
           "Content-Type": "application/json",
           "X-Local-CSRF": (await request("/api/local/session")).csrf,
@@ -471,9 +505,26 @@ export function mountChat({
   element("chat-close").addEventListener("click", close);
   element("chat-refresh").addEventListener("click", refresh);
   stopDisplayButton.addEventListener("click", () => stopDisplay?.());
+  stopRequestButton.addEventListener("click", () => {
+    requestController?.abort();
+    stopRequestButton.disabled = true;
+    state.textContent = "Stopping this app's wait. A remote model may continue; its outcome is unknown.";
+  });
   taskPrepare.addEventListener("click", prepareTaskProposal);
   taskConfirm.addEventListener("click", confirmTaskProposal);
   conversations.addEventListener("change", load);
+  voiceController = mountVoiceControls({
+    documentRef,
+    windowRef,
+    fetchImpl,
+    confirmImpl,
+    canUseChat: () => Boolean(selected && canSend && !busy),
+    onTranscript: transcript => {
+      const draft = input.value.replace(/\s+$/, "");
+      input.value = draft ? `${draft}\n${transcript}` : transcript;
+      input.focus?.();
+    },
+  });
   return {
     initialLoad: refresh(),
     refresh,
@@ -483,6 +534,7 @@ export function mountChat({
     close,
     prepareTaskProposal,
     confirmTaskProposal,
+    voice: voiceController,
   };
 }
 if (typeof document !== "undefined") mountChat();

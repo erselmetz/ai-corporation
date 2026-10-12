@@ -357,8 +357,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-127 are verified complete, Task 128 is next,
-and Tasks 128-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-128 are verified complete, Task 129 is next,
+and Task 129 is planned. Every task has dependencies, acceptance checks,
 exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -729,6 +729,29 @@ did not make live model calls. See [desktop/README.md](desktop/README.md) for
 build, install, and recovery instructions. Existing CLI startup and the Task 126
 Python launcher remain separate and are not managed by Electron.
 Checkpoint tag `task-127-windows-electron-installer`.
+
+## Optional voice interaction (Task 128)
+
+The coordinator chat offers explicit local on-device speech recognition, optional
+Gemini 3.5 Transcribe, and local speech playback. Typed chat remains available.
+Local recognition requires verified `processLocally` support and an installed
+language pack; unsupported devices never fall back to cloud. Gemini accepts only
+explicitly consented, mono 16 kHz PCM WAV clips up to 10 seconds and sends audio
+inline without the Files API. The transcript appears in the message box for
+review and is not submitted until the owner chooses Send. Possible API-key text
+is discarded. Electron microphone access requires a native one-use audio-only
+confirmation.
+
+Audio is not persisted by the app and the process-local cloud request budget
+reserves one cent per attempt, up to the configured 1–100 cent app-run limit.
+This limits requests initiated through this app; it is not a guaranteed provider
+invoice cap. Gemini provider-side retention and account billing are external and
+cannot be configured or verified here. Stopping local capture/playback is
+immediate, but aborting a cloud transcription or model wait does not prove remote
+cancellation; its outcome and charge may be unknown and the app never retries.
+Validation uses deterministic fakes only; no microphone or live paid provider
+request was used. See the Task 128 evidence and limitations in the public task
+roadmap.
 
 ## Windows Electron executable and installer (Task 127)
 

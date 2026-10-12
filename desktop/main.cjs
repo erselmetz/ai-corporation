@@ -15,6 +15,7 @@ let applicationWindow;
 let backend;
 let quitAfterShutdown = false;
 let quitting = false;
+let microphoneGrantUntil = 0;
 
 app.setName("ERSELMETZ AI");
 app.setPath("userData", path.join(APP_DATA, "desktop"));
@@ -180,7 +181,6 @@ function createApplicationWindow() {
     try { if (new URL(target).origin !== ORIGIN) event.preventDefault(); }
     catch { event.preventDefault(); }
   });
-  applicationWindow.webContents.session.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
   applicationWindow.loadURL(`${ORIGIN}/desktop/`);
   applicationWindow.once("ready-to-show", () => applicationWindow && applicationWindow.show());
   applicationWindow.on("closed", () => { applicationWindow = undefined; app.quit(); });
@@ -199,9 +199,35 @@ function stopBackend() {
 }
 
 if (hasSingleInstanceLock) app.whenReady().then(() => {
-  session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+    const trusted = applicationWindow && webContents === applicationWindow.webContents
+      && webContents.getURL().startsWith(`${ORIGIN}/`);
+    const audioOnly = permission === "media" && Array.isArray(details?.mediaTypes)
+      && details.mediaTypes.length === 1 && details.mediaTypes[0] === "audio";
+    if (trusted && audioOnly && Date.now() < microphoneGrantUntil) {
+      microphoneGrantUntil = 0;
+      callback(true);
+      return;
+    }
+    callback(false);
+  });
   ipcMain.handle("desktop:get-setup-state", (event) => isTrustedBootstrap(event) && !fs.existsSync(CREDENTIAL));
   ipcMain.handle("desktop:start", (event, payload) => isTrustedBootstrap(event) ? startBackend(payload) : { started: false, message: "Request denied." });
+  ipcMain.handle("desktop:request-microphone", async (event) => {
+    const frame = event.senderFrame;
+    if (!applicationWindow || event.sender !== applicationWindow.webContents
+        || !event.sender.getURL().startsWith(`${ORIGIN}/`)
+        || !frame || !frame.isMainFrame || !frame.url.startsWith(`${ORIGIN}/`)) return false;
+    const result = await dialog.showMessageBox(applicationWindow, {
+      type: "question", buttons: ["Allow once", "Deny"], defaultId: 1, cancelId: 1,
+      title: "Microphone access",
+      message: "Allow microphone access for this voice interaction?",
+      detail: "Audio is used only for the interaction you start. Local mode keeps recognition on this device; Gemini mode sends the recording only after separate per-use consent.",
+    });
+    if (result.response !== 0) return false;
+    microphoneGrantUntil = Date.now() + 15_000;
+    return true;
+  });
   makeBootstrapWindow();
 });
 

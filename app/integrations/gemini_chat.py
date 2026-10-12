@@ -55,6 +55,7 @@ class GeminiConnectionManager:
         self._lock = threading.RLock()
         self._connection: GeminiConnection | None = None
         self._calls_by_key: dict[bytes, int] = {}
+        self._voice_calls_by_key: dict[bytes, int] = {}
         self._pending_keys: dict[bytes, int] = {}
         self._active = False
         self._target: tuple[str, str, str, str, str] | None = None
@@ -210,6 +211,26 @@ class GeminiConnectionManager:
             return self._calls_by_key.get(identity, 0)
 
     def end_call(self):
+        with self._lock:
+            self._active = False
+
+    def begin_voice_call(self) -> str:
+        """Reserve one explicitly connected owner credential for a voice request."""
+        with self._lock:
+            self._expire_locked()
+            connection = self._connection
+            if connection is None or self._target is None:
+                raise GeminiConnectionError("Connect Gemini to a coordinator before cloud transcription.")
+            if self._active:
+                raise GeminiConnectionError("A Gemini request is already active; wait for it to finish.")
+            identity = hashlib.sha256(connection.configuration.api_key.encode("utf-8")).digest()
+            if self._voice_calls_by_key.get(identity, 0) >= 100:
+                raise GeminiCallLimit("Gemini voice request allowance is used for this app run; no automatic retry occurred.")
+            self._voice_calls_by_key[identity] = self._voice_calls_by_key.get(identity, 0) + 1
+            self._active = True
+            return connection.configuration.api_key
+
+    def end_voice_call(self):
         with self._lock:
             self._active = False
 

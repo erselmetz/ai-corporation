@@ -87,9 +87,9 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 29]);
   });
 
-  it("marks only verified tasks 1–127 complete and tasks 128–129 planned", () => {
-    assert.ok(tasks.slice(0, 127).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(127).every((task) => task.status === "planned"));
+  it("marks only verified tasks 1–128 complete and Task 129 planned", () => {
+    assert.ok(tasks.slice(0, 128).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(128).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -164,28 +164,28 @@ describe("documentation site", () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
     assert.match(html, /Milestones 1–100 are completed foundations/);
-    assert.match(html, /Tasks 101-127 are verified post-100 checkpoints/);
-    assert.match(html, /Tasks 128-129 are planned/);
+    assert.match(html, /Tasks 101-128 are verified post-100 checkpoints/);
+    assert.match(html, /Task 129 is planned/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
   });
 
-  it("keeps public overview pages aligned with Task 127 completion", async () => {
+  it("keeps public overview pages aligned with Task 128 completion", async () => {
     const [home, documentation, architecture, roadmap] = await Promise.all(
       ["index.html", "documentation.html", "architecture.html", "roadmap.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
-    assert.match(home, /Verified Tasks 101–127/);
-    assert.match(documentation, /Tasks 101–127 are verified post-100 checkpoints/);
+    assert.match(home, /Verified Tasks 101-128/);
+    assert.match(documentation, /Tasks 101-128 are verified post-100 checkpoints/);
     assert.match(architecture, /Task 105 adds explicitly consented Gemini coordinator chat/);
-    assert.match(architecture, /Tasks 128–129/);
+    assert.match(architecture, /Task 129/);
     assert.match(architecture, /Chat-driven GitHub study and research — Task 121/);
-    assert.match(roadmap, /href="tasks.html#task-128">Next: Task 128/);
-    assert.match(roadmap, /Next: Task 128.*Optional voice interaction/);
-    for (const page of [home, documentation, architecture]) assert.match(page, /Tasks 128–129/);
+    assert.match(roadmap, /href="tasks.html#task-129">Next: Task 129/);
+    assert.match(roadmap, /Next: Task 129.*Command center usability/);
+    for (const page of [home, documentation, architecture]) assert.match(page, /Task 129/);
   });
 
   it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {
-    assert.equal(nextTask.number, 128);
+    assert.equal(nextTask.number, 129);
     const task122 = post100Tasks.find(task => task.number === 122);
     assert.equal(task122.status, "completed");
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");
@@ -197,7 +197,7 @@ describe("documentation site", () => {
       "task-121-chat-driven-github-study", "task-122-isolated-adaptation-validation",
       "task-123-approved-local-activation", "task-124-read-only-software-inventory",
       "task-125-managed-vscode-user-lifecycle", "task-126-local-application-lifecycle",
-      "task-127-windows-electron-installer"]);
+      "task-127-windows-electron-installer", "task-128-optional-voice-interaction"]);
     const task127 = post100Tasks.find(task => task.number === 127);
     assert.equal(task127.status, "completed");
     assert.equal(task127.checkpoint, "task-127-windows-electron-installer");
@@ -217,6 +217,11 @@ describe("documentation site", () => {
     assert.equal(task126.checkpoint, "task-126-local-application-lifecycle");
     assert.match(task126.validation.join(" "), /Eleven deterministic lifecycle and credential tests passed/);
     assert.match(task126.limitations.join(" "), /Electron packaging.*Task 127/);
+    const task128 = post100Tasks.find(task => task.number === 128);
+    assert.equal(task128.status, "completed");
+    assert.equal(task128.checkpoint, "task-128-optional-voice-interaction");
+    assert.match(task128.validation.join(" "), /1093 passed, 3 skipped/);
+    assert.match(task128.limitations.join(" "), /not an enforceable cap on Google's account billing/);
     for (const task of post100Tasks) {
       assert.ok(task.acceptance.length > 0 && task.outOfScope.length > 0);
       assert.ok(Array.isArray(task.decisions));

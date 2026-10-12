@@ -32,7 +32,8 @@ LOGIN_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 
 
 def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
-                     application_service=None, clock=None, desktop_ui_dir=None):
+                     application_service=None, clock=None, desktop_ui_dir=None,
+                     voice_connection_manager=None):
     backend = LocalOwnerAuthentication(password, origin, **({"clock": clock} if clock else {}))
     application = create_app(application_service=application_service,
                              authentication_backend=backend)
@@ -42,10 +43,12 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
     application.include_router(assignment_policy_router)
     from app.api.local_online_provider import create_local_online_provider_router
     from app.integrations.gemini_chat import GeminiConnectionManager
-    connection_manager = GeminiConnectionManager()
+    connection_manager = voice_connection_manager or GeminiConnectionManager()
     application.state.gemini_connection_manager = connection_manager
     application.state.local_online_provider = None
     application.include_router(create_local_online_provider_router(connection_manager))
+    from app.api.local_voice import create_local_voice_router
+    application.include_router(create_local_voice_router(connection_manager))
     from app.api.provider_connections import router as provider_connections_router
     application.include_router(provider_connections_router)
     from app.api.inventory import router as inventory_router
@@ -68,12 +71,16 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                     backend.require_csrf(request)
                 except HTTPException as error:
                     return JSONResponse({"detail": error.detail}, status_code=error.status_code)
-            if request.headers.get("content-type", "").split(";")[0] != "application/json":
+            content_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
+            voice_upload = (request.url.path == "/api/local/voice/transcribe"
+                            and content_type == "audio/wav")
+            if content_type != "application/json" and not voice_upload:
                 return JSONResponse({"detail": "JSON request required"}, status_code=415)
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Permissions-Policy"] = "microphone=(self), camera=(), geolocation=()"
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self'; style-src 'self'; "
             "img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")

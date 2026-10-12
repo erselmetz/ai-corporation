@@ -35,8 +35,19 @@ test("preload exposes only bounded startup operations, never raw Electron IPC", 
   assert.match(preload, /contextBridge\.exposeInMainWorld\("desktopBridge"/);
   assert.match(preload, /ipcRenderer\.invoke\("desktop:get-setup-state"\)/);
   assert.match(preload, /ipcRenderer\.invoke\("desktop:start"/);
+  assert.match(preload, /requestMicrophone: \(\) => ipcRenderer\.invoke\("desktop:request-microphone"\)/);
   assert.doesNotMatch(preload, /contextBridge\.exposeInMainWorld\("desktopBridge",\s*ipcRenderer/);
   assert.doesNotMatch(preload, /sendSync|\.send\s*\(/);
+});
+
+test("microphone requests need an explicit native confirmation and one-use audio grant", () => {
+  const main = read("main.cjs");
+  assert.match(main, /title: "Microphone access"/);
+  assert.match(main, /buttons: \["Allow once", "Deny"\]/);
+  assert.match(main, /permission === "media"/);
+  assert.match(main, /details\.mediaTypes\.length === 1 && details\.mediaTypes\[0\] === "audio"/);
+  assert.match(main, /microphoneGrantUntil = 0/);
+  assert.match(main, /callback\(false\)/);
 });
 
 test("static Next export contains only local command-center destinations", () => {
