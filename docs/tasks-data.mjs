@@ -975,7 +975,7 @@ export const post100Tasks = [
     "title": "Software and integration inventory panel",
     "description": "Show supported installed applications, repository checkouts, integrations and service versions as separate records.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       123
     ],
@@ -988,12 +988,19 @@ export const post100Tasks = [
       "Scanning arbitrary credential stores or taking ownership of all PC software."
     ],
     "decisions": [
-      "Approve initial inventory adapters and local inspection scopes."
+      "Initial supported sources are the running app, current Python runtime, fixed application checkout, and configured provider connections; no OS-wide software scanning."
     ],
     "area": "P12a",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-124-read-only-software-inventory",
+    "validation": [
+      "Focused inventory, local-auth and Web UI Python tests: 28 passed; coverage includes owner authorization, supported-source boundaries, stale and missing inventory, bounded records, and safe omission of credentials and filesystem paths.",
+      "Full Python suite: 1054 passed, 3 skipped, 2 pre-existing unrelated failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service); the same failures were recorded before Task 124.",
+      "Browser-module suite: 147 passed. Public documentation suite: 14 passed. Python compileall, JavaScript syntax check, git diff --check and full scope/security review passed."
+    ],
+    "limitations": [
+      "Only the running application, current Python runtime, fixed source checkout and configured Ollama/Gemini connections are inspected; installed Windows programs, arbitrary directories, package managers, credentials and remote services are not scanned.",
+      "Inventory is a bounded sequential snapshot. Externally managed software is informational, and no install/update/remove action is provided; those actions remain planned under Task 125."
+    ]
   },
   {
     "number": 125,

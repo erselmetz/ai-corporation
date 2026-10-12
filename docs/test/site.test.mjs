@@ -87,9 +87,9 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 29]);
   });
 
-  it("marks only verified tasks 1–123 complete and tasks 124–129 planned", () => {
-    assert.ok(tasks.slice(0, 123).every((task) => task.status === "completed"));
-    assert.ok(tasks.slice(123).every((task) => task.status === "planned"));
+  it("marks only verified tasks 1–124 complete and tasks 125–129 planned", () => {
+    assert.ok(tasks.slice(0, 124).every((task) => task.status === "completed"));
+    assert.ok(tasks.slice(124).every((task) => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -164,8 +164,8 @@ describe("documentation site", () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
     assert.match(html, /Milestones 1–100 are completed foundations/);
-    assert.match(html, /Tasks 101-123 are verified post-100 checkpoints/);
-    assert.match(html, /Tasks 124-129 are planned/);
+    assert.match(html, /Tasks 101-124 are verified post-100 checkpoints/);
+    assert.match(html, /Tasks 125-129 are planned/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
   });
@@ -174,18 +174,18 @@ describe("documentation site", () => {
     const [home, documentation, architecture, roadmap] = await Promise.all(
       ["index.html", "documentation.html", "architecture.html", "roadmap.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
-    assert.match(home, /Verified Tasks 101–123/);
-    assert.match(documentation, /Tasks 101–123 are verified post-100 checkpoints/);
+    assert.match(home, /Verified Tasks 101–124/);
+    assert.match(documentation, /Tasks 101–124 are verified post-100 checkpoints/);
     assert.match(architecture, /Task 105 adds explicitly consented Gemini coordinator chat/);
-    assert.match(architecture, /Tasks 124–129/);
+    assert.match(architecture, /Tasks 125–129/);
     assert.match(architecture, /Chat-driven GitHub study and research — Task 121/);
-    assert.match(roadmap, /href="tasks.html#task-124">Next: Task 124/);
-    assert.match(roadmap, /Next: Task 124.*Software and integration inventory panel/);
-    for (const page of [home, documentation, architecture]) assert.match(page, /Tasks 124–129/);
+    assert.match(roadmap, /href="tasks.html#task-125">Next: Task 125/);
+    assert.match(roadmap, /Next: Task 125.*Managed install update version and remove/);
+    for (const page of [home, documentation, architecture]) assert.match(page, /Tasks 125–129/);
   });
 
   it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {
-    assert.equal(nextTask.number, 124);
+    assert.equal(nextTask.number, 125);
     const task122 = post100Tasks.find(task => task.number === 122);
     assert.equal(task122.status, "completed");
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");
@@ -195,7 +195,11 @@ describe("documentation site", () => {
       "task-118-durable-chat-history", "task-119-local-model-resource-controls",
       "task-120-supported-streaming-truthful-stop",
       "task-121-chat-driven-github-study", "task-122-isolated-adaptation-validation",
-      "task-123-approved-local-activation"]);
+      "task-123-approved-local-activation", "task-124-read-only-software-inventory"]);
+    const task124 = post100Tasks.find(task => task.number === 124);
+    assert.equal(task124.status, "completed");
+    assert.match(task124.validation.join(" "), /Focused inventory.*28 passed/);
+    assert.match(task124.limitations.join(" "), /Windows programs/);
     for (const task of post100Tasks) {
       assert.ok(task.acceptance.length > 0 && task.outOfScope.length > 0);
       assert.ok(Array.isArray(task.decisions));

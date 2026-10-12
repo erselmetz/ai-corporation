@@ -340,8 +340,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-123 are verified complete, Task 124 is next,
-and Tasks 124-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-124 are verified complete, Task 125 is next,
+and Tasks 125-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -633,6 +633,27 @@ process, verify runtime health, install dependencies, migrate data, deploy the
 website, or reverse external side effects. No model weights are trained or
 changed. Validation and limitations are in `docs/tasks-data.mjs`; checkpoint
 tag `task-123-approved-local-activation`.
+
+## Task 124 - Read-only software and integration inventory
+
+The explicit local-owner mode now serves `/ui/inventory` and the protected
+`GET /api/local/inventory` with `inventory:read`. It reports the running app,
+the current Python runtime, the fixed application Git checkout, and configured
+Ollama/Gemini provider connections as separate records. Records show their source,
+version or revision when verified, status, management ownership and dependent
+workflow/Agent assignments. The checkout adapter uses only fixed Git metadata
+commands with one-second timeouts; absent or unsupported evidence remains
+`unknown`, stale provider catalogs remain `stale`, and no configured connection
+is represented as `not_configured`.
+
+This is not a Windows installed-program scanner. It does not traverse arbitrary
+directories, inspect credential stores, query package managers or remote services,
+or install/update/remove software. Python is externally managed; provider
+credentials remain in memory and are not serialized into inventory responses.
+Inventory records are bounded and sequential rather than an atomic snapshot.
+The default API stays fail-closed and does not mount the local-owner inventory
+route. Task 125 remains planned for any managed software lifecycle operations.
+Checkpoint tag `task-124-read-only-software-inventory`.
 
 ## Task 118 - Durable chat history
 

@@ -18,6 +18,7 @@ READ_PERMISSIONS = frozenset({
     "documentation:read", "updates:read", "memory:read",
     "position:read", "github:read",
     "assignment-policy:read",
+    "inventory:read",
 })
 
 CHAT_PERMISSIONS = frozenset({"chat:read", "chat:start", "chat:send", "chat:close"})

@@ -32,6 +32,7 @@ def corporation_dashboard() -> HTMLResponse:
                 <li><a href="#dashboard" aria-current="page">Dashboard</a></li>
                 <li><a href="/ui/employees">Employee management</a></li>
                 <li><a href="/ui/providers">Provider &amp; model management</a></li>
+                <li><a href="/ui/inventory">Software &amp; integration inventory</a></li>
                 <li><a href="/ui/tasks">Task management</a></li>
                 <li><a href="/ui/projects">Project management</a></li>
                 <li><a href="/ui/activity">Activity &amp; logs</a></li>
@@ -864,6 +865,26 @@ def coordinator_chat_page():
     use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here; configure Gemini in its separate online setup page.</p>
     <p id="cloud-consent-panel" hidden><label><input id="cloud-consent" type="checkbox">
     I consent to send this message, recent conversation history, and configured chat context to Google Gemini for this reply.</label></p>
+    </main></body></html>""")
+
+
+@router.get("/ui/inventory", response_class=HTMLResponse, include_in_schema=False)
+def inventory_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Software inventory - ERSELMETZ AI</title>
+    <link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/inventory.mjs"></script></head><body>
+    <main class="content"><nav><a href="/ui">Dashboard</a> |
+    <a href="/ui/providers">Providers</a> | <a href="/ui/login">Local sign-in / sign-out</a></nav>
+    <p class="eyebrow">Read-only local inspection</p><h1>Software &amp; integration inventory</h1>
+    <p>This page reports the running ERSELMETZ AI app, its Python runtime, this source checkout,
+    and configured provider connections. It does not scan installed Windows apps or manage software.
+    Unknown means the source could not verify a value.</p>
+    <button id="inventory-refresh" type="button">Refresh inventory</button>
+    <p id="inventory-status" role="status" aria-live="polite">Sign in, then load the inventory.</p>
+    <div id="inventory-records" class="dashboard-grid" aria-live="polite"></div>
+    <section class="management-card"><h2>Inspection limits</h2><ul id="inventory-limitations"></ul></section>
     </main></body></html>""")
 
 

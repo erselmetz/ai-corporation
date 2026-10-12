@@ -659,8 +659,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-123 are verified complete, Task 124 is next,
-and Tasks 124-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-124 are verified complete, Task 125 is next,
+and Tasks 125-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -1008,3 +1008,53 @@ supervised restart contract, so source activation does not restart the Python
 process or claim runtime health; dependency installation, data migrations, model
 weight changes and website deployment are not performed. Experiment/approval
 evidence remains process-local; Git commits remain in the checkout after restart.
+
+## Software and integration inventory (Task 124)
+
+Explicit local-owner mode exposes a read-only inventory at
+`GET /api/local/inventory` (`inventory:read`) and `/ui/inventory`. The API
+combines the running application's version metadata, the active Python runtime,
+fixed Git metadata for this repository checkout, and the configured
+provider-connection registry. It relates configured provider connections to
+Agent assignments returned by the Application Service. The panel labels source,
+version/revision, status, management ownership, observation time, and recorded
+dependent workflows. Its Git adapter runs only fixed `rev-parse` and branch
+metadata commands against the known repository root, each with a one-second
+timeout; no shell or caller-provided path is accepted.
+
+The inventory has a 128-record cap and a 64-model cap per provider record.
+Missing checkout metadata is `unknown`; no configured integrations are reported
+as `not_configured`; stale provider catalogs preserve their stale status and
+observation time. This is not an operating-system installed-app inventory:
+Windows registry/package-manager scans, arbitrary filesystem traversal, remote
+health checks, and credential-store access are excluded. Python is marked
+externally managed. Provider credentials are never included. Results are
+sequential snapshots and can change immediately after observation. The default
+API remains fail-closed and does not mount this local-owner route. The panel has
+no install, update, version-pin, or remove actions; those are separately planned
+under Task 125.
+
+## Software and integration inventory (Task 124)
+
+Explicit local-owner mode exposes a read-only inventory at
+`GET /api/local/inventory` (`inventory:read`) and `/ui/inventory`. The API
+combines the running application's version metadata, the active Python runtime,
+fixed Git metadata for this repository checkout, and the configured
+provider-connection registry. It relates configured provider connections to
+Agent assignments returned by the Application Service. The panel labels source,
+version/revision, status, management ownership, observation time, and recorded
+dependent workflows. Its Git adapter runs only fixed `rev-parse` and branch
+metadata commands against the known repository root, each with a one-second
+timeout; no shell or caller-provided path is accepted.
+
+The inventory has a 128-record cap and a 64-model cap per provider record.
+Missing checkout metadata is `unknown`; no configured integrations are reported
+as `not_configured`; stale provider catalogs preserve their stale status and
+observation time. This is not an operating-system installed-app inventory:
+Windows registry/package-manager scans, arbitrary filesystem traversal, remote
+health checks, and credential-store access are excluded. Python is marked
+externally managed. Provider credentials are never included. Results are
+sequential snapshots and can change immediately after observation. The default
+API remains fail-closed and does not mount this local-owner route. The panel has
+no install, update, version-pin, or remove actions; those are separately planned
+under Task 125.

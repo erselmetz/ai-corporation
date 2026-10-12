@@ -119,6 +119,32 @@ def test_read_access_preserves_api_permissions_and_default_auth():
         assert default.get("/ui/login").status_code == 404
 
 
+def test_inventory_requires_local_owner_and_exposes_only_supported_records():
+    service = MagicMock()
+    service.list_models.return_value = []
+    app = create_local_app(password=PASSWORD, application_service=service)
+    with TestClient(app, base_url=ORIGIN, client=("127.0.0.1", 50100)) as client:
+        denied = client.get("/api/local/inventory")
+        assert denied.status_code == 401
+        assert login(client).status_code == 200
+        session = client.get("/api/local/session").json()
+        assert "inventory:read" in session["permissions"]
+        response = client.get("/api/local/inventory")
+        assert response.status_code == 200
+        assert response.headers["cache-control"] == "no-store"
+        payload = response.json()
+        assert {item["kind"] for item in payload["items"]} >= {
+            "application", "runtime", "repository_checkout", "integration_summary"
+        }
+        assert "api_key" not in response.text.lower()
+        assert ".env" not in response.text
+        assert client.get("/ui/inventory").status_code == 200
+        assert client.get("/ui/static/inventory.mjs").status_code == 200
+    with TestClient(create_app(application_service=service)) as default:
+        assert default.get("/api/local/inventory").status_code == 404
+        assert default.get("/api/status").status_code == 401
+
+
 def test_invalid_login_payload_does_not_echo_password():
     with client_for() as client:
         for payload in [{"password": PASSWORD, "secret": PASSWORD}, {"password": [PASSWORD]},
