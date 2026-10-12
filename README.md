@@ -267,7 +267,18 @@ Routing failures and exceptions caught during Agent/Provider execution are recor
 
 ## Local owner Web UI (Task 102)
 
-Start the explicitly configured local app from the repository root:
+On Windows, double-click `launch_erselmetz_ai.pyw` from the repository root to
+open the Task 126 lifecycle controller. The first run asks you to create and
+confirm an owner password; later runs ask you to enter that password in the GUI.
+The launcher stores only a salted PBKDF2 verifier protected by Windows DPAPI for
+the current Windows account. It opens the browser at the existing local sign-in
+page after the backend passes its health check; browser authentication is still
+required. Use the GUI to check health, stop or restart the managed backend.
+The launcher requires Windows, the repository checkout, and a Python environment
+with Tkinter and the project dependencies. Task 127 will package the app as an
+installer/executable.
+
+The existing command-line fallback remains available from the repository root:
 
 ```powershell
 python -m app.local
@@ -285,7 +296,12 @@ create/change/delete and maintenance actions are denied. The normal
 `app.api.app:app` remains rejecting by default; do not launch local mode via a
 reverse proxy or expose it remotely. Startup still uses the existing runtime and
 SQLite initialization; do not treat reads as proof of a configured provider/model.
-No installer, background startup, OS service, or automatic provider call is added.
+The GUI holds a current-user launcher lease and owns exactly one in-process
+Uvicorn thread on `127.0.0.1:8000`, using a socket it binds before startup. It never adopts or kills another process. If the
+port is occupied, it reports the conflict and leaves the existing listener
+untouched. Stop and window close request graceful shutdown; the window remains
+open if the backend has not stopped. Logs shown by the launcher contain only
+bounded lifecycle events; raw server exceptions and request content are omitted.
 
 Local access uses hashed password verification, bounded attempts, opaque expiring
 HttpOnly SameSite=Strict session cookies, logout revocation, loopback peer/Host
@@ -340,8 +356,8 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-125 are verified complete, Task 126 is next,
-and Tasks 126-129 are planned. Every task has dependencies, acceptance checks,
+public `docs/tasks.html`: Tasks 101-126 are verified complete, Task 127 is next,
+and Tasks 127-129 are planned. Every task has dependencies, acceptance checks,
 exclusions and explicit decision gates; completed post-100 records
 include checkpoint and validation evidence. The P00-P15 Markdown plan is
 supplementary. Use the same contracts for any implementing AI, preserve concurrent
@@ -679,6 +695,28 @@ external package-manager changes and other app instances are outside that
 coordination. Tests use deterministic fake package managers; no install,
 upgrade, pin, or uninstall was performed during Task 125 validation. See
 `docs/tasks-data.mjs` for verified test evidence and remaining limitations.
+
+## Task 126 - One-click local application lifecycle
+
+The Windows double-click entry point `launch_erselmetz_ai.pyw` opens a small
+Tkinter control window for the existing FastAPI/Web UI. The GUI owns one Uvicorn
+server thread and binds an exclusive socket only to `127.0.0.1:8000` before
+startup. It opens the browser only after `/health` responds, and offers explicit
+health, stop, and restart controls. A current-user exclusive lease prevents a
+second managed GUI instance. Port conflicts, startup failures, and slow shutdown are reported with safe fixed messages; the launcher never adopts,
+signals, or kills another process. Closing the window requests graceful stop.
+
+First-run setup confirms an owner password of 12–1024 characters. A salted
+PBKDF2 verifier is protected with current-user Windows DPAPI and saved under
+`%LOCALAPPDATA%`; the raw password is not written to disk or command-line
+arguments. Each later GUI start/restart requires the owner to enter it again,
+and the Web UI still requires its separate explicit sign-in. Browser sessions
+remain in memory and are invalidated on backend restart. The GUI displays only
+a bounded list of redacted lifecycle events. If the saved owner verifier is lost or corrupt, remove only `%LOCALAPPDATA%\ERSELMETZ AI\owner-credential.dpapi` to repeat GUI setup; app data remains. This is a repository launcher,
+not an installed executable; it requires a Windows Python environment with
+Tkinter and project dependencies. Electron packaging, runtime bundling, and
+installer lifecycle belong to Task 127. Existing CLI startup remains available.
+Checkpoint tag `task-126-local-application-lifecycle`.
 
 ## Task 118 - Durable chat history
 

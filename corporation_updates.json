@@ -1,5 +1,11 @@
 {
   "items": [
+    {
+      "date": "2026-10-12",
+      "type": "development",
+      "title": "One-click local application lifecycle",
+      "summary": "Completed Task 126 with a double-clickable Windows Tkinter launcher for the existing Python backend/Web UI. It holds a current-user exclusive lease and owns one Uvicorn thread in its process, binds only a pre-reserved 127.0.0.1:8000 socket, checks health, opens browser sign-in and supports stop/restart. Port conflicts fail closed without adopting or terminating another listener; shutdown is graceful and the UI stays open while pending. First-run setup stores only a salted PBKDF2-SHA256 verifier protected by current-user DPAPI; each GUI start requires owner password entry and browser authentication remains explicit. Eleven deterministic lifecycle/credential tests and thirteen local-access tests passed; 14 public docs tests passed; browser tests were not rerun because no browser implementation changed; full Python suite 1076 passed, 3 skipped and the same two unrelated pre-existing model-assignment failures. No live provider/model calls or package changes. Python compilation/import, launcher entry-point compilation, JSON parsing and diff checks passed; Pylance/pyright were unavailable. Electron executable and backend/runtime packaging remain Task 127. Checkpoint tag: task-126-local-application-lifecycle. Tasks 127-129 remain planned."
+    },
 {
     "date": "2026-10-12",
     "type": "development",

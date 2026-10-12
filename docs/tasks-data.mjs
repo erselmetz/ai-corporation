@@ -1043,7 +1043,7 @@ export const post100Tasks = [
     "title": "One-click local application lifecycle",
     "description": "Provide a supported startup/health/stop/restart flow for the existing Python backend and Web UI.",
     "category": "Post-100 Usable Command Center",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       103,
       104
@@ -1058,12 +1058,20 @@ export const post100Tasks = [
       "Remote deployment or rewriting the backend for a desktop framework."
     ],
     "decisions": [
-      "Approve OS process ownership and startup credential-entry behavior."
+      "Resolved to a double-clickable Windows .pyw controller that owns one in-process Uvicorn server thread and a socket pre-bound only to 127.0.0.1:8000. A current-user file lease prevents a second managed GUI controller; the controller never scans for, adopts, signals, or kills another process, and a port conflict fails closed. The first GUI run creates an owner-chosen password and stores only a salted PBKDF2 verifier protected by current-Windows-user DPAPI. Every later GUI start/restart requires that owner password; the backend still requires a separate browser sign-in. Stop and window close request graceful shutdown and never force-kill the service."
     ],
     "area": "P01b / P13a",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-126-local-application-lifecycle",
+    "validation": [
+      "Eleven deterministic lifecycle and credential tests passed, covering clean start/health/stop/restart, preserved owner login, current-user exclusive lease behavior, second-controller exclusion, port conflict without taking over another listener, loopback-only binding, safe startup failure, real Windows DPAPI round-trip, first-run password validation and corrupted credential fail-closed behavior.",
+      "The combined lifecycle/credential/local-access regression selection passed 24 tests. Full Python suite: 1076 passed, 3 skipped and the same 2 pre-existing unrelated model-assignment failures; public documentation tests passed. Browser-module tests were not rerun because no browser implementation changed. No live model/provider calls, package actions or remote listener were used.",
+      "Python compilation/import, launcher entry-point compilation, update-manifest JSON parsing and git diff --check passed. Pylance/pyright diagnostics were unavailable in the environment."
+    ],
+    "limitations": [
+      "The launcher requires Windows, the current Python environment with Tkinter and the repository checkout; it is not an installed executable. Electron packaging and runtime/dependency bundling are Task 127.",
+      "The GUI owns one Uvicorn server thread inside its current process on fixed 127.0.0.1:8000. It cannot manage a CLI-started server, another app process or services on other ports. Port conflicts are reported and the existing listener is left untouched.",
+      "The owner enters the password in the GUI on every start/restart and still signs in through the Web UI. DPAPI protects only a salted verifier; sessions, provider credentials and runtime state keep their existing lifecycle. The launcher does not persist raw passwords or application logs. Lost/corrupt verifier recovery is an explicit owner action: remove only `%LOCALAPPDATA%\ERSELMETZ AI\owner-credential.dpapi` and repeat GUI setup; application data is retained."
+    ]
   },
   {
     "number": 127,
