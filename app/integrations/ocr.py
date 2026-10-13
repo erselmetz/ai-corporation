@@ -66,6 +66,10 @@ class OcrProvider(Protocol):
     def recognize(self, image: OcrImage, *, timeout_seconds: float) -> Sequence[OcrRegion]: ...
 
 
+class OcrProviderTimeout(TimeoutError):
+    """A provider's bounded operation exceeded its deadline."""
+
+
 class OcrService:
     MAX_REGIONS = 128
     MAX_REGION_TEXT_CHARS = 4096
@@ -101,14 +105,16 @@ class OcrService:
 
         def run() -> None:
             try:
-                if not provider.supports_language(image.language):
-                    outcome.put((True, ("status", OcrStatus.UNSUPPORTED)))
-                    return
                 if not provider.is_available():
                     outcome.put((True, ("status", OcrStatus.UNAVAILABLE)))
                     return
+                if not provider.supports_language(image.language):
+                    outcome.put((True, ("status", OcrStatus.UNSUPPORTED)))
+                    return
                 outcome.put((True, ("regions", provider.recognize(image, timeout_seconds=self._timeout_seconds))))
-            except Exception as exc:
+            except OcrProviderTimeout:
+                outcome.put((True, ("status", OcrStatus.TIMEOUT)))
+            except Exception:
                 outcome.put((False, exc))
             finally:
                 self._active.release()
@@ -124,8 +130,9 @@ class OcrService:
         kind, value = value
         if kind == "status":
             status = value
-            diagnostic = ("Requested language is unsupported" if status is OcrStatus.UNSUPPORTED
-                          else "OCR provider is unavailable")
+            diagnostic = ({OcrStatus.UNSUPPORTED: "Requested language is unsupported",
+                           OcrStatus.UNAVAILABLE: "OCR provider is unavailable",
+                           OcrStatus.TIMEOUT: "OCR processing timed out"}[status])
             return self._result(image, status, elapsed=started, diagnostic=diagnostic)
         try:
             regions = self._validate_regions(value, image)

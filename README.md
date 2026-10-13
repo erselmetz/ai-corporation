@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-153 are verified complete; Task 134 is deferred and incomplete; Tasks 154-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-154 are verified complete; Task 134 is deferred and incomplete; Tasks 155-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -1029,3 +1029,8 @@ Authenticated chat owners can explicitly attach PNG or JPEG files to an open con
 ## OCR provider contract (Task 153)
 
 `CorporationApplicationService.ocr()` constructs the provider-neutral OCR service without selecting or loading an engine. It accepts an existing temporary Task 150 attachment, checks its digest, type, dimensions, and byte cap, and returns the image ID, upload/capture provenance, source SHA-256, requested language, confidence, pixel boxes, and bounded OCR text. Region count, per-region and total text, language tags, error text, and processing deadline are limited. Unsupported language, unavailable provider, low confidence, success, timeout, and sanitized failure are distinct outcomes. OCR results are marked untrusted and are not submitted to chat or interpreted as instructions. Only deterministic fake providers are tested; no OCR engine, API/UI, image transfer, or live accuracy claim is included. A provider must honor its supplied deadline; one active call per service instance prevents runaway thread creation, and a hung call keeps that instance unavailable until it exits. Checkpoint: `task-153-bounded-ocr-provider-contract`.
+
+
+## Optional local Tesseract OCR (Task 154)
+
+`TesseractLocalProvider` is an optional subprocess adapter for an owner-configured absolute executable path and optional tessdata directory. It checks engine and installed language availability, reads a bounded TSV response, and maps each word's confidence and pixel box into Task 153's provenance-bearing OCR contract. The image is passed over stdin; commands use an argument list with `shell=False`, output is size-checked, execution has a timeout, and raw engine diagnostics are never returned. It writes no image temporary file and performs no installation or download. The engine and traineddata must be installed separately. Tesseract is Apache-2.0; the official installation guide identifies the engine and language data as separate requirements. [Tesseract installation](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md) and [engine license](https://github.com/tesseract-ocr/tesseract/blob/main/LICENSE). The `pytesseract` project is a wrapper that still requires the Tesseract executable ([official README](https://github.com/madmaze/pytesseract)); EasyOCR's official setup uses PyTorch and downloads model weights by default ([official README](https://github.com/JaidedAI/EasyOCR)). Those alternatives are not installed or activated. Tests use fake subprocess results; no live Tesseract engine or OCR quality was tested. Checkpoint: `task-154-explicit-optional-tesseract-backend`.

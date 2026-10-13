@@ -1981,26 +1981,15 @@ export const post100Tasks = [
     "title": "Optional local OCR backend",
     "description": "Implement an explicitly configured local OCR provider and report external Tesseract installation requirements.",
     "category": "Phase E - Vision",
-    "status": "planned",
-    "dependsOn": [
-      134,
-      153
-    ],
-    "acceptance": [
-      "Detect missing engine/language packs without breaking core startup.",
-      "Keep pytesseract/Tesseract and EasyOCR optional alternatives.",
-      "Test permissions, malformed image, timeout, and sanitized failure."
-    ],
-    "outOfScope": [
-      "Do not silently download OCR models or binaries."
-    ],
-    "decisions": [
-      "Select initial backend by license, language, setup friction, and measured accuracy."
-    ],
+    "status": "completed",
+    "dependsOn": [153],
+    "acceptance": ["Detect missing engine/language packs without breaking core startup.", "Keep pytesseract/Tesseract and EasyOCR optional alternatives.", "Test permissions, malformed image, timeout, and sanitized failure."],
+    "outOfScope": ["Do not silently download OCR models or binaries. No bundled engine, model installation, API/UI, or chat auto-submit."],
+    "decisions": ["Select the Tesseract CLI as the first optional backend. Its Apache-2.0 engine is invoked only at an explicitly configured absolute path, over stdin/stdout, without a shell or image temp files. The binary and chosen traineddata language files must be installed separately by the owner. Task 134 remains deferred; this manually configured backend does not depend on its package lifecycle. Do not add the pytesseract wrapper or EasyOCR/Torch dependencies: the former still requires the external engine and the latter defaults to downloading model weights."],
     "area": "P21",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-154-explicit-optional-tesseract-backend",
+    "validation": ["Focused Tesseract, OCR contract, Task 150 image, Task 152 processing, and update regressions: 34 passed.", "Full Python suite: 1185 passed, 6 skipped; two previously recorded unrelated model-assignment failures remain.", "Public documentation tests: 15 passed; Python compilation and git diff --check passed."],
+    "limitations": ["No Tesseract binary or traineddata is bundled, downloaded, or installed. Recognition is tested with deterministic subprocess fakes; no live engine accuracy, language coverage, or hardware performance is claimed.", "The explicitly configured engine runs with the application's OS privileges. Command execution uses no shell and no image files on disk, but it is not an OS sandbox. Only a bounded TSV output and bounded OCR result are accepted."]
   },
   {
     "number": 155,
@@ -2598,7 +2587,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-153 are verified; Tasks 154-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-154 are verified; Tasks 155-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

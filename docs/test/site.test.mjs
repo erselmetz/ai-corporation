@@ -91,9 +91,9 @@ describe("documentation site", () => {
   });
 
   it("records verified, deferred, and planned work without treating deferral as completion", () => {
-    assert.equal(tasks.filter(task => task.status === "completed").length, 152);
+    assert.equal(tasks.filter(task => task.status === "completed").length, 153);
     assert.equal(tasks.filter(task => task.status === "deferred").length, 1);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 22);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 21);
     assert.equal(tasks.find(task => task.number === 134).status, "deferred");
     assert.equal(tasks.find(task => task.number === 135).status, "completed");
     assert.equal(tasks.find(task => task.number === 136).status, "completed");
@@ -109,7 +109,10 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 153).status, "completed");
     assert.equal(tasks.find(task => task.number === 153).checkpoint, "task-153-bounded-ocr-provider-contract");
     assert.deepEqual(tasks.find(task => task.number === 153).dependsOn, [150, 152]);
-    assert.equal(nextTask.number, 154);
+    assert.equal(tasks.find(task => task.number === 154).status, "completed");
+    assert.equal(tasks.find(task => task.number === 154).checkpoint, "task-154-explicit-optional-tesseract-backend");
+    assert.deepEqual(tasks.find(task => task.number === 154).dependsOn, [153]);
+    assert.equal(nextTask.number, 155);
     assert.ok(tasks.slice(0, 133).every(task => task.status === "completed"));
     assert.ok(tasks.slice(133).some(task => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
@@ -189,8 +192,8 @@ describe("documentation site", () => {
   it("summarizes the roadmap while preserving the full task contracts", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
-    assert.match(html, /152 complete; 1 deferred; 22 planned/);
-    assert.match(html, /Tasks 1-133 and 135-153 are verified/);
+    assert.match(html, /153 complete; 1 deferred; 21 planned/);
+    assert.match(html, /Tasks 1-133 and 135-154 are verified/);
     assert.match(html, /Task 134 is deferred/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
@@ -200,18 +203,18 @@ describe("documentation site", () => {
     const [home, documentation, architecture, roadmap, updates] = await Promise.all(
       ["index.html", "documentation.html", "architecture.html", "roadmap.html", "updates.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
-    assert.match(home, /Latest update.*Task 153/);
-    assert.match(home, /Next planned.*Task 154/);
+    assert.match(home, /Latest update.*Task 154/);
+    assert.match(home, /Next planned.*Task 155/);
     assert.doesNotMatch(home, /Task 134/);
     assert.match(home, /Changelog/);
     assert.doesNotMatch(home, /Task 57|Task 100|Verified Tasks 101-133/);
     assert.match(documentation, /local-first application with a Python backend and an Electron desktop interface/);
     assert.match(architecture, /Python service owns AI and application logic/);
-    assert.match(updates, /Task 153.*2026-10-14/);
+    assert.match(updates, /Task 154.*2026-10-14/);
     assert.match(updates, /Task 140.*2026-10-13/);
-    assert.match(roadmap, /Tasks 1-133 and 135-153 are complete/);
-    assert.match(roadmap, /152 complete.*1 deferred.*22 planned/);
-    assert.match(roadmap, /requires no OCR engine installation/);
+    assert.match(roadmap, /Tasks 1-133 and 135-154 are complete/);
+    assert.match(roadmap, /153 complete.*1 deferred.*21 planned/);
+    assert.match(roadmap, /reports external Tesseract and traineddata requirements/);
     assert.doesNotMatch(roadmap, /Task 130.*semantic/i);
   });
 
@@ -219,7 +222,10 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 153).status, "completed");
     assert.equal(tasks.find(task => task.number === 153).checkpoint, "task-153-bounded-ocr-provider-contract");
     assert.deepEqual(tasks.find(task => task.number === 153).dependsOn, [150, 152]);
-    assert.equal(nextTask.number, 154);
+    assert.equal(tasks.find(task => task.number === 154).status, "completed");
+    assert.equal(tasks.find(task => task.number === 154).checkpoint, "task-154-explicit-optional-tesseract-backend");
+    assert.deepEqual(tasks.find(task => task.number === 154).dependsOn, [153]);
+    assert.equal(nextTask.number, 155);
     const task122 = post100Tasks.find(task => task.number === 122);
     assert.equal(task122.status, "completed");
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");
@@ -233,7 +239,7 @@ describe("documentation site", () => {
       "task-125-managed-vscode-user-lifecycle", "task-126-local-application-lifecycle",
       "task-127-windows-electron-installer", "task-128-optional-voice-interaction",
       "task-129-command-center-release-acceptance", "task-130-semantic-memory-rag-foundation",
-      "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance", "task-135-semantic-retrieval-evaluation", "task-136-hybrid-lexical-semantic-retrieval", "task-137-semantic-index-lifecycle-observability", "task-138-owner-reviewed-knowledge-proposals", "task-139-versioned-documentation-review", "task-140-central-capability-permissions", "task-141-capability-grants-session-policy", "task-142-action-risk-approval-policy", "task-143-capability-audit-retention", "task-144-emergency-stop-capture-indicators", "task-145-bounded-speech-input-contracts", "task-146-optional-local-speech-recognition", "task-147-reviewed-speech-input-in-conversations", "task-148-offline-text-to-speech-provider", "task-149-bounded-local-voice-queue-controls", "task-150-bounded-image-input-vision-context", "task-151-explicit-screen-capture-provider", "task-152-bounded-optional-image-processing", "task-153-bounded-ocr-provider-contract"]);
+      "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance", "task-135-semantic-retrieval-evaluation", "task-136-hybrid-lexical-semantic-retrieval", "task-137-semantic-index-lifecycle-observability", "task-138-owner-reviewed-knowledge-proposals", "task-139-versioned-documentation-review", "task-140-central-capability-permissions", "task-141-capability-grants-session-policy", "task-142-action-risk-approval-policy", "task-143-capability-audit-retention", "task-144-emergency-stop-capture-indicators", "task-145-bounded-speech-input-contracts", "task-146-optional-local-speech-recognition", "task-147-reviewed-speech-input-in-conversations", "task-148-offline-text-to-speech-provider", "task-149-bounded-local-voice-queue-controls", "task-150-bounded-image-input-vision-context", "task-151-explicit-screen-capture-provider", "task-152-bounded-optional-image-processing", "task-153-bounded-ocr-provider-contract", "task-154-explicit-optional-tesseract-backend"]);
     const task143 = post100Tasks.find(task => task.number === 143);
     assert.equal(task143.status, "completed");
     assert.equal(task143.checkpoint, "task-143-capability-audit-retention");
