@@ -2282,7 +2282,7 @@ export const post100Tasks = [
     "title": "Original ERSELMETZ AI assistant identity",
     "description": "Define an original central assistant profile that is calm, strategic, concise, trustworthy, and distinct from copyrighted identities.",
     "category": "Phase H - ERSELMETZ AI Persona",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       103,
       113,
@@ -2295,11 +2295,21 @@ export const post100Tasks = [
     "outOfScope": [
       "Do not copy any fictional character name, voice, dialogue, or protected identity."
     ],
-    "decisions": [],
+    "decisions": [
+      "The owner-approved profile is a read-only product contract in corporation_docs/assistant-identity.md, surfaced by the existing Documentation Portal; it does not change runtime prompts or conversation behavior.",
+      "ERSELMETZ AI is the original assistant name and identity. The role is central coordinator and truthful explainer; response language follows the conversation and may use English, Filipino, or natural Taglish.",
+      "Service evidence determines claims and Agent attribution. Persona, title, and conversational instructions do not grant permissions, consent, approvals, assignments, or execution authority; the separate authorization system remains authoritative."
+    ],
     "area": "P24",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-163-original-assistant-identity",
+    "validation": [
+      "Read-only Documentation Portal API regressions: 11 passed, 2 skipped.",
+      "Reviewed English and Taglish examples for concise language, truthful status/attribution, non-impersonation, and separation of identity from authorization."
+    ],
+    "limitations": [
+      "This task defines the product identity in documentation only. Runtime prompt composition, response preferences, and orchestration presentation remain unchanged and are handled by later tasks.",
+      "The examples are policy illustrations, not measured model behavior or a guarantee that every configured Provider follows the profile."
+    ]
   },
   {
     "number": 164,
@@ -2660,7 +2670,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-162 are verified; Tasks 163-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-163 are verified; Tasks 164-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

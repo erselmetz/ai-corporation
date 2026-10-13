@@ -176,6 +176,7 @@ def test_default_source_is_configured_to_the_internal_document_directory():
     assert response.status_code == 200
     assert {item["id"] for item in response.json()["items"]} == {
         "api-and-web-ui-boundaries",
+        "assistant-identity",
         "corporation-overview",
     }
 
@@ -308,3 +309,24 @@ def test_documentation_api_has_no_write_routes(documentation_api):
     paths = application.openapi()["paths"]
     assert set(paths["/api/documentation"]) == {"get"}
     assert set(paths["/api/documentation/{document_id}"]) == {"get"}
+
+
+def test_assistant_identity_profile_is_available_in_default_read_only_portal():
+    application = create_app(
+        CorporationApplicationService(MagicMock(spec=Orchestrator)),
+        DocumentationTestAuthenticationBackend(),
+    )
+
+    with TestClient(application) as client:
+        summaries = client.get("/api/documentation", headers=documentation_headers())
+        profile = client.get("/api/documentation/assistant-identity", headers=documentation_headers())
+
+    assert summaries.status_code == 200
+    assert {item["id"] for item in summaries.json()["items"]} >= {"assistant-identity"}
+    assert profile.status_code == 200
+    content = profile.json()["content"]
+    assert "## Role and boundaries" in content
+    assert "cannot create its own permissions, consent, approvals, assignments, or authority" in content
+    assert "Use the language of the conversation. English, Filipino, and natural Taglish are supported" in content
+    assert "## Examples" in content
+    assert "explicitly avoids inventing worker activity" in content

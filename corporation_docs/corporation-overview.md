@@ -14,3 +14,5 @@ The internal Documentation Portal reads approved Markdown files from the
 repository-root `corporation_docs/` directory. It is separate from the public
 project documentation website in `docs/` and is not an AI-managed knowledge
 system.
+
+The approved ERSELMETZ AI assistant identity and communication boundaries are documented in `assistant-identity.md`. This is a read-only product contract; it does not configure runtime prompts, permissions, or provider behavior.
