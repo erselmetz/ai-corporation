@@ -131,7 +131,7 @@ test("start and send use same-origin, session CSRF and actual coordinator identi
     message("user", "completed", "Hello"), message("assistant", "completed", untrusted)])) : null);
   assert.equal(await ui.controller.initialLoad, true);
   assert.equal(await ui.controller.start(), true);
-  assert.match(ui.elements["chat-identity"].textContent, /Actual Worker.*fake.*configured-model/);
+  assert.match(ui.elements["chat-identity"].textContent, /Coordinator: Actual Worker.*fake.*configured-model/);
   ui.elements["chat-input"].value = "Hello";
   assert.equal(await ui.controller.send({ preventDefault() {} }), true);
   assert.ok(ui.elements["chat-history"].textContent.includes(untrusted));

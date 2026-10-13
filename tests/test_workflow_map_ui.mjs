@@ -19,7 +19,10 @@ const setup = () => {
 };
 const node = (id, extra = {}) => ({
   id, role: "worker", state: "review", depth: 1, attempts: 1, agent_id: "w1", agent_visibility: "available",
-  destination_id: "d1", reason: "", uncertain: false, output_recorded: true, review: null, approval: null, ...extra,
+  agent_name: "Worker One", agent_role: "Developer", agent_state: "available",
+  assignment_source: "workflow work-item Agent ID", assignment_reason: "not recorded",
+  response_state: "recorded", destination_id: "d1", reason: "", uncertain: false,
+  output_recorded: true, review: null, approval: null, ...extra,
 });
 const snap = (nodes, extra = {}) => ({
   generated_at: "2026-01-01T00:00:00+00:00", stale_after_seconds: 60,
@@ -58,11 +61,37 @@ test("selection shows current evidence and reflects state changes", async () => 
   const api = await mountWorkflowMap({ documentRef: doc, nowImpl: now, fetchImpl: async () => ok(snap([current])) });
   await api.select("w", "a");
   assert.match(els["workflow-map-detail"].textContent, /Review: none recorded/);
-  current = node("a", { state: "approved", review: { passed: true, evidence: "checked", at: "T" },
+  current = node("a", { state: "approved", review: { passed: true, evidence: "checked", at: "T", reviewer_agent_id: "r1" },
     approval: { evidence: "ran tests", at: "T2" } });
   await api.refresh();
-  assert.match(els["workflow-map-detail"].textContent, /Review passed at T: checked/);
-  assert.match(els["workflow-map-detail"].textContent, /Owner approval at T2: ran tests/);
+  assert.match(els["workflow-map-detail"].textContent, /Review passed at T by Agent r1: checked/);
+  assert.match(els["workflow-map-detail"].textContent, /Owner verification evidence recorded at T2: ran tests/);
+});
+
+test("shows Agent assignment source, unrecorded reason, and truthful outcome evidence", async () => {
+  const { els, doc } = setup();
+  const api = await mountWorkflowMap({ documentRef: doc, nowImpl: now,
+    fetchImpl: async () => ok(snap([node("a", { state: "blocked", response_state: "not recorded",
+      output_recorded: false, reason: "No destination is configured for this Agent" })])) });
+  await api.select("w", "a");
+  assert.match(els["workflow-map-list"].textContent, /blocked.*Worker One.*no response recorded/);
+  assert.match(els["workflow-map-detail"].textContent, /Assignment source: workflow work-item Agent ID/);
+  assert.match(els["workflow-map-detail"].textContent, /Assignment reason: not recorded/);
+  assert.match(els["workflow-map-detail"].textContent, /Verified outcome: none recorded/);
+});
+
+test("labels missing Agent and uncertain provider outcomes without claiming a response", async () => {
+  const { els, doc } = setup();
+  const nodes = [
+    node("missing", { agent_state: "missing", agent_name: null, state: "blocked", response_state: "not recorded" }),
+    node("uncertain", { state: "failed", uncertain: true, response_state: "not recorded", output_recorded: false }),
+  ];
+  const api = await mountWorkflowMap({ documentRef: doc, nowImpl: now, fetchImpl: async () => ok(snap(nodes)) });
+  await api.select("w", "missing");
+  assert.match(els["workflow-map-detail"].textContent, /missing from the current registry/);
+  await api.select("w", "uncertain");
+  assert.match(els["workflow-map-detail"].textContent, /UNKNOWN: inspect before retrying/);
+  assert.match(els["workflow-map-list"].textContent, /outcome unknown/);
 });
 
 test("forbidden agents and reporting data are labelled", async () => {

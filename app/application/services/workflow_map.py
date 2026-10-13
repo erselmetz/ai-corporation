@@ -17,23 +17,33 @@ def _safe_reason(reason):
     return text[:200]
 
 
-def _node(item, can_see_agents):
+def _node(item, can_see_agents, agent_records):
     review = item.get("review")
     approval = item.get("approval")
+    agent_id = item["agent_id"]
+    agent = agent_records.get(agent_id) if agent_records is not None else None
     return {
         "id": item["id"],
         "role": item["role"],
         "state": item["state"],
         "depth": item["depth"],
         "attempts": item["attempts"],
-        "agent_id": item["agent_id"] if can_see_agents else None,
+        "agent_id": agent_id if can_see_agents else None,
+        "agent_name": agent.name if agent is not None else None,
+        "agent_role": agent.role if agent is not None else None,
+        "agent_state": ("forbidden" if not can_see_agents else "unknown" if agent_records is None
+                        else "available" if agent is not None else "missing"),
         "agent_visibility": "available" if can_see_agents else "forbidden",
+        "assignment_source": "workflow work-item Agent ID",
+        "assignment_reason": "not recorded",
+        "response_state": "recorded" if item["output"] is not None else "not recorded",
         "destination_id": item["destination_id"] if can_see_agents else None,
         "reason": _safe_reason(item["reason"]),
         "uncertain": bool(item.get("uncertain")),
         "output_recorded": item["output"] is not None,
         "review": None if review is None else {
             "passed": review["passed"], "evidence": review["evidence"], "at": review["at"],
+            "reviewer_agent_id": review["reviewer_agent_id"] if can_see_agents else None,
         },
         "approval": None if approval is None else {
             "evidence": approval["evidence"], "at": approval["at"],
@@ -45,10 +55,15 @@ def build_workflow_map(application, permissions, *, now=None):
     if "workflow:read" not in permissions:
         raise PermissionError("workflow:read is required")
     can_see_agents = "agent:read" in permissions
+    agent_records = None
+    if can_see_agents:
+        list_agents = getattr(application, "list_agents", None)
+        if callable(list_agents):
+            agent_records = {agent.id: agent for agent in list_agents()}
     generated = (now or datetime.now(timezone.utc)).isoformat()
     workflows = []
     for report in application.workflow_review().list():
-        nodes = [_node(item, can_see_agents) for item in report["items"]]
+        nodes = [_node(item, can_see_agents, agent_records) for item in report["items"]]
         edges = []
         for item in report["items"]:
             if item["parent_id"]:

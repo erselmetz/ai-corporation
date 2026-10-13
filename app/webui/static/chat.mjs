@@ -154,7 +154,7 @@ export function mountChat({
     cloudPanel.hidden = !requiresCloudConsent;
     cloudConsent.checked = false;
     conversations.value = record.id;
-    element("chat-identity").textContent = `${agent.name} (${agent.role}) | ${agent.provider} / ${agent.model} | ${record.status}`;
+    element("chat-identity").textContent = `Coordinator: ${agent.name} (${agent.role}) | ${agent.provider} / ${agent.model} | ${record.status}`;
     history.replaceChildren();
     taskSource.replaceChildren();
     option(taskSource, "", "Select a completed chat proposal");

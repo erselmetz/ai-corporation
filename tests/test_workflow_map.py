@@ -17,15 +17,19 @@ DEST = [{"id": "d1", "kind": "local", "provider_id": "ollama-a", "model_id": "m"
 
 
 class App:
-    def __init__(self, runner=lambda dest, prompt: "OUTPUT-BODY", positions=()):
+    def __init__(self, runner=lambda dest, prompt: "OUTPUT-BODY", positions=(), agents=()):
         self.service = WorkflowReviewService(runner)
         self._positions = positions
+        self._agents = agents
 
     def workflow_review(self):
         return self.service
 
     def list_positions(self):
         return self._positions
+
+    def list_agents(self):
+        return self._agents
 
 
 def pos(pid, title, parent=None):
@@ -65,6 +69,26 @@ def test_outcome_evidence_and_state_changes_follow_records():
     node = next(n for n in build_workflow_map(app, READ)["workflows"][0]["nodes"] if n["id"] == first)
     assert node["state"] == "approved"
     assert node["review"]["evidence"] == "checked" and node["approval"]["evidence"] == "ran tests"
+    assert node["response_state"] == "recorded"
+    assert node["assignment_source"] == "workflow work-item Agent ID"
+    assert node["assignment_reason"] == "not recorded"
+
+
+def test_agent_identity_and_registration_state_are_permission_scoped_and_evidence_based():
+    app = App(agents=(NS(id="w1", name="Worker One", role="Developer"),))
+    wid = app.service.create("owner", "T", destinations=DEST)["id"]
+    app.service.add_item(wid, role="worker", agent_id="w1", prompt="p")
+    node = build_workflow_map(app, READ)["workflows"][0]["nodes"][0]
+    assert node["agent_state"] == "available"
+    assert (node["agent_name"], node["agent_role"]) == ("Worker One", "Developer")
+    assert node["response_state"] == "not recorded"
+    assert node["assignment_reason"] == "not recorded"
+    restricted = build_workflow_map(app, frozenset({"workflow:read"}))["workflows"][0]["nodes"][0]
+    assert restricted["agent_state"] == "forbidden"
+    assert restricted["agent_id"] is None and restricted["agent_name"] is None
+    app._agents = ()
+    missing = build_workflow_map(app, READ)["workflows"][0]["nodes"][0]
+    assert missing["agent_state"] == "missing" and missing["agent_id"] == "w1"
 
 
 def test_raw_errors_are_omitted_and_uncertain_outcomes_are_flagged():

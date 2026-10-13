@@ -2350,7 +2350,7 @@ export const post100Tasks = [
     "title": "Coordinator presence and orchestration presentation",
     "description": "Present coordinator identity, worker assignments, handoffs, and verified outcomes through existing orchestration services.",
     "category": "Phase H - ERSELMETZ AI Persona",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       113,
       115,
@@ -2364,11 +2364,23 @@ export const post100Tasks = [
     "outOfScope": [
       "Do not simulate Agents or assert work without service evidence."
     ],
-    "decisions": [],
+    "decisions": [
+      "Presentation uses the existing protected workflow-map snapshot and coordinator chat identity; no new orchestration, assignment, or execution behavior is introduced.",
+      "The current workflow service does not record assignment rationale. The UI identifies the recorded source as the work-item Agent ID and displays the rationale as not recorded rather than inferring it.",
+      "Agent names and roles are resolved only when the caller has agent:read. Missing registry records, unavailable registry capability, and denied detail access remain distinct."
+    ],
     "area": "P24",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-165-coordinator-presence-orchestration",
+    "validation": [
+      "Workflow review/map and related Python regressions: 22 passed; workflow, dashboard, chat and related browser module tests: 34 passed; full browser-module suite: 190 passed.",
+      "Full Python suite excluding the pre-existing syntax-invalid tests/test_automation_traces.py: 1,229 passed, 3 skipped, and 2 known unrelated baseline failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service).",
+      "Public docs and update-manifest tests: 15 passed; Python application compilation, JavaScript syntax checks, and git diff --check passed."
+    ],
+    "limitations": [
+      "Workflow presentation uses existing process-local snapshots and their freshness rules; it is not a live event stream.",
+      "The existing workflow service has no assignment-reason field, so no rationale can be displayed beyond the recorded Agent-ID source.",
+      "Detailed Agent identity is permission-gated. Workflow output and owner verification are shown only as recorded evidence; they do not guarantee quality or independently prove external effects."
+    ]
   },
   {
     "number": 166,
@@ -2677,7 +2689,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-164 are verified; Tasks 165-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-165 are verified; Tasks 166-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

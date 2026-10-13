@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 import { createDocumentationServer } from "../server.mjs";
 import { taskGroups, tasks, foundationTasks, post100Tasks, nextTask, roadmapRules } from "../tasks-data.mjs";
@@ -63,7 +63,7 @@ describe("documentation site", () => {
   it("resolves local public links including generated task and category anchors", async () => {
     const generatedIds = new Set([
       ...tasks.map(task => `task-${task.number}`),
-      ...taskGroups.map(group => `tasks-${group.range.replace("–", "-")}`),
+      ...taskGroups.map(group => `tasks-${group.range.replace("â€“", "-")}`),
     ]);
     const contents = new Map();
     for (const page of pages) contents.set(page, await (await fetch(`${baseUrl}/${page}`)).text());
@@ -83,7 +83,7 @@ describe("documentation site", () => {
     }
   });
 
-  it("preserves foundation tasks 1–100 and adds contiguous post-100 contracts", () => {
+  it("preserves foundation tasks 1â€“100 and adds contiguous post-100 contracts", () => {
     assert.equal(tasks.length, 175);
     assert.equal(foundationTasks.length, 100);
     assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 175 }, (_, i) => i + 1));
@@ -91,9 +91,9 @@ describe("documentation site", () => {
   });
 
   it("records verified, deferred, and planned work without treating deferral as completion", () => {
-    assert.equal(tasks.filter(task => task.status === "completed").length, 163);
+    assert.equal(tasks.filter(task => task.status === "completed").length, 164);
     assert.equal(tasks.filter(task => task.status === "deferred").length, 1);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 11);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 10);
     assert.equal(tasks.find(task => task.number === 134).status, "deferred");
     assert.equal(tasks.find(task => task.number === 135).status, "completed");
     assert.equal(tasks.find(task => task.number === 156).status, "completed");
@@ -135,6 +135,11 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 162).checkpoint, "task-162-three-dimensional-map-review");
     assert.equal(tasks.find(task => task.number === 162).status, "completed");
     assert.equal(tasks.find(task => task.number === 163).status, "completed");
+    assert.equal(tasks.find(task => task.number === 164).status, "completed");
+    assert.equal(tasks.find(task => task.number === 165).status, "completed");
+    assert.equal(tasks.find(task => task.number === 165).checkpoint, "task-165-coordinator-presence-orchestration");
+    assert.match(tasks.find(task => task.number === 165).limitations.join(" "), /no assignment-reason field/);
+    assert.equal(tasks.find(task => task.number === 163).status, "completed");
     assert.equal(tasks.find(task => task.number === 163).checkpoint, "task-163-original-assistant-identity");
     assert.match(tasks.find(task => task.number === 163).decisions.join(" "), /do not grant permissions/);
     const visualizationReview = tasks.find(task => task.number === 162);
@@ -142,7 +147,7 @@ describe("documentation site", () => {
     assert.match(visualizationReview.decisions.join(" "), /WCAG 2.2 AA/);
     assert.match(visualizationReview.limitations.join(" "), /not achieved measurements/);
     assert.equal(tasks.find(task => task.number === 158).checkpoint, "task-158-automation-review-traces");
-    assert.equal(nextTask.number, 165);
+    assert.equal(nextTask.number, 166);
     assert.ok(tasks.slice(0, 133).every(task => task.status === "completed"));
     assert.ok(tasks.slice(133).some(task => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
@@ -222,8 +227,8 @@ describe("documentation site", () => {
   it("summarizes the roadmap while preserving the full task contracts", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
-    assert.match(html, /163 complete; 1 deferred; 11 planned/);
-    assert.match(html, /Tasks 1-133 and 135-164 are verified/);
+    assert.match(html, /164 complete; 1 deferred; 10 planned/);
+    assert.match(html, /Tasks 1-133 and 135-165 are verified/);
     assert.match(html, /Task 134 is deferred/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
@@ -233,18 +238,18 @@ describe("documentation site", () => {
     const [home, documentation, architecture, roadmap, updates] = await Promise.all(
       ["index.html", "documentation.html", "architecture.html", "roadmap.html", "updates.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
-    assert.match(home, /Latest update.*Task 164/);
-    assert.match(home, /Next planned.*Task 165/);
+    assert.match(home, /Latest update.*Task 165/);
+    assert.match(home, /Next planned.*Task 166/);
     assert.doesNotMatch(home, /Task 134/);
     assert.match(home, /Changelog/);
     assert.doesNotMatch(home, /Task 57|Task 100|Verified Tasks 101-133/);
     assert.match(documentation, /local-first application with a Python backend and an Electron desktop interface/);
     assert.match(architecture, /Python service owns AI and application logic/);
-    assert.match(updates, /Task 164.*2026-10-14/);
+    assert.match(updates, /Task 165.*2026-10-14/);
     assert.match(updates, /Task 156.*2026-10-14/);
     assert.match(updates, /Task 140.*2026-10-13/);
-    assert.match(roadmap, /Tasks 1-133 and 135-164 are complete/);
-    assert.match(roadmap, /163 complete.*1 deferred.*11 planned/);
+    assert.match(roadmap, /Tasks 1-133 and 135-165 are complete/);
+    assert.match(roadmap, /164 complete.*1 deferred.*10 planned/);
     assert.match(roadmap, /reports external Tesseract and traineddata requirements/);
     assert.doesNotMatch(roadmap, /Task 130.*semantic/i);
   });
@@ -269,7 +274,7 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 162).checkpoint, "task-162-three-dimensional-map-review");
     assert.equal(tasks.find(task => task.number === 162).status, "completed");
     assert.equal(tasks.find(task => task.number === 158).checkpoint, "task-158-automation-review-traces");
-    assert.equal(nextTask.number, 165);
+    assert.equal(nextTask.number, 166);
     const task122 = post100Tasks.find(task => task.number === 122);
     assert.equal(task122.status, "completed");
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");
@@ -283,7 +288,7 @@ describe("documentation site", () => {
       "task-125-managed-vscode-user-lifecycle", "task-126-local-application-lifecycle",
       "task-127-windows-electron-installer", "task-128-optional-voice-interaction",
       "task-129-command-center-release-acceptance", "task-130-semantic-memory-rag-foundation",
-      "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance", "task-135-semantic-retrieval-evaluation", "task-136-hybrid-lexical-semantic-retrieval", "task-137-semantic-index-lifecycle-observability", "task-138-owner-reviewed-knowledge-proposals", "task-139-versioned-documentation-review", "task-140-central-capability-permissions", "task-141-capability-grants-session-policy", "task-142-action-risk-approval-policy", "task-143-capability-audit-retention", "task-144-emergency-stop-capture-indicators", "task-145-bounded-speech-input-contracts", "task-146-optional-local-speech-recognition", "task-147-reviewed-speech-input-in-conversations", "task-148-offline-text-to-speech-provider", "task-149-bounded-local-voice-queue-controls", "task-150-bounded-image-input-vision-context", "task-151-explicit-screen-capture-provider", "task-152-bounded-optional-image-processing", "task-153-bounded-ocr-provider-contract", "task-154-explicit-optional-tesseract-backend", "task-155-one-use-camera-vision-chat", "task-156-scoped-browser-automation", "task-157-scoped-desktop-automation", "task-158-automation-review-traces", "task-159-shared-visual-design-system", "task-160-operational-command-center-dashboard", "task-161-knowledge-resource-visualization", "task-162-three-dimensional-map-review", "task-163-original-assistant-identity", "task-164-owner-response-preferences"]);
+      "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance", "task-135-semantic-retrieval-evaluation", "task-136-hybrid-lexical-semantic-retrieval", "task-137-semantic-index-lifecycle-observability", "task-138-owner-reviewed-knowledge-proposals", "task-139-versioned-documentation-review", "task-140-central-capability-permissions", "task-141-capability-grants-session-policy", "task-142-action-risk-approval-policy", "task-143-capability-audit-retention", "task-144-emergency-stop-capture-indicators", "task-145-bounded-speech-input-contracts", "task-146-optional-local-speech-recognition", "task-147-reviewed-speech-input-in-conversations", "task-148-offline-text-to-speech-provider", "task-149-bounded-local-voice-queue-controls", "task-150-bounded-image-input-vision-context", "task-151-explicit-screen-capture-provider", "task-152-bounded-optional-image-processing", "task-153-bounded-ocr-provider-contract", "task-154-explicit-optional-tesseract-backend", "task-155-one-use-camera-vision-chat", "task-156-scoped-browser-automation", "task-157-scoped-desktop-automation", "task-158-automation-review-traces", "task-159-shared-visual-design-system", "task-160-operational-command-center-dashboard", "task-161-knowledge-resource-visualization", "task-162-three-dimensional-map-review", "task-163-original-assistant-identity", "task-164-owner-response-preferences", "task-165-coordinator-presence-orchestration"]);
     const task143 = post100Tasks.find(task => task.number === 143);
     assert.equal(task143.status, "completed");
     assert.equal(task143.checkpoint, "task-143-capability-audit-retention");

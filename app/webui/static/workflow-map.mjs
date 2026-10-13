@@ -59,7 +59,13 @@ export async function mountWorkflowMap({
         const row = documentRef.createElement("li");
         const button = documentRef.createElement("button");
         button.type = "button";
-        button.textContent = `${node.role} ${node.id}: ${node.state}`;
+        const responder = node.agent_visibility === "forbidden" ? "Agent restricted"
+          : node.agent_state === "missing" ? `Agent missing (${node.agent_id})`
+            : node.agent_name ? `${node.agent_name} (${node.agent_id})`
+              : `Agent ${node.agent_id ?? "unknown"}`;
+        const response = node.uncertain ? "; outcome unknown"
+          : node.response_state === "recorded" ? "; response recorded" : "; no response recorded";
+        button.textContent = `${node.role} ${node.id}: ${node.state} - ${responder}${response}`;
         button.addEventListener("click", () => select(workflow.id, node.id));
         row.append(button);
         items.append(row);
@@ -96,16 +102,24 @@ export async function mountWorkflowMap({
     }
     detail.append(text("h3", `${node.role} ${node.id}`));
     detail.append(text("p", `State: ${node.state}${node.reason ? ` - ${node.reason}` : ""}`));
-    detail.append(text("p", `Agent: ${node.agent_visibility === "forbidden" ? FORBIDDEN : node.agent_id}`));
+    if (node.agent_visibility === "forbidden") {
+      detail.append(text("p", `Assigned Agent: ${FORBIDDEN}`));
+    } else if (node.agent_state === "missing") {
+      detail.append(text("p", `Assigned Agent: missing from the current registry (${node.agent_id}).`));
+    } else {
+      const identity = node.agent_name ? `${node.agent_name} (${node.agent_id}) - ${node.agent_role}` : node.agent_id;
+      detail.append(text("p", `Assigned Agent: ${identity ?? "unknown"}${node.response_state === "recorded" ? "; response recorded" : node.uncertain ? "; provider outcome UNKNOWN" : "; no response recorded"}`));
+    }
+    detail.append(text("p", `Assignment source: ${node.assignment_source || "unknown"}. Assignment reason: ${node.assignment_reason || "not recorded"}.`));
     detail.append(text("p", `Destination: ${node.agent_visibility === "forbidden" ? FORBIDDEN : node.destination_id ?? "none"}`));
     detail.append(text("p", `Attempts: ${node.attempts}; output recorded: ${node.output_recorded ? "yes" : "no"}`));
     if (node.uncertain) detail.append(text("p", "Outcome UNKNOWN: inspect before retrying."));
     detail.append(text("p", node.review
-      ? `Review ${node.review.passed ? "passed" : "rejected"} at ${node.review.at}: ${node.review.evidence}`
+      ? `Review ${node.review.passed ? "passed" : "rejected"} at ${node.review.at} by Agent ${node.review.reviewer_agent_id ?? "restricted or unavailable"}: ${node.review.evidence}`
       : "Review: none recorded"));
     detail.append(text("p", node.approval
-      ? `Owner approval at ${node.approval.at}: ${node.approval.evidence}`
-      : "Owner approval: none recorded"));
+      ? `Owner verification evidence recorded at ${node.approval.at}: ${node.approval.evidence}. This is the recorded owner-approval state.`
+      : "Verified outcome: none recorded; owner verification evidence is absent."));
   }
 
   function fail(error) {

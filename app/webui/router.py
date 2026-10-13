@@ -1104,7 +1104,8 @@ def workflow_map_page():
     <a href="/ui/login">Local sign-in / sign-out</a></nav>
     <h1>Workflow map</h1>
     <p>Operational handoff and delegation links are listed separately from organizational reporting
-    links. Only recorded state and evidence are shown; there is no progress estimate or live activity.</p>
+    links. Agent responses, assignment source, recorded rationale, review, and owner verification are
+    shown only when supported by workflow records. Missing rationale and uncertain outcomes stay explicit.</p>
     <p id="workflow-map-status" role="status">Loading workflow map...</p>
     <button id="workflow-map-refresh" type="button">Refresh</button>
     <section aria-label="Workflow work items"><div id="workflow-map-list"></div></section>
