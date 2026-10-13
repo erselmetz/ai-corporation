@@ -155,7 +155,7 @@ class OwnedChatService:
         with self._access(owner, identifier):
             return self._chat.get_status(identifier)
 
-    def send(self, owner, identifier, text, retrieved_context=None, *, image_ids=(),
+    def send(self, owner, identifier, text, retrieved_context=None, *, presentation_preferences=None, image_ids=(),
              image_consent=False, ocr_evidence=()):
         with self._access(owner, identifier) as entry:
             with self.agent_request(entry.coordinator.id):
@@ -171,7 +171,10 @@ class OwnedChatService:
                     if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
                         raise ChatLimit("Conversation message limit reached; start a new conversation")
                     try:
-                        record = self._chat.send_with_images(identifier, text, images, ocr_evidence=tuple(ocr_evidence))
+                        record = self._chat.send_with_images(
+                            identifier, text, images, ocr_evidence=tuple(ocr_evidence),
+                            presentation_preferences=presentation_preferences,
+                        )
                         return {
                             "conversation": record,
                             "coordinator": entry.coordinator,
@@ -189,14 +192,14 @@ class OwnedChatService:
                     finally:
                         for image in images:
                             self._image_store.remove(owner, identifier, image.id)
-                return self._send(entry, identifier, text, retrieved_context)
+                return self._send(entry, identifier, text, retrieved_context, presentation_preferences)
 
-    def stream(self, owner, identifier, text, retrieved_context=None):
+    def stream(self, owner, identifier, text, retrieved_context=None, presentation_preferences=None):
         with self._access(owner, identifier) as entry:
             if getattr(entry.provider, "supports_streaming", False) is not True:
                 raise ChatUnavailable("The selected provider does not support response streaming")
             with self.agent_request(entry.coordinator.id):
-                for event in self._chat.send_stream(identifier, text, retrieved_context):
+                for event in self._chat.send_stream(identifier, text, retrieved_context, presentation_preferences):
                     if event["type"] == "complete":
                         yield {
                             **event,
@@ -206,7 +209,7 @@ class OwnedChatService:
                     else:
                         yield event
 
-    def _send(self, entry, identifier, text, retrieved_context=None):
+    def _send(self, entry, identifier, text, retrieved_context=None, presentation_preferences=None):
         current, provider = self._coordinator(entry.coordinator.id)
         if (current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model):
             raise ChatConflict("Coordinator assignment changed; start a new conversation")
@@ -214,7 +217,7 @@ class OwnedChatService:
             raise ChatConflict("Coordinator connection changed; start a new conversation")
         if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
             raise ChatLimit("Conversation message limit reached; start a new conversation")
-        record = self._chat.send(identifier, text, retrieved_context)
+        record = self._chat.send(identifier, text, retrieved_context, presentation_preferences)
         return {"conversation": record, "coordinator": entry.coordinator}
 
     def close(self, owner, identifier):

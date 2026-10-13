@@ -1047,6 +1047,7 @@ textarea::placeholder { color: #718196; }
 .chat-message { border-color: var(--ui-line); background: rgba(15, 25, 37, 0.88); }
 .chat-message strong { color: var(--ui-cyan); font-size: 0.82rem; }
 .chat-message p { color: #e0e9f2; line-height: 1.65; }
+.chat-message p.response-detail-brief { max-height: 12rem; overflow: auto; font-size: 0.94rem; }
 .chat-content textarea { min-height: 7rem; resize: vertical; }
 .chat-advanced { margin-top: 0.85rem; border: 1px solid var(--ui-line); border-radius: 0.6rem; background: rgba(13, 21, 31, 0.72); }
 .chat-advanced > summary { padding: 0.85rem 1rem; color: var(--ui-cyan); cursor: pointer; font-weight: 650; }

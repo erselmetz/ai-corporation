@@ -52,6 +52,10 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
         from app.application.services.emergency_stop import EmergencyStopService
         emergency_stop_service = EmergencyStopService()
     application.state.emergency_stop_service = emergency_stop_service
+    from app.application.services.owner_preferences import OwnerPreferencesService
+    application.state.owner_preferences_service = OwnerPreferencesService()
+    from app.api.local_preferences import router as local_preferences_router
+    application.include_router(local_preferences_router)
     from app.api.emergency_stop import create_emergency_stop_router
     application.include_router(create_emergency_stop_router())
     from app.api.local_models import router as local_models_router

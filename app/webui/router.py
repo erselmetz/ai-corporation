@@ -14,7 +14,7 @@ def _navigation(active_path: str) -> str:
         ("OPERATIONS", (("Tasks", "/ui/tasks"), ("Workflows", "/ui/workflows"),
                         ("Workflow map", "/ui/workflow-map"), ("Activity", "/ui/activity"))),
         ("SYSTEM", (("Software inventory", "/ui/inventory"), ("Documentation", "/ui/documentation"),
-                    ("Updates", "/ui/updates"), ("Owner sign-in", "/ui/login"))),
+                    ("Updates", "/ui/updates"), ("Preferences", "/ui/preferences"), ("Owner sign-in", "/ui/login"))),
     )
     parts = ['<nav class="navigation" aria-label="Main navigation"><h2>Navigate</h2><ul>']
     for label, links in groups:
@@ -749,10 +749,11 @@ def coordinator_chat_page():
     <title>Chat - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
     <script type="module" src="/ui/static/chat.mjs"></script></head><body>
     <main class="content chat-content"><nav aria-label="Chat navigation">
-    <a href="/ui">Home</a> | <a href="/ui/login">Owner sign-in</a> | <a href="/ui/employee-chat">Employee chat</a> | <a href="/ui/providers">Providers &amp; models</a></nav>
+    <a href="/ui">Home</a> | <a href="/ui/login">Owner sign-in</a> | <a href="/ui/preferences">Response preferences</a> | <a href="/ui/employee-chat">Employee chat</a> | <a href="/ui/providers">Providers &amp; models</a></nav>
     {safety_controls}
     <p class="eyebrow">YOUR AI WORKSPACE</p><h1>Chat with your AI team</h1>
     <p>Choose a registered AI team member, start a conversation, and send a message. The first reply checks whether its configured service can respond. Chat does not run generated instructions.</p>
+    <section class="panel" id="response-preferences-summary" aria-label="Current response preferences"><p id="response-preferences-label">Loading owner response preferences...</p><a href="/ui/preferences">Change preferences</a></section>
     <label for="chat-agent">AI team member and assigned model</label><select id="chat-agent"></select>
     <button id="chat-start" type="button">New conversation</button>
     <label for="chat-conversation">Your conversations for this app run</label><select id="chat-conversation"></select>
@@ -898,6 +899,28 @@ def inventory_page():
       <ul id="software-manager-limitations"></ul>
     </section>
     <section class="management-card"><h2>Inspection limits</h2><ul id="inventory-limitations"></ul></section>
+    </main></body></html>""")
+
+
+@router.get("/ui/preferences", response_class=HTMLResponse)
+def owner_preferences_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Response preferences - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/preferences.mjs"></script></head><body>
+    <main class="content"><nav aria-label="Preferences navigation"><a href="/ui">Home</a> | <a href="/ui/chat">Chat</a> | <a href="/ui/login">Owner sign-in</a></nav>
+    <p class="eyebrow">OWNER SETTINGS</p><h1>Response preferences</h1>
+    <p>These choices guide presentation only. They do not change provider or model assignments, routing, approval, permissions, execution, microphone access, or cloud consent.</p>
+    <form id="preferences-form">
+      <label for="preference-mode">Response style</label><select id="preference-mode"><option value="balanced">Balanced</option><option value="concise">Concise</option><option value="friendly">Friendly</option><option value="formal">Formal</option><option value="technical">Technical</option></select>
+      <label for="preference-locale">Response locale</label><select id="preference-locale"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="fil-PH">Filipino</option></select>
+      <label for="preference-detail">Response detail</label><select id="preference-detail"><option value="brief">Brief</option><option value="standard">Standard</option><option value="detailed">Detailed</option></select>
+      <label for="preference-voice-mode">Optional reply speech preference</label><select id="preference-voice-mode"><option value="off">Off</option><option value="local">Local device voice when manually requested</option></select>
+      <label for="preference-voice-language">Local voice language</label><select id="preference-voice-language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="fil-PH">Filipino</option></select>
+      <label for="preference-voice-id">Local voice identifier (optional)</label><input id="preference-voice-id" maxlength="160" autocomplete="off">
+      <button type="submit">Save preferences</button><button id="preferences-reset" type="button">Reset to defaults</button><a id="preferences-export" href="/api/local/preferences/export">Export preferences JSON</a>
+    </form><p id="preferences-state" role="status" aria-live="polite"></p>
+    <p id="preferences-retention">Preferences are stored locally in the application database until reset or that database is removed. They contain presentation choices only; chat content and credentials are not stored.</p>
     </main></body></html>""")
 
 

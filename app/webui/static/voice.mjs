@@ -82,6 +82,7 @@ export function mountVoiceControls({
   let remoteOutcomeUnknown = false;
   let localCaptureTimer = null;
   let captureStartup = 0;
+  let savedVoicePreference = null;
 
   function reportActivity() {
     const EventType = windowRef?.CustomEvent || globalThis.CustomEvent;
@@ -102,6 +103,15 @@ export function mountVoiceControls({
   }
 
   async function loadBudget() {
+    try {
+      const preferencesResponse = await fetchImpl("/api/local/preferences", { credentials: "same-origin", cache: "no-store" });
+      if (preferencesResponse.ok) {
+        const preferences = (await preferencesResponse.json()).preferences;
+        savedVoicePreference = preferences;
+        if (language && preferences.locale) language.value = preferences.locale;
+        if (outputLanguage && preferences.voice_language) outputLanguage.value = preferences.voice_language;
+      }
+    } catch { /* Preferences never gate voice safety or typed chat. */ }
     try {
       const response = await fetchImpl("/api/local/voice", { credentials: "same-origin", cache: "no-store" });
       if (!response.ok) throw new Error("Sign in to inspect cloud voice settings.");
@@ -176,6 +186,10 @@ export function mountVoiceControls({
         outputVoice.append(option);
       }
       outputVoice.value = snapshot.selected_voice || "";
+      if (savedVoicePreference?.voice_mode === "local" && savedVoicePreference.voice_id) {
+        const preferred = snapshot.voices.find(voice => voice.voice_uri === savedVoicePreference.voice_id);
+        if (preferred) outputVoice.value = preferred.voice_uri;
+      }
       outputVoice.disabled = snapshot.voices.length === 0;
     }
     if (outputState) {
@@ -199,10 +213,19 @@ export function mountVoiceControls({
     if (!outputVoice?.value || !outputLanguage) { updateOutputStatus(); return; }
     try {
       updateOutputStatus(speechOutput.configure({ voiceURI: outputVoice.value, language: outputLanguage.value.trim() }));
+      void saveVoicePreference({ voice_mode: "local", voice_language: outputLanguage.value.trim(), voice_id: outputVoice.value });
     } catch (error) {
       updateOutputStatus();
       if (outputState) outputState.textContent = error.message;
     }
+  }
+
+  async function saveVoicePreference(changes) {
+    try {
+      const csrf = (await session()).csrf;
+      await fetchImpl("/api/local/preferences", { method: "PUT", credentials: "same-origin", cache: "no-store",
+        headers: { "Content-Type": "application/json", "X-Local-CSRF": csrf }, body: JSON.stringify(changes) });
+    } catch { /* Voice remains an explicit per-use action. */ }
   }
 
   speechOutput.setStatusListener(updateOutputStatus);

@@ -58,6 +58,11 @@ def contains_gemini_key(text: str) -> bool:
     )
 
 
+def _presentation_preferences(request: Request, owner_id: str):
+    store = getattr(request.app.state, "owner_preferences_service", None)
+    return store.response_contract(owner_id) if store is not None else None
+
+
 def get_application_service(request: Request):
     return request.app.state.application_service
 
@@ -327,13 +332,14 @@ def remove_image(identifier: str, image_id: str,
 
 
 @router.post("/{identifier}/messages")
-def send_message(identifier: str, payload=Depends(bounded_body),
+def send_message(identifier: str, request: Request, payload=Depends(bounded_body),
                  principal=Depends(require_permission("chat:send")),
                  service=Depends(get_application_service), now=Depends(get_chat_now)):
     body = parse(SendRequest, payload)
     if contains_gemini_key(body.text) or (body.context and contains_gemini_key(body.context.query)):
         raise HTTPException(422, SECRET_PASTE_GUIDANCE)
     with chat_errors():
+        presentation = _presentation_preferences(request, principal.identity)
         current = service.owned_chat().get(principal.identity, identifier)
         if (
             service.provider_requires_explicit_cloud_consent(
@@ -361,13 +367,15 @@ def send_message(identifier: str, payload=Depends(bounded_body),
             if body.include_local_ocr:
                 ocr = service.ocr()
                 ocr_evidence = tuple(ocr.recognize(image, language="eng") for image in images)
-            result = owned.send(principal.identity, identifier, body.text, image_ids=tuple(body.image_ids),
+            result = owned.send(principal.identity, identifier, body.text, presentation_preferences=presentation,
+                                image_ids=tuple(body.image_ids),
                                 image_consent=True, ocr_evidence=ocr_evidence)
         else:
             if body.image_consent or body.include_local_ocr:
                 raise HTTPException(422, "Image consent and OCR require selected images.")
             result = service.owned_chat().send(principal.identity, identifier, body.text,
-                                               knowledge.prompt_context(retrieved) if retrieved else None)
+                                               knowledge.prompt_context(retrieved) if retrieved else None,
+                                               presentation_preferences=presentation)
         if retrieved is not None:
             reply = result["conversation"].messages[-1]
             result = {**result, "context_trace": knowledge.record_trace(
@@ -376,7 +384,7 @@ def send_message(identifier: str, payload=Depends(bounded_body),
 
 
 @router.post("/{identifier}/messages/stream")
-def stream_message(identifier: str, payload=Depends(bounded_body),
+def stream_message(identifier: str, request: Request, payload=Depends(bounded_body),
                    principal=Depends(require_permission("chat:send")),
                    service=Depends(get_application_service), now=Depends(get_chat_now)):
     body = parse(SendRequest, payload)
@@ -385,6 +393,7 @@ def stream_message(identifier: str, payload=Depends(bounded_body),
     if contains_gemini_key(body.text) or (body.context and contains_gemini_key(body.context.query)):
         raise HTTPException(422, SECRET_PASTE_GUIDANCE)
     with chat_errors():
+        presentation = _presentation_preferences(request, principal.identity)
         owned = service.owned_chat()
         current = owned.get(principal.identity, identifier)
         if not current.get("streaming_supported"):
@@ -421,6 +430,7 @@ def stream_message(identifier: str, payload=Depends(bounded_body),
                 identifier,
                 body.text,
                 knowledge.prompt_context(retrieved) if retrieved else None,
+                presentation,
             ):
                 if event["type"] == "complete" and retrieved is not None:
                     completed = event["conversation"]

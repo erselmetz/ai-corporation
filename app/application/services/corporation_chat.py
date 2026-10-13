@@ -147,7 +147,7 @@ class CorporationChatService:
         return ChatTaskCreation(task.id, task.status, review.project_id,
                                 review.agent_id, review.id)
 
-    def send(self, conversation_id: str, text: str, retrieved_context=None):
+    def send(self, conversation_id: str, text: str, retrieved_context=None, presentation_preferences=None):
         record = self.get(conversation_id)
         if record.status is not ConversationStatus.OPEN:
             raise ValueError("Cannot send to a closed conversation")
@@ -162,6 +162,8 @@ class CorporationChatService:
                    "history": history, "request": text}
         if retrieved_context is not None:
             payload["retrieved_context"] = retrieved_context
+        if presentation_preferences is not None:
+            payload["presentation_preferences"] = presentation_preferences
         prompt = json.dumps(payload, ensure_ascii=True)
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
             raise ValueError("Prompt exceeds byte limit")
@@ -193,7 +195,7 @@ class CorporationChatService:
         self._remember_status(conversation_id, user_id, MessageStatus.COMPLETED, strict=True)
         return self.get(conversation_id)
 
-    def send_with_images(self, conversation_id: str, text: str, images, *, ocr_evidence=()):
+    def send_with_images(self, conversation_id: str, text: str, images, *, ocr_evidence=(), presentation_preferences=None):
         """One explicitly consented multimodal turn; image bytes never enter history."""
         record = self.get(conversation_id)
         if record.status is not ConversationStatus.OPEN:
@@ -230,6 +232,8 @@ class CorporationChatService:
                 for result in safe_ocr if result.regions
             ],
         }
+        if presentation_preferences is not None:
+            payload["presentation_preferences"] = presentation_preferences
         prompt = json.dumps(payload, ensure_ascii=True)
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
             raise ValueError("Prompt exceeds byte limit")
@@ -263,7 +267,7 @@ class CorporationChatService:
         self._remember_status(conversation_id, user_id, MessageStatus.COMPLETED, strict=True)
         return self.get(conversation_id)
 
-    def send_stream(self, conversation_id: str, text: str, retrieved_context=None):
+    def send_stream(self, conversation_id: str, text: str, retrieved_context=None, presentation_preferences=None):
         record = self.get(conversation_id)
         if record.status is not ConversationStatus.OPEN:
             raise ValueError("Cannot send to a closed conversation")
@@ -284,6 +288,8 @@ class CorporationChatService:
         }
         if retrieved_context is not None:
             payload["retrieved_context"] = retrieved_context
+        if presentation_preferences is not None:
+            payload["presentation_preferences"] = presentation_preferences
         prompt = json.dumps(payload, ensure_ascii=True)
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
             raise ValueError("Prompt exceeds byte limit")

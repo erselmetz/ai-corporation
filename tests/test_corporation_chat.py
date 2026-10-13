@@ -35,6 +35,21 @@ def test_organization_identity_history_and_no_task_execution(setup):
     orchestrator.execute_task.assert_not_called()
 
 
+def test_owner_presentation_preferences_are_prompted_without_routing_or_authority_changes(setup):
+    import json
+    chat, orchestrator = setup
+    chat.start("one", "agent")
+    preferences = {"locale": "fil-PH", "style": "Use concise answers.",
+                   "detail": "Use a brief level of detail.",
+                   "boundary": "Presentation only; no authority changes."}
+    chat.send("one", "Kumusta?", presentation_preferences=preferences)
+    prompt = json.loads(orchestrator.run_agent.call_args.args[1])
+    assert prompt["presentation_preferences"] == preferences
+    assert prompt["request"] == "Kumusta?"
+    assert "provider" not in prompt["presentation_preferences"]
+    assert "permission" not in prompt["presentation_preferences"]
+
+
 @pytest.mark.parametrize("reply", [None, "", "x" * 8193])
 def test_invalid_provider_reply_records_failure_and_allows_closure(setup, reply):
     chat, orchestrator = setup

@@ -73,6 +73,7 @@ export function mountChat({
   const voiceSources = [];
   let emergencyStopped = false;
   let requestController = null;
+  let presentationPreferences = { response_mode: "balanced", locale: "en-US", detail_level: "standard" };
   const base = "/api/chat/conversations";
   const imageManager = mountChatImages({ documentRef, windowRef, fetchImpl, getConversation: () => selected });
   function clearVoiceProvenance() {
@@ -167,6 +168,8 @@ export function mountChat({
       const content = documentRef.createElement("p");
       content.textContent = message.content;
       item.append(label, content);
+      if (message.role === "assistant" && message.status === "completed"
+          && presentationPreferences.detail_level === "brief") content.classList.add("response-detail-brief");
       if (message.role === "assistant" && message.status === "completed" && voiceController) {
         const speak = documentRef.createElement("button");
         speak.type = "button";
@@ -216,6 +219,21 @@ export function mountChat({
     return action(async () => {
       clear();
       clearTaskProposal();
+      try {
+        const response = await fetchImpl("/api/local/preferences", { credentials: "same-origin", cache: "no-store" });
+        const payload = response.ok ? await response.json() : null;
+        const prefs = payload?.preferences;
+        if (prefs) presentationPreferences = prefs;
+        const preferenceLabel = element("response-preferences-label");
+        if (preferenceLabel) preferenceLabel.textContent = prefs
+          ? `Display preference: ${prefs.response_mode}; locale ${prefs.locale}; ${prefs.detail_level} detail. It does not alter provider prompts or assignments.`
+          : "Sign in to load your saved response preferences.";
+        document.documentElement.lang = prefs?.locale || "en-US";
+        history.dataset.responseMode = prefs?.response_mode || "balanced";
+        history.dataset.detailLevel = prefs?.detail_level || "standard";
+      } catch {
+        element("response-preferences-label").textContent = "Saved response preferences are unavailable.";
+      }
       agents.replaceChildren(); conversations.replaceChildren();
       state.textContent = "Loading authorized chat records…";
       try {

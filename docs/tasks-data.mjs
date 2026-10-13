@@ -2316,7 +2316,7 @@ export const post100Tasks = [
     "title": "Response modes and owner preferences",
     "description": "Allow owners to select bounded response styles, locale, and privacy-conscious preferences, including optional voice preferences, without changing capability permissions.",
     "category": "Phase H - ERSELMETZ AI Persona",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       103,
       118,
@@ -2324,19 +2324,26 @@ export const post100Tasks = [
       163
     ],
     "acceptance": [
-      "Define modes, locale, detail level, reset/export, and retention behavior.",
-      "Keep presentation separate from routing, approval, and execution authority."
+      "Persist allowlisted response mode, locale, detail level, and optional local voice preferences for the authenticated owner; provide reset and JSON export.",
+      "Apply a bounded presentation-preference object to local chat prompts without changing Provider/Agent selection, routing, approval, permissions, consent, or execution."
     ],
     "outOfScope": [
       "Do not grant access or consent from persona selection."
     ],
-    "decisions": [
-      "Choose preference storage and migration policy before persistence."
-    ],
+    "decisions": [],
     "area": "P24",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-164-owner-response-preferences",
+    "validation": [
+      "Focused owner preference, authentication, chat prompt, and compatibility regressions: 50 passed.",
+      "Chat browser module tests: 16 passed; focused owner, auth, chat, memory, and voice regressions: 71 passed; public docs tests: 13 passed. Full Python suite excluding the pre-existing syntax-invalid automation-trace file: 1,228 passed, 3 skipped, and 2 known unrelated baseline failures.",
+      "Python compilation, JavaScript syntax checks, and git diff --check passed."
+    ],
+    "limitations": [
+      "Preferences are stored unencrypted in the local SQLite database until reset or database removal; they contain presentation settings only, not chat content or credentials.",
+      "The exported file contains only the current version, local owner identity, selected settings, and retention notice; it is not an import/restore feature.",
+      "Optional voice preferences store a local voice identifier and language. They do not start microphone capture or speech playback, grant consent, enable cloud transcription, or guarantee the voice remains installed.",
+      "Presentation preferences are a bounded provider-prompt hint and may not be followed by a model. No response-quality guarantee is made."
+    ]
   },
   {
     "number": 165,
@@ -2670,7 +2677,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-163 are verified; Tasks 164-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-164 are verified; Tasks 165-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

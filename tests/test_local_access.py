@@ -122,6 +122,8 @@ def test_read_access_preserves_api_permissions_and_default_auth():
     with TestClient(create_app(application_service=service)) as default:
         assert default.get("/api/employees").status_code == 401
         assert default.get("/ui/login").status_code == 404
+        assert default.get("/api/local/preferences").status_code == 404
+        assert default.get("/api/local/preferences").status_code == 404
 
 
 def test_inventory_requires_local_owner_and_exposes_only_supported_records():

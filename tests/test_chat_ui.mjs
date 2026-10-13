@@ -55,6 +55,7 @@ function setup(handler = null, windowRef = globalThis.window) {
     "repository-study-owner", "repository-study-name", "repository-study-submit",
     "repository-study-state", "repository-study-result",
     "chat-stop-request", "voice-mode", "voice-language", "voice-start", "voice-stop",
+    "response-preferences-label",
     "voice-transcribe", "voice-install-local", "voice-cloud-consent", "voice-budget-form",
     "voice-budget-cents", "voice-budget-save", "voice-budget-state", "voice-state",
     "voice-stop-playback",
@@ -63,6 +64,7 @@ function setup(handler = null, windowRef = globalThis.window) {
     ["chat-agent", "chat-conversation", "chat-task-source", "chat-task-agent",
       "chat-task-context-scope"].includes(id) ? "select" : "",
   )]));
+  elements["chat-history"].dataset = {};
   const calls = [];
   elements["voice-mode"].value = "local";
   elements["voice-language"].value = "en-US";
@@ -76,6 +78,10 @@ function setup(handler = null, windowRef = globalThis.window) {
       csrf: "test-csrf",
       permissions: ["chat-task:create", "github:read"],
     });
+    if (path === "/api/local/preferences") return response({ preferences: {
+      response_mode: "balanced", locale: "en-US", detail_level: "standard",
+      voice_mode: "off", voice_language: "en-US", voice_id: "",
+    }, retention: "Local presentation choices only." });
     if (path === "/api/local/voice") return response({
       cloud_budget: { configured: false, ceiling_cents: null, reserved_cents: 0,
         remaining_cents: null, reservation_per_request_cents: 1, reset: "app_restart" },
@@ -84,7 +90,7 @@ function setup(handler = null, windowRef = globalThis.window) {
     if (path.endsWith("/close")) return response(snapshot([], "closed"));
     return response(snapshot());
   };
-  const documentRef = { getElementById: id => elements[id], createElement: tag => new Element(tag) };
+  const documentRef = { getElementById: id => elements[id], documentElement: {}, createElement: tag => new Element(tag) };
   const controller = mountChat({ documentRef, fetchImpl, confirmImpl: () => true, windowRef });
   return { controller, elements, calls };
 }
