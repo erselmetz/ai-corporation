@@ -44,6 +44,7 @@ MAINTENANCE_EXPERIMENT_PERMISSIONS = frozenset({
     "maintenance:experiment", "maintenance:approve", "maintenance:checkpoint",
     "maintenance:activate",
 })
+DOCUMENTATION_REVIEW_PERMISSIONS = frozenset({"documentation:review"})
 
 
 @dataclass(frozen=True)
@@ -83,6 +84,7 @@ class LocalOwnerAuthentication:
             | TASK_DISPATCH_PERMISSIONS | PROVIDER_CONNECTION_MANAGEMENT_PERMISSIONS
             | MODEL_RUNTIME_PERMISSIONS | WORKFLOW_PERMISSIONS
             | SOFTWARE_MANAGEMENT_PERMISSIONS
+            | DOCUMENTATION_REVIEW_PERMISSIONS
             | MAINTENANCE_EXPERIMENT_PERMISSIONS)
 
     def _hash(self, password: str) -> bytes:

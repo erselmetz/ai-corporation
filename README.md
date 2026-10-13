@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-138 are verified complete; Task 134 is deferred and incomplete; Tasks 139-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-139 are verified complete; Task 134 is deferred and incomplete; Tasks 140-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -966,3 +966,8 @@ The memory service exposes permission-gated, bounded synchronous rebuild, inspec
 ## Owner-reviewed AI knowledge proposals (Task 138)
 
 The local-owner API accepts one explicitly selected retained Conversation or Project memory source and an explicitly selected Agent only when it is assigned to the configured loopback Ollama provider. Generated summaries and claims are untrusted drafts; every claim must cite an exact source excerpt. The review response binds the source revision, expiry, destination scope, exact proposal and digest. Accept/reject/more-information are explicit owner decisions. Acceptance rechecks the source revision and creates one retained summary in the same private scope, with the source expiry; it does not share or publish the result. Proposals live only in bounded process memory for up to 15 minutes. No cloud provider, repository/file ingestion, transcript retention or portal write is added. Checkpoint: task-138-owner-reviewed-knowledge-proposals.
+
+
+## Versioned documentation review (Task 139)
+
+Owner-authorized drafts and append-only versions are stored in a dedicated local SQLite workflow, separate from published Markdown and the read-only Task 53 Documentation Portal. Edits use expected-version conflict checks; approval records the reviewer and time for the exact current version and SHA-256 digest. Diffs and provenance remain in version history, and recovery creates a new draft from an earlier version. History is bounded to 100 documents and 50 versions per document, with no automatic pruning. Approval does not publish; no AI direct writes or portal migration are enabled.

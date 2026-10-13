@@ -967,6 +967,7 @@ def create_app(
     maintenance_sandbox_image_policy: SandboxImagePolicy | None = None,
     maintenance_activation_root: Path | None = None,
     semantic_memory_service=None,
+    documentation_review_service=None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
@@ -983,6 +984,11 @@ def create_app(
         application.state.documentation_service = DocumentationApplicationService(
             source
         )
+        if documentation_review_service is None:
+            from app.application.services.documentation_review import DocumentationReviewService
+            application.state.documentation_review_service = DocumentationReviewService()
+        else:
+            application.state.documentation_review_service = documentation_review_service
         source_updates = updates_source
         if source_updates is None:
             source_updates = CuratedUpdatesManifest(
@@ -1046,6 +1052,8 @@ def create_app(
     application.include_router(corporation_router)
     from .memory import router as memory_router
     application.include_router(memory_router)
+    from .documentation_review import router as documentation_review_router
+    application.include_router(documentation_review_router)
     from .maintenance_approvals import router as maintenance_approvals_router
     application.include_router(maintenance_approvals_router)
     from .maintenance_checkpoints import router as maintenance_checkpoints_router

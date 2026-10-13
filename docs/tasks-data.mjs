@@ -1496,7 +1496,7 @@ export const post100Tasks = [
     "title": "Versioned documentation review workflow",
     "description": "Add draft, review, approval, version history, and recovery for proposed documentation while preserving the Task 53 portal boundary until migration is approved.",
     "category": "Phase B - Knowledge and RAG",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       53,
       130,
@@ -1510,12 +1510,22 @@ export const post100Tasks = [
       "Do not give AI direct write access to published Markdown or auto-publish."
     ],
     "decisions": [
-      "Resolve storage, conflict, retention, and portal migration design before enabling writes."
+      "Drafts and append-only version history are stored in dedicated tables in the local SQLite database, separate from published Markdown and the Task 53 portal.",
+      "Optimistic expected-version checks prevent stale edits; every edit/recovery creates an unapproved version, and approval binds the current version and SHA-256 digest.",
+      "History is retained without automatic pruning, bounded to 100 draft documents and 50 versions per document; reaching a limit fails closed. Recovery copies an earlier version into a new version.",
+      "Portal migration remains unapproved. No publication endpoint, AI direct write, filesystem path selection, or automatic publishing is provided."
     ],
     "area": "P18",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-139-versioned-documentation-review",
+    "validation": [
+      "Documentation review and existing read-only documentation API tests: 15 passed, 2 skipped.",
+      "Draft ownership, exact-version approval, digest mismatch, stale edit conflict, reviewer/time provenance, diffs, append-only recovery, separate permission, and published-route read-only behavior were verified.",
+      "Full Python suite: 1123 passed, 6 skipped, and the same two pre-existing unrelated model-assignment failures: tests/test_command_interface.py::test_model_set_command and tests/test_provider_model_api.py::test_model_replacement_uses_existing_assignment_service. Public docs tests: 15 passed; update-manifest tests: 6 passed; Python compilation and diff checks passed."
+    ],
+    "limitations": [
+      "Review approval records owner approval only; it does not publish or change files in corporation_docs or the public docs site. Portal migration requires a later explicit design and task.",
+      "The local SQLite history has no automatic retention cleanup and is bounded by fixed document/version counts; no secure-erasure guarantee is made. Multi-process write contention relies on SQLite transactions and expected-version checks."
+    ]
   },
   {
     "number": 140,
@@ -2504,7 +2514,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-138 are verified; Tasks 139-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-139 are verified; Tasks 140-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
