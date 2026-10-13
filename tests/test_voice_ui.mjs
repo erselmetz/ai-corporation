@@ -387,8 +387,11 @@ test("reply audio uses an installed local voice and can be stopped", async () =>
   assert.equal(spoken.text, "A local answer");
   assert.equal(spoken.voice.voiceURI, "local-voice");
   assert.equal(spoken.lang, "en-US");
+  assert.equal(ui.controller.speak("A second reviewed reply"), true);
+  assert.match(ui.elements["voice-output-state"].textContent, /1 more replies queued/);
   ui.elements["voice-stop-playback"].listeners.click();
-  assert.equal(cancelled, 2);
+  assert.equal(cancelled, 1);
+  assert.match(ui.elements["voice-output-state"].textContent, /stopped.*queued reply text was cleared/i);
   assert.match(ui.elements["voice-state"].textContent, /playback stopped/);
 });
 

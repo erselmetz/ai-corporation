@@ -186,8 +186,9 @@ export function mountVoiceControls({
         "voice-not-selected": "Choose an installed local voice and output language before speaking a reply.",
         "selected-voice-unavailable": "The selected local voice is no longer available. Choose another voice.",
         ready: `Offline device speech is ready: ${selected?.name || "local voice"} (${languageCode}).`,
-        speaking: `Speaking locally with ${selected?.name || "the selected voice"} (${languageCode}).`,
+        speaking: `Speaking locally with ${selected?.name || "the selected voice"} (${languageCode})${snapshot.queued_items ? `; ${snapshot.queued_items} more replies queued` : ""}.`,
         failed: "Local speech output failed. No online fallback was used.",
+        stopped: "Local speech stopped and queued reply text was cleared.",
       };
       outputState.textContent = labels[snapshot.state] || "Offline speech output status is unknown.";
     }
@@ -526,8 +527,11 @@ export function mountVoiceControls({
 
   function speak(text) {
     try {
-      updateOutputStatus(speechOutput.speak(text));
-      setState("Speaking the reply with the selected offline device voice. No audio was sent.");
+      const snapshot = speechOutput.speak(text);
+      updateOutputStatus(snapshot);
+      setState(snapshot.queued_items
+        ? `Reply added to the bounded local speech queue (${snapshot.queued_items} waiting). No text was sent online.`
+        : "Speaking the reply with the selected offline device voice. No text was sent online.");
       return true;
     } catch (error) {
       updateOutputStatus();
@@ -539,7 +543,7 @@ export function mountVoiceControls({
   function clear() {
     if (stage === "local-capture" || stage === "audio-capture" || stage === "audio-stopping" || stage === "audio-ready") void stop();
     else if (stage === "cloud-request") requestController?.abort();
-    speechOutput.stop();
+    updateOutputStatus(speechOutput.stop());
     stage = "idle"; audioBlob = null; updateControls();
   }
 

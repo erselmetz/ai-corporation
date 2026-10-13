@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-148 are verified complete; Task 134 is deferred and incomplete; Tasks 149-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-149 are verified complete; Task 134 is deferred and incomplete; Tasks 150-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -1008,3 +1008,7 @@ The chat draft reports whether inserted speech came from browser on-device recog
 ## Offline text-to-speech provider foundation (Task 148)
 
 Reply playback uses an explicit local-only adapter over the browser/device Web Speech synthesis API. The voice selector lists only voices reported as local by the platform; the operator separately selects a speech output language. Availability, voice inventory, and language support depend on the operating system/browser, and the selected settings last only for the page session. Speaking remains an explicit presentation action on a reply, with a local playback status and stop control. It grants no action permission and never sends text to an online service or silently falls back to one. Checkpoint: task-148-offline-text-to-speech-provider.
+
+## Bounded local voice queue and playback control (Task 149)
+
+Clicking Speak on replies during playback adds them to a sequential, page-memory queue capped at three pending replies and 16 KiB of queued UTF-8 text; each spoken reply is capped at 8 KiB. Stop interrupts local playback and clears queued text. The UI identifies output as local. Remote voices are excluded, so chat text is not sent online and no remote cancellation or retry is claimed. No online adapter or external speech runtime was selected because this task has no verified provider/model license, privacy, retention, and quality evidence. Task 134 remains deferred; this feature uses only device-provided voices and does not activate capability packs. Device voices and packaged availability remain platform-dependent. Checkpoint: task-149-bounded-local-voice-queue-controls.

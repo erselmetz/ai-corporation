@@ -1831,7 +1831,7 @@ export const post100Tasks = [
     "title": "Optional natural voices and playback control",
     "description": "Add explicitly selected optional local or online natural-voice adapters with bounded queue, playback, interruption, and stop controls.",
     "category": "Phase D - Voice and Speech",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       134,
       142,
@@ -1848,12 +1848,17 @@ export const post100Tasks = [
       "Speech output grants no action authority."
     ],
     "decisions": [
-      "Evaluate license, model size, privacy, quality, and retention before adapter selection."
+      "Use the existing browser/device Web Speech synthesis adapter and allow only explicitly selected voices reported as local. Do not package or install a model/runtime or add an online provider in this task: no provider/model has verified license, privacy, retention, and quality evidence. Remote voices remain unavailable; therefore this implementation sends no chat text online and has no remote cancellation/retry behavior. The platform's voice quality and terms are not certified by this app."
     ],
     "area": "P20",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-149-bounded-local-voice-queue-controls",
+    "validation": [
+      "Focused local TTS queue/provider and voice UI tests: 19 passed, covering explicit local selection, local-only voice filtering, bounded sequential queue, queue overflow, interruption/clear, unavailable voices, and no online fallback.",
+      "Full browser-module suite: 175 passed. Directly affected WebUI route and update-manifest tests: 18 passed. Public documentation site tests: 15 passed. Python compilation and git diff --check passed."
+    ],
+    "limitations": [
+      "This checkpoint implements only the local adapter. It uses device-provided voices and does not depend on or activate Task 134 capability packs; Task 134 remains deferred and incomplete. No cloud speech provider, cloud-consent flow, or remote cancellation outcome exists; a future online adapter needs a separately reviewed provider, retention, privacy, and consent contract. Voice quality, language inventory, legal terms, and packaged availability depend on the device/browser and are not certified. Queueing is page-memory only, limited to three pending replies and 16 KiB total queued UTF-8 text, and Stop discards the queue."
+    ]
   },
   {
     "number": 150,
@@ -2578,7 +2583,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-148 are verified; Tasks 149-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-149 are verified; Tasks 150-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

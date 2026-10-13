@@ -19,6 +19,7 @@ function harness(voices = []) {
   return {
     provider: createOfflineTextToSpeechProvider({ speechSynthesis: synthesis, SpeechSynthesisUtterance: Utterance }),
     spoken,
+    synthesis,
     cancelled: () => cancelled,
   };
 }
@@ -26,7 +27,8 @@ function harness(voices = []) {
 test("provider reports unavailable when device-local speech is absent", () => {
   const provider = createOfflineTextToSpeechProvider({});
   assert.deepEqual(provider.status(), {
-    backend: "local", state: "unavailable", selected_voice: null, language: null, voices: [],
+    backend: "local", state: "unavailable", selected_voice: null, language: null,
+    queued_items: 0, queued_bytes: 0, current_bytes: 0, voices: [],
   });
   assert.throws(() => provider.speak("hello"), /unavailable/);
 });
@@ -58,15 +60,46 @@ test("output validates language and bounded text rather than truncating the repl
   assert.throws(() => provider.speak("  "), /8192 UTF-8 bytes/);
 });
 
-test("voice disappearing is reported and stop cancels only local playback", () => {
+test("voice disappearing is reported and stop cancels local playback and queued text", () => {
   const localVoice = { localService: true, voiceURI: "device-en", name: "Device English", lang: "en-US" };
-  const { provider, cancelled } = harness([localVoice]);
+  const { provider, cancelled, spoken } = harness([localVoice]);
   provider.configure({ voiceURI: "device-en", language: "en-US" });
   provider.speak("hello");
-  assert.equal(provider.stop().state, "ready");
-  assert.equal(cancelled(), 2);
+  provider.speak("queued reply");
+  const stopped = provider.stop();
+  assert.equal(stopped.state, "stopped");
+  assert.equal(stopped.queued_items, 0);
+  assert.equal(stopped.queued_bytes, 0);
+  assert.equal(cancelled(), 1);
+  spoken[0].onerror();
+  assert.equal(provider.status().state, "stopped");
   localVoice.localService = false;
   const status = provider.status();
   assert.equal(status.state, "unavailable");
   assert.equal(status.selected_voice, "device-en");
+});
+
+test("reply queue is sequential and bounded by item count and UTF-8 bytes", () => {
+  const { provider, spoken, synthesis } = harness([{ localService: true, voiceURI: "device-en", name: "Device English", lang: "en-US" }]);
+  provider.configure({ voiceURI: "device-en", language: "en-US" });
+  provider.speak("first");
+  provider.speak("second");
+  provider.speak("third");
+  provider.speak("fourth");
+  assert.equal(spoken.length, 1);
+  assert.equal(provider.status().queued_items, 3);
+  assert.equal(provider.status().queued_bytes, "secondthirdfourth".length);
+  assert.throws(() => provider.speak("fifth"), /queue is full/);
+  synthesis.speaking = false;
+  spoken[0].onend();
+  assert.equal(spoken.length, 2);
+  assert.equal(spoken[1].text, "second");
+  assert.equal(provider.status().queued_items, 2);
+  provider.stop();
+
+  const oversizedQueue = "x".repeat(8192);
+  provider.speak("first");
+  provider.speak(oversizedQueue);
+  provider.speak(oversizedQueue);
+  assert.throws(() => provider.speak("x"), /queue is full/);
 });
