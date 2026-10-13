@@ -88,15 +88,15 @@ describe("documentation site", () => {
   });
 
   it("records verified, deferred, and planned work without treating deferral as completion", () => {
-    assert.equal(tasks.filter(task => task.status === "completed").length, 140);
+    assert.equal(tasks.filter(task => task.status === "completed").length, 141);
     assert.equal(tasks.filter(task => task.status === "deferred").length, 1);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 34);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 33);
     assert.equal(tasks.find(task => task.number === 134).status, "deferred");
     assert.equal(tasks.find(task => task.number === 135).status, "completed");
     assert.equal(tasks.find(task => task.number === 136).status, "completed");
     assert.equal(tasks.find(task => task.number === 138).status, "completed");
     assert.equal(tasks.find(task => task.number === 139).status, "completed");
-    assert.equal(nextTask.number, 142);
+    assert.equal(nextTask.number, 143);
     assert.ok(tasks.slice(0, 133).every(task => task.status === "completed"));
     assert.ok(tasks.slice(133).some(task => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
@@ -177,7 +177,7 @@ describe("documentation site", () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
     assert.match(html, /Milestones 1–100 are completed foundations/);
-    assert.match(html, /Tasks 101-133 and Tasks 135-141 are verified post-100 checkpoints; Task 134 is deferred and incomplete; Tasks 142-175 are planned/);
+    assert.match(html, /Tasks 101-133 and Tasks 135-142 are verified post-100 checkpoints; Task 134 is deferred and incomplete; Tasks 143-175 are planned/);
     assert.match(html, /Task 134 is deferred and incomplete/);
     assert.match(html, /interactive maps, multimodal controls/);
     assert.match(html, /id="next-task"/);
@@ -190,7 +190,7 @@ describe("documentation site", () => {
         (await fetch(`${baseUrl}/${page}`)).text()));
     assert.match(home, /Verified Tasks 101-133 cover/);
     assert.match(home, /Task 131 documents the current packaging and distribution boundary/);
-    assert.match(documentation, /Tasks 101-133 and Tasks 135-141 are verified post-100 checkpoints; Task 134 is deferred and incomplete; Tasks 142-175 remain planned/);
+    assert.match(documentation, /Tasks 101-133 and Tasks 135-142 are verified post-100 checkpoints; Task 134 is deferred and incomplete; Tasks 143-175 remain planned/);
     assert.match(architecture, /Task 105 adds explicitly consented Gemini coordinator chat/);
     assert.match(architecture, /Supported packaging and distribution boundary — Task 131/);
     assert.match(architecture, /Windows 11 x64.*not claimed as supported/);
@@ -199,16 +199,16 @@ describe("documentation site", () => {
     assert.match(architecture, /Chat-driven GitHub study and research — Task 121/);
     assert.match(roadmap, /href="tasks.html#task-130">Task 130.*memory/i);
     assert.match(roadmap, /Task 134 is deferred and incomplete/);
-    assert.match(roadmap, /34 planned tasks/);
+    assert.match(roadmap, /33 planned tasks/);
     assert.match(roadmap, /tasks.html#tasks-131-134/);
     assert.match(roadmap, /all 175 tasks/);
     assert.match(architecture, /Task 130.*semantic/i);
-    assert.match(architecture, /Tasks 101-133 and Tasks 135-141 are verified checkpoints; Task 134 is deferred and incomplete; Tasks 142-175 remain planned/);
+    assert.match(architecture, /Tasks 101-133 and Tasks 135-142 are verified checkpoints; Task 134 is deferred and incomplete; Tasks 143-175 remain planned/);
     for (const page of [home, documentation]) assert.match(page, /Task 130/);
   });
 
   it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {
-    assert.equal(nextTask.number, 142);
+    assert.equal(nextTask.number, 143);
     const task122 = post100Tasks.find(task => task.number === 122);
     assert.equal(task122.status, "completed");
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");
@@ -222,7 +222,7 @@ describe("documentation site", () => {
       "task-125-managed-vscode-user-lifecycle", "task-126-local-application-lifecycle",
       "task-127-windows-electron-installer", "task-128-optional-voice-interaction",
       "task-129-command-center-release-acceptance", "task-130-semantic-memory-rag-foundation",
-      "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance", "task-135-semantic-retrieval-evaluation", "task-136-hybrid-lexical-semantic-retrieval", "task-137-semantic-index-lifecycle-observability", "task-138-owner-reviewed-knowledge-proposals", "task-139-versioned-documentation-review", "task-140-central-capability-permissions", "task-141-capability-grants-session-policy"]);
+      "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance", "task-135-semantic-retrieval-evaluation", "task-136-hybrid-lexical-semantic-retrieval", "task-137-semantic-index-lifecycle-observability", "task-138-owner-reviewed-knowledge-proposals", "task-139-versioned-documentation-review", "task-140-central-capability-permissions", "task-141-capability-grants-session-policy", "task-142-action-risk-approval-policy"]);
     const task127 = post100Tasks.find(task => task.number === 127);
     assert.equal(task127.status, "completed");
     assert.equal(task127.checkpoint, "task-127-windows-electron-installer");

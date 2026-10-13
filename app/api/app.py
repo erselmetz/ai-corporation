@@ -1051,6 +1051,9 @@ def create_app(
             application.state.capability_authorization_service)
     else:
         application.state.capability_grant_service = capability_grant_service
+    approval_factory = getattr(application_service, "capability_approvals", None)
+    application.state.capability_approval_service = (
+        approval_factory() if callable(approval_factory) else None)
     application.state.semantic_memory_service = semantic_memory_service
     if semantic_memory_service is not None and hasattr(application_service, "configure_semantic_memory"):
         application_service.configure_semantic_memory(semantic_memory_service)
@@ -1067,6 +1070,8 @@ def create_app(
     application.include_router(memory_router)
     from .capability_grants import router as capability_grants_router
     application.include_router(capability_grants_router)
+    from .capability_approvals import router as capability_approvals_router
+    application.include_router(capability_approvals_router)
     from .documentation_review import router as documentation_review_router
     application.include_router(documentation_review_router)
     from .maintenance_approvals import router as maintenance_approvals_router

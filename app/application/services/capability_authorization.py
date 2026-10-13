@@ -37,7 +37,7 @@ class CapabilityAuthorizationDenied(PermissionError):
 _LEGACY_PERMISSION_NAMES = (
     "activity:read", "agent:read", "assignment-policy:manage", "assignment-policy:read",
     "chat-history:manage", "chat-knowledge:retain", "chat-knowledge:withdraw",
-    "capability-grant:manage", "chat-task:create", "chat:close", "chat:read", "chat:send", "chat:start",
+    "capability-approval:manage", "capability-grant:manage", "chat-task:create", "chat:close", "chat:read", "chat:send", "chat:start",
     "corporation:read", "documentation:read", "documentation:review",
     "employee-chat:close", "employee-chat:read", "employee-chat:send", "employee-chat:start",
     "employee:manage", "employee:read", "github:read", "inventory:read",
@@ -55,6 +55,7 @@ _HIGH_RISK = frozenset({
     "maintenance:experiment", "task:dispatch", "software:manage", "provider-connection:manage",
     "online-provider:connect", "online-provider:disconnect", "chat-history:manage",
     "memory:manage", "memory:index", "documentation:review", "task:create", "capability-grant:manage",
+    "capability-approval:manage",
 })
 _MODERATE_RISK = frozenset({
     "assignment-policy:manage", "chat:send", "chat:start", "chat:close",

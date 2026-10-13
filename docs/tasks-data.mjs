@@ -1598,7 +1598,7 @@ export const post100Tasks = [
     "title": "Action risk levels and approval policy",
     "description": "Classify capability actions by impact and require matching owner confirmation for protected or high-impact work.",
     "category": "Phase C - Capability Governance",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       83,
       140,
@@ -1613,12 +1613,20 @@ export const post100Tasks = [
       "Never auto-approve irreversible actions."
     ],
     "decisions": [
-      "Define risk categories and expiry through threat-model review."
+      "Use the Task 140 low/moderate/high catalog. Low-risk actions do not create approval records; moderate and high-risk actions require a separate explicit owner confirmation. Irreversible operations are elevated to high risk.",
+      "Bind a process-local, single-use approval to the exact action ID and human-readable summary, target reference and current-state digest, scope, payload digest, policy version, owner identity, and a maximum five-minute expiry. Recheck current capability authorization and target digest immediately before a one-time trusted application callback. Do not create approvals implicitly from chat/model output and do not automatically retry an action callback after a failure."
     ],
     "area": "P19",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-142-action-risk-approval-policy",
+    "validation": [
+      "Focused Task 142 approval, Task 141 grants, central authorization, local access, maintenance approval, and coordinator proposal regressions: 32 passed.",
+      "Verified low-risk bypass, moderate/high review, irreversible elevation, exact action/target/scope/payload/policy digest binding, explicit CSRF-protected local owner confirmation, five-minute expiry, fresh authorization and target-state checks, stale-target rejection, and single-use consumption without replay.",
+      "Full Python suite: 1133 passed, 6 skipped, with the same two pre-existing unrelated failures in tests/test_command_interface.py::test_model_set_command and tests/test_provider_model_api.py::test_model_replacement_uses_existing_assignment_service. Public docs tests: 15 passed; update-manifest tests: 6 passed; Python compilation and git diff checks passed."
+    ],
+    "limitations": [
+      "The approval service is process-local and only protects trusted application callers that route an operation through its guarded callback. Existing action-specific approval flows are unchanged; this checkpoint does not claim every application action is automatically governed.",
+      "No action-creation API, generic executor, UI screen, persistence, audit history, distributed lock, or durable recovery is added. A failed operation callback consumes its approval and requires a new owner-reviewed request."
+    ]
   },
   {
     "number": 143,
@@ -2532,7 +2540,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-141 are verified; Tasks 142-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-142 are verified; Tasks 143-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

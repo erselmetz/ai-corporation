@@ -182,6 +182,9 @@ class CorporationApplicationService:
             from .capability_authorization import DEFAULT_CAPABILITY_AUTHORIZATION
             capability_authorization_service = DEFAULT_CAPABILITY_AUTHORIZATION
         self._capability_authorization_service = capability_authorization_service
+        from .capability_approvals import CapabilityApprovalService
+        self._capability_approval_service = CapabilityApprovalService(
+            self._capability_authorization_service)
         self._corporation_chat = None
         self._owned_chat = None
         self._owned_employee_chat = None
@@ -223,6 +226,10 @@ class CorporationApplicationService:
         return self._capability_authorization_service.require(
             identity=identity, permissions=permissions, capability_id=capability_id,
             scope_type=scope_type, scope_id=scope_id, session_grants=session_grants)
+
+    def capability_approvals(self):
+        """Return the bounded process-local review service for exact protected actions."""
+        return self._capability_approval_service
 
     def assess_model_resources(self, candidates):
         from app.resources.assessment import assess_model_resources
