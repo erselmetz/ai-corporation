@@ -69,6 +69,16 @@ class MemoryVectorStore:
                       if (value[1].get("scope"), value[1].get("scope_id"), value[1].get("memory_id"))
                       != (scope, scope_id, memory_id)}
 
+    def inspect_source(self, source_key, limit):
+        return tuple(dict(metadata) for _, metadata in self.items.values()
+                     if metadata.get("source_key") == source_key)[:limit]
+
+    def stats(self):
+        estimated = sum(len(vector) * 4 + len(str(metadata).encode("utf-8"))
+                        for vector, metadata in self.items.values())
+        return {"vector_count": len(self.items), "storage_bytes": estimated,
+                "storage_complete": True, "storage_entries_scanned": len(self.items)}
+
 
 def retained(memory_id, content, *, owner="owner", scope=MemoryScope.CONVERSATION, scope_id="chat"):
     record = MemoryRecord(memory_id, owner, scope, scope_id, MemoryType.NOTE, content,
@@ -332,6 +342,122 @@ def test_index_failures_do_not_expose_provider_secrets():
         assert response.json()["detail"] == "Local semantic indexing failed"
 
 
+def test_semantic_lifecycle_is_explicit_bounded_and_preserves_authoritative_memory():
+    runtime = create_corporation_runtime()
+    owned = retained("lifecycle-owned", "owner retained source for recovery")
+    private = retained("lifecycle-private", "another owner's source", owner="other")
+    semantic, vectors = service(runtime)
+
+    rebuilt = semantic.rebuild([owned.id, private.id], actor_id="owner",
+                               scope=owned.scope, scope_id=owned.scope_id, now=NOW)
+    assert rebuilt.operation == "rebuild"
+    assert (rebuilt.completed, rebuilt.failed) == (1, 1)
+    assert [item.completed for item in rebuilt.sources] == [1, 2]
+    assert rebuilt.sources[0].state == "complete"
+    assert rebuilt.sources[1].state == "failed"
+    assert rebuilt.storage["vector_count"] == len(vectors.items)
+
+    from app.knowledge.service import _source_key
+    source_key = _source_key("owner", owned.scope, owned.scope_id, owned.id)
+    for item_id, (vector, metadata) in list(vectors.items.items()):
+        if metadata["source_key"] == source_key:
+            changed_metadata = dict(metadata)
+            changed_metadata["revision"] = "0" * 64
+            vectors.items[item_id] = (vector, changed_metadata)
+
+    inspected = semantic.inspect_lifecycle([owned.id], actor_id="owner",
+                                          scope=owned.scope, scope_id=owned.scope_id, now=NOW)
+    assert inspected.sources[0].state == "stale"
+    assert inspected.stale_chunks == inspected.sources[0].indexed_chunks
+    cleaned = semantic.cleanup_stale([owned.id], actor_id="owner",
+                                    scope=owned.scope, scope_id=owned.scope_id, now=NOW)
+    assert cleaned.sources[0].state == "cleaned"
+    assert all(item[1]["memory_id"] != owned.id for item in vectors.items.items())
+    assert runtime.application_service.memory_management().inspect(
+        owned.id, actor_id="owner", scope=owned.scope, scope_id=owned.scope_id,
+        now=NOW)["content"] == owned.content
+
+    with pytest.raises(ValueError, match="Select 1 to 10"):
+        semantic.rebuild([f"id-{i}" for i in range(11)], actor_id="owner",
+                         scope=owned.scope, scope_id=owned.scope_id, now=NOW)
+
+
+def test_semantic_lifecycle_vector_failure_does_not_remove_authoritative_memory():
+    class FailingStore(MemoryVectorStore):
+        def upsert(self, ids, vectors, metadata):
+            raise RuntimeError("private backend diagnostic")
+
+    runtime = create_corporation_runtime()
+    source = retained("lifecycle-failure", "must remain available after vector failure")
+    semantic = SemanticMemoryService(runtime.application_service.memory_management(),
+                                     FakeEmbeddingProvider(), FailingStore())
+    report = semantic.rebuild([source.id], actor_id="owner", scope=source.scope,
+                              scope_id=source.scope_id, now=NOW)
+    assert report.failed == 1
+    assert "private backend diagnostic" not in str(report)
+    assert "preserved" in report.sources[0].detail
+    assert runtime.application_service.memory_management().inspect(
+        source.id, actor_id="owner", scope=source.scope, scope_id=source.scope_id,
+        now=NOW)["content"] == source.content
+
+
+def test_semantic_lifecycle_routes_require_existing_memory_index_permission():
+    runtime = create_corporation_runtime()
+    source = retained("lifecycle-api", "explicitly retained API source")
+    semantic, _ = service(runtime)
+    body = {"scope": source.scope.value, "scope_id": source.scope_id,
+            "memory_ids": [source.id]}
+    app = create_app(runtime.application_service, Auth(frozenset({"memory:read"})),
+                     semantic_memory_service=semantic)
+    app.dependency_overrides[get_memory_now] = lambda: NOW
+    with TestClient(app) as client:
+        denied = client.post("/api/memory/semantic/rebuild", json=body)
+    assert denied.status_code == 403
+    app = create_app(runtime.application_service, Auth(frozenset({"memory:index"})),
+                     semantic_memory_service=semantic)
+    app.dependency_overrides[get_memory_now] = lambda: NOW
+    with TestClient(app) as client:
+        rebuilt = client.post("/api/memory/semantic/rebuild", json=body)
+        inspected = client.post("/api/memory/semantic/inspect", json=body)
+        cleaned = client.post("/api/memory/semantic/cleanup", json=body)
+    assert rebuilt.status_code == inspected.status_code == cleaned.status_code == 200
+    assert rebuilt.json()["execution"] == "synchronous-bounded"
+    assert rebuilt.json()["sources"][0]["completed"] == 1
+    assert inspected.json()["sources"][0]["state"] == "current"
+    assert cleaned.json()["sources"][0]["state"] == "current"
+
+
+def test_chroma_lifecycle_stats_measure_only_configured_store_and_bound_walk(tmp_path, monkeypatch):
+    collection = types.SimpleNamespace(
+        count=lambda: 2,
+        get=lambda where, limit, include: {
+            "ids": ["chunk"], "metadatas": [{"source_key": where["source_key"]}]
+        },
+    )
+    client = types.SimpleNamespace(get_or_create_collection=lambda *args, **kwargs: collection)
+    chroma = types.ModuleType("chromadb")
+    chroma.PersistentClient = lambda **kwargs: client
+    config = types.ModuleType("chromadb.config")
+    config.Settings = lambda **kwargs: object()
+    chroma.config = config
+    monkeypatch.setitem(sys.modules, "chromadb", chroma)
+    monkeypatch.setitem(sys.modules, "chromadb.config", config)
+
+    from app.knowledge.vector_store import ChromaVectorStore
+    path = tmp_path / "configured-vectors"
+    path.mkdir()
+    (path / "index.db").write_bytes(b"12345")
+    child = path / "segments"
+    child.mkdir()
+    (child / "segment.bin").write_bytes(b"abc")
+    store = ChromaVectorStore(str(path))
+    assert store.inspect_source("selected-key", 17) == ({"source_key": "selected-key"},)
+    stats = store.stats()
+    assert stats == {"vector_count": 2, "storage_bytes": 8,
+                     "storage_complete": True, "storage_entries_scanned": 3}
+    assert str(path) not in str(stats)
+
+
 def test_optional_adapters_use_only_local_embeddings_and_external_vectors(tmp_path, monkeypatch):
     calls = {}
 
@@ -395,4 +521,3 @@ def test_optional_adapters_use_only_local_embeddings_and_external_vectors(tmp_pa
     assert chroma_calls["collection"]["embedding_function"] is None
     assert "documents" not in chroma_calls["upsert"]
     assert chroma_calls["query"]["query_embeddings"] == [[1.0, 0.0]]
-

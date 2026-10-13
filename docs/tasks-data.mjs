@@ -1429,7 +1429,7 @@ export const post100Tasks = [
     "title": "Semantic index lifecycle and observability",
     "description": "Provide bounded rebuild, consistency inspection, cleanup, and recovery for derived Task 130 vectors.",
     "category": "Phase B - Knowledge and RAG",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       65,
       130,
@@ -1443,12 +1443,19 @@ export const post100Tasks = [
       "Do not promise secure erasure of disk blocks/backups or scan arbitrary files/all database rows."
     ],
     "decisions": [
-      "Choose synchronous versus bounded-job operation after performance measurement."
+      "Use a synchronous bounded operation: a deterministic fake-adapter benchmark indexed 10 short retained sources in approximately 0.011 seconds total (maximum single-source time approximately 0.0021 seconds), and the repository has no durable job infrastructure. The benchmark does not measure local embedding-model latency. Rebuild accepts at most 10 explicit source IDs; reports per-source completion/failure; inspection and cleanup are limited to the same explicit selection."
     ],
     "area": "P18",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-137-semantic-index-lifecycle-observability",
+    "validation": [
+      "Focused semantic memory, context retrieval, and retrieval evaluation regressions: 35 passed.",
+      "Lifecycle API operations use the existing memory:index permission, operate only on explicit retained authorized source IDs, expose bounded progress/failure/stale counts/storage usage, and preserve authoritative memory when vector operations fail. Cleanup removes derived vectors only; it makes no secure-erasure claim.",
+      "Full Python suite: 1111 passed, 6 skipped, and 2 failed in the same unrelated pre-existing model-assignment tests: tests/test_command_interface.py::test_model_set_command and tests/test_provider_model_api.py::test_model_replacement_uses_existing_assignment_service."
+    ],
+    "limitations": [
+      "Operations are synchronous and bounded to 10 explicit source IDs; there is no durable background job or cross-process coordination.",
+      "The performance measurement used a deterministic fake adapter and is not a local embedding-runtime performance claim. Storage usage is a bounded measurement of the configured vector directory and can be unavailable when the scan is incomplete."
+    ]
   },
   {
     "number": 138,
@@ -2490,7 +2497,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-136 are verified; Tasks 137-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-137 are verified; Tasks 138-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

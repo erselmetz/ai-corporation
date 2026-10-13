@@ -62,6 +62,13 @@ class SemanticSearchRequest(BaseModel):
     limit: StrictInt = Field(default=5, ge=1, le=10)
 
 
+class SemanticLifecycleRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    scope: MemoryScope
+    scope_id: StrictStr = Field(min_length=1, max_length=256)
+    memory_ids: list[StrictStr] = Field(min_length=1, max_length=10)
+
+
 def get_memory_now():
     return datetime.now(timezone.utc)
 
@@ -193,3 +200,49 @@ def search_memory(body: SemanticSearchRequest,
             "capability": result.capability,
             "candidate_limit_reached": result.candidate_limit_reached,
             "note": "Similarity orders candidates; it does not prove correctness."}
+
+
+def _semantic_lifecycle(operation, body, principal, index, now):
+    try:
+        result = operation(body.memory_ids, actor_id=principal.identity,
+                           scope=body.scope, scope_id=body.scope_id, now=now)
+    except SemanticCapabilityUnavailable:
+        raise HTTPException(503, "Semantic lifecycle capability is unavailable") from None
+    except ValueError:
+        raise HTTPException(422, "Semantic lifecycle request is invalid") from None
+    except (RuntimeError, sqlite3.Error, TypeError):
+        raise HTTPException(503, "Semantic lifecycle operation failed") from None
+    except Exception:
+        raise HTTPException(503, "Semantic lifecycle operation failed") from None
+    return {
+        "operation": result.operation,
+        "sources": [source.__dict__ for source in result.sources],
+        "completed": result.completed,
+        "failed": result.failed,
+        "stale_chunks": result.stale_chunks,
+        "chunk_counts_truncated": result.counts_truncated,
+        "storage": result.storage,
+        "execution": "synchronous-bounded",
+        "progress_note": "Each selected source result records the completed/total count; no background job is persisted.",
+    }
+
+
+@router.post("/semantic/rebuild")
+def rebuild_semantic_memory(body: SemanticLifecycleRequest,
+                            principal: AuthenticatedPrincipal = Depends(require_permission("memory:index")),
+                            index=Depends(semantic_service), now=Depends(get_memory_now)):
+    return _semantic_lifecycle(index.rebuild, body, principal, index, now)
+
+
+@router.post("/semantic/inspect")
+def inspect_semantic_memory(body: SemanticLifecycleRequest,
+                            principal: AuthenticatedPrincipal = Depends(require_permission("memory:index")),
+                            index=Depends(semantic_service), now=Depends(get_memory_now)):
+    return _semantic_lifecycle(index.inspect_lifecycle, body, principal, index, now)
+
+
+@router.post("/semantic/cleanup")
+def cleanup_semantic_memory(body: SemanticLifecycleRequest,
+                            principal: AuthenticatedPrincipal = Depends(require_permission("memory:index")),
+                            index=Depends(semantic_service), now=Depends(get_memory_now)):
+    return _semantic_lifecycle(index.cleanup_stale, body, principal, index, now)

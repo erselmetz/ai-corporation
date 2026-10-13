@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-136 are verified complete; Task 134 is deferred and incomplete; Tasks 137-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-137 are verified complete; Task 134 is deferred and incomplete; Tasks 138-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -956,3 +956,8 @@ A versioned synthetic fixture evaluates explicit Task 130 retrieval with Recall@
 ## Hybrid lexical and semantic retrieval (Task 136)
 
 The context retrieval application service provides an explicit `retrieve_hybrid(..., ranking_policy="rrf-v1")` operation. It combines bounded lexical and Task 130 semantic candidate ranks with explainable per-source contributions and rechecks current ownership, scope, revision, expiry, and provenance before returning results. If the optional vector capability is unavailable, the operation reports lexical-only mode. Existing lexical retrieval remains the default; chat injection and routing are unchanged. RRF is selected as a deterministic opt-in policy, while the Task 135 synthetic fixture is not evidence of production-model relevance. Checkpoint: `task-136-hybrid-lexical-semantic-retrieval`.
+
+
+## Semantic index lifecycle and observability (Task 137)
+
+The memory service exposes permission-gated, bounded synchronous rebuild, inspection, and cleanup for derived semantic vectors. Calls require explicit retained source IDs, validate ownership and scope, and return bounded per-source progress/failure, stale/missing counts, and configured vector-store usage when measurable. Cleanup removes only validated derived vectors and never deletes authoritative memory; failures leave the authoritative source intact. No secure-erasure guarantee is made. The operation caps each request at 10 selected source IDs. The deterministic fake-adapter benchmark is not a local embedding latency claim. Checkpoint: task-137-semantic-index-lifecycle-observability.
