@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-143 are verified complete; Task 134 is deferred and incomplete; Tasks 144-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-144 are verified complete; Task 134 is deferred and incomplete; Tasks 145-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -988,3 +988,7 @@ The application service exposes an exact-action approval service for trusted cal
 ## Capability audit and sensitive-data controls (Task 143)
 
 Capability permission decisions and the Task 141–142 grant/approval lifecycle write fixed metadata-only records to the existing local SQLite database. Records are pruned after 30 days and capped at 10,000; the explicitly authorized `capability-audit:read` endpoint returns at most 200 events per request. All actor identifiers are hashed into opaque references and unsafe references omitted. Raw prompts, credentials, screenshots, audio, action payloads, approval summaries, and raw error text are not stored. This is local operational history, not tamper-proof evidence: the database is not encrypted at rest and retention is not secure erasure. Checkpoint: task-143-capability-audit-retention.
+
+## Emergency stop and capture indicators (Task 144)
+
+The explicitly configured local app now has an owner-controlled, process-local emergency stop panel on Home and Chat. It blocks new state-changing local API requests while preserving status reads, sign-out, explicit session-grant revocation, Stop, and separately confirmed Resume. The current chat page stops microphone capture and local speech playback; aborting a model or Gemini request only stops this app's wait, and remote completion remains unknown. The panel shows current-session permissions and grant expiry/revocation state, plus page-reported microphone/playback activity. This app does not use screen or camera capture. The stop latch resets on process restart; there is no distributed stop, replay, or claim of remote cancellation. Existing adapters keep their own bounded request timeouts. Checkpoint: task-144-emergency-stop-capture-indicators.

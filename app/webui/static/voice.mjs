@@ -66,6 +66,20 @@ export function mountVoiceControls({
   let currentSpeech = null;
   let cloudBudget = null;
   let localAvailability = null;
+  let emergencyStopped = false;
+  let remoteOutcomeUnknown = false;
+
+  function reportActivity() {
+    const EventType = windowRef?.CustomEvent || globalThis.CustomEvent;
+    if (typeof windowRef?.dispatchEvent !== "function" || typeof EventType !== "function") return;
+    windowRef.dispatchEvent(new EventType("ersel:voice-activity", { detail: {
+      microphone: ["local-capture", "cloud-capture", "cloud-stopping"].includes(stage) ? "active" : "off",
+      local_playback: windowRef?.speechSynthesis?.speaking || windowRef?.speechSynthesis?.pending
+        ? "active" : "off",
+      remote_request: remoteOutcomeUnknown ? "possibly-processing-after-local-stop"
+        : stage === "cloud-request" ? "possibly-processing" : "none",
+    } }));
+  }
 
   async function session() {
     const response = await fetchImpl("/api/local/session", { credentials: "same-origin", cache: "no-store" });
@@ -101,6 +115,7 @@ export function mountVoiceControls({
     stopButton.disabled = stage === "idle";
     transcribe.hidden = stage !== "cloud-ready";
     stopPlayback.disabled = !windowRef?.speechSynthesis;
+    reportActivity();
   }
 
   function setState(message) { state.textContent = message; }
@@ -122,6 +137,7 @@ export function mountVoiceControls({
       return;
     }
     const availability = await Recognition.available({ langs: [languageCode], processLocally: true });
+    if (emergencyStopped) { stage = "idle"; updateControls(); return; }
     localAvailability = availability;
     if (availability !== "available") {
       if (availability === "downloadable") {
@@ -134,6 +150,7 @@ export function mountVoiceControls({
       return;
     }
     await authorizeMicrophone();
+    if (emergencyStopped) { stage = "idle"; updateControls(); return; }
     recognition = new Recognition();
     if (!("processLocally" in recognition)) {
       recognition = null;
@@ -195,11 +212,14 @@ export function mountVoiceControls({
         throw new Error("Set an available cloud voice ceiling before recording for Gemini.");
       }
     }
+    if (emergencyStopped) throw new Error("Emergency stop is active. Voice capture is blocked.");
     await authorizeMicrophone();
+    if (emergencyStopped) throw new Error("Emergency stop is active. Voice capture is blocked.");
     stream = await windowRef.navigator.mediaDevices.getUserMedia({
       audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       video: false,
     });
+    if (emergencyStopped) { for (const track of stream.getTracks()) track.stop(); stream = null; throw new Error("Emergency stop is active. Voice capture was stopped."); }
     audioContext = new windowRef.AudioContext();
     source = audioContext.createMediaStreamSource(stream);
     processor = audioContext.createScriptProcessor(4096, 1, 1);
@@ -292,6 +312,7 @@ export function mountVoiceControls({
       const result = await response.json();
       if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : "Gemini transcription failed.");
       if (typeof result.transcript !== "string" || !result.transcript.trim()) throw new Error("Gemini returned no transcript.");
+      remoteOutcomeUnknown = false;
       if (SENSITIVE.test(result.transcript)) {
         setState("Possible API key or sensitive credential detected. The transcript was discarded.");
       } else {
@@ -337,10 +358,27 @@ export function mountVoiceControls({
       audioBlob = null; stage = "idle"; updateControls();
       setState("Local recording discarded before any cloud request. Nothing was sent.");
     } else if (stage === "cloud-request") {
+      remoteOutcomeUnknown = true;
       requestController?.abort();
       stopButton.disabled = true;
+    } else if (stage === "starting") {
+      stage = "idle";
+      updateControls();
+      setState("Voice startup stopped. No new microphone capture will begin.");
     }
   }
+
+  windowRef?.addEventListener?.("ersel:emergency-stop", () => {
+    emergencyStopped = true;
+    void stop();
+    windowRef?.speechSynthesis?.cancel?.();
+    currentSpeech = null;
+    updateControls();
+  });
+  windowRef?.addEventListener?.("ersel:emergency-resumed", () => {
+    emergencyStopped = false;
+    updateControls();
+  });
 
   async function configureBudget(event) {
     event.preventDefault();
@@ -393,6 +431,7 @@ export function mountVoiceControls({
   }
 
   start.addEventListener("click", async () => {
+    if (emergencyStopped) { setState("Emergency stop is active. Resume protected actions before starting voice."); return; }
     if (!canUseChat()) { setState("Start or select an open conversation before using voice."); return; }
     stage = "starting"; updateControls();
     try {

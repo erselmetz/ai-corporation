@@ -1666,7 +1666,7 @@ export const post100Tasks = [
     "title": "Emergency stop, expiry, and capture indicators",
     "description": "Provide visible stop/revoke controls and truthful activity indicators for screen, camera, microphone, and running actions.",
     "category": "Phase C - Capability Governance",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       140,
       141,
@@ -1683,12 +1683,19 @@ export const post100Tasks = [
       "No always-on screen, camera, or microphone by default."
     ],
     "decisions": [
-      "Define stop-state persistence and in-flight recovery behavior."
+      "Use an explicit process-local stop latch for the current configured local app. The latch resets on process restart because this app does not persist capture state or replay actions. Permit status reads, sign-out, explicit grant revocation, stop, and separately confirmed resume while stopped; block other state-changing requests. A stop aborts browser-local microphone capture and playback in the current page and stops this app's wait on in-flight model/transcription requests, but remote completion/cancellation remains UNKNOWN. Recheck authentication and expiring/revoked session grants on every protected request. Existing provider request timeouts remain authoritative; no generic action executor or camera/screen capture is introduced."
     ],
     "area": "P19",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-144-emergency-stop-capture-indicators",
+    "validation": [
+      "Focused Task 144 stop, grant, voice, authorization, and audit regressions: 30 passed.",
+      "Browser-module regression tests: 165 passed, including emergency panel interactions, microphone stop/restart gating, speech playback stop, and unknown provider outcome after abort.",
+      "Full Python suite: 1141 passed, 6 skipped, with the same two pre-existing unrelated failures in tests/test_command_interface.py::test_model_set_command and tests/test_provider_model_api.py::test_model_replacement_uses_existing_assignment_service."
+    ],
+    "limitations": [
+      "The stop latch coordinates one configured local application process only and resets after restart. It does not provide cross-process control or confirm that local/online provider work stopped after request cancellation.",
+      "Microphone/playback status is reported by the current browser page; screen and camera capture are not used by this app. No always-on capture or persistent stop history is added. Existing action/provider timeouts remain bounded by their own adapters; this is not a universal timeout controller."
+    ]
   },
   {
     "number": 145,
@@ -2547,7 +2554,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-143 are verified; Tasks 144-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-144 are verified; Tasks 145-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

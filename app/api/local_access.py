@@ -21,6 +21,7 @@ READ_PERMISSIONS = frozenset({
     "provider-connection:read",
     "model:read", "task:read", "project:read", "activity:read",
     "documentation:read", "updates:read", "memory:read", "capability-audit:read",
+    "capability-emergency:read",
     "position:read", "github:read",
     "assignment-policy:read",
     "inventory:read",
@@ -95,7 +96,8 @@ class LocalOwnerAuthentication:
             | TASK_DISPATCH_PERMISSIONS | PROVIDER_CONNECTION_MANAGEMENT_PERMISSIONS
             | MODEL_RUNTIME_PERMISSIONS | WORKFLOW_PERMISSIONS
             | SOFTWARE_MANAGEMENT_PERMISSIONS
-            | frozenset({"capability-grant:manage", "capability-approval:manage"})
+            | frozenset({"capability-grant:manage", "capability-approval:manage",
+                         "capability-emergency:manage"})
             | DOCUMENTATION_REVIEW_PERMISSIONS
             | MAINTENANCE_EXPERIMENT_PERMISSIONS)
 

@@ -33,7 +33,8 @@ LOGIN_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                      application_service=None, clock=None, desktop_ui_dir=None,
                      voice_connection_manager=None, capability_authorization_service=None,
-                     capability_grant_service=None, capability_audit_service=None):
+                     capability_grant_service=None, capability_audit_service=None,
+                     emergency_stop_service=None):
     backend = LocalOwnerAuthentication(
         password, origin, **({"clock": clock} if clock else {}),
         **({"capability_authorization_service": capability_authorization_service}
@@ -45,6 +46,12 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                              capability_authorization_service=backend.capability_authorization_service,
                              capability_grant_service=backend.capability_grant_service,
                              capability_audit_service=capability_audit_service)
+    if emergency_stop_service is None:
+        from app.application.services.emergency_stop import EmergencyStopService
+        emergency_stop_service = EmergencyStopService()
+    application.state.emergency_stop_service = emergency_stop_service
+    from app.api.emergency_stop import create_emergency_stop_router
+    application.include_router(create_emergency_stop_router())
     from app.api.local_models import router as local_models_router
     application.include_router(local_models_router)
     from app.api.assignment_policy import router as assignment_policy_router
@@ -84,6 +91,16 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                             and content_type == "audio/wav")
             if content_type != "application/json" and not voice_upload:
                 return JSONResponse({"detail": "JSON request required"}, status_code=415)
+            stopped = application.state.emergency_stop_service.stopped
+            allowed_while_stopped = (
+                request.url.path in {"/api/local/emergency-stop/stop", "/api/local/emergency-stop/resume",
+                                     "/api/local/logout"}
+                or (request.url.path.startswith("/api/capabilities/grants/")
+                    and request.url.path.endswith("/revoke"))
+            )
+            if stopped and not allowed_while_stopped:
+                return JSONResponse({"detail": "Emergency stop is active; new protected actions are blocked"},
+                                    status_code=423)
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"

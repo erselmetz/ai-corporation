@@ -1074,3 +1074,12 @@ textarea::placeholder { color: #718196; }
   .dashboard-actions { justify-content: flex-start; }
   .setup-card { padding: 0.95rem; }
 }
+.safety-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; margin-block: 1rem; padding: 1rem; border: 1px solid var(--border, #334155); border-left: .3rem solid #d97706; border-radius: .75rem; background: var(--surface, #fff); }
+.safety-panel h2 { margin: .15rem 0 .4rem; }
+.safety-panel .eyebrow { margin: 0; }
+.safety-actions { display: flex; flex-wrap: wrap; align-content: center; gap: .5rem; }
+.danger-action { border-color: #b42318; background: #b42318; color: #fff; font-weight: 700; }
+.safety-panel details { grid-column: 1 / -1; }
+.grant-list { display: grid; gap: .5rem; padding-left: 1.25rem; }
+.grant-list li { display: flex; justify-content: space-between; align-items: center; gap: .8rem; }
+@media (max-width: 700px) { .safety-panel { grid-template-columns: 1fr; } .safety-actions { justify-content: flex-start; } .grant-list li { align-items: flex-start; flex-direction: column; } }

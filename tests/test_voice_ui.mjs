@@ -59,6 +59,36 @@ test("local mode requires processLocally and never falls back to cloud", async (
   assert.match(ui.elements["voice-state"].textContent, /stopped/i);
 });
 
+test("emergency stop aborts local capture and blocks a new voice start until resumed", async () => {
+  let recognition;
+  let starts = 0;
+  const listeners = {};
+  class Recognition {
+    static async available() { return "available"; }
+    static async install() { return true; }
+    processLocally = false;
+    constructor() { recognition = this; }
+    start() { starts++; }
+    abort() { this.aborted = true; this.onend?.(); }
+  }
+  const windowRef = {
+    SpeechRecognition: Recognition,
+    addEventListener(name, callback) { listeners[name] = callback; },
+    dispatchEvent() {},
+  };
+  const ui = harness({ windowRef,
+    fetchImpl: async () => ({ ok: true, json: async () => ({ cloud_budget: {} }) }) });
+  await ui.elements["voice-start"].listeners.click();
+  assert.equal(starts, 1);
+  listeners["ersel:emergency-stop"]();
+  assert.equal(recognition.aborted, true);
+  await ui.elements["voice-start"].listeners.click();
+  assert.equal(starts, 1);
+  listeners["ersel:emergency-resumed"]();
+  await ui.elements["voice-start"].listeners.click();
+  assert.equal(starts, 2);
+});
+
 test("sensitive local transcript is discarded before it enters chat", async () => {
   let recognition;
   class Recognition {

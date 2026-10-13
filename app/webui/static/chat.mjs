@@ -57,6 +57,7 @@ export function mountChat({
   let canStudyRepositories = false;
   let currentProposal = null;
   let voiceController = null;
+  let emergencyStopped = false;
   let requestController = null;
   const base = "/api/chat/conversations";
   function clear() {
@@ -231,6 +232,7 @@ export function mountChat({
   }
   async function start() {
     return action(async () => {
+      if (emergencyStopped) throw new Error("Emergency stop is active. Resume protected actions before starting a conversation.");
       if (!agents.value) throw new Error("Choose an AI team member first.");
       state.textContent = "Starting conversation…";
       const result = await request(base, { agent_id: agents.value });
@@ -251,6 +253,7 @@ export function mountChat({
   async function send(event) {
     event?.preventDefault();
     return action(async () => {
+      if (emergencyStopped) throw new Error("Emergency stop is active. Resume protected actions before sending a message.");
       const text = input.value;
       if (!selected || !canSend) throw new Error("Start or select an open conversation first.");
       if (!text.trim() || new TextEncoder().encode(text).length > 8192) throw new Error("Enter a message of at most 8192 UTF-8 bytes.");
@@ -504,6 +507,13 @@ export function mountChat({
   repositoryStudyForm.addEventListener("submit", studyRepository);
   element("chat-close").addEventListener("click", close);
   element("chat-refresh").addEventListener("click", refresh);
+  windowRef?.addEventListener?.("ersel:emergency-stop", () => {
+    emergencyStopped = true;
+    if (requestController) requestController.abort();
+    stopDisplay?.();
+    state.textContent = "Emergency stop active. This app stopped waiting locally; provider-side cancellation is unknown.";
+  });
+  windowRef?.addEventListener?.("ersel:emergency-resumed", () => { emergencyStopped = false; });
   stopDisplayButton.addEventListener("click", () => stopDisplay?.());
   stopRequestButton.addEventListener("click", () => {
     requestController?.abort();

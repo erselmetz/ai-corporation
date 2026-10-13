@@ -27,6 +27,19 @@ def _navigation(active_path: str) -> str:
     return "".join(parts)
 
 
+def _emergency_controls() -> str:
+    return '''<section class="safety-panel" aria-labelledby="emergency-title">
+      <div><p class="eyebrow">SAFETY CONTROLS</p><h2 id="emergency-title">Emergency stop</h2>
+      <p id="emergency-state" role="status" aria-live="polite">Loading safety status…</p>
+      <p id="emergency-activity">Checking microphone, playback, and capture activity…</p></div>
+      <div class="safety-actions"><button id="emergency-stop" type="button" class="danger-action">Stop protected actions</button>
+      <button id="emergency-resume" type="button" disabled>Resume protected actions</button></div>
+      <details><summary>Active permissions and session grants</summary>
+      <p>Session grants include their expiry and can be revoked here. Permission names show this session’s current authorized capabilities.</p>
+      <ul id="emergency-grants" class="grant-list"></ul></details>
+      <script type="module" src="/ui/static/emergency-stop.mjs"></script></section>'''
+
+
 @router.get("/ui", response_class=HTMLResponse, include_in_schema=False)
 def corporation_dashboard() -> HTMLResponse:
     return HTMLResponse(f"""
@@ -68,6 +81,7 @@ def corporation_dashboard() -> HTMLResponse:
                 </div>
                 <p class="setup-boundary">Provider registration and model assignments show configuration only. Provider availability is not checked here; no model is downloaded or reassigned.</p>
               </section>
+              {_emergency_controls()}
               <div class="dashboard-grid">
                 <section class="dashboard-card" id="status-panel" aria-labelledby="status-title">
                   <h2 id="status-title">Workspace identity</h2>
@@ -716,6 +730,7 @@ def coordinator_chat_page():
     <script type="module" src="/ui/static/chat.mjs"></script></head><body>
     <main class="content chat-content"><nav aria-label="Chat navigation">
     <a href="/ui">Home</a> | <a href="/ui/login">Owner sign-in</a> | <a href="/ui/employee-chat">Employee chat</a> | <a href="/ui/providers">Providers &amp; models</a></nav>
+    {safety_controls}
     <p class="eyebrow">YOUR AI WORKSPACE</p><h1>Chat with your AI team</h1>
     <p>Choose a registered AI team member, start a conversation, and send a message. The first reply checks whether its configured service can respond. Chat does not run generated instructions.</p>
     <label for="chat-agent">AI team member and assigned model</label><select id="chat-agent"></select>
@@ -801,7 +816,7 @@ def coordinator_chat_page():
     use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here; configure Gemini in its separate online setup page.</p></details>
     <p id="cloud-consent-panel" hidden><label><input id="cloud-consent" type="checkbox">
     I consent to send this message, recent conversation history, and configured chat context to Google Gemini for this reply.</label></p>
-    </main></body></html>""")
+    </main></body></html>""".replace("{safety_controls}", _emergency_controls()))
 
 
 @router.get("/ui/inventory", response_class=HTMLResponse, include_in_schema=False)
