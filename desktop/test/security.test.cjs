@@ -55,8 +55,10 @@ test("static Next export contains only local command-center destinations", () =>
   const page = read("../desktop-ui/src/app/page.tsx");
   assert.match(config, /output:\s*["']export["']/);
   assert.match(config, /basePath:\s*["']\/desktop["']/);
-  assert.match(page, /href:\s*["']\/ui\/chat["']/);
-  assert.match(page, /href:\s*["']\/ui\/structure["']/);
-  assert.match(page, /href:\s*["']\/ui\/workflow-map["']/);
+  assert.match(page, /href="\/ui\/chat"/);
+  assert.match(page, /href="\/ui\/login"/);
+  assert.match(page, /href="\/ui\/projects"/);
+  assert.match(page, /href="\/ui\/employees"/);
+  assert.match(page, /href="\/ui\/providers"/);
   assert.doesNotMatch(page, /https?:\/\//);
 });
