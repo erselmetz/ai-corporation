@@ -25,8 +25,8 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-174-175");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 175 }, (_, index) => 175 - index));
-  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*131 completed.*44 planned/);
-  assert.match(elements["next-task"].textContent, /Next: Task 132/);
+  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*132 completed.*43 planned/);
+  assert.match(elements["next-task"].textContent, /Next: Task 133/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -37,7 +37,7 @@ test("renders completion evidence separately from planned decision gates and exp
   const multiProvider = items.find(item => item.id === "task-112");
   const release = items.find(item => item.id === "task-129");
   const semanticMemory = items.find(item => item.id === "task-130");
-  const firstPlanned = items.find(item => item.id === "task-132");
+  const firstPlanned = items.find(item => item.id === "task-133");
   assert.equal(release.children[2].textContent, "Completed");
   assert.match(release.textContent, /task-129-command-center-release-acceptance/);
   assert.match(release.textContent, /206A36D5C94FD76B2696C01F95CD842C24E3A79FD05FEB7FDB45F3DA101DC091/);
@@ -46,7 +46,10 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.match(semanticMemory.textContent, /task-130-semantic-memory-rag-foundation/);
   assert.match(semanticMemory.textContent, /104 passed/);
   assert.equal(firstPlanned.children[2].textContent, "Planned");
-  assert.match(firstPlanned.textContent, /Task 132|Guided first-run/);
+  assert.match(firstPlanned.textContent, /Task 133|Provider and model setup/);
+  const onboarding = items.find(item => item.id === "task-132");
+  assert.equal(onboarding.children[2].textContent, "Completed");
+  assert.match(onboarding.textContent, /task-132-guided-first-run-setup/);
   const distribution = items.find(item => item.id === "task-131");
   assert.equal(distribution.children[2].textContent, "Completed");
   assert.match(distribution.textContent, /task-131-supported-packaging-distribution-strategy/);

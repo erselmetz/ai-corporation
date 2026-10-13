@@ -672,7 +672,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-131 are verified complete; Tasks 132-175 are planned expansion work. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-132 are verified complete; Tasks 133-175 are planned expansion work. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -1285,3 +1285,8 @@ without removing application data. These checks do not establish downgrade,
 database rollback, cross-version migration, or recovery from a corrupt data
 directory. Back up application data before changing versions. The full
 installation and recovery guide is in `desktop/README.md`.
+
+
+## Guided first-run setup (Task 132)
+
+The Electron/Next.js home screen uses bounded same-origin reads to report local API health, owner sign-in, the chat:start and chat:send permissions, provider registration, and Agent provider/model assignment. Checks time out after 2.5 seconds and preserve permission failures and unsupported observations as explicit states. Provider availability, installed app integrity, installed models, and optional capability packs are not inferred: the overview reports them as Unknown. The existing owner-initiated local-model inventory remains a separate explicit check. The home screen guides owners to sign in, review configuration, start coordinator chat, and inspect the organization; advanced configuration links are kept in a separate disclosure. It performs no provider check, download, assignment update, permission grant, or Task dispatch.

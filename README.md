@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-131 are verified complete; Tasks 132-175 are planned expansion work. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-132 are verified complete; Tasks 133-175 are planned expansion work. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -937,3 +937,9 @@ manual-update only, and not publicly distributed. The build-time Electron
 dependency audit reported 8 moderate advisories; `node_modules` is not packaged.
 This checkpoint verifies a local install workflow, not production completeness or
 unrestricted autonomous behavior.
+
+
+## Guided first-run setup (Task 132)
+
+After install, open the desktop or Start Menu shortcut; the installer does not launch the app. The native startup window asks you to create and confirm an owner password on first run and to enter it on later starts. After the workspace opens, sign in again in the UI to create the protected browser session, then open Chat. The Electron home screen provides this chat-first path plus bounded, read-only checks for the local API, owner session, chat permission, registered providers, and configured Agent model assignments. Each request has a 2.5-second timeout. Provider availability, installer integrity, installed models, and optional capability packs remain explicitly UNKNOWN on this overview; the supported local-model inventory is a separate owner-initiated check. Beginner first-chat and organization guidance is separated from expandable operator setup. The overview does not connect providers, download models, change assignments, grant permissions, or dispatch Tasks.
+Checkpoint: task-132-guided-first-run-setup.

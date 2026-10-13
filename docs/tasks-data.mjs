@@ -1283,7 +1283,7 @@ export const post100Tasks = [
     "title": "Guided first-run setup and capability detection",
     "description": "Guide a new owner through a clear first-run path, explaining how to open and use ERSELMETZ AI, complete minimum setup, and truthfully detect supported providers, models, permissions, and optional capabilities.",
     "category": "Phase A - Install and Onboarding",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       104,
       112,
@@ -1303,9 +1303,9 @@ export const post100Tasks = [
     ],
     "decisions": [],
     "area": "P17",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-132-guided-first-run-setup",
+    "validation": ["Next.js static production build passed; 3 deterministic onboarding tests and 5 existing Electron security tests passed; public docs suite passed (15 tests); syntax, JSON and diff checks passed."],
+    "limitations": ["The overview confirms the local service process, not installer signature or package integrity. Provider availability, installed model inventory, and optional capability packs remain UNKNOWN until existing supported explicit checks are run; model inventory is available separately in local-owner mode. No live provider check, model download, installer rebuild, or packaged-install smoke was performed for this UI-only checkpoint."]
   },
   {
     "number": 133,
@@ -2480,7 +2480,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; Task 131 is verified and Tasks 132-175 are planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; Tasks 131-132 are verified and Tasks 133-175 are planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

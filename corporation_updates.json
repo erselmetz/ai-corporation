@@ -3,6 +3,12 @@
     {
       "date": "2026-10-13",
       "type": "development",
+      "title": "Guided first-run setup and capability detection",
+      "summary": "Completed Task 132 with a chat-first Electron home, beginner steps, separate advanced operator guidance, and 2.5-second bounded read-only checks for local API health, owner session, chat:start and chat:send permissions, provider registration, and Agent model assignment. Provider availability, installer integrity, installed models, and optional capability packs remain UNKNOWN unless an existing explicit check provides evidence. The separate local model inventory remains owner-initiated. No provider health check, download, assignment change, permission grant, Task dispatch, live provider/model request, or installer rebuild was performed. Validation: Next.js production static build; 3 focused onboarding tests and 5 existing Electron security tests; 15 public docs tests; syntax, JSON, and diff checks. Checkpoint: task-132-guided-first-run-setup."
+    },
+    {
+      "date": "2026-10-13",
+      "type": "development",
       "title": "Supported packaging and distribution strategy",
       "summary": "Completed Task 131 as a documentation-only checkpoint. The only installer target with clean-install evidence is the local Windows 11 x64 per-user NSIS package; Windows 10, ARM64, macOS, Linux, portable, and app-store targets remain unverified and unsupported claims. Documented build prerequisites, unsigned status and signing expectations, absence of a public update source/automatic updater, manual trusted reinstall, and precise same-version uninstall/reinstall recovery limits. No runtime, package, or installer artifact changed. Verification: 15 public docs tests and 6 update API/manifest tests passed; Node syntax, JSON parsing, and git diff --check passed. Public release readiness and cross-version migration/downgrade/database rollback remain unverified. Checkpoint: task-131-supported-packaging-distribution-strategy."
     },
