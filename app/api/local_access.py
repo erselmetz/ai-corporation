@@ -1,5 +1,5 @@
 """Explicit single-owner loopback access; never enabled by the default API."""
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 import hashlib
 import hmac
 import secrets
@@ -9,6 +9,11 @@ from urllib.parse import urlsplit
 
 from fastapi import HTTPException, Request
 from .security import AuthenticatedPrincipal
+from app.application.services.capability_authorization import (
+    CapabilityAuthorizationService,
+    DEFAULT_CAPABILITY_AUTHORIZATION,
+)
+from app.application.services.capability_grants import CapabilityGrantService
 
 COOKIE = "ersel_local_session"
 READ_PERMISSIONS = frozenset({
@@ -51,6 +56,7 @@ DOCUMENTATION_REVIEW_PERMISSIONS = frozenset({"documentation:review"})
 class LocalSession:
     csrf: str = field(repr=False)
     expires: float
+    session_id: str = field(repr=False)
 
 
 class LocalOwnerAuthentication:
@@ -59,7 +65,9 @@ class LocalOwnerAuthentication:
     MAX_FAILURES = 5
     LOCKOUT_SECONDS = 300
 
-    def __init__(self, password: str, origin: str, *, clock=time.monotonic):
+    def __init__(self, password: str, origin: str, *, clock=time.monotonic,
+                 capability_authorization_service: CapabilityAuthorizationService | None = None,
+                 capability_grant_service: CapabilityGrantService | None = None):
         if not isinstance(password, str) or not 12 <= len(password) <= 1024:
             raise ValueError("Local password must contain 12 to 1024 characters")
         endpoint = urlsplit(origin)
@@ -71,6 +79,9 @@ class LocalOwnerAuthentication:
         self.origin = origin
         self.authority = endpoint.netloc
         self.clock = clock
+        self.capability_authorization_service = capability_authorization_service or DEFAULT_CAPABILITY_AUTHORIZATION
+        self.capability_grant_service = capability_grant_service or CapabilityGrantService(
+            self.capability_authorization_service)
         self._salt = secrets.token_bytes(32)
         self._digest = self._hash(password)
         self._sessions: dict[str, LocalSession] = {}
@@ -84,6 +95,7 @@ class LocalOwnerAuthentication:
             | TASK_DISPATCH_PERMISSIONS | PROVIDER_CONNECTION_MANAGEMENT_PERMISSIONS
             | MODEL_RUNTIME_PERMISSIONS | WORKFLOW_PERMISSIONS
             | SOFTWARE_MANAGEMENT_PERMISSIONS
+            | frozenset({"capability-grant:manage"})
             | DOCUMENTATION_REVIEW_PERMISSIONS
             | MAINTENANCE_EXPERIMENT_PERMISSIONS)
 
@@ -98,6 +110,9 @@ class LocalOwnerAuthentication:
 
     def _prune(self):
         now = self.clock()
+        expired = [session for session in self._sessions.values() if session.expires <= now]
+        for session in expired:
+            self.capability_grant_service.revoke_session(session.session_id)
         self._sessions = {key: session for key, session in self._sessions.items()
                           if session.expires > now}
         self._failures = [stamp for stamp in self._failures
@@ -115,7 +130,8 @@ class LocalOwnerAuthentication:
                 raise HTTPException(429, "Session limit reached; sign out another session")
             token = secrets.token_urlsafe(32)
             self._sessions[token] = LocalSession(secrets.token_urlsafe(32),
-                                                 self.clock() + self.SESSION_SECONDS)
+                                                 self.clock() + self.SESSION_SECONDS,
+                                                 secrets.token_urlsafe(24))
             return token
 
     def session(self, request: Request) -> LocalSession | None:
@@ -126,7 +142,12 @@ class LocalOwnerAuthentication:
             return self._sessions.get(request.cookies.get(COOKIE, ""))
 
     def authenticate(self, request: Request):
-        return self.principal if self.session(request) is not None else None
+        session = self.session(request)
+        if session is None:
+            return None
+        return replace(self.principal, session_id=session.session_id,
+                       session_grants=self.capability_grant_service.active_keys(
+                           grantor=self.principal.identity, session_id=session.session_id))
 
     def require_csrf(self, request: Request):
         session = self.session(request)
@@ -138,4 +159,6 @@ class LocalOwnerAuthentication:
 
     def logout(self, request: Request):
         with self._lock:
-            self._sessions.pop(request.cookies.get(COOKIE, ""), None)
+            session = self._sessions.pop(request.cookies.get(COOKIE, ""), None)
+            if session is not None:
+                self.capability_grant_service.revoke_session(session.session_id)

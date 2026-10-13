@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-140 are verified complete; Task 134 is deferred and incomplete; Tasks 141-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-141 are verified complete; Task 134 is deferred and incomplete; Tasks 142-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -975,4 +975,8 @@ Owner-authorized drafts and append-only versions are stored in a dedicated local
 
 ## Central capability permission model (Task 140)
 
-The application now has an immutable capability catalog separate from capability inventory. Each definition records a stable identity, scope type, required permission, risk level, and disabled-by-default metadata. The centralized authorization service denies unknown capabilities, missing permissions, and scope mismatches. Existing permission strings remain canonical compatibility grants, existing resource ownership remains enforced by domain services, and default API authentication remains rejecting. This establishes shared checks for APIs and trusted application-service boundaries; grant management and UI controls remain Task 141 scope.
+The application now has an immutable capability catalog separate from capability inventory. Each definition records a stable identity, scope type, required permission, risk level, and disabled-by-default metadata. The centralized authorization service denies unknown capabilities, missing permissions, and scope mismatches. Existing permission strings remain canonical compatibility grants, existing resource ownership remains enforced by domain services, and default API authentication remains rejecting. This establishes shared checks for APIs and trusted application-service boundaries; Task 141 adds a separate grant lifecycle; no graphical grant-management screen is included.
+
+## Capability grants and enable/disable policy (Task 141)
+
+Authenticated local owners can explicitly enable eligible low-risk capabilities and issue or revoke short-lived grants limited to their own principal scope. Grants expire within one hour and become unusable after revocation, disablement, logout, or session expiry. Snapshots expose grantor, capability, scope, session, expiry, status, and session-only persistence. Both enablement and grant records are process-local; there is no configured persistent grant mode. Existing Task 140 permission strings remain unchanged, and these controls do not silently migrate or revoke compatibility permissions. High-risk, moderate-risk, unknown, and non-principal capabilities cannot receive grants. Checkpoint: task-141-capability-grants-session-policy.

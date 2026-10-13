@@ -969,6 +969,7 @@ def create_app(
     semantic_memory_service=None,
     documentation_review_service=None,
     capability_authorization_service=None,
+    capability_grant_service=None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
@@ -1044,6 +1045,12 @@ def create_app(
         application.state.capability_authorization_service = DEFAULT_CAPABILITY_AUTHORIZATION
     else:
         application.state.capability_authorization_service = capability_authorization_service
+    if capability_grant_service is None:
+        from app.application.services.capability_grants import CapabilityGrantService
+        application.state.capability_grant_service = CapabilityGrantService(
+            application.state.capability_authorization_service)
+    else:
+        application.state.capability_grant_service = capability_grant_service
     application.state.semantic_memory_service = semantic_memory_service
     if semantic_memory_service is not None and hasattr(application_service, "configure_semantic_memory"):
         application_service.configure_semantic_memory(semantic_memory_service)
@@ -1058,6 +1065,8 @@ def create_app(
     application.include_router(corporation_router)
     from .memory import router as memory_router
     application.include_router(memory_router)
+    from .capability_grants import router as capability_grants_router
+    application.include_router(capability_grants_router)
     from .documentation_review import router as documentation_review_router
     application.include_router(documentation_review_router)
     from .maintenance_approvals import router as maintenance_approvals_router

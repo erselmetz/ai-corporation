@@ -217,11 +217,12 @@ class CorporationApplicationService:
         self._node = node
 
     def authorize_capability(self, *, identity: str, permissions: frozenset[str],
-                             capability_id: str, scope_type: str, scope_id: str):
+                             capability_id: str, scope_type: str, scope_id: str,
+                             session_grants: frozenset[tuple[str, str, str]] = frozenset()):
         """Enforce the shared capability policy at trusted application-service boundaries."""
         return self._capability_authorization_service.require(
             identity=identity, permissions=permissions, capability_id=capability_id,
-            scope_type=scope_type, scope_id=scope_id)
+            scope_type=scope_type, scope_id=scope_id, session_grants=session_grants)
 
     def assess_model_resources(self, candidates):
         from app.resources.assessment import assess_model_resources

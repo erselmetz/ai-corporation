@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 
 from fastapi import Depends, HTTPException, Request
@@ -13,6 +13,8 @@ from app.application.services.capability_authorization import (
 class AuthenticatedPrincipal:
     identity: str
     permissions: frozenset[str]
+    session_id: str | None = field(default=None, repr=False)
+    session_grants: frozenset[tuple[str, str, str]] = field(default_factory=frozenset, repr=False)
 
     def __post_init__(self) -> None:
         if not self.identity.strip():
@@ -57,7 +59,7 @@ def require_permission(permission: str):
         try:
             authorizer.require(identity=principal.identity, permissions=principal.permissions,
                                capability_id=permission, scope_type="principal",
-                               scope_id=principal.identity)
+                               scope_id=principal.identity, session_grants=principal.session_grants)
         except CapabilityAuthorizationDenied:
             raise HTTPException(status_code=403, detail="Permission denied")
         return principal

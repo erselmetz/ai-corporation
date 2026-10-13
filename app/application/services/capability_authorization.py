@@ -5,6 +5,7 @@ from typing import Iterable, Literal
 
 
 CapabilityRisk = Literal["low", "moderate", "high"]
+CapabilityGrantMode = Literal["session"]
 
 
 @dataclass(frozen=True)
@@ -14,6 +15,7 @@ class CapabilityDefinition:
     required_permissions: frozenset[str]
     risk: CapabilityRisk
     default_enabled: bool = False
+    grant_modes: frozenset[CapabilityGrantMode] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -35,7 +37,7 @@ class CapabilityAuthorizationDenied(PermissionError):
 _LEGACY_PERMISSION_NAMES = (
     "activity:read", "agent:read", "assignment-policy:manage", "assignment-policy:read",
     "chat-history:manage", "chat-knowledge:retain", "chat-knowledge:withdraw",
-    "chat-task:create", "chat:close", "chat:read", "chat:send", "chat:start",
+    "capability-grant:manage", "chat-task:create", "chat:close", "chat:read", "chat:send", "chat:start",
     "corporation:read", "documentation:read", "documentation:review",
     "employee-chat:close", "employee-chat:read", "employee-chat:send", "employee-chat:start",
     "employee:manage", "employee:read", "github:read", "inventory:read",
@@ -52,7 +54,7 @@ _HIGH_RISK = frozenset({
     "maintenance:activate", "maintenance:approve", "maintenance:checkpoint",
     "maintenance:experiment", "task:dispatch", "software:manage", "provider-connection:manage",
     "online-provider:connect", "online-provider:disconnect", "chat-history:manage",
-    "memory:manage", "memory:index", "documentation:review", "task:create",
+    "memory:manage", "memory:index", "documentation:review", "task:create", "capability-grant:manage",
 })
 _MODERATE_RISK = frozenset({
     "assignment-policy:manage", "chat:send", "chat:start", "chat:close",
@@ -76,6 +78,7 @@ def _legacy_definitions() -> tuple[CapabilityDefinition, ...]:
             required_permissions=frozenset({permission}),
             risk=risk,
             default_enabled=False,
+            grant_modes=frozenset({"session"}) if risk == "low" else frozenset(),
         ))
     return tuple(definitions)
 
@@ -94,6 +97,8 @@ class CapabilityAuthorizationService:
                     or not item.required_permissions
                     or any(not permission.strip() for permission in item.required_permissions)
                     or item.risk not in {"low", "moderate", "high"}
+                    or not item.grant_modes.issubset({"session"})
+                    or (item.grant_modes and item.risk != "low")
                     or not isinstance(item.default_enabled, bool)):
                 raise ValueError("Capability definitions must be complete and valid")
         self._catalog = MappingProxyType({item.capability_id: item for item in catalog})
@@ -102,8 +107,12 @@ class CapabilityAuthorizationService:
     def definitions(self) -> tuple[CapabilityDefinition, ...]:
         return tuple(self._catalog.values())
 
+    def definition(self, capability_id: str) -> CapabilityDefinition | None:
+        return self._catalog.get(capability_id)
+
     def evaluate(self, *, identity: str, permissions: frozenset[str],
-                 capability_id: str, scope_type: str, scope_id: str) -> CapabilityAuthorizationDecision:
+                 capability_id: str, scope_type: str, scope_id: str,
+                 session_grants: frozenset[tuple[str, str, str]] = frozenset()) -> CapabilityAuthorizationDecision:
         definition = self._catalog.get(capability_id)
         reason = "capability_not_registered"
         allowed = False
@@ -116,17 +125,21 @@ class CapabilityAuthorizationService:
                 principal_scope_owned = scope_type != "principal" or (identity and scope_id == identity)
                 if principal_scope_owned and scope_id:
                     reason = "permission_not_granted"
-                    if definition.required_permissions.issubset(permissions):
+                    grant_key = (capability_id, scope_type, scope_id)
+                    legacy_grant = definition.required_permissions.issubset(permissions)
+                    session_grant = "session" in definition.grant_modes and grant_key in session_grants
+                    if legacy_grant or session_grant:
                         reason = "explicit_permission_granted"
                         allowed = True
         return CapabilityAuthorizationDecision(
             capability_id, scope_type, scope_id, risk, allowed, reason)
 
     def require(self, *, identity: str, permissions: frozenset[str],
-                capability_id: str, scope_type: str, scope_id: str) -> CapabilityAuthorizationDecision:
+                capability_id: str, scope_type: str, scope_id: str,
+                session_grants: frozenset[tuple[str, str, str]] = frozenset()) -> CapabilityAuthorizationDecision:
         decision = self.evaluate(identity=identity, permissions=permissions,
                                  capability_id=capability_id, scope_type=scope_type,
-                                 scope_id=scope_id)
+                                 scope_id=scope_id, session_grants=session_grants)
         if not decision.allowed:
             raise CapabilityAuthorizationDenied(decision.reason)
         return decision
