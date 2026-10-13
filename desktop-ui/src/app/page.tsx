@@ -203,7 +203,39 @@ export default function Home() {
           <li><span>04</span><div><strong>Chat with the coordinator</strong><p>Choose Chat and send a message to the configured coordinator. If setup is missing, review provider connections and Agent assignments first.</p></div></li>
           <li><span>05</span><div><strong>Review the AI organization</strong><p>Use AI team to inspect Employees and Agents, and Projects or Tasks to review organized work. This overview does not dispatch Tasks.</p></div></li>
         </ol>
-        <details className="operator-guide"><summary>Advanced operator setup</summary><div><p>Use Provider connections to explicitly configure a supported local or online connection, then Providers &amp; models to review registration and Agent assignments. The local-model inventory page supports an explicit bounded check for supported providers; unsupported capabilities remain unknown. This overview never probes providers, downloads models, changes assignments, or grants permissions.</p><div className="setup-actions"><a href="/ui/provider-connections">Provider connections</a><a href="/ui/providers">Provider and model settings</a><a href="/ui/local-models">Local model inventory</a><a href="/ui/employees">Agent assignments</a><a href="/ui/tasks">Task review</a></div></div></details>
+      </section>
+
+      <section className="provider-guide" aria-labelledby="provider-guide-title">
+        <div className="section-heading"><div><p className="eyebrow">SUPPORTED SETUP · OWNER CONTROLLED</p><h2 id="provider-guide-title">Connect a provider and choose a model</h2></div><span className="local-tag">NO AUTOMATIC CONNECTIONS</span></div>
+        <p className="provider-intro">Start with one supported connection. Keep API keys out of ordinary chat; enter credentials only in the dedicated owner-protected connection form. Nothing connects, downloads, or changes an Agent assignment from this guide.</p>
+        <div className="provider-options">
+          <article className="provider-option"><span className="card-index">LOCAL</span><h3>Use a local Ollama service</h3><p>Start Ollama yourself, then use Provider connections to add its loopback address and explicitly refresh the model catalog. Installed-model checks and model selection are separate owner actions.</p><a href="/ui/provider-connections">Set up local connection <span aria-hidden="true">→</span></a></article>
+          <article className="provider-option"><span className="card-index">ONLINE</span><h3>Use Google Gemini</h3><p>Connect from the dedicated setup page with an owner-managed API key. Model discovery is an explicit online check; each Gemini chat turn still requires its separate consent.</p><a href="/ui/online-provider">Set up Gemini <span aria-hidden="true">→</span></a></article>
+        </div>
+        <p className="preferences-note"><strong>Everyday use:</strong> Chat is available from the main navigation. This version does not yet have a general preferences page; the unified preferences experience remains planned separately.</p>
+        <div className="readiness-legend" aria-label="How provider and model readiness terms differ">
+          <h3>What each setup signal means</h3>
+          <dl>
+            <div><dt>Registered provider</dt><dd>A provider record exists. This alone does not mean the service responds.</dd></div>
+            <div><dt>Service availability</dt><dd>A supported explicit check returned a result. The home overview does not run one; otherwise availability is unknown.</dd></div>
+            <div><dt>Installed model</dt><dd>A supported model inventory check observed it. A configured model name is not inventory evidence.</dd></div>
+            <div><dt>Agent assignment</dt><dd>An Agent has a configured provider and model. Assignment does not prove availability, installation, compatibility, or successful execution.</dd></div>
+            <div><dt>Software capacity</dt><dd>Request slots bound software concurrency. They do not measure available GPU, VRAM, or RAM.</dd></div>
+            <div><dt>Measured hardware evidence</dt><dd>Only a supported runtime measurement can report observed loaded-model memory; absent or unsupported evidence stays unknown and does not guarantee fit.</dd></div>
+          </dl>
+        </div>
+        <details className="operator-guide"><summary>Advanced operator settings</summary><div>
+          <p>These pages require owner sign-in and keep their existing confirmation and consent steps. Use them when you need to inspect or change a specific connection, assignment, policy, or supported software item.</p>
+          <div className="operator-groups">
+            <section><h3>Connections and credentials</h3><a href="/ui/provider-connections">Provider connections</a><small>Configure supported Ollama or Gemini connections; credentials are handled only here.</small></section>
+            <section><h3>Provider records and Agent assignments</h3><a href="/ui/providers">Providers &amp; models</a><small>Inspect provider registration and configured Agent/model assignments.</small></section>
+            <section><h3>Model inventory and capability guidance</h3><a href="/ui/local-models">Local model inventory</a><a href="/ui/assignment-policy">Review assignment recommendations</a><small>Inventory and recommendations use their own explicit checks and do not prove hardware fit.</small></section>
+            <section><h3>Security and access</h3><a href="/ui/login">Owner sign-in</a><small>Protected operator pages remain unavailable without the required owner session.</small></section>
+            <section><h3>Resource settings</h3><p>No dedicated resource-settings page is available in this workspace yet. Configured request slots represent software concurrency only.</p></section>
+            <section><h3>Diagnostics and activity</h3><a href="/ui/activity">Activity &amp; logs</a><small>Review recorded application activity; missing runtime or hardware evidence remains unknown.</small></section>
+            <section><h3>Supported software inventory</h3><a href="/ui/inventory">Software &amp; integrations</a><small>Review the existing scoped inventory and supported lifecycle actions.</small></section>
+          </div>
+        </div></details>
       </section>
 
       <section className="workspaces" aria-labelledby="workspaces-title">

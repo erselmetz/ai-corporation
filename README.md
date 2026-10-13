@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-132 are verified complete; Tasks 133-175 are planned expansion work. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 are verified complete; Tasks 134-175 are planned expansion work. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -943,3 +943,8 @@ unrestricted autonomous behavior.
 
 After install, open the desktop or Start Menu shortcut; the installer does not launch the app. The native startup window asks you to create and confirm an owner password on first run and to enter it on later starts. After the workspace opens, sign in again in the UI to create the protected browser session, then open Chat. The Electron home screen provides this chat-first path plus bounded, read-only checks for the local API, owner session, chat permission, registered providers, and configured Agent model assignments. Each request has a 2.5-second timeout. Provider availability, installer integrity, installed models, and optional capability packs remain explicitly UNKNOWN on this overview; the supported local-model inventory is a separate owner-initiated check. Beginner first-chat and organization guidance is separated from expandable operator setup. The overview does not connect providers, download models, change assignments, grant permissions, or dispatch Tasks.
 Checkpoint: task-132-guided-first-run-setup.
+
+## Provider and model setup guidance (Task 133)
+
+The Electron home page now gives owners a beginner path for the supported local Ollama and online Google Gemini connections, then explains how provider registration, service availability, installed model inventory, Agent assignment, software request-slot capacity, and observed loaded-model memory differ. API credentials belong only in the dedicated owner-protected connection setup, never ordinary chat. The overview does not connect or check providers, change assignments, or claim hardware fit. Advanced operator pages group existing connection, provider/model, local inventory, capability recommendation, owner access, activity, and software inventory flows. No separate resource-settings page exists; request slots limit software concurrency only. No general preferences page exists yet; the unified preferences experience remains planned as Task 171. The Electron installer was not rebuilt for this source UI change.
+Checkpoint: task-133-provider-model-setup-guidance.
