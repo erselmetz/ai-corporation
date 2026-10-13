@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-139 are verified complete; Task 134 is deferred and incomplete; Tasks 140-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-140 are verified complete; Task 134 is deferred and incomplete; Tasks 141-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -971,3 +971,8 @@ The local-owner API accepts one explicitly selected retained Conversation or Pro
 ## Versioned documentation review (Task 139)
 
 Owner-authorized drafts and append-only versions are stored in a dedicated local SQLite workflow, separate from published Markdown and the read-only Task 53 Documentation Portal. Edits use expected-version conflict checks; approval records the reviewer and time for the exact current version and SHA-256 digest. Diffs and provenance remain in version history, and recovery creates a new draft from an earlier version. History is bounded to 100 documents and 50 versions per document, with no automatic pruning. Approval does not publish; no AI direct writes or portal migration are enabled.
+
+
+## Central capability permission model (Task 140)
+
+The application now has an immutable capability catalog separate from capability inventory. Each definition records a stable identity, scope type, required permission, risk level, and disabled-by-default metadata. The centralized authorization service denies unknown capabilities, missing permissions, and scope mismatches. Existing permission strings remain canonical compatibility grants, existing resource ownership remains enforced by domain services, and default API authentication remains rejecting. This establishes shared checks for APIs and trusted application-service boundaries; grant management and UI controls remain Task 141 scope.

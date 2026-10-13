@@ -968,6 +968,7 @@ def create_app(
     maintenance_activation_root: Path | None = None,
     semantic_memory_service=None,
     documentation_review_service=None,
+    capability_authorization_service=None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
@@ -1038,6 +1039,11 @@ def create_app(
         if authentication_backend is None
         else authentication_backend
     )
+    if capability_authorization_service is None:
+        from app.application.services.capability_authorization import DEFAULT_CAPABILITY_AUTHORIZATION
+        application.state.capability_authorization_service = DEFAULT_CAPABILITY_AUTHORIZATION
+    else:
+        application.state.capability_authorization_service = capability_authorization_service
     application.state.semantic_memory_service = semantic_memory_service
     if semantic_memory_service is not None and hasattr(application_service, "configure_semantic_memory"):
         application_service.configure_semantic_memory(semantic_memory_service)

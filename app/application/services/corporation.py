@@ -168,6 +168,7 @@ class CorporationApplicationService:
         node: Node | None = None,
         *,
         tool_registry: ToolRegistry | None = None,
+        capability_authorization_service=None,
     ):
         if tool_registry is not None and not isinstance(tool_registry, ToolRegistry):
             raise TypeError("tool_registry must be a ToolRegistry or None")
@@ -177,6 +178,10 @@ class CorporationApplicationService:
             employees if isinstance(employees, EmployeeRegistry) else None
         )
         self._tool_registry = tool_registry
+        if capability_authorization_service is None:
+            from .capability_authorization import DEFAULT_CAPABILITY_AUTHORIZATION
+            capability_authorization_service = DEFAULT_CAPABILITY_AUTHORIZATION
+        self._capability_authorization_service = capability_authorization_service
         self._corporation_chat = None
         self._owned_chat = None
         self._owned_employee_chat = None
@@ -210,6 +215,13 @@ class CorporationApplicationService:
         self._knowledge_proposals_lock = Lock()
         self._corporation = corporation
         self._node = node
+
+    def authorize_capability(self, *, identity: str, permissions: frozenset[str],
+                             capability_id: str, scope_type: str, scope_id: str):
+        """Enforce the shared capability policy at trusted application-service boundaries."""
+        return self._capability_authorization_service.require(
+            identity=identity, permissions=permissions, capability_id=capability_id,
+            scope_type=scope_type, scope_id=scope_id)
 
     def assess_model_resources(self, candidates):
         from app.resources.assessment import assess_model_resources

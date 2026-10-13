@@ -1532,7 +1532,7 @@ export const post100Tasks = [
     "title": "Central capability permission model",
     "description": "Define and enforce centralized least-privilege authorization for existing and future optional capabilities.",
     "category": "Phase C - Capability Governance",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       92,
       102
@@ -1546,12 +1546,20 @@ export const post100Tasks = [
       "Do not broaden default API authentication."
     ],
     "decisions": [
-      "Specify compatibility/migration behavior for existing permissions."
+      "Preserve existing AuthenticatedPrincipal permission strings and route meanings as canonical compatibility grants. Require every route permission to map to a centrally declared capability; unknown capabilities deny access.",
+      "Capability definitions are separate from Task 92 inventory and contain a stable ID, required permission, scope type, risk level, and disabled-by-default metadata. Existing resource-owner checks remain in their domain services; no role/title/inventory-based grants or permission migration are introduced."
     ],
     "area": "P19",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-140-central-capability-permissions",
+    "validation": [
+      "Capability authorization, API, local-owner, documentation API/review tests: 38 passed, 2 skipped.",
+      "Unknown capability, missing grant, wrong scope type, foreign principal scope, explicit permission compatibility, risk metadata, and direct application-service authorization were verified. Existing API permission strings and default rejecting authentication remain unchanged.",
+      "Full Python suite: 1127 passed, 6 skipped, with the same two pre-existing unrelated failures in tests/test_command_interface.py::test_model_set_command and tests/test_provider_model_api.py::test_model_replacement_uses_existing_assignment_service. Public docs tests: 15 passed; update-manifest tests: 6 passed; Python compilation and diff checks passed."
+    ],
+    "limitations": [
+      "This task centralizes declared permissions and enforcement helpers but does not add grant creation/revocation, persistence, UI management, or per-resource grant storage; those remain Task 141 scope.",
+      "Non-principal resource ownership and state are still verified by the existing domain services; the policy checks the declared capability, permission, and scope type. Inventory descriptions remain non-authoritative."
+    ]
   },
   {
     "number": 141,
@@ -2514,7 +2522,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-139 are verified; Tasks 140-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-140 are verified; Tasks 141-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

@@ -3,6 +3,11 @@ from typing import Protocol
 
 from fastapi import Depends, HTTPException, Request
 
+from app.application.services.capability_authorization import (
+    CapabilityAuthorizationDenied,
+    DEFAULT_CAPABILITY_AUTHORIZATION,
+)
+
 
 @dataclass(frozen=True)
 class AuthenticatedPrincipal:
@@ -44,9 +49,16 @@ def require_permission(permission: str):
         raise ValueError("Permission cannot be empty")
 
     def dependency(
+        request: Request,
         principal: AuthenticatedPrincipal = Depends(require_authenticated_principal),
     ) -> AuthenticatedPrincipal:
-        if permission not in principal.permissions:
+        authorizer = getattr(request.app.state, "capability_authorization_service",
+                             DEFAULT_CAPABILITY_AUTHORIZATION)
+        try:
+            authorizer.require(identity=principal.identity, permissions=principal.permissions,
+                               capability_id=permission, scope_type="principal",
+                               scope_id=principal.identity)
+        except CapabilityAuthorizationDenied:
             raise HTTPException(status_code=403, detail="Permission denied")
         return principal
 
