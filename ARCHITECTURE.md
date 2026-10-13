@@ -672,7 +672,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 are verified complete; Tasks 134-175 are planned expansion work. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Task 135 are verified complete; Task 134 is deferred and incomplete; Tasks 136-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -1293,4 +1293,8 @@ The Electron/Next.js home screen uses bounded same-origin reads to report local 
 
 ## Provider and model setup guidance (Task 133)
 
-The desktop home explains the existing local Ollama and online Gemini setup paths and distinguishes provider registration, explicit service availability, installed-model inventory, Agent assignment, software request slots, and supported observed loaded-model memory. Credentials are entered only in the dedicated owner-protected connection form, not ordinary chat. Advanced operator settings group existing provider connections, provider/model assignments, local inventory, capability recommendations, owner access, activity records, and scoped software inventory. No separate resource-settings page is present; request slots bound software concurrency and do not prove hardware fit. The guide performs no provider checks, credential edits, downloads, or assignment changes. Task 134 remains next.
+The desktop home explains the existing local Ollama and online Gemini setup paths and distinguishes provider registration, explicit service availability, installed-model inventory, Agent assignment, software request slots, and supported observed loaded-model memory. Credentials are entered only in the dedicated owner-protected connection form, not ordinary chat. Advanced operator settings group existing provider connections, provider/model assignments, local inventory, capability recommendations, owner access, activity records, and scoped software inventory. No separate resource-settings page is present; request slots bound software concurrency and do not prove hardware fit. The guide performs no provider checks, credential edits, downloads, or assignment changes. Task 134 is deferred and incomplete; Task 136 is next.
+
+## Semantic retrieval quality evaluation (Task 135)
+
+tests/fixtures/semantic_retrieval_v1.json and tests/fixtures/semantic_retrieval_v1_report.json are the versioned synthetic test set and expected report for Task 130 explicit semantic retrieval and the existing lexical path. Deterministic tests report Recall@5, Precision@5, mean reciprocal rank, and false-positive/false-negative examples using synthetic IDs only. Thresholds are 1.0 for semantic Recall@5, Precision@5, and MRR, 1.0 for lexical Recall@5, and zero stale, expired, or unauthorized-record leakage. Stale revisions and expired records are re-read from the authoritative memory service; owner/scope filters prevent unauthorized candidates. The fixture does not represent private user content or call a live Provider. Synthetic embeddings validate search and access contracts only; they do not establish real-model relevance quality. No runtime retrieval, authorization, API, or UI behavior changes in this task. Task 134 is deferred and incomplete; Task 136 is next.

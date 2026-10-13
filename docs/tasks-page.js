@@ -60,8 +60,8 @@ for (const group of [...taskGroups].reverse()) {
     title.className = "task-title";
     title.textContent = task.title;
     const status = document.createElement("span");
-    status.className = `status status-${task.status === "completed" ? "complete" : "planned"}`;
-    status.textContent = task.status === "completed" ? "Completed" : "Planned";
+    status.className = `status status-${task.status === "completed" ? "complete" : task.status === "deferred" ? "deferred" : "planned"}`;
+    status.textContent = task.status === "completed" ? "Completed" : task.status === "deferred" ? "Deferred — incomplete" : "Planned";
     const description = document.createElement("span");
     description.className = "task-description";
     description.textContent = task.description;
@@ -90,4 +90,6 @@ for (const group of [...taskGroups].reverse()) {
 }
 
 const completeCount = tasks.filter((task) => task.status === "completed").length;
-summary.textContent = `${tasks.length} roadmap tasks · ${completeCount} completed scoped checkpoints · ${tasks.length - completeCount} planned`;
+const deferredCount = tasks.filter((task) => task.status === "deferred").length;
+const plannedCount = tasks.filter((task) => task.status === "planned").length;
+summary.textContent = `${tasks.length} roadmap tasks · ${completeCount} completed scoped checkpoints · ${deferredCount} deferred and incomplete · ${plannedCount} planned`;

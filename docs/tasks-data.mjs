@@ -1338,7 +1338,7 @@ export const post100Tasks = [
     "title": "Optional capability pack lifecycle",
     "description": "Manage separately declared optional capability packs with versioned manifests, explicit preview/confirmation, and graceful unavailable states.",
     "category": "Phase A - Install and Onboarding",
-    "status": "planned",
+    "status": "deferred",
     "dependsOn": [
       131,
       132,
@@ -1358,14 +1358,14 @@ export const post100Tasks = [
     "area": "P17",
     "checkpoint": null,
     "validation": [],
-    "limitations": []
+    "limitations": ["Deferred before implementation because the current packaged runtime has no verified first-party pack artifact source, publisher trust anchor, or isolated runtime-loading boundary. This task remains incomplete and is not a prerequisite for independent Task 135 evaluation."]
   },
   {
     "number": 135,
     "title": "Semantic retrieval quality evaluation",
     "description": "Evaluate Task 130 semantic retrieval against a versioned, permission-safe test set with measurable relevance and failure reporting.",
     "category": "Phase B - Knowledge and RAG",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       66,
       117,
@@ -1379,13 +1379,17 @@ export const post100Tasks = [
       "Do not claim model quality from fake-provider contract tests.",
       "Do not auto-change thresholds or index content."
     ],
-    "decisions": [
-      "Select evaluation metrics and acceptance thresholds before implementation."
-    ],
+    "decisions": [],
     "area": "P18",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-135-semantic-retrieval-evaluation",
+    "validation": [
+      "Resolved evaluation policy: use Recall@5, Precision@5, and mean reciprocal rank (MRR) for synthetic relevance cases with a 1.0 threshold for each, lexical Recall@5 of 1.0, and zero stale, expired, or unauthorized record leakage. These are fixture-contract thresholds, not production-model quality claims.",
+      "Versioned deterministic fixture tests passed for semantic paraphrase/exact relevance, unchanged lexical retrieval, stale revision rejection, expiry rejection, and unauthorized-owner isolation. Recall@5 1.0, Precision@5 1.0, MRR 1.0, lexical Recall@5 1.0, and zero excluded-record leaks on the synthetic fixture.",
+      "Focused Task 130 semantic memory, context retrieval, and chat knowledge regressions plus Task 135: 36 passed. Update manifest tests: 6 passed; public documentation tests: 15 passed. Full Python suite: 1105 passed, 6 skipped, with two unrelated existing failures in tests/test_command_interface.py::test_model_set_command and tests/test_provider_model_api.py::test_model_replacement_uses_existing_assignment_service."
+    ],
+    "limitations": [
+      "The versioned fixture and expected report use deterministic synthetic embeddings; they do not measure relevance quality of Sentence Transformers or any production embedding model. The full Python suite still has two unrelated existing model-assignment failures documented in validation."
+    ]
   },
   {
     "number": 136,
@@ -2480,7 +2484,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; Tasks 131-133 are verified and Tasks 134-175 are planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Task 135 is verified; Tasks 136-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
@@ -2511,4 +2515,4 @@ export const taskGroups = [...foundationTaskGroups, {
   tasks: post100Tasks.filter(task => task.number <= 130).map(({ title, description }) => [title, description]),
 }, ...futureRoadmapGroups];
 export const tasks = [...foundationTasks, ...post100Tasks];
-export const nextTask = post100Tasks.find((task) => task.status !== "completed");
+export const nextTask = post100Tasks.find((task) => task.status === "planned");

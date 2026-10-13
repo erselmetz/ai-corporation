@@ -55,6 +55,7 @@ p { margin: .65rem 0 1rem; }
 .status { border-radius: 999px; display: inline-block; font-size: .75rem; font-weight: 700; line-height: 1.5; padding: .15rem .55rem; white-space: nowrap; }
 .status-complete { background: var(--green-soft); color: var(--green); }
 .status-planned { background: var(--amber-soft); color: var(--amber); }
+.status-deferred { background: #edf0f4; color: #48566a; }
 .stat-row { display: flex; flex-wrap: wrap; gap: .65rem; margin: 1.2rem 0; }
 .stat { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; min-width: 145px; padding: .7rem .85rem; }
 .stat strong { color: var(--ink); display: block; font-size: 1.25rem; }

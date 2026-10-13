@@ -1,0 +1,23 @@
+{
+  "fixture_version": "1.0.0",
+  "semantic": {
+    "recall_at_5": 1.0,
+    "precision_at_5": 1.0,
+    "mrr": 1.0,
+    "false_positive_examples": [],
+    "false_negative_examples": [],
+    "excluded_record_leaks": []
+  },
+  "lexical": {
+    "recall_at_5": 1.0,
+    "false_positive_examples": [],
+    "false_negative_examples": []
+  },
+  "stale_candidates_rejected": {
+    "semantic-paraphrase-canine": 1,
+    "semantic-exact-invoice": 0,
+    "semantic-galaxy-with-invalid-candidates": 1
+  },
+  "excluded_synthetic_record_ids": ["eval-stale", "eval-expired", "eval-private"],
+  "quality_claim": "Deterministic fixture-contract evidence only; no production embedding-model relevance claim."
+}

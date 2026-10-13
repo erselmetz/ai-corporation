@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "description": "Synthetic, permission-safe fixtures for the Task 130 semantic retrieval contract.",
+  "embedding_fixture": "deterministic-token-groups-v1",
+  "metrics": {
+    "semantic_recall_at_5_min": 1.0,
+    "semantic_precision_at_5_min": 1.0,
+    "semantic_mrr_min": 1.0,
+    "lexical_recall_at_5_min": 1.0,
+    "unauthorized_stale_expired_leakage_max": 0
+  },
+  "records": [
+    {"id": "eval-canine", "scope_id": "eval-semantic", "owner_id": "owner", "content": "canine animal", "expires_minutes": 1440},
+    {"id": "eval-invoice", "scope_id": "eval-lexical", "owner_id": "owner", "content": "invoice payment", "expires_minutes": 1440},
+    {"id": "eval-galaxy", "scope_id": "eval-semantic", "owner_id": "owner", "content": "galaxy space", "expires_minutes": 1440},
+    {"id": "eval-stale", "scope_id": "eval-semantic", "owner_id": "owner", "content": "galaxy stars", "updated_content": "calibration manual", "expires_minutes": 1440, "state": "stale"},
+    {"id": "eval-expired", "scope_id": "eval-semantic", "owner_id": "owner", "content": "galaxy records", "expires_minutes": 30, "state": "expired"},
+    {"id": "eval-private", "scope_id": "eval-semantic", "owner_id": "another-owner", "content": "galaxy notes", "expires_minutes": 1440, "state": "unauthorized"}
+  ],
+  "cases": [
+    {"id": "semantic-paraphrase-canine", "mode": "semantic", "query": "dog puppy", "scope_id": "eval-semantic", "at_minutes": 0, "relevant_ids": ["eval-canine"]},
+    {"id": "semantic-exact-invoice", "mode": "semantic", "query": "invoice payment", "scope_id": "eval-lexical", "at_minutes": 0, "relevant_ids": ["eval-invoice"]},
+    {"id": "semantic-galaxy-with-invalid-candidates", "mode": "semantic", "query": "galaxy stars", "scope_id": "eval-semantic", "at_minutes": 60, "relevant_ids": ["eval-galaxy"], "excluded_ids": ["eval-stale", "eval-expired", "eval-private"]},
+    {"id": "lexical-exact-invoice", "mode": "lexical", "query": "invoice payment", "scope_id": "eval-lexical", "at_minutes": 0, "relevant_ids": ["eval-invoice"]}
+  ]
+}

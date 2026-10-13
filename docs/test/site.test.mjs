@@ -87,12 +87,15 @@ describe("documentation site", () => {
     assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 30, 4, 5, 5, 5, 6, 3, 4, 4, 4, 1, 2, 2]);
   });
 
-  it("preserves 133 completed tasks and marks the 42 future tasks planned", () => {
-    assert.equal(tasks.filter(task => task.status === "completed").length, 133);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 42);
-    assert.equal(nextTask.number, 134);
+  it("records verified, deferred, and planned work without treating deferral as completion", () => {
+    assert.equal(tasks.filter(task => task.status === "completed").length, 134);
+    assert.equal(tasks.filter(task => task.status === "deferred").length, 1);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 40);
+    assert.equal(tasks.find(task => task.number === 134).status, "deferred");
+    assert.equal(tasks.find(task => task.number === 135).status, "completed");
+    assert.equal(nextTask.number, 136);
     assert.ok(tasks.slice(0, 133).every(task => task.status === "completed"));
-    assert.ok(tasks.slice(133).every(task => task.status === "planned"));
+    assert.ok(tasks.slice(133).some(task => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -171,8 +174,8 @@ describe("documentation site", () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
     assert.match(html, /Milestones 1–100 are completed foundations/);
-    assert.match(html, /Tasks 101-133 are verified post-100 checkpoints; Tasks 134-175 are planned only/);
-    assert.match(html, /Tasks 134-175 are planned/);
+    assert.match(html, /Tasks 101-133 and Task 135 are verified post-100 checkpoints; Task 134 is deferred and incomplete; Tasks 136-175 are planned/);
+    assert.match(html, /Task 134 is deferred and incomplete/);
     assert.match(html, /interactive maps, multimodal controls/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
@@ -182,27 +185,27 @@ describe("documentation site", () => {
     const [home, documentation, architecture, roadmap, updates] = await Promise.all(
       ["index.html", "documentation.html", "architecture.html", "roadmap.html", "updates.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
-    assert.match(home, /Verified Tasks 101-133/);
+    assert.match(home, /Verified Tasks 101-133 cover/);
     assert.match(home, /Task 131 documents the current packaging and distribution boundary/);
-    assert.match(documentation, /Tasks 101-133 are verified post-100 checkpoints, including Task 131 packaging documentation, Task 132 guided first-run onboarding, and Task 133 provider and model setup guidance; Tasks 134-175 remain planned and are not current implementation/);
+    assert.match(documentation, /Tasks 101-133 and Task 135 are verified post-100 checkpoints; Task 134 is deferred and incomplete; Tasks 136-175 remain planned/);
     assert.match(architecture, /Task 105 adds explicitly consented Gemini coordinator chat/);
     assert.match(architecture, /Supported packaging and distribution boundary — Task 131/);
     assert.match(architecture, /Windows 11 x64.*not claimed as supported/);
-    assert.match(updates, /Completed — Task 133 — 2026-10-13/);
+    assert.match(updates, /Completed — Task 135 — 2026-10-13/);
     assert.match(architecture, /Task 130/);
     assert.match(architecture, /Chat-driven GitHub study and research — Task 121/);
     assert.match(roadmap, /href="tasks.html#task-130">Task 130.*memory/i);
-    assert.match(roadmap, /Tasks 134-175 are planned expansions/);
-    assert.match(roadmap, /42 planned capability and productization tasks/);
+    assert.match(roadmap, /Task 134 is deferred and incomplete/);
+    assert.match(roadmap, /40 planned tasks/);
     assert.match(roadmap, /tasks.html#tasks-131-134/);
     assert.match(roadmap, /all 175 tasks/);
     assert.match(architecture, /Task 130.*semantic/i);
-    assert.match(architecture, /Tasks 101-133 are verified checkpoints; Tasks 134-175 are planned expansion work/);
+    assert.match(architecture, /Tasks 101-133 and Task 135 are verified checkpoints; Task 134 is deferred and incomplete; Tasks 136-175 remain planned/);
     for (const page of [home, documentation]) assert.match(page, /Task 130/);
   });
 
   it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {
-    assert.equal(nextTask.number, 134);
+    assert.equal(nextTask.number, 136);
     const task122 = post100Tasks.find(task => task.number === 122);
     assert.equal(task122.status, "completed");
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");
@@ -216,7 +219,7 @@ describe("documentation site", () => {
       "task-125-managed-vscode-user-lifecycle", "task-126-local-application-lifecycle",
       "task-127-windows-electron-installer", "task-128-optional-voice-interaction",
       "task-129-command-center-release-acceptance", "task-130-semantic-memory-rag-foundation",
-      "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance"]);
+      "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance", "task-135-semantic-retrieval-evaluation"]);
     const task127 = post100Tasks.find(task => task.number === 127);
     assert.equal(task127.status, "completed");
     assert.equal(task127.checkpoint, "task-127-windows-electron-installer");
@@ -261,6 +264,17 @@ describe("documentation site", () => {
     assert.equal(task133.checkpoint, "task-133-provider-model-setup-guidance");
     assert.match(task133.validation.join(" "), /Next.js static production build/);
     assert.match(task133.limitations.join(" "), /software concurrency only/);
+    const task134 = post100Tasks.find(task => task.number === 134);
+    assert.equal(task134.status, "deferred");
+    assert.match(task134.limitations.join(" "), /no verified first-party pack artifact source/);
+    const task135 = post100Tasks.find(task => task.number === 135);
+    assert.equal(task135.status, "completed");
+    assert.equal(task135.checkpoint, "task-135-semantic-retrieval-evaluation");
+    assert.deepEqual(task135.dependsOn, [66, 117, 130]);
+    assert.ok(!task135.dependsOn.includes(134));
+    assert.deepEqual(task135.decisions, []);
+    assert.match(task135.validation.join(" "), /Recall@5 1.0, Precision@5 1.0, MRR 1.0/);
+    assert.match(task135.limitations.join(" "), /do not measure relevance quality/);
     assert.match(task132.validation.join(" "), /Next.js static production build/);
     assert.match(task132.limitations.join(" "), /installer signature or package integrity/);
     for (const task of post100Tasks) {

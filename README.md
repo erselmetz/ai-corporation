@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 are verified complete; Tasks 134-175 are planned expansion work. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Task 135 are verified complete; Task 134 is deferred and incomplete; Tasks 136-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -948,3 +948,7 @@ Checkpoint: task-132-guided-first-run-setup.
 
 The Electron home page now gives owners a beginner path for the supported local Ollama and online Google Gemini connections, then explains how provider registration, service availability, installed model inventory, Agent assignment, software request-slot capacity, and observed loaded-model memory differ. API credentials belong only in the dedicated owner-protected connection setup, never ordinary chat. The overview does not connect or check providers, change assignments, or claim hardware fit. Advanced operator pages group existing connection, provider/model, local inventory, capability recommendation, owner access, activity, and software inventory flows. No separate resource-settings page exists; request slots limit software concurrency only. No general preferences page exists yet; the unified preferences experience remains planned as Task 171. The Electron installer was not rebuilt for this source UI change.
 Checkpoint: task-133-provider-model-setup-guidance.
+
+## Semantic retrieval quality evaluation (Task 135)
+
+A versioned synthetic fixture evaluates explicit Task 130 retrieval with Recall@5, Precision@5, and mean reciprocal rank (MRR). Fixture thresholds are 1.0 for each metric, 1.0 for unchanged lexical Recall@5, and zero leakage of stale, expired, or unauthorized records. The versioned test and expected report are stored at tests/fixtures/semantic_retrieval_v1.json and tests/fixtures/semantic_retrieval_v1_report.json; false-positive and false-negative examples use synthetic record IDs only. These results validate deterministic retrieval contracts; they do not measure the relevance quality of a production embedding model. Task 134 is deferred and incomplete; its unresolved pack-source trust and isolated loading boundary do not block this independent evaluation.
