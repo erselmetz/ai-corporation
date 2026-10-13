@@ -36,7 +36,7 @@ class CapabilityAuthorizationDenied(PermissionError):
 # grant meaning. Adding a new route permission requires an explicit catalog entry.
 _LEGACY_PERMISSION_NAMES = (
     "activity:read", "agent:read", "assignment-policy:manage", "assignment-policy:read",
-    "browser:act",
+    "browser:act", "desktop:act",
     "chat-history:manage", "chat-knowledge:retain", "chat-knowledge:withdraw",
     "capability-approval:manage", "capability-audit:read", "capability-emergency:manage", "capability-emergency:read", "capability-grant:manage", "chat-task:create", "chat:close", "chat:read", "chat:send", "chat:start",
     "corporation:read", "documentation:read", "documentation:review",
@@ -60,6 +60,7 @@ _HIGH_RISK = frozenset({
     "capability-audit:read",
     "capability-emergency:manage",
     "browser:act",
+    "desktop:act",
     "screen:capture",
     "camera:capture",
 })

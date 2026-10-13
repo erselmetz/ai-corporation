@@ -39,6 +39,7 @@ def test_login_session_cookie_and_logout_revocation():
         assert "chat-task:create" in record.json()["permissions"]
         assert "screen:capture" in record.json()["permissions"]
         assert "browser:act" in record.json()["permissions"]
+        assert "desktop:act" in record.json()["permissions"]
         assert "task:dispatch" in record.json()["permissions"]
         assert "employee:read" in record.json()["permissions"]
         assert "github:read" in record.json()["permissions"]

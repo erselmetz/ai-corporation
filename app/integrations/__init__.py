@@ -137,6 +137,17 @@ from .scoped_browser_automation import (
     ScopedBrowserAutomation,
     ScopedBrowserError,
 )
+from .scoped_desktop_automation import (
+    DesktopActionPreview,
+    DesktopActionRequest,
+    DesktopActionUnavailable,
+    DesktopAutomationPolicy,
+    DesktopPolicyDenied,
+    DesktopTargetUnavailable,
+    ScopedDesktopAutomation,
+    ScopedDesktopError,
+    WindowsUIAutomationBackend,
+)
 from .gemini_catalog import (
     GeminiAPIConfiguration,
     GeminiCatalogAuditEvent,
@@ -261,6 +272,15 @@ __all__ = [
     "BrowserTargetUnavailable",
     "ScopedBrowserAutomation",
     "ScopedBrowserError",
+    "DesktopActionPreview",
+    "DesktopActionRequest",
+    "DesktopActionUnavailable",
+    "DesktopAutomationPolicy",
+    "DesktopPolicyDenied",
+    "DesktopTargetUnavailable",
+    "ScopedDesktopAutomation",
+    "ScopedDesktopError",
+    "WindowsUIAutomationBackend",
     "GeminiAPIConfiguration",
     "GeminiCatalogAuditEvent",
     "GeminiCatalogAuditStatus",

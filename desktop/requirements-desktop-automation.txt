@@ -1,0 +1,2 @@
+# Optional exact-target Windows UI Automation adapter; install only when used.
+pywinauto==0.6.9

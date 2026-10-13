@@ -2061,9 +2061,9 @@ export const post100Tasks = [
   {
     "number": 157,
     "title": "Scoped desktop automation provider",
-    "description": "Add an optional desktop action adapter for individually authorized operations with visible state and bounded recovery.",
+    "description": "Add an optional Windows UI Automation action adapter for individually approved semantic controls with visible state and bounded recovery.",
     "category": "Phase F - Controlled Automation",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       140,
       141,
@@ -2071,20 +2071,28 @@ export const post100Tasks = [
       144
     ],
     "acceptance": [
-      "Require per-action grant, target boundary, timeout, indicator, and stop handling.",
-      "Provide preview/dry-run where target state can be assessed safely."
+      "Require a one-use owner approval bound to the exact process, window, control, target digest, and action.",
+      "Require an exact executable allowlist, visible enabled native Button target, bounded caller timeout, activity indicator, and emergency-stop handling.",
+      "Provide read-only preview before any action."
     ],
     "outOfScope": [
-      "No unrestricted keyboard/mouse control by default.",
+      "No unrestricted keyboard/mouse control, coordinate targeting, text entry, screenshots, launches, or background enumeration.",
+      "No API/UI/chat wiring or default allowed process.",
       "open-interpreter requires separate capability/security evaluation."
     ],
     "decisions": [
-      "Choose platform API after isolation review; pyautogui is only a candidate."
+      "Use Windows UI Automation through the optional pywinauto UIA backend. It targets one direct-child native Button by exact process ID/name, window handle/title, automation ID, and accessible name. It exposes only Invoke; it sends no coordinates or keyboard input. pyautogui is excluded because coordinate/global input has a broader target boundary. The optional pywinauto 0.6.9 requirement is installed manually and is not added to core or the packaged runtime."
     ],
     "area": "P22",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-157-scoped-desktop-automation",
+    "validation": [
+      "Focused desktop/browser capability, approval, authorization, and local-owner tests: 36 passed. Deterministic backend fakes only; no live desktop window was inspected or changed.",
+      "Windows UI Automation optional dependency pywinauto 0.6.9 and comtypes 1.4.17 import successfully under Python 3.14.",
+      "Full Python suite: 1212 passed, 6 skipped; the same two previously recorded unrelated model-assignment failures remain (test_model_set_command and test_model_replacement_uses_existing_assignment_service). Public documentation tests: 15 passed; Python compilation and git diff checks passed."
+    ],
+    "limitations": [
+      "The integration is a Python service foundation only; there is no route, UI, chat tool, default process policy, or bundled optional dependency. It invokes only direct-child native UIA Buttons in one exact allowed executable and visible window. A timed-out in-flight UIA call cannot be remotely cancelled; its outcome remains unknown, the action is never retried, and the local controller remains occupied until that call exits. Windows UIA provider behavior has not been tested against a live desktop application. Process IDs, approvals, action counts, and activity state are process-local."
+    ]
   },
   {
     "number": 158,
@@ -2599,7 +2607,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-156 are verified; Tasks 157-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-157 are verified; Tasks 158-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
