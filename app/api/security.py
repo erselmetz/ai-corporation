@@ -56,12 +56,27 @@ def require_permission(permission: str):
     ) -> AuthenticatedPrincipal:
         authorizer = getattr(request.app.state, "capability_authorization_service",
                              DEFAULT_CAPABILITY_AUTHORIZATION)
+        audit = getattr(request.app.state, "capability_audit_service", None)
         try:
             authorizer.require(identity=principal.identity, permissions=principal.permissions,
                                capability_id=permission, scope_type="principal",
                                scope_id=principal.identity, session_grants=principal.session_grants)
         except CapabilityAuthorizationDenied:
+            if audit is not None:
+                try:
+                    audit.record(actor_id=principal.identity, capability_id=permission,
+                                 permission_decision="deny", action_state="authorization",
+                                 result_state="denied", safe_reference=principal.identity)
+                except (RuntimeError, OSError, ValueError):
+                    raise HTTPException(status_code=503, detail="Capability audit unavailable") from None
             raise HTTPException(status_code=403, detail="Permission denied")
+        if audit is not None:
+            try:
+                audit.record(actor_id=principal.identity, capability_id=permission,
+                             permission_decision="allow", action_state="authorization",
+                             result_state="allowed", safe_reference=principal.identity)
+            except (RuntimeError, OSError, ValueError):
+                raise HTTPException(status_code=503, detail="Capability audit unavailable") from None
         return principal
 
     return dependency

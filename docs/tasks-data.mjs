@@ -1633,7 +1633,7 @@ export const post100Tasks = [
     "title": "Capability audit and sensitive-data controls",
     "description": "Record bounded authorized audit events and minimize sensitive capability inputs, outputs, and retained evidence.",
     "category": "Phase C - Capability Governance",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       140,
       141
@@ -1647,12 +1647,19 @@ export const post100Tasks = [
       "Do not claim tamper-proof audit without evidence."
     ],
     "decisions": [
-      "Select durable audit storage and retention policy after privacy/recovery review."
+      "Use the existing local SQLite database for metadata-only audit events, with a 30-day retention window, a 10,000-event hard cap, and at most 200 events per owner inspection. This is durable local operational history, not tamper-proof evidence; the database is not encrypted at rest. Store fixed actor/capability/permission/action/result/time fields and validated safe references only. Hash all actor identifiers into opaque references, and omit unsafe references."
     ],
     "area": "P19",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-143-capability-audit-retention",
+    "validation": [
+      "Focused capability audit, grant, approval, authorization, and local access regressions: 28 passed.",
+      "Audit tests verify fixed metadata-only storage, opaque hashing of every actor identifier including token-shaped values, omitted unsafe references, 30-day pruning, hard event/inspection bounds, explicit local-owner inspection permission, and grant lifecycle events.",
+      "Full Python suite: 1138 passed, 6 skipped, with the same two pre-existing unrelated failures in tests/test_command_interface.py::test_model_set_command and tests/test_provider_model_api.py::test_model_replacement_uses_existing_assignment_service."
+    ],
+    "limitations": [
+      "The SQLite audit database is local and unencrypted at rest; retention is logical deletion, not secure erasure. There is no tamper-proof guarantee, remote aggregation, audit UI, or storage recovery certification.",
+      "Only fixed metadata is recorded. Raw prompts, credentials, audio, screenshots, action payloads, approval summaries, and raw error text are not retained. Inspection is limited to an explicit high-risk capability permission and at most 200 records per request."
+    ]
   },
   {
     "number": 144,
@@ -2540,7 +2547,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-142 are verified; Tasks 143-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-143 are verified; Tasks 144-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

@@ -39,6 +39,16 @@ class CapabilityGrantService:
         self._enabled: dict[str, bool] = {}
         self._lock = threading.RLock()
 
+    def set_audit_service(self, audit_service) -> None:
+        self._audit = audit_service
+
+    def _record(self, actor_id: str, capability_id: str, action_state: str,
+                result_state: str, reference: str | None = None) -> None:
+        if getattr(self, "_audit", None) is not None:
+            self._audit.record(actor_id=actor_id, capability_id=capability_id,
+                               permission_decision="allow", action_state=action_state,
+                               result_state=result_state, safe_reference=reference)
+
     def enabled_snapshot(self) -> tuple[dict, ...]:
         with self._lock:
             return tuple({"capability_id": definition.capability_id,
@@ -49,7 +59,7 @@ class CapabilityGrantService:
                          for definition in self._policy.definitions
                          if "session" in definition.grant_modes and definition.risk == "low")
 
-    def set_enabled(self, capability_id: str, *, enabled: bool) -> dict:
+    def set_enabled(self, capability_id: str, *, enabled: bool, actor_id: str = "system") -> dict:
         definition = self._policy.definition(capability_id)
         if definition is None:
             raise CapabilityGrantNotFound("Capability is not registered")
@@ -58,6 +68,7 @@ class CapabilityGrantService:
             raise CapabilityGrantConflict("Capability is not approved for owner enablement")
         if type(enabled) is not bool:
             raise ValueError("Capability enabled state must be boolean")
+        self._record(actor_id, capability_id, "enabled" if enabled else "disabled", "success", actor_id)
         with self._lock:
             self._enabled[capability_id] = enabled
             if not enabled:
@@ -115,6 +126,7 @@ class CapabilityGrantService:
             grant = CapabilityGrant(uuid4().hex, grantor, capability_id, scope_type,
                                     scope_id, session_id, now.isoformat(),
                                     (now + timedelta(seconds=ttl_seconds)).isoformat(), None)
+            self._record(grantor, capability_id, "granted", "success", grant.grant_id)
             self._grants[grant.grant_id] = grant
             return grant
 
@@ -155,6 +167,7 @@ class CapabilityGrantService:
             if datetime.fromisoformat(grant.expires_at) <= self._clock().astimezone(timezone.utc):
                 raise CapabilityGrantConflict("Expired session grants cannot be revoked")
             revoked = replace(grant, revoked_at=self._clock().astimezone(timezone.utc).isoformat())
+            self._record(grantor, grant.capability_id, "revoked", "success", grant.grant_id)
             self._grants[grant_id] = revoked
             return revoked
 

@@ -970,6 +970,7 @@ def create_app(
     documentation_review_service=None,
     capability_authorization_service=None,
     capability_grant_service=None,
+    capability_audit_service=None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
@@ -978,6 +979,13 @@ def create_app(
             application.state.application_service = runtime.application_service
         else:
             application.state.application_service = application_service
+        if application.state.capability_approval_service is None:
+            approval_factory = getattr(application.state.application_service, "capability_approvals", None)
+            application.state.capability_approval_service = (
+                approval_factory() if callable(approval_factory) else None)
+        if hasattr(application.state.capability_approval_service, "set_audit_service"):
+            application.state.capability_approval_service.set_audit_service(
+                application.state.capability_audit_service)
         source = documentation_source
         if source is None:
             source = MarkdownDocumentationSource(
@@ -1040,6 +1048,11 @@ def create_app(
         if authentication_backend is None
         else authentication_backend
     )
+    if capability_audit_service is None:
+        from app.application.services.capability_audit import CapabilityAuditService
+        application.state.capability_audit_service = CapabilityAuditService()
+    else:
+        application.state.capability_audit_service = capability_audit_service
     if capability_authorization_service is None:
         from app.application.services.capability_authorization import DEFAULT_CAPABILITY_AUTHORIZATION
         application.state.capability_authorization_service = DEFAULT_CAPABILITY_AUTHORIZATION
@@ -1051,6 +1064,8 @@ def create_app(
             application.state.capability_authorization_service)
     else:
         application.state.capability_grant_service = capability_grant_service
+    if hasattr(application.state.capability_grant_service, "set_audit_service"):
+        application.state.capability_grant_service.set_audit_service(application.state.capability_audit_service)
     approval_factory = getattr(application_service, "capability_approvals", None)
     application.state.capability_approval_service = (
         approval_factory() if callable(approval_factory) else None)
@@ -1072,6 +1087,8 @@ def create_app(
     application.include_router(capability_grants_router)
     from .capability_approvals import router as capability_approvals_router
     application.include_router(capability_approvals_router)
+    from .capability_audit import router as capability_audit_router
+    application.include_router(capability_audit_router)
     from .documentation_review import router as documentation_review_router
     application.include_router(documentation_review_router)
     from .maintenance_approvals import router as maintenance_approvals_router

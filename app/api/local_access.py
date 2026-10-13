@@ -20,7 +20,7 @@ READ_PERMISSIONS = frozenset({
     "corporation:read", "employee:read", "agent:read", "provider:read",
     "provider-connection:read",
     "model:read", "task:read", "project:read", "activity:read",
-    "documentation:read", "updates:read", "memory:read",
+    "documentation:read", "updates:read", "memory:read", "capability-audit:read",
     "position:read", "github:read",
     "assignment-policy:read",
     "inventory:read",

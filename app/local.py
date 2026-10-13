@@ -33,7 +33,7 @@ LOGIN_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                      application_service=None, clock=None, desktop_ui_dir=None,
                      voice_connection_manager=None, capability_authorization_service=None,
-                     capability_grant_service=None):
+                     capability_grant_service=None, capability_audit_service=None):
     backend = LocalOwnerAuthentication(
         password, origin, **({"clock": clock} if clock else {}),
         **({"capability_authorization_service": capability_authorization_service}
@@ -43,7 +43,8 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
     application = create_app(application_service=application_service,
                              authentication_backend=backend,
                              capability_authorization_service=backend.capability_authorization_service,
-                             capability_grant_service=backend.capability_grant_service)
+                             capability_grant_service=backend.capability_grant_service,
+                             capability_audit_service=capability_audit_service)
     from app.api.local_models import router as local_models_router
     application.include_router(local_models_router)
     from app.api.assignment_policy import router as assignment_policy_router

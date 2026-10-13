@@ -73,7 +73,8 @@ def set_policy(capability_id: Annotated[str, Path(min_length=1, max_length=128)]
     csrf = getattr(request.app.state.authentication_backend, "require_csrf", None)
     if callable(csrf):
         csrf(request)
-    return invoke(lambda: grants.set_enabled(capability_id, enabled=body.enabled), grants)
+    return invoke(lambda: grants.set_enabled(capability_id, enabled=body.enabled,
+                                             actor_id=principal.identity), grants)
 
 
 @router.get("")

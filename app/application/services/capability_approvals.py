@@ -59,6 +59,17 @@ class CapabilityApprovalService:
         self._clock = clock or (lambda: datetime.now(timezone.utc))
         self._records: dict[str, CapabilityActionApproval] = {}
         self._lock = threading.RLock()
+        self._audit = None
+
+    def set_audit_service(self, audit_service) -> None:
+        self._audit = audit_service
+
+    def _record(self, actor_id: str, capability_id: str, action_state: str,
+                result_state: str, reference: str | None = None) -> None:
+        if self._audit is not None:
+            self._audit.record(actor_id=actor_id, capability_id=capability_id,
+                               permission_decision="allow", action_state=action_state,
+                               result_state=result_state, safe_reference=reference)
 
     def request(self, *, actor_id: str, permissions: frozenset[str],
                 session_grants: frozenset[tuple[str, str, str]] = frozenset(),
@@ -107,6 +118,7 @@ class CapabilityApprovalService:
         with self._lock:
             if len(self._records) >= self.MAX_APPROVALS:
                 raise CapabilityApprovalError("Approval record capacity is full")
+            self._record(actor_id, capability_id, "approval_requested", "pending", approval.approval_id)
             self._records[approval.approval_id] = approval
         return approval
 
@@ -156,6 +168,8 @@ class CapabilityApprovalService:
                 raise CapabilityApprovalError("Owner confirmation does not match this exact action")
             approved = replace(record, status="approved", approved_by=approver_id,
                                approved_at=self._now().isoformat())
+            self._record(approver_id, record.capability_id, "approval_confirmed", "success",
+                         record.approval_id)
             self._records[approval_id] = approved
             return approved
 
@@ -183,6 +197,7 @@ class CapabilityApprovalService:
             with self._lock:
                 current = self._get_locked(approval_id)
                 if current.status == "approved":
+                    self._record(actor_id, capability_id, "stale", "stale", approval_id)
                     self._records[approval_id] = replace(current, status="stale")
             raise CapabilityApprovalError("Approved target state has changed")
         with self._lock:
@@ -190,8 +205,15 @@ class CapabilityApprovalService:
             if current.status != "approved" or datetime.fromisoformat(current.expires_at) <= self._now():
                 raise CapabilityApprovalError("Approval is no longer usable")
             consumed = replace(current, status="consumed", consumed_at=self._now().isoformat())
+            self._record(actor_id, capability_id, "execution_started", "pending", approval_id)
             self._records[approval_id] = consumed
-        return operation()
+        try:
+            result = operation()
+        except Exception:
+            self._record(actor_id, capability_id, "executed", "failure", approval_id)
+            raise
+        self._record(actor_id, capability_id, "executed", "success", approval_id)
+        return result
 
     def _get_locked(self, approval_id: str) -> CapabilityActionApproval:
         record = self._records.get(approval_id)

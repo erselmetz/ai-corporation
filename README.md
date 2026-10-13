@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-142 are verified complete; Task 134 is deferred and incomplete; Tasks 143-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-143 are verified complete; Task 134 is deferred and incomplete; Tasks 144-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -984,3 +984,7 @@ Authenticated local owners can explicitly enable eligible low-risk capabilities 
 ## Action risk levels and approval policy (Task 142)
 
 The application service exposes an exact-action approval service for trusted callers: low-risk actions need no approval record; moderate and high risks require an owner confirmation, and irreversible actions are elevated to high risk. A review record binds an action ID and readable summary, target reference and current-state digest, scope, payload digest, policy version, actor, and at most five minutes of expiry. The local owner can inspect and explicitly confirm the exact digest through protected read/approve routes. Before the guarded callback runs, the service rechecks current capability authority, exact binding, expiry, and target state, then consumes the approval once. A changed target becomes stale; failed callbacks do not make approvals reusable. Checkpoint: task-142-action-risk-approval-policy.
+
+## Capability audit and sensitive-data controls (Task 143)
+
+Capability permission decisions and the Task 141–142 grant/approval lifecycle write fixed metadata-only records to the existing local SQLite database. Records are pruned after 30 days and capped at 10,000; the explicitly authorized `capability-audit:read` endpoint returns at most 200 events per request. All actor identifiers are hashed into opaque references and unsafe references omitted. Raw prompts, credentials, screenshots, audio, action payloads, approval summaries, and raw error text are not stored. This is local operational history, not tamper-proof evidence: the database is not encrypted at rest and retention is not secure erasure. Checkpoint: task-143-capability-audit-retention.
