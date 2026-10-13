@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-151 are verified complete; Task 134 is deferred and incomplete; Tasks 152-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-152 are verified complete; Task 134 is deferred and incomplete; Tasks 153-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -1016,6 +1016,10 @@ Clicking Speak on replies during playback adds them to a sequential, page-memory
 ## Explicit screen capture provider (Task 151)
 
 The local chat UI offers one caller-triggered display/window capture through the browser display-capture API and an Electron-owned native source chooser. Capture requires both `chat:send` and `screen:capture`; unsupported or canceled choices fail closed. One frame is downscaled to at most 4096 pixels per side and 8 megapixels, encoded as JPEG under 2 MiB, then attached to an open owner conversation using Task 150 retention. It is not sent to a Provider, indexed, or persisted. The app does not capture in the background, crop regions, redact content, or capture camera input. The native chooser is limited to 24 reported sources and cannot be programmatically dismissed. Deterministic fakes were used; no live screen hardware was tested. Checkpoint: `task-151-explicit-screen-capture-provider`.
+
+## Optional image processing adapters (Task 152)
+
+`CorporationApplicationService.image_processing()` exposes an optional Pillow adapter without importing Pillow during application startup. Pillow is pinned separately in `requirements-image-processing.txt`; it is not a core or packaged dependency and is never installed automatically. A bounded child worker supports downscaling, PNG/JPEG conversion, and caller-specified solid-black pixel rectangles. Input/output are limited to 2 MiB, dimensions to 4096 pixels per side and 8 megapixels, decoded pixel storage to 32 MiB, and processing time to five seconds. Re-encoding removes source text metadata. The worker shares the user's OS permissions and is not a sandbox. Redaction is limited to caller-provided rectangles and does not guarantee anonymization. Results remain in memory; this task adds no API, UI, attachment, Provider transfer, package lifecycle, or automatic install. Pillow's MIT-CMU license and image-processing API were selected over OpenCV's heavier setup for this bounded scope. A synthetic 8 MP local resize measured 271 ms, not a hardware guarantee. Checkpoint: `task-152-bounded-optional-image-processing`.
 
 ## Bounded image input and vision context (Task 150)
 

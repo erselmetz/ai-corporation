@@ -1358,7 +1358,7 @@ export const post100Tasks = [
     "area": "P17",
     "checkpoint": null,
     "validation": [],
-    "limitations": ["Deferred before implementation because the current packaged runtime has no verified first-party pack artifact source, publisher trust anchor, or isolated runtime-loading boundary. This task remains incomplete and is not a prerequisite for independent Task 135 evaluation."]
+    "limitations": ["Deferred before implementation because the current packaged runtime has no verified first-party pack artifact source, publisher trust anchor, or isolated runtime-loading boundary. This task remains incomplete. Task 152 uses a separately installed optional dependency and does not install or manage capability packs, so it does not require this lifecycle."]
   },
   {
     "number": 135,
@@ -1934,9 +1934,8 @@ export const post100Tasks = [
     "title": "Optional image processing adapters",
     "description": "Provide optional bounded image resize, conversion, and redaction adapters using an evaluated Pillow/OpenCV path.",
     "category": "Phase E - Vision",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
-      134,
       150
     ],
     "acceptance": [
@@ -1947,12 +1946,20 @@ export const post100Tasks = [
       "Do not make Pillow/OpenCV mandatory or claim complete redaction without tests."
     ],
     "decisions": [
-      "Choose a library by measured need, compatibility, and license."
+      "Use Pillow as a separately installed optional dependency: its mature Python image API and MIT-CMU license fit the bounded resize/re-encode needs with less setup than OpenCV. Do not add an application package lifecycle or a mandatory runtime dependency. Task 134 remains deferred; this adapter does not install or manage packages."
     ],
     "area": "P21",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-152-bounded-optional-image-processing",
+    "validation": [
+      "Focused image-processing and Task 150 attachment regressions: 13 passed; synthetic 8-megapixel local resize completed in 271 ms inside the bounded worker.",
+      "Full Python suite: 1170 passed, 6 skipped; two previously recorded unrelated model-assignment failures remain.",
+      "Python compilation, public documentation suite, update-manifest tests, and git diff --check passed."
+    ],
+    "limitations": [
+      "Pillow is absent from core requirements and packaged runtime. The optional requirements-image-processing.txt file must be installed manually; no app install UI, capability-pack lifecycle, API, or chat integration was added.",
+      "Processing runs in a child process with a five-second maximum timeout, but that process shares the user's OS permissions and is not a security sandbox. Inputs and outputs are capped at 2 MiB, dimensions at 4096 by 4096 and 8 megapixels, and decoded pixel storage at 32 MiB.",
+      "Redaction only blacks out caller-specified pixel rectangles and strips metadata on re-encode. It does not detect sensitive content or guarantee complete anonymization. Results are returned in memory and are not attached or sent to a Provider automatically."
+    ]
   },
   {
     "number": 153,
@@ -2599,7 +2606,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-151 are verified; Tasks 152-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-152 are verified; Tasks 153-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

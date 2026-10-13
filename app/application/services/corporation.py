@@ -770,6 +770,11 @@ class CorporationApplicationService:
             raise ValueError("Resource manager is already configured")
         return self._resource_manager
 
+    def image_processing(self):
+        """Return an optional image adapter without loading Pillow at startup."""
+        from app.integrations.image_processing import PillowImageProcessingAdapter
+        return PillowImageProcessingAdapter()
+
     def task_planning(self):
         from .task_planning import TaskPlanningService
         return TaskPlanningService(self._orchestrator, self.context_retrieval())

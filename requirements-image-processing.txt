@@ -1,0 +1,2 @@
+# Optional image processing; install only for explicit image operations.
+Pillow==12.3.0
