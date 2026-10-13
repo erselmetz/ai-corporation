@@ -5,6 +5,7 @@ import re
 from contextlib import contextmanager
 from datetime import datetime, timezone
 import json
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
@@ -92,6 +93,11 @@ class ImageUploadRequest(BaseModel):
     data_base64: str = Field(min_length=1, max_length=2_800_000)
 
 
+class ScreenCaptureUploadRequest(ImageUploadRequest):
+    display_surface: Literal["monitor", "window", "browser"]
+    captured_at: datetime
+
+
 def get_chat_now():
     return datetime.now(timezone.utc)
 
@@ -159,6 +165,13 @@ def parse(model, payload):
         return model.model_validate_json(payload)
     except ValueError:
         raise HTTPException(422, "Invalid chat request fields") from None
+
+
+def decode_image_data(value: str) -> bytes:
+    try:
+        return base64.b64decode(value, validate=True)
+    except (binascii.Error, ValueError):
+        raise HTTPException(422, "Image data must be valid base64") from None
 
 
 def get_repository_study_service(request: Request) -> RepositoryStudyService:
@@ -240,10 +253,7 @@ def attach_image(identifier: str, payload=Depends(bounded_image_body),
                  principal=Depends(require_permission("chat:send")),
                  service=Depends(get_application_service)):
     body = parse(ImageUploadRequest, payload)
-    try:
-        data = base64.b64decode(body.data_base64, validate=True)
-    except (binascii.Error, ValueError):
-        raise HTTPException(422, "Image data must be valid base64") from None
+    data = decode_image_data(body.data_base64)
     with chat_errors():
         item = service.owned_chat().attach_image(
             principal.identity, identifier, data, body.media_type
@@ -252,6 +262,26 @@ def attach_image(identifier: str, payload=Depends(bounded_image_body),
             "image": item.snapshot(),
             "provider_transfer_supported": False,
             "message": "Image is attached temporarily to this conversation; it is not sent to a Provider.",
+        }
+
+
+@router.post("/{identifier}/screen-captures")
+def attach_screen_capture(identifier: str, payload=Depends(bounded_image_body),
+                          principal=Depends(require_permission("chat:send")),
+                          _capture_permission=Depends(require_permission("screen:capture")),
+                          service=Depends(get_application_service)):
+    body = parse(ScreenCaptureUploadRequest, payload)
+    data = decode_image_data(body.data_base64)
+    with chat_errors():
+        item = service.owned_chat().attach_image(
+            principal.identity, identifier, data, body.media_type,
+            source="screen_capture", display_surface=body.display_surface,
+            captured_at=body.captured_at,
+        )
+        return {
+            "image": item.snapshot(),
+            "provider_transfer_supported": False,
+            "message": "One screen frame is attached temporarily; it is not sent to a Provider.",
         }
 
 

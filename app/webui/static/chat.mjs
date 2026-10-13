@@ -1,4 +1,5 @@
 import { mountVoiceControls } from "./voice.mjs";
+import { mountScreenCapture } from "./screen-capture.mjs";
 
 export function voiceTranscriptSourceLabel(source) {
   return ({
@@ -569,4 +570,7 @@ export function mountChat({
     voice: voiceController,
   };
 }
-if (typeof document !== "undefined") mountChat();
+if (typeof document !== "undefined") {
+  mountChat();
+  mountScreenCapture();
+}

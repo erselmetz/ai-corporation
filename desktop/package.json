@@ -22,7 +22,7 @@
     "appId": "com.erselmetz.ai.commandcenter",
     "productName": "ERSELMETZ AI",
     "asar": true,
-    "files": ["main.cjs", "preload.cjs", "bootstrap.html", "bootstrap.css", "bootstrap.js", "package.json"],
+    "files": ["main.cjs", "screen-capture.cjs", "preload.cjs", "bootstrap.html", "bootstrap.css", "bootstrap.js", "package.json"],
     "extraResources": [
       { "from": "build/backend/erselmetz-backend", "to": "backend", "filter": ["**/*"] },
       { "from": "../desktop-ui/out", "to": "desktop-ui", "filter": ["**/*"] }

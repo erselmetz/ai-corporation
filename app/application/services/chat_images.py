@@ -26,6 +26,8 @@ class ChatImageAttachment:
     retention: str
     created_at: datetime
     expires_at: datetime
+    display_surface: str | None = None
+    captured_at: datetime | None = None
     provider_transfer_authorized: bool = False
     _data: bytes = field(default=b"", repr=False, compare=False)
 
@@ -42,6 +44,8 @@ class ChatImageAttachment:
             "retention": self.retention,
             "created_at": self.created_at.isoformat(),
             "expires_at": self.expires_at.isoformat(),
+            "display_surface": self.display_surface,
+            "captured_at": self.captured_at.isoformat() if self.captured_at else None,
             "provider_transfer_authorized": self.provider_transfer_authorized,
         }
 
@@ -67,7 +71,10 @@ class ChatImageStore:
         self._lock = RLock()
 
     def attach(self, owner: str, conversation_id: str, data: bytes,
-               media_type: str, *, now: datetime | None = None) -> ChatImageAttachment:
+               media_type: str, *, source: str = "explicit_user_upload",
+               display_surface: str | None = None,
+               captured_at: datetime | None = None,
+               now: datetime | None = None) -> ChatImageAttachment:
         if not isinstance(owner, str) or not owner.strip():
             raise ChatImageError("Owner identity is required")
         if not isinstance(conversation_id, str) or not conversation_id.strip():
@@ -79,6 +86,16 @@ class ChatImageStore:
             raise ChatImageError("Image type does not match its content")
         if width > self.MAX_WIDTH or height > self.MAX_HEIGHT or width * height > self.MAX_PIXELS:
             raise ChatImageError("Image dimensions exceed the limit")
+        if source not in {"explicit_user_upload", "screen_capture"}:
+            raise ChatImageError("Image source is unsupported")
+        if source == "screen_capture":
+            if display_surface not in {"monitor", "window", "browser"}:
+                raise ChatImageError("Selected display surface is unsupported")
+            if not isinstance(captured_at, datetime) or captured_at.tzinfo is None:
+                raise ChatImageError("Screen capture timestamp must include a timezone")
+            captured_at = captured_at.astimezone(timezone.utc)
+        elif display_surface is not None or captured_at is not None:
+            raise ChatImageError("Capture details require a screen-capture source")
         current = self._now(now)
         key = (owner, conversation_id)
         with self._lock:
@@ -96,10 +113,12 @@ class ChatImageStore:
                 height=height,
                 size_bytes=len(data),
                 sha256=hashlib.sha256(data).hexdigest(),
-                source="explicit_user_upload",
+                source=source,
                 retention="process_memory_until_expiry_or_removal",
                 created_at=current,
                 expires_at=current + self.TTL,
+                display_surface=display_surface,
+                captured_at=captured_at,
                 _data=data,
             )
             items[item.id] = item

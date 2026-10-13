@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-150 are verified complete; Task 134 is deferred and incomplete; Tasks 151-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-151 are verified complete; Task 134 is deferred and incomplete; Tasks 152-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -1012,6 +1012,10 @@ Reply playback uses an explicit local-only adapter over the browser/device Web S
 ## Bounded local voice queue and playback control (Task 149)
 
 Clicking Speak on replies during playback adds them to a sequential, page-memory queue capped at three pending replies and 16 KiB of queued UTF-8 text; each spoken reply is capped at 8 KiB. Stop interrupts local playback and clears queued text. The UI identifies output as local. Remote voices are excluded, so chat text is not sent online and no remote cancellation or retry is claimed. No online adapter or external speech runtime was selected because this task has no verified provider/model license, privacy, retention, and quality evidence. Task 134 remains deferred; this feature uses only device-provided voices and does not activate capability packs. Device voices and packaged availability remain platform-dependent. Checkpoint: task-149-bounded-local-voice-queue-controls.
+
+## Explicit screen capture provider (Task 151)
+
+The local chat UI offers one caller-triggered display/window capture through the browser display-capture API and an Electron-owned native source chooser. Capture requires both `chat:send` and `screen:capture`; unsupported or canceled choices fail closed. One frame is downscaled to at most 4096 pixels per side and 8 megapixels, encoded as JPEG under 2 MiB, then attached to an open owner conversation using Task 150 retention. It is not sent to a Provider, indexed, or persisted. The app does not capture in the background, crop regions, redact content, or capture camera input. The native chooser is limited to 24 reported sources and cannot be programmatically dismissed. Deterministic fakes were used; no live screen hardware was tested. Checkpoint: `task-151-explicit-screen-capture-provider`.
 
 ## Bounded image input and vision context (Task 150)
 

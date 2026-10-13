@@ -50,7 +50,7 @@ def test_emergency_stop_blocks_new_actions_but_keeps_stop_status_revoke_and_resu
         assert status.status_code == 200
         assert status.json()["stopped"] is True
         assert "capability-emergency:manage" in status.json()["active_capabilities"]
-        assert status.json()["capture"]["screen"] == "not-used-by-this-app"
+        assert status.json()["capture"]["screen"] == "page-reported"
         assert any(item["grant_id"] == grant_id and item["expires_at"]
                    for item in status.json()["session_grants"])
 

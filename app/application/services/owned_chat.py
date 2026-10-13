@@ -190,11 +190,11 @@ class OwnedChatService:
             self._image_store.clear_conversation(owner, identifier)
             return {"conversation": result, "coordinator": entry.coordinator}
 
-    def attach_image(self, owner, identifier, data: bytes, media_type: str):
+    def attach_image(self, owner, identifier, data: bytes, media_type: str, **provenance):
         with self._access(owner, identifier):
             if self._chat.get_status(identifier) is not ConversationStatus.OPEN:
                 raise ChatImageError("Images can only be attached to an open conversation")
-            return self._image_store.attach(owner, identifier, data, media_type)
+            return self._image_store.attach(owner, identifier, data, media_type, **provenance)
 
     def list_images(self, owner, identifier):
         with self._access(owner, identifier):

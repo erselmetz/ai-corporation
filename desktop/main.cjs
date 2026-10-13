@@ -1,9 +1,10 @@
-const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
+const { app, BrowserWindow, desktopCapturer, dialog, ipcMain, session } = require("electron");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
 const { fileURLToPath } = require("node:url");
+const { createDisplayMediaRequestHandler } = require("./screen-capture.cjs");
 
 const HOST = "127.0.0.1";
 const PORT = 8765;
@@ -204,6 +205,12 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
       && webContents.getURL().startsWith(`${ORIGIN}/`);
     const audioOnly = permission === "media" && Array.isArray(details?.mediaTypes)
       && details.mediaTypes.length === 1 && details.mediaTypes[0] === "audio";
+    const displayCapture = trusted && permission === "display-capture"
+      && webContents.getURL().startsWith(`${ORIGIN}/ui/chat`);
+    if (displayCapture) {
+      callback(true);
+      return;
+    }
     if (trusted && audioOnly && Date.now() < microphoneGrantUntil) {
       microphoneGrantUntil = 0;
       callback(true);
@@ -211,6 +218,37 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
     }
     callback(false);
   });
+  session.defaultSession.setDisplayMediaRequestHandler(
+    createDisplayMediaRequestHandler({
+      isTrusted: (request) => Boolean(
+        applicationWindow
+        && request?.frame === applicationWindow.webContents.mainFrame
+        && request.securityOrigin === ORIGIN
+        && applicationWindow.webContents.getURL().startsWith(`${ORIGIN}/ui/chat`)
+      ),
+      getSources: () => desktopCapturer.getSources({
+        types: ["screen", "window"],
+        thumbnailSize: { width: 80, height: 45 },
+        fetchWindowIcons: false,
+      }),
+      chooseSource: async (sources) => {
+        if (sources.length > 24 || !applicationWindow || applicationWindow.isDestroyed()) return null;
+        const buttons = [...sources.map((source) => source.name.slice(0, 120)), "Cancel"];
+        const cancelId = buttons.length - 1;
+        const result = await dialog.showMessageBox(applicationWindow, {
+          type: "question",
+          title: "Capture one screen frame",
+          message: "Choose one display or window to capture.",
+          detail: "The app captures one image frame without audio, then immediately stops capture. The image is attached to the open chat and is not sent to an AI Provider.",
+          buttons,
+          defaultId: cancelId,
+          cancelId,
+          noLink: true,
+        });
+        return result.response < sources.length ? sources[result.response] : null;
+      },
+    })
+  );
   ipcMain.handle("desktop:get-setup-state", (event) => isTrustedBootstrap(event) && !fs.existsSync(CREDENTIAL));
   ipcMain.handle("desktop:start", (event, payload) => isTrustedBootstrap(event) ? startBackend(payload) : { started: false, message: "Request denied." });
   ipcMain.handle("desktop:request-microphone", async (event) => {

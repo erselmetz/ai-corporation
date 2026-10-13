@@ -1896,27 +1896,38 @@ export const post100Tasks = [
   {
     "number": 151,
     "title": "Explicit screen capture provider",
-    "description": "Add caller-triggered, permission-gated screen capture through a replaceable adapter such as optional mss.",
+    "description": "Capture one user-selected display or window frame from the chat UI through the platform's native chooser and a replaceable, permission-gated adapter.",
     "category": "Phase E - Vision",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       144,
       150
     ],
     "acceptance": [
-      "Show capture indicator and selected display/window/region.",
+      "Show capture indicator and the selected supported display/window/browser surface; region cropping remains unsupported.",
       "Return bounded timestamped evidence; fail closed when permission/support is absent."
     ],
     "outOfScope": [
       "Do not poll or capture in background."
     ],
     "decisions": [
-      "Choose platform API after permission and multi-monitor review."
+      "Use browser getDisplayMedia with an Electron-owned native chooser; no new mss dependency.",
+      "The current picker selects a display/window/browser surface; in-app region cropping is unsupported."
     ],
     "area": "P21",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-151-explicit-screen-capture-provider",
+    "validation": [
+      "Focused chat-image, local-access, emergency-stop, and screen-capture Python/browser/Electron tests passed.",
+      "Full Python suite: 1162 passed, 6 skipped; two previously recorded unrelated model-assignment tests still fail.",
+      "Full browser-module suite: 179 passed; Electron tests: 12 passed; public documentation tests: 15 passed; update-manifest tests: 6 passed.",
+      "Python compilation and git diff --check passed."
+    ],
+    "limitations": [
+      "Capture is a caller-triggered single frame, downscaled to at most 4096 pixels per side and 8 megapixels, JPEG-encoded to at most 2 MiB, then attached to an open owner conversation for the existing 15-minute process-memory lifetime.",
+      "Capture requires both chat:send and screen:capture. The selected frame is not sent to a Provider, indexed, or persisted. No OCR, region crop, redaction, background capture, or camera input is included.",
+      "The custom Electron chooser is limited to 24 reported sources; unsupported APIs, unknown selected surface types, cancellation, permission denial, chooser errors, and emergency stop fail closed. Region selection is not available, and the native picker cannot be programmatically dismissed by the app.",
+      "Capture behavior is tested with deterministic fakes; no live screen or display hardware was exercised."
+    ]
   },
   {
     "number": 152,
@@ -2588,7 +2599,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-150 are verified; Tasks 151-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-151 are verified; Tasks 152-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

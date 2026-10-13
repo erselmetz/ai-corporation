@@ -30,6 +30,7 @@ READ_PERMISSIONS = frozenset({
 SEMANTIC_MEMORY_PERMISSIONS = frozenset({"memory:index"})
 
 CHAT_PERMISSIONS = frozenset({"chat:read", "chat:start", "chat:send", "chat:close"})
+SCREEN_CAPTURE_PERMISSIONS = frozenset({"screen:capture"})
 LOCAL_MODEL_PERMISSIONS = frozenset({"local-model:select"})
 ONLINE_PROVIDER_PERMISSIONS = frozenset({"online-provider:connect", "online-provider:disconnect"})
 POSITION_MANAGEMENT_PERMISSIONS = frozenset({"position:manage"})
@@ -89,7 +90,8 @@ class LocalOwnerAuthentication:
         self._failures: list[float] = []
         self._lock = threading.RLock()
         self.principal = AuthenticatedPrincipal(
-            "local-owner", READ_PERMISSIONS | CHAT_PERMISSIONS | SEMANTIC_MEMORY_PERMISSIONS
+            "local-owner",
+            READ_PERMISSIONS | CHAT_PERMISSIONS | SCREEN_CAPTURE_PERMISSIONS | SEMANTIC_MEMORY_PERMISSIONS
             | LOCAL_MODEL_PERMISSIONS | ONLINE_PROVIDER_PERMISSIONS
             | POSITION_MANAGEMENT_PERMISSIONS | EMPLOYEE_CHAT_PERMISSIONS
             | ASSIGNMENT_POLICY_PERMISSIONS | CHAT_TASK_PERMISSIONS | CHAT_KNOWLEDGE_PERMISSIONS | CHAT_HISTORY_PERMISSIONS

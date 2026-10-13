@@ -41,6 +41,8 @@ def test_ephemeral_owner_scoped_attachment_limits_and_expiry():
         "retention": "process_memory_until_expiry_or_removal",
         "created_at": NOW.isoformat(),
         "expires_at": (NOW + store.TTL).isoformat(),
+        "display_surface": None,
+        "captured_at": None,
         "provider_transfer_authorized": False,
     }
     assert store.list_for("alice", "chat-1") == (image,)
@@ -100,8 +102,11 @@ class Authentication:
         if identity is None:
             return None
         permissions = {"chat:read", "chat:start", "chat:send", "chat:close"}
+        permissions.add("screen:capture")
         if identity == "reader":
             permissions = {"chat:read"}
+        elif identity == "chat-only":
+            permissions = {"chat:read", "chat:send"}
         return AuthenticatedPrincipal(identity, frozenset(permissions))
 
 
@@ -147,3 +152,34 @@ def test_chat_api_requires_owner_and_send_permission_and_never_transfers_image()
         assert client.get(image_path, headers=headers).json()["items"] == []
         assert client.delete(f"{image_path}/{image_id}", headers=headers).status_code == 404
     assert len(provider.calls) == 1
+
+
+def test_screen_capture_attachment_requires_permission_and_records_bounded_provenance():
+    runtime = create_corporation_runtime()
+    provider = Provider()
+    runtime.providers.remove("ollama")
+    runtime.providers.register("ollama", provider)
+    app = create_app(application_service=runtime.application_service,
+                     authentication_backend=Authentication())
+    with TestClient(app) as client:
+        headers = {"x-owner": "alice"}
+        root = "/api/chat/conversations"
+        identifier = client.post(root, json={"agent_id": "local_worker"},
+                                 headers=headers).json()["conversation"]["id"]
+        path = f"{root}/{identifier}/screen-captures"
+        payload = {
+            "media_type": "image/png",
+            "data_base64": base64.b64encode(png()).decode("ascii"),
+            "display_surface": "monitor",
+            "captured_at": NOW.isoformat(),
+        }
+        assert client.post(path, json=payload, headers={"x-owner": "chat-only"}).status_code == 403
+        result = client.post(path, json=payload, headers=headers)
+        assert result.status_code == 200
+        image = result.json()["image"]
+        assert image["source"] == "screen_capture"
+        assert image["display_surface"] == "monitor"
+        assert image["captured_at"] == NOW.isoformat()
+        assert image["provider_transfer_authorized"] is False
+        assert result.json()["provider_transfer_supported"] is False
+        assert provider.calls == []

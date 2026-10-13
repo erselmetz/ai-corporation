@@ -743,6 +743,8 @@ def coordinator_chat_page():
     <textarea id="chat-input" rows="4" maxlength="8192" required></textarea>
     <p id="chat-input-provenance" role="status" aria-live="polite" hidden></p>
     <button id="chat-send" type="submit">Send</button>
+    <button id="chat-capture-screen" type="button" disabled>Capture display once</button>
+    <p id="chat-capture-status" role="status" aria-live="polite">Screen capture is off. Choose a display/window only when you request a one-frame capture.</p>
     <button id="chat-stop-request" type="button" disabled hidden>Stop waiting (remote outcome may be unknown)</button>
     <button id="chat-stop-display" type="button" disabled hidden>Stop display (generation continues)</button></form>
     <details class="chat-advanced"><summary>Optional voice input and reply audio</summary>
