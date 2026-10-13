@@ -747,7 +747,7 @@ def coordinator_chat_page():
     <details class="chat-advanced"><summary>Optional voice input and reply audio</summary>
     <section class="panel" id="voice-panel" aria-labelledby="voice-heading">
     <h2 id="voice-heading">Optional voice input and reply audio</h2>
-    <p>Voice is off until you start it. Local speech uses on-device recognition only and never falls back to cloud.
+    <p>Voice is off until you start it. Each microphone session is started explicitly and stops after at most 10 seconds. Local speech uses on-device recognition only and never falls back to cloud.
     Cloud transcription is optional, sends a recording to Google Gemini only after per-use consent, and is limited to 10 seconds.
     The app keeps no audio after the request; transcripts go into the message box for review and are not sent to chat until you choose Send.
     Gemini API may retain request data under Google's account tier and policy. This app cannot configure or verify provider retention, or cap Google's final invoice; its budget only limits this app's requests.

@@ -1702,7 +1702,7 @@ export const post100Tasks = [
     "title": "Audio input and speech recognition contracts",
     "description": "Define backend-neutral audio capture and speech-to-text interfaces with explicit microphone lifecycle, limits, and governance checks.",
     "category": "Phase D - Voice and Speech",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       128,
       140,
@@ -1717,12 +1717,17 @@ export const post100Tasks = [
       "No always-on microphone or silent local-to-cloud fallback."
     ],
     "decisions": [
-      "Choose supported capture APIs after platform/accessibility review."
+      "Keep browser/device microphone capture explicit per use, limit every recording to ten seconds, and retain the existing browser permission prompt and visible status. Define the backend-neutral Python input/provider contract for mono 16 kHz 16-bit PCM WAV; do not add microphone hardware access to the Python API. Cancellation stops capture and app-side waiting, with no automatic retry or cloud fallback."
     ],
     "area": "P20",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-145-bounded-speech-input-contracts",
+    "validation": [
+      "Focused deterministic speech input contract tests: 8 passed.",
+      "Browser voice tests passed, including the ten-second local capture limit, explicit local recognition, cancellation, and no cloud fallback."
+    ],
+    "limitations": [
+      "The browser/OS controls microphone permission and provides the local recognition engine. Cancellation can stop the app's capture or wait, but cannot interrupt an operation already running inside the browser or remote provider."
+    ]
   },
   {
     "number": 146,
@@ -2554,7 +2559,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-144 are verified; Tasks 145-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-145 are verified; Tasks 146-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

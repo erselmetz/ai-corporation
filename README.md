@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-144 are verified complete; Task 134 is deferred and incomplete; Tasks 145-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-145 are verified complete; Task 134 is deferred and incomplete; Tasks 146-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -992,3 +992,7 @@ Capability permission decisions and the Task 141–142 grant/approval lifecycle 
 ## Emergency stop and capture indicators (Task 144)
 
 The explicitly configured local app now has an owner-controlled, process-local emergency stop panel on Home and Chat. It blocks new state-changing local API requests while preserving status reads, sign-out, explicit session-grant revocation, Stop, and separately confirmed Resume. The current chat page stops microphone capture and local speech playback; aborting a model or Gemini request only stops this app's wait, and remote completion remains unknown. The panel shows current-session permissions and grant expiry/revocation state, plus page-reported microphone/playback activity. This app does not use screen or camera capture. The stop latch resets on process restart; there is no distributed stop, replay, or claim of remote cancellation. Existing adapters keep their own bounded request timeouts. Checkpoint: task-144-emergency-stop-capture-indicators.
+
+## Bounded speech input contracts (Task 145)
+
+Speech input now has a backend-neutral contract for mono 16 kHz, 16-bit PCM WAV with a ten-second and 320,044-byte maximum. Language tags and transcript size are validated; audio and transcript text are omitted from object representations to avoid accidental diagnostic leakage. Browser microphone capture remains per-use and visible, with a matching ten-second local recognition limit, explicit stop/cancel behavior, and no silent cloud fallback. The Python backend does not access microphone hardware. Cancellation cannot interrupt work already running inside a browser engine or remote provider. Checkpoint: task-145-bounded-speech-input-contracts.

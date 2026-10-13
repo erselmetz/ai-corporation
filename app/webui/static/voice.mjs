@@ -1,4 +1,5 @@
 const MAX_SECONDS = 10;
+const MAX_CAPTURE_MS = MAX_SECONDS * 1000;
 const TARGET_RATE = 16_000;
 const SENSITIVE = /\bAIza[A-Za-z0-9_-]{20,}\b|\b(?:GEMINI|GOOGLE)_API_KEY\s*=\s*\S+/i;
 
@@ -35,6 +36,8 @@ export function mountVoiceControls({
   onTranscript = () => {},
   canUseChat = () => true,
   confirmImpl = globalThis.confirm ?? (() => false),
+  setTimeoutImpl = setTimeout,
+  clearTimeoutImpl = clearTimeout,
 } = {}) {
   const element = id => documentRef.getElementById(id);
   const mode = element("voice-mode");
@@ -68,6 +71,8 @@ export function mountVoiceControls({
   let localAvailability = null;
   let emergencyStopped = false;
   let remoteOutcomeUnknown = false;
+  let localCaptureTimer = null;
+  let captureStartup = 0;
 
   function reportActivity() {
     const EventType = windowRef?.CustomEvent || globalThis.CustomEvent;
@@ -126,7 +131,7 @@ export function mountVoiceControls({
     if (permitted !== true) throw new Error("Microphone access was not approved. Typed chat remains available.");
   }
 
-  async function beginLocal() {
+  async function beginLocal(startupId) {
     const languageCode = language.value.trim();
     if (!/^[a-z]{2,3}(?:-[A-Z0-9]{2,8})?$/.test(languageCode)) throw new Error("Choose a valid speech language tag.");
     if (typeof Recognition.available !== "function" || typeof Recognition.install !== "function") {
@@ -137,7 +142,10 @@ export function mountVoiceControls({
       return;
     }
     const availability = await Recognition.available({ langs: [languageCode], processLocally: true });
-    if (emergencyStopped) { stage = "idle"; updateControls(); return; }
+    if (emergencyStopped || startupId !== captureStartup) {
+      if (startupId === captureStartup) stage = "idle";
+      updateControls(); return;
+    }
     localAvailability = availability;
     if (availability !== "available") {
       if (availability === "downloadable") {
@@ -150,7 +158,10 @@ export function mountVoiceControls({
       return;
     }
     await authorizeMicrophone();
-    if (emergencyStopped) { stage = "idle"; updateControls(); return; }
+    if (emergencyStopped || startupId !== captureStartup) {
+      if (startupId === captureStartup) stage = "idle";
+      updateControls(); return;
+    }
     recognition = new Recognition();
     if (!("processLocally" in recognition)) {
       recognition = null;
@@ -181,11 +192,20 @@ export function mountVoiceControls({
         : "Local speech recognition failed. Nothing was sent or saved; typed chat remains available.");
     };
     recognition.onend = () => {
+      if (localCaptureTimer !== null) clearTimeoutImpl(localCaptureTimer);
+      localCaptureTimer = null;
       if (stage === "local-capture") stage = "idle";
       recognition = null;
       updateControls();
     };
-    try { recognition.start(); }
+    try {
+      recognition.start();
+      localCaptureTimer = setTimeoutImpl(() => {
+        if (stage !== "local-capture") return;
+        void stop();
+        setState("The 10-second local capture limit was reached. The transcript was not sent or saved.");
+      }, MAX_CAPTURE_MS);
+    }
     catch { recognition = null; stage = "idle"; updateControls(); throw new Error("Local speech recognition could not start."); }
   }
 
@@ -205,21 +225,21 @@ export function mountVoiceControls({
     } finally { stage = "idle"; updateControls(); }
   }
 
-  async function beginCloudCapture() {
+  async function beginCloudCapture(startupId) {
     if (!cloudBudget?.configured || cloudBudget.remaining_cents < 1) {
       await loadBudget();
       if (!cloudBudget?.configured || cloudBudget.remaining_cents < 1) {
         throw new Error("Set an available cloud voice ceiling before recording for Gemini.");
       }
     }
-    if (emergencyStopped) throw new Error("Emergency stop is active. Voice capture is blocked.");
+    if (emergencyStopped || startupId !== captureStartup) return;
     await authorizeMicrophone();
-    if (emergencyStopped) throw new Error("Emergency stop is active. Voice capture is blocked.");
+    if (emergencyStopped || startupId !== captureStartup) return;
     stream = await windowRef.navigator.mediaDevices.getUserMedia({
       audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       video: false,
     });
-    if (emergencyStopped) { for (const track of stream.getTracks()) track.stop(); stream = null; throw new Error("Emergency stop is active. Voice capture was stopped."); }
+    if (emergencyStopped || startupId !== captureStartup) { for (const track of stream.getTracks()) track.stop(); stream = null; return; }
     audioContext = new windowRef.AudioContext();
     source = audioContext.createMediaStreamSource(stream);
     processor = audioContext.createScriptProcessor(4096, 1, 1);
@@ -336,6 +356,8 @@ export function mountVoiceControls({
   }
 
   async function stop() {
+    if (localCaptureTimer !== null) clearTimeoutImpl(localCaptureTimer);
+    localCaptureTimer = null;
     if (stage === "local-capture") {
       stage = "idle";
       recognition?.abort();
@@ -362,6 +384,7 @@ export function mountVoiceControls({
       requestController?.abort();
       stopButton.disabled = true;
     } else if (stage === "starting") {
+      captureStartup += 1;
       stage = "idle";
       updateControls();
       setState("Voice startup stopped. No new microphone capture will begin.");
@@ -433,11 +456,13 @@ export function mountVoiceControls({
   start.addEventListener("click", async () => {
     if (emergencyStopped) { setState("Emergency stop is active. Resume protected actions before starting voice."); return; }
     if (!canUseChat()) { setState("Start or select an open conversation before using voice."); return; }
+    const startupId = ++captureStartup;
     stage = "starting"; updateControls();
     try {
-      if (mode.value === "local") await beginLocal();
-      else await beginCloudCapture();
+      if (mode.value === "local") await beginLocal(startupId);
+      else await beginCloudCapture(startupId);
     } catch (error) {
+      if (startupId !== captureStartup) return;
       stage = "idle";
       setState(error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError"
         ? "Microphone access was denied. Typed chat remains available."
