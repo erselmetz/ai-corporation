@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-147 are verified complete; Task 134 is deferred and incomplete; Tasks 148-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-148 are verified complete; Task 134 is deferred and incomplete; Tasks 149-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -1004,3 +1004,7 @@ An optional faster-whisper adapter is available only when its runtime is already
 ## Reviewed speech input in conversations (Task 147)
 
 The chat draft reports whether inserted speech came from browser on-device recognition, the selected local model, or Google Gemini after its per-recording cloud consent. Voice text is appended after existing typed text and remains editable; users still choose Send explicitly, and Gemini chat keeps its separate existing per-turn consent. The accessible source note applies only to the transcript insertion, not typed text or later edits, and clears after a successful send. This provenance is a transient UI indicator, not stored conversation metadata. No audio or transcript-source metadata is persisted. Checkpoint: task-147-reviewed-speech-input-in-conversations.
+
+## Offline text-to-speech provider foundation (Task 148)
+
+Reply playback uses an explicit local-only adapter over the browser/device Web Speech synthesis API. The voice selector lists only voices reported as local by the platform; the operator separately selects a speech output language. Availability, voice inventory, and language support depend on the operating system/browser, and the selected settings last only for the page session. Speaking remains an explicit presentation action on a reply, with a local playback status and stop control. It grants no action permission and never sends text to an online service or silently falls back to one. Checkpoint: task-148-offline-text-to-speech-provider.

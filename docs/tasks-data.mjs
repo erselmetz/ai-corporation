@@ -1799,7 +1799,7 @@ export const post100Tasks = [
     "title": "Offline text-to-speech provider foundation",
     "description": "Define a text-to-speech provider boundary with an offline backend and explicit voice/output configuration.",
     "category": "Phase D - Voice and Speech",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       128,
       140,
@@ -1814,12 +1814,17 @@ export const post100Tasks = [
       "Do not silently fall back from local to online speech."
     ],
     "decisions": [
-      "Choose the offline backend after platform and distribution review."
+      "Use the existing browser/device Web Speech synthesis API as the offline adapter, but expose only voices explicitly reported with localService=true. Voice availability and language depend on the operating system/browser. Do not add another runtime or online adapter; packaged builds expose only what their browser engine reports locally. Voice output is an explicit user-triggered presentation action and grants no Task, Tool, permission, or other action authority."
     ],
     "area": "P20",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-148-offline-text-to-speech-provider",
+    "validation": [
+      "Focused offline TTS provider and voice UI tests: 18 passed, including explicit local voice/language selection, bounded text, unavailable and disappearing voice states, and stop behavior.",
+      "Full browser-module suite: 174 passed. Directly affected WebUI route tests: 12 passed. Public documentation site tests: 15 passed; update-manifest tests: 6 passed. Python compilation and git diff --check passed."
+    ],
+    "limitations": [
+      "The provider relies on voices exposed by the browser/operating system and explicitly filters to localService=true. Voice inventory, supported languages, naturalness, and availability in a packaged distribution vary by device and were not certified. Selected voice/language settings are page-local and are not persisted. No online fallback or audio transfer is implemented."
+    ]
   },
   {
     "number": 149,
@@ -2573,7 +2578,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-145 are verified; Tasks 146-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-148 are verified; Tasks 149-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

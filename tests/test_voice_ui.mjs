@@ -13,11 +13,13 @@ function harness({ fetchImpl, windowRef, confirmImpl = () => true, setTimeoutImp
   const ids = ["voice-mode", "voice-language", "voice-start", "voice-stop", "voice-transcribe",
     "voice-install-local", "voice-cloud-consent", "voice-budget-form", "voice-budget-cents",
     "voice-budget-save", "voice-budget-state", "voice-state", "voice-stop-playback",
-    "voice-local-model", "voice-local-model-state", "voice-cloud-consent-panel"];
+    "voice-local-model", "voice-local-model-state", "voice-cloud-consent-panel",
+    "voice-output-language", "voice-output-voice", "voice-output-state"];
   const elements = Object.fromEntries(ids.map(id => [id, new Element()]));
   elements["voice-mode"].value = "local";
   elements["voice-language"].value = "en-US";
   elements["voice-budget-cents"].value = "5";
+  elements["voice-output-language"].value = "en-US";
   const documentRef = { getElementById: id => elements[id], createElement: () => new Element() };
   const transcripts = [];
   const controller = mountVoiceControls({ documentRef, windowRef, fetchImpl, confirmImpl, setTimeoutImpl, clearTimeoutImpl,
@@ -366,20 +368,34 @@ test("stopping at the capture-finalization boundary discards audio instead of ma
   assert.equal(requests.includes("/api/local/voice/transcribe"), false);
 });
 
-test("reply audio uses an installed local voice and can be stopped", () => {
+test("reply audio uses an installed local voice and can be stopped", async () => {
   let spoken;
   let cancelled = 0;
   class Utterance { constructor(text) { this.text = text; } }
   const speechSynthesis = {
-    getVoices: () => [{ localService: true, name: "Local voice" }],
+    getVoices: () => [{ localService: true, voiceURI: "local-voice", name: "Local voice", lang: "en-US" }],
+    addEventListener() {},
     speak(item) { spoken = item; },
     cancel() { cancelled += 1; },
   };
   const ui = harness({ windowRef: { speechSynthesis, SpeechSynthesisUtterance: Utterance },
     fetchImpl: async () => ({ ok: true, json: async () => ({ cloud_budget: { configured: false } }) }) });
+  assert.match(ui.elements["voice-output-state"].textContent, /Choose an installed local voice/);
+  ui.elements["voice-output-voice"].value = "local-voice";
+  await ui.elements["voice-output-voice"].listeners.change();
   assert.equal(ui.controller.speak("A local answer"), true);
   assert.equal(spoken.text, "A local answer");
+  assert.equal(spoken.voice.voiceURI, "local-voice");
+  assert.equal(spoken.lang, "en-US");
   ui.elements["voice-stop-playback"].listeners.click();
   assert.equal(cancelled, 2);
   assert.match(ui.elements["voice-state"].textContent, /playback stopped/);
+});
+
+test("missing local speech output is visible and does not try an online fallback", () => {
+  const ui = harness({ windowRef: {}, fetchImpl: async () => ({ ok: true, json: async () => ({ cloud_budget: {} }) }) });
+  assert.match(ui.elements["voice-output-state"].textContent, /unavailable.*no online fallback/i);
+  assert.equal(ui.elements["voice-output-voice"].disabled, true);
+  assert.equal(ui.controller.speak("A reviewed reply"), false);
+  assert.match(ui.elements["voice-state"].textContent, /unavailable/i);
 });

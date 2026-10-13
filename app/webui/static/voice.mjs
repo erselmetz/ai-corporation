@@ -2,6 +2,7 @@ const MAX_SECONDS = 10;
 const MAX_CAPTURE_MS = MAX_SECONDS * 1000;
 const TARGET_RATE = 16_000;
 const SENSITIVE = /\bAIza[A-Za-z0-9_-]{20,}\b|\b(?:GEMINI|GOOGLE)_API_KEY\s*=\s*\S+/i;
+import { createOfflineTextToSpeechProvider } from "./text-to-speech.mjs";
 
 export function encodePcmWav(samples, sourceRate, { seconds = MAX_SECONDS } = {}) {
   if (!(samples instanceof Float32Array) || !Number.isFinite(sourceRate) || sourceRate < TARGET_RATE) {
@@ -53,10 +54,14 @@ export function mountVoiceControls({
   const budgetState = element("voice-budget-state");
   const state = element("voice-state");
   const stopPlayback = element("voice-stop-playback");
+  const outputLanguage = element("voice-output-language");
+  const outputVoice = element("voice-output-voice");
+  const outputState = element("voice-output-state");
   const localModel = element("voice-local-model");
   const localModelState = element("voice-local-model-state");
   const cloudConsentPanel = element("voice-cloud-consent-panel");
   const Recognition = windowRef?.SpeechRecognition || windowRef?.webkitSpeechRecognition;
+  const speechOutput = createOfflineTextToSpeechProvider(windowRef);
   let recognition = null;
   let stream = null;
   let audioContext = null;
@@ -69,7 +74,6 @@ export function mountVoiceControls({
   let stage = "idle";
   let audioBlob = null;
   let requestController = null;
-  let currentSpeech = null;
   let cloudBudget = null;
   let localSpeechStatus = { state: "backend-unavailable", available_models: [] };
   let captureMode = "cloud";
@@ -154,9 +158,53 @@ export function mountVoiceControls({
     const consentMode = ["audio-ready", "audio-preparing", "cloud-request", "local-model-request"].includes(stage)
       ? captureMode : mode.value;
     if (cloudConsentPanel) cloudConsentPanel.hidden = consentMode !== "cloud";
-    stopPlayback.disabled = !windowRef?.speechSynthesis;
+    stopPlayback.disabled = speechOutput.status().state !== "speaking";
     reportActivity();
   }
+
+  function updateOutputStatus(snapshot = speechOutput.status()) {
+    if (outputVoice) {
+      outputVoice.replaceChildren();
+      const placeholder = documentRef.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = snapshot.voices.length ? "Select a local voice" : "No local voices available";
+      outputVoice.append(placeholder);
+      for (const voice of snapshot.voices) {
+        const option = documentRef.createElement("option");
+        option.value = voice.voice_uri;
+        option.textContent = `${voice.name} (${voice.language})`;
+        outputVoice.append(option);
+      }
+      outputVoice.value = snapshot.selected_voice || "";
+      outputVoice.disabled = snapshot.voices.length === 0;
+    }
+    if (outputState) {
+      const selected = snapshot.voices.find(voice => voice.voice_uri === snapshot.selected_voice);
+      const languageCode = outputLanguage?.value.trim() || snapshot.language || "not set";
+      const labels = {
+        unavailable: "Offline speech output is unavailable on this device; no online fallback is used.",
+        "voice-not-selected": "Choose an installed local voice and output language before speaking a reply.",
+        "selected-voice-unavailable": "The selected local voice is no longer available. Choose another voice.",
+        ready: `Offline device speech is ready: ${selected?.name || "local voice"} (${languageCode}).`,
+        speaking: `Speaking locally with ${selected?.name || "the selected voice"} (${languageCode}).`,
+        failed: "Local speech output failed. No online fallback was used.",
+      };
+      outputState.textContent = labels[snapshot.state] || "Offline speech output status is unknown.";
+    }
+    if (stopPlayback) stopPlayback.disabled = snapshot.state !== "speaking";
+  }
+
+  function configureOutput() {
+    if (!outputVoice?.value || !outputLanguage) { updateOutputStatus(); return; }
+    try {
+      updateOutputStatus(speechOutput.configure({ voiceURI: outputVoice.value, language: outputLanguage.value.trim() }));
+    } catch (error) {
+      updateOutputStatus();
+      if (outputState) outputState.textContent = error.message;
+    }
+  }
+
+  speechOutput.setStatusListener(updateOutputStatus);
 
   function setState(message) { state.textContent = message; }
 
@@ -446,8 +494,7 @@ export function mountVoiceControls({
   windowRef?.addEventListener?.("ersel:emergency-stop", () => {
     emergencyStopped = true;
     void stop();
-    windowRef?.speechSynthesis?.cancel?.();
-    currentSpeech = null;
+    updateOutputStatus(speechOutput.stop());
     updateControls();
   });
   windowRef?.addEventListener?.("ersel:emergency-resumed", () => {
@@ -478,30 +525,21 @@ export function mountVoiceControls({
   }
 
   function speak(text) {
-    if (!windowRef?.speechSynthesis || typeof windowRef.SpeechSynthesisUtterance !== "function") {
-      setState("Local speech output is unavailable on this device.");
+    try {
+      updateOutputStatus(speechOutput.speak(text));
+      setState("Speaking the reply with the selected offline device voice. No audio was sent.");
+      return true;
+    } catch (error) {
+      updateOutputStatus();
+      setState(error.message || "Local speech output failed. No online fallback was used.");
       return false;
     }
-    windowRef.speechSynthesis.cancel();
-    currentSpeech = new windowRef.SpeechSynthesisUtterance(text.slice(0, 8192));
-    const localVoice = windowRef.speechSynthesis.getVoices().find(voice => voice.localService);
-    if (!localVoice) {
-      currentSpeech = null;
-      setState("No local speech output voice is installed on this device.");
-      return false;
-    }
-    currentSpeech.voice = localVoice;
-    currentSpeech.onend = () => { currentSpeech = null; setState("Local speech playback finished."); };
-    currentSpeech.onerror = () => { currentSpeech = null; setState("Local speech playback stopped or failed."); };
-    windowRef.speechSynthesis.speak(currentSpeech);
-    setState("Speaking the reply with the device's local speech engine. No audio was sent.");
-    return true;
   }
 
   function clear() {
     if (stage === "local-capture" || stage === "audio-capture" || stage === "audio-stopping" || stage === "audio-ready") void stop();
     else if (stage === "cloud-request") requestController?.abort();
-    windowRef?.speechSynthesis?.cancel?.();
+    speechOutput.stop();
     stage = "idle"; audioBlob = null; updateControls();
   }
 
@@ -548,10 +586,17 @@ export function mountVoiceControls({
     updateControls();
   });
   stopPlayback.addEventListener("click", () => {
-    windowRef?.speechSynthesis?.cancel?.(); currentSpeech = null;
+    updateOutputStatus(speechOutput.stop());
     setState("Local speech playback stopped.");
   });
+  outputVoice?.addEventListener("change", configureOutput);
+  outputLanguage?.addEventListener("change", configureOutput);
+  windowRef?.speechSynthesis?.addEventListener?.("voiceschanged", () => {
+    updateOutputStatus();
+    updateControls();
+  });
   mode.addEventListener("change", updateControls);
+  updateOutputStatus();
   updateControls();
   void loadBudget();
   return { clear, speak, loadBudget, updateControls };

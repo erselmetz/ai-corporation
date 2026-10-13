@@ -773,6 +773,11 @@ def coordinator_chat_page():
       <button id="voice-budget-save" type="submit">Set cloud ceiling</button>
     </form>
     <p id="voice-budget-state" role="status" aria-live="polite">Cloud transcription is off until you set a per-run spending ceiling.</p>
+    <h3>Offline reply speech</h3>
+    <p>Uses only local voices exposed by this device's browser. Choose the output language and voice explicitly. This setting controls spoken replies only; it grants no action permission and never switches to an online service.</p>
+    <label for="voice-output-language">Reply speech language tag</label><input id="voice-output-language" value="en-US" maxlength="16">
+    <label for="voice-output-voice">Local reply voice</label><select id="voice-output-voice" disabled><option value="">Checking local voices…</option></select>
+    <p id="voice-output-state" role="status" aria-live="polite">Checking local speech output availability. No online fallback is used.</p>
     <button id="voice-stop-playback" type="button" disabled>Stop local reply playback</button>
     <p id="voice-state" role="status" aria-live="polite">Typed chat remains available while voice is disabled.</p>
     </section></details>
