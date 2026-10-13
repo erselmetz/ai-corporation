@@ -1396,7 +1396,7 @@ export const post100Tasks = [
     "title": "Hybrid lexical and semantic retrieval",
     "description": "Combine existing deterministic lexical retrieval with Task 130 semantic candidates under explicit, explainable ranking policy.",
     "category": "Phase B - Knowledge and RAG",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       66,
       117,
@@ -1411,12 +1411,18 @@ export const post100Tasks = [
       "Do not inject results into chat automatically or change routing."
     ],
     "decisions": [
-      "Choose fusion method from Task 135 evidence and require explicit owner policy for ranking changes."
+      "Use an opt-in per-call rrf-v1 reciprocal-rank policy. The Task 135 synthetic fixture validates access/retrieval contracts but does not establish real-model ranking quality; the existing lexical default remains unchanged."
     ],
     "area": "P18",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-136-hybrid-lexical-semantic-retrieval",
+    "validation": [
+      "Focused context, semantic-memory, and Task 135 evaluation regressions: 31 passed.",
+      "The hybrid call requires explicit rrf-v1 selection, reports bounded lexical/semantic contributions, rechecks current provenance and revision, and falls back to lexical-only when the optional vector capability is unavailable. Existing lexical retrieval and chat/routing behavior are unchanged.",
+      "Full Python suite: 1107 passed, 6 skipped, 2 failed in the same unrelated pre-existing model-assignment tests: tests/test_command_interface.py::test_model_set_command and tests/test_provider_model_api.py::test_model_replacement_uses_existing_assignment_service."
+    ],
+    "limitations": [
+      "Hybrid retrieval is an explicit application-service capability and is not automatically injected into chat or routing. RRF is opt-in per call; the synthetic Task 135 fixture makes no production embedding relevance claim."
+    ]
   },
   {
     "number": 137,
@@ -2484,7 +2490,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Task 135 is verified; Tasks 136-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-136 are verified; Tasks 137-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

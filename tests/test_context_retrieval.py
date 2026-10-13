@@ -40,6 +40,52 @@ def test_deterministic_relevance_and_traceable_immutable_results():
     assert retrieve(service) == result
 
 
+def test_hybrid_retrieval_requires_explicit_policy_and_reports_bounded_rrf_contributions():
+    from app.knowledge.service import SemanticMemoryService
+    from tests.test_semantic_memory import FakeEmbeddingProvider, MemoryVectorStore
+
+    runtime = create_corporation_runtime()
+    note("lexical-semantic", "alpha beta with additional supporting context")
+    note("semantic-only", "A related concept described using different words")
+    manager = runtime.application_service.memory_management()
+    vectors = MemoryVectorStore()
+    semantic = SemanticMemoryService(manager, FakeEmbeddingProvider(), vectors)
+    runtime.application_service.configure_semantic_memory(semantic)
+    semantic.index("lexical-semantic", actor_id="owner", scope=MemoryScope.CONVERSATION,
+                   scope_id="chat", now=NOW)
+    semantic.index("semantic-only", actor_id="owner", scope=MemoryScope.CONVERSATION,
+                   scope_id="chat", now=NOW)
+    service = runtime.application_service.context_retrieval()
+
+    with pytest.raises(ValueError, match="explicit supported"):
+        service.retrieve_hybrid("alpha", actor_id="owner", scope=MemoryScope.CONVERSATION,
+                                scope_id="chat", now=NOW, ranking_policy="")
+
+    result = service.retrieve_hybrid("alpha", actor_id="owner", scope=MemoryScope.CONVERSATION,
+                                     scope_id="chat", now=NOW, limit=5,
+                                     ranking_policy="rrf-v1")
+    assert result.mode == "hybrid"
+    assert result.ranking_policy == "rrf-v1"
+    assert {hit.source.memory_id for hit in result.hits} == {"lexical-semantic", "semantic-only"}
+    assert all(0.0 <= hit.lexical_contribution <= 1.0 for hit in result.hits)
+    assert all(0.0 <= hit.semantic_contribution <= 1.0 for hit in result.hits)
+    assert all(hit.fused_score == pytest.approx(
+        hit.lexical_contribution + hit.semantic_contribution) for hit in result.hits)
+    assert result.hits[0].source.revision
+
+
+def test_hybrid_retrieval_falls_back_to_lexical_when_vectors_are_unavailable():
+    service = create_corporation_runtime().application_service.context_retrieval()
+    note("lexical", "alpha beta")
+    result = service.retrieve_hybrid("alpha", actor_id="owner", scope=MemoryScope.CONVERSATION,
+                                     scope_id="chat", now=NOW, ranking_policy="rrf-v1")
+    assert result.mode == "lexical-only"
+    assert result.semantic_candidate_count == 0
+    assert [hit.source.memory_id for hit in result.hits] == ["lexical"]
+    assert result.hits[0].lexical_contribution > 0
+    assert result.hits[0].semantic_contribution == 0
+
+
 def test_exact_scope_owner_and_expiry_no_fallback():
     service = create_corporation_runtime().application_service.context_retrieval()
     note("own", "alpha"); note("private", "alpha secret", owner="other"); note("elsewhere", "alpha", scope_id="other-chat")
