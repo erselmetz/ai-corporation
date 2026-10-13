@@ -741,6 +741,7 @@ def coordinator_chat_page():
     <section id="chat-history" aria-label="Conversation messages" aria-live="polite"></section>
     <form id="chat-form"><label for="chat-input">Message (up to 8192 UTF-8 bytes)</label>
     <textarea id="chat-input" rows="4" maxlength="8192" required></textarea>
+    <p id="chat-input-provenance" role="status" aria-live="polite" hidden></p>
     <button id="chat-send" type="submit">Send</button>
     <button id="chat-stop-request" type="button" disabled hidden>Stop waiting (remote outcome may be unknown)</button>
     <button id="chat-stop-display" type="button" disabled hidden>Stop display (generation continues)</button></form>

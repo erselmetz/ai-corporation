@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mountChat } from "../app/webui/static/chat.mjs";
+import { mountChat, voiceTranscriptSourceLabel } from "../app/webui/static/chat.mjs";
 
 class Element {
   constructor(tag = "") { this.tag = tag; this.children = []; this.value = ""; this.text = ""; this.listeners = {}; this.disabled = false; this.hidden = false; }
@@ -44,7 +44,7 @@ const completedStreamEvent = {
 };
 function setup(handler = null, windowRef = globalThis.window) {
   const ids = [
-    "chat-state", "chat-history", "chat-agent", "chat-conversation", "chat-input",
+    "chat-state", "chat-history", "chat-agent", "chat-conversation", "chat-input", "chat-input-provenance",
     "chat-start", "chat-send", "chat-close", "chat-refresh", "chat-identity",
     "chat-form", "cloud-consent-panel", "cloud-consent", "chat-task-source",
     "chat-task-agent", "chat-task-prepare", "chat-task-confirm", "chat-task-review",
@@ -106,7 +106,17 @@ test("local transcript is added after an unsent typed draft and never submits th
   await ui.elements["voice-start"].listeners.click();
   recognition.onresult({ results: [[{ transcript: "spoken addition" }]] });
   assert.equal(ui.elements["chat-input"].value, "typed context\nspoken addition");
+  assert.equal(ui.elements["chat-input-provenance"].hidden, false);
+  assert.match(ui.elements["chat-input-provenance"].textContent, /Browser on-device speech recognition \(local\)/);
+  assert.match(ui.elements["chat-input-provenance"].textContent, /source applies only to the inserted transcript/);
   assert.equal(ui.calls.some(call => call.path.endsWith("/messages") || call.path.endsWith("/messages/stream")), false);
+});
+
+test("speech source labels distinguish local, local-model, and consented online transcripts", () => {
+  assert.match(voiceTranscriptSourceLabel("local"), /Browser on-device.*local/);
+  assert.match(voiceTranscriptSourceLabel("local-model"), /Selected local speech model/);
+  assert.match(voiceTranscriptSourceLabel("gemini"), /online, explicitly consented/);
+  assert.match(voiceTranscriptSourceLabel("unexpected"), /Unverified/);
 });
 
 test("start and send use same-origin, session CSRF and actual coordinator identity; text stays inert", async () => {
@@ -120,6 +130,7 @@ test("start and send use same-origin, session CSRF and actual coordinator identi
   assert.equal(await ui.controller.send({ preventDefault() {} }), true);
   assert.ok(ui.elements["chat-history"].textContent.includes(untrusted));
   assert.equal(ui.elements["chat-input"].value, "");
+  assert.equal(ui.elements["chat-input-provenance"].hidden, true);
   const post = ui.calls.find(call => call.path.endsWith("/messages"));
   assert.equal(post.options.credentials, "same-origin");
   assert.equal(post.options.headers["X-Local-CSRF"], "test-csrf");

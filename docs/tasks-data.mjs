@@ -1767,7 +1767,7 @@ export const post100Tasks = [
     "title": "Reviewed speech input in conversations",
     "description": "Connect governed local transcription to chat with language/model configuration and mandatory review before sending.",
     "category": "Phase D - Voice and Speech",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       128,
       145,
@@ -1781,11 +1781,18 @@ export const post100Tasks = [
       "Do not auto-submit transcripts or store raw audio.",
       "Preserve existing Gemini consent semantics."
     ],
-    "decisions": [],
+    "decisions": [
+      "Keep transcript provenance as an accessible, transient client-side label on the editable draft: distinguish browser on-device, explicitly selected local model, and Google Gemini online transcription after that recording's required consent. Append recognized text after any typed draft without changing it; sending still requires the existing explicit Send action and existing per-turn Gemini chat consent. The source label describes the insertion origin only, not typed text or later edits, and is cleared after successful send. Raw audio and transcript-source metadata are not persisted in conversation history; the message API schema and existing Conversation/Message lifecycle remain unchanged."
+    ],
     "area": "P20",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-147-reviewed-speech-input-in-conversations",
+    "validation": [
+      "Focused chat UI and voice-module tests: 29 passed, including typed-draft preservation, source labels for local/local-model/consented online transcription, and no automatic send.",
+      "Full browser-module suite: 169 passed. Public documentation site tests: 15 passed; update-manifest tests: 6 passed. Python runtime code was unchanged in this task."
+    ],
+    "limitations": [
+      "Provenance is a temporary UI indicator of transcript insertion, not persisted message metadata. It does not identify individual text ranges after editing and is cleared after successful send. The browser remains responsible for microphone permission; raw audio remains ephemeral under the existing Task 145/146 routes."
+    ]
   },
   {
     "number": 148,

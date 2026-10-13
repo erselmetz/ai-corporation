@@ -1,5 +1,13 @@
 import { mountVoiceControls } from "./voice.mjs";
 
+export function voiceTranscriptSourceLabel(source) {
+  return ({
+    local: "Browser on-device speech recognition (local)",
+    "local-model": "Selected local speech model",
+    gemini: "Google Gemini (online, explicitly consented for this recording)",
+  })[source] || "Unverified speech source";
+}
+
 function isGeminiProvider(providerId) {
   return typeof providerId === "string"
     && (providerId === "gemini" || providerId.startsWith("gemini-"));
@@ -17,6 +25,8 @@ export function mountChat({
   const agents = element("chat-agent");
   const conversations = element("chat-conversation");
   const input = element("chat-input");
+  const voiceProvenance = element("chat-input-provenance");
+  voiceProvenance.hidden = true;
   const cloudPanel = element("cloud-consent-panel");
   const cloudConsent = element("cloud-consent");
   const taskSource = element("chat-task-source");
@@ -57,9 +67,15 @@ export function mountChat({
   let canStudyRepositories = false;
   let currentProposal = null;
   let voiceController = null;
+  const voiceSources = [];
   let emergencyStopped = false;
   let requestController = null;
   const base = "/api/chat/conversations";
+  function clearVoiceProvenance() {
+    voiceSources.length = 0;
+    voiceProvenance.hidden = true;
+    voiceProvenance.textContent = "";
+  }
   function clear() {
     voiceController?.clear();
     history.replaceChildren();
@@ -274,6 +290,7 @@ export function mountChat({
           const outcome = await receiveStream(identifier, body, controller.signal);
           if (outcome.complete) {
             input.value = "";
+            clearVoiceProvenance();
             render(outcome.complete);
             state.textContent = outcome.displayStopped
               ? "Display was stopped, but generation continued and completed. This did not cancel the provider request; the verified final response is shown."
@@ -300,6 +317,7 @@ export function mountChat({
           state.textContent = "Pending: waiting for the configured model. Closing this page does not cancel its request.";
           const result = await request(`${base}/${encodeURIComponent(identifier)}/messages`, body, controller.signal);
           input.value = "";
+          clearVoiceProvenance();
           render(result);
         }
       } catch (error) {
@@ -529,9 +547,13 @@ export function mountChat({
     fetchImpl,
     confirmImpl,
     canUseChat: () => Boolean(selected && canSend && !busy),
-    onTranscript: transcript => {
+    onTranscript: (transcript, source) => {
       const draft = input.value.replace(/\s+$/, "");
       input.value = draft ? `${draft}\n${transcript}` : transcript;
+      const label = voiceTranscriptSourceLabel(source);
+      if (!voiceSources.includes(label)) voiceSources.push(label);
+      voiceProvenance.hidden = false;
+      voiceProvenance.textContent = `Voice transcript source: ${voiceSources.join("; ")}. The draft remains editable; this source applies only to the inserted transcript, not typed text or later edits. Review it and choose Send. Nothing was submitted automatically.`;
       input.focus?.();
     },
   });
