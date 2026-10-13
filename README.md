@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-152 are verified complete; Task 134 is deferred and incomplete; Tasks 153-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-153 are verified complete; Task 134 is deferred and incomplete; Tasks 154-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -1024,3 +1024,8 @@ The local chat UI offers one caller-triggered display/window capture through the
 ## Bounded image input and vision context (Task 150)
 
 Authenticated chat owners can explicitly attach PNG or JPEG files to an open conversation through the API. Each file is capped at 2 MiB, 4096 pixels per dimension and 8 megapixels; each conversation holds at most four images, while the process-wide temporary store is capped at 20 MiB. Attachments are process-memory only, expire after 15 minutes on the next image operation, and are removed on explicit deletion, conversation close, or process restart. Only safe metadata is returned; bytes are not persisted, indexed, added to messages, or passed to a Provider. Provider transfer is unsupported here and remains denied until a future task provides explicit per-use Provider selection and consent. No upload UI, screen/camera capture, image transformation, complete image decoding, or secure-erasure guarantee is included. Checkpoint: task-150-bounded-image-input-vision-context.
+
+
+## OCR provider contract (Task 153)
+
+`CorporationApplicationService.ocr()` constructs the provider-neutral OCR service without selecting or loading an engine. It accepts an existing temporary Task 150 attachment, checks its digest, type, dimensions, and byte cap, and returns the image ID, upload/capture provenance, source SHA-256, requested language, confidence, pixel boxes, and bounded OCR text. Region count, per-region and total text, language tags, error text, and processing deadline are limited. Unsupported language, unavailable provider, low confidence, success, timeout, and sanitized failure are distinct outcomes. OCR results are marked untrusted and are not submitted to chat or interpreted as instructions. Only deterministic fake providers are tested; no OCR engine, API/UI, image transfer, or live accuracy claim is included. A provider must honor its supplied deadline; one active call per service instance prevents runaway thread creation, and a hung call keeps that instance unavailable until it exits. Checkpoint: `task-153-bounded-ocr-provider-contract`.

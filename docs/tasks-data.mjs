@@ -1966,23 +1966,15 @@ export const post100Tasks = [
     "title": "OCR provider abstraction",
     "description": "Define a replaceable OCR provider contract with language, confidence, bounding-box, and source-image provenance.",
     "category": "Phase E - Vision",
-    "status": "planned",
-    "dependsOn": [
-      150,
-      152
-    ],
-    "acceptance": [
-      "Bound region count, output text, processing time, and errors.",
-      "Distinguish unsupported, unavailable, low-confidence, and success."
-    ],
-    "outOfScope": [
-      "OCR output is untrusted data, not an action instruction."
-    ],
-    "decisions": [],
+    "status": "completed",
+    "dependsOn": [150, 152],
+    "acceptance": ["Bound region count, output text, processing time, and errors.", "Distinguish unsupported, unavailable, low-confidence, and success."],
+    "outOfScope": ["OCR output is untrusted data, not an action instruction. No OCR engine, UI/API, chat submission, or provider transfer is included."],
+    "decisions": ["Use a provider protocol plus an in-memory service over existing owner-scoped Task 150 image attachments. Validate source digest, dimensions, language tags, confidence, pixel boxes, and bounded text. Enforce a maximum five-second call deadline; serialize each service instance so a stuck provider cannot spawn unbounded work."],
     "area": "P21",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-153-bounded-ocr-provider-contract",
+    "validation": ["Focused OCR contract and image attachment regressions: 13 passed.", "Full Python suite: 1180 passed, 6 skipped; two previously recorded unrelated model-assignment failures remain.", "Public documentation tests: 15 passed; Python compilation and git diff --check passed."],
+    "limitations": ["No OCR backend is configured or bundled. The replaceable provider contract is tested with deterministic fakes only; OCR accuracy, language coverage, and real engine performance are not claimed.", "A provider must honor its supplied deadline. The service returns at the configured timeout and permits only one active provider call per service instance; a hung daemon call keeps that instance unavailable until it exits. OCR text is explicitly untrusted and is not used as an instruction."]
   },
   {
     "number": 154,
@@ -2606,7 +2598,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-152 are verified; Tasks 153-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-153 are verified; Tasks 154-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

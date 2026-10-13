@@ -775,6 +775,11 @@ class CorporationApplicationService:
         from app.integrations.image_processing import PillowImageProcessingAdapter
         return PillowImageProcessingAdapter()
 
+    def ocr(self, provider=None, *, timeout_seconds=2.0):
+        """Construct the replaceable OCR contract without selecting a backend."""
+        from app.integrations.ocr import OcrService
+        return OcrService(provider, timeout_seconds=timeout_seconds)
+
     def task_planning(self):
         from .task_planning import TaskPlanningService
         return TaskPlanningService(self._orchestrator, self.context_retrieval())
