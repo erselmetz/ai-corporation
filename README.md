@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-145 are verified complete; Task 134 is deferred and incomplete; Tasks 146-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-146 are verified complete; Task 134 is deferred and incomplete; Tasks 147-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -996,3 +996,7 @@ The explicitly configured local app now has an owner-controlled, process-local e
 ## Bounded speech input contracts (Task 145)
 
 Speech input now has a backend-neutral contract for mono 16 kHz, 16-bit PCM WAV with a ten-second and 320,044-byte maximum. Language tags and transcript size are validated; audio and transcript text are omitted from object representations to avoid accidental diagnostic leakage. Browser microphone capture remains per-use and visible, with a matching ten-second local recognition limit, explicit stop/cancel behavior, and no silent cloud fallback. The Python backend does not access microphone hardware. Cancellation cannot interrupt work already running inside a browser engine or remote provider. Checkpoint: task-145-bounded-speech-input-contracts.
+
+## Optional local speech recognition (Task 146)
+
+An optional faster-whisper adapter is available only when its runtime is already installed and an owner-supplied model directory is present under the fixed local `speech-models` data folder. The UI lists supported local folders and requires explicit model selection; the model loads only when the owner chooses local transcription. Runtime and model files are not bundled, installed, or downloaded; the packaged Electron sidecar therefore does not provide this backend, and there is no UI installer for it. Loading uses a local path, CPU/int8, and local-files-only mode. Audio remains in bounded, wipeable request memory and is not sent to a cloud provider or written to disk by this adapter. The transcript enters the editable chat draft and is never submitted automatically. The upstream [faster-whisper project](https://github.com/SYSTRAN/faster-whisper) is MIT-licensed, but each model has its own license. CTranslate2 and audio/array runtime dependencies plus independently sized model files create a nontrivial optional footprint. Language coverage depends on the selected model. Tests use deterministic injected model fakes; no installed runtime, model quality, hardware fit, or latency is claimed. Task 134 remains deferred; this feature does not install or manage capability packs. Checkpoint: task-146-optional-local-speech-recognition.

@@ -1734,9 +1734,8 @@ export const post100Tasks = [
     "title": "Optional local speech-to-text backend",
     "description": "Add one optional local speech-to-text backend, evaluating faster-whisper as the preferred candidate.",
     "category": "Phase D - Voice and Speech",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
-      134,
       145
     ],
     "acceptance": [
@@ -1748,12 +1747,20 @@ export const post100Tasks = [
       "Do not download models automatically."
     ],
     "decisions": [
-      "Confirm license, footprint, language support, hardware, and latency."
+      "Evaluated faster-whisper as the single optional backend. Its upstream project is MIT-licensed, but model licenses remain model-specific. The native CTranslate2 runtime, audio/array libraries, and independently sized model files create a nontrivial distribution footprint, so none are bundled or made required. Model language coverage is selected-model-specific. Use it only when faster-whisper is already installed and the owner has placed a supported model directory directly inside the fixed local speech-models folder. Because Task 134 is deferred for lack of a verified pack source/trust/loading boundary, this backend does not install, catalog, download, or activate third-party packs; it reads only owner-present files and requires explicit model selection. Model loading is lazy, CPU/int8, local-files-only, and tested through deterministic injected fakes. No online fallback or automatic model download is provided."
     ],
     "area": "P20",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-146-optional-local-speech-recognition",
+    "validation": [
+      "Focused local speech backend/API and Task 145/voice/emergency-stop regression tests: 22 passed.",
+      "Browser voice-module tests: 13 passed, including explicit local model selection, local-only request routing, editable transcript handoff, and no cloud budget/consent use.",
+      "Full Python suite: 1157 passed, 6 skipped, with the same two unrelated model-assignment failures in tests/test_command_interface.py::test_model_set_command and tests/test_provider_model_api.py::test_model_replacement_uses_existing_assignment_service.",
+      "Full browser-module suite: 168 passed. Public documentation site tests: 15 passed; update-manifest tests: 6 passed. Python compilation and git diff --check passed."
+    ],
+    "limitations": [
+      "The optional faster-whisper/native runtime and model are not bundled or installed by the application. The packaged Electron sidecar therefore does not provide this backend unless a separately supported packaging route is introduced; there is currently no UI installer for the runtime/model. Only owner-present model directories with required files are listed; each model's license must be checked by its owner, and model quality, language coverage, hardware fit, and latency are not certified. Cancellation is cooperative between model segments and cannot guarantee interruption while native model code is running.",
+      "Task 134 remains deferred and incomplete; this backend avoids its missing pack lifecycle by reading a fixed owner-managed folder without adding install, trust, catalog, or activation operations."
+    ]
   },
   {
     "number": 147,

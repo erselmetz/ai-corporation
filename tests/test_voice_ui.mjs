@@ -3,14 +3,17 @@ import test from "node:test";
 import { encodePcmWav, mountVoiceControls } from "../app/webui/static/voice.mjs";
 
 class Element {
-  constructor() { this.listeners = {}; this.value = ""; this.checked = false; this.disabled = false; this.hidden = false; this.textContent = ""; }
+  constructor() { this.listeners = {}; this.value = ""; this.checked = false; this.disabled = false; this.hidden = false; this.textContent = ""; this.children = []; }
   addEventListener(name, fn) { this.listeners[name] = fn; }
+  replaceChildren(...items) { this.children = items; }
+  append(...items) { this.children.push(...items); }
 }
 
 function harness({ fetchImpl, windowRef, confirmImpl = () => true, setTimeoutImpl, clearTimeoutImpl } = {}) {
   const ids = ["voice-mode", "voice-language", "voice-start", "voice-stop", "voice-transcribe",
     "voice-install-local", "voice-cloud-consent", "voice-budget-form", "voice-budget-cents",
-    "voice-budget-save", "voice-budget-state", "voice-state", "voice-stop-playback"];
+    "voice-budget-save", "voice-budget-state", "voice-state", "voice-stop-playback",
+    "voice-local-model", "voice-local-model-state", "voice-cloud-consent-panel"];
   const elements = Object.fromEntries(ids.map(id => [id, new Element()]));
   elements["voice-mode"].value = "local";
   elements["voice-language"].value = "en-US";
@@ -240,6 +243,61 @@ test("cloud audio requires one-use consent and places only the reviewed transcri
   assert.deepEqual(ui.transcripts, [{ text: "hello cloud", source: "gemini" }]);
   assert.equal(ui.elements["voice-cloud-consent"].checked, false);
   assert.match(ui.elements["voice-state"].textContent, /not sent to chat or saved/);
+});
+
+test("optional local model is selected explicitly, processes audio locally, and inserts a reviewable draft", async () => {
+  const paths = [];
+  let requestOptions;
+  const localStatus = { runtime: "available", selected_model: null, available_models: ["tiny-en"], state: "model-not-selected" };
+  const fetchImpl = async (path, options = {}) => {
+    paths.push(path);
+    if (path === "/api/local/voice") return { ok: true, json: async () => ({
+      cloud_budget: { configured: false, ceiling_cents: 0, remaining_cents: 0 }, local_speech: localStatus,
+    }) };
+    if (path === "/api/local/session") return { ok: true, json: async () => ({ csrf: "csrf" }) };
+    if (path === "/api/local/voice/local-model") {
+      requestOptions = options;
+      localStatus.selected_model = "tiny-en"; localStatus.state = "ready";
+      return { ok: true, json: async () => ({ ...localStatus }) };
+    }
+    if (path.startsWith("/api/local/voice/transcribe-local?")) {
+      requestOptions = options;
+      return { ok: true, json: async () => ({ transcript: "hello local model", backend: "local", language: "en-US" }) };
+    }
+    throw new Error(`unexpected request ${path}`);
+  };
+  class AudioContext {
+    constructor() { this.sampleRate = 16_000; this.state = "running"; this.destination = {}; AudioContext.last = this; }
+    createMediaStreamSource() { return { connect() {}, disconnect() {} }; }
+    createScriptProcessor() { return this.processor = { connect() {}, disconnect() {}, onaudioprocess: null }; }
+    createGain() { return { gain: {}, connect() {}, disconnect() {} }; }
+    async close() { this.state = "closed"; }
+  }
+  const tracks = [{ stop() { this.stopped = true; } }];
+  const ui = harness({ windowRef: { AudioContext, navigator: { mediaDevices: {
+    async getUserMedia() { return { getTracks: () => tracks }; },
+  } } }, fetchImpl });
+  await ui.controller.loadBudget();
+  assert.deepEqual(ui.elements["voice-local-model"].children.map(option => option.value), ["", "tiny-en"]);
+  ui.elements["voice-local-model"].value = "tiny-en";
+  await ui.elements["voice-local-model"].listeners.change();
+  assert.equal(requestOptions.headers["X-Local-CSRF"], "csrf");
+  assert.equal(JSON.parse(requestOptions.body).model_id, "tiny-en");
+  ui.elements["voice-mode"].value = "local-model";
+  ui.elements["voice-mode"].listeners.change();
+  assert.equal(ui.elements["voice-cloud-consent-panel"].hidden, true);
+  assert.equal(ui.elements["voice-start"].disabled, false);
+  await ui.elements["voice-start"].listeners.click();
+  AudioContext.last.processor.onaudioprocess({ inputBuffer: { getChannelData: () => new Float32Array(160_000) } });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(ui.elements["voice-transcribe"].hidden, false);
+  assert.equal(ui.elements["voice-transcribe"].textContent, "Transcribe locally");
+  await ui.elements["voice-transcribe"].listeners.click();
+  assert.ok(paths.some(path => path.startsWith("/api/local/voice/transcribe-local?language=en-US")));
+  assert.equal(requestOptions.headers["X-Cloud-Consent"], undefined);
+  assert.equal(requestOptions.body.type, "audio/wav");
+  assert.deepEqual(ui.transcripts, [{ text: "hello local model", source: "local-model" }]);
+  assert.match(ui.elements["voice-state"].textContent, /review/);
 });
 
 test("stopping a cloud transcription stops local waiting and records an unknown provider outcome", async () => {

@@ -53,6 +53,9 @@ export function mountVoiceControls({
   const budgetState = element("voice-budget-state");
   const state = element("voice-state");
   const stopPlayback = element("voice-stop-playback");
+  const localModel = element("voice-local-model");
+  const localModelState = element("voice-local-model-state");
+  const cloudConsentPanel = element("voice-cloud-consent-panel");
   const Recognition = windowRef?.SpeechRecognition || windowRef?.webkitSpeechRecognition;
   let recognition = null;
   let stream = null;
@@ -68,6 +71,8 @@ export function mountVoiceControls({
   let requestController = null;
   let currentSpeech = null;
   let cloudBudget = null;
+  let localSpeechStatus = { state: "backend-unavailable", available_models: [] };
+  let captureMode = "cloud";
   let localAvailability = null;
   let emergencyStopped = false;
   let remoteOutcomeUnknown = false;
@@ -78,7 +83,7 @@ export function mountVoiceControls({
     const EventType = windowRef?.CustomEvent || globalThis.CustomEvent;
     if (typeof windowRef?.dispatchEvent !== "function" || typeof EventType !== "function") return;
     windowRef.dispatchEvent(new EventType("ersel:voice-activity", { detail: {
-      microphone: ["local-capture", "cloud-capture", "cloud-stopping"].includes(stage) ? "active" : "off",
+      microphone: ["local-capture", "audio-capture", "audio-stopping"].includes(stage) ? "active" : "off",
       local_playback: windowRef?.speechSynthesis?.speaking || windowRef?.speechSynthesis?.pending
         ? "active" : "off",
       remote_request: remoteOutcomeUnknown ? "possibly-processing-after-local-stop"
@@ -98,6 +103,28 @@ export function mountVoiceControls({
       if (!response.ok) throw new Error("Sign in to inspect cloud voice settings.");
       const payload = await response.json();
       cloudBudget = payload.cloud_budget;
+      localSpeechStatus = payload.local_speech || localSpeechStatus;
+      if (localModel) {
+        const models = Array.isArray(localSpeechStatus.available_models) ? localSpeechStatus.available_models : [];
+        localModel.replaceChildren();
+        const placeholder = documentRef.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Select an installed local model";
+        localModel.append(placeholder);
+        for (const modelId of models) {
+          const option = documentRef.createElement("option");
+          option.value = modelId;
+          option.textContent = modelId;
+          localModel.append(option);
+        }
+        localModel.value = localSpeechStatus.selected_model || "";
+        localModel.disabled = localSpeechStatus.runtime !== "available" || !models.length;
+      }
+      if (localModelState) localModelState.textContent = localSpeechStatus.runtime !== "available"
+        ? "Optional Faster-Whisper runtime or one of its dependencies is unavailable. Browser on-device speech remains available."
+        : localSpeechStatus.state === "ready"
+          ? `Local model ready: ${localSpeechStatus.selected_model}. No model was downloaded by this app.`
+          : `${localSpeechStatus.state}. Add model files to the local speech-models folder, then select one here.`;
       budgetState.textContent = cloudBudget.configured
         ? `App-run cloud request budget: $${(cloudBudget.ceiling_cents / 100).toFixed(2)}; $${(cloudBudget.remaining_cents / 100).toFixed(2)} remains. The app reserves 1¢ per attempt; this is not a provider invoice cap.`
         : "Cloud transcription is off until you set an app-run request budget. This budget does not cap the provider invoice.";
@@ -112,13 +139,21 @@ export function mountVoiceControls({
 
   function updateControls() {
     const localMode = mode.value === "local";
+    const modelMode = mode.value === "local-model";
     start.disabled = stage !== "idle" || !canUseChat()
-      || (localMode ? !Recognition : !windowRef?.navigator?.mediaDevices?.getUserMedia);
+      || (localMode ? !Recognition : modelMode
+        ? localSpeechStatus.state !== "ready" || !windowRef?.navigator?.mediaDevices?.getUserMedia
+        : !windowRef?.navigator?.mediaDevices?.getUserMedia);
     install.hidden = !localMode || !Recognition || !Recognition.available
       || localAvailability !== "downloadable" || stage !== "idle";
     stopButton.hidden = ["idle", "starting", "installing"].includes(stage);
     stopButton.disabled = stage === "idle";
-    transcribe.hidden = stage !== "cloud-ready";
+    transcribe.hidden = stage !== "audio-ready";
+    if (!transcribe.hidden) transcribe.textContent = captureMode === "cloud"
+      ? "Transcribe via Gemini (send recording)" : "Transcribe locally";
+    const consentMode = ["audio-ready", "audio-preparing", "cloud-request", "local-model-request"].includes(stage)
+      ? captureMode : mode.value;
+    if (cloudConsentPanel) cloudConsentPanel.hidden = consentMode !== "cloud";
     stopPlayback.disabled = !windowRef?.speechSynthesis;
     reportActivity();
   }
@@ -225,8 +260,9 @@ export function mountVoiceControls({
     } finally { stage = "idle"; updateControls(); }
   }
 
-  async function beginCloudCapture(startupId) {
-    if (!cloudBudget?.configured || cloudBudget.remaining_cents < 1) {
+  async function beginAudioCapture(startupId) {
+    captureMode = mode.value;
+    if (captureMode === "cloud" && (!cloudBudget?.configured || cloudBudget.remaining_cents < 1)) {
       await loadBudget();
       if (!cloudBudget?.configured || cloudBudget.remaining_cents < 1) {
         throw new Error("Set an available cloud voice ceiling before recording for Gemini.");
@@ -248,7 +284,7 @@ export function mountVoiceControls({
     pieces = [];
     capturedFrames = 0;
     recording = true;
-    stage = "cloud-capture";
+    stage = "audio-capture";
     processor.onaudioprocess = event => {
       if (!recording) return;
       const data = event.inputBuffer.getChannelData(0);
@@ -261,7 +297,9 @@ export function mountVoiceControls({
     processor.connect(gain);
     gain.connect(audioContext.destination);
     updateControls();
-    setState("Recording locally for at most 10 seconds. Nothing is sent until you review the cloud-consent box and choose Transcribe.");
+    setState(captureMode === "cloud"
+      ? "Recording locally for at most 10 seconds. Nothing is sent until you review cloud consent and choose Transcribe."
+      : "Recording locally for at most 10 seconds. Audio stays on this device and is sent only to the explicitly selected local model when you choose Transcribe.");
   }
 
   function joinedSamples() {
@@ -283,30 +321,32 @@ export function mountVoiceControls({
   }
 
   async function finishCapture() {
-    if (stage !== "cloud-capture") return;
-    stage = "cloud-stopping";
+    if (stage !== "audio-capture") return;
+    stage = "audio-stopping";
     const samples = joinedSamples();
     const rate = audioContext?.sampleRate;
     await stopTracks();
     pieces = []; capturedFrames = 0;
-    if (stage !== "cloud-stopping") {
+    if (stage !== "audio-stopping") {
       samples.fill(0);
       return;
     }
     try {
       audioBlob = encodePcmWav(samples, rate);
-      stage = "cloud-ready";
-      setState("Recording is held in memory for this turn only. Review the cloud-consent notice, then explicitly choose Transcribe to send it to Google Gemini.");
+      stage = "audio-ready";
+      setState(captureMode === "cloud"
+        ? "Recording is held in memory for this turn only. Review cloud consent, then explicitly choose Transcribe to send it to Google Gemini."
+        : "Recording is held in memory for this turn only. Choose Transcribe to process it with the selected local model.");
     } catch (error) {
       audioBlob = null; stage = "idle"; setState(error.message);
     }
     updateControls();
   }
 
-  async function transcribeCloud() {
-    if (stage !== "cloud-ready" || !audioBlob) throw new Error("Record a short clip before transcription.");
-    if (!consent.checked) throw new Error("Consent to send this recording to Google Gemini for transcription before continuing.");
-    stage = "cloud-preparing";
+  async function transcribeAudio() {
+    if (stage !== "audio-ready" || !audioBlob) throw new Error("Record a short clip before transcription.");
+    if (captureMode === "cloud" && !consent.checked) throw new Error("Consent to send this recording to Google Gemini for transcription before continuing.");
+    stage = "audio-preparing";
     updateControls();
     let csrf;
     try { csrf = (await session()).csrf; }
@@ -314,36 +354,45 @@ export function mountVoiceControls({
       audioBlob = null; stage = "idle"; updateControls();
       throw error;
     }
-    if (stage !== "cloud-preparing" || !audioBlob) return;
+    if (stage !== "audio-preparing" || !audioBlob) return;
     requestController = new AbortController();
     const controller = requestController;
     const payload = audioBlob;
     audioBlob = null;
-    stage = "cloud-request";
+    stage = captureMode === "cloud" ? "cloud-request" : "local-model-request";
     updateControls();
-    setState("Sending the confirmed recording to Gemini. The app does not store audio; the provider request can still finish if you stop waiting.");
-    consent.checked = false;
+    setState(captureMode === "cloud"
+      ? "Sending the confirmed recording to Gemini. The app does not store audio; the provider request can still finish if you stop waiting."
+      : "Processing the recording with the selected local model. Audio is not sent to an online provider.");
+    if (captureMode === "cloud") consent.checked = false;
     try {
-      const response = await fetchImpl("/api/local/voice/transcribe", {
+      const endpoint = captureMode === "cloud" ? "/api/local/voice/transcribe"
+        : `/api/local/voice/transcribe-local?language=${encodeURIComponent(language.value.trim())}`;
+      const response = await fetchImpl(endpoint, {
         method: "POST", credentials: "same-origin", cache: "no-store", signal: controller.signal,
-        headers: { "Content-Type": "audio/wav", "X-Local-CSRF": csrf, "X-Cloud-Consent": "true" },
+        headers: { "Content-Type": "audio/wav", "X-Local-CSRF": csrf,
+          ...(captureMode === "cloud" ? { "X-Cloud-Consent": "true" } : {}) },
         body: payload,
       });
       const result = await response.json();
       if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : "Gemini transcription failed.");
       if (typeof result.transcript !== "string" || !result.transcript.trim()) throw new Error("Gemini returned no transcript.");
-      remoteOutcomeUnknown = false;
+      if (captureMode === "cloud") remoteOutcomeUnknown = false;
       if (SENSITIVE.test(result.transcript)) {
         setState("Possible API key or sensitive credential detected. The transcript was discarded.");
       } else {
-        onTranscript(result.transcript, "gemini");
-        setState("Transcript added to the message box for review. It was not sent to chat or saved; choose Send to continue.");
+        onTranscript(result.transcript, captureMode === "cloud" ? "gemini" : "local-model");
+        setState(`${captureMode === "cloud" ? "Cloud" : "Local model"} transcript added to the message box for review. It was not sent to chat or saved; choose Send to continue.`);
       }
-      cloudBudget = { ...cloudBudget, remaining_cents: result.remaining_cents };
-      await loadBudget();
+      if (captureMode === "cloud") {
+        cloudBudget = { ...cloudBudget, remaining_cents: result.remaining_cents };
+        await loadBudget();
+      }
     } catch (error) {
       if (controller.signal.aborted) {
-        setState("Stopped waiting locally. Gemini may already have received or processed this recording; the request outcome and charge are unknown. No retry was made.");
+        setState(captureMode === "cloud"
+          ? "Stopped waiting locally. Gemini may already have received or processed this recording; the request outcome and charge are unknown. No retry was made."
+          : "Stopped waiting locally. Model processing may finish before it notices cancellation. No audio was sent online and no retry was made.");
       } else {
         setState(error.message);
         await loadBudget();
@@ -364,23 +413,26 @@ export function mountVoiceControls({
       recognition = null;
       updateControls();
       setState("Local recording stopped. No transcript was sent or saved.");
-    } else if (stage === "cloud-capture") {
+    } else if (stage === "audio-capture") {
       await stopTracks(); pieces = []; capturedFrames = 0; stage = "idle";
       updateControls();
       setState("Recording stopped and discarded locally. No audio was sent.");
-    } else if (stage === "cloud-stopping") {
-      stage = "cloud-canceling";
+    } else if (stage === "audio-stopping") {
+      stage = "audio-canceling";
       audioBlob = null;
       await stopTracks(); pieces = []; capturedFrames = 0; stage = "idle";
       updateControls(); setState("Recording stopped and discarded locally. No audio was sent.");
-    } else if (stage === "cloud-ready") {
+    } else if (stage === "audio-ready") {
       audioBlob = null; stage = "idle"; updateControls();
       setState("Local recording discarded. Nothing was sent.");
-    } else if (stage === "cloud-preparing") {
+    } else if (stage === "audio-preparing") {
       audioBlob = null; stage = "idle"; updateControls();
       setState("Local recording discarded before any cloud request. Nothing was sent.");
     } else if (stage === "cloud-request") {
       remoteOutcomeUnknown = true;
+      requestController?.abort();
+      stopButton.disabled = true;
+    } else if (stage === "local-model-request") {
       requestController?.abort();
       stopButton.disabled = true;
     } else if (stage === "starting") {
@@ -447,7 +499,7 @@ export function mountVoiceControls({
   }
 
   function clear() {
-    if (stage === "local-capture" || stage === "cloud-capture" || stage === "cloud-stopping" || stage === "cloud-ready") void stop();
+    if (stage === "local-capture" || stage === "audio-capture" || stage === "audio-stopping" || stage === "audio-ready") void stop();
     else if (stage === "cloud-request") requestController?.abort();
     windowRef?.speechSynthesis?.cancel?.();
     stage = "idle"; audioBlob = null; updateControls();
@@ -460,7 +512,7 @@ export function mountVoiceControls({
     stage = "starting"; updateControls();
     try {
       if (mode.value === "local") await beginLocal(startupId);
-      else await beginCloudCapture(startupId);
+      else await beginAudioCapture(startupId);
     } catch (error) {
       if (startupId !== captureStartup) return;
       stage = "idle";
@@ -472,11 +524,29 @@ export function mountVoiceControls({
   });
   stopButton.addEventListener("click", () => { void stop(); });
   transcribe.addEventListener("click", async () => {
-    try { await transcribeCloud(); }
+    try { await transcribeAudio(); }
     catch (error) { setState(error.message); }
   });
   install.addEventListener("click", () => { void installLocalPack(); });
   budgetForm.addEventListener("submit", configureBudget);
+  localModel?.addEventListener("change", async () => {
+    if (!localModel.value) return;
+    try {
+      const csrf = (await session()).csrf;
+      const response = await fetchImpl("/api/local/voice/local-model", {
+        method: "POST", credentials: "same-origin", cache: "no-store",
+        headers: { "Content-Type": "application/json", "X-Local-CSRF": csrf },
+        body: JSON.stringify({ model_id: localModel.value }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.detail || "Local speech model could not be selected.");
+      localSpeechStatus = result;
+      if (localModelState) localModelState.textContent = `Local model selected: ${result.selected_model}. It loads only when you explicitly transcribe.`;
+    } catch (error) {
+      if (localModelState) localModelState.textContent = error.message || "Local speech model could not be selected.";
+    }
+    updateControls();
+  });
   stopPlayback.addEventListener("click", () => {
     windowRef?.speechSynthesis?.cancel?.(); currentSpeech = null;
     setState("Local speech playback stopped.");

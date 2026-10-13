@@ -1,7 +1,9 @@
 """Explicit local-owner speech controls and bounded Gemini transcription."""
 
+import asyncio
+import threading
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 
 from app.integrations.gemini_chat import GeminiCallLimit, GeminiConnectionError
 from app.integrations.gemini_voice import (
@@ -10,6 +12,8 @@ from app.integrations.gemini_voice import (
     VoiceRequestError,
     VoiceSpendBudget,
 )
+from app.integrations.local_speech import LocalSpeechUnavailable
+from app.integrations.speech import MAX_SPEECH_WAV_BYTES, SpeechInputError, SpeechInputRequest
 from .security import require_permission
 
 
@@ -18,7 +22,13 @@ class CloudBudgetRequest(BaseModel):
     ceiling_cents: int = Field(ge=1, le=100, strict=True)
 
 
-def create_local_voice_router(connection_manager, budget: VoiceSpendBudget | None = None):
+class LocalSpeechModelRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    model_id: StrictStr = Field(min_length=1, max_length=64)
+
+
+def create_local_voice_router(connection_manager, budget: VoiceSpendBudget | None = None,
+                              local_speech=None):
     router = APIRouter(prefix="/api/local/voice")
     budget = budget or VoiceSpendBudget()
     transcriber = GeminiTranscriber(connection_manager, budget)
@@ -30,7 +40,24 @@ def create_local_voice_router(connection_manager, budget: VoiceSpendBudget | Non
             "cloud_provider": "gemini",
             "cloud_budget": budget.snapshot(),
             "audio_retention": "none_by_application",
+            "local_speech": local_speech.status().__dict__ if local_speech is not None else {
+                "runtime": "unavailable", "selected_model": None,
+                "available_models": (), "state": "backend-unavailable"},
         }
+
+    @router.post("/local-model")
+    async def select_local_model(request: Request,
+                                 _principal=Depends(require_permission("chat:send"))):
+        if local_speech is None:
+            raise HTTPException(503, "Optional local speech backend is unavailable")
+        from app.api.chat import bounded_body
+        try:
+            body = LocalSpeechModelRequest.model_validate_json(await bounded_body(request))
+            return local_speech.select_model(body.model_id).__dict__
+        except LocalSpeechUnavailable as error:
+            raise HTTPException(409, str(error)) from None
+        except ValueError as error:
+            raise HTTPException(422, str(error)) from None
 
     @router.post("/cloud-budget")
     async def configure_budget(request: Request,
@@ -75,5 +102,61 @@ def create_local_voice_router(connection_manager, budget: VoiceSpendBudget | Non
             "remaining_cents": result.remaining_cents,
             "audio_retained": False,
         }
+
+    @router.post("/transcribe-local")
+    async def transcribe_local(request: Request,
+                               _principal=Depends(require_permission("chat:send"))):
+        if local_speech is None:
+            raise HTTPException(503, "Optional local speech backend is unavailable")
+        if request.headers.get("content-type", "").split(";", 1)[0].strip().lower() != "audio/wav":
+            raise HTTPException(415, "Local speech accepts only bounded 16 kHz PCM WAV audio")
+        audio = bytearray()
+        try:
+            async for chunk in request.stream():
+                if len(audio) + len(chunk) > MAX_SPEECH_WAV_BYTES:
+                    raise HTTPException(413, "Voice recording exceeds the 10-second limit")
+                audio.extend(chunk)
+        except BaseException:
+            audio[:] = b"\0" * len(audio)
+            raise
+        try:
+            query = request.query_params
+            language = query.get("language", "en-US")
+            speech_request = SpeechInputRequest(audio=audio, language=language)
+        except SpeechInputError as error:
+            audio[:] = b"\0" * len(audio)
+            raise HTTPException(422, str(error)) from None
+        cancelled = threading.Event()
+        task = asyncio.create_task(asyncio.to_thread(
+            local_speech.transcribe, speech_request, cancelled=cancelled))
+        disconnected = False
+        try:
+            while not task.done():
+                await asyncio.sleep(0.05)
+                if (request.app.state.emergency_stop_service.stopped
+                        or await request.is_disconnected()):
+                    disconnected = await request.is_disconnected()
+                    cancelled.set()
+            if request.app.state.emergency_stop_service.stopped:
+                cancelled.set()
+                await task
+                raise HTTPException(423, "Emergency stop is active; local transcription was cancelled")
+            if disconnected:
+                cancelled.set()
+                await task
+                raise HTTPException(409, "Local transcription was cancelled after the browser disconnected")
+            result = await task
+            return {"transcript": result.text, "backend": "local", "language": result.language,
+                    "audio_retained": False}
+        except LocalSpeechUnavailable as error:
+            raise HTTPException(409, str(error)) from None
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(502, "Local speech recognition failed") from None
+        finally:
+            cancelled.set()
+            speech_request.close()
+            audio[:] = b"\0" * len(audio)
 
     return router

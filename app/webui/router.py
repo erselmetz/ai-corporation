@@ -753,10 +753,13 @@ def coordinator_chat_page():
     Gemini API may retain request data under Google's account tier and policy. This app cannot configure or verify provider retention, or cap Google's final invoice; its budget only limits this app's requests.
     Check your Google account policy first. Do not record passwords, API keys, or other sensitive information.</p>
     <label for="voice-mode">Speech processing</label><select id="voice-mode">
-      <option value="local" selected>Local on-device recognition (default; no cloud fallback)</option>
+      <option value="local" selected>Browser on-device speech recognition (no cloud fallback)</option>
+      <option value="local-model">Optional local Faster-Whisper model</option>
       <option value="cloud">Cloud transcription through Google Gemini (consent and ceiling required)</option>
     </select>
     <label for="voice-language">Recognition language tag</label><input id="voice-language" value="en-US" maxlength="16">
+    <label for="voice-local-model">Installed local speech model</label><select id="voice-local-model" disabled><option value="">Checking local model folder…</option></select>
+    <p id="voice-local-model-state" role="status" aria-live="polite">Optional Faster-Whisper is not installed by default.</p>
     <button id="voice-start" type="button" disabled>Start voice</button>
     <button id="voice-install-local" type="button" hidden>Install local language pack</button>
     <button id="voice-transcribe" type="button" hidden>Transcribe via Gemini (send recording)</button>

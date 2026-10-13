@@ -2,6 +2,8 @@
 import argparse
 import getpass
 import logging
+import os
+from pathlib import Path
 import secrets
 
 from fastapi import HTTPException, Request
@@ -34,7 +36,7 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                      application_service=None, clock=None, desktop_ui_dir=None,
                      voice_connection_manager=None, capability_authorization_service=None,
                      capability_grant_service=None, capability_audit_service=None,
-                     emergency_stop_service=None):
+                     emergency_stop_service=None, local_speech_provider=None):
     backend = LocalOwnerAuthentication(
         password, origin, **({"clock": clock} if clock else {}),
         **({"capability_authorization_service": capability_authorization_service}
@@ -63,7 +65,15 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
     application.state.local_online_provider = None
     application.include_router(create_local_online_provider_router(connection_manager))
     from app.api.local_voice import create_local_voice_router
-    application.include_router(create_local_voice_router(connection_manager))
+    if local_speech_provider is None:
+        from app.integrations.local_speech import FasterWhisperLocalProvider
+        app_data = (Path(os.environ["LOCALAPPDATA"]) / "ERSELMETZ AI"
+                    if os.environ.get("LOCALAPPDATA") else
+                    Path.home() / ".local" / "share" / "ERSELMETZ AI")
+        local_speech_provider = FasterWhisperLocalProvider(app_data / "speech-models")
+    application.state.local_speech_provider = local_speech_provider
+    application.include_router(create_local_voice_router(connection_manager,
+                                                         local_speech=local_speech_provider))
     from app.api.provider_connections import router as provider_connections_router
     application.include_router(provider_connections_router)
     from app.api.inventory import router as inventory_router
@@ -87,7 +97,8 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                 except HTTPException as error:
                     return JSONResponse({"detail": error.detail}, status_code=error.status_code)
             content_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
-            voice_upload = (request.url.path == "/api/local/voice/transcribe"
+            voice_upload = (request.url.path in {"/api/local/voice/transcribe",
+                                                 "/api/local/voice/transcribe-local"}
                             and content_type == "audio/wav")
             if content_type != "application/json" and not voice_upload:
                 return JSONResponse({"detail": "JSON request required"}, status_code=415)
@@ -152,7 +163,6 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
         return response
 
     if desktop_ui_dir is not None:
-        from pathlib import Path
         import base64
         import hashlib
         import re
