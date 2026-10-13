@@ -24,9 +24,14 @@ class ProviderStreamingUnsupported(RuntimeError):
     """The provider does not implement validated response streaming."""
 
 
+class ProviderVisionUnsupported(RuntimeError):
+    """The configured provider does not accept explicit image input."""
+
+
 class AIProvider(ABC):
     requires_explicit_cloud_consent = False
     supports_streaming = False
+    supports_image_input = False
 
     @abstractmethod
     def generate(self, model: str, prompt: str) -> str:
@@ -35,6 +40,9 @@ class AIProvider(ABC):
 
     def generate_stream(self, model: str, prompt: str):
         raise ProviderStreamingUnsupported("Response streaming is unsupported by this provider")
+
+    def generate_with_images(self, model: str, prompt: str, images, *, ocr_evidence=()) -> str:
+        raise ProviderVisionUnsupported("Image input is unsupported by this provider")
 
     def check_availability(self) -> AvailabilityResult:
         """Return UNKNOWN unless this provider implements a truthful health check."""

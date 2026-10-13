@@ -745,6 +745,18 @@ def coordinator_chat_page():
     <button id="chat-send" type="submit">Send</button>
     <button id="chat-capture-screen" type="button" disabled>Capture display once</button>
     <p id="chat-capture-status" role="status" aria-live="polite">Screen capture is off. Choose a display/window only when you request a one-frame capture.</p>
+    <button id="chat-capture-camera" type="button" disabled>Capture camera once</button>
+    <p id="chat-camera-status" role="status" aria-live="polite">Camera is off. Capture one frame only when you choose this action.</p>
+    <section class="panel" aria-labelledby="chat-images-heading">
+      <h2 id="chat-images-heading">Temporary images</h2>
+      <label for="chat-image-file">Attach JPEG or PNG (up to 2 MiB)</label><input id="chat-image-file" type="file" accept="image/jpeg,image/png">
+      <button id="chat-image-upload" type="button">Attach selected image</button><div id="chat-image-list" aria-live="polite"></div>
+      <div id="chat-image-consent-panel" hidden>
+        <label><input id="chat-image-consent" type="checkbox"> For this reply only, send the selected image(s) and recent chat context to the configured model provider.</label>
+        <label><input id="chat-image-ocr" type="checkbox"> Run optional local OCR and include its text as untrusted image evidence.</label>
+      </div>
+      <p id="chat-image-status" role="status" aria-live="polite">No temporary images attached.</p>
+    </section>
     <button id="chat-stop-request" type="button" disabled hidden>Stop waiting (remote outcome may be unknown)</button>
     <button id="chat-stop-display" type="button" disabled hidden>Stop display (generation continues)</button></form>
     <details class="chat-advanced"><summary>Optional voice input and reply audio</summary>

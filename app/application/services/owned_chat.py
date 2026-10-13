@@ -121,6 +121,7 @@ class OwnedChatService:
                     "conversation": record,
                     "coordinator": agent,
                     "streaming_supported": getattr(provider, "supports_streaming", False) is True,
+                    "image_input_supported": getattr(provider, "supports_image_input", False) is True,
                 }
 
     def list(self, owner: str):
@@ -147,15 +148,47 @@ class OwnedChatService:
                 "conversation": self._chat.get(identifier),
                 "coordinator": entry.coordinator,
                 "streaming_supported": getattr(entry.provider, "supports_streaming", False) is True,
+                "image_input_supported": getattr(entry.provider, "supports_image_input", False) is True,
             }
 
     def get_status(self, owner, identifier):
         with self._access(owner, identifier):
             return self._chat.get_status(identifier)
 
-    def send(self, owner, identifier, text, retrieved_context=None):
+    def send(self, owner, identifier, text, retrieved_context=None, *, image_ids=(),
+             image_consent=False, ocr_evidence=()):
         with self._access(owner, identifier) as entry:
             with self.agent_request(entry.coordinator.id):
+                if image_ids:
+                    if image_consent is not True:
+                        raise ChatConsentRequired("Explicit consent is required to send selected images to the configured provider")
+                    current, provider = self._coordinator(entry.coordinator.id)
+                    if (current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model) or provider is not entry.provider:
+                        raise ChatConflict("Coordinator assignment changed; start a new conversation")
+                    if getattr(provider, "supports_image_input", False) is not True:
+                        raise ChatUnavailable("The selected provider does not support image input")
+                    images = self._image_store.selected_for(owner, identifier, tuple(image_ids))
+                    if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
+                        raise ChatLimit("Conversation message limit reached; start a new conversation")
+                    try:
+                        record = self._chat.send_with_images(identifier, text, images, ocr_evidence=tuple(ocr_evidence))
+                        return {
+                            "conversation": record,
+                            "coordinator": entry.coordinator,
+                            "image_transfer": {
+                                "image_ids": [image.id for image in images],
+                                "provider_id": current.provider,
+                                "ocr_regions_included": sum(len(item.regions) for item in ocr_evidence),
+                                "ocr_statuses": [{
+                                    "image_id": item.image_id, "status": item.status.value,
+                                    "diagnostic": item.diagnostic,
+                                } for item in ocr_evidence],
+                                "retention": "discarded_after_one_use",
+                            },
+                        }
+                    finally:
+                        for image in images:
+                            self._image_store.remove(owner, identifier, image.id)
                 return self._send(entry, identifier, text, retrieved_context)
 
     def stream(self, owner, identifier, text, retrieved_context=None):
@@ -199,6 +232,10 @@ class OwnedChatService:
     def list_images(self, owner, identifier):
         with self._access(owner, identifier):
             return self._image_store.list_for(owner, identifier)
+
+    def selected_images_for_ocr(self, owner, identifier, image_ids):
+        with self._access(owner, identifier):
+            return self._image_store.selected_for(owner, identifier, tuple(image_ids))
 
     def remove_image(self, owner, identifier, image_id):
         with self._access(owner, identifier):

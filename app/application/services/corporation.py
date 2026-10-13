@@ -776,7 +776,16 @@ class CorporationApplicationService:
         return PillowImageProcessingAdapter()
 
     def ocr(self, provider=None, *, timeout_seconds=2.0):
-        """Construct the replaceable OCR contract without selecting a backend."""
+        """Construct OCR lazily; an optional local Tesseract path is owner-configured."""
+        if provider is None:
+            import os
+            executable = os.environ.get("ERSELMETZ_TESSERACT_PATH")
+            if executable:
+                from app.integrations.tesseract_ocr import TesseractLocalProvider
+                provider = TesseractLocalProvider(
+                    executable,
+                    tessdata_directory=os.environ.get("ERSELMETZ_TESSDATA_PATH") or None,
+                )
         from app.integrations.ocr import OcrService
         return OcrService(provider, timeout_seconds=timeout_seconds)
 

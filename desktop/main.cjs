@@ -17,6 +17,7 @@ let backend;
 let quitAfterShutdown = false;
 let quitting = false;
 let microphoneGrantUntil = 0;
+let cameraGrantUntil = 0;
 
 app.setName("ERSELMETZ AI");
 app.setPath("userData", path.join(APP_DATA, "desktop"));
@@ -205,6 +206,8 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
       && webContents.getURL().startsWith(`${ORIGIN}/`);
     const audioOnly = permission === "media" && Array.isArray(details?.mediaTypes)
       && details.mediaTypes.length === 1 && details.mediaTypes[0] === "audio";
+    const videoOnly = permission === "media" && Array.isArray(details?.mediaTypes)
+      && details.mediaTypes.length === 1 && details.mediaTypes[0] === "video";
     const displayCapture = trusted && permission === "display-capture"
       && webContents.getURL().startsWith(`${ORIGIN}/ui/chat`);
     if (displayCapture) {
@@ -213,6 +216,12 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
     }
     if (trusted && audioOnly && Date.now() < microphoneGrantUntil) {
       microphoneGrantUntil = 0;
+      callback(true);
+      return;
+    }
+    if (trusted && videoOnly && webContents.getURL().startsWith(`${ORIGIN}/ui/chat`)
+        && Date.now() < cameraGrantUntil) {
+      cameraGrantUntil = 0;
       callback(true);
       return;
     }
@@ -251,6 +260,21 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
   );
   ipcMain.handle("desktop:get-setup-state", (event) => isTrustedBootstrap(event) && !fs.existsSync(CREDENTIAL));
   ipcMain.handle("desktop:start", (event, payload) => isTrustedBootstrap(event) ? startBackend(payload) : { started: false, message: "Request denied." });
+  ipcMain.handle("desktop:request-camera", async (event) => {
+    const frame = event.senderFrame;
+    if (!applicationWindow || event.sender !== applicationWindow.webContents
+        || !event.sender.getURL().startsWith(`${ORIGIN}/ui/chat`)
+        || !frame || !frame.isMainFrame || !frame.url.startsWith(`${ORIGIN}/ui/chat`)) return false;
+    const result = await dialog.showMessageBox(applicationWindow, {
+      type: "question", buttons: ["Allow once", "Deny"], defaultId: 1, cancelId: 1,
+      title: "Camera access",
+      message: "Allow one camera frame for this chat?",
+      detail: "The camera turns on only for this capture and stops immediately afterward. The frame stays temporary and is not sent to a model unless you separately select it and consent for a chat turn.",
+    });
+    if (result.response !== 0) return false;
+    cameraGrantUntil = Date.now() + 15_000;
+    return true;
+  });
   ipcMain.handle("desktop:request-microphone", async (event) => {
     const frame = event.senderFrame;
     if (!applicationWindow || event.sender !== applicationWindow.webContents

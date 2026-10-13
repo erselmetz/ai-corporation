@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import test from "node:test";
 import { mountEmergencyStop } from "../app/webui/static/emergency-stop.mjs";
 
@@ -29,7 +29,7 @@ test("safety panel stops, revokes grants, reports activity, and confirms resume"
       stopped, stopped_at: stopped ? "2035-01-01T00:00:00+00:00" : null,
       active_capabilities: ["chat:send"],
       session_grants: [{ grant_id: "grant-1", capability_id: "optional.inspect", status: "active", expires_at: "2035-01-01T00:01:00+00:00" }],
-      capture: { microphone: "page-reported", local_playback: "page-reported", screen: "page-reported", camera: "not-used-by-this-app" },
+      capture: { microphone: "page-reported", local_playback: "page-reported", screen: "page-reported", camera: "page-reported" },
     }) };
     if (path === "/api/local/emergency-stop/stop") stopped = true;
     if (path === "/api/local/emergency-stop/resume") stopped = false;
@@ -37,7 +37,7 @@ test("safety panel stops, revokes grants, reports activity, and confirms resume"
   };
   const ui = mountEmergencyStop({ documentRef, windowRef, fetchImpl, confirmImpl: () => true });
   await ui.refresh();
-  assert.match(elements["emergency-activity"].textContent, /Screen capture: page-reported\. Camera: not used by this app/);
+  assert.match(elements["emergency-activity"].textContent, /Screen capture: page-reported\. Camera: page-reported/);
   assert.equal(elements["emergency-grants"].children.length, 1);
   const revoke = elements["emergency-grants"].children[0].children[1];
   await revoke.listeners.click();

@@ -1,5 +1,7 @@
 import { mountVoiceControls } from "./voice.mjs";
 import { mountScreenCapture } from "./screen-capture.mjs";
+import { mountCameraCapture } from "./camera-capture.mjs";
+import { mountChatImages } from "./chat-images.mjs";
 
 export function voiceTranscriptSourceLabel(source) {
   return ({
@@ -72,6 +74,7 @@ export function mountChat({
   let emergencyStopped = false;
   let requestController = null;
   const base = "/api/chat/conversations";
+  const imageManager = mountChatImages({ documentRef, windowRef, fetchImpl, getConversation: () => selected });
   function clearVoiceProvenance() {
     voiceSources.length = 0;
     voiceProvenance.hidden = true;
@@ -190,6 +193,7 @@ export function mountChat({
     taskControls();
     repositoryStudyControls();
     voiceController?.updateControls();
+    void imageManager?.refresh();
   }
   async function action(operation) {
     if (busy) return false;
@@ -279,6 +283,9 @@ export function mountChat({
         throw new Error("This message looks like it contains a Gemini API key. It was not saved or sent. Use the Gemini online setup page to connect a key.");
       }
       if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Consent to send this message and chat context to Google Gemini before continuing.");
+      const imageIds = imageManager?.selectedIds() || [];
+      if (imageIds.length && !imageManager.consented()) throw new Error("Select the per-turn image consent checkbox before sending selected images to the configured provider.");
+      if (!imageIds.length && imageManager?.wantsLocalOcr()) throw new Error("Select an image before requesting local OCR.");
       const identifier = selected;
       const controller = new AbortController();
       requestController = controller;
@@ -287,7 +294,12 @@ export function mountChat({
       input.disabled = true;
       try {
         const body = requiresCloudConsent ? { text, cloud_consent: true } : { text };
-        if (streamingSupported) {
+        if (imageIds.length) {
+          body.image_ids = imageIds;
+          body.image_consent = true;
+          body.include_local_ocr = imageManager.wantsLocalOcr();
+        }
+        if (streamingSupported && !imageIds.length) {
           const outcome = await receiveStream(identifier, body, controller.signal);
           if (outcome.complete) {
             input.value = "";
@@ -320,8 +332,17 @@ export function mountChat({
           input.value = "";
           clearVoiceProvenance();
           render(result);
+          imageManager?.clearConsent();
+          await imageManager?.refresh();
+          if (result.image_transfer) {
+            const statuses = result.image_transfer.ocr_statuses || [];
+            state.textContent = statuses.length
+              ? `Image turn completed; selected temporary images were discarded. Local OCR: ${statuses.map(item => item.status).join(", ")}. OCR text is untrusted.`
+              : "Image turn completed; selected temporary images were discarded.";
+          }
         }
       } catch (error) {
+        void imageManager?.refresh();
         if (controller.signal.aborted) {
           try { render(await request(`${base}/${encodeURIComponent(identifier)}`)); } catch { clear(); }
           canSend = false;
@@ -573,4 +594,5 @@ export function mountChat({
 if (typeof document !== "undefined") {
   mountChat();
   mountScreenCapture();
+  mountCameraCapture();
 }

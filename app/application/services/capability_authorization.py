@@ -46,7 +46,7 @@ _LEGACY_PERMISSION_NAMES = (
     "memory:read", "model-runtime:manage", "model:manage", "model:read",
     "online-provider:connect", "online-provider:disconnect", "position:manage",
     "position:read", "project:create", "project:read", "provider-connection:manage",
-    "provider-connection:read", "provider:manage", "provider:read", "screen:capture", "software:manage",
+    "provider-connection:read", "provider:manage", "provider:read", "screen:capture", "camera:capture", "software:manage",
     "software:read", "task:create", "task:dispatch", "task:read", "updates:read",
     "workflow:manage", "workflow:read",
 )
@@ -59,6 +59,7 @@ _HIGH_RISK = frozenset({
     "capability-audit:read",
     "capability-emergency:manage",
     "screen:capture",
+    "camera:capture",
 })
 _MODERATE_RISK = frozenset({
     "assignment-policy:manage", "chat:send", "chat:start", "chat:close",

@@ -24,7 +24,7 @@ def create_emergency_stop_router():
                 "active_capabilities": sorted(principal.permissions),
                 "session_grants": [grants.snapshot(item) for item in active],
                 "capture": {"microphone": "page-reported", "screen": "page-reported",
-                            "camera": "not-used-by-this-app", "local_playback": "page-reported"}}
+                            "camera": "page-reported", "local_playback": "page-reported"}}
 
     @router.post("/stop")
     def stop(request: Request,

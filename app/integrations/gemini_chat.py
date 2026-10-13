@@ -1,6 +1,7 @@
-"""Bounded Gemini text generation; no retries, tools, or stored credentials."""
+"""Bounded Gemini text and image generation; no retries, tools, or stored credentials."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
@@ -264,6 +265,7 @@ class GeminiProvider(AIProvider):
     """Bounded verified-model generateContent adapter with no fallback."""
 
     requires_explicit_cloud_consent = True
+    supports_image_input = True
 
     def __init__(self, model_id: str | None, key_identity: bytes,
                  manager: GeminiConnectionManager):
@@ -316,5 +318,58 @@ class GeminiProvider(AIProvider):
             return reply
         except (httpx.HTTPError, ValueError, TypeError, KeyError, IndexError, UnicodeError):
             raise RuntimeError("Gemini response failed; check provider status and limits. No automatic retry occurred.") from None
+        finally:
+            self._manager.end_call()
+
+    def generate_with_images(self, model: str, prompt: str, images, *, ocr_evidence=()) -> str:
+        """Send owner-selected image bytes only after API-layer per-turn and cloud consent."""
+        from app.application.services.chat_images import ChatImageStore
+
+        if (self._model_id is not None and model != self._model_id) or not isinstance(model, str) or not _MODEL_ID.fullmatch(model):
+            raise ValueError("Gemini request configuration is invalid")
+        if not isinstance(prompt, str) or not prompt.strip() or len(prompt.encode("utf-8")) > _MAX_INPUT_BYTES:
+            raise ValueError("Gemini input exceeds the byte limit")
+        if not isinstance(images, tuple) or not 1 <= len(images) <= ChatImageStore.MAX_PER_CONVERSATION:
+            raise ValueError("Select one to four images")
+        parts = [{"text": prompt}]
+        total = 0
+        for image in images:
+            data = getattr(image, "_data", None)
+            media_type = getattr(image, "media_type", None)
+            if not isinstance(data, bytes) or media_type not in {"image/png", "image/jpeg"}:
+                raise ValueError("Image attachment is invalid")
+            total += len(data)
+            if len(data) > ChatImageStore.MAX_IMAGE_BYTES or total > 8 * 1024 * 1024:
+                raise ValueError("Selected images exceed the byte limit")
+            parts.append({"inline_data": {"mime_type": media_type, "data": base64.b64encode(data).decode("ascii")}})
+        api_key = self._manager.begin_call(self._key_identity, model)
+        started_at = time.monotonic()
+        endpoint = f"{_ENDPOINT}/{model}:generateContent"
+        payload = {"contents": [{"role": "user", "parts": parts}],
+                   "generationConfig": {"maxOutputTokens": _MAX_OUTPUT_TOKENS}}
+        try:
+            with httpx.Client(timeout=_TIMEOUT_SECONDS, follow_redirects=False, trust_env=False) as client:
+                with client.stream("POST", endpoint, headers={
+                    "Accept": "application/json", "Content-Type": "application/json",
+                    "x-goog-api-key": api_key,
+                }, json=payload) as response:
+                    response.raise_for_status()
+                    body = bytearray()
+                    for chunk in response.iter_bytes():
+                        if time.monotonic() - started_at > _MAX_ELAPSED_SECONDS:
+                            raise ValueError("Gemini response exceeded the elapsed-time limit")
+                        if len(body) + len(chunk) > _MAX_RESPONSE_BYTES:
+                            raise ValueError("Gemini response exceeds the byte limit")
+                        body.extend(chunk)
+            data = json.loads(body)
+            candidates = data.get("candidates") if isinstance(data, dict) else None
+            response_parts = candidates[0]["content"]["parts"] if isinstance(candidates, list) and candidates else None
+            reply = "".join(part["text"] for part in response_parts
+                            if isinstance(part, dict) and isinstance(part.get("text"), str)) if isinstance(response_parts, list) else ""
+            if not reply.strip() or len(reply.encode("utf-8")) > 8192:
+                raise ValueError("Gemini returned no bounded text reply")
+            return reply
+        except (httpx.HTTPError, ValueError, TypeError, KeyError, IndexError, UnicodeError):
+            raise RuntimeError("Gemini image request failed; check provider status and limits. No automatic retry occurred.") from None
         finally:
             self._manager.end_call()

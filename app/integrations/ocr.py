@@ -114,7 +114,7 @@ class OcrService:
                 outcome.put((True, ("regions", provider.recognize(image, timeout_seconds=self._timeout_seconds))))
             except OcrProviderTimeout:
                 outcome.put((True, ("status", OcrStatus.TIMEOUT)))
-            except Exception:
+            except Exception as exc:
                 outcome.put((False, exc))
             finally:
                 self._active.release()

@@ -3,6 +3,7 @@ from uuid import uuid4
 from app.agents import AgentRegistry, EmployeeRegistry
 from app.database import TaskLogger
 from app.providers import ProviderRegistry
+from app.providers import ProviderVisionUnsupported
 
 from .task import Task, TaskFailureCategory, TaskStatus
 from .task_registry import TaskRegistry
@@ -74,6 +75,18 @@ class Orchestrator:
             if getattr(provider, "supports_streaming", False) is not True:
                 raise RuntimeError("Selected provider does not support response streaming")
             yield from provider.generate_stream(agent.model, prompt)
+
+    def run_agent_with_images(self, agent_id: str, prompt: str, images, *,
+                              ocr_evidence=(), expected_assignment=None) -> str:
+        """Send owner-selected image bytes only through an image-capable provider."""
+        with self.agents.execution(agent_id):
+            agent = self.agents.get(agent_id)
+            if expected_assignment is not None and (agent.provider, agent.model) != expected_assignment:
+                raise RuntimeError("Agent assignment changed before image execution; request was not sent")
+            provider = agent.resolve_provider(self.providers)
+            if getattr(provider, "supports_image_input", False) is not True:
+                raise ProviderVisionUnsupported("The selected provider does not support image input")
+            return provider.generate_with_images(agent.model, prompt, images, ocr_evidence=ocr_evidence)
 
     def run_employee(self, employee: "Employee", prompt: str) -> str:
         """

@@ -22,7 +22,9 @@ from app.application.services.github_inspection import (
 from app.application.services.repository_study import RepositoryStudyService
 from app.application.services.chat_history import ChatHistoryError
 from app.application.services.chat_knowledge import ContextRequest, KnowledgeNotFound
-from app.application.services.owned_chat import ChatConflict, ChatLimit, ChatNotFound, ChatUnavailable
+from app.application.services.owned_chat import (
+    ChatConflict, ChatConsentRequired, ChatLimit, ChatNotFound, ChatUnavailable,
+)
 from app.application.services.chat_task_proposals import (
     ChatTaskProposalConflict,
     ChatTaskProposalExpired,
@@ -77,6 +79,9 @@ class SendRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     text: str = Field(min_length=1, max_length=8192)
     cloud_consent: bool = False
+    image_ids: list[str] = Field(default_factory=list, max_length=4)
+    image_consent: StrictBool = False
+    include_local_ocr: StrictBool = False
     context: ChatContextBody | None = None
 
 
@@ -95,6 +100,10 @@ class ImageUploadRequest(BaseModel):
 
 class ScreenCaptureUploadRequest(ImageUploadRequest):
     display_surface: Literal["monitor", "window", "browser"]
+    captured_at: datetime
+
+
+class CameraCaptureUploadRequest(ImageUploadRequest):
     captured_at: datetime
 
 
@@ -194,6 +203,8 @@ def chat_errors():
         raise HTTPException(403, "Context scope is not authorized for this conversation") from None
     except ChatNotFound:
         raise HTTPException(404, "Conversation not found") from None
+    except ChatConsentRequired as error:
+        raise HTTPException(403, str(error)) from None
     except ChatConflict as error:
         raise HTTPException(409, str(error)) from None
     except ChatLimit as error:
@@ -244,7 +255,7 @@ def list_images(identifier: str,
         return {
             "items": [item.snapshot() for item in
                       service.owned_chat().list_images(principal.identity, identifier)],
-            "provider_transfer_supported": False,
+            "provider_transfer_supported": service.owned_chat().get(principal.identity, identifier).get("image_input_supported", False),
         }
 
 
@@ -260,8 +271,8 @@ def attach_image(identifier: str, payload=Depends(bounded_image_body),
         )
         return {
             "image": item.snapshot(),
-            "provider_transfer_supported": False,
-            "message": "Image is attached temporarily to this conversation; it is not sent to a Provider.",
+            "provider_transfer_supported": service.owned_chat().get(principal.identity, identifier).get("image_input_supported", False),
+            "message": "Image is attached temporarily; it is sent only when selected and explicitly consented for one chat turn.",
         }
 
 
@@ -280,8 +291,27 @@ def attach_screen_capture(identifier: str, payload=Depends(bounded_image_body),
         )
         return {
             "image": item.snapshot(),
-            "provider_transfer_supported": False,
-            "message": "One screen frame is attached temporarily; it is not sent to a Provider.",
+            "provider_transfer_supported": service.owned_chat().get(principal.identity, identifier).get("image_input_supported", False),
+            "message": "One screen frame is attached temporarily; it is sent only when selected and explicitly consented for one chat turn.",
+        }
+
+
+@router.post("/{identifier}/camera-captures")
+def attach_camera_capture(identifier: str, payload=Depends(bounded_image_body),
+                          principal=Depends(require_permission("chat:send")),
+                          _capture_permission=Depends(require_permission("camera:capture")),
+                          service=Depends(get_application_service)):
+    body = parse(CameraCaptureUploadRequest, payload)
+    data = decode_image_data(body.data_base64)
+    with chat_errors():
+        item = service.owned_chat().attach_image(
+            principal.identity, identifier, data, body.media_type,
+            source="camera_capture", captured_at=body.captured_at,
+        )
+        return {
+            "image": item.snapshot(),
+            "provider_transfer_supported": service.owned_chat().get(principal.identity, identifier).get("image_input_supported", False),
+            "message": "One camera frame is attached temporarily; it is sent only when selected and explicitly consented for one chat turn.",
         }
 
 
@@ -317,8 +347,27 @@ def send_message(identifier: str, payload=Depends(bounded_body),
         if body.context is not None:
             retrieved, trace_request = knowledge.retrieve(principal.identity, identifier, ContextRequest(
                 body.context.query, body.context.scope, body.context.scope_id, body.context.limit), now)
-        result = service.owned_chat().send(principal.identity, identifier, body.text,
-                                           knowledge.prompt_context(retrieved) if retrieved else None)
+        if body.image_ids:
+            if body.image_consent is not True:
+                raise HTTPException(403, "Explicit per-turn consent is required before selected images are sent to the configured provider.")
+            if body.context is not None:
+                raise HTTPException(422, "Image turns cannot include separately retrieved context.")
+            owned = service.owned_chat()
+            current_chat = owned.get(principal.identity, identifier)
+            if not current_chat.get("image_input_supported"):
+                raise HTTPException(409, "The configured provider does not support image input.")
+            images = owned.selected_images_for_ocr(principal.identity, identifier, tuple(body.image_ids))
+            ocr_evidence = ()
+            if body.include_local_ocr:
+                ocr = service.ocr()
+                ocr_evidence = tuple(ocr.recognize(image, language="eng") for image in images)
+            result = owned.send(principal.identity, identifier, body.text, image_ids=tuple(body.image_ids),
+                                image_consent=True, ocr_evidence=ocr_evidence)
+        else:
+            if body.image_consent or body.include_local_ocr:
+                raise HTTPException(422, "Image consent and OCR require selected images.")
+            result = service.owned_chat().send(principal.identity, identifier, body.text,
+                                               knowledge.prompt_context(retrieved) if retrieved else None)
         if retrieved is not None:
             reply = result["conversation"].messages[-1]
             result = {**result, "context_trace": knowledge.record_trace(
@@ -331,6 +380,8 @@ def stream_message(identifier: str, payload=Depends(bounded_body),
                    principal=Depends(require_permission("chat:send")),
                    service=Depends(get_application_service), now=Depends(get_chat_now)):
     body = parse(SendRequest, payload)
+    if body.image_ids or body.image_consent or body.include_local_ocr:
+        raise HTTPException(422, "Image turns use the bounded non-streaming message endpoint.")
     if contains_gemini_key(body.text) or (body.context and contains_gemini_key(body.context.query)):
         raise HTTPException(422, SECRET_PASTE_GUIDANCE)
     with chat_errors():

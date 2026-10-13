@@ -53,7 +53,7 @@ class ChatImageAttachment:
 class ChatImageStore:
     """Ephemeral image bytes tied to an authenticated owner's open conversation.
 
-    This store never writes images to disk, memory indexes, messages, or Providers.
+    Images remain in process memory until expiry/removal and are sent only through an explicitly consented one-use chat turn.
     """
 
     MAX_IMAGE_BYTES = 2 * 1024 * 1024
@@ -86,13 +86,15 @@ class ChatImageStore:
             raise ChatImageError("Image type does not match its content")
         if width > self.MAX_WIDTH or height > self.MAX_HEIGHT or width * height > self.MAX_PIXELS:
             raise ChatImageError("Image dimensions exceed the limit")
-        if source not in {"explicit_user_upload", "screen_capture"}:
+        if source not in {"explicit_user_upload", "screen_capture", "camera_capture"}:
             raise ChatImageError("Image source is unsupported")
-        if source == "screen_capture":
-            if display_surface not in {"monitor", "window", "browser"}:
+        if source in {"screen_capture", "camera_capture"}:
+            if source == "screen_capture" and display_surface not in {"monitor", "window", "browser"}:
                 raise ChatImageError("Selected display surface is unsupported")
+            if source == "camera_capture" and display_surface is not None:
+                raise ChatImageError("Camera captures do not have a display surface")
             if not isinstance(captured_at, datetime) or captured_at.tzinfo is None:
-                raise ChatImageError("Screen capture timestamp must include a timezone")
+                raise ChatImageError("Capture timestamp must include a timezone")
             captured_at = captured_at.astimezone(timezone.utc)
         elif display_surface is not None or captured_at is not None:
             raise ChatImageError("Capture details require a screen-capture source")
@@ -131,6 +133,21 @@ class ChatImageStore:
         with self._lock:
             self._purge(current)
             return tuple(self._items.get((owner, conversation_id), {}).values())
+
+    def selected_for(self, owner: str, conversation_id: str, image_ids: tuple[str, ...],
+                     *, now: datetime | None = None) -> tuple[ChatImageAttachment, ...]:
+        if (not isinstance(image_ids, tuple) or not 1 <= len(image_ids) <= self.MAX_PER_CONVERSATION
+                or any(not isinstance(item, str) or not item.strip() for item in image_ids)
+                or len(set(image_ids)) != len(image_ids)):
+            raise ChatImageError("Select one to four distinct conversation images")
+        current = self._now(now)
+        with self._lock:
+            self._purge(current)
+            items = self._items.get((owner, conversation_id), {})
+            selected = tuple(items[item] for item in image_ids if item in items)
+            if len(selected) != len(image_ids):
+                raise ChatImageError("A selected image is unavailable or expired")
+            return selected
 
     def remove(self, owner: str, conversation_id: str, image_id: str,
                *, now: datetime | None = None) -> bool:

@@ -30,7 +30,7 @@ READ_PERMISSIONS = frozenset({
 SEMANTIC_MEMORY_PERMISSIONS = frozenset({"memory:index"})
 
 CHAT_PERMISSIONS = frozenset({"chat:read", "chat:start", "chat:send", "chat:close"})
-SCREEN_CAPTURE_PERMISSIONS = frozenset({"screen:capture"})
+SCREEN_CAPTURE_PERMISSIONS = frozenset({"screen:capture", "camera:capture"})
 LOCAL_MODEL_PERMISSIONS = frozenset({"local-model:select"})
 ONLINE_PROVIDER_PERMISSIONS = frozenset({"online-provider:connect", "online-provider:disconnect"})
 POSITION_MANAGEMENT_PERMISSIONS = frozenset({"position:manage"})

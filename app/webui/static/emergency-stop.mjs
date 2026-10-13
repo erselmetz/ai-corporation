@@ -11,7 +11,7 @@ export function mountEmergencyStop({
   const grants = documentRef.getElementById("emergency-grants");
   const activity = documentRef.getElementById("emergency-activity");
   let stopped = false;
-  let capture = { microphone: "unknown", screen: "unknown", local_playback: "unknown", remote_request: "none" };
+  let capture = { microphone: "unknown", screen: "unknown", camera: "unknown", local_playback: "unknown", remote_request: "none" };
   let previousStopped = null;
 
   function text(node, value) { if (node) node.textContent = value; }
@@ -19,9 +19,10 @@ export function mountEmergencyStop({
   function renderActivity(serverCapture = {}) {
     const microphone = capture.microphone === "unknown" ? serverCapture.microphone : capture.microphone;
     const screen = capture.screen === "unknown" ? serverCapture.screen : capture.screen;
+    const camera = capture.camera === "unknown" ? serverCapture.camera : capture.camera;
     const playback = capture.local_playback === "unknown" ? serverCapture.local_playback : capture.local_playback;
     const remote = capture.remote_request === "none" ? "none reported" : capture.remote_request;
-    text(activity, `Microphone: ${microphone || "unknown"}. Screen capture: ${screen || "unknown"}. Camera: not used by this app. Local playback: ${playback || "unknown"}. Remote cancellation: ${remote === "none reported" ? "unknown unless a provider confirms" : "unknown; request may still be running"}.`);
+    text(activity, `Microphone: ${microphone || "unknown"}. Screen capture: ${screen || "unknown"}. Camera: ${camera || "unknown"}. Local playback: ${playback || "unknown"}. Remote cancellation: ${remote === "none reported" ? "unknown unless a provider confirms" : "unknown; request may still be running"}.`);
   }
 
   function renderGrants(items = []) {
@@ -136,6 +137,10 @@ export function mountEmergencyStop({
   });
   windowRef?.addEventListener?.("ersel:screen-capture-activity", event => {
     capture = { ...capture, screen: event.detail?.state || "unknown" };
+    renderActivity();
+  });
+  windowRef?.addEventListener?.("ersel:camera-activity", event => {
+    capture = { ...capture, camera: event.detail?.state || "unknown" };
     renderActivity();
   });
   stopButton.addEventListener("click", () => stop());

@@ -1,4 +1,5 @@
-﻿import os
+﻿import base64
+import os
 from datetime import datetime, timezone
 import json
 import time
@@ -24,6 +25,10 @@ _MAX_STREAM_OUTPUT_BYTES = 8192
 
 
 class OllamaProvider(AIProvider):
+    @property
+    def supports_image_input(self) -> bool:
+        return self._is_loopback_endpoint()
+
     def __init__(
         self,
         base_url: str = _DEFAULT_BASE_URL,
@@ -254,6 +259,54 @@ class OllamaProvider(AIProvider):
             data = response.json()
 
         return data["response"]
+
+    def generate_with_images(self, model: str, prompt: str, images, *, ocr_evidence=()) -> str:
+        """Send only caller-selected bounded images to the configured Ollama endpoint."""
+        from app.application.services.chat_images import ChatImageStore
+
+        if not self._is_loopback_endpoint():
+            raise RuntimeError("Image input requires a configured loopback Ollama provider")
+        if not isinstance(model, str) or not model.strip() or len(model.encode("utf-8")) > 256:
+            raise ValueError("Invalid model identifier")
+        if not isinstance(prompt, str) or len(prompt.encode("utf-8")) > 32768:
+            raise ValueError("Prompt exceeds byte limit")
+        if not isinstance(images, tuple) or not 1 <= len(images) <= ChatImageStore.MAX_PER_CONVERSATION:
+            raise ValueError("Select one to four images")
+        total = 0
+        encoded = []
+        for image in images:
+            data = getattr(image, "_data", None)
+            media_type = getattr(image, "media_type", None)
+            if not isinstance(data, bytes) or media_type not in {"image/png", "image/jpeg"}:
+                raise ValueError("Image attachment is invalid")
+            total += len(data)
+            if len(data) > ChatImageStore.MAX_IMAGE_BYTES or total > 8 * 1024 * 1024:
+                raise ValueError("Selected images exceed the byte limit")
+            encoded.append(base64.b64encode(data).decode("ascii"))
+        try:
+            with httpx.Client(timeout=120.0, trust_env=False, follow_redirects=False) as client:
+                with client.stream(
+                    "POST", f"{self.base_url}/api/generate",
+                    json={"model": model, "prompt": prompt, "stream": False, "images": encoded},
+                ) as response:
+                    response.raise_for_status()
+                    payload = bytearray()
+                    deadline = time.monotonic() + 120.0
+                    for chunk in response.iter_bytes():
+                        if time.monotonic() > deadline:
+                            raise httpx.ReadTimeout("Local provider request timed out")
+                        if len(payload) + len(chunk) > 262144:
+                            raise ValueError("Provider response exceeds byte limit")
+                        payload.extend(chunk)
+            result = json.loads(payload)
+            output = result.get("response")
+            if not isinstance(output, str) or not output.strip() or len(output.encode("utf-8")) > 8192:
+                raise ValueError("Provider output is invalid or exceeds limits")
+            return output
+        except httpx.HTTPError:
+            raise RuntimeError("Ollama image request failed; check the configured local model.") from None
+        except (ValueError, TypeError, KeyError, json.JSONDecodeError):
+            raise RuntimeError("Ollama returned an invalid or oversized image response.") from None
 
     def check_availability(self) -> AvailabilityResult:
         try:

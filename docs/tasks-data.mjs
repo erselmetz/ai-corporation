@@ -1996,7 +1996,7 @@ export const post100Tasks = [
     "title": "Explicit camera input and vision chat integration",
     "description": "Add one-use owner-authorized camera capture and attach selected imagery/OCR evidence within Task 150 limits.",
     "category": "Phase E - Vision",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       144,
       150,
@@ -2010,12 +2010,19 @@ export const post100Tasks = [
       "No continuous camera access or automatic image retention."
     ],
     "decisions": [
-      "Review platform camera permission behavior before enabling."
+      "Use explicit one-frame browser camera access, plus a native allow-once prompt in Electron. Keep the video-only camera grant for at most 15 seconds and attach no more than one bounded frame per action. Store captures in the Task 150 owner-scoped process-memory store. A selected image is sent only on a non-streaming chat turn after explicit per-turn consent; discard selected images after provider completion or failure. Optional OCR uses only an explicitly configured local Task 154 Tesseract path, is labeled untrusted, and its text is not persisted. Use the existing bounded Gemini connection adapter for explicitly consented cloud vision, and the loopback Ollama adapter for local vision transport. Gemini image turns require both the one-turn image consent and the existing one-turn cloud consent. The assigned model's vision ability is not preflighted."
     ],
     "area": "P21",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-155-one-use-camera-vision-chat",
+    "validation": [
+      "Task 155 focused API, one-use image consent/discard, OCR provenance, and deterministic Ollama/Gemini image payload tests: 8 passed. Directly affected chat-image, local-access, capability, and capture regressions: 30 passed.",
+      "Browser-module suite: 184 passed; Electron suite: 14 passed; public documentation suite: 15 passed; Python compilation and git diff --check passed.",
+      "Full Python suite: 1191 passed, 8 skipped; two previously recorded unrelated model-assignment failures remain (test_model_set_command and test_model_replacement_uses_existing_assignment_service)."
+    ],
+    "limitations": [
+      "Camera permission prompts, actual device capture, live Ollama or Gemini vision inference, and real Tesseract OCR are not exercised by deterministic tests. Camera availability and browser/Electron permission behavior vary by platform. A registered loopback Ollama endpoint accepts image payloads while a selected text-only model may still reject or mishandle them; model-level vision capability is not verified and no fallback or retry occurs.",
+      "Unselected temporary attachments remain owner-scoped in process memory until removal, conversation close, process restart, or lazy 15-minute expiry. Selected images are removed after one provider attempt. The app cannot control a provider's own retention after transmission. The API remains loopback/authenticated; no continuous camera capture, automatic image retention, or new provider class is added. Gemini data retention after its explicitly consented request remains controlled by Google's account policy. Task 134 remains deferred and incomplete."
+    ]
   },
   {
     "number": 156,
@@ -2587,7 +2594,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-154 are verified; Tasks 155-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-155 are verified; Tasks 156-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

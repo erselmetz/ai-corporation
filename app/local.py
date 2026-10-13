@@ -116,7 +116,7 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
-        response.headers["Permissions-Policy"] = "microphone=(self), camera=(), display-capture=(self), geolocation=()"
+        response.headers["Permissions-Policy"] = "microphone=(self), camera=(self), display-capture=(self), geolocation=()"
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self'; style-src 'self'; "
             "img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
