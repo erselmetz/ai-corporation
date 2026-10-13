@@ -93,8 +93,9 @@ export async function mountStructure({
     detail.append(text("p", `Reporting: ${reporting}`));
     detail.append(text("p", `Responsibilities: ${node.responsibilities.join("; ") || "none recorded"}`));
     detail.append(text("p", `Employee: ${describe(node.employee, e => `${e.name} (${e.role})`)}`));
-    detail.append(text("p", `Agent/model: ${describe(node.agent, a =>
-      `${a.name}; provider ${a.provider_id} (${a.provider_state}); model ${a.model_id}`)}`));
+    detail.append(text("p", `Agent: ${describe(node.agent, a => `${a.name} (${a.id})`)}`));
+    detail.append(text("p", `Provider/model assignment: ${describe(node.model, model =>
+      `provider ${model.provider_id}, model ${model.model_id}; provider registration ${model.provider_state}`)}`));
   }
 
   async function select(id) {

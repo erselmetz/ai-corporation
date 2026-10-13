@@ -15,6 +15,7 @@ export async function mountVisualization({
   const canvas = el("viz-canvas");
   const list = el("viz-list");
   const detail = el("viz-detail");
+  const evidence = el("viz-evidence-data");
   const costLine = el("viz-cost");
   const effectsBox = el("viz-effects");
   const motionBox = el("viz-reduce-motion");
@@ -26,6 +27,15 @@ export async function mountVisualization({
   let view = null;
   let notice = "";
   let sectionNotes = [];
+  let modelAssignments = [];
+  let resourceCapacities = null;
+  let knowledgeItems = [];
+  let modelReadState = "unknown";
+  let resourceReadState = "unknown";
+  let knowledgeReadState = "unknown";
+  let resourceObservedAt = null;
+  let structureSnapshotAt = null;
+  let workflowSnapshotAt = null;
 
   const text = (tag, value) => {
     const node = documentRef.createElement(tag);
@@ -40,6 +50,94 @@ export async function mountVisualization({
       return { note: SECTION_LABEL[response.status] ?? "could not be loaded" };
     } catch {
       return { note: "disconnected" };
+    }
+  }
+
+  async function fetchKnowledge(corporationId) {
+    const query = new URLSearchParams({ scope: "corporation", scope_id: corporationId, limit: "10" });
+    return fetchSection(`/api/memory?${query}`);
+  }
+
+  function renderEvidence() {
+    evidence.replaceChildren();
+    const stateText = note => ({
+      signin: "Sign in to read this source.",
+      forbidden: "Access denied for this source.",
+      disconnected: "Source disconnected.",
+      failed: "Source could not be loaded.",
+      unavailable: "Source unavailable.",
+    }[note] ?? "Source state unknown.");
+
+    const resources = documentRef.createElement("section");
+    resources.append(text("h3", "Software resource snapshot"));
+    if (resourceReadState !== "available") {
+      resources.append(text("p", stateText(resourceReadState)));
+    } else if (resourceObservedAt) {
+      resources.append(text("p", `Server snapshot observed at ${resourceObservedAt}.`));
+    }
+    if (resourceReadState === "available" && !resourceCapacities) {
+      resources.append(text("p", "No resource manager is configured; hardware availability is unknown."));
+    } else if (resourceReadState === "available" && !resourceCapacities.length) {
+      resources.append(text("p", "No configured resource slots are reported."));
+    } else if (resourceReadState === "available") {
+      const list = documentRef.createElement("ul");
+      for (const capacity of resourceCapacities) {
+        const target = [capacity.scope, capacity.provider_id, capacity.model_id].filter(Boolean).join(" / ");
+        list.append(text("li", `${target}: ${capacity.allocated}/${capacity.limit} slots allocated; ${capacity.remaining} remaining`));
+      }
+      resources.append(list);
+    }
+    evidence.append(resources);
+
+    const knowledge = documentRef.createElement("section");
+    knowledge.append(text("h3", "Corporation knowledge provenance"));
+    if (knowledgeReadState !== "available") {
+      knowledge.append(text("p", stateText(knowledgeReadState)));
+    } else if (!knowledgeItems.length) {
+      knowledge.append(text("p", "No owner-readable retained Corporation knowledge."));
+    } else {
+      const list = documentRef.createElement("ul");
+      for (const item of knowledgeItems) {
+        const provenance = item.provenance;
+        const source = provenance
+          ? `${provenance.source_scope} ${provenance.source_scope_id} / ${provenance.source_reference} (source created ${provenance.source_created_at})`
+          : "Source provenance unavailable";
+        list.append(text("li", `${item.type} ${item.id}: published ${item.created_at}; ${source}; expires ${item.expires_at}`));
+      }
+      knowledge.append(list);
+    }
+    evidence.append(knowledge);
+  }
+
+  function appendAgentModelDetail(container, node) {
+    if (node.agent_visibility === "forbidden") {
+      container.append(text("p", "Provider/model association unavailable because Agent access is forbidden."));
+      return;
+    }
+    if (!node.agent_id) {
+      container.append(text("p", "No recorded Agent association for this map item."));
+      return;
+    }
+    if (modelReadState !== "available") {
+      container.append(text("p", `Model assignment for Agent ${node.agent_id}: ${modelReadState}.`));
+      return;
+    }
+    const assignment = modelAssignments.find(item => item.agent_id === node.agent_id);
+    if (!assignment) {
+      container.append(text("p", `No recorded provider/model assignment for Agent ${node.agent_id}.`));
+      return;
+    }
+    container.append(text("p", `Recorded assignment for Agent ${node.agent_id}: provider ${assignment.provider_id}, model ${assignment.model_id}.`));
+    const matching = resourceCapacities?.filter(item => item.scope === "model"
+      && item.provider_id === assignment.provider_id && item.model_id === assignment.model_id) ?? [];
+    if (resourceReadState === "available" && matching.length) {
+      for (const capacity of matching) {
+        container.append(text("p", `Associated software slot budget: ${capacity.allocated}/${capacity.limit} allocated; ${capacity.remaining} remaining. This is not hardware capacity.`));
+      }
+    } else if (resourceReadState !== "available") {
+      container.append(text("p", `Resource snapshot: ${resourceReadState}.`));
+    } else {
+      container.append(text("p", "No exact configured model slot limit is recorded; hardware fit is unknown."));
     }
   }
 
@@ -92,6 +190,7 @@ export async function mountVisualization({
     const node = model?.nodes.find(n => n.id === selectedId);
     if (!selectedId) { detail.append(text("p", "Select a node.")); return; }
     detail.append(text("p", node ? node.detail : "Stale: this item is no longer recorded."));
+    if (node) appendAgentModelDetail(detail, node);
   }
 
   function select(id) {
@@ -113,18 +212,43 @@ export async function mountVisualization({
   function renderStatus() {
     const parts = [];
     if (model) parts.push(`${model.nodes.length} recorded nodes${model.omitted ? ` (${model.omitted} more omitted by the scene cap)` : ""}.`);
+    if (structureSnapshotAt) parts.push(`Structure snapshot: ${structureSnapshotAt}.`);
+    if (workflowSnapshotAt) parts.push(`Workflow snapshot: ${workflowSnapshotAt}.`);
     if (sectionNotes.length) parts.push(`Unavailable: ${sectionNotes.join("; ")}.`);
     if (notice) parts.push(notice);
     status.textContent = parts.join(" ");
   }
 
   async function refresh() {
-    const [structure, workflows] = await Promise.all([
+    const [structure, workflows, modelsRead, resourcesRead, statusRead] = await Promise.all([
       fetchSection("/api/structure-map"), fetchSection("/api/local/workflows/map"),
+      fetchSection("/api/models"), fetchSection("/api/system/monitor"), fetchSection("/api/status"),
     ]);
     sectionNotes = [];
     if (structure.note) sectionNotes.push(`structure ${structure.note}`);
     if (workflows.note) sectionNotes.push(`workflows ${workflows.note}`);
+    structureSnapshotAt = structure.data?.generated_at ?? null;
+    workflowSnapshotAt = workflows.data?.generated_at ?? null;
+    modelReadState = modelsRead.data && Array.isArray(modelsRead.data.items)
+      && modelsRead.data.items.every(item => item && typeof item.agent_id === "string"
+        && typeof item.provider_id === "string" && typeof item.model_id === "string")
+      ? "available" : modelsRead.note ?? "failed";
+    modelAssignments = modelReadState === "available" ? modelsRead.data.items : [];
+    resourceReadState = resourcesRead.data && typeof resourcesRead.data.observed_at === "string"
+      && (resourcesRead.data.resource_capacities === null || Array.isArray(resourcesRead.data.resource_capacities))
+      ? "available" : resourcesRead.note ?? "failed";
+    resourceCapacities = resourceReadState === "available" ? resourcesRead.data.resource_capacities : null;
+    resourceObservedAt = resourceReadState === "available" ? resourcesRead.data.observed_at : null;
+    knowledgeItems = [];
+    if (statusRead.data?.corporation?.id) {
+      const knowledgeRead = await fetchKnowledge(statusRead.data.corporation.id);
+      knowledgeReadState = knowledgeRead.data && Array.isArray(knowledgeRead.data.items)
+        && knowledgeRead.data.items.every(item => item && typeof item.id === "string"
+          && typeof item.type === "string" && typeof item.created_at === "string"
+          && typeof item.expires_at === "string" && item.scope === "corporation")
+        ? "available" : knowledgeRead.note ?? "failed";
+      knowledgeItems = knowledgeReadState === "available" ? knowledgeRead.data.items : [];
+    } else knowledgeReadState = statusRead.note ?? "unavailable";
     const previous = model;
     model = buildSceneModel(structure.data, workflows.data);
     renderList();
@@ -142,6 +266,7 @@ export async function mountVisualization({
     applyMode();
     renderStatus();
     showDetail();
+    renderEvidence();
   }
 
   async function setMode(next) {
@@ -171,7 +296,10 @@ export async function mountVisualization({
   el("viz-rotate-left").addEventListener("click", () => view?.rotate(-0.3));
   el("viz-rotate-right").addEventListener("click", () => view?.rotate(0.3));
   effectsBox.addEventListener("change", () => { if (model && view) { view.setModel(model, { effects: effectsBox.checked }); renderCost(); } });
-  motionBox.addEventListener("change", () => { reduced = motionBox.checked; });
+  motionBox.addEventListener("change", () => {
+    reduced = motionBox.checked;
+    if (reduced && mode === "3d") setMode("list");
+  });
 
   await refresh();
   return { refresh, select, setMode, mode: () => mode };

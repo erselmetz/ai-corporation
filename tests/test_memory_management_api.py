@@ -138,6 +138,26 @@ def test_published_reader_cannot_correct_or_remove(setup):
         assert client.delete("/api/memory/record?" + query).status_code == 204
 
 
+def test_corporation_memory_list_includes_authorized_provenance_without_content(setup):
+    runtime, _ = setup
+    runtime.application_service.corporation_knowledge().publish(
+        "published", actor_id="owner", source_scope=MemoryScope.CONVERSATION,
+        source_scope_id="chat", source_memory_id="memory", readers=["reader"],
+        now=NOW, publication_opt_in=True)
+    app = application(runtime, Authentication(identity="reader"))
+    with TestClient(app) as client:
+        listing = client.get("/api/memory?scope=corporation&scope_id=corp_local&limit=10")
+        denied = client.get("/api/memory?scope=corporation&scope_id=wrong-corp&limit=10")
+    assert listing.status_code == 200
+    item = listing.json()["items"][0]
+    assert item["provenance"] == {
+        "source_scope": "conversation", "source_scope_id": "chat",
+        "source_reference": "message", "source_created_at": "2026-10-02T00:00:00Z",
+    }
+    assert "content" not in item
+    assert denied.status_code == 404
+
+
 def test_corrupt_storage_is_a_service_failure_not_empty_success(setup):
     runtime, _ = setup
     connection = get_connection()

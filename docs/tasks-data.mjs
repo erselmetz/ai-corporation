@@ -2207,7 +2207,7 @@ export const post100Tasks = [
     "title": "Knowledge and resource visualization",
     "description": "Extend actual corporation/workflow maps with authorized knowledge provenance, provider/model assignment, and resource snapshots.",
     "category": "Phase G - Command Center UI and Visualization",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       114,
       115,
@@ -2221,11 +2221,23 @@ export const post100Tasks = [
     "outOfScope": [
       "Do not expose private memory or equate slots with hardware readiness."
     ],
-    "decisions": [],
+    "decisions": [
+      "Map source reads keep their existing independent permissions: structure, Agent, model assignment, Provider registration, workflow, Corporation memory, and system/resource snapshots are not combined into a new privileged API.",
+      "Model assignments are associated only by exact recorded Agent ID; resource budgets match exact provider/model IDs. Knowledge provenance is shown as a source record, not as an inferred graph edge."
+    ],
     "area": "P23",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-161-knowledge-resource-visualization",
+    "validation": [
+      "Focused protected Python map, provenance, resource, access, and page regressions: 66 passed.",
+      "Visualization, structure-list, and workflow-map Node tests: 20 passed; public docs/task/update-manifest suite: 13 passed.",
+      "Full Python suite excluding the pre-existing syntactically invalid tests/test_automation_traces.py: 1219 passed, 5 skipped, and the two previously recorded unrelated model-assignment failures; the Task 161 updates-manifest regression passed after correcting the entry schema.",
+    ],
+    "limitations": [
+      "Corporation knowledge is limited to the ten latest records returned by the existing memory:read scoped list and exposes provenance metadata only; private Conversation/Project memory and content are not shown.",
+      "Provider registration is labeled only where provider:read is authorized; a model assignment does not imply provider availability. System capacities are software slot limits, not hardware fit.",
+      "Structure/workflow edges remain only their recorded reporting/delegation/handoff links. Resource association requires an exact provider/model match; no relationship is inferred from similar names or roles.",
+      "Model assignment API records have no source update timestamp. Structure/workflow timestamps and the system observed_at are displayed independently; reads are not one atomic cross-service snapshot."
+    ]
   },
   {
     "number": 162,
@@ -2637,7 +2649,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-160 are verified; Tasks 161-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-161 are verified; Tasks 162-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

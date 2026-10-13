@@ -19,7 +19,8 @@ def test_visualization_page_is_3d_first_with_accessible_alternatives_and_setup_l
         assert response.status_code == 200
         html = response.text
         for fragment in ('id="viz-canvas"', 'tabindex="0"', 'id="viz-list"', 'id="viz-reduce-motion"',
-                         'id="viz-effects"', 'href="/ui/chat"', 'href="/ui/providers"'):
+                         'id="viz-effects"', 'id="viz-evidence-data"',
+                         'href="/ui/chat"', 'href="/ui/providers"'):
             assert fragment in html
         assert "<script" in html and "onclick" not in html.lower()
         assert "script-src 'self'" in response.headers["content-security-policy"]

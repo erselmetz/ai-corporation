@@ -20,6 +20,13 @@ router = APIRouter(prefix="/api/memory")
 Identifier = Annotated[str, Query(min_length=1, max_length=256)]
 
 
+class MemoryProvenanceSummary(BaseModel):
+    source_scope: MemoryScope
+    source_scope_id: str
+    source_reference: str
+    source_created_at: datetime
+
+
 class MemorySummary(BaseModel):
     id: str
     scope: MemoryScope
@@ -29,6 +36,7 @@ class MemorySummary(BaseModel):
     expires_at: datetime
     expired: bool
     can_manage: bool
+    provenance: MemoryProvenanceSummary | None = None
 
 
 class MemoryList(BaseModel):

@@ -7,7 +7,7 @@ from app.runtime.factory import create_corporation_runtime
 
 PASSWORD = "test-owner-passphrase"
 ORIGIN = "http://127.0.0.1:8000"
-ALL = frozenset({"position:read", "employee:read", "agent:read"})
+ALL = frozenset({"position:read", "employee:read", "agent:read", "model:read", "provider:read"})
 
 
 def _service():
@@ -26,7 +26,8 @@ def test_structure_reports_only_recorded_links_and_distinguishes_missing_identit
     assert report["roots"] == [root.id]
     assert nodes[child.id]["reports_to_position_id"] == root.id
     assert nodes[root.id]["agent"]["state"] == "assigned"
-    assert nodes[root.id]["agent"]["model_id"] == "llama3.2:3b"
+    assert nodes[root.id]["model"]["model_id"] == "llama3.2:3b"
+    assert nodes[root.id]["model"]["provider_state"] == "registered"
     assert nodes[child.id]["employee"]["state"] == "assigned"
     assert nodes[child.id]["agent"] == {"state": "unassigned"}
     assert nodes[vacant.id]["employee"] == {"state": "unassigned"}
@@ -34,14 +35,37 @@ def test_structure_reports_only_recorded_links_and_distinguishes_missing_identit
     assert set(report["sections"].values()) == {"available"}
 
 
+def test_agent_read_does_not_disclose_model_or_provider_without_their_permissions():
+    service, root, _, _ = _service()
+    report = build_structure_map(service, frozenset({"position:read", "employee:read", "agent:read"}))
+    node = next(item for item in report["positions"] if item["id"] == root.id)
+    assert report["sections"]["models"] == "forbidden"
+    assert report["sections"]["providers"] == "forbidden"
+    assert node["agent"]["state"] == "assigned"
+    assert "provider_id" not in node["agent"]
+    assert "model_id" not in node["agent"]
+    assert node["model"] == {"state": "forbidden"}
+
+
+def test_model_assignment_is_visible_only_with_model_read_and_provider_state_is_separate():
+    service, root, _, _ = _service()
+    report = build_structure_map(service, frozenset({"position:read", "employee:read", "agent:read", "model:read"}))
+    node = next(item for item in report["positions"] if item["id"] == root.id)
+    assert node["model"]["provider_id"] == "ollama"
+    assert node["model"]["model_id"] == "llama3.2:3b"
+    assert node["model"]["provider_state"] == "forbidden"
+
+
 def test_forbidden_sections_are_labelled():
     service, root, child, _ = _service()
     report = build_structure_map(service, frozenset({"position:read"}))
     assert report["sections"] == {
-        "positions": "available", "employees": "forbidden", "agents": "forbidden"}
+        "positions": "available", "employees": "forbidden", "agents": "forbidden",
+        "models": "forbidden", "providers": "forbidden"}
     nodes = {n["id"]: n for n in report["positions"]}
     assert nodes[root.id]["employee"] == {"state": "forbidden", "id": "local_employee"}
     assert nodes[root.id]["agent"] == {"state": "forbidden"}
+    assert nodes[root.id]["model"] == {"state": "forbidden"}
 
 
 def test_missing_parent_employee_agent_and_provider_are_labelled():
@@ -62,6 +86,9 @@ def test_missing_parent_employee_agent_and_provider_are_labelled():
         def list_agents(self):
             return (NS(id="a2", name="A", provider="offline", model="m"),)
 
+        def list_models(self):
+            return (NS(agent_id="a2", provider_id="offline", model_id="m"),)
+
         def provider_exists(self, provider_id):
             return False
 
@@ -71,7 +98,7 @@ def test_missing_parent_employee_agent_and_provider_are_labelled():
     assert "p1" in report["roots"]
     assert nodes["p1"]["employee"]["state"] == "missing"
     assert nodes["p2"]["agent"]["state"] == "assigned"
-    assert nodes["p2"]["agent"]["provider_state"] == "unavailable"
+    assert nodes["p2"]["model"]["provider_state"] == "unavailable"
 
 
 def test_permission_error_without_position_read():
@@ -98,4 +125,11 @@ def test_api_requires_position_read_and_local_session():
             "local-owner", frozenset({"position:read"}))
         partial = client.get("/api/structure-map").json()
         assert partial["sections"]["agents"] == "forbidden"
+        client.app.state.authentication_backend.principal = AuthenticatedPrincipal(
+            "local-owner", frozenset({"position:read", "employee:read", "agent:read"}))
+        agent_only = client.get("/api/structure-map").json()
+        assigned = next(n for n in agent_only["positions"] if n["id"] == root.id)
+        assert agent_only["sections"]["models"] == "forbidden"
+        assert assigned["model"] == {"state": "forbidden"}
+        assert "provider_id" not in assigned["agent"]
         assert client.post("/api/structure-map").status_code in {405, 415, 403}

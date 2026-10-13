@@ -45,6 +45,8 @@ export function buildSceneModel(structure, workflows, { maxNodes = MAX_SCENE_NOD
     tiers.set(tier, index + 1);
     nodes.push({
       id: `pos:${p.id}`, kind: "position", label: p.title, state: positionState(p), revision: p.revision,
+      agent_id: p.agent.state === "assigned" ? p.agent.id : null,
+      agent_visibility: p.agent.state === "forbidden" ? "forbidden" : "available",
       detail: `Position ${p.title}; ${p.active ? "active" : "inactive"}; employee ${p.employee.state}; agent ${p.agent.state}`,
       x: index * 2.4 - 1.2, y: -tier * 2.2, z: 0, slot: index,
     });
@@ -57,6 +59,8 @@ export function buildSceneModel(structure, workflows, { maxNodes = MAX_SCENE_NOD
     workflow.nodes.forEach((n, index) => {
       nodes.push({
         id: `wi:${n.id}`, kind: "work_item", label: `${workflow.title}: ${n.role}`, state: n.state,
+        agent_id: n.agent_visibility === "available" ? n.agent_id : null,
+        agent_visibility: n.agent_visibility ?? "unknown",
         detail: `Work item ${n.id} (${n.role}) is ${n.state}${n.reason ? ` - ${n.reason}` : ""}`,
         x: index * 2.4 - 1.2, y: -row * 1.8, z: -6, slot: index,
       });

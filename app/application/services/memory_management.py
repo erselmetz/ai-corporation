@@ -29,15 +29,25 @@ class MemoryManagementService:
 
     def list(self, *, actor_id, scope, scope_id, limit, now):
         _time(now)
-        records = self._store(scope, scope_id).list_scoped(actor_id=actor_id, scope_id=scope_id, limit=limit)
+        store = self._store(scope, scope_id)
+        records = store.list_scoped(actor_id=actor_id, scope_id=scope_id, limit=limit)
         items = []
         for record in records:
             if now < record.created_at:
                 raise ValueError("Memory creation time is in the future")
+            provenance = None
+            if scope is MemoryScope.CORPORATION:
+                knowledge = store.retrieve(record.id, actor_id=actor_id, corporation_id=scope_id, now=now)
+                source = knowledge.provenance
+                provenance = dict(source_scope=source.source_scope,
+                                  source_scope_id=source.source_scope_id,
+                                  source_reference=source.source_reference,
+                                  source_created_at=source.source_created_at)
             items.append(dict(id=record.id, scope=record.scope.value, scope_id=record.scope_id,
                               type=record.type.value, created_at=record.created_at,
                               expires_at=record.expires_at,
-                              expired=now >= record.expires_at, can_manage=actor_id == record.owner_id))
+                              expired=now >= record.expires_at, can_manage=actor_id == record.owner_id,
+                              provenance=provenance))
         return items
 
     def inspect(self, memory_id, *, actor_id, scope, scope_id, now):

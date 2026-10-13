@@ -53,6 +53,7 @@ def test_dashboard_shell_and_assets_are_served_without_runtime_execution():
         "System &amp; resources",
         "Protected-action approvals",
         "Corporation knowledge",
+        "3D visualization",
     ):
         assert section in shell.text
 

@@ -10,7 +10,7 @@ const pos = (id, extra = {}) => ({
   employee: { state: "assigned" }, agent: { state: "assigned" }, ...extra,
 });
 const structure = { positions: [pos("boss"), pos("dev", { reports_to_position_id: "boss", reporting_state: "linked" })] };
-const wi = (id, state) => ({ id, role: "worker", state, reason: "" });
+const wi = (id, state) => ({ id, role: "worker", state, reason: "", agent_id: "w1", agent_visibility: "available" });
 const workflows = state => ({ workflows: [{ id: "w", title: "Plan", nodes: [wi("a", state), wi("b", "waiting")],
   operational_edges: [{ kind: "handoff", from: "a", to: "b" }] }] });
 
@@ -71,14 +71,26 @@ class El {
   all(tag) { return this.children.flatMap(c => [...(c.tag === tag ? [c] : []), ...c.all(tag)]); }
 }
 const IDS = ["viz-status", "viz-canvas", "viz-list", "viz-detail", "viz-cost", "viz-effects", "viz-reduce-motion",
-  "viz-mode-3d", "viz-mode-list", "viz-refresh", "viz-rotate-left", "viz-rotate-right"];
+  "viz-mode-3d", "viz-mode-list", "viz-refresh", "viz-rotate-left", "viz-rotate-right", "viz-evidence-data"];
 const setup = () => {
   const els = Object.fromEntries(IDS.map(id => [id, new El()]));
   els["viz-effects"].checked = true;
   return { els, doc: { getElementById: id => els[id], createElement: tag => new El(tag) } };
 };
 const ok = body => ({ ok: true, status: 200, json: async () => body });
-const route = (state = "review") => async url => ok(url.includes("structure") ? structure : workflows(state));
+const route = (state = "review") => async url => {
+  if (url.includes("structure")) return ok(structure);
+  if (url.includes("workflows")) return ok(workflows(state));
+  if (url === "/api/models") return ok({ items: [{ agent_id: "w1", provider_id: "local", model_id: "qwen" }] });
+  if (url === "/api/system/monitor") return ok({ observed_at: "T", resource_capacities: [
+    { scope: "model", provider_id: "local", model_id: "qwen", allocated: 1, limit: 2, remaining: 1 },
+  ] });
+  if (url === "/api/status") return ok({ corporation: { id: "corp" } });
+  if (url.startsWith("/api/memory?")) return ok({ items: [{ id: "knowledge", scope: "corporation", type: "summary",
+    created_at: "published-time", expires_at: "expiry",
+    provenance: { source_scope: "project", source_scope_id: "p1", source_reference: "task-1", source_created_at: "source-time" } }] });
+  return { ok: false, status: 404 };
+};
 const fakeView = log => () => ({
   setModel: (m, o) => log.push(["model", m.nodes.length, o.effects]), select: id => log.push(["select", id]),
   pulse: ids => log.push(["pulse", ...ids]), rotate: d => log.push(["rotate", d]), resize() {}, pick: () => "wi:a",
@@ -125,6 +137,18 @@ test("reduced-motion preference starts in list mode without loading graphics", a
   assert.equal(els["viz-reduce-motion"].checked, true);
 });
 
+test("turning on reduced motion while viewing 3D switches to the equivalent list view", async () => {
+  const { els, doc } = setup();
+  const api = await mountVisualization({ documentRef: doc, fetchImpl: route(), loadThree: async () => ({}),
+    createView: fakeView([]), matchMedia: () => ({ matches: false }) });
+  assert.equal(api.mode(), "3d");
+  els["viz-reduce-motion"].checked = true;
+  els["viz-reduce-motion"].handlers.change();
+  assert.equal(api.mode(), "list");
+  assert.equal(els["viz-canvas"].hidden, true);
+  assert.equal(els["viz-list"].hidden, false);
+});
+
 test("WebGL failure falls back to the list with a notice", async () => {
   const { els, doc } = setup();
   const api = await mountVisualization({ documentRef: doc, fetchImpl: route(), loadThree: async () => ({}),
@@ -151,4 +175,15 @@ test("keyboard selection, effects toggle, forbidden and failed sections", async 
     createView: fakeView([]), matchMedia: () => ({ matches: false }) });
   assert.match(down.els["viz-status"].textContent, /disconnected/);
   assert.match(down.els["viz-list"].textContent, /No recorded positions/);
+});
+
+test("shows only recorded Agent associations, provenance metadata, and software slot budgets", async () => {
+  const { els, doc } = setup();
+  const api = await mountVisualization({ documentRef: doc, fetchImpl: route(), loadThree: async () => ({}),
+    createView: fakeView([]), matchMedia: () => ({ matches: false }) });
+  await api.select("wi:a");
+  assert.match(els["viz-detail"].textContent, /Recorded assignment for Agent w1: provider local, model qwen/);
+  assert.match(els["viz-detail"].textContent, /1\/2 allocated/);
+  assert.match(els["viz-evidence-data"].textContent, /project p1 \/ task-1/);
+  assert.doesNotMatch(els["viz-evidence-data"].textContent, /content of knowledge/);
 });

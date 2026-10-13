@@ -19,24 +19,25 @@ const setup = () => {
 };
 const pos = (id, extra = {}) => ({
   id, title: id, responsibilities: ["r"], active: true, revision: 1, reports_to_position_id: null,
-  reporting_state: "root", employee: { state: "unassigned" }, agent: { state: "not_applicable" }, ...extra,
+  reporting_state: "root", employee: { state: "unassigned" }, agent: { state: "not_applicable" },
+  model: { state: "not_applicable" }, ...extra,
 });
-const map = (positions, sections = { positions: "available", employees: "available", agents: "available" }) =>
+const map = (positions, sections = { positions: "available", employees: "available", agents: "available", models: "available", providers: "available" }) =>
   ({ ok: true, status: 200, json: async () => ({ generated_at: "T", sections, positions, roots: [] }) });
 
 test("renders a keyboard-reachable tree with explicit missing and forbidden labels", async () => {
   const { els, doc } = setup();
   const data = [
-    pos("<b>boss</b>", { employee: { state: "forbidden", id: "x" } }),
+    pos("<b>boss</b>", { employee: { state: "forbidden", id: "x" }, model: { state: "forbidden" } }),
     pos("child", { reports_to_position_id: "<b>boss</b>", reporting_state: "linked", employee: { state: "missing", id: "g" } }),
   ];
-  await mountStructure({ documentRef: doc, fetchImpl: async () => map(data, { positions: "available", employees: "forbidden", agents: "forbidden" }) });
+  await mountStructure({ documentRef: doc, fetchImpl: async () => map(data, { positions: "available", employees: "forbidden", agents: "forbidden", models: "forbidden", providers: "forbidden" }) });
   const buttons = els["structure-tree"].all("button");
   assert.equal(buttons.length, 2);
   assert.ok(buttons.every(b => b.type === "button"));
   assert.match(els["structure-tree"].textContent, /forbidden \(permission not granted\)/);
   assert.match(els["structure-tree"].textContent, /missing record/);
-  assert.match(els["structure-status"].textContent, /Not permitted: employees, agents/);
+  assert.match(els["structure-status"].textContent, /Not permitted: employees, agents, models, providers/);
 });
 
 test("selecting shows current details and flags stale revision or vanished positions", async () => {
@@ -51,6 +52,19 @@ test("selecting shows current details and flags stale revision or vanished posit
   gone = true;
   await api.select("p");
   assert.match(els["structure-detail"].textContent, /no longer exists/);
+});
+
+test("separates Agent identity from protected provider/model assignment details", async () => {
+  const { els, doc } = setup();
+  const data = [pos("engineer", {
+    employee: { state: "assigned", id: "employee-1", name: "Engineer", role: "Developer" },
+    agent: { state: "assigned", id: "agent-1", name: "Builder" },
+    model: { state: "assigned", provider_id: "local", model_id: "qwen", provider_state: "forbidden" },
+  })];
+  const api = await mountStructure({ documentRef: doc, fetchImpl: async () => map(data) });
+  await api.select("engineer");
+  assert.match(els["structure-detail"].textContent, /Agent: Builder \(agent-1\)/);
+  assert.match(els["structure-detail"].textContent, /provider local, model qwen; provider registration forbidden/);
 });
 
 test("reports sign-in and permission failures without data", async () => {

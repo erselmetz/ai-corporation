@@ -6,6 +6,8 @@ SECTIONS = {
     "positions": "position:read",
     "employees": "employee:read",
     "agents": "agent:read",
+    "models": "model:read",
+    "providers": "provider:read",
 }
 
 
@@ -19,6 +21,7 @@ def build_structure_map(application, permissions, *, now=None):
         raise PermissionError("position:read is required")
     employees = {e.id: e for e in application.list_employees()} if allowed["employees"] else None
     agents = {a.id: a for a in application.list_agents()} if allowed["agents"] else None
+    models = {m.agent_id: m for m in application.list_models()} if allowed["models"] else None
     positions = application.list_positions()
     known = {p.id for p in positions}
     nodes = []
@@ -31,7 +34,8 @@ def build_structure_map(application, permissions, *, now=None):
         else:
             parent_state = "missing"
         employee = _employee_state(position.employee_id, employees)
-        agent = _agent_state(application, employee, employees, agents)
+        agent = _agent_state(employee, employees, agents)
+        model = _model_state(application, employee, employees, agents, models, allowed["providers"])
         nodes.append({
             "id": position.id,
             "title": position.title,
@@ -42,6 +46,7 @@ def build_structure_map(application, permissions, *, now=None):
             "reporting_state": parent_state,
             "employee": employee,
             "agent": agent,
+            "model": model,
         })
     return {
         "generated_at": (now or datetime.now(timezone.utc)).isoformat(),
@@ -62,7 +67,7 @@ def _employee_state(employee_id, employees):
     return {"state": "assigned", "id": employee.id, "name": employee.name, "role": employee.role}
 
 
-def _agent_state(application, employee, employees, agents):
+def _agent_state(employee, employees, agents):
     if employee["state"] in {"unassigned", "missing"}:
         return {"state": "not_applicable"}
     if employee["state"] == "forbidden":
@@ -75,8 +80,29 @@ def _agent_state(application, employee, employees, agents):
     agent = agents.get(agent_id)
     if agent is None:
         return {"state": "missing", "id": agent_id}
+    return {"state": "assigned", "id": agent.id, "name": agent.name}
+
+
+def _model_state(application, employee, employees, agents, models, can_read_providers):
+    if employee["state"] in {"unassigned", "missing"}:
+        return {"state": "not_applicable"}
+    if employee["state"] == "forbidden" or agents is None or models is None:
+        return {"state": "forbidden"}
+    agent_id = employees[employee["id"]].agent_id
+    if agent_id is None:
+        return {"state": "not_applicable"}
+    agent = agents.get(agent_id)
+    if agent is None:
+        return {"state": "missing"}
+    assignment = models.get(agent.id)
+    if assignment is None:
+        return {"state": "missing"}
     return {
-        "state": "assigned", "id": agent.id, "name": agent.name,
-        "provider_id": agent.provider, "model_id": agent.model,
-        "provider_state": "registered" if application.provider_exists(agent.provider) else "unavailable",
+        "state": "assigned",
+        "provider_id": assignment.provider_id,
+        "model_id": assignment.model_id,
+        "provider_state": (
+            ("registered" if application.provider_exists(assignment.provider_id) else "unavailable")
+            if can_read_providers else "forbidden"
+        ),
     }

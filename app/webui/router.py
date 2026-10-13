@@ -10,7 +10,7 @@ def _navigation(active_path: str) -> str:
         ("PRIMARY", (("Home", "/ui"), ("Chat", "/ui/chat"), ("Projects", "/ui/projects"))),
         ("AI", (("Employees", "/ui/employees"), ("Positions", "/ui/positions"),
                 ("Organization map", "/ui/structure"), ("Providers &amp; models", "/ui/providers"),
-                ("Memory", "/ui/memory"))),
+                ("3D visualization", "/ui/visualization"), ("Memory", "/ui/memory"))),
         ("OPERATIONS", (("Tasks", "/ui/tasks"), ("Workflows", "/ui/workflows"),
                         ("Workflow map", "/ui/workflow-map"), ("Activity", "/ui/activity"))),
         ("SYSTEM", (("Software inventory", "/ui/inventory"), ("Documentation", "/ui/documentation"),
@@ -1117,6 +1117,10 @@ def visualization_page():
     <section id="viz-list" aria-label="List view" hidden></section>
     <p id="viz-cost" role="status"></p>
     <section aria-live="polite"><h2>Details</h2><div id="viz-detail">Select a node.</div></section>
+    <section id="viz-evidence" aria-labelledby="viz-evidence-title">
+    <h2 id="viz-evidence-title">Authorized map evidence</h2>
+    <p>Model associations use recorded Agent IDs. Knowledge provenance is shown as source metadata, not inferred graph links. Slot counts are software limits, not hardware capacity.</p>
+    <div id="viz-evidence-data"></div></section>
     </main></body></html>""")
 
 @router.get("/ui/provider-connections", response_class=HTMLResponse)
