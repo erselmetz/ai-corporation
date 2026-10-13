@@ -11,6 +11,7 @@ import re
 import threading
 from typing import Literal, Protocol
 
+from app.application.services.automation_traces import AutomationTraceService
 from app.application.services.capability_approvals import (
     POLICY_VERSION,
     CapabilityApprovalError,
@@ -179,6 +180,7 @@ class ScopedDesktopAutomation:
         emergency_stop: EmergencyStopService,
         backend: DesktopAutomationBackend | None = None,
         authorization: CapabilityAuthorizationService = DEFAULT_CAPABILITY_AUTHORIZATION,
+        trace_service: AutomationTraceService | None = None,
     ):
         if not isinstance(policy, DesktopAutomationPolicy):
             raise TypeError("A DesktopAutomationPolicy is required")
@@ -188,17 +190,24 @@ class ScopedDesktopAutomation:
             raise TypeError("An EmergencyStopService is required")
         if not isinstance(authorization, CapabilityAuthorizationService):
             raise TypeError("A CapabilityAuthorizationService is required")
+        if trace_service is not None and not isinstance(trace_service, AutomationTraceService):
+            raise TypeError("An AutomationTraceService is required")
         self._policy = policy
         self._approvals = approvals
         self._stop = emergency_stop
         self._authorization = authorization
         self._backend = backend or WindowsUIAutomationBackend()
+        self._trace_service = trace_service or AutomationTraceService()
         self._lock = threading.RLock()
         self._actions: dict[str, int] = {}
         self._active_sessions: set[str] = set()
         self._activity = {"state": "idle", "started_at": None,
                           "finished_at": None, "result": None}
         self._activity_generation = 0
+
+    @property
+    def trace_service(self) -> AutomationTraceService:
+        return self._trace_service
 
     def activity_snapshot(self) -> dict:
         with self._lock:
@@ -272,6 +281,17 @@ class ScopedDesktopAutomation:
                 or approval.scope_id != actor_id or approval.payload_digest != payload_digest
                 or approval.policy_version != POLICY_VERSION):
             raise ScopedDesktopError("The exact desktop action is not currently owner-approved")
+        trace_started_at = datetime.now(timezone.utc)
+
+        def record_trace(action_result: str, remote_outcome: str):
+            return self._trace_service.record_action(
+                actor_id=actor_id, capability_id=CAPABILITY_ID,
+                grant_id=approval_id, policy_version=POLICY_VERSION,
+                target_ref=target_ref, action_id="desktop.invoke_button",
+                before_digest=approval.target_digest, action_result=action_result,
+                remote_outcome=remote_outcome, started_at=trace_started_at,
+            )
+
         with self._lock:
             if len(self._actions) >= 64 and session_id not in self._actions:
                 raise ScopedDesktopError("Desktop session capacity is full; restart the local app")
@@ -383,21 +403,31 @@ class ScopedDesktopAutomation:
                     cancel_before_dispatch.set()
             if attempted.is_set():
                 self._set_activity_for_generation(generation, "outcome_unknown", "unknown")
+                trace = record_trace("timed_out_unknown", "unknown")
                 return {"status": "timed_out", "remote_outcome": "unknown",
                         "action": request.action, "retry": "forbidden",
+                        "trace_id": trace.trace_id,
                         "message": "The desktop action may have run; do not retry automatically."}
             self._set_activity_for_generation(generation, "timed_out_before_dispatch", "not_dispatched")
+            record_trace("failed_before_dispatch", "not_dispatched")
             raise DesktopActionUnavailable("Desktop inspection timed out before action dispatch")
         if "error" in outcome:
             if outcome.get("error_type") == "approval":
+                record_trace("failed_before_dispatch", "not_dispatched")
                 raise ScopedDesktopError(outcome["error"])
             if outcome.get("error_type") == "unknown":
                 self._set_activity_for_generation(generation, "outcome_unknown", "unknown")
+                trace = record_trace("failed_unknown", "unknown")
                 return {"status": "action_failed", "remote_outcome": "unknown",
                         "action": request.action, "retry": "forbidden",
+                        "trace_id": trace.trace_id,
                         "message": outcome["error"]}
+            record_trace("failed_before_dispatch", "not_dispatched")
             raise DesktopActionUnavailable(outcome["error"])
-        return outcome["result"]
+        result = outcome["result"]
+        trace = record_trace("dispatched", "unknown")
+        result["trace_id"] = trace.trace_id
+        return result
 
     def _validate_request(self, request: DesktopActionRequest) -> None:
         if not isinstance(request, DesktopActionRequest):

@@ -152,6 +152,11 @@ def test_invoke_requires_exact_owner_approval_and_reports_unknown_outcome():
     result = execute(service, action, record["approval_id"])
     assert result["status"] == "action_dispatched"
     assert result["remote_outcome"] == "unknown"
+    trace = service.trace_service.get(result["trace_id"], actor_id=OWNER)
+    assert trace.grant_id == record["approval_id"]
+    assert trace.action_id == "desktop.invoke_button"
+    assert trace.before_digest == record["target_digest"]
+    assert trace.after_state == "unknown"
     assert backend.invocations == 1
     assert approvals.get(record["approval_id"]).status == "consumed"
     assert service.activity_snapshot()["state"] == "outcome_unknown"
@@ -193,6 +198,9 @@ def test_action_timeout_is_unknown_no_retry_and_blocks_overlapping_actions():
     assert result["status"] == "timed_out"
     assert result["remote_outcome"] == "unknown"
     assert result["retry"] == "forbidden"
+    trace = service.trace_service.get(result["trace_id"], actor_id=OWNER)
+    assert trace.action_result == "timed_out_unknown"
+    assert trace.remote_outcome == "unknown"
     assert service.activity_snapshot()["active"] is True
 
     second_action, second_record = approved_action(service, approvals)

@@ -317,6 +317,12 @@ def test_browser_action_requires_exact_owner_approval_then_reports_unknown_remot
 
     assert result["status"] == "action_dispatched"
     assert result["remote_outcome"] == "unknown"
+    trace = service.trace_service.get(result["trace_id"], actor_id=OWNER)
+    assert trace.grant_id == record["approval_id"]
+    assert trace.action_id == "browser.click"
+    assert trace.before_digest == record["target_digest"]
+    assert trace.after_state == "unknown"
+    assert trace.screenshot_references == ()
     assert playwright.page.clicks == 1
     assert playwright.page.action_route.continued is True
     assert approvals.get(record["approval_id"]).status == "consumed"

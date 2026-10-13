@@ -25,8 +25,8 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-174-175");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 175 }, (_, index) => 175 - index));
-  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*156 completed.*1 deferred and incomplete.*18 planned/);
-  assert.match(elements["next-task"].textContent, /Next: Task 158/);
+  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*157 completed.*1 deferred and incomplete.*17 planned/);
+  assert.match(elements["next-task"].textContent, /Next: Task 159/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -55,7 +55,8 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.equal(scopedDesktop.children[2].textContent, "Completed");
   assert.match(scopedDesktop.textContent, /task-157-scoped-desktop-automation/);
   assert.match(scopedDesktop.textContent, /Windows UI Automation/);
-  assert.equal(items.find(item => item.id === "task-158").children[2].textContent, "Planned");
+  assert.equal(items.find(item => item.id === "task-158").children[2].textContent, "Completed");
+  assert.match(items.find(item => item.id === "task-158").textContent, /task-158-automation-review-traces/);
   assert.equal(items.find(item => item.id === "task-135").children[2].textContent, "Completed");
   const onboarding = items.find(item => item.id === "task-132");
   assert.equal(onboarding.children[2].textContent, "Completed");

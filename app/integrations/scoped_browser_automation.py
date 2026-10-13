@@ -14,6 +14,7 @@ from urllib.parse import urljoin, urlsplit
 
 from playwright.sync_api import Error as PlaywrightError, Route, sync_playwright
 
+from app.application.services.automation_traces import AutomationTraceService
 from app.application.services.capability_approvals import (
     POLICY_VERSION,
     CapabilityApprovalError,
@@ -122,6 +123,7 @@ class ScopedBrowserAutomation:
         authorization: CapabilityAuthorizationService = DEFAULT_CAPABILITY_AUTHORIZATION,
         emergency_stop: EmergencyStopService,
         browser_launcher=None,
+        trace_service: AutomationTraceService | None = None,
     ) -> None:
         if not isinstance(policy, BrowserSitePolicy):
             raise TypeError("policy must be an explicit BrowserSitePolicy")
@@ -131,14 +133,21 @@ class ScopedBrowserAutomation:
             raise TypeError("authorization must use the configured capability policy")
         if not isinstance(emergency_stop, EmergencyStopService):
             raise TypeError("emergency_stop must use the configured process stop service")
+        if trace_service is not None and not isinstance(trace_service, AutomationTraceService):
+            raise TypeError("trace_service must use the bounded automation trace service")
         self._policy = policy
         self._approvals = approvals
         self._authorization = authorization
         self._emergency_stop = emergency_stop
         self._browser_launcher = browser_launcher or self._launch_chromium
+        self._trace_service = trace_service or AutomationTraceService()
         self._lock = threading.RLock()
         self._actions: dict[str, int] = {}
         self._in_flight: set[str] = set()
+
+    @property
+    def trace_service(self) -> AutomationTraceService:
+        return self._trace_service
 
     def preview(
         self,
@@ -242,6 +251,10 @@ class ScopedBrowserAutomation:
                 raise ScopedBrowserError("Browser action limit reached for this session")
             self._in_flight.add(session_id)
         action_attempted = False
+        trace_started_at = datetime.now(timezone.utc)
+        trace_eligible = False
+        trace_succeeded = False
+        result = None
         try:
             with self._open_page(origin, canonical_url) as (page, action_network_enabled):
                 def current_target_digest() -> str:
@@ -276,7 +289,8 @@ class ScopedBrowserAutomation:
                         "dispatched_at": datetime.now(timezone.utc).isoformat(),
                     }
 
-                return self._approvals.execute(
+                trace_eligible = True
+                result = self._approvals.execute(
                     approval_id,
                     actor_id=actor_id,
                     permissions=permissions,
@@ -291,6 +305,8 @@ class ScopedBrowserAutomation:
                     read_current_target_digest=current_target_digest,
                     operation=perform_action,
                 )
+                trace_succeeded = True
+                return result
         except (ScopedBrowserError, PermissionError):
             raise
         except CapabilityApprovalError as error:
@@ -305,6 +321,20 @@ class ScopedBrowserAutomation:
             )
             raise BrowserActionUnavailable(message) from None
         finally:
+            if trace_eligible:
+                trace = self._trace_service.record_action(
+                    actor_id=actor_id, capability_id=CAPABILITY_ID,
+                    grant_id=approval_id, policy_version=POLICY_VERSION,
+                    target_ref=target_ref, action_id=action_id,
+                    before_digest=approval.target_digest,
+                    action_result=("failed_before_dispatch" if not action_attempted
+                                   else "dispatched" if trace_succeeded
+                                   else "failed_unknown"),
+                    remote_outcome=("not_dispatched" if not action_attempted else "unknown"),
+                    started_at=trace_started_at,
+                )
+                if isinstance(result, dict):
+                    result["trace_id"] = trace.trace_id
             with self._lock:
                 self._in_flight.discard(session_id)
 

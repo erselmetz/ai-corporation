@@ -91,14 +91,15 @@ describe("documentation site", () => {
   });
 
   it("records verified, deferred, and planned work without treating deferral as completion", () => {
-    assert.equal(tasks.filter(task => task.status === "completed").length, 156);
+    assert.equal(tasks.filter(task => task.status === "completed").length, 157);
     assert.equal(tasks.filter(task => task.status === "deferred").length, 1);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 18);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 17);
     assert.equal(tasks.find(task => task.number === 134).status, "deferred");
     assert.equal(tasks.find(task => task.number === 135).status, "completed");
     assert.equal(tasks.find(task => task.number === 156).status, "completed");
     assert.equal(tasks.find(task => task.number === 157).status, "completed");
-    assert.equal(tasks.find(task => task.number === 158).status, "planned");
+    assert.equal(tasks.find(task => task.number === 158).status, "completed");
+    assert.equal(tasks.find(task => task.number === 158).checkpoint, "task-158-automation-review-traces");
     assert.equal(tasks.find(task => task.number === 157).checkpoint, "task-157-scoped-desktop-automation");
     assert.match(tasks.find(task => task.number === 157).decisions.join(" "), /Windows UI Automation through the optional pywinauto UIA backend/);
     assert.equal(tasks.find(task => task.number === 156).checkpoint, "task-156-scoped-browser-automation");
@@ -125,7 +126,9 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 156).status, "completed");
     assert.equal(tasks.find(task => task.number === 156).checkpoint, "task-156-scoped-browser-automation");
     assert.deepEqual(tasks.find(task => task.number === 156).dependsOn, [90, 140, 141, 142, 144]);
-    assert.equal(nextTask.number, 158);
+    assert.equal(tasks.find(task => task.number === 159).status, "planned");
+    assert.equal(tasks.find(task => task.number === 158).checkpoint, "task-158-automation-review-traces");
+    assert.equal(nextTask.number, 159);
     assert.ok(tasks.slice(0, 133).every(task => task.status === "completed"));
     assert.ok(tasks.slice(133).some(task => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
@@ -205,8 +208,8 @@ describe("documentation site", () => {
   it("summarizes the roadmap while preserving the full task contracts", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
-    assert.match(html, /156 complete; 1 deferred; 18 planned/);
-    assert.match(html, /Tasks 1-133 and 135-157 are verified/);
+    assert.match(html, /157 complete; 1 deferred; 17 planned/);
+    assert.match(html, /Tasks 1-133 and 135-158 are verified/);
     assert.match(html, /Task 134 is deferred/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
@@ -216,18 +219,18 @@ describe("documentation site", () => {
     const [home, documentation, architecture, roadmap, updates] = await Promise.all(
       ["index.html", "documentation.html", "architecture.html", "roadmap.html", "updates.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
-    assert.match(home, /Latest update.*Task 157/);
-    assert.match(home, /Next planned.*Task 158/);
+    assert.match(home, /Latest update.*Task 158/);
+    assert.match(home, /Next planned.*Task 159/);
     assert.doesNotMatch(home, /Task 134/);
     assert.match(home, /Changelog/);
     assert.doesNotMatch(home, /Task 57|Task 100|Verified Tasks 101-133/);
     assert.match(documentation, /local-first application with a Python backend and an Electron desktop interface/);
     assert.match(architecture, /Python service owns AI and application logic/);
-    assert.match(updates, /Task 157.*2026-10-14/);
+    assert.match(updates, /Task 158.*2026-10-14/);
     assert.match(updates, /Task 156.*2026-10-14/);
     assert.match(updates, /Task 140.*2026-10-13/);
-    assert.match(roadmap, /Tasks 1-133 and 135-157 are complete/);
-    assert.match(roadmap, /156 complete.*1 deferred.*18 planned/);
+    assert.match(roadmap, /Tasks 1-133 and 135-158 are complete/);
+    assert.match(roadmap, /157 complete.*1 deferred.*17 planned/);
     assert.match(roadmap, /reports external Tesseract and traineddata requirements/);
     assert.doesNotMatch(roadmap, /Task 130.*semantic/i);
   });
@@ -243,7 +246,9 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 155).checkpoint, "task-155-one-use-camera-vision-chat");
     assert.equal(tasks.find(task => task.number === 156).checkpoint, "task-156-scoped-browser-automation");
     assert.deepEqual(tasks.find(task => task.number === 155).dependsOn, [144, 150, 153]);
-    assert.equal(nextTask.number, 158);
+    assert.equal(tasks.find(task => task.number === 159).status, "planned");
+    assert.equal(tasks.find(task => task.number === 158).checkpoint, "task-158-automation-review-traces");
+    assert.equal(nextTask.number, 159);
     const task122 = post100Tasks.find(task => task.number === 122);
     assert.equal(task122.status, "completed");
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");
@@ -257,7 +262,7 @@ describe("documentation site", () => {
       "task-125-managed-vscode-user-lifecycle", "task-126-local-application-lifecycle",
       "task-127-windows-electron-installer", "task-128-optional-voice-interaction",
       "task-129-command-center-release-acceptance", "task-130-semantic-memory-rag-foundation",
-      "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance", "task-135-semantic-retrieval-evaluation", "task-136-hybrid-lexical-semantic-retrieval", "task-137-semantic-index-lifecycle-observability", "task-138-owner-reviewed-knowledge-proposals", "task-139-versioned-documentation-review", "task-140-central-capability-permissions", "task-141-capability-grants-session-policy", "task-142-action-risk-approval-policy", "task-143-capability-audit-retention", "task-144-emergency-stop-capture-indicators", "task-145-bounded-speech-input-contracts", "task-146-optional-local-speech-recognition", "task-147-reviewed-speech-input-in-conversations", "task-148-offline-text-to-speech-provider", "task-149-bounded-local-voice-queue-controls", "task-150-bounded-image-input-vision-context", "task-151-explicit-screen-capture-provider", "task-152-bounded-optional-image-processing", "task-153-bounded-ocr-provider-contract", "task-154-explicit-optional-tesseract-backend", "task-155-one-use-camera-vision-chat", "task-156-scoped-browser-automation", "task-157-scoped-desktop-automation"]);
+      "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance", "task-135-semantic-retrieval-evaluation", "task-136-hybrid-lexical-semantic-retrieval", "task-137-semantic-index-lifecycle-observability", "task-138-owner-reviewed-knowledge-proposals", "task-139-versioned-documentation-review", "task-140-central-capability-permissions", "task-141-capability-grants-session-policy", "task-142-action-risk-approval-policy", "task-143-capability-audit-retention", "task-144-emergency-stop-capture-indicators", "task-145-bounded-speech-input-contracts", "task-146-optional-local-speech-recognition", "task-147-reviewed-speech-input-in-conversations", "task-148-offline-text-to-speech-provider", "task-149-bounded-local-voice-queue-controls", "task-150-bounded-image-input-vision-context", "task-151-explicit-screen-capture-provider", "task-152-bounded-optional-image-processing", "task-153-bounded-ocr-provider-contract", "task-154-explicit-optional-tesseract-backend", "task-155-one-use-camera-vision-chat", "task-156-scoped-browser-automation", "task-157-scoped-desktop-automation", "task-158-automation-review-traces"]);
     const task143 = post100Tasks.find(task => task.number === 143);
     assert.equal(task143.status, "completed");
     assert.equal(task143.checkpoint, "task-143-capability-audit-retention");

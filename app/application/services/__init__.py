@@ -1,3 +1,9 @@
+from .automation_traces import (
+    AutomationTraceError,
+    AutomationTraceRecord,
+    AutomationTraceService,
+    ScreenshotReference,
+)
 from .corporation import (
     ActivitySummary,
     AgentSummary,
@@ -159,6 +165,10 @@ from app.capability_evaluation import (
 )
 
 __all__ = [
+    "AutomationTraceError",
+    "AutomationTraceRecord",
+    "AutomationTraceService",
+    "ScreenshotReference",
     "ActivitySummary",
     "AgentSummary",
     "CorporationApplicationService",

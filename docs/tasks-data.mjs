@@ -2097,9 +2097,9 @@ export const post100Tasks = [
   {
     "number": 158,
     "title": "Automation review and debug traces",
-    "description": "Show bounded before/action/after traces for authorized actions with reviewable evidence and safe recovery guidance.",
+    "description": "Record bounded, owner-scoped before/action/after metadata for approved browser and desktop actions, with evidence digests and safe recovery guidance.",
     "category": "Phase F - Controlled Automation",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       143,
       144,
@@ -2107,18 +2107,28 @@ export const post100Tasks = [
       157
     ],
     "acceptance": [
-      "Bind actor, grant, policy, target/action, result, timing, and permitted screenshot references.",
-      "Support inspection/replay simulation without repeating external side effects.",
-      "Redact secrets and obey capture-retention policy."
+      "Bind the actor, one-use action approval reference, policy version, sanitized target/action, outcome, and timing.",
+      "Expose before/action/after phases; keep the after state UNKNOWN unless a read-only digest is explicitly available.",
+      "Allow owner-scoped inspection and replay simulation without calling an action adapter or repeating external effects.",
+      "Retain at most 200 in-memory records for no more than one day and accept screenshot IDs only through a consent validator."
     ],
     "outOfScope": [
-      "Do not automatically replay uncertain/completed actions or persist raw media without consent."
+      "No automatic retry/replay, persistent trace database, API/UI, screenshot capture, or raw media storage."
     ],
-    "decisions": [],
+    "decisions": [
+      "Use an in-memory metadata-only AutomationTraceService. Its grant_id is the one-use action approval ID; high-risk actions do not use Task 141 low-risk session-grant records. Store digests and allowlisted outcome categories, never page text, typed values, window titles, or raw errors.",
+      "After-state remains UNKNOWN for Task 156/157 because neither adapter can safely verify remote effects. Replay simulation returns stored phases and never invokes browser/desktop automation.",
+      "Screenshot references default to disabled and store opaque IDs only when an injected validator confirms owner consent and expiry. The trace store does not capture or retain image bytes."
+    ],
     "area": "P22",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-158-automation-review-traces",
+    "validation": [
+      "Focused trace-store, scoped browser/desktop, capability authorization/approval/audit/grant, emergency-stop, and local-owner regressions: 57 passed.",
+      "Deterministic tests cover owner isolation, expiry/capacity, safe replay simulation, unknown outcomes, secret-free metadata, and consent-validated screenshot references. No live browser/site or desktop action was used. Full Python suite: 1219 passed, 6 skipped, with the two previously recorded unrelated failures in test_model_set_command and test_model_replacement_uses_existing_assignment_service. Public documentation suite: 15 passed; Python compilation and git diff --check passed."
+    ],
+    "limitations": [
+      "Records are process-local and disappear on restart or after expiry/eviction; there is no API/UI or durable audit trail. Task 156/157 after-state remains UNKNOWN and remote completion is not asserted. Screenshot reference use is unavailable unless a consent validator is explicitly supplied; the service stores no screenshots or media."
+    ]
   },
   {
     "number": 159,
@@ -2607,7 +2617,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-157 are verified; Tasks 158-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-158 are verified; Tasks 159-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
