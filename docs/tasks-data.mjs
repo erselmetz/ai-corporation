@@ -2244,7 +2244,7 @@ export const post100Tasks = [
     "title": "Three-dimensional map architecture and performance review",
     "description": "Assess the Task 116 Three.js layer before further 3D expansion and define data, performance, accessibility, and fallback limits.",
     "category": "Phase G - Command Center UI and Visualization",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       116,
       159,
@@ -2253,18 +2253,29 @@ export const post100Tasks = [
     ],
     "acceptance": [
       "Review current use, supported hardware, data freshness, interaction, reduced motion, and 2D fallback.",
-      "Decide whether to extend Three.js or use another approach without assuming react-three-fiber/framework migration."
+      "Retain the existing vendored Three.js path unless measured reference-device results fail these gates; do not assume a framework migration."
     ],
     "outOfScope": [
       "Do not add a new 3D dependency before this review."
     ],
     "decisions": [
-      "Set measurable frame-time, memory, and accessibility thresholds before implementation."
+      "Performance gate: on a published minimum desktop profile, measure at least 300 animation-frame intervals in each of three runs, both idle and during local inference; require p95 <= 16.7 ms and p99 <= 33.3 ms. Measure requestAnimationFrame intervals, not only synchronous renderer.render duration.",
+      "Renderer-resource gate at the 60-node cap: renderer.info reports <= 128 geometries, <= 4 textures, and <= 240 render calls, with effects on and off after refresh/settling.",
+      "Freshness and hardware decision: show structure, workflow, and resource timestamps independently; model assignments without source timestamps remain undated, and the UI must not imply an atomic multi-source snapshot. WebGL-capable browser/device support is required for 3D; the list remains the functional fallback, and no minimum hardware profile is currently claimed.",
+      "Accessibility gate: WCAG 2.2 AA review; all nodes, links, and details are available in the equivalent labeled list; every action is keyboard reachable with visible focus; status is not conveyed by color alone; content works at 200% zoom; reduced motion immediately selects the list and prevents pulses; WebGL failure leaves the list usable."
     ],
     "area": "P23",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-162-three-dimensional-map-review",
+    "validation": [
+      "Reviewed the existing scene model, Three.js renderer, visualization controls, vendored library boundary, and deterministic scene/UI tests.",
+      "Public documentation, task-roadmap, and update-manifest tests: 13 passed; no physical-device benchmark was run because the minimum supported desktop profile is not yet specified."
+    ],
+    "limitations": [
+      "The current hard cap is 60 scene nodes; renderer pixel ratio is fixed at 1, power preference is low-power, and rendering is on demand apart from a bounded 800 ms state-change pulse.",
+      "The displayed render-cost metric averages at most 30 synchronous WebGLRenderer.render call durations; it is not frame pacing, GPU completion time, or an end-to-end performance benchmark. renderer.info counters and a browser/device memory measurement are not currently exposed.",
+      "No minimum desktop CPU/GPU profile or physical-device benchmark is recorded. The frame and renderer-resource values above are acceptance gates for future expansion, not achieved measurements or supported-hardware claims.",
+      "Automated UI tests verify keyboard/list/reduced-motion/WebGL-fallback behavior, but no screen-reader or WCAG audit against a real browser/assistive-technology combination is claimed."
+    ]
   },
   {
     "number": 163,
@@ -2649,7 +2660,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-161 are verified; Tasks 162-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-162 are verified; Tasks 163-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
