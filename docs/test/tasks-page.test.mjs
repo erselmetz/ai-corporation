@@ -25,8 +25,8 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-174-175");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 175 }, (_, index) => 175 - index));
-  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*154 completed.*1 deferred and incomplete.*20 planned/);
-  assert.match(elements["next-task"].textContent, /Next: Task 156/);
+  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*155 completed.*1 deferred and incomplete.*19 planned/);
+  assert.match(elements["next-task"].textContent, /Next: Task 157/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -38,6 +38,7 @@ test("renders completion evidence separately from planned decision gates and exp
   const release = items.find(item => item.id === "task-129");
   const semanticMemory = items.find(item => item.id === "task-130");
   const deferred = items.find(item => item.id === "task-134");
+  const scopedBrowser = items.find(item => item.id === "task-156");
   assert.equal(release.children[2].textContent, "Completed");
   assert.match(release.textContent, /task-129-command-center-release-acceptance/);
   assert.match(release.textContent, /206A36D5C94FD76B2696C01F95CD842C24E3A79FD05FEB7FDB45F3DA101DC091/);
@@ -47,6 +48,11 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.match(semanticMemory.textContent, /104 passed/);
   assert.equal(deferred.children[2].textContent, "Deferred — incomplete");
   assert.match(deferred.textContent, /no verified first-party pack artifact source/);
+  assert.equal(scopedBrowser.children[2].textContent, "Completed");
+  assert.match(scopedBrowser.textContent, /task-156-scoped-browser-automation/);
+  assert.match(scopedBrowser.textContent, /exact HTTPS origin/);
+  assert.equal(items.find(item => item.id === "task-157").children[2].textContent, "Planned");
+  assert.equal(items.find(item => item.id === "task-158").children[2].textContent, "Planned");
   assert.equal(items.find(item => item.id === "task-135").children[2].textContent, "Completed");
   const onboarding = items.find(item => item.id === "task-132");
   assert.equal(onboarding.children[2].textContent, "Completed");

@@ -99,7 +99,7 @@ class LocalOwnerAuthentication:
             | MODEL_RUNTIME_PERMISSIONS | WORKFLOW_PERMISSIONS
             | SOFTWARE_MANAGEMENT_PERMISSIONS
             | frozenset({"capability-grant:manage", "capability-approval:manage",
-                         "capability-emergency:manage"})
+                         "capability-emergency:manage", "browser:act"})
             | DOCUMENTATION_REVIEW_PERMISSIONS
             | MAINTENANCE_EXPERIMENT_PERMISSIONS)
 

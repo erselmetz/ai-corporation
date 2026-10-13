@@ -2029,7 +2029,7 @@ export const post100Tasks = [
     "title": "Scoped browser automation provider",
     "description": "Add bounded Playwright browser actions extending Task 90 read-only inspection only under explicit grants and exact site policy.",
     "category": "Phase F - Controlled Automation",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       90,
       140,
@@ -2046,12 +2046,17 @@ export const post100Tasks = [
       "No arbitrary browsing, downloads, local files, credentials, or unrestricted script execution."
     ],
     "decisions": [
-      "Evaluate Playwright first and Selenium only if separately justified."
+      "Use the already installed Playwright sync adapter. Keep exact HTTPS origin and operation policy constructor-supplied and empty by default; restrict actions to exact-role native button/link click or non-sensitive textbox fill. Every mutation uses the existing one-use high-risk owner approval, and every target is re-read against its digest before dispatch."
     ],
     "area": "P22",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-156-scoped-browser-automation",
+    "validation": [
+      "Focused scoped-browser, existing read-only inspection, capability authorization/approval/audit/grant, emergency-stop, and local-owner regressions: 46 passed.",
+      "Full Python suite: 1203 passed, 6 skipped; the two previously recorded unrelated failures remain (test_model_set_command and test_model_replacement_uses_existing_assignment_service). No live site or download was used."
+    ],
+    "limitations": [
+      "The adapter is an API/service foundation only; no route, UI, chat tool, or site policy is configured by default. Allowed page scripts execute for the owner-selected origin; HTTP requests outside that exact origin and all WebSockets are blocked. Same-origin non-GET/HEAD requests are blocked during page load/inspection and allowed only during approved action dispatch. Same-origin GET/HEAD requests and approved page handlers may still cause site-side effects whose completion remains unknown. The browser context has no stored cookies or credentials, does not access files, and does not retain screenshots. DNS-to-address pinning is not implemented, so site policy must name a trusted public HTTPS origin. Per-session action counts and approvals are process-local; no cross-process coordination exists."
+    ]
   },
   {
     "number": 157,
@@ -2594,7 +2599,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-155 are verified; Tasks 156-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-156 are verified; Tasks 157-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

@@ -126,6 +126,17 @@ from .browser_inspection import (
     BrowserInspectionUnavailable,
     ReadOnlyBrowserInspector,
 )
+from .scoped_browser_automation import (
+    BrowserActionPreview,
+    BrowserActionRequest,
+    BrowserActionStale,
+    BrowserActionUnavailable,
+    BrowserPolicyDenied,
+    BrowserSitePolicy,
+    BrowserTargetUnavailable,
+    ScopedBrowserAutomation,
+    ScopedBrowserError,
+)
 from .gemini_catalog import (
     GeminiAPIConfiguration,
     GeminiCatalogAuditEvent,
@@ -241,6 +252,15 @@ __all__ = [
     "BrowserInspectionResult",
     "BrowserInspectionUnavailable",
     "ReadOnlyBrowserInspector",
+    "BrowserActionPreview",
+    "BrowserActionRequest",
+    "BrowserActionStale",
+    "BrowserActionUnavailable",
+    "BrowserPolicyDenied",
+    "BrowserSitePolicy",
+    "BrowserTargetUnavailable",
+    "ScopedBrowserAutomation",
+    "ScopedBrowserError",
     "GeminiAPIConfiguration",
     "GeminiCatalogAuditEvent",
     "GeminiCatalogAuditStatus",
