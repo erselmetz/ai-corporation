@@ -22,11 +22,11 @@ function render() {
 test("shows all tasks in descending order and reports the next planned task", () => {
   const elements = render();
   const groups = elements["roadmap-groups"].children;
-  assert.equal(groups[0].id, "tasks-167-170");
+  assert.equal(groups[0].id, "tasks-174-175");
   const items = groups.flatMap(group => group.children[1].children);
-  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 170 }, (_, index) => 170 - index));
-  assert.match(elements["roadmap-summary"].textContent, /170 roadmap tasks.*130 completed.*40 planned/);
-  assert.match(elements["next-task"].textContent, /Next: Task 131/);
+  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 175 }, (_, index) => 175 - index));
+  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*131 completed.*44 planned/);
+  assert.match(elements["next-task"].textContent, /Next: Task 132/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -37,7 +37,7 @@ test("renders completion evidence separately from planned decision gates and exp
   const multiProvider = items.find(item => item.id === "task-112");
   const release = items.find(item => item.id === "task-129");
   const semanticMemory = items.find(item => item.id === "task-130");
-  const firstPlanned = items.find(item => item.id === "task-131");
+  const firstPlanned = items.find(item => item.id === "task-132");
   assert.equal(release.children[2].textContent, "Completed");
   assert.match(release.textContent, /task-129-command-center-release-acceptance/);
   assert.match(release.textContent, /206A36D5C94FD76B2696C01F95CD842C24E3A79FD05FEB7FDB45F3DA101DC091/);
@@ -46,7 +46,10 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.match(semanticMemory.textContent, /task-130-semantic-memory-rag-foundation/);
   assert.match(semanticMemory.textContent, /104 passed/);
   assert.equal(firstPlanned.children[2].textContent, "Planned");
-  assert.match(firstPlanned.textContent, /Task 131|Supported packaging/);
+  assert.match(firstPlanned.textContent, /Task 132|Guided first-run/);
+  const distribution = items.find(item => item.id === "task-131");
+  assert.equal(distribution.children[2].textContent, "Completed");
+  assert.match(distribution.textContent, /task-131-supported-packaging-distribution-strategy/);
   assert.equal(completed.children[2].textContent, "Completed");
   assert.match(completed.textContent, /Verified checkpoint: d1ca364/);
   assert.match(completed.textContent, /876 Python passed/);
@@ -99,4 +102,24 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.match(repositoryStudy.textContent, /empty GitHub repository allowlist/);
   assert.match(elements["roadmap-rules"].textContent, /Do not infer approval/);
   assert.match(elements["roadmap-rules"].textContent, /identical generated code is not guaranteed/);
+});
+
+test("publishes the remaining usability, visualization, settings, and multimodal scopes as planned", () => {
+  const planned = tasks.filter(task => task.number >= 171);
+  assert.deepEqual(planned.map(task => [task.number, task.status]), [
+    [171, "planned"], [172, "planned"], [173, "planned"], [174, "planned"], [175, "planned"],
+  ]);
+  const corporationMap = planned.find(task => task.number === 172);
+  assert.match(corporationMap.description, /interactive, evidence-backed 3D map/);
+  assert.match(corporationMap.acceptance.join(" "), /zoom\/orbit\/pan.*filters\/layers/i);
+  assert.match(corporationMap.acceptance.join(" "), /labeled 2D\/list fallback/);
+  assert.match(corporationMap.outOfScope.join(" "), /Do not invent nodes, relationships, activity/);
+  const memoryMap = planned.find(task => task.number === 173);
+  assert.match(memoryMap.acceptance.join(" "), /provenance.*retrieval matches/);
+  assert.match(memoryMap.outOfScope.join(" "), /Do not broaden Task 130/);
+  const multimodal = planned.find(task => task.number === 174);
+  assert.match(multimodal.acceptance.join(" "), /microphone, camera, screen-capture/);
+  assert.match(multimodal.outOfScope.join(" "), /Do not auto-enable/);
+  assert.match(planned.find(task => task.number === 171).acceptance.join(" "), /advanced provider\/model/);
+  assert.match(planned.find(task => task.number === 175).acceptance.join(" "), /keyboard-only use, screen-reader semantics/);
 });

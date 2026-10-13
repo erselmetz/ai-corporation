@@ -672,7 +672,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-130 are verified complete; Tasks 131-170 are planned expansion work. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-131 are verified complete; Tasks 132-175 are planned expansion work. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -1259,3 +1259,29 @@ Windows 11 x64 was acceptance-tested. The package remains unsigned with manual
 updates; the build-time Electron dependency audit reported 8 moderate advisories
 and those `node_modules` are not packaged. This evidence does not claim production
 completeness or unrestricted autonomous operation.
+
+## Supported packaging targets and distribution boundary (Task 131)
+
+The only installer target with clean-install evidence is Windows 11 x64 using
+the per-user NSIS installer. It is a local acceptance/development artifact, not
+a signed or publicly supported release. Windows 10, Windows ARM64, macOS,
+Linux, portable archives, and app-store packages are unverified and are not
+claimed as supported. The Python CLI and Task 126 launcher remain separate
+repository-based entry points.
+
+Reproducing the package requires a Windows x64 checkout, Python 3.14 x64 in the
+repository virtual environment, Node.js 22.12 or newer, network access to the
+pinned package registries, and locked project dependencies. The installed
+per-user app requests no elevation. Its current build is unsigned; no public
+signing identity, distribution channel, update feed, or automatic updater is
+configured. Updates are manual reinstalls from an owner-verified installer.
+Public distribution requires an owner-controlled signing and release process
+and verified artifact provenance.
+
+Task 129 verified uninstall/reinstall of the same local version while
+preserving `%LOCALAPPDATA%\ERSELMETZ AI`, including the current-user DPAPI
+owner verifier. Removing only `owner-credential.dpapi` repeats owner setup
+without removing application data. These checks do not establish downgrade,
+database rollback, cross-version migration, or recovery from a corrupt data
+directory. Back up application data before changing versions. The full
+installation and recovery guide is in `desktop/README.md`.

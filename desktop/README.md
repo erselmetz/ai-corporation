@@ -1,5 +1,42 @@
 # Windows desktop package
 
+## Supported target and distribution boundary
+
+| Target or mode | Current status |
+| --- | --- |
+| Windows 11 x64 per-user NSIS installer | Local acceptance-tested target only; not a signed or publicly supported release |
+| Windows 10, Windows ARM64, macOS, Linux, portable archives, and app stores | Unverified and not currently supported or claimed |
+| Repository-based Python CLI and Task 126 launcher | Separate development entry points; neither is managed by the Electron installer |
+
+Task 129's clean-install evidence applies only to Windows 11 x64 and the exact
+local artifact `desktop/release/task129/ERSELMETZ-AI-Setup-0.1.0-win-x64.exe`
+(SHA-256
+`206A36D5C94FD76B2696C01F95CD842C24E3A79FD05FEB7FDB45F3DA101DC091`). That
+ignored local artifact is not a public download or an update feed. The installer
+is unsigned; Windows may display an unknown-publisher warning. Do not treat an
+unsigned copy as a verified public release. Public distribution requires an
+owner-controlled code-signing and release process, with signature and artifact
+provenance verification established before advertising a supported release.
+
+The packaged installer is per-user, does not request elevation, creates Start
+Menu and Desktop shortcuts, and does not start the app after installation. The
+build requires a Windows x64 checkout, Python 3.14 x64 in the repository's
+`.venv`, Node.js 22.12 or later, network access to the pinned package
+registries, and the repository's locked Python and Node dependencies. The
+installed app uses Windows current-user DPAPI and loopback services; other OS
+targets have not been evaluated for those behaviors.
+
+There is no automatic updater, update endpoint, or configured public source.
+Updates are manual reinstalls from an installer the owner obtained through a
+trusted, independently verified source. Task 129 verified uninstall and
+reinstall of the same local version, with `%LOCALAPPDATA%\ERSELMETZ AI` and
+the DPAPI owner verifier preserved. This does not prove downgrade, database
+rollback, cross-version migration, or recovery from a corrupt data directory.
+To repeat owner setup, remove only
+`%LOCALAPPDATA%\ERSELMETZ AI\owner-credential.dpapi`; this leaves app data
+in place. Back up and remove remaining app data separately only when the owner
+intends a full reset.
+
 Task 127 adds a per-user Electron installer for Windows x64. It opens the
 existing FastAPI application on `http://127.0.0.1:8765`; the Next.js UI is a
 static export mounted at `/desktop/`. There is no production Next.js server,

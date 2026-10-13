@@ -1253,7 +1253,7 @@ export const post100Tasks = [
     "title": "Supported packaging and distribution strategy",
     "description": "Define supported distribution targets, prerequisites, trust, and upgrade boundaries beyond the currently verified Windows installer.",
     "category": "Phase A - Install and Onboarding",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       127,
       129
@@ -1266,18 +1266,22 @@ export const post100Tasks = [
       "Do not claim one-click installation or production readiness.",
       "Do not install or change packages in this planning task."
     ],
-    "decisions": [
-      "Choose additional release targets only after compatibility and maintenance evidence."
-    ],
+    "decisions": [],
     "area": "P17",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-131-supported-packaging-distribution-strategy",
+    "validation": [
+      "Documented target support, install modes, build prerequisites, update source, signing expectations, and recovery limits in desktop/README.md and the public Architecture page.",
+      "Task 129 artifact/hash and clean-install evidence remain the only verified installer target; no other platform is claimed.",
+      "Public docs site tests: 15 passed; update manifest/API tests: 6 passed. Node syntax, manifest JSON parsing, and git diff --check passed."
+    ],
+    "limitations": [
+      "Only Windows 11 x64 has local acceptance evidence. The installer is unsigned and not publicly distributed; no signed-release process, public update source, automatic updater, cross-version migration, downgrade, or database rollback is verified."
+    ]
   },
   {
     "number": 132,
     "title": "Guided first-run setup and capability detection",
-    "description": "Guide a new owner through minimum setup while detecting supported providers, models, permissions, and optional capabilities truthfully.",
+    "description": "Guide a new owner through a clear first-run path, explaining how to open and use ERSELMETZ AI, complete minimum setup, and truthfully detect supported providers, models, permissions, and optional capabilities.",
     "category": "Phase A - Install and Onboarding",
     "status": "planned",
     "dependsOn": [
@@ -1290,7 +1294,8 @@ export const post100Tasks = [
     ],
     "acceptance": [
       "Show install health, detected configuration, missing prerequisites, and UNKNOWN states from bounded supported checks.",
-      "Provide the shortest supported path from opening the app to usable chat without routine terminal commands."
+      "Provide the shortest supported path from opening the app to usable chat without routine terminal commands.",
+      "Separate beginner-facing setup guidance from advanced operator configuration and explain common chat and organization workflows."
     ],
     "outOfScope": [
       "Do not download models, connect providers, or change assignments without explicit owner action.",
@@ -1305,7 +1310,7 @@ export const post100Tasks = [
   {
     "number": 133,
     "title": "Provider and model setup guidance",
-    "description": "Explain supported provider/model setup and readiness using existing adapters and owner-managed credentials.",
+    "description": "Explain supported provider/model setup and readiness through clear beginner guidance and a distinct advanced operator settings area using existing adapters and owner-managed credentials.",
     "category": "Phase A - Install and Onboarding",
     "status": "planned",
     "dependsOn": [
@@ -1316,7 +1321,8 @@ export const post100Tasks = [
     ],
     "acceptance": [
       "Distinguish registration, service availability, installed models, assignment, software capacity, and measured hardware evidence.",
-      "Give sanitized guidance without requesting secrets in ordinary chat."
+      "Give sanitized guidance without requesting secrets in ordinary chat.",
+      "Make routine chat and basic preferences easy to find while grouping provider, model, connection, capability, security, resource, and diagnostic controls for operators."
     ],
     "outOfScope": [
       "Do not add unsupported providers or equate availability with execution feasibility."
@@ -1516,14 +1522,14 @@ export const post100Tasks = [
   {
     "number": 141,
     "title": "Capability grants and enable/disable policy",
-    "description": "Add explicit per-capability enablement and revocable session-scoped grants under Task 140.",
+    "description": "Add explicit per-capability enablement and revocable session-scoped grants, with owner-configured persistent policy only where the capability permits it, under Task 140.",
     "category": "Phase C - Capability Governance",
     "status": "planned",
     "dependsOn": [
       140
     ],
     "acceptance": [
-      "Show grantor, capability scope, session/expiry, and revocation status.",
+      "Show grantor, capability scope, session or explicitly configured persistent policy, expiry, and revocation status.",
       "Default to disabled unless the owner explicitly configures a safe policy."
     ],
     "outOfScope": [
@@ -1990,7 +1996,7 @@ export const post100Tasks = [
   {
     "number": 159,
     "title": "Shared visual design system",
-    "description": "Unify Python Web UI and Electron surfaces with reusable accessible visual tokens and interaction patterns.",
+    "description": "Unify Python Web UI and Electron into a coherent application shell with shared accessible visual tokens, navigation, page layouts, forms, and interaction patterns.",
     "category": "Phase G - Command Center UI and Visualization",
     "status": "planned",
     "dependsOn": [
@@ -1999,8 +2005,8 @@ export const post100Tasks = [
       129
     ],
     "acceptance": [
-      "Apply shared type, color, spacing, state, form, and navigation patterns to representative pages.",
-      "Preserve service boundaries, keyboard access, responsive layout, and reduced motion."
+      "Apply shared typography, color, spacing, navigation, page structure, forms, buttons, feedback, loading, empty, denied, and error states consistently across primary screens.",
+      "Preserve service boundaries, keyboard access, responsive layout, and reduced motion; replace legacy pages that visibly diverge from the shared system."
     ],
     "outOfScope": [
       "No framework migration or decorative activity claims."
@@ -2014,7 +2020,7 @@ export const post100Tasks = [
   {
     "number": 160,
     "title": "Operational command-center dashboard",
-    "description": "Present authorized current chat, Task, Agent, Provider, resource, and approval state with timestamps and stale/unknown indicators.",
+    "description": "Present authorized current chat, active Projects and Tasks, Agent/Employee assignments, Providers, resources, approvals, system status, and recent memory/knowledge activity with timestamps and stale/unknown indicators.",
     "category": "Phase G - Command Center UI and Visualization",
     "status": "planned",
     "dependsOn": [
@@ -2025,8 +2031,8 @@ export const post100Tasks = [
       159
     ],
     "acceptance": [
-      "Use protected APIs and show source/freshness.",
-      "Keep permissions distinct and provide empty, offline, denied, and error states."
+      "Use protected APIs and show source/freshness for organization, project/task execution, provider/model, system, memory/knowledge, and approval summaries.",
+      "Keep permissions distinct and provide empty, offline, denied, stale, and error states."
     ],
     "outOfScope": [
       "Do not invent activity or call Providers from presentation code."
@@ -2118,7 +2124,7 @@ export const post100Tasks = [
   {
     "number": 164,
     "title": "Response modes and owner preferences",
-    "description": "Allow owners to select bounded response styles and privacy-conscious preferences without changing capability permissions.",
+    "description": "Allow owners to select bounded response styles, locale, and privacy-conscious preferences, including optional voice preferences, without changing capability permissions.",
     "category": "Phase H - ERSELMETZ AI Persona",
     "status": "planned",
     "dependsOn": [
@@ -2312,12 +2318,169 @@ export const post100Tasks = [
     "checkpoint": null,
     "validation": [],
     "limitations": []
+  },
+  {
+    "number": 171,
+    "title": "Unified settings and operator controls",
+    "description": "Provide one coherent settings experience that keeps everyday preferences simple and advanced system controls discoverable and safely separated.",
+    "category": "Phase J - Settings and Operator Controls",
+    "status": "planned",
+    "dependsOn": [
+      132,
+      133,
+      140,
+      159,
+      160
+    ],
+    "acceptance": [
+      "Group owner preferences separately from advanced provider/model, connection, capability, security, resource, and diagnostic settings.",
+      "Use existing authorized APIs, preserve permission checks, and show current values, source, and actionable validation/errors.",
+      "Keep routine chat and first-run readiness accessible without requiring users to understand operator controls."
+    ],
+    "outOfScope": [
+      "Do not create new runtime configuration capabilities or weaken backend authorization.",
+      "Do not expose credentials in ordinary settings summaries or logs."
+    ],
+    "decisions": [],
+    "area": "P26",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 172,
+    "title": "Interactive 3D corporation and execution map",
+    "description": "Extend the reviewed visualization foundation into an interactive, evidence-backed 3D map of the organization and its live work relationships.",
+    "category": "Phase K - Interactive Maps and Visualization",
+    "status": "planned",
+    "dependsOn": [
+      114,
+      115,
+      116,
+      159,
+      160,
+      162
+    ],
+    "acceptance": [
+      "Show authorized Core, Agent/Employee, department/position, Project, Task/execution-flow, Provider/model, capability, resource, and memory/knowledge relationships only when backed by current source records.",
+      "Support selecting nodes for details, zoom/orbit/pan, and filters/layers that make large maps understandable.",
+      "Provide a labeled 2D/list fallback with equivalent access to key information, keyboard operation, reduced motion, and measured performance limits."
+    ],
+    "outOfScope": [
+      "Do not invent nodes, relationships, activity, completion, or causal links.",
+      "Do not choose or add a rendering dependency before Task 162 review and do not imply the map itself grants permissions."
+    ],
+    "decisions": [
+      "Select the visualization architecture and measurable device/performance thresholds after Task 162 evidence."
+    ],
+    "area": "P27",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 173,
+    "title": "Memory and knowledge relationship explorer",
+    "description": "Make retained memory and RAG activity understandable through authorized source, scope, provenance, retrieval, and status views.",
+    "category": "Phase K - Interactive Maps and Visualization",
+    "status": "planned",
+    "dependsOn": [
+      130,
+      135,
+      136,
+      137,
+      138,
+      139,
+      161
+    ],
+    "acceptance": [
+      "Show retained knowledge sources, Project/owner scope, provenance, freshness, retrieval matches, and evidence-backed relationships with clear inferred-versus-recorded labels.",
+      "Support useful cluster/relationship exploration and direct inspection without exposing content outside the owner's current permissions.",
+      "Provide searchable labeled list/2D alternatives, accessible selection, and clear empty, stale, unavailable, and denied states."
+    ],
+    "outOfScope": [
+      "Do not broaden Task 130 indexing, retention, or automatic chat-injection behavior.",
+      "Do not reveal private memory through aggregate labels, graph edges, or search suggestions."
+    ],
+    "decisions": [],
+    "area": "P27",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 174,
+    "title": "Unified multimodal capability controls and indicators",
+    "description": "Integrate governed voice, vision, screen, camera, and automation status into a clear owner-facing control and activity surface.",
+    "category": "Phase L - Multimodal Interface and Usability",
+    "status": "planned",
+    "dependsOn": [
+      144,
+      145,
+      147,
+      149,
+      150,
+      151,
+      153,
+      155,
+      156,
+      157,
+      158,
+      159,
+      160
+    ],
+    "acceptance": [
+      "Show supported/unavailable capability state, permission scope/expiry, and truthful active microphone, camera, screen-capture, speech-playback, and automation indicators.",
+      "Provide explicit owner controls to start, stop, revoke, or inspect supported operations and clearly distinguish local processing from online transfer.",
+      "Keep denied, unsupported, failed, uncertain-stop, and inactive states distinct and accessible."
+    ],
+    "outOfScope": [
+      "Do not auto-enable, continuously capture, or silently transfer media or screen content.",
+      "Do not claim a remote operation stopped without provider confirmation."
+    ],
+    "decisions": [],
+    "area": "P28",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
+  },
+  {
+    "number": 175,
+    "title": "End-user usability and accessibility evaluation",
+    "description": "Evaluate the finished user journeys with evidence from beginner setup, everyday chat, operator controls, and organization/knowledge views.",
+    "category": "Phase L - Multimodal Interface and Usability",
+    "status": "planned",
+    "dependsOn": [
+      132,
+      133,
+      134,
+      159,
+      160,
+      171,
+      172,
+      173,
+      174
+    ],
+    "acceptance": [
+      "Test first-run readiness, basic chat, provider/model configuration, permission review, troubleshooting, and navigation with representative new and experienced owners.",
+      "Evaluate keyboard-only use, screen-reader semantics, responsive layouts, contrast, reduced motion, and understandable loading/empty/error/denied states.",
+      "Record reproducible findings, severity, limitations, and verified follow-up fixes; do not claim usability or accessibility conformance without evidence."
+    ],
+    "outOfScope": [
+      "Do not treat automated checks alone as proof of usability or accessibility conformance.",
+      "Do not change runtime behavior or grant capabilities as part of the evaluation."
+    ],
+    "decisions": [],
+    "area": "P28",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": []
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; Tasks 131-170 are planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; Task 131 is verified and Tasks 132-175 are planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
@@ -2336,7 +2499,10 @@ const futureRoadmapGroups = [
   { name: "Phase F - Controlled Automation", range: "156-158", tasks: post100Tasks.filter(task => task.category === "Phase F - Controlled Automation").map(({ title, description }) => [title, description]) },
   { name: "Phase G - Command Center UI and Visualization", range: "159-162", tasks: post100Tasks.filter(task => task.category === "Phase G - Command Center UI and Visualization").map(({ title, description }) => [title, description]) },
   { name: "Phase H - ERSELMETZ AI Persona", range: "163-166", tasks: post100Tasks.filter(task => task.category === "Phase H - ERSELMETZ AI Persona").map(({ title, description }) => [title, description]) },
-  { name: "Phase I - Productization and Stable Release", range: "167-170", tasks: post100Tasks.filter(task => task.category === "Phase I - Productization and Stable Release").map(({ title, description }) => [title, description]) }
+  { name: "Phase I - Productization and Stable Release", range: "167-170", tasks: post100Tasks.filter(task => task.category === "Phase I - Productization and Stable Release").map(({ title, description }) => [title, description]) },
+  { name: "Phase J - Settings and Operator Controls", range: "171-171", tasks: post100Tasks.filter(task => task.category === "Phase J - Settings and Operator Controls").map(({ title, description }) => [title, description]) },
+  { name: "Phase K - Interactive Maps and Visualization", range: "172-173", tasks: post100Tasks.filter(task => task.category === "Phase K - Interactive Maps and Visualization").map(({ title, description }) => [title, description]) },
+  { name: "Phase L - Multimodal Interface and Usability", range: "174-175", tasks: post100Tasks.filter(task => task.category === "Phase L - Multimodal Interface and Usability").map(({ title, description }) => [title, description]) }
 ];
 
 export const taskGroups = [...foundationTaskGroups, {

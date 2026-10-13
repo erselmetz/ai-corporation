@@ -3,6 +3,12 @@
     {
       "date": "2026-10-13",
       "type": "development",
+      "title": "Supported packaging and distribution strategy",
+      "summary": "Completed Task 131 as a documentation-only checkpoint. The only installer target with clean-install evidence is the local Windows 11 x64 per-user NSIS package; Windows 10, ARM64, macOS, Linux, portable, and app-store targets remain unverified and unsupported claims. Documented build prerequisites, unsigned status and signing expectations, absence of a public update source/automatic updater, manual trusted reinstall, and precise same-version uninstall/reinstall recovery limits. No runtime, package, or installer artifact changed. Verification: 15 public docs tests and 6 update API/manifest tests passed; Node syntax, JSON parsing, and git diff --check passed. Public release readiness and cross-version migration/downgrade/database rollback remain unverified. Checkpoint: task-131-supported-packaging-distribution-strategy."
+    },
+    {
+      "date": "2026-10-13",
+      "type": "development",
       "title": "Optional vector memory and RAG foundation",
       "summary": "Completed Task 130: explicit local semantic indexing and scoped search over owner-selected retained conversation, Project, and Corporation knowledge. Existing lexical retrieval remains unchanged; returned chunks are rechecked for current scope, reader authorization, revision and expiry, with provenance and bounded untrusted RAG context. No automatic indexing, chat/planning injection, Provider generation or documentation-file indexing. Sentence Transformers and Chroma are optional and require an explicitly configured local model; downloads are disabled. Derived vectors are unencrypted at rest and the Task 53 Documentation Portal remains file-based/read-only. Validation: 104 focused affected Python regressions, 12 deterministic semantic tests, 12 memory UI tests; full Python suite 1107 passed, 3 skipped, with the same two recorded model-assignment failures. Optional adapters were stubbed; no live provider/model use. Checkpoint: task-130-semantic-memory-rag-foundation."
     },
