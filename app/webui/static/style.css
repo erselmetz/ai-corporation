@@ -1,8 +1,9 @@
+@import url("/ui/static/design-tokens.css");
+
 :root {
-  color-scheme: light;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #17212b;
-  background: #f2f5f7;
+  font-family: var(--ui-font-body);
+  color: var(--ui-text);
+  background: var(--ui-bg);
 }
 
 * {
@@ -760,19 +761,7 @@ button:disabled {
 /* Shared ERSELMETZ desktop visual system. Keep every Python-served workspace
    on the same dark, low-glare palette as the Electron command center. */
 :root {
-  color-scheme: dark;
-  --ui-bg: #080c13;
-  --ui-panel: #0e1520;
-  --ui-panel-raised: #121d2b;
-  --ui-line: #223245;
-  --ui-line-soft: rgba(130, 157, 184, 0.15);
-  --ui-text: #eaf1fa;
-  --ui-muted: #91a0b2;
-  --ui-dim: #647488;
-  --ui-cyan: #68d8e5;
-  --ui-violet: #b39bff;
-  --ui-amber: #ffc976;
-  font-family: "Segoe UI", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--ui-font-body);
   color: var(--ui-text);
   background: var(--ui-bg);
 }
@@ -919,10 +908,10 @@ button,
 .employee-select,
 .record-select {
   min-height: 2.5rem;
-  border: 1px solid #33485e;
-  border-radius: 0.5rem;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius-control);
   color: var(--ui-text);
-  background: #111c29;
+  background: var(--ui-panel-raised);
   font: inherit;
   font-size: 0.84rem;
   transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
@@ -950,8 +939,8 @@ select:focus-visible {
 input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
 textarea,
 select {
-  border: 1px solid #33485e !important;
-  border-radius: 0.5rem !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-radius-control) !important;
   color: var(--ui-text) !important;
   background: #0a111b !important;
   accent-color: var(--ui-cyan);

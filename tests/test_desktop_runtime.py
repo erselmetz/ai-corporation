@@ -82,7 +82,23 @@ def test_built_next_export_assets_are_served_from_the_local_api_origin():
         assert local_assets
         assert all(asset.startswith("/desktop/_next/static/") for asset in local_assets)
         for asset in local_assets:
-            assert client.get(asset).status_code == 200
+            response = client.get(asset)
+            assert response.status_code == 200
+            if asset.endswith(".css"):
+                assert "--ui-bg:#080c13" in response.text
+                assert "rail-group-label" in response.text
+                assert "prefers-reduced-motion" in response.text
+        assert "PRIMARY" in response.text or any(
+            asset.endswith(".js") and "PRIMARY" in client.get(asset).text
+            for asset in local_assets
+        )
+
+
+def test_electron_design_tokens_are_generated_from_python_canonical_source():
+    root = Path(__file__).resolve().parents[1]
+    canonical = (root / "app" / "webui" / "static" / "design-tokens.css").read_text(encoding="utf-8")
+    generated = (root / "desktop-ui" / "src" / "app" / "design-tokens.css").read_text(encoding="utf-8")
+    assert generated == canonical
 
 
 def test_desktop_owner_setup_creates_only_through_existing_credential_api():

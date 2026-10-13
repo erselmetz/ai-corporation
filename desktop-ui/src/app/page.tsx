@@ -157,12 +157,32 @@ export default function Home() {
     <aside className="rail" aria-label="Main navigation">
       <a className="brand" href="/desktop/"><span className="brand-mark">E</span><span>ERSELMETZ<span className="muted"> AI</span></span></a>
       <p className="rail-label">COMMAND CENTER</p>
-      <a className="rail-link active" href="/desktop/">Home</a>
-      <a className="rail-link" href="/ui/chat">Chat</a>
-      <a className="rail-link" href="/ui/projects">Projects</a>
-      <a className="rail-link" href="/ui/employees">AI team</a>
-      <a className="rail-link" href="/ui/providers">Providers &amp; models</a>
-      <a className="rail-link" href="/ui/tasks">Tasks</a>
+      <nav className="rail-navigation" aria-label="Main navigation">
+        <div className="rail-group"><span className="rail-group-label">PRIMARY</span>
+          <a className="rail-link active" aria-current="page" href="/desktop/">Home</a>
+          <a className="rail-link" href="/ui/chat">Chat</a>
+          <a className="rail-link" href="/ui/projects">Projects</a>
+        </div>
+        <div className="rail-group"><span className="rail-group-label">AI</span>
+          <a className="rail-link" href="/ui/employees">Employees</a>
+          <a className="rail-link" href="/ui/positions">Positions</a>
+          <a className="rail-link" href="/ui/structure">Organization map</a>
+          <a className="rail-link" href="/ui/providers">Providers &amp; models</a>
+          <a className="rail-link" href="/ui/memory">Memory</a>
+        </div>
+        <div className="rail-group"><span className="rail-group-label">OPERATIONS</span>
+          <a className="rail-link" href="/ui/tasks">Tasks</a>
+          <a className="rail-link" href="/ui/workflows">Workflows</a>
+          <a className="rail-link" href="/ui/workflow-map">Workflow map</a>
+          <a className="rail-link" href="/ui/activity">Activity</a>
+        </div>
+        <div className="rail-group"><span className="rail-group-label">SYSTEM</span>
+          <a className="rail-link" href="/ui/inventory">Software inventory</a>
+          <a className="rail-link" href="/ui/documentation">Documentation</a>
+          <a className="rail-link" href="/ui/updates">Updates</a>
+          <a className="rail-link" href="/ui/login">Owner sign-in</a>
+        </div>
+      </nav>
       <div className="rail-footer"><span className="pulse" /> LOCAL RUNTIME<br /><small>Loopback only · owner controlled</small></div>
     </aside>
     <section className="main-panel">

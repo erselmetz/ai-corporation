@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-158 are verified complete; Task 134 is deferred and incomplete; Tasks 159-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-159 are verified complete; Task 134 is deferred and incomplete; Tasks 160-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -1041,7 +1041,7 @@ The authenticated coordinator chat can attach an owner-uploaded or explicitly ca
 
 Images remain in the Task 150 process-memory store until explicit removal, close, restart, or lazy 15-minute expiry. They are unselected by default, and are sent only after per-turn owner consent to the configured loopback Ollama provider or explicitly connected Gemini provider; Gemini also requires the existing per-turn cloud consent. Selected images are removed after the provider attempt. Both adapters bound request/response data, use timeouts, disable redirects, and do not retry. An endpoint accepting image transport does not prove the assigned model has vision capability; that model may reject the request.
 
-Optional OCR runs only through the explicitly configured local Task 154 Tesseract executable and language data. OCR output is bounded, provenance-bound, marked untrusted, and appears only in the current provider prompt; status metadata is returned to the owner. OCR does not create instructions or actions. Tests use deterministic media, provider, and OCR fakes: no live camera, Ollama/Gemini model call, or Tesseract accuracy is claimed. Unselected attachments may remain in process memory for up to the 15-minute TTL; provider-side retention after the explicitly consented request is outside this app's control. Task 134 remains deferred and incomplete; Task 158 is complete and Task 159 is next.
+Optional OCR runs only through the explicitly configured local Task 154 Tesseract executable and language data. OCR output is bounded, provenance-bound, marked untrusted, and appears only in the current provider prompt; status metadata is returned to the owner. OCR does not create instructions or actions. Tests use deterministic media, provider, and OCR fakes: no live camera, Ollama/Gemini model call, or Tesseract accuracy is claimed. Unselected attachments may remain in process memory for up to the 15-minute TTL; provider-side retention after the explicitly consented request is outside this app's control. Task 134 remains deferred and incomplete; Task 159 is complete and Task 160 is next.
 
 ## Scoped browser automation (Task 156)
 

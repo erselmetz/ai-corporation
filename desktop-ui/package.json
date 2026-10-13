@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": { "node": ">=22.12.0" },
-  "scripts": { "build": "next build" },
+  "scripts": { "sync:design-tokens": "node scripts/sync-design-tokens.mjs", "build": "npm run sync:design-tokens && next build" },
   "dependencies": {
     "next": "16.4.0",
     "react": "19.3.0",

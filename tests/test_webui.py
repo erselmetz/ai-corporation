@@ -15,6 +15,7 @@ def test_dashboard_shell_and_assets_are_served_without_runtime_execution():
     with TestClient(application) as client:
         shell = client.get("/ui")
         stylesheet = client.get("/ui/static/style.css")
+        tokens = client.get("/ui/static/design-tokens.css")
         dashboard_script = client.get("/ui/static/dashboard.mjs")
         missing_asset = client.get("/ui/static/missing.css")
         protected_responses = [
@@ -54,6 +55,11 @@ def test_dashboard_shell_and_assets_are_served_without_runtime_execution():
     assert stylesheet.status_code == 200
     assert stylesheet.headers["content-type"].startswith("text/css")
     assert ".dashboard-grid" in stylesheet.text
+    assert tokens.status_code == 200
+    assert "--ui-bg: #080c13" in tokens.text
+    assert "prefers-reduced-motion" in tokens.text
+    assert "button:focus-visible" in tokens.text
+    assert "@import url(\"/ui/static/design-tokens.css\")" in stylesheet.text
     assert dashboard_script.status_code == 200
     assert dashboard_script.headers["content-type"].startswith("text/javascript")
     for endpoint in (

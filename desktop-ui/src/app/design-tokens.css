@@ -1,0 +1,112 @@
+:root {
+  color-scheme: dark;
+  --ui-bg: #080c13;
+  --ui-panel: #0e1520;
+  --ui-panel-raised: #121d2b;
+  --ui-line: #223245;
+  --ui-line-soft: rgba(130, 157, 184, 0.15);
+  --ui-text: #eaf1fa;
+  --ui-muted: #91a0b2;
+  --ui-dim: #647488;
+  --ui-cyan: #68d8e5;
+  --ui-violet: #b39bff;
+  --ui-amber: #ffc976;
+  --ui-danger: #ff9696;
+  --ui-success: #8fe0bd;
+  --ui-nav-width: 15rem;
+  --ui-nav-width-compact: 12.8rem;
+  --ui-radius-card: 0.75rem;
+  --ui-radius-control: 0.5rem;
+  --ui-space-1: 0.35rem;
+  --ui-space-2: 0.55rem;
+  --ui-space-3: 0.8rem;
+  --ui-space-4: 1rem;
+  --ui-font-body: "Segoe UI", Inter, ui-sans-serif, system-ui, sans-serif;
+  --ui-font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+
+  /* Legacy aliases for existing Electron screen rules. */
+  --bg: var(--ui-bg);
+  --panel: var(--ui-panel);
+  --panel-raised: var(--ui-panel-raised);
+  --line: var(--ui-line);
+  --line-soft: var(--ui-line-soft);
+  --text: var(--ui-text);
+  --muted: var(--ui-muted);
+  --dim: var(--ui-dim);
+  --cyan: var(--ui-cyan);
+  --violet: var(--ui-violet);
+  --amber: var(--ui-amber);
+  font-family: var(--ui-font-body);
+  color: var(--ui-text);
+  background: var(--ui-bg);
+}
+
+:where(button, input, textarea, select) {
+  font: inherit;
+}
+
+button {
+  min-height: 2.5rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius-control);
+  color: var(--ui-text);
+  background: var(--ui-panel-raised);
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: #52738d;
+  background: #172638;
+}
+
+button:disabled {
+  color: var(--ui-dim);
+  cursor: wait;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--ui-cyan);
+  outline-offset: 3px;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+textarea,
+select {
+  min-height: 2.5rem;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius-control);
+  color: var(--ui-text);
+  background: #0a111b;
+  accent-color: var(--ui-cyan);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--ui-dim);
+}
+
+.section-state[role="status"],
+[role="alert"] {
+  overflow-wrap: anywhere;
+}
+
+.error-state,
+[data-state="error"] { color: var(--ui-danger); }
+.success-state,
+[data-state="success"] { color: var(--ui-success); }
+.muted,
+.empty-state,
+[data-state="unknown"] { color: var(--ui-muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

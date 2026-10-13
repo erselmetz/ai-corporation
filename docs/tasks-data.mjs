@@ -2135,7 +2135,7 @@ export const post100Tasks = [
     "title": "Shared visual design system",
     "description": "Unify Python Web UI and Electron into a coherent application shell with shared accessible visual tokens, navigation, page layouts, forms, and interaction patterns.",
     "category": "Phase G - Command Center UI and Visualization",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       47,
       127,
@@ -2148,11 +2148,20 @@ export const post100Tasks = [
     "outOfScope": [
       "No framework migration or decorative activity claims."
     ],
-    "decisions": [],
+    "decisions": [
+      "Use the Python-served token sheet as canonical; synchronize legacy Electron CSS aliases at static-export build time because Next.js cannot resolve an absolute runtime CSS URL as an import."
+    ],
     "area": "P23",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-159-shared-visual-design-system",
+    "validation": [
+      "Next.js production static build and TypeScript check passed after canonical token synchronization.",
+      "Focused Web UI and desktop runtime tests: 20 passed, including token endpoint, generated-token parity, static export assets, and grouped navigation.",
+      "Dashboard, visualization, and camera browser-module regressions: 20 passed; public documentation tests: 13 passed. Full Python suite excluding the baseline-invalid tests/test_automation_traces.py: 1214 passed, 5 skipped, with the two previously recorded unrelated model-assignment failures. The unfiltered full-suite run stops at collection on that file?s existing `rom __future__` syntax error. Changed Python tests compile; git diff --check passed."
+    ],
+    "limitations": [
+      "The shared visual system covers the primary Web UI shell and Electron home. Older deep pages retain specialized layout rules where replacing them would expand beyond this checkpoint; they consume the same global tokens and control/focus states.",
+      "The packaged installer was not rebuilt; an installed copy requires a new installer build to include these source UI changes."
+    ]
   },
   {
     "number": 160,
@@ -2617,7 +2626,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-158 are verified; Tasks 159-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-159 are verified; Tasks 160-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
