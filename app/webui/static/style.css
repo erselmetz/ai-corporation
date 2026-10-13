@@ -899,6 +899,16 @@ h3 { font-size: 0.9rem; }
 .snapshot-freshness.stale { color: var(--ui-amber); }
 .dashboard-card-link { display: inline-block; margin: 0.5rem 0; color: var(--ui-cyan); }
 .data-count { color: var(--ui-text); font-weight: 650; }
+.suggestion-panel { margin: 1rem 0; }
+.suggestion-panel .dashboard-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.suggestion-settings { display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem; padding: 0.85rem 0; border-block: 1px solid var(--ui-line); }
+.suggestion-settings label { color: var(--ui-muted); font-size: 0.82rem; }
+.suggestion-settings input[type="time"] { min-height: 2.5rem; }
+.suggestion-settings input[type="checkbox"] { accent-color: var(--ui-cyan); }
+.suggestion-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: 0.75rem; padding: 0; list-style: none; }
+.suggestion-list > li { padding: 0.85rem; border: 1px solid var(--ui-line); border-radius: var(--ui-radius-card); background: var(--ui-panel-raised); }
+.suggestion-list h3 { margin: 0 0 0.4rem; }
+.suggestion-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem; }
 
 .auth-boundary {
   border: 1px solid rgba(104, 216, 229, 0.16);

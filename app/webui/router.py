@@ -82,6 +82,24 @@ def corporation_dashboard() -> HTMLResponse:
                 <p class="setup-boundary">Provider registration and model assignments show configuration only. Provider availability is not checked here; no model is downloaded or reassigned.</p>
               </section>
               {_emergency_controls()}
+              <section class="dashboard-card suggestion-panel" aria-labelledby="suggestions-title">
+                <div class="dashboard-heading">
+                  <div><p class="eyebrow">OWNER CONTROLLED</p><h2 id="suggestions-title">Suggestions</h2>
+                    <p class="muted">Read-only suggestions from current local workflow records. They never run actions.</p></div>
+                  <button id="suggestions-refresh" type="button">Refresh suggestions</button>
+                </div>
+                <form id="suggestions-settings" class="suggestion-settings">
+                  <label><input id="suggestions-enabled" type="checkbox"> Enable suggestions</label>
+                  <label for="suggestions-quiet-start">Quiet period starts</label>
+                  <input id="suggestions-quiet-start" type="time">
+                  <label for="suggestions-quiet-end">Quiet period ends</label>
+                  <input id="suggestions-quiet-end" type="time">
+                  <button type="submit">Save suggestion settings</button>
+                </form>
+                <p class="muted">Quiet periods use this browser’s local time. Data is read only when this page loads or you refresh.</p>
+                <p id="suggestions-status" role="status" aria-live="polite">Loading suggestion settings…</p>
+                <ul id="suggestions-list" class="suggestion-list"></ul>
+              </section>
               <div class="dashboard-grid">
                 <section class="dashboard-card" id="status-panel" aria-labelledby="status-title">
                   <h2 id="status-title">Workspace identity</h2>
@@ -136,6 +154,7 @@ def corporation_dashboard() -> HTMLResponse:
               </div>
             </main>
           </div>
+          <script type="module" src="/ui/static/suggestions.mjs"></script>
         </body>
         </html>
         """

@@ -2387,7 +2387,7 @@ export const post100Tasks = [
     "title": "Opt-in proactive suggestions",
     "description": "Offer bounded recommendations from authorized current signals while requiring explicit owner action for protected operations.",
     "category": "Phase H - ERSELMETZ AI Persona",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       140,
       142,
@@ -2404,12 +2404,23 @@ export const post100Tasks = [
       "No background execution, unbounded polling, or self-granted authority."
     ],
     "decisions": [
-      "Set allowed sources and frequency during implementation review."
+      "Suggestions are disabled by default and use only existing process-local workflow records readable under workflow:read. Fixed rules surface blocked, failed, interrupted, review-pending, and active uncertain outcomes; raw prompts, outputs, titles, and provider error details are omitted.",
+      "Evaluation occurs only when the dashboard loads or the owner explicitly refreshes. No background timer, notification, provider/model call, task query, or task/action execution is used.",
+      "A recurring quiet period is a local-browser-time HH:MM interval. Dismissal stores only a bounded suggestion identifier in the owner-scoped local SQLite settings; stale dismissal identifiers are pruned against current results."
     ],
     "area": "P24",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-166-opt-in-proactive-suggestions",
+    "validation": [
+      "Focused suggestion, owner preference, local access, workflow, capability authorization, and Web UI regressions: 63 passed.",
+      "Suggestion, dashboard, and workflow browser-module tests: 20 passed; complete browser-module suite: 194 passed.",
+      "Full Python suite excluding the pre-existing syntax-invalid tests/test_automation_traces.py: 1,236 passed, 3 skipped, and 2 known unrelated baseline failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service).",
+      "Python application compilation, JavaScript syntax checks, git diff --check, and public docs/update-manifest tests are recorded after the roadmap update."
+    ],
+    "limitations": [
+      "Workflow records are process-local. Suggestions describe the state observed during the page request; event timestamps expose the last recorded change when available, but no cross-process synchronization or history is added.",
+      "Suggestions are deterministic review prompts, not generated analysis or proof that the recommended next step is correct. The owner must inspect source records and decide what to do.",
+      "Owner settings and dismissals are stored unencrypted in the local SQLite database until reset or database removal. Quiet periods use the browser's local time and are not notifications or background suppression."
+    ]
   },
   {
     "number": 167,
@@ -2689,7 +2700,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-165 are verified; Tasks 166-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-166 are verified; Tasks 167-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

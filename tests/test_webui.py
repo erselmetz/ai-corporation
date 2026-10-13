@@ -17,6 +17,7 @@ def test_dashboard_shell_and_assets_are_served_without_runtime_execution():
         stylesheet = client.get("/ui/static/style.css")
         tokens = client.get("/ui/static/design-tokens.css")
         dashboard_script = client.get("/ui/static/dashboard.mjs")
+        suggestions_script = client.get("/ui/static/suggestions.mjs")
         missing_asset = client.get("/ui/static/missing.css")
         protected_responses = [
             client.get(path)
@@ -39,6 +40,8 @@ def test_dashboard_shell_and_assets_are_served_without_runtime_execution():
     assert "Welcome to ERSELMETZ AI" in shell.text
     assert "Start Chat" in shell.text
     assert "Refresh status" in shell.text
+    assert "Suggestions" in shell.text
+    assert 'src="/ui/static/suggestions.mjs"' in shell.text
     assert "aria-label=\"Main navigation\"" in shell.text
     assert "PARTIALLY CONFIGURED" not in shell.text
     assert "Provider availability is not checked here" in shell.text
@@ -67,6 +70,8 @@ def test_dashboard_shell_and_assets_are_served_without_runtime_execution():
     assert "@import url(\"/ui/static/design-tokens.css\")" in stylesheet.text
     assert dashboard_script.status_code == 200
     assert dashboard_script.headers["content-type"].startswith("text/javascript")
+    assert suggestions_script.status_code == 200
+    assert suggestions_script.headers["content-type"].startswith("text/javascript")
     for endpoint in (
         "/api/status",
         "/api/employees",

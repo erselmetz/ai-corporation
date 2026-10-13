@@ -25,13 +25,15 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-174-175");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 175 }, (_, index) => 175 - index));
-  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*164 completed.*1 deferred and incomplete.*10 planned/);
-  assert.match(elements["next-task"].textContent, /Next: Task 166/);
+  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*165 completed.*1 deferred and incomplete.*9 planned/);
+  assert.match(elements["next-task"].textContent, /Next: Task 167/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
-  assert.equal(tasks.find(task => task.number === 165).status, "completed");
-  assert.equal(tasks.find(task => task.number === 165).checkpoint, "task-165-coordinator-presence-orchestration");
+  assert.equal(tasks.find(task => task.number === 166).status, "completed");
+  assert.equal(tasks.find(task => task.number === 166).checkpoint, "task-166-opt-in-proactive-suggestions");
+  assert.match(tasks.find(task => task.number === 166).validation.join(" "), /194 passed/);
+  assert.match(tasks.find(task => task.number === 166).limitations.join(" "), /deterministic review prompts/);
   const elements = render();
   const items = elements["roadmap-groups"].children.flatMap(group => group.children[1].children);
   const completed = items.find(item => item.id === "task-103");
