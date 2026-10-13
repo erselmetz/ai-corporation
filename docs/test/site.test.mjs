@@ -43,8 +43,11 @@ describe("documentation site", () => {
       assert.equal(response.status, 200, `${filename} should load`);
       assert.match(response.headers.get("content-type") ?? "", /text\/html/);
       const html = await response.text();
-      for (const target of pages) {
-        assert.ok(html.includes(`href="${target}"`), `${filename} should link to ${target}`);
+      for (const target of ["index.html", "documentation.html", "architecture.html", "roadmap.html", "tasks.html", "updates.html", "about.html"]) {
+        assert.ok(html.includes(`href="${target}"`), `${filename} should link to primary page ${target}`);
+      }
+      if (filename === "documentation.html") {
+        for (const target of pages) assert.ok(html.includes(`href="${target}"`), `overview should link to ${target}`);
       }
     }
   });
@@ -177,38 +180,33 @@ describe("documentation site", () => {
     assert.equal(tasks[129].status, "completed");
   });
 
-  it("describes the completed roadmap and final release-acceptance checkpoint", async () => {
+  it("summarizes the roadmap while preserving the full task contracts", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
-    assert.match(html, /Milestones 1–100 are completed foundations/);
-    assert.match(html, /Tasks 101-133 and Tasks 135-151 are verified post-100 checkpoints; Task 134 is deferred and incomplete; Tasks 152-175 are planned/);
-    assert.match(html, /Task 134 is deferred and incomplete/);
-    assert.match(html, /interactive maps, multimodal controls/);
+    assert.match(html, /150 complete; 1 deferred; 24 planned/);
+    assert.match(html, /Tasks 1-133 and 135-151 are verified/);
+    assert.match(html, /Task 134 is deferred/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
   });
 
-  it("keeps public overview pages aligned with completed and planned roadmap scopes", async () => {
+  it("keeps public overview pages concise and aligned with the latest roadmap status", async () => {
     const [home, documentation, architecture, roadmap, updates] = await Promise.all(
       ["index.html", "documentation.html", "architecture.html", "roadmap.html", "updates.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
-    assert.match(home, /Verified Tasks 101-133 cover/);
-    assert.match(home, /Task 131 documents the current packaging and distribution boundary/);
-    assert.match(documentation, /Tasks 101-133 and Tasks 135-151 are verified post-100 checkpoints; Task 134 is deferred and incomplete; Task 146 adds optional local Faster-Whisper transcription.*Task 148 adds explicit local device speech output; Task 149 adds a bounded local reply queue; Task 150 adds bounded ephemeral owner-scoped PNG\/JPEG attachments without Provider transfer; Task 151 adds explicit permission-gated one-frame screen capture; Tasks 152-175 remain planned/);
-    assert.match(architecture, /Task 105 adds explicitly consented Gemini coordinator chat/);
-    assert.match(architecture, /Supported packaging and distribution boundary — Task 131/);
-    assert.match(architecture, /Windows 11 x64.*not claimed as supported/);
+    assert.match(home, /Latest update.*Task 151/);
+    assert.match(home, /Next planned.*Task 152/);
+    assert.match(home, /depends on deferred Task 134/);
+    assert.match(home, /Changelog/);
+    assert.doesNotMatch(home, /Task 57|Task 100|Verified Tasks 101-133/);
+    assert.match(documentation, /local-first application with a Python backend and an Electron desktop interface/);
+    assert.match(architecture, /Python service owns AI and application logic/);
     assert.match(updates, /Task 151.*2026-10-14/);
-    assert.match(architecture, /Task 130/);
-    assert.match(architecture, /Chat-driven GitHub study and research — Task 121/);
-    assert.match(roadmap, /href="tasks.html#task-130">Task 130.*memory/i);
-    assert.match(roadmap, /Task 134 is deferred and incomplete/);
-    assert.match(roadmap, /24 planned tasks/);
-    assert.match(roadmap, /tasks.html#tasks-131-134/);
-    assert.match(roadmap, /all 175 tasks/);
-    assert.match(architecture, /Task 130.*semantic/i);
-    assert.match(architecture, /Tasks 101-133 and Tasks 135-151 are verified checkpoints; Task 134 is deferred and incomplete; Tasks 152-175 remain planned/);
-    for (const page of [home, documentation]) assert.match(page, /Task 130/);
+    assert.match(updates, /Task 140.*2026-10-13/);
+    assert.match(roadmap, /Tasks 1-133 and 135-151 are complete/);
+    assert.match(roadmap, /150 complete.*1 deferred.*24 planned/);
+    assert.match(roadmap, /depends on deferred Task 134/);
+    assert.doesNotMatch(roadmap, /Task 130.*semantic/i);
   });
 
   it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {

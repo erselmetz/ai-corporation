@@ -3,9 +3,16 @@ import { taskGroups, tasks, nextTask, roadmapRules } from "./tasks-data.mjs";
 const container = document.querySelector("#roadmap-groups");
 const summary = document.querySelector("#roadmap-summary");
 const categoryIndex = document.querySelector("#category-index");
+function cleanText(value) {
+  return value
+    .replace(/\u00e2\u20ac\u2014/g, "\u2014")
+    .replace(/\u00e2\u20ac\u2013/g, "\u2013")
+    .replace(/\u00c2\u00b7/g, "\u00b7")
+    .replace(/\u00e2\u20ac\u2122/g, "\u2019");
+}
 function textNode(tag, content, parent) {
   const node = document.createElement(tag);
-  node.textContent = content;
+  node.textContent = cleanText(content);
   parent.append(node);
   return node;
 }
