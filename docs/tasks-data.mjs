@@ -1462,7 +1462,7 @@ export const post100Tasks = [
     "title": "Owner-reviewed AI knowledge proposals",
     "description": "Let an AI prepare provenance-bound knowledge proposals from an owner-selected source for explicit human review and acceptance.",
     "category": "Phase B - Knowledge and RAG",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       121,
       130,
@@ -1477,12 +1477,19 @@ export const post100Tasks = [
       "Untrusted source text cannot expand permissions."
     ],
     "decisions": [
-      "Define approved source types and model/provider consent requirements."
+      "Limit sources to one owner-selected retained Conversation or Project memory record; exclude transcripts not separately retained, repositories, arbitrary files, and published Corporation scope. Use only the owner-selected existing Agent when it is assigned to the configured loopback Ollama provider; reject cloud and unknown providers. No cloud consent flow is introduced because online generation is out of scope. Proposals expire within 15 minutes or at source expiry, whichever comes first, and acceptance creates a new retained summary only in the exact source scope and scope ID."
     ],
     "area": "P18",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-138-owner-reviewed-knowledge-proposals",
+    "validation": [
+      "Focused knowledge-proposal, memory-management API, semantic-memory, and existing coordinator Task proposal regressions: 42 passed.",
+      "The owner reviews exact generated content, excerpt-backed claims, source revision, expiry, destination scope, and proposal digest. Acceptance rechecks current owner access and source revision before creating one retained private summary; reject and more-information outcomes write nothing. Cloud Providers and arbitrary external content are excluded, and proposals are process-local/short-lived.",
+      "Full Python suite: 1118 passed, 6 skipped, and 2 failed in the same unrelated pre-existing model-assignment tests: tests/test_command_interface.py::test_model_set_command and tests/test_provider_model_api.py::test_model_replacement_uses_existing_assignment_service. Public docs and update-manifest checks, compilation/import, and diff checks passed."
+    ],
+    "limitations": [
+      "Generation is limited to explicitly requested local loopback Ollama use through an existing Agent assignment. It was tested with deterministic fake generation; no live Ollama request or quality claim was made.",
+      "Pending proposals are held in bounded process memory for at most 15 minutes and are lost on restart. The accepted summary retains the same private scope and expiry; publication, chat transcript retention, arbitrary sources, UI, and documentation-portal writes are not implemented."
+    ]
   },
   {
     "number": 139,
@@ -2497,7 +2504,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-137 are verified; Tasks 138-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-138 are verified; Tasks 139-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

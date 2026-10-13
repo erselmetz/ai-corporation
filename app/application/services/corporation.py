@@ -206,6 +206,8 @@ class CorporationApplicationService:
         self._controlled_execution = None
         self._semantic_memory_index = None
         self._semantic_memory_lock = Lock()
+        self._knowledge_proposals = None
+        self._knowledge_proposals_lock = Lock()
         self._corporation = corporation
         self._node = node
 
@@ -843,6 +845,29 @@ class CorporationApplicationService:
                 raise RuntimeError("Semantic memory is already configured for this application run")
             self._semantic_memory_index = service
         return service
+
+    def generate_local_knowledge_proposal(self, agent_id: str, prompt: str) -> str:
+        """Generate one proposal only through the configured loopback Ollama Agent."""
+        from app.providers import OllamaProvider
+        agent = self._orchestrator.agents.get(agent_id)
+        if agent.provider != "ollama" or not self.is_loopback_ollama_provider(agent.provider):
+            raise ValueError("Knowledge proposals support only the configured loopback Ollama provider")
+        provider = self._orchestrator.providers.get(agent.provider)
+        if not isinstance(provider, OllamaProvider):
+            raise ValueError("Knowledge proposals support only the configured loopback Ollama provider")
+        if not agent.model or not isinstance(prompt, str) or len(prompt.encode("utf-8")) > 32768:
+            raise ValueError("Knowledge proposal request is invalid or exceeds its bound")
+        return self._orchestrator.run_agent(
+            agent_id, prompt, expected_assignment=(agent.provider, agent.model)
+        )
+
+    def knowledge_proposals(self):
+        """Return the bounded process-local proposal review service."""
+        with self._knowledge_proposals_lock:
+            if self._knowledge_proposals is None:
+                from .knowledge_proposals import KnowledgeProposalService
+                self._knowledge_proposals = KnowledgeProposalService(self)
+            return self._knowledge_proposals
 
     def corporation_knowledge(self):
         if self._corporation is None:

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Annotated
+from typing import Annotated, Literal
 import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
@@ -10,6 +10,10 @@ from app.memory.models import MemoryDataError
 from app.memory.management import MemoryConflictError
 from app.knowledge import SemanticMemoryService
 from app.knowledge.service import SemanticCapabilityUnavailable
+from app.application.services.knowledge_proposals import (
+    KnowledgeProposalConflict,
+    KnowledgeProposalNotFound,
+)
 from .security import AuthenticatedPrincipal, require_permission
 
 router = APIRouter(prefix="/api/memory")
@@ -67,6 +71,20 @@ class SemanticLifecycleRequest(BaseModel):
     scope: MemoryScope
     scope_id: StrictStr = Field(min_length=1, max_length=256)
     memory_ids: list[StrictStr] = Field(min_length=1, max_length=10)
+
+
+class KnowledgeProposalRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    scope: MemoryScope
+    scope_id: StrictStr = Field(min_length=1, max_length=256)
+    memory_id: StrictStr = Field(min_length=1, max_length=256)
+    agent_id: StrictStr = Field(min_length=1, max_length=256)
+
+
+class KnowledgeProposalDecision(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    proposal_digest: StrictStr = Field(min_length=64, max_length=64)
+    decision: Literal["accept", "reject", "more_information"]
 
 
 def get_memory_now():
@@ -246,3 +264,45 @@ def cleanup_semantic_memory(body: SemanticLifecycleRequest,
                             principal: AuthenticatedPrincipal = Depends(require_permission("memory:index")),
                             index=Depends(semantic_service), now=Depends(get_memory_now)):
     return _semantic_lifecycle(index.cleanup_stale, body, principal, index, now)
+
+
+@router.post("/proposals")
+def prepare_knowledge_proposal(body: KnowledgeProposalRequest,
+                               request: Request,
+                               principal: AuthenticatedPrincipal = Depends(require_permission("memory:manage"))):
+    try:
+        return request.app.state.application_service.knowledge_proposals().prepare(
+            principal.identity, body.scope, body.scope_id, body.memory_id, body.agent_id)
+    except MemoryExpiredError:
+        raise HTTPException(410, "Selected memory source has expired") from None
+    except PermissionError:
+        raise HTTPException(403, "Only the retained memory owner may prepare a proposal") from None
+    except KeyError:
+        raise HTTPException(404, "Selected retained memory source is unavailable") from None
+    except ValueError as exc:
+        message = str(exc)
+        if "loopback Ollama" in message:
+            raise HTTPException(409, "The selected Agent must use the configured loopback Ollama provider") from None
+        raise HTTPException(422, "Knowledge proposal request or generated result is invalid") from None
+    except Exception:
+        raise HTTPException(503, "Local knowledge proposal generation failed") from None
+
+
+@router.post("/proposals/{proposal_id}/decision")
+def decide_knowledge_proposal(proposal_id: str, body: KnowledgeProposalDecision,
+                              request: Request,
+                              principal: AuthenticatedPrincipal = Depends(require_permission("memory:manage"))):
+    service = request.app.state.application_service.knowledge_proposals()
+    try:
+        return service.decide(principal.identity, proposal_id,
+                              proposal_digest=body.proposal_digest, decision=body.decision)
+    except KnowledgeProposalNotFound:
+        raise HTTPException(404, "Knowledge proposal not found or expired") from None
+    except KnowledgeProposalConflict as exc:
+        raise HTTPException(409, str(exc)) from None
+    except ValueError:
+        raise HTTPException(422, "Knowledge proposal decision is invalid") from None
+    except (PermissionError, KeyError):
+        raise HTTPException(403, "Selected memory source is no longer available to its owner") from None
+    except Exception:
+        raise HTTPException(503, "Knowledge proposal decision failed") from None

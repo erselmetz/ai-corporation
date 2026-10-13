@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-137 are verified complete; Task 134 is deferred and incomplete; Tasks 138-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-138 are verified complete; Task 134 is deferred and incomplete; Tasks 139-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -961,3 +961,8 @@ The context retrieval application service provides an explicit `retrieve_hybrid(
 ## Semantic index lifecycle and observability (Task 137)
 
 The memory service exposes permission-gated, bounded synchronous rebuild, inspection, and cleanup for derived semantic vectors. Calls require explicit retained source IDs, validate ownership and scope, and return bounded per-source progress/failure, stale/missing counts, and configured vector-store usage when measurable. Cleanup removes only validated derived vectors and never deletes authoritative memory; failures leave the authoritative source intact. No secure-erasure guarantee is made. The operation caps each request at 10 selected source IDs. The deterministic fake-adapter benchmark is not a local embedding latency claim. Checkpoint: task-137-semantic-index-lifecycle-observability.
+
+
+## Owner-reviewed AI knowledge proposals (Task 138)
+
+The local-owner API accepts one explicitly selected retained Conversation or Project memory source and an explicitly selected Agent only when it is assigned to the configured loopback Ollama provider. Generated summaries and claims are untrusted drafts; every claim must cite an exact source excerpt. The review response binds the source revision, expiry, destination scope, exact proposal and digest. Accept/reject/more-information are explicit owner decisions. Acceptance rechecks the source revision and creates one retained summary in the same private scope, with the source expiry; it does not share or publish the result. Proposals live only in bounded process memory for up to 15 minutes. No cloud provider, repository/file ingestion, transcript retention or portal write is added. Checkpoint: task-138-owner-reviewed-knowledge-proposals.
