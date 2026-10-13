@@ -1,4 +1,6 @@
 """Authorized owned chat; routes depend only on application services."""
+import base64
+import binascii
 import re
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -84,6 +86,12 @@ class RetainRequest(BaseModel):
     retention_opt_in: StrictBool
 
 
+class ImageUploadRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    media_type: str = Field(min_length=1, max_length=32)
+    data_base64: str = Field(min_length=1, max_length=2_800_000)
+
+
 def get_chat_now():
     return datetime.now(timezone.utc)
 
@@ -133,6 +141,15 @@ async def bounded_body(request: Request):
     async for chunk in request.stream():
         if len(payload) + len(chunk) > 65536:
             raise HTTPException(413, "Chat request too large")
+        payload.extend(chunk)
+    return bytes(payload)
+
+
+async def bounded_image_body(request: Request):
+    payload = bytearray()
+    async for chunk in request.stream():
+        if len(payload) + len(chunk) > 3_000_000:
+            raise HTTPException(413, "Image request exceeds the byte limit")
         payload.extend(chunk)
     return bytes(payload)
 
@@ -204,6 +221,49 @@ def get_conversation(identifier: str, principal=Depends(require_permission("chat
     with chat_errors():
         record = service.owned_chat().get(principal.identity, identifier)
         return {**record, "context_traces": service.chat_knowledge().traces(principal.identity, identifier, now)}
+
+
+@router.get("/{identifier}/images")
+def list_images(identifier: str,
+                principal=Depends(require_permission("chat:read")),
+                service=Depends(get_application_service)):
+    with chat_errors():
+        return {
+            "items": [item.snapshot() for item in
+                      service.owned_chat().list_images(principal.identity, identifier)],
+            "provider_transfer_supported": False,
+        }
+
+
+@router.post("/{identifier}/images")
+def attach_image(identifier: str, payload=Depends(bounded_image_body),
+                 principal=Depends(require_permission("chat:send")),
+                 service=Depends(get_application_service)):
+    body = parse(ImageUploadRequest, payload)
+    try:
+        data = base64.b64decode(body.data_base64, validate=True)
+    except (binascii.Error, ValueError):
+        raise HTTPException(422, "Image data must be valid base64") from None
+    with chat_errors():
+        item = service.owned_chat().attach_image(
+            principal.identity, identifier, data, body.media_type
+        )
+        return {
+            "image": item.snapshot(),
+            "provider_transfer_supported": False,
+            "message": "Image is attached temporarily to this conversation; it is not sent to a Provider.",
+        }
+
+
+@router.delete("/{identifier}/images/{image_id}")
+def remove_image(identifier: str, image_id: str,
+                 principal=Depends(require_permission("chat:send")),
+                 service=Depends(get_application_service)):
+    with chat_errors():
+        removed = service.owned_chat().remove_image(principal.identity, identifier, image_id)
+        if not removed:
+            raise HTTPException(404, "Image attachment not found")
+        return {"removed": True}
 
 
 @router.post("/{identifier}/messages")

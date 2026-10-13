@@ -8,7 +8,9 @@ from typing import TYPE_CHECKING, Callable
 from uuid import uuid4
 
 from app.agents.registry import AgentAssignmentBusy
+from app.conversations.models import ConversationStatus
 
+from .chat_images import ChatImageError, ChatImageStore
 from .corporation_chat import CorporationChatService
 
 if TYPE_CHECKING:
@@ -65,6 +67,7 @@ class OwnedChatService:
         self._catalog_lock = RLock()
         self._active_agents: dict[str, int] = {}
         self._configuring_agents: set[str] = set()
+        self._image_store = ChatImageStore()
 
     @contextmanager
     def configuration_change(self, agent_id):
@@ -183,7 +186,23 @@ class OwnedChatService:
 
     def close(self, owner, identifier):
         with self._access(owner, identifier) as entry:
-            return {"conversation": self._chat.close(identifier), "coordinator": entry.coordinator}
+            result = self._chat.close(identifier)
+            self._image_store.clear_conversation(owner, identifier)
+            return {"conversation": result, "coordinator": entry.coordinator}
+
+    def attach_image(self, owner, identifier, data: bytes, media_type: str):
+        with self._access(owner, identifier):
+            if self._chat.get_status(identifier) is not ConversationStatus.OPEN:
+                raise ChatImageError("Images can only be attached to an open conversation")
+            return self._image_store.attach(owner, identifier, data, media_type)
+
+    def list_images(self, owner, identifier):
+        with self._access(owner, identifier):
+            return self._image_store.list_for(owner, identifier)
+
+    def remove_image(self, owner, identifier, image_id):
+        with self._access(owner, identifier):
+            return self._image_store.remove(owner, identifier, image_id)
 
     @contextmanager
     def agent_request(self, agent_id: str):

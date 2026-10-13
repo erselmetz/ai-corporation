@@ -1865,7 +1865,7 @@ export const post100Tasks = [
     "title": "Bounded image input and vision context",
     "description": "Define authorized image records and explicit conversation attachment with bounded, provenance-aware lifecycle.",
     "category": "Phase E - Vision",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       117,
       128,
@@ -1881,12 +1881,17 @@ export const post100Tasks = [
       "No silent screen/camera capture or image indexing into Task 130."
     ],
     "decisions": [
-      "Decide image persistence/provider transfer policy before implementation."
+      "Use only explicit authenticated user uploads, keep bytes in bounded process memory, make attachments expire after 15 minutes with lazy cleanup on the next image operation, and remove them on explicit deletion, conversation close, or process restart. Never persist or index them. No Provider transfer is implemented or authorized in this task; later vision transfer must name a selected Provider and require explicit per-use consent."
     ],
     "area": "P21",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-150-bounded-image-input-vision-context",
+    "validation": [
+      "Focused chat-image, owned-chat, local-access, emergency-stop, and local-voice regressions: 35 passed, covering type/dimension/byte/count/global-memory bounds, owner and conversation isolation, expiry/removal/close cleanup, Provider non-transfer, and preserved stop behavior.",
+      "Full Python suite: 1161 passed, 6 skipped, with two unrelated existing failures in tests/test_command_interface.py::test_model_set_command and tests/test_provider_model_api.py::test_model_replacement_uses_existing_assignment_service. Public documentation suite: 15 passed; update-manifest tests: 6 passed; Python compilation and git diff --check passed."
+    ],
+    "limitations": [
+      "Only bounded PNG/JPEG header metadata is inspected; image bytes are not fully decoded or transformed. The store is process-local and not durable or securely erased; expiry cleanup is lazy on image operations. No UI upload control or vision-capable Provider integration is added. Provider transfer remains unavailable until a later task implements explicit per-use selection and consent. The full Python run also reproduces two unrelated model-assignment test failures documented before Task 150; neither affected files changed in this task."
+    ]
   },
   {
     "number": 151,
@@ -2583,7 +2588,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-149 are verified; Tasks 150-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-150 are verified; Tasks 151-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

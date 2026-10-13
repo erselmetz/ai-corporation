@@ -386,7 +386,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-149 are verified complete; Task 134 is deferred and incomplete; Tasks 150-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-150 are verified complete; Task 134 is deferred and incomplete; Tasks 151-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -1012,3 +1012,7 @@ Reply playback uses an explicit local-only adapter over the browser/device Web S
 ## Bounded local voice queue and playback control (Task 149)
 
 Clicking Speak on replies during playback adds them to a sequential, page-memory queue capped at three pending replies and 16 KiB of queued UTF-8 text; each spoken reply is capped at 8 KiB. Stop interrupts local playback and clears queued text. The UI identifies output as local. Remote voices are excluded, so chat text is not sent online and no remote cancellation or retry is claimed. No online adapter or external speech runtime was selected because this task has no verified provider/model license, privacy, retention, and quality evidence. Task 134 remains deferred; this feature uses only device-provided voices and does not activate capability packs. Device voices and packaged availability remain platform-dependent. Checkpoint: task-149-bounded-local-voice-queue-controls.
+
+## Bounded image input and vision context (Task 150)
+
+Authenticated chat owners can explicitly attach PNG or JPEG files to an open conversation through the API. Each file is capped at 2 MiB, 4096 pixels per dimension and 8 megapixels; each conversation holds at most four images, while the process-wide temporary store is capped at 20 MiB. Attachments are process-memory only, expire after 15 minutes on the next image operation, and are removed on explicit deletion, conversation close, or process restart. Only safe metadata is returned; bytes are not persisted, indexed, added to messages, or passed to a Provider. Provider transfer is unsupported here and remains denied until a future task provides explicit per-use Provider selection and consent. No upload UI, screen/camera capture, image transformation, complete image decoding, or secure-erasure guarantee is included. Checkpoint: task-150-bounded-image-input-vision-context.
