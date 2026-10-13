@@ -35,7 +35,8 @@ class MemoryManagementService:
             if now < record.created_at:
                 raise ValueError("Memory creation time is in the future")
             items.append(dict(id=record.id, scope=record.scope.value, scope_id=record.scope_id,
-                              type=record.type.value, expires_at=record.expires_at,
+                              type=record.type.value, created_at=record.created_at,
+                              expires_at=record.expires_at,
                               expired=now >= record.expires_at, can_manage=actor_id == record.owner_id))
         return items
 
@@ -52,7 +53,8 @@ class MemoryManagementService:
             record = knowledge.record
             provenance = knowledge.provenance
         return dict(id=record.id, scope=record.scope.value, scope_id=record.scope_id,
-                    type=record.type.value, expires_at=record.expires_at, expired=False,
+                    type=record.type.value, created_at=record.created_at,
+                    expires_at=record.expires_at, expired=False,
                     can_manage=actor_id == record.owner_id, content=record.content,
                     source_id=record.source_id, revision=memory_revision(record),
                     source_scope=provenance.source_scope.value if provenance else record.scope.value,

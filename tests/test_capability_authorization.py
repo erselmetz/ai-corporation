@@ -48,12 +48,13 @@ def test_unknown_capability_wrong_scope_and_foreign_principal_scope_are_denied()
 def test_legacy_route_permissions_have_explicit_compatible_definitions():
     policy = CapabilityAuthorizationService()
     by_id = {definition.capability_id: definition for definition in policy.definitions}
-    for permission in ("task:read", "task:dispatch", "documentation:review", "memory:manage", "browser:act", "desktop:act"):
+    for permission in ("task:read", "system:read", "task:dispatch", "documentation:review", "memory:manage", "browser:act", "desktop:act"):
         definition = by_id[permission]
         assert definition.required_permissions == frozenset({permission})
         assert definition.scope_type == "principal"
         assert definition.default_enabled is False
     assert by_id["task:read"].risk == "low"
+    assert by_id["system:read"].risk == "low"
     assert by_id["task:dispatch"].risk == "high"
     assert by_id["browser:act"].risk == "high"
     assert by_id["desktop:act"].risk == "high"

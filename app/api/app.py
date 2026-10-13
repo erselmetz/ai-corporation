@@ -1087,6 +1087,8 @@ def create_app(
     application.include_router(capability_grants_router)
     from .capability_approvals import router as capability_approvals_router
     application.include_router(capability_approvals_router)
+    from .system_monitoring import router as system_monitoring_router
+    application.include_router(system_monitoring_router)
     from .capability_audit import router as capability_audit_router
     application.include_router(capability_audit_router)
     from .documentation_review import router as documentation_review_router

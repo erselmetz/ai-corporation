@@ -15,6 +15,10 @@ const expectedPaths = [
   "/api/tasks",
   "/api/projects",
   "/api/activity?limit=8",
+  "/api/chat/conversations",
+  "/api/capabilities/approvals",
+  "/api/system/monitor",
+  "/api/memory?scope=corporation&scope_id=corp&limit=10",
 ];
 
 function response(status, payload) {
@@ -34,8 +38,9 @@ class TestElement {
     this.hidden = false;
     this._text = "";
     this.href = "";
+    this.dataset = {};
     this.className = "";
-    this.classList = { add: (name) => { this.className += ` ${name}`; } };
+    this.classList = { add: (name) => { this.className += ` ${name}`; }, toggle: () => {} };
   }
 
   get textContent() {
@@ -75,6 +80,10 @@ function dashboardDocument() {
     "tasks-panel",
     "projects-panel",
     "activity-panel",
+    "chat-panel",
+    "system-panel",
+    "approvals-panel",
+    "knowledge-panel",
   ]) {
     const panel = new TestElement("section");
     const state = new TestElement("p");
@@ -89,6 +98,7 @@ function dashboardDocument() {
       createElement: (tagName) => new TestElement(tagName),
       getElementById: (id) => setup.get(id) ?? panels.get(id),
       querySelector: (selector) => selector === ".setup-links" ? setup.get("setup-links") : null,
+      querySelectorAll: () => [],
     },
     setup,
   };
@@ -100,6 +110,9 @@ function setupResults({ agents = [], providers = [], error } = {}) {
     status: error ? { error } : { data: { corporation: { id: "c", name: "AI" }, node: { id: "n", name: "Local" } } },
     agents: result(agents), providers: result(providers),
     employees: result([]), models: result([]), tasks: result([]), projects: result([]), activity: result([]),
+    conversations: result([]), approvals: result([]),
+    system: error ? { error } : { data: { observed_at: "2026-10-14T00:00:00Z", task_status_counts: [], provider_availability: "unknown", resource_capacities: null } },
+    memory: result([]),
   };
 }
 
@@ -143,18 +156,23 @@ test("loads the existing protected read resources with same-origin credentials",
   const calls = [];
   const results = await loadDashboard(async (path, options) => {
     calls.push({ path, options });
+    if (path.startsWith("/api/memory?")) return response(200, { items: [] });
     return response(200, path === "/api/status"
       ? {
           corporation: { id: "corp", name: "Corporation" },
           node: { id: "node", name: "Node" },
         }
-      : { items: [] });
+      : path === "/api/system/monitor"
+        ? { observed_at: "2026-10-14T00:00:00Z", task_status_counts: [], provider_availability: "unknown", resource_capacities: null }
+        : { items: [] });
   });
 
   assert.deepEqual(calls.map(({ path }) => path).sort(), [...expectedPaths].sort());
   assert.ok(calls.every(({ options }) => options.credentials === "same-origin"));
   assert.ok(calls.every(({ options }) => options.headers.Accept === "application/json"));
-  assert.deepEqual(results.employees, { data: { items: [] } });
+  assert.ok(calls.some(({ path }) => path === "/api/memory?scope=corporation&scope_id=corp&limit=10"));
+  assert.deepEqual(results.employees.data, { items: [] });
+  assert.equal(typeof results.employees.observedAt, "string");
   assert.deepEqual(results.status.data.node, { id: "node", name: "Node" });
 });
 
@@ -166,11 +184,13 @@ test("preserves empty lists as successful data rather than converting failures t
           corporation: { id: "corp", name: "Corporation" },
           node: { id: "node", name: "Node" },
         }
-      : { items: [] },
+      : path === "/api/system/monitor"
+        ? { observed_at: "2026-10-14T00:00:00Z", task_status_counts: [], provider_availability: "unknown", resource_capacities: null }
+        : { items: [] },
   ));
 
-  for (const name of ["employees", "agents", "providers", "models", "tasks", "projects", "activity"]) {
-    assert.deepEqual(results[name], { data: { items: [] } });
+  for (const name of ["employees", "agents", "providers", "models", "tasks", "projects", "activity", "conversations", "approvals", "memory"]) {
+    assert.deepEqual(results[name].data, { items: [] });
   }
 });
 
@@ -191,7 +211,7 @@ test("distinguishes authentication, authorization, and other failures per resour
   assert.deepEqual(results.agents, { error: "failed" });
   assert.deepEqual(results.providers, { error: "failed" });
   assert.deepEqual(results.models, { error: "failed" });
-  assert.deepEqual(results.tasks, { data: { items: [] } });
+  assert.deepEqual(results.tasks.data, { items: [] });
 });
 
 test("renders empty collections explicitly", () => {
@@ -212,6 +232,10 @@ test("renders empty collections explicitly", () => {
       tasks: { data: { items: [] } },
       projects: { data: { items: [] } },
       activity: { data: { items: [] } },
+      conversations: { data: { items: [] } },
+      approvals: { data: { items: [] } },
+      system: { data: { observed_at: "2026-10-14T00:00:00Z", task_status_counts: [], provider_availability: "unknown", resource_capacities: null } },
+      memory: { data: { items: [] } },
     });
 
     for (const panel of panels.values()) {
@@ -221,8 +245,40 @@ test("renders empty collections explicitly", () => {
     assert.match(panels.get("workforce-panel").textContent, /No agents found/);
     assert.match(panels.get("providers-panel").textContent, /No providers are configured/);
     assert.match(panels.get("tasks-panel").textContent, /No tasks found/);
-    assert.match(panels.get("projects-panel").textContent, /No projects found/);
+    assert.match(panels.get("projects-panel").textContent, /No active projects/);
     assert.match(panels.get("activity-panel").textContent, /No recent activity found/);
+    assert.match(panels.get("chat-panel").textContent, /No open owner conversations/);
+    assert.match(panels.get("system-panel").textContent, /hardware availability is unknown/);
+    assert.match(panels.get("approvals-panel").textContent, /No pending protected-action approvals/);
+    assert.match(panels.get("knowledge-panel").textContent, /No owner-readable Corporation knowledge/);
+  } finally {
+    delete globalThis.document;
+  }
+});
+
+test("dashboard shows only pending work and active projects, with unknown source freshness where timestamps are absent", () => {
+  const { document, panels } = dashboardDocument();
+  globalThis.document = document;
+  try {
+    renderDashboard({
+      ...setupResults(),
+      tasks: { data: { items: [
+        { id: "pending", title: "Queued", status: "pending" },
+        { id: "done", title: "Finished", status: "completed" },
+      ] } },
+      projects: { data: { items: [
+        { id: "active", name: "Current", status: "active" },
+        { id: "closed", name: "Archived", status: "completed" },
+      ] } },
+    });
+    const tasks = panels.get("tasks-panel").textContent;
+    assert.match(tasks, /Active tasks · 1/);
+    assert.match(tasks, /Queued/);
+    assert.doesNotMatch(tasks, /Finished/);
+    assert.match(tasks, /source timestamps/);
+    const projects = panels.get("projects-panel").textContent;
+    assert.match(projects, /Current/);
+    assert.doesNotMatch(projects, /Archived/);
   } finally {
     delete globalThis.document;
   }
@@ -249,7 +305,7 @@ test("renders failed and partial responses without hiding successful panel data"
     assert.match(panels.get("providers-panel").textContent, /could not be loaded/i);
     assert.match(panels.get("providers-panel").textContent, /No model assignments found/);
     assert.match(panels.get("tasks-panel").textContent, /Retry to try again/);
-    assert.match(panels.get("projects-panel").textContent, /No projects found/);
+    assert.match(panels.get("projects-panel").textContent, /No active projects/);
     assert.match(panels.get("activity-panel").textContent, /Access denied/);
   } finally {
     delete globalThis.document;

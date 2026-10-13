@@ -25,6 +25,7 @@ class MemorySummary(BaseModel):
     scope: MemoryScope
     scope_id: str
     type: str
+    created_at: datetime
     expires_at: datetime
     expired: bool
     can_manage: bool

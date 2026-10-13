@@ -49,6 +49,10 @@ def test_dashboard_shell_and_assets_are_served_without_runtime_execution():
         "Tasks</h2>",
         "Projects overview",
         "Recent activity",
+        "Owner chat",
+        "System &amp; resources",
+        "Protected-action approvals",
+        "Corporation knowledge",
     ):
         assert section in shell.text
 
@@ -71,6 +75,9 @@ def test_dashboard_shell_and_assets_are_served_without_runtime_execution():
         "/api/tasks",
         "/api/projects",
         "/api/activity?limit=8",
+        "/api/chat/conversations",
+        "/api/capabilities/approvals",
+        "/api/system/monitor",
     ):
         assert endpoint in dashboard_script.text
     assert "Bearer " not in dashboard_script.text

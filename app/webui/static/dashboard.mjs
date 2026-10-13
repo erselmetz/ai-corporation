@@ -10,6 +10,9 @@ const dashboardResources = {
     path: "/api/activity?limit=8",
     fields: ["id", "task_id", "event", "created_at"],
   },
+  conversations: { path: "/api/chat/conversations", fields: null },
+  approvals: { path: "/api/capabilities/approvals", fields: null },
+  system: { path: "/api/system/monitor", fields: null },
 };
 
 function validPayload(resource, payload) {
@@ -25,7 +28,7 @@ function validPayload(resource, payload) {
       )),
     );
   }
-  return Boolean(
+  if (resource.path === "/api/status") return Boolean(
     payload.corporation &&
     typeof payload.corporation.id === "string" &&
     typeof payload.corporation.name === "string" &&
@@ -33,6 +36,12 @@ function validPayload(resource, payload) {
     typeof payload.node.id === "string" &&
     typeof payload.node.name === "string",
   );
+  if (resource.path === "/api/system/monitor") {
+    return typeof payload.observed_at === "string" && Array.isArray(payload.task_status_counts)
+      && typeof payload.provider_availability === "string"
+      && (payload.resource_capacities === null || Array.isArray(payload.resource_capacities));
+  }
+  return Array.isArray(payload.items);
 }
 
 export async function loadDashboard(fetchImpl = globalThis.fetch) {
@@ -51,13 +60,38 @@ export async function loadDashboard(fetchImpl = globalThis.fetch) {
         if (!validPayload(resource, payload)) {
           return [name, { error: "failed" }];
         }
-        return [name, { data: payload }];
+        return [name, { data: payload, observedAt: new Date().toISOString() }];
       } catch {
         return [name, { error: "failed" }];
       }
     }),
   );
-  return Object.fromEntries(entries);
+  const results = Object.fromEntries(entries);
+  const corporationId = results.status?.data?.corporation?.id;
+  if (typeof corporationId !== "string" || !corporationId) {
+    results.memory = { error: results.status?.error ?? "unknown" };
+  } else {
+    const query = new URLSearchParams({ scope: "corporation", scope_id: corporationId, limit: "10" });
+    try {
+      const response = await fetchImpl(`/api/memory?${query}`, {
+        credentials: "same-origin", headers: { Accept: "application/json" },
+      });
+      if (response.status === 401) results.memory = { error: "authentication" };
+      else if (response.status === 403) results.memory = { error: "forbidden" };
+      else if (!response.ok) results.memory = { error: "failed" };
+      else {
+        const payload = await response.json();
+        if (!payload || !Array.isArray(payload.items) || !payload.items.every((item) =>
+          item && typeof item.id === "string" && typeof item.type === "string"
+          && typeof item.created_at === "string" && typeof item.expires_at === "string")) {
+          results.memory = { error: "failed" };
+        } else results.memory = { data: payload, observedAt: new Date().toISOString() };
+      }
+    } catch {
+      results.memory = { error: "failed" };
+    }
+  }
+  return results;
 }
 
 function element(tag, className, text) {
@@ -107,6 +141,7 @@ function setPanel(panelId, outcome, loadingText, render) {
       authentication: "Sign-in required. This browser session is not authenticated.",
       forbidden: "Access denied. This account lacks the required read permission.",
       failed: "Data could not be loaded. Retry to try again.",
+      unknown: "Source freshness is unknown because workspace identity could not be read.",
     };
     state.textContent = errors[outcome.error];
     state.className = "section-state error-state";
@@ -116,7 +151,31 @@ function setPanel(panelId, outcome, loadingText, render) {
   state.textContent = "Data loaded";
   state.className = "section-state success-state";
   data.hidden = false;
+  appendFreshness(data, outcome.observedAt);
   render(data, outcome.data);
+}
+
+function appendFreshness(data, value) {
+  const freshness = element("time", "snapshot-freshness", "Snapshot checked");
+  const observedAt = value ?? new Date().toISOString();
+  freshness.dateTime = observedAt;
+  freshness.dataset.observedAt = observedAt;
+  freshness.textContent = freshnessText(observedAt);
+  data.prepend(freshness);
+}
+
+function freshnessText(value, now = Date.now()) {
+  const observed = Date.parse(value);
+  if (!Number.isFinite(observed)) return "Freshness unknown; refresh to retry.";
+  const age = Math.max(0, now - observed);
+  return `${age > 60_000 ? "STALE" : "Snapshot"} · checked ${new Date(observed).toLocaleString()}`;
+}
+
+function updateFreshnessLabels(now = Date.now()) {
+  for (const marker of document.querySelectorAll?.(".snapshot-freshness[data-observed-at]") ?? []) {
+    marker.textContent = freshnessText(marker.dataset.observedAt, now);
+    marker.classList?.toggle?.("stale", now - Date.parse(marker.dataset.observedAt) > 60_000);
+  }
 }
 
 function setCombinedPanel(panelId, resources, render) {
@@ -129,6 +188,12 @@ function setCombinedPanel(panelId, resources, render) {
   const failures = resources.filter(([, outcome]) => outcome.error);
   const available = resources.filter(([, outcome]) => outcome.data);
   data.hidden = false;
+  const sourceReadTimes = available
+    .map(([, outcome]) => Date.parse(outcome.observedAt))
+    .filter(Number.isFinite);
+  appendFreshness(data, sourceReadTimes.length
+    ? new Date(Math.min(...sourceReadTimes)).toISOString()
+    : undefined);
   if (failures.length) {
     state.textContent = available.length
       ? "Some data could not be loaded."
@@ -303,31 +368,31 @@ function renderTasks(container, payload) {
   }
   container.append(statusList);
 
+  const active = tasks.filter((task) => task.status === "pending" || task.status === "running");
   const sample = element("div", "data-group");
-  sample.append(element("h3", "", "Task records"));
+  sample.append(element("h3", "", `Active tasks · ${active.length}`));
   addList(
     sample,
-    tasks.slice(0, 4),
-    "No tasks found.",
+    active.slice(0, 4),
+    "No pending or running tasks.",
     (task) => namedEntry(task.title, `${task.id} · ${task.status}`),
   );
   if (tasks.length > 4) {
     sample.append(element("p", "muted", `Showing 4 of ${tasks.length} task records; task timestamps are not provided.`));
   }
   container.append(sample);
+  container.append(element("p", "muted", "Task records have no source timestamps; freshness is based on the last dashboard read."));
 }
 
 function renderProjects(container, payload) {
-  const projects = payload.items;
-  addList(
-    container,
-    projects.slice(0, 5),
-    "No projects found.",
-    (project) => namedEntry(project.name, `${project.id} · ${project.status}`),
-  );
+  const projects = payload.items.filter((project) => project.status === "active");
+  if (projects.length === 0) container.append(element("p", "empty-state", "No active projects."));
+  else addList(container, projects.slice(0, 5), "No active projects.",
+    (project) => namedEntry(project.name, `${project.id} · ${project.status}`));
   if (projects.length > 5) {
     container.append(element("p", "muted", `Showing 5 of ${projects.length} projects.`));
   }
+  container.append(element("p", "muted", "Project records have no source timestamps; freshness is based on the last dashboard read."));
 }
 
 function renderActivity(container, payload) {
@@ -338,6 +403,53 @@ function renderActivity(container, payload) {
     "No recent activity found.",
     (entry) => namedEntry(entry.event, `Task ${entry.task_id} · ${entry.created_at}`),
   );
+}
+
+function renderConversations(container, payload) {
+  const items = payload.items.filter((item) => item && typeof item.id === "string");
+  if (!items.length) container.append(element("p", "empty-state", "No open owner conversations."));
+  else {
+    const latest = items.slice(-5).reverse();
+    addList(container, latest, "No open owner conversations.", (item) =>
+      namedEntry(item.coordinator?.name ?? item.coordinator?.id ?? "Coordinator chat", `Conversation ${item.id}`));
+  }
+  const link = element("a", "dashboard-card-link", "Open chat");
+  link.href = "/ui/chat";
+  container.append(link);
+}
+
+function renderApprovals(container, payload) {
+  const items = Array.isArray(payload.items) ? payload.items : [];
+  const pending = items.filter((item) => item.status === "pending");
+  container.append(element("p", "data-count", `${pending.length} pending owner approval${pending.length === 1 ? "" : "s"}`));
+  addList(container, pending.slice(0, 4), "No pending protected-action approvals.", (item) =>
+    namedEntry(item.action_summary ?? item.action_id ?? "Protected action", `${item.requested_at ?? "Request time unavailable"} · expires ${item.expires_at ?? "unknown"}`));
+  container.append(element("p", "muted", "Approval details and decisions use the protected approval API; there is no separate review page."));
+}
+
+function renderSystem(container, payload) {
+  const observedAt = payload.observed_at ?? "unknown";
+  container.append(element("p", "muted", `Provider availability: ${payload.provider_availability ?? "unknown"} · no provider probe is run.`));
+  const counts = element("ul", "status-counts");
+  for (const item of payload.task_status_counts ?? []) counts.append(namedEntry(item.status, String(item.count)));
+  container.append(counts);
+  const capacities = payload.resource_capacities;
+  if (Array.isArray(capacities)) {
+    addList(container, capacities.slice(0, 5), "No resource snapshot available.", (item) =>
+      namedEntry(item.scope, `${item.allocated}/${item.limit} slots · ${item.remaining} remaining`));
+    container.append(element("p", "muted", "Configured request slots are software concurrency, not hardware capacity."));
+  } else container.append(element("p", "empty-state", "Resource capacity is not configured; hardware availability is unknown."));
+  container.append(element("p", "muted", `Server snapshot: ${observedAt}`));
+}
+
+function renderKnowledge(container, payload) {
+  const items = [...payload.items].sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at));
+  addList(container, items.slice(0, 5), "No owner-readable Corporation knowledge is retained.", (item) =>
+    namedEntry(item.type, `${item.id} · created ${item.created_at} · expires ${item.expires_at}`));
+  container.append(element("p", "muted", "Metadata only. Private conversation and Project memory are not enumerated here."));
+  const link = element("a", "dashboard-card-link", "Inspect knowledge");
+  link.href = "/ui/memory";
+  container.append(link);
 }
 
 export function renderDashboard(results) {
@@ -356,6 +468,11 @@ export function renderDashboard(results) {
   setPanel("tasks-panel", results.tasks, "Loading tasks…", renderTasks);
   setPanel("projects-panel", results.projects, "Loading projects…", renderProjects);
   setPanel("activity-panel", results.activity, "Loading activity…", renderActivity);
+  setPanel("chat-panel", results.conversations, "Loading owner chat…", renderConversations);
+  setPanel("system-panel", results.system, "Loading system snapshot…", renderSystem);
+  setPanel("approvals-panel", results.approvals, "Loading approvals…", renderApprovals);
+  setPanel("knowledge-panel", results.memory, "Loading retained knowledge…", renderKnowledge);
+  updateFreshnessLabels();
 }
 
 async function refreshDashboard() {
@@ -372,6 +489,10 @@ async function refreshDashboard() {
     ["tasks-panel", "Loading tasks…"],
     ["projects-panel", "Loading projects…"],
     ["activity-panel", "Loading activity…"],
+    ["chat-panel", "Loading owner chat…"],
+    ["system-panel", "Loading system snapshot…"],
+    ["approvals-panel", "Loading approvals…"],
+    ["knowledge-panel", "Loading retained knowledge…"],
   ];
   for (const [panelId, message] of panels) setPanel(panelId, undefined, message, () => {});
   try {
@@ -385,4 +506,5 @@ async function refreshDashboard() {
 if (typeof document !== "undefined") {
   document.getElementById("dashboard-retry").addEventListener("click", refreshDashboard);
   refreshDashboard();
+  window.setInterval?.(updateFreshnessLabels, 15_000);
 }

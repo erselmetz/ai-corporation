@@ -65,6 +65,7 @@ def test_inspect_correct_retain_conflict_and_remove_round_trip(setup):
         listing = client.get("/api/memory?scope=conversation&scope_id=chat")
         assert listing.status_code == 200
         assert "content" not in listing.json()["items"][0]
+        assert datetime.fromisoformat(listing.json()["items"][0]["created_at"]) == NOW
         detail = client.get("/api/memory/record?" + QUERY).json()
         body = dict(content="Corrected note", expires_at=(NOW + timedelta(hours=2)).isoformat(),
                     retention_opt_in=True, revision=detail["revision"])
@@ -77,6 +78,19 @@ def test_inspect_correct_retain_conflict_and_remove_round_trip(setup):
         assert client.get("/api/memory/record?" + QUERY).status_code == 404
     with pytest.raises(KeyError):
         ConversationMemoryStore().retrieve("memory", owner_id="owner", conversation_id="chat", now=NOW)
+
+
+def test_memory_list_is_ordered_by_recent_creation(setup):
+    runtime, _ = setup
+    newer = MemoryRecord("newer", "owner", MemoryScope.CONVERSATION, "chat",
+                         MemoryType.NOTE, "Newer note", "message-new", NOW + timedelta(minutes=1),
+                         NOW + timedelta(hours=2), True)
+    ConversationMemoryStore().retain(newer, now=NOW + timedelta(minutes=1))
+    app = application(runtime, Authentication())
+    app.dependency_overrides[get_memory_now] = lambda: NOW + timedelta(minutes=2)
+    with TestClient(app) as client:
+        items = client.get("/api/memory?scope=conversation&scope_id=chat").json()["items"]
+    assert [item["id"] for item in items] == ["newer", "memory"]
 
 
 @pytest.mark.parametrize("changes", [

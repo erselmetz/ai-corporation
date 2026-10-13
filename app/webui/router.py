@@ -113,6 +113,26 @@ def corporation_dashboard() -> HTMLResponse:
                   <p class="section-state" role="status" aria-live="polite">Loading activityâ€¦</p>
                   <div class="section-data" hidden></div>
                 </section>
+                <section class="dashboard-card" id="chat-panel" aria-labelledby="chat-title">
+                  <h2 id="chat-title">Owner chat</h2>
+                  <p class="section-state" role="status" aria-live="polite">Loading owner chat…</p>
+                  <div class="section-data" hidden></div>
+                </section>
+                <section class="dashboard-card" id="system-panel" aria-labelledby="system-title">
+                  <h2 id="system-title">System &amp; resources</h2>
+                  <p class="section-state" role="status" aria-live="polite">Loading system snapshot…</p>
+                  <div class="section-data" hidden></div>
+                </section>
+                <section class="dashboard-card" id="approvals-panel" aria-labelledby="approvals-title">
+                  <h2 id="approvals-title">Protected-action approvals</h2>
+                  <p class="section-state" role="status" aria-live="polite">Loading approvals…</p>
+                  <div class="section-data" hidden></div>
+                </section>
+                <section class="dashboard-card" id="knowledge-panel" aria-labelledby="knowledge-title">
+                  <h2 id="knowledge-title">Corporation knowledge</h2>
+                  <p class="section-state" role="status" aria-live="polite">Loading retained knowledge…</p>
+                  <div class="section-data" hidden></div>
+                </section>
               </div>
             </main>
           </div>

@@ -2168,7 +2168,7 @@ export const post100Tasks = [
     "title": "Operational command-center dashboard",
     "description": "Present authorized current chat, active Projects and Tasks, Agent/Employee assignments, Providers, resources, approvals, system status, and recent memory/knowledge activity with timestamps and stale/unknown indicators.",
     "category": "Phase G - Command Center UI and Visualization",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       113,
       114,
@@ -2184,12 +2184,23 @@ export const post100Tasks = [
       "Do not invent activity or call Providers from presentation code."
     ],
     "decisions": [
-      "Choose polling or event delivery after load/freshness measurements."
+      "Dashboard refresh remains explicit because source freshness/load measurements are unavailable; combined panels use the oldest successful client read time and mark it stale after 60 seconds without background API polling.",
+      "Expose corporation-scoped retained knowledge metadata only, and omit private Conversation/Project memory and message contents.",
+      "Expose a protected system:read snapshot and preserve each source resource's existing read permission; approval entries are review metadata only."
     ],
     "area": "P23",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-160-operational-command-center-dashboard",
+    "validation": [
+      "Focused dashboard, protected API, memory, local access, capability, chat, and activity regressions: 72 passed. Dashboard module tests: 9 passed.",
+      "Full deterministic Python suite excluding the pre-existing syntactically invalid tests/test_automation_traces.py: 1216 passed, 5 skipped, with the two previously recorded failures in tests/test_command_interface.py::test_model_set_command and tests/test_provider_model_api.py::test_model_replacement_uses_existing_assignment_service.",
+      "Public documentation/task-roadmap/update-manifest tests: 13 passed; dashboard module tests: 9 passed. Python compilation and git diff --check passed."
+    ],
+    "limitations": [
+      "Freshness on most panels is the time the browser last read that protected API; task/project APIs do not provide source-update timestamps. The system panel also displays the server snapshot observed_at.",
+      "Approval panel displays pending approval metadata only and provides no decision controls. Conversation panel lists bounded open-conversation identifiers and coordinator labels, not messages.",
+      "Knowledge panel lists only the ten latest corporation-scope memory metadata records after memory:read authorization; private Conversation/Project memories and content are omitted.",
+      "System provider availability remains UNKNOWN unless separately checked; configured request slots do not establish hardware capacity or feasibility."
+    ]
   },
   {
     "number": 161,
@@ -2626,7 +2637,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-159 are verified; Tasks 160-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-160 are verified; Tasks 161-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

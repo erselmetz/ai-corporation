@@ -65,11 +65,11 @@ class _ScopedMemoryStore:
                 rows = connection.execute(
                     "SELECT k.* FROM corporation_knowledge k WHERE k.scope_id = ? AND "
                     "(k.owner_id = ? OR EXISTS (SELECT 1 FROM corporation_knowledge_readers r "
-                    "WHERE r.knowledge_id = k.id AND r.reader_id = ?)) ORDER BY k.id LIMIT ?",
+                    "WHERE r.knowledge_id = k.id AND r.reader_id = ?)) ORDER BY k.created_at DESC, k.id LIMIT ?",
                     (scope_id, actor_id, actor_id, limit)).fetchall()
             else:
                 rows = connection.execute(
-                    f"SELECT * FROM {self._table} WHERE owner_id = ? AND scope_id = ? ORDER BY id LIMIT ?",
+                    f"SELECT * FROM {self._table} WHERE owner_id = ? AND scope_id = ? ORDER BY created_at DESC, id LIMIT ?",
                     (actor_id, scope_id, limit)).fetchall()
             return tuple(self._record(row) for row in rows)
         finally:

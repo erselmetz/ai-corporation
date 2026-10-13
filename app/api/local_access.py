@@ -26,6 +26,7 @@ READ_PERMISSIONS = frozenset({
     "assignment-policy:read",
     "inventory:read",
     "software:read",
+    "system:read",
 })
 SEMANTIC_MEMORY_PERMISSIONS = frozenset({"memory:index"})
 
