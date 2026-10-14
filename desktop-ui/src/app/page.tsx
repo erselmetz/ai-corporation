@@ -177,6 +177,7 @@ export default function Home() {
           <a className="rail-link" href="/ui/activity">Activity</a>
         </div>
         <div className="rail-group"><span className="rail-group-label">SYSTEM</span>
+          <a className="rail-link" href="/desktop/settings/">Settings</a>
           <a className="rail-link" href="/ui/inventory">Software inventory</a>
           <a className="rail-link" href="/ui/readiness">Performance readiness</a>
           <a className="rail-link" href="/ui/backup">Backup &amp; restore</a>
@@ -234,7 +235,7 @@ export default function Home() {
           <article className="provider-option"><span className="card-index">LOCAL</span><h3>Use a local Ollama service</h3><p>Start Ollama yourself, then use Provider connections to add its loopback address and explicitly refresh the model catalog. Installed-model checks and model selection are separate owner actions.</p><a href="/ui/provider-connections">Set up local connection <span aria-hidden="true">→</span></a></article>
           <article className="provider-option"><span className="card-index">ONLINE</span><h3>Use Google Gemini</h3><p>Connect from the dedicated setup page with an owner-managed API key. Model discovery is an explicit online check; each Gemini chat turn still requires its separate consent.</p><a href="/ui/online-provider">Set up Gemini <span aria-hidden="true">→</span></a></article>
         </div>
-        <p className="preferences-note"><strong>Everyday use:</strong> Chat is available from the main navigation. This version does not yet have a general preferences page; the unified preferences experience remains planned separately.</p>
+        <p className="preferences-note"><strong>Everyday use:</strong> Chat is available from the main navigation. Use <a href="/desktop/settings/">Settings</a> for owner preferences and grouped operator controls.</p>
         <div className="readiness-legend" aria-label="How provider and model readiness terms differ">
           <h3>What each setup signal means</h3>
           <dl>

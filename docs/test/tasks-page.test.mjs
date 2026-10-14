@@ -25,11 +25,16 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-174-175");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 175 }, (_, index) => 175 - index));
-  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*168 completed.*2 deferred and incomplete.*5 planned/);
-  assert.match(elements["next-task"].textContent, /Next: Task 171/);
+  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*169 completed.*2 deferred and incomplete.*4 planned/);
+  assert.match(elements["next-task"].textContent, /Next: Task 172/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
+  assert.equal(tasks.find(task => task.number === 171).status, "completed");
+  assert.equal(tasks.find(task => task.number === 171).checkpoint, "task-171-unified-settings-operator-controls");
+  assert.match(tasks.find(task => task.number === 171).validation.join(" "), /Next.js static production build/);
+  assert.match(tasks.find(task => task.number === 171).limitations.join(" "), /installer was not rebuilt/);
+  assert.equal(tasks.find(task => task.number === 172).status, "planned");
   assert.equal(tasks.find(task => task.number === 166).status, "completed");
   assert.equal(tasks.find(task => task.number === 166).checkpoint, "task-166-opt-in-proactive-suggestions");
   assert.match(tasks.find(task => task.number === 166).validation.join(" "), /194 passed/);
@@ -129,10 +134,15 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.match(elements["roadmap-rules"].textContent, /identical generated code is not guaranteed/);
 });
 
-test("publishes the remaining usability, visualization, settings, and multimodal scopes as planned", () => {
-  const planned = tasks.filter(task => task.number >= 171);
+test("publishes the completed settings milestone and remaining phases as planned", () => {
+  const settings = tasks.find(task => task.number === 171);
+  assert.equal(settings.status, "completed");
+  assert.equal(settings.checkpoint, "task-171-unified-settings-operator-controls");
+  assert.match(settings.validation.join(" "), /17 passed.*33 passed/);
+  assert.match(settings.limitations.join(" "), /installer was not rebuilt/);
+  const planned = tasks.filter(task => task.number >= 172);
   assert.deepEqual(planned.map(task => [task.number, task.status]), [
-    [171, "planned"], [172, "planned"], [173, "planned"], [174, "planned"], [175, "planned"],
+    [172, "planned"], [173, "planned"], [174, "planned"], [175, "planned"],
   ]);
   const corporationMap = planned.find(task => task.number === 172);
   assert.match(corporationMap.description, /interactive, evidence-backed 3D map/);
@@ -145,6 +155,5 @@ test("publishes the remaining usability, visualization, settings, and multimodal
   const multimodal = planned.find(task => task.number === 174);
   assert.match(multimodal.acceptance.join(" "), /microphone, camera, screen-capture/);
   assert.match(multimodal.outOfScope.join(" "), /Do not auto-enable/);
-  assert.match(planned.find(task => task.number === 171).acceptance.join(" "), /advanced provider\/model/);
   assert.match(planned.find(task => task.number === 175).acceptance.join(" "), /keyboard-only use, screen-reader semantics/);
 });

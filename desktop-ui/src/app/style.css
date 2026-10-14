@@ -93,6 +93,32 @@ a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; border-ra
 .provider-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .preferences-note { margin: 12px 0; padding: 10px 12px; border-left: 2px solid var(--violet); color: #aebdcb; background: rgba(179, 155, 255, 0.055); font-size: 10px; line-height: 1.6; }
 .preferences-note strong { color: #d7caff; }
+.preferences-note a { color: var(--cyan); text-decoration: underline; text-underline-offset: 3px; }
+.settings-page { padding-bottom: 36px; }
+.settings-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; padding: 35px 0 26px; }
+.settings-heading .eyebrow { color: #8190a4; }
+.settings-heading h1 { margin-top: 8px; font-size: clamp(32px, 4vw, 48px); letter-spacing: -0.045em; }
+.settings-heading p:last-child { max-width: 680px; margin: 10px 0 0; color: #a0adbc; font-size: 12px; line-height: 1.65; }
+.settings-section { padding: 22px 0 27px; border-top: 1px solid var(--line-soft); }
+.settings-section .section-heading { margin-bottom: 14px; }
+.settings-section .section-heading h2 { font-size: 19px; }
+.settings-intro { max-width: 900px; margin: -4px 0 16px; color: #9eacbb; font-size: 11px; line-height: 1.65; }
+.settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+.settings-card { min-width: 0; padding: 15px; border: 1px solid var(--line); border-radius: 9px; background: linear-gradient(145deg, rgba(18, 29, 43, 0.85), rgba(10, 16, 25, 0.72)); }
+.settings-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.settings-card h3 { margin: 0; font-size: 13px; }
+.settings-state { flex: 0 0 auto; color: #b5a2f4; font: 700 8px ui-monospace, "Cascadia Code", Consolas, monospace; letter-spacing: 0.06em; text-transform: uppercase; }
+.settings-state.ready { color: #82dfc3; }
+.settings-state.empty, .settings-state.sign-in { color: var(--amber); }
+.settings-state.denied, .settings-state.failed { color: #ff9e9e; }
+.settings-card > p { margin: 10px 0 0; color: #a0adbc; font-size: 10px; line-height: 1.6; }
+.settings-card .settings-message { color: #d0d9e3; }
+.settings-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; margin: 12px 0 0; }
+.settings-values dt { color: #8290a2; font-size: 9px; }
+.settings-values dd { margin: 3px 0 0; color: #d6e1eb; font-size: 10px; overflow-wrap: anywhere; }
+.settings-source { display: block; margin-top: 10px; color: #8290a2; font: 9px ui-monospace, "Cascadia Code", Consolas, monospace; overflow-wrap: anywhere; }
+.settings-link { display: inline-block; margin-top: 12px; color: var(--cyan); font-size: 10px; font-weight: 700; }
+.settings-link:focus-visible { outline: 2px solid var(--ui-cyan); outline-offset: 3px; }
 .provider-option { padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(135deg, rgba(17, 29, 43, 0.85), rgba(11, 17, 26, 0.75)); }
 .provider-option h3 { margin: 12px 0 7px; font-size: 13px; }
 .provider-option p, .operator-groups small { display: block; margin: 0; color: #9eacbb; font-size: 10px; line-height: 1.65; }
@@ -169,6 +195,8 @@ h1 span { color: #a4b4c7; }
   .hero { min-height: 390px; }
   .readiness { padding: 15px; }
   .provider-options, .readiness-legend dl, .operator-groups { grid-template-columns: 1fr; }
+  .settings-grid, .settings-values { grid-template-columns: 1fr; }
+  .settings-heading { align-items: flex-start; flex-direction: column; }
   .guide-steps { grid-template-columns: 1fr; }
   .shell { grid-template-columns: var(--ui-nav-width-compact) minmax(0, 1fr); }
   .rail { padding-right: 15px; padding-left: 15px; }

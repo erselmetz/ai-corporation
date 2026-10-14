@@ -2573,7 +2573,7 @@ export const post100Tasks = [
     "title": "Unified settings and operator controls",
     "description": "Provide one coherent settings experience that keeps everyday preferences simple and advanced system controls discoverable and safely separated.",
     "category": "Phase J - Settings and Operator Controls",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       132,
       133,
@@ -2592,9 +2592,17 @@ export const post100Tasks = [
     ],
     "decisions": [],
     "area": "P26",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-171-unified-settings-operator-controls",
+    "validation": [
+      "Focused Electron onboarding/settings tests: 17 passed.",
+      "Next.js static production build and TypeScript checks passed; /settings was exported.",
+      "Existing owner access, preference, provider connection, capability grant, and system-monitor regressions: 33 passed.",
+      "Public documentation tests: 16 passed."
+    ],
+    "limitations": [
+      "The settings hub reads only existing permission-checked endpoints and links to existing pages for changes; it adds no runtime settings or authority.",
+      "The Electron installer was not rebuilt. The installed package must be rebuilt to include the new static settings route; hardware feasibility remains unknown."
+    ]
   },
   {
     "number": 172,
@@ -2732,7 +2740,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 are verified; Task 171 is next and Tasks 171-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 are verified; Task 171 is complete and Task 172 is next; Tasks 172-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
