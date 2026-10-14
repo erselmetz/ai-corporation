@@ -43,6 +43,11 @@ class UpdatesListResponse(BaseModel):
     items: list[UpdateResponse]
 
 
+class ReleasePrepareRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    version: str = Field(min_length=5, max_length=40, pattern=r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$")
+
+
 class GitHubLatestReleaseResponse(BaseModel):
     tag_name: str
     name: str | None

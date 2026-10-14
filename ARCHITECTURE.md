@@ -1,4 +1,4 @@
-﻿# ERSELMETZ AI â€” Current Architecture and Roadmap
+# ERSELMETZ AI â€” Current Architecture and Roadmap
 
 ## Product definition
 
@@ -672,7 +672,7 @@ The CEO label/hierarchy, workforce delegation and richer onboarding remain plann
 
 The shared post-100 implementation checklist is authoritative in
 `docs/tasks-data.mjs` (`post100Tasks` and `roadmapRules`) and displayed on the
-public `docs/tasks.html`: Tasks 101-133 and Tasks 135-166 are verified complete; Task 134 is deferred and incomplete; Tasks 167-175 remain planned. Task 129 provides clean-install evidence for the
+public `docs/tasks.html`: Tasks 101-133 and Tasks 135-167 are verified complete; Task 134 is deferred and incomplete; Tasks 168-175 remain planned. Task 129 provides clean-install evidence for the
 local Windows 11 x64 Electron package; it does not claim production completeness.
 Every task has dependencies, acceptance checks, exclusions and explicit decision
 gates; completed post-100 records include checkpoint and validation evidence.
@@ -1430,3 +1430,11 @@ The existing authorized workflow-map service supplies process-local work-item, a
 ## Task 166 opt-in workflow suggestions
 
 `OwnerSuggestionService` reads the existing process-local workflow review service only after `workflow:read` authorization and only when the owner enabled suggestions. It formats at most ten fixed review prompts for blocked, failed, interrupted, review-pending, or uncertain work; source identifiers, last recorded item event time when available, and request observation time are exposed, while prompts, outputs, titles, and provider error strings remain omitted. Owner settings and dismissals use additive local SQLite storage and the existing same-origin/CSRF controls. A browser-local quiet interval suppresses retrieval and display. Requests occur only at dashboard load or explicit refresh. There are no notifications, polling, Provider/Agent calls, Task or tool execution, or authority changes. Checkpoint: `task-166-opt-in-proactive-suggestions`.
+
+## Task 167 - Trusted updates and configuration migration
+
+`TrustedReleaseService` checks only `https://api.github.com/repos/erselmetz/ai-corporation/releases/latest`. It accepts bounded release metadata and assets from the fixed repository, follows only HTTPS GitHub asset redirects, verifies a detached Ed25519 signature against the public key embedded in the application, checks the release tag/version binding, and verifies the Windows x64 installer SHA-256 while streaming it to a temporary path. It never reads API credentials, follows an arbitrary origin, installs, retries, downgrades, or changes provider/model/task state. `GET /api/updates/release` requires `updates:read`; explicit preparation requires `updates:manage` and same-origin CSRF. The protected Updates page uses `textContent` for all signed strings.
+
+Preparation accepts only a newer signed release whose declared configuration source version matches the local SQLite `PRAGMA user_version` and whose target is supported by this build. It creates a SQLite online backup and verifies `PRAGMA quick_check` before moving the verified installer into `%LOCALAPPDATA%\\ERSELMETZ AI\\updates`. The owner closes the app and runs that file manually. The backup covers the SQLite database only; provider-side data, external model files, and files outside the database are not covered. Recovery requires a manual reinstall and, if needed, a manual SQLite restore. This does not guarantee that a prior executable can read a database after a future schema-changing migration; no downgrade is attempted.
+
+The legacy additive database initialization is migration version 0 to 1. Its schema changes and `user_version` update run in one transaction; a database declaring a newer version fails before mutation. The initial signed release format supports only the current version 1 configuration schema. `desktop/scripts/sign-release-manifest.cjs` creates the signed manifest for a manually published GitHub release. The Ed25519 private key is stored outside the repository under the current Windows user's `%LOCALAPPDATA%\\ERSELMETZ AI\\release-signing` directory. The generated PEM is unencrypted at rest; its directory ACL is restricted to the current Windows user and SYSTEM. Keep an encrypted offline backup and rotate the key if this profile is exposed. The key is not included in the release package. No automatic updater or public release feed is activated; until a matching signed GitHub release exists, on-demand checks return a safe unavailable result. The NSIS installer is still unsigned by Windows Authenticode, so the in-app signature verifies publisher-controlled release integrity but does not suppress Windows publisher warnings. Checkpoint: `task-167-trusted-updates-config-migration`.

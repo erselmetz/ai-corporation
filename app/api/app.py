@@ -33,6 +33,7 @@ from app.application import (
 )
 from app.documentation import MarkdownDocumentationSource
 from app.updates import CuratedUpdatesManifest
+from app.updates.trusted_release import TrustedReleaseError, TrustedReleaseService
 from app.application.services.owned_chat import ChatConflict
 from app.integrations import SandboxImagePolicy
 from app.runtime import create_corporation_runtime
@@ -80,6 +81,7 @@ from .models import (
     TaskResponse,
     UpdatesListResponse,
     UpdateResponse,
+    ReleasePrepareRequest,
 )
 from app.orchestrator.router import RoutingError
 from .security import (
@@ -231,6 +233,34 @@ def list_updates(
             for update in updates
         ]
     )
+
+
+@corporation_router.get(
+    "/updates/release",
+    dependencies=[Depends(require_permission("updates:read"))],
+)
+def check_trusted_release(request: Request) -> dict[str, object]:
+    try:
+        return request.app.state.trusted_release_service.check().response()
+    except TrustedReleaseError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@corporation_router.post(
+    "/updates/release/prepare",
+    dependencies=[Depends(require_permission("updates:manage"))],
+)
+def prepare_trusted_release(
+    payload: ReleasePrepareRequest,
+    request: Request,
+) -> dict[str, object]:
+    csrf = getattr(request.app.state.authentication_backend, "require_csrf", None)
+    if callable(csrf):
+        csrf(request)
+    try:
+        return request.app.state.trusted_release_service.prepare(payload.version)
+    except TrustedReleaseError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @corporation_router.get(
@@ -962,6 +992,7 @@ def create_app(
     authentication_backend: AuthenticationBackend | None = None,
     documentation_source: DocumentationSource | None = None,
     updates_source: UpdatesSource | None = None,
+    trusted_release_service: TrustedReleaseService | None = None,
     github_repository_inspection_service: GitHubRepositoryInspectionService | None = None,
     repository_study_service: RepositoryStudyService | None = None,
     maintenance_sandbox_image_policy: SandboxImagePolicy | None = None,
@@ -1005,6 +1036,11 @@ def create_app(
                 Path(__file__).resolve().parents[2] / "corporation_updates.json"
             )
         application.state.updates_service = UpdatesApplicationService(source_updates)
+        application.state.trusted_release_service = (
+            trusted_release_service
+            if trusted_release_service is not None
+            else TrustedReleaseService(Path.cwd())
+        )
         inspection_service = (
             GitHubRepositoryInspectionService()
             if github_repository_inspection_service is None

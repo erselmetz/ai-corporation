@@ -44,6 +44,7 @@ def test_login_session_cookie_and_logout_revocation():
         assert "employee:read" in record.json()["permissions"]
         assert "system:read" in record.json()["permissions"]
         assert "github:read" in record.json()["permissions"]
+        assert "updates:manage" in record.json()["permissions"]
         assert {"software:read", "software:manage"}.issubset(record.json()["permissions"])
         assert {
             "employee-chat:read",

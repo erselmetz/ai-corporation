@@ -13,10 +13,10 @@ local artifact `desktop/release/task129/ERSELMETZ-AI-Setup-0.1.0-win-x64.exe`
 (SHA-256
 `206A36D5C94FD76B2696C01F95CD842C24E3A79FD05FEB7FDB45F3DA101DC091`). That
 ignored local artifact is not a public download or an update feed. The installer
-is unsigned; Windows may display an unknown-publisher warning. Do not treat an
-unsigned copy as a verified public release. Public distribution requires an
-owner-controlled code-signing and release process, with signature and artifact
-provenance verification established before advertising a supported release.
+is unsigned by Windows Authenticode, so Windows may display an unknown-publisher
+warning. Task 167 adds in-app Ed25519 verification of a fixed GitHub Releases
+origin and signed artifact digest; this does not provide Authenticode publisher
+identity or mean that a public release has been published.
 
 The packaged installer is per-user, does not request elevation, creates Start
 Menu and Desktop shortcuts, and does not start the app after installation. The
@@ -26,12 +26,24 @@ registries, and the repository's locked Python and Node dependencies. The
 installed app uses Windows current-user DPAPI and loopback services; other OS
 targets have not been evaluated for those behaviors.
 
-There is no automatic updater, update endpoint, or configured public source.
-Updates are manual reinstalls from an installer the owner obtained through a
-trusted, independently verified source. Task 129 verified uninstall and
-reinstall of the same local version, with `%LOCALAPPDATA%\ERSELMETZ AI` and
-the DPAPI owner verifier preserved. This does not prove downgrade, database
-rollback, cross-version migration, or recovery from a corrupt data directory.
+There is no automatic updater. The protected Updates page checks only
+`https://api.github.com/repos/erselmetz/ai-corporation/releases/latest` after an
+explicit owner request and verifies a detached Ed25519 signature using the
+public key pinned in the app. The owner can explicitly prepare a newer
+compatible signed Windows x64 installer; the app rechecks its SHA-256, creates
+a verified SQLite online backup, and saves the installer under
+`%LOCALAPPDATA%\ERSELMETZ AI\updates`. The owner closes the app and runs the
+installer manually. Release notes and the signed configuration migration
+preview appear before preparation. No signed public release is claimed until
+the owner publishes matching signed assets. The generated PEM signing key is
+stored outside this repository under `%LOCALAPPDATA%\ERSELMETZ AI\release-signing`.
+It is unencrypted at rest; its directory ACL is limited to the current Windows
+user and SYSTEM. Keep an encrypted offline backup and rotate the key if this
+profile is exposed. A recovery backup covers only the application
+SQLite database. Reinstalling a previous installer and restoring data are
+manual; compatibility with a prior version after a future schema migration is
+not guaranteed. Task 129 verified reinstall of the same local version and
+preservation of the owner verifier.
 To repeat owner setup, remove only
 `%LOCALAPPDATA%\ERSELMETZ AI\owner-credential.dpapi`; this leaves app data
 in place. Back up and remove remaining app data separately only when the owner

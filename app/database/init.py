@@ -1,10 +1,16 @@
 from .connection import get_connection
 
+CURRENT_CONFIGURATION_VERSION = 1
+
 
 def initialize_database() -> None:
     connection = get_connection()
 
     try:
+        configuration_version = connection.execute("PRAGMA user_version").fetchone()[0]
+        if configuration_version > CURRENT_CONFIGURATION_VERSION:
+            raise RuntimeError("Application configuration is newer than this release supports")
+        connection.execute("BEGIN IMMEDIATE")
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS tasks (
@@ -185,6 +191,9 @@ def initialize_database() -> None:
         """)
         connection.execute("CREATE INDEX IF NOT EXISTS execution_queue_fifo ON execution_queue(corporation_id, state, sequence)")
 
+        # Version zero is the legacy additive schema. Keep its existing records
+        # and publish the migrated version only after every DDL/DML step succeeds.
+        connection.execute(f"PRAGMA user_version = {CURRENT_CONFIGURATION_VERSION}")
         connection.commit()
 
     finally:

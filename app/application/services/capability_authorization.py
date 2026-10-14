@@ -48,7 +48,7 @@ _LEGACY_PERMISSION_NAMES = (
     "online-provider:connect", "online-provider:disconnect", "position:manage",
     "position:read", "project:create", "project:read", "provider-connection:manage",
     "provider-connection:read", "provider:manage", "provider:read", "screen:capture", "camera:capture", "software:manage",
-    "software:read", "system:read", "task:create", "task:dispatch", "task:read", "updates:read",
+    "software:read", "system:read", "task:create", "task:dispatch", "task:read", "updates:manage", "updates:read",
     "workflow:manage", "workflow:read",
 )
 _HIGH_RISK = frozenset({
@@ -56,7 +56,7 @@ _HIGH_RISK = frozenset({
     "maintenance:experiment", "task:dispatch", "software:manage", "provider-connection:manage",
     "online-provider:connect", "online-provider:disconnect", "chat-history:manage",
     "memory:manage", "memory:index", "documentation:review", "task:create", "capability-grant:manage",
-    "capability-approval:manage",
+    "capability-approval:manage", "updates:manage",
     "capability-audit:read",
     "capability-emergency:manage",
     "browser:act",

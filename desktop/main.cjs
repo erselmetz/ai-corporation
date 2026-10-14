@@ -76,7 +76,7 @@ function handleChildErrors(child) {
 }
 
 function safeBackendEnvironment() {
-  const env = {};
+  const env = { ERSELMETZ_APP_VERSION: require("./package.json").version };
   for (const key of ["LOCALAPPDATA", "APPDATA", "USERPROFILE", "SYSTEMROOT", "WINDIR", "TEMP", "TMP"]) {
     if (process.env[key]) env[key] = process.env[key];
   }

@@ -331,6 +331,19 @@ def updates_page() -> HTMLResponse:
                 <p id="updates-list-state" class="section-state" role="status" aria-live="polite">Loading updatesâ€¦</p>
                 <ol id="updates-list" class="updates-list" aria-label="Corporation updates"></ol>
               </section>
+              <section class="management-card" aria-labelledby="trusted-release-title">
+                <h2 id="trusted-release-title">Signed application release</h2>
+                <p>Check the fixed ERSELMETZ AI GitHub release origin. The app verifies a pinned Ed25519 signature before showing notes or migration details. Preparing an update downloads only a verified Windows x64 installer and creates a local SQLite recovery backup; installation remains a manual owner action.</p>
+                <button id="release-check" type="button">Check for release</button>
+                <p id="release-state" class="section-state" role="status" aria-live="polite">No release check has been performed.</p>
+                <div id="release-preview" hidden>
+                  <h3 id="release-version"></h3>
+                  <p><strong>Release notes</strong></p><p id="release-notes"></p>
+                  <p><strong>Configuration migration preview</strong></p><p id="release-migration"></p>
+                  <button id="release-prepare" type="button" disabled>Prepare verified installer and backup</button>
+                  <p id="release-prepare-state" role="status" aria-live="polite"></p>
+                </div>
+              </section>
             </main>
           </div>
         </body>

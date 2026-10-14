@@ -1,3 +1,5 @@
+import { mountReleaseUpdatePage } from "./release-update.mjs";
+
 function validUpdate(entry) {
   if (
     !entry ||
@@ -73,6 +75,7 @@ export function mountUpdatesPage({
   const list = documentRef.getElementById("updates-list");
   const listState = documentRef.getElementById("updates-list-state");
   const refreshButton = documentRef.getElementById("updates-refresh");
+  mountReleaseUpdatePage({ documentRef, fetchImpl });
   let isLoading = false;
 
   async function loadUpdates() {
