@@ -170,9 +170,12 @@ describe("documentation site", () => {
     assert.match(task170.decisions.join(" "), /exclude app-managed capability-pack installation\/loading/);
     assert.match(task170.limitations.join(" "), /No independent security\/privacy reviewer/);
     const task175 = tasks.find(task => task.number === 175);
+    assert.equal(task175.status, "planned");
     assert.ok(!task175.dependsOn.includes(134));
     assert.match(task175.acceptance.join(" "), /capability packs are unavailable/);
     assert.match(task175.decisions.join(" "), /Task 134 is deferred and excluded/);
+    assert.match(task175.validation.join(" "), /3\.56:1 against.*four media indicators.*all announced changes/);
+    assert.match(task175.limitations.join(" "), /No representative new or experienced owner participated/);
     assert.equal(tasks.find(task => task.number === 163).status, "completed");
     assert.equal(tasks.find(task => task.number === 163).checkpoint, "task-163-original-assistant-identity");
     assert.match(tasks.find(task => task.number === 163).decisions.join(" "), /do not grant permissions/);
@@ -461,7 +464,11 @@ describe("documentation site", () => {
         assert.ok(task.validation.length > 0 && task.limitations.length > 0);
       } else {
         assert.equal(task.checkpoint, null);
-        assert.deepEqual(task.validation, []);
+        if (task.number === 175) {
+          assert.ok(task.validation.length > 0 && task.limitations.length > 0);
+        } else {
+          assert.deepEqual(task.validation, []);
+        }
       }
     }
     assert.match(roadmapRules.completion, /acceptance evidence/);

@@ -33,10 +33,10 @@ def _emergency_controls() -> str:
       <p>Inspect support, current activity, permissions, and session grants. Voice and media stay off until you start them.</p>
       <p id="emergency-state" role="status" aria-live="polite">Loading safety status…</p>
       <ul id="capability-indicators" class="capability-indicators" aria-label="Multimodal support and current activity">
-        <li><strong>Microphone</strong><span id="capability-microphone-support">Checking support</span><span id="capability-microphone-activity" role="status">Unknown</span><span>Local recognition; cloud transcription needs separate consent.</span></li>
-        <li><strong>Camera</strong><span id="capability-camera-support">Checking support</span><span id="capability-camera-activity" role="status">Unknown</span><span>One local frame; provider transfer requires per-turn consent.</span></li>
-        <li><strong>Screen capture</strong><span id="capability-screen-support">Checking support</span><span id="capability-screen-activity" role="status">Unknown</span><span>One local frame; provider transfer requires per-turn consent.</span></li>
-        <li><strong>Speech playback</strong><span id="capability-playback-support">Checking support</span><span id="capability-playback-activity" role="status">Unknown</span><span>Local device voices only; no online fallback.</span></li>
+        <li><strong>Microphone</strong><span id="capability-microphone-support">Checking support</span><span id="capability-microphone-activity">Unknown</span><span>Local recognition; cloud transcription needs separate consent.</span></li>
+        <li><strong>Camera</strong><span id="capability-camera-support">Checking support</span><span id="capability-camera-activity">Unknown</span><span>One local frame; provider transfer requires per-turn consent.</span></li>
+        <li><strong>Screen capture</strong><span id="capability-screen-support">Checking support</span><span id="capability-screen-activity">Unknown</span><span>One local frame; provider transfer requires per-turn consent.</span></li>
+        <li><strong>Speech playback</strong><span id="capability-playback-support">Checking support</span><span id="capability-playback-activity">Unknown</span><span>Local device voices only; no online fallback.</span></li>
         <li><strong>Vision</strong><span id="capability-vision-support">Checking support</span><span>Inactive until an image is selected</span><span>Images stay temporary; provider transfer requires explicit per-turn consent.</span></li>
         <li><strong>Computer automation</strong><span id="capability-automation-support">Unavailable</span><span id="capability-automation-activity">Inactive</span><span>No in-app automation execution control is exposed.</span></li>
       </ul>
@@ -90,7 +90,7 @@ def corporation_dashboard() -> HTMLResponse:
                 <div class="setup-links">
                   <a href="/ui/login">Sign in</a><a href="/ui/providers">Review providers &amp; models</a><a href="/ui/employees">Review AI team</a>
                 </div>
-                <p class="setup-boundary">Provider registration and model assignments show configuration only. Provider availability is not checked here; no model is downloaded or reassigned.</p>
+                <p class="setup-boundary">Provider registration and model assignments show configuration only. Provider availability is not checked here; no model is downloaded or reassigned. App-managed capability packs are unavailable. A browser-managed speech language pack, when offered, is separate.</p>
               </section>
               {_emergency_controls()}
               <section class="dashboard-card suggestion-panel" aria-labelledby="suggestions-title">
@@ -846,7 +846,7 @@ def coordinator_chat_page():
     <label for="voice-local-model">Installed local speech model</label><select id="voice-local-model" disabled><option value="">Checking local model folder…</option></select>
     <p id="voice-local-model-state" role="status" aria-live="polite">Optional Faster-Whisper is not installed by default.</p>
     <button id="voice-start" type="button" disabled>Start voice</button>
-    <button id="voice-install-local" type="button" hidden>Install local language pack</button>
+    <button id="voice-install-local" type="button" hidden>Install browser speech language pack</button><p class="muted">This optional language pack is managed by the browser for on-device speech. ERSELMETZ AI app-managed capability packs are unavailable.</p>
     <button id="voice-transcribe" type="button" hidden>Transcribe via Gemini (send recording)</button>
     <button id="voice-stop" type="button" hidden>Stop / discard voice request</button>
     <p id="voice-cloud-consent-panel"><label><input id="voice-cloud-consent" type="checkbox">

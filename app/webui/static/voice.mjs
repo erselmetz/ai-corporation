@@ -257,7 +257,7 @@ export function mountVoiceControls({
     localAvailability = availability;
     if (availability !== "available") {
       if (availability === "downloadable") {
-        setState("This local language pack is downloadable. Select Install local pack; speech audio will still be processed on this device.");
+        setState("A browser-managed speech language pack is available. Choose Install browser speech language pack; speech audio remains on this device.");
       } else {
         setState("On-device speech recognition is unavailable for this language. No cloud fallback was used.");
       }
@@ -322,17 +322,17 @@ export function mountVoiceControls({
 
   async function installLocalPack() {
     const languageCode = language.value.trim();
-    if (!Recognition?.install || !confirmImpl(`Download the ${languageCode} on-device speech pack? Microphone audio will remain local.`)) return;
+    if (!Recognition?.install || !confirmImpl(`Download the browser-managed ${languageCode} speech language pack? Microphone audio will remain local.`)) return;
     stage = "installing";
     updateControls();
-    setState("Downloading the selected on-device language pack. No microphone audio is sent.");
+    setState("Downloading the selected browser speech language pack. No microphone audio is sent.");
     try {
       const installed = await Recognition.install({ langs: [languageCode], processLocally: true });
       localAvailability = installed ? "available" : "downloadable";
-      setState(installed ? "Local language pack installed. Start a new local recording when ready."
-        : "The local language pack could not be installed. No cloud fallback was used.");
+      setState(installed ? "Browser speech language pack installed. Start a new local recording when ready."
+        : "The browser speech language pack could not be installed. No cloud fallback was used.");
     } catch {
-      setState("The local language pack could not be installed. No cloud fallback was used.");
+      setState("The browser speech language pack could not be installed. No cloud fallback was used.");
     } finally { stage = "idle"; updateControls(); }
   }
 

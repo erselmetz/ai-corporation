@@ -10,7 +10,7 @@ type SetupSnapshot = {
   providers: CheckState;
   modelAssignment: CheckState;
   providerAvailability: "unknown";
-  optionalCapabilities: "unknown";
+  optionalCapabilities: "unavailable";
 };
 
 const initialSetup: SetupSnapshot = {
@@ -20,7 +20,7 @@ const initialSetup: SetupSnapshot = {
   providers: "checking",
   modelAssignment: "checking",
   providerAvailability: "unknown",
-  optionalCapabilities: "unknown",
+  optionalCapabilities: "unavailable",
 };
 
 const copy: Record<CheckState | "unknown", string> = {
@@ -213,7 +213,7 @@ export default function Home() {
           {checkRow("Provider availability", "unknown", "No live provider health check is run from this screen.")}
           {checkRow("Installed app verification", "unknown", "The app does not expose installer signature or package-integrity verification.")}
           {checkRow("Installed models", "unknown", "Inventory is not automatic; use the separate local-model page to choose an Agent and explicitly refresh.")}
-          {checkRow("Optional capabilities", "unknown", "The current app has no general detector for optional capability packs.")}
+          {checkRow("App-managed capability packs", "unavailable", "Task 134 remains deferred; this app does not install or load capability packs. Browser speech language packs are separate.")}
         </ul>
         <div className="setup-actions"><a href="/ui/login">Sign in</a><a href="/ui/providers">Review providers &amp; models</a><a href="/ui/local-models">Check local model inventory</a><a href="/ui/employees">Review AI team</a></div>
       </section>

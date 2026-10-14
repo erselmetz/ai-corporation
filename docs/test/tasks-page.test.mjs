@@ -159,5 +159,8 @@ test("publishes the completed settings milestone and remaining phases as planned
   const multimodal = planned.find(task => task.number === 174);
   assert.match(multimodal.acceptance.join(" "), /microphone, camera, screen-capture/);
   assert.match(multimodal.outOfScope.join(" "), /Do not auto-enable/);
-  assert.match(planned.find(task => task.number === 175).acceptance.join(" "), /keyboard-only use, screen-reader semantics/);
+  const usability = planned.find(task => task.number === 175);
+  assert.match(usability.acceptance.join(" "), /keyboard-only use, screen-reader semantics/);
+  assert.match(usability.validation.join(" "), /Expert heuristic walkthrough.*not a representative owner study/);
+  assert.match(usability.limitations.join(" "), /Task 175 remains planned/);
 });

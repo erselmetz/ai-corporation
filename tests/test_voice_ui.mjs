@@ -180,7 +180,7 @@ test("local voice denial and unsupported language fail closed without cloud fall
   assert.equal(unsupported.elements["voice-install-local"].hidden, true);
 });
 
-test("downloadable local language packs require a separate owner action", async () => {
+test("browser-managed downloadable speech languages require a separate owner action", async () => {
   let installs = 0;
   let starts = 0;
   class Recognition {
@@ -195,10 +195,12 @@ test("downloadable local language packs require a separate owner action", async 
   assert.equal(starts, 0);
   assert.equal(installs, 0);
   assert.equal(ui.elements["voice-install-local"].hidden, false);
+  assert.match(ui.elements["voice-state"].textContent, /browser-managed speech language pack/);
   await ui.elements["voice-install-local"].listeners.click();
   assert.equal(installs, 1);
   assert.equal(starts, 0);
   assert.equal(ui.elements["voice-install-local"].hidden, true);
+  assert.match(ui.elements["voice-state"].textContent, /Browser speech language pack installed/);
 });
 
 test("cloud audio requires one-use consent and places only the reviewed transcript in chat", async () => {

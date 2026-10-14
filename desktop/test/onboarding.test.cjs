@@ -14,12 +14,13 @@ test("first-run checks are bounded and report unsupported evidence as unknown", 
   assert.match(page, /boundedFetch\("\/api\/providers"\)/);
   assert.match(page, /boundedFetch\("\/api\/agents"\)/);
   assert.match(page, /providerAvailability: "unknown"/);
-  assert.match(page, /optionalCapabilities: "unknown"/);
+  assert.match(page, /optionalCapabilities: "unavailable"/);
   assert.match(page, /Installed app verification/);
   assert.match(page, /Installed models/);
   assert.match(page, /Coordinator chat permission/);
   assert.match(page, /does not verify installer integrity/);
   assert.match(page, /No live provider health check is run/);
+  assert.match(page, /Task 134 remains deferred; this app does not install or load capability packs/);
 });
 
 test("onboarding explains the shortest chat path and keeps operator controls separate", () => {

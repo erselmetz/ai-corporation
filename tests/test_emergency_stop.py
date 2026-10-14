@@ -89,6 +89,11 @@ def test_dashboard_and_chat_expose_unified_capability_controls_and_capture_state
         assert 'id="emergency-resume"' in page
         assert 'id="emergency-activity"' in page
         assert 'id="capability-indicators"' in page
+        assert 'id="capability-microphone-activity" role="status"' not in page
+        assert 'id="capability-camera-activity" role="status"' not in page
+        assert 'id="capability-screen-activity" role="status"' not in page
+        assert 'id="capability-playback-activity" role="status"' not in page
+        assert 'id="emergency-activity" role="status" aria-live="polite"' in page
         assert 'id="capability-microphone-activity"' in page
         assert 'id="capability-camera-activity"' in page
         assert 'id="capability-screen-activity"' in page
@@ -100,3 +105,5 @@ def test_dashboard_and_chat_expose_unified_capability_controls_and_capture_state
         assert "provider transfer requires per-turn consent" in page
         assert "Session permissions end at sign-out or session expiry" in page
         assert "/ui/static/emergency-stop.mjs" in page
+    assert "App-managed capability packs are unavailable" in dashboard
+    assert "Install browser speech language pack" in chat

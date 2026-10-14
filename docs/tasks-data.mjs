@@ -2766,8 +2766,16 @@ export const post100Tasks = [
     ],
     "area": "P28",
     "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "validation": [
+      "Expert heuristic walkthrough on 2026-10-15 covered first-run readiness, owner sign-in, chat, provider/model setup, permission review, troubleshooting links, navigation, organization and knowledge maps. It is not a representative owner study.",
+      "Reproducible findings and verified fixes: (medium) open desktop first-run Setup checks: unsupported app-managed capability packs appeared Unknown; now Unavailable, with browser speech packs identified separately. (medium) #647488 small text measured 3.56:1 against #121d2b, below 4.5:1; shared #77889c now measures at least 4.68:1 on reviewed dark surfaces. (low) open /ui or /ui/chat and inspect Capability controls: four media indicators plus the aggregate status all announced changes; per-indicator live roles were removed while the aggregate remains announced. (low) Chat voice controls now label optional language downloads browser-managed.",
+      "Focused UI regressions: 31 Python tests and 15 voice/safety browser-module tests passed; full browser-module suite: 206 passed; Electron tests: 17 passed; Next.js static production build and TypeScript checks passed; public documentation tests: 16 passed; update-manifest tests: 6 passed; git diff --check passed."
+    ],
+    "limitations": [
+      "No representative new or experienced owner participated. The first acceptance criterion is incomplete; Task 175 remains planned and must not be represented as completed.",
+      "Keyboard navigation and screen-reader semantics were reviewed in code and automated checks, but no assistive technology session or independent accessibility audit was performed. Responsive breakpoints and reduced-motion rules were inspected, not tested across physical devices or every viewport.",
+      "No usability or accessibility conformance claim is made. The full Python suite has a pre-existing collection SyntaxError in tests/test_automation_traces.py and two known unrelated model-assignment failures when that file is excluded."
+    ]
   }
 ];
 

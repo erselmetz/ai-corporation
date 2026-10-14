@@ -961,7 +961,8 @@ select {
 }
 
 input::placeholder,
-textarea::placeholder { color: #718196; }
+input::placeholder,
+textarea::placeholder { color: #8192a6; }
 
 .status-counts .list-entry,
 .activity-entry,
