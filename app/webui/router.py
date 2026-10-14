@@ -13,7 +13,7 @@ def _navigation(active_path: str) -> str:
                 ("3D visualization", "/ui/visualization"), ("Memory", "/ui/memory"))),
         ("OPERATIONS", (("Tasks", "/ui/tasks"), ("Workflows", "/ui/workflows"),
                         ("Workflow map", "/ui/workflow-map"), ("Activity", "/ui/activity"))),
-        ("SYSTEM", (("Software inventory", "/ui/inventory"), ("Documentation", "/ui/documentation"),
+        ("SYSTEM", (("Software inventory", "/ui/inventory"), ("Backup &amp; restore", "/ui/backup"), ("Documentation", "/ui/documentation"),
                     ("Updates", "/ui/updates"), ("Preferences", "/ui/preferences"), ("Owner sign-in", "/ui/login"))),
     )
     parts = ['<nav class="navigation" aria-label="Main navigation"><h2>Navigate</h2><ul>']
@@ -954,6 +954,34 @@ def owner_preferences_page():
     </form><p id="preferences-state" role="status" aria-live="polite"></p>
     <p id="preferences-retention">Preferences are stored locally in the application database until reset or that database is removed. They contain presentation choices only; chat content and credentials are not stored.</p>
     </main></body></html>""")
+
+
+@router.get("/ui/backup", response_class=HTMLResponse)
+def backup_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Backup &amp; restore - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/backup.mjs"></script></head><body>
+    <main class="content"><nav aria-label="Backup navigation"><a href="/ui">Home</a> | <a href="/ui/login">Owner sign-in</a></nav>
+    <p class="eyebrow">LOCAL OWNER CONTROL</p><h1>Backup &amp; restore</h1>
+    <p>Encrypted local backup files use a passphrase you choose. The app never stores or recovers it. Keep the file and passphrase together safely; losing the passphrase makes the backup unreadable.</p>
+    <section class="management-card"><h2>Preview and export</h2>
+      <button id="diagnostics-export" type="button">Export safe diagnostics</button>
+      <p>Diagnostics contain application, Python, platform, and schema metadata only. They exclude records, logs, credentials, local paths, provider checks, and model or hardware claims.</p>
+      <label><input id="backup-private" type="checkbox"> Include private app data (Tasks, projects, conversations, messages, and memory)</label>
+      <button id="backup-preview" type="button">Preview included data</button><pre id="backup-preview-result" aria-live="polite"></pre>
+      <label for="backup-passphrase">Backup passphrase (12–1024 characters)</label><input id="backup-passphrase" type="password" minlength="12" maxlength="1024" autocomplete="new-password">
+      <button id="backup-export" type="button">Create encrypted backup</button>
+    </section>
+    <section class="management-card"><h2>Inspect and restore</h2>
+      <label for="backup-file">Choose an ERSELMETZ AI backup file</label><input id="backup-file" type="file" accept=".erselbackup,application/vnd.erselmetz.backup">
+      <label for="restore-passphrase">Backup passphrase</label><input id="restore-passphrase" type="password" minlength="12" maxlength="1024" autocomplete="current-password">
+      <button id="backup-inspect" type="button">Verify and preview backup</button><pre id="backup-inspect-result" aria-live="polite"></pre>
+      <label for="restore-confirmation">Type RESTORE to confirm</label><input id="restore-confirmation" maxlength="16" autocomplete="off">
+      <button id="backup-restore" type="button" class="danger-action">Restore backup</button>
+    </section>
+    <section class="management-card"><h2>Limits</h2><p>Restore creates an encrypted pre-restore copy in the local ERSELMETZ AI backups folder. Restart the app after restore. Retention and deletion are owner-managed. Provider account data, API credentials held outside this database, downloaded model files, and remote data cannot be exported or erased here. No cloud destination is available.</p></section>
+    <p id="backup-state" role="status" aria-live="polite"></p></main></body></html>""")
 
 
 @router.get("/ui/employee-chat", response_class=HTMLResponse)

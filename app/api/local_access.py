@@ -27,6 +27,7 @@ READ_PERMISSIONS = frozenset({
     "inventory:read",
     "software:read",
     "system:read",
+    "backup:read",
 })
 SEMANTIC_MEMORY_PERMISSIONS = frozenset({"memory:index"})
 
@@ -101,6 +102,7 @@ class LocalOwnerAuthentication:
             | SOFTWARE_MANAGEMENT_PERMISSIONS
             | frozenset({"capability-grant:manage", "capability-approval:manage", "updates:manage",
                          "capability-emergency:manage", "browser:act", "desktop:act"})
+            | frozenset({"backup:export", "backup:restore"})
             | DOCUMENTATION_REVIEW_PERMISSIONS
             | MAINTENANCE_EXPERIMENT_PERMISSIONS)
 

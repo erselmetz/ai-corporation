@@ -2462,7 +2462,7 @@ export const post100Tasks = [
     "title": "Diagnostics export backup and restore",
     "description": "Provide explicit owner-controlled diagnostic export and backup/restore for supported configuration, memory, and app state.",
     "category": "Phase I - Productization and Stable Release",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       118,
       130,
@@ -2476,13 +2476,19 @@ export const post100Tasks = [
     "outOfScope": [
       "Do not export secrets/private data by default or claim success without restore verification."
     ],
-    "decisions": [
-      "Define encryption, key recovery, retention, and destinations."
-    ],
+    "decisions": [],
     "area": "P25",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-168-encrypted-data-portability",
+    "validation": [
+      "Focused portability, local access/permissions, preferences, managed software, memory/knowledge, project/task, local chat, and trusted-update regressions: 127 passed.",
+      "Full deterministic Python suite excluding the pre-existing syntax-invalid tests/test_automation_traces.py: 1,250 passed, 6 skipped, and 2 pre-existing unrelated failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service).",
+      "Browser modules: 200 passed; desktop package tests: 16 passed; public documentation tests: 15 passed; Next.js static build and TypeScript checks, Python compilation, JavaScript syntax, and git diff --check passed."
+    ],
+    "limitations": [
+      "Only an encrypted local file is supported. AES-256-GCM uses a passphrase-derived Scrypt key; the passphrase is not stored and cannot be recovered. Export uses a local save picker when available, otherwise the browser's configured download destination; no cloud destination or automatic retention policy exists.",
+      "By default only allowlisted owner preferences, suggestion settings, and software pins are included. Private application records require explicit opt-in. Common credential patterns are redacted from text; credential-named and unsupported database fields/tables fail closed. Pattern-based redaction cannot identify every possible secret, so owners should inspect privately opted-in files before sharing them.",
+      "Restore accepts only the current configuration schema and a bounded supported database size, verifies encrypted integrity, SQLite quick_check and row counts, creates an encrypted pre-restore copy in the owner-managed local backups folder, and requires app restart. External provider/account data, credentials held outside SQLite, models, and remote records cannot be exported, restored, or erased by this feature."
+    ]
   },
   {
     "number": 169,
@@ -2708,7 +2714,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-167 are verified; Tasks 168-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-168 are verified; Tasks 169-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

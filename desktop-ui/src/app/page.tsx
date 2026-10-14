@@ -178,6 +178,7 @@ export default function Home() {
         </div>
         <div className="rail-group"><span className="rail-group-label">SYSTEM</span>
           <a className="rail-link" href="/ui/inventory">Software inventory</a>
+          <a className="rail-link" href="/ui/backup">Backup &amp; restore</a>
           <a className="rail-link" href="/ui/documentation">Documentation</a>
           <a className="rail-link" href="/ui/updates">Updates</a>
           <a className="rail-link" href="/ui/login">Owner sign-in</a>
@@ -253,6 +254,7 @@ export default function Home() {
             <section><h3>Security and access</h3><a href="/ui/login">Owner sign-in</a><small>Protected operator pages remain unavailable without the required owner session.</small></section>
             <section><h3>Resource settings</h3><p>No dedicated resource-settings page is available in this workspace yet. Configured request slots represent software concurrency only.</p></section>
             <section><h3>Diagnostics and activity</h3><a href="/ui/activity">Activity &amp; logs</a><small>Review recorded application activity; missing runtime or hardware evidence remains unknown.</small></section>
+            <section><h3>Backup and restore</h3><a href="/ui/backup">Encrypted local backup</a><small>Export safe diagnostics and owner-selected local application data; restore requires explicit confirmation.</small></section>
             <section><h3>Supported software inventory</h3><a href="/ui/inventory">Software &amp; integrations</a><small>Review the existing scoped inventory and supported lifecycle actions.</small></section>
           </div>
         </div></details>

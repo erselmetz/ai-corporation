@@ -36,7 +36,8 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                      application_service=None, clock=None, desktop_ui_dir=None,
                      voice_connection_manager=None, capability_authorization_service=None,
                      capability_grant_service=None, capability_audit_service=None,
-                     emergency_stop_service=None, local_speech_provider=None):
+                     emergency_stop_service=None, local_speech_provider=None,
+                     data_portability_service=None):
     backend = LocalOwnerAuthentication(
         password, origin, **({"clock": clock} if clock else {}),
         **({"capability_authorization_service": capability_authorization_service}
@@ -90,11 +91,24 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
     application.include_router(managed_software_router)
     from app.api.workflows import router as workflows_router
     application.include_router(workflows_router)
+    from app.api.data_portability import router as data_portability_router
+    if data_portability_service is None:
+        from app.database.connection import DATABASE_PATH
+        from app.portability.backups import DataPortabilityService
+        data_portability_service = DataPortabilityService(DATABASE_PATH)
+    application.state.data_portability_service = data_portability_service
+    application.state.data_restore_requires_restart = False
+    application.include_router(data_portability_router)
 
     @application.middleware("http")
     async def protect_local_request(request: Request, call_next):
         if not backend.request_allowed(request):
             return JSONResponse({"detail": "Local request denied"}, status_code=403)
+        if (application.state.data_restore_requires_restart
+                and request.url.path.startswith("/api/")
+                and request.url.path not in {"/api/health", "/api/local/logout"}):
+            return JSONResponse({"detail": "Application data was restored. Restart ERSELMETZ AI before using the API."},
+                                status_code=503)
         if request.method not in {"GET", "HEAD", "OPTIONS"}:
             if request.headers.get("origin") != backend.origin:
                 return JSONResponse({"detail": "Same-origin request required"}, status_code=403)
@@ -108,7 +122,14 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
             voice_upload = (request.url.path in {"/api/local/voice/transcribe",
                                                  "/api/local/voice/transcribe-local"}
                             and content_type == "audio/wav")
-            if content_type != "application/json" and not voice_upload:
+            backup_upload = (request.url.path in {"/api/local/backup/inspect", "/api/local/backup/restore"}
+                             and content_type == "multipart/form-data")
+            if backup_upload:
+                from app.portability.backups import MAX_BACKUP_BYTES
+                content_length = request.headers.get("content-length", "")
+                if not content_length.isdecimal() or int(content_length) > MAX_BACKUP_BYTES + 1024 * 1024:
+                    return JSONResponse({"detail": "Backup request exceeds the supported size"}, status_code=413)
+            if content_type != "application/json" and not voice_upload and not backup_upload:
                 return JSONResponse({"detail": "JSON request required"}, status_code=415)
             stopped = application.state.emergency_stop_service.stopped
             allowed_while_stopped = (

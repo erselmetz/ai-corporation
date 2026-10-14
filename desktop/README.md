@@ -124,6 +124,13 @@ Smoke-test profiles use temporary credentials and are removed when the test
 finishes. Installer and backend build outputs remain under `desktop/release/`
 and `desktop/build/` for inspection and are ignored by Git.
 
+Task 168 adds the owner-protected **Backup & restore** page from the desktop
+navigation. Encrypted backups are saved locally; private app records are
+excluded unless explicitly selected. A restore creates an encrypted recovery
+copy under `%LOCALAPPDATA%\ERSELMETZ AI\backups` and requires an app restart.
+The passphrase is never stored or recoverable. Provider data, credentials held
+outside the SQLite database, model files, and remote data are not covered.
+
 ## Verification
 
 Run deterministic tests with `npm --prefix desktop test` and the Python tests
