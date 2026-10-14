@@ -85,9 +85,9 @@ export function mountCameraCapture({ documentRef = document, windowRef = globalT
   const conversation = documentRef.getElementById("chat-conversation");
   if (!button || !state || !conversation) return null;
   let stopped = false; let authorized = false; let busy = false; let activeStream = null;
-  const activity = (text, active = false) => {
+  const activity = (text, activityState = "inactive") => {
     state.textContent = text;
-    windowRef?.dispatchEvent?.(new windowRef.CustomEvent("ersel:camera-activity", { detail: { state: active ? "active" : "inactive" } }));
+    windowRef?.dispatchEvent?.(new windowRef.CustomEvent("ersel:camera-activity", { detail: { state: activityState } }));
   };
   const update = () => { button.disabled = stopped || busy || !authorized || !conversation.value; };
   async function refreshAuthorization() {
@@ -117,13 +117,14 @@ export function mountCameraCapture({ documentRef = document, windowRef = globalT
       if ((await response.json()).stopped === true) { stopped = true; update(); activity("Emergency stop is active; camera capture is blocked."); return; }
     } catch { activity("Could not confirm emergency-stop status; camera capture is blocked."); return; }
     busy = true; update();
-    activity("Camera permission requested for one video-only frame.");
+    activity("Camera permission requested for one video-only frame.", "unknown");
     const frame = await captureCameraFrame({ mediaDevices, blocked: () => stopped, onStream: stream => {
       activeStream = stream;
-      activity(stream ? "Camera capture active: reading one frame, with audio disabled." : "Camera is off.", Boolean(stream));
+      activity(stream ? "Camera capture active: reading one frame, with audio disabled." : "Camera is off.", stream ? "active" : "inactive");
     } });
     activeStream = null;
-    if (frame.status !== "captured" || stopped) { activity(stopped ? "Emergency stop active; camera frame discarded." : frame.message); busy = false; update(); return; }
+    if (frame.status !== "captured" || stopped) { activity(stopped ? "Emergency stop active; camera frame discarded." : frame.message,
+      stopped || frame.status === "stopped" ? "inactive" : frame.status); busy = false; update(); return; }
     try {
       const sessionResponse = await fetchImpl("/api/local/session", { credentials: "same-origin", cache: "no-store" });
       if (!sessionResponse.ok) throw new Error("Sign in again before attaching this camera frame.");
@@ -136,14 +137,19 @@ export function mountCameraCapture({ documentRef = document, windowRef = globalT
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.detail || "The camera frame was not attached.");
-      activity(`Captured one camera frame ${frame.width}x${frame.height} at ${frame.captured_at}. Temporarily attached; not sent until selected and consented.`);
+      activity(`Captured one camera frame ${frame.width}x${frame.height} at ${frame.captured_at}. Temporarily attached; not sent until selected and consented.`, "inactive");
       windowRef?.dispatchEvent?.(new windowRef.CustomEvent("ersel:chat-images-changed"));
-    } catch (error) { activity(error.message || "The camera frame was not attached."); }
+    } catch (error) { activity(error.message || "The camera frame was not attached.", "failed"); }
     finally { busy = false; update(); }
   }
   function stop() {
+    const permissionPromptMayBeOpen = busy && activeStream === null;
     stopped = true; for (const track of activeStream?.getTracks?.() || []) { try { track.stop(); } catch { /* best effort */ } }
-    activeStream = null; activity("Emergency stop active; capture stopped and frame discarded."); update();
+    activeStream = null;
+    activity(permissionPromptMayBeOpen
+      ? "Emergency stop active; waiting for the camera permission request to settle."
+      : "Emergency stop active; capture stopped and frame discarded.", permissionPromptMayBeOpen ? "uncertain_stop" : "inactive");
+    update();
   }
   function resume() { stopped = false; update(); }
   button.addEventListener("click", capture); conversation.addEventListener("change", update);

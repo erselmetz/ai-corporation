@@ -29,13 +29,24 @@ def _navigation(active_path: str) -> str:
 
 def _emergency_controls() -> str:
     return '''<section class="safety-panel" aria-labelledby="emergency-title">
-      <div><p class="eyebrow">SAFETY CONTROLS</p><h2 id="emergency-title">Emergency stop</h2>
+      <div><p class="eyebrow">OWNER CONTROLS</p><h2 id="emergency-title">Capability controls</h2>
+      <p>Inspect support, current activity, permissions, and session grants. Voice and media stay off until you start them.</p>
       <p id="emergency-state" role="status" aria-live="polite">Loading safety status…</p>
-      <p id="emergency-activity">Checking microphone, playback, and capture activity…</p></div>
-      <div class="safety-actions"><button id="emergency-stop" type="button" class="danger-action">Stop protected actions</button>
+      <ul id="capability-indicators" class="capability-indicators" aria-label="Multimodal support and current activity">
+        <li><strong>Microphone</strong><span id="capability-microphone-support">Checking support</span><span id="capability-microphone-activity" role="status">Unknown</span><span>Local recognition; cloud transcription needs separate consent.</span></li>
+        <li><strong>Camera</strong><span id="capability-camera-support">Checking support</span><span id="capability-camera-activity" role="status">Unknown</span><span>One local frame; provider transfer requires per-turn consent.</span></li>
+        <li><strong>Screen capture</strong><span id="capability-screen-support">Checking support</span><span id="capability-screen-activity" role="status">Unknown</span><span>One local frame; provider transfer requires per-turn consent.</span></li>
+        <li><strong>Speech playback</strong><span id="capability-playback-support">Checking support</span><span id="capability-playback-activity" role="status">Unknown</span><span>Local device voices only; no online fallback.</span></li>
+        <li><strong>Vision</strong><span id="capability-vision-support">Checking support</span><span>Inactive until an image is selected</span><span>Images stay temporary; provider transfer requires explicit per-turn consent.</span></li>
+        <li><strong>Computer automation</strong><span id="capability-automation-support">Unavailable</span><span id="capability-automation-activity">Inactive</span><span>No in-app automation execution control is exposed.</span></li>
+      </ul>
+      <nav class="capability-shortcuts" aria-label="Open supported capability controls"><a href="/ui/chat#voice-panel">Voice controls</a><a href="/ui/chat#chat-capture-camera">Camera capture</a><a href="/ui/chat#chat-capture-screen">Screen capture</a><a href="/ui/chat#chat-images-heading">Vision and images</a></nav>
+      <p id="emergency-activity" role="status" aria-live="polite">Microphone, playback, and capture activity are unknown until reported by this page.</p></div>
+      <div class="safety-actions"><button id="emergency-stop" type="button" class="danger-action">Stop local protected actions</button>
       <button id="emergency-resume" type="button" disabled>Resume protected actions</button></div>
-      <details><summary>Active permissions and session grants</summary>
-      <p>Session grants include their expiry and can be revoked here. Permission names show this session’s current authorized capabilities.</p>
+      <details><summary>Current permissions and session grants</summary>
+      <p>Session permissions end at sign-out or session expiry. Temporary grants show their exact scope and expiry and can be revoked here.</p>
+      <ul id="emergency-permissions" class="permission-list"></ul><h3>Temporary grants</h3>
       <ul id="emergency-grants" class="grant-list"></ul></details>
       <script type="module" src="/ui/static/emergency-stop.mjs"></script></section>'''
 

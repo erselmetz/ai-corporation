@@ -3,26 +3,87 @@ export function mountEmergencyStop({
   windowRef = globalThis.window,
   fetchImpl = fetch,
   confirmImpl = globalThis.confirm ?? (() => false),
+  browserFeatures = null,
 } = {}) {
   const stopButton = documentRef.getElementById("emergency-stop");
   if (!stopButton) return null;
   const resumeButton = documentRef.getElementById("emergency-resume");
   const state = documentRef.getElementById("emergency-state");
   const grants = documentRef.getElementById("emergency-grants");
+  const permissions = documentRef.getElementById("emergency-permissions");
   const activity = documentRef.getElementById("emergency-activity");
   let stopped = false;
   let capture = { microphone: "unknown", screen: "unknown", camera: "unknown", local_playback: "unknown", remote_request: "none" };
   let previousStopped = null;
 
+  function features() {
+    if (browserFeatures) return browserFeatures;
+    const nav = windowRef?.navigator || globalThis.navigator;
+    const recognition = windowRef?.SpeechRecognition || windowRef?.webkitSpeechRecognition;
+    return {
+      microphone: typeof nav?.mediaDevices?.getUserMedia === "function" || typeof recognition === "function",
+      camera: typeof nav?.mediaDevices?.getUserMedia === "function",
+      screen: typeof nav?.mediaDevices?.getDisplayMedia === "function",
+      playback: typeof windowRef?.speechSynthesis?.speak === "function",
+      vision: Boolean(documentRef.getElementById("chat-image-file")),
+    };
+  }
+
+  function setIndicator(name, support, state) {
+    text(documentRef.getElementById(`capability-${name}-support`), support);
+    text(documentRef.getElementById(`capability-${name}-activity`), state);
+  }
+
+  function activityLabel(value) {
+    return ({ active: "Active", inactive: "Inactive", off: "Inactive", denied: "Denied",
+      unsupported: "Unsupported", unavailable: "Unavailable", failed: "Failed",
+      uncertain_stop: "Stop uncertain", unknown: "Unknown" })[value] || "Unknown";
+  }
+
+  function renderCapabilities() {
+    const available = features();
+    text(documentRef.getElementById("capability-microphone-support"), available.microphone ? "Available in this browser" : "Unsupported in this browser");
+    text(documentRef.getElementById("capability-camera-support"), available.camera ? "Available in this browser" : "Unsupported in this browser");
+    text(documentRef.getElementById("capability-screen-support"), available.screen ? "Available in this browser" : "Unsupported in this browser");
+    text(documentRef.getElementById("capability-playback-support"), available.playback ? "Available on this device" : "Unsupported on this device");
+    text(documentRef.getElementById("capability-vision-support"), available.vision
+      ? "Available in chat; model support varies" : "Not available on this page; open Chat");
+    setIndicator("automation", "Unavailable in this app UI", "Inactive");
+    setIndicator("microphone", available.microphone ? "Available in this browser" : "Unsupported in this browser", activityLabel(capture.microphone));
+    setIndicator("camera", available.camera ? "Available in this browser" : "Unsupported in this browser", activityLabel(capture.camera));
+    setIndicator("screen", available.screen ? "Available in this browser" : "Unsupported in this browser", activityLabel(capture.screen));
+    setIndicator("playback", available.playback ? "Available on this device" : "Unsupported on this device", activityLabel(capture.local_playback));
+  }
+
   function text(node, value) { if (node) node.textContent = value; }
 
   function renderActivity(serverCapture = {}) {
-    const microphone = capture.microphone === "unknown" ? serverCapture.microphone : capture.microphone;
-    const screen = capture.screen === "unknown" ? serverCapture.screen : capture.screen;
-    const camera = capture.camera === "unknown" ? serverCapture.camera : capture.camera;
-    const playback = capture.local_playback === "unknown" ? serverCapture.local_playback : capture.local_playback;
+    const resolve = (live, reported) => live !== "unknown" ? live
+      : reported === "page-reported" ? "unknown" : (reported || "unknown");
+    const microphone = resolve(capture.microphone, serverCapture.microphone);
+    const screen = resolve(capture.screen, serverCapture.screen);
+    const camera = resolve(capture.camera, serverCapture.camera);
+    const playback = resolve(capture.local_playback, serverCapture.local_playback);
     const remote = capture.remote_request === "none" ? "none reported" : capture.remote_request;
     text(activity, `Microphone: ${microphone || "unknown"}. Screen capture: ${screen || "unknown"}. Camera: ${camera || "unknown"}. Local playback: ${playback || "unknown"}. Remote cancellation: ${remote === "none reported" ? "unknown unless a provider confirms" : "unknown; request may still be running"}.`);
+    capture = { ...capture, microphone, screen, camera, local_playback: playback };
+    renderCapabilities();
+  }
+
+  function renderPermissions(items = []) {
+    if (!permissions) return;
+    permissions.replaceChildren();
+    if (!items.length) {
+      const empty = documentRef.createElement("li");
+      empty.textContent = "Permissions are unavailable until owner sign-in.";
+      permissions.append(empty);
+      return;
+    }
+    for (const permission of items) {
+      const row = documentRef.createElement("li");
+      row.textContent = permission;
+      permissions.append(row);
+    }
   }
 
   function renderGrants(items = []) {
@@ -37,7 +98,7 @@ export function mountEmergencyStop({
     for (const item of items) {
       const row = documentRef.createElement("li");
       const label = documentRef.createElement("span");
-      label.textContent = `${item.capability_id}: ${item.status}; expires ${item.expires_at}`;
+      label.textContent = `${item.capability_id}: ${item.status}; scope ${item.scope_type}:${item.scope_id}; expires ${item.expires_at}`;
       row.append(label);
       if (item.status === "active") {
         const revoke = documentRef.createElement("button");
@@ -76,6 +137,7 @@ export function mountEmergencyStop({
       stopButton.disabled = stopped;
       resumeButton.disabled = !stopped;
       renderGrants(data.session_grants);
+      renderPermissions(data.active_capabilities);
       renderActivity(data.capture);
       return data;
     } catch (error) {
@@ -132,19 +194,23 @@ export function mountEmergencyStop({
   }
 
   windowRef?.addEventListener?.("ersel:voice-activity", event => {
-    capture = event.detail || capture;
+    capture = { ...capture, ...(event.detail || {}) };
+    renderCapabilities();
     return refresh();
   });
   windowRef?.addEventListener?.("ersel:screen-capture-activity", event => {
     capture = { ...capture, screen: event.detail?.state || "unknown" };
+    renderCapabilities();
     renderActivity();
   });
   windowRef?.addEventListener?.("ersel:camera-activity", event => {
     capture = { ...capture, camera: event.detail?.state || "unknown" };
+    renderCapabilities();
     renderActivity();
   });
   stopButton.addEventListener("click", () => stop());
   resumeButton.addEventListener("click", () => resume());
+  renderCapabilities();
   void refresh();
   return { refresh, stop, resume };
 }

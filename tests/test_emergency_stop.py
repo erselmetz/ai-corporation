@@ -79,7 +79,7 @@ def test_emergency_stop_is_process_local_and_idempotent():
     assert service.resume()["stopped"] is False
 
 
-def test_dashboard_and_chat_expose_owner_stop_controls_and_capture_state():
+def test_dashboard_and_chat_expose_unified_capability_controls_and_capture_state():
     app = create_local_app(password=PASSWORD, application_service=MagicMock())
     with TestClient(app, base_url=ORIGIN, client=("127.0.0.1", 50146)) as client:
         dashboard = client.get("/ui").text
@@ -88,4 +88,15 @@ def test_dashboard_and_chat_expose_owner_stop_controls_and_capture_state():
         assert 'id="emergency-stop"' in page
         assert 'id="emergency-resume"' in page
         assert 'id="emergency-activity"' in page
+        assert 'id="capability-indicators"' in page
+        assert 'id="capability-microphone-activity"' in page
+        assert 'id="capability-camera-activity"' in page
+        assert 'id="capability-screen-activity"' in page
+        assert 'id="capability-playback-activity"' in page
+        assert 'id="capability-automation-support"' in page
+        assert "No in-app automation execution control is exposed" in page
+        assert 'id="emergency-permissions"' in page
+        assert 'id="emergency-grants"' in page
+        assert "provider transfer requires per-turn consent" in page
+        assert "Session permissions end at sign-out or session expiry" in page
         assert "/ui/static/emergency-stop.mjs" in page

@@ -2695,7 +2695,7 @@ export const post100Tasks = [
     "title": "Unified multimodal capability controls and indicators",
     "description": "Integrate governed voice, vision, screen, camera, and automation status into a clear owner-facing control and activity surface.",
     "category": "Phase L - Multimodal Interface and Usability",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       144,
       145,
@@ -2722,9 +2722,17 @@ export const post100Tasks = [
     ],
     "decisions": [],
     "area": "P28",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-174-unified-multimodal-capability-controls",
+    "validation": [
+      "Focused Task 174 Python regressions: 27 passed; full browser-module suite: 206 passed; focused capability UI suite: 23 passed; public docs tests: 16 passed; update-manifest tests: 6 passed; Python compilation, JavaScript syntax checks, and git diff --check passed.",
+      "Full Python collection remains blocked by the existing SyntaxError in tests/test_automation_traces.py. Excluding that file yielded 1,256 passed, 3 skipped, and two previously recorded unrelated model-assignment failures."
+    ],
+    "limitations": [
+      "Capability indicators reflect browser feature support and events reported by the current page only; they do not inspect OS-wide or cross-page activity or device permission state.",
+      "The current-session permission API does not expose an expiry timestamp; session permissions end at sign-out or session expiry. Temporary grants expose scope, expiry, and revocation.",
+      "Vision availability depends on the selected model; computer automation is unavailable in this UI. Remote cancellation remains unknown without provider confirmation.",
+      "The full Python suite cannot currently pass collection because of tests/test_automation_traces.py syntax, and two unrelated known model-assignment tests still fail when that file is excluded."
+    ]
   },
   {
     "number": 175,
@@ -2765,7 +2773,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and 171-173 are verified; Task 174 is next; Tasks 174-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and 171-174 are verified; Task 175 is next and remains planned; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

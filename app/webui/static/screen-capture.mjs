@@ -120,10 +120,10 @@ export function mountScreenCapture({
   let activeStream = null;
   let busy = false;
 
-  const activity = (value) => {
+  const activity = (value, activityState = "inactive") => {
     state.textContent = value;
     windowRef?.dispatchEvent?.(new windowRef.CustomEvent("ersel:screen-capture-activity", {
-      detail: { state: value.includes("capturing") ? "active" : "inactive" },
+      detail: { state: activityState },
     }));
   };
   const update = () => {
@@ -148,15 +148,18 @@ export function mountScreenCapture({
     const conversationId = conversation.value;
     busy = true;
     update();
-    activity("capturing: choose one display or window in the system picker; audio is off.");
+    activity("Choose one display or window in the system picker; audio is off.", "unknown");
     const frame = await captureScreenFrame({
       mediaDevices,
       blocked: () => stopped,
-      onStream: (stream) => { activeStream = stream; },
+      onStream: (stream) => {
+        activeStream = stream;
+        activity(stream ? "Screen capture active for one frame; audio is off." : "Screen capture is inactive.", stream ? "active" : "inactive");
+      },
     });
     activeStream = null;
     if (frame.status !== "captured") {
-      activity(frame.message || "Screen capture is unavailable.");
+      activity(frame.message || "Screen capture is unavailable.", frame.status === "stopped" ? "inactive" : frame.status);
       busy = false;
       update();
       return;
@@ -180,9 +183,9 @@ export function mountScreenCapture({
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.detail || "The screen frame was not attached.");
-      activity(`Captured ${frame.display_surface} ${frame.width}x${frame.height} at ${frame.captured_at}. Attached temporarily; not sent to a Provider.`);
+      activity(`Captured ${frame.display_surface} ${frame.width}x${frame.height} at ${frame.captured_at}. Attached temporarily; not sent to a Provider.`, "inactive");
     } catch (error) {
-      activity(error.message || "The screen frame was not attached.");
+      activity(error.message || "The screen frame was not attached.", "failed");
     } finally {
       busy = false;
       update();
@@ -195,7 +198,7 @@ export function mountScreenCapture({
       try { track.stop(); } catch { /* best effort */ }
     }
     activeStream = null;
-    if (busy) activity("Emergency stop requested; waiting for the system picker to close and discarding any frame.");
+    if (busy) activity("Emergency stop requested; waiting for the system picker to close and discarding any frame.", "uncertain_stop");
     update();
   }
   function resume() { stopped = false; update(); }

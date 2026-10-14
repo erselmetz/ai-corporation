@@ -79,6 +79,7 @@ export function mountVoiceControls({
   let captureMode = "cloud";
   let localAvailability = null;
   let emergencyStopped = false;
+  let microphoneOutcome = "unknown";
   let remoteOutcomeUnknown = false;
   let localCaptureTimer = null;
   let captureStartup = 0;
@@ -88,7 +89,7 @@ export function mountVoiceControls({
     const EventType = windowRef?.CustomEvent || globalThis.CustomEvent;
     if (typeof windowRef?.dispatchEvent !== "function" || typeof EventType !== "function") return;
     windowRef.dispatchEvent(new EventType("ersel:voice-activity", { detail: {
-      microphone: ["local-capture", "audio-capture", "audio-stopping"].includes(stage) ? "active" : "off",
+      microphone: ["local-capture", "audio-capture", "audio-stopping"].includes(stage) ? "active" : microphoneOutcome,
       local_playback: windowRef?.speechSynthesis?.speaking || windowRef?.speechSynthesis?.pending
         ? "active" : "off",
       remote_request: remoteOutcomeUnknown ? "possibly-processing-after-local-stop"
@@ -294,14 +295,17 @@ export function mountVoiceControls({
       setState("Local transcript added to the message box for review. It was not sent or saved; choose Send to continue.");
     };
     recognition.onerror = event => {
+      microphoneOutcome = event.error === "not-allowed" || event.error === "service-not-allowed" ? "denied" : "failed";
       setState(event.error === "not-allowed" || event.error === "service-not-allowed"
         ? "Microphone access was denied. Typed chat remains available."
         : "Local speech recognition failed. Nothing was sent or saved; typed chat remains available.");
+      reportActivity();
     };
     recognition.onend = () => {
       if (localCaptureTimer !== null) clearTimeoutImpl(localCaptureTimer);
       localCaptureTimer = null;
       if (stage === "local-capture") stage = "idle";
+      if (microphoneOutcome === "unknown" || microphoneOutcome === "active") microphoneOutcome = "inactive";
       recognition = null;
       updateControls();
     };
@@ -477,6 +481,9 @@ export function mountVoiceControls({
   }
 
   async function stop() {
+    if (["local-capture", "audio-capture", "audio-stopping", "starting"].includes(stage)) {
+      microphoneOutcome = "inactive";
+    }
     if (localCaptureTimer !== null) clearTimeoutImpl(localCaptureTimer);
     localCaptureTimer = null;
     if (stage === "local-capture") {
@@ -573,6 +580,7 @@ export function mountVoiceControls({
   start.addEventListener("click", async () => {
     if (emergencyStopped) { setState("Emergency stop is active. Resume protected actions before starting voice."); return; }
     if (!canUseChat()) { setState("Start or select an open conversation before using voice."); return; }
+    microphoneOutcome = "unknown";
     const startupId = ++captureStartup;
     stage = "starting"; updateControls();
     try {
@@ -581,6 +589,8 @@ export function mountVoiceControls({
     } catch (error) {
       if (startupId !== captureStartup) return;
       stage = "idle";
+      microphoneOutcome = error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError"
+        ? "denied" : "failed";
       setState(error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError"
         ? "Microphone access was denied. Typed chat remains available."
         : error.message || "Voice interaction failed. Typed chat remains available.");
