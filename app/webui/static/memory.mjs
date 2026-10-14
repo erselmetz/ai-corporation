@@ -16,11 +16,17 @@ function failure(status) {
     : "Memory service failed. Please retry.";
 }
 export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl = globalThis.fetch,
-                                  confirmImpl = message => globalThis.confirm(message) }) {
+                                  confirmImpl = message => globalThis.confirm(message),
+                                  now = () => new Date() }) {
   const el = id => documentRef.getElementById(id);
   const list = el("memory-list"), state = el("memory-state"), detail = el("memory-detail-state");
   let selected = null, revision = 0, busy = false;
   let semanticConfigured = false;
+  let loadedScope = null;
+  let listedItems = [];
+  let retrievalHits = [];
+  let searchRevision = 0;
+  let freshness = new Map();
   function clearDetail() {
     selected = null;
     el("memory-content").value = "";
@@ -37,6 +43,82 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
     if (withId) params.set("memory_id", item.id);
     return params.toString();
   }
+  function renderRelationships() {
+    const root = el("memory-map-root"), list = el("memory-relationship-list"), mapState = el("memory-map-state");
+    root.replaceChildren(); list.replaceChildren();
+    if (!loadedScope) {
+      mapState.textContent = "Choose a scope and refresh to load its authorized records.";
+      return;
+    }
+    const { scope, scope_id: scopeId } = loadedScope;
+    const rootNode = documentRef.createElement("p");
+    rootNode.className = "memory-map-root-node";
+    rootNode.textContent = `Selected ${scope} scope: ${scopeId} · ${listedItems.length} records in this authorized response`;
+    root.append(rootNode);
+    mapState.textContent = `Showing only the ${scope} scope ${scopeId}. The API does not provide a source snapshot timestamp; refresh to recheck current records.`;
+    const hitsById = new Map(retrievalHits.map(hit => [hit.memory_id, hit]));
+    const shown = new Set();
+    for (const item of listedItems) {
+      if (!validSummary(item) || item.scope !== scope || item.scope_id !== scopeId) continue;
+      shown.add(item.id);
+      const row = documentRef.createElement("li");
+      row.className = "memory-map-node";
+      const inspect = documentRef.createElement("button");
+      inspect.type = "button";
+      inspect.textContent = `Inspect ${item.type} ${item.id}`;
+      inspect.addEventListener("click", () => void select(item));
+      row.append(inspect);
+      const relation = documentRef.createElement("p");
+      relation.textContent = `Recorded in selected ${scope} scope · ${item.expired ? "expired metadata; content unavailable" : `expires ${item.expires_at}`}.`;
+      row.append(relation);
+      if (item.provenance) {
+        const provenance = documentRef.createElement("p");
+        const source = item.provenance;
+        provenance.textContent = `Recorded provenance: ${source.source_scope}:${source.source_scope_id} / ${source.source_reference}; ${source.source_created_at ? `source created ${source.source_created_at}.` : "source creation time is unavailable."}`;
+        row.append(provenance);
+      }
+      const hit = hitsById.get(item.id);
+      if (hit) appendRetrievalMatch(row, hit);
+      list.append(row);
+    }
+    for (const hit of retrievalHits) {
+      if (!shown.has(hit.memory_id)) {
+        const row = documentRef.createElement("li");
+        row.className = "memory-map-node";
+        row.append(makeInspectButton(hit));
+        appendRetrievalMatch(row, hit);
+        list.append(row);
+      }
+    }
+    if (!listedItems.length && !retrievalHits.length) {
+      const empty = documentRef.createElement("li");
+      empty.textContent = "No authorized records were returned for this exact scope.";
+      list.append(empty);
+    }
+  }
+  function makeInspectButton(hit) {
+    const button = documentRef.createElement("button");
+    button.type = "button";
+    button.textContent = `Inspect retrieved record ${hit.memory_id}`;
+    button.addEventListener("click", () => void select({ id: hit.memory_id, scope: hit.scope, scope_id: hit.scope_id,
+      type: "retrieved record", expires_at: hit.expires_at, expired: false, can_manage: false }));
+    return button;
+  }
+  function appendRetrievalMatch(row, hit) {
+    const match = documentRef.createElement("p");
+    match.textContent = `Semantic retrieval match · chunk ${hit.chunk_position + 1} · relevance ${hit.relevance.toFixed(3)} (ranking hint, not confidence or proof) · source ${hit.source_reference}.`;
+    row.append(match);
+    const verify = documentRef.createElement("button");
+    verify.type = "button";
+    verify.textContent = "Recheck source freshness";
+    verify.addEventListener("click", () => verifyHit(hit));
+    row.append(verify);
+    const state = documentRef.createElement("p");
+    const key = `${hit.scope}\u0000${hit.scope_id}\u0000${hit.memory_id}`;
+    state.textContent = freshness.get(key) ?? `Retrieved source revision ${hit.revision.slice(0, 12)}… · not rechecked since search.`;
+    state.dataset.testid = "memory-hit-freshness";
+    row.append(state);
+  }
   async function select(item) {
     if (busy) return false;
     const token = ++revision;
@@ -46,11 +128,12 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
       selected = item;
       detail.textContent = "Expired: content is unavailable. The owner can remove this record.";
       el("memory-remove").disabled = !item.can_manage;
+      renderRelationships();
       return true;
     }
     detail.textContent = "Loading memory…";
     try {
-      const response = await fetchImpl(`/api/memory/record?${query(item)}`, { credentials: "same-origin", headers: { Accept: "application/json" } });
+      const response = await fetchImpl(`/api/memory/record?${query(item)}`, { credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" } });
       if (token !== revision) return false;
       if (!response.ok) { detail.textContent = failure(response.status); return false; }
       const data = await response.json();
@@ -72,6 +155,12 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
       if (el("semantic-index")) el("semantic-index").disabled = !semanticConfigured || !data.can_manage || data.expired;
       detail.textContent = `Source memory/reference: ${data.source_id}; scope resource: ${data.source_scope_id}; original reference: ${data.source_reference}. `
         + (data.scope === "corporation" ? "Published snapshot: correction or new retention requires withdrawal and explicit republication through the application service." : "Owner correction preserves source IDs; explicit consent and expiry are required.");
+      if (loadedScope?.scope === data.scope && loadedScope.scope_id === data.scope_id) {
+        const entry = listedItems.find(value => value.id === data.id);
+        if (entry) entry.provenance = { source_scope: data.source_scope, source_scope_id: data.source_scope_id,
+          source_reference: data.source_reference, source_created_at: null };
+      }
+      renderRelationships();
       return true;
     } catch { if (token === revision) detail.textContent = "Memory service failed. Please retry."; return false; }
   }
@@ -79,11 +168,12 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
     if (busy) return false;
     const token = ++revision;
     clearDetail(); list.replaceChildren();
+    ++searchRevision; loadedScope = null; listedItems = []; retrievalHits = []; freshness.clear(); renderRelationships();
     const scope = el("memory-scope").value, scopeId = el("memory-scope-id").value.trim();
-    if (!scopes.has(scope) || !scopeId) { state.textContent = "Choose a scope and enter its resource ID."; return false; }
+    if (!scopes.has(scope) || !scopeId) { loadedScope = null; listedItems = []; retrievalHits = []; renderRelationships(); state.textContent = "Choose a scope and enter its resource ID."; return false; }
     state.textContent = "Loading memory…";
     try {
-      const response = await fetchImpl(`/api/memory?${query({ scope, scope_id: scopeId }, false)}&limit=50`, { credentials: "same-origin", headers: { Accept: "application/json" } });
+      const response = await fetchImpl(`/api/memory?${query({ scope, scope_id: scopeId }, false)}&limit=50`, { credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" } });
       if (token !== revision) return false;
       if (!response.ok) { state.textContent = failure(response.status); return false; }
       const data = await response.json();
@@ -91,6 +181,10 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
       if (!data || !Array.isArray(data.items) || !data.items.every(item => validSummary(item) && item.scope === scope && item.scope_id === scopeId)) {
         state.textContent = "Memory response was invalid."; return false;
       }
+      loadedScope = { scope, scope_id: scopeId };
+      listedItems = data.items;
+      retrievalHits = [];
+      freshness.clear();
       for (const item of data.items) {
         const row = documentRef.createElement("li"), button = documentRef.createElement("button");
         button.type = "button";
@@ -99,8 +193,9 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
         row.append(button); list.append(row);
       }
       state.textContent = data.items.length ? `Loaded ${data.items.length} records (maximum 50; this is not a complete history).` : "No accessible memory records returned for this scope.";
+      renderRelationships();
       return true;
-    } catch { if (token === revision) state.textContent = "Memory service failed. Please retry."; return false; }
+    } catch { if (token === revision) { loadedScope = null; listedItems = []; retrievalHits = []; renderRelationships(); state.textContent = "Memory service failed. Please retry."; } return false; }
   }
   async function save() {
     if (busy || !selected?.can_manage || selected.expired || selected.scope === "corporation") return false;
@@ -181,8 +276,12 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
     if (!semanticConfigured || busy) return false;
     const scope = el("memory-scope").value, scopeId = el("memory-scope-id").value.trim();
     const queryText = el("semantic-query").value.trim(), state = el("semantic-search-state"), results = el("semantic-results");
+    const token = ++searchRevision;
+    const scopeToken = revision;
+    retrievalHits = [];
     results.replaceChildren();
-    if (!scopes.has(scope) || !scopeId || !queryText) { state.textContent = "Enter a query and choose the exact scope to search."; return false; }
+    renderRelationships();
+    if (!scopes.has(scope) || !scopeId || !queryText || loadedScope?.scope !== scope || loadedScope?.scope_id !== scopeId) { state.textContent = "Load this exact scope before searching; enter a query and refresh the selected scope."; renderRelationships(); return false; }
     state.textContent = "Searching the selected scope…";
     try {
       const csrf = await localCsrf();
@@ -191,13 +290,17 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
         headers: { "Content-Type": "application/json", "X-Local-CSRF": csrf, Accept: "application/json" },
         body: JSON.stringify({ query: queryText, scope, scope_id: scopeId, limit: 5 }),
       });
+      if (token !== searchRevision || scopeToken !== revision || el("memory-scope").value !== scope || el("memory-scope-id").value.trim() !== scopeId) return false;
       if (!response.ok) { state.textContent = failure(response.status); return false; }
       const data = await response.json();
       if (!data || !Array.isArray(data.items) || !data.items.every(hit => hit && typeof hit.memory_id === "string"
-          && hit.scope === scope && hit.scope_id === scopeId && typeof hit.excerpt === "string"
-          && typeof hit.source_reference === "string" && Number.isFinite(hit.relevance))) {
+          && hit.scope === scope && hit.scope_id === scopeId && typeof hit.revision === "string" && /^[a-f0-9]{64}$/i.test(hit.revision)
+          && typeof hit.expires_at === "string" && Number.isFinite(Date.parse(hit.expires_at))
+          && typeof hit.excerpt === "string" && typeof hit.source_reference === "string"
+          && Number.isInteger(hit.chunk_position) && hit.chunk_position >= 0 && Number.isFinite(hit.relevance))) {
         state.textContent = "Semantic search response was invalid."; return false;
       }
+      retrievalHits = data.items;
       for (const hit of data.items) {
         const row = documentRef.createElement("li");
         row.textContent = `${hit.memory_id} · ${hit.source_reference} · chunk ${hit.chunk_position + 1} · relevance ${hit.relevance.toFixed(3)} — ${hit.excerpt}`;
@@ -206,22 +309,62 @@ export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl =
       state.textContent = data.items.length
         ? `${data.items.length} authorized results${data.candidate_limit_reached ? " (candidate limit reached; more results may exist)" : ""}. Similarity is a relevance hint, not a confidence guarantee.`
         : `No current result in the bounded candidate set${data.candidate_limit_reached ? " (candidate limit reached; more results may exist)" : ""}.`;
+      renderRelationships();
       return true;
-    } catch { state.textContent = "Local semantic search failed."; return false; }
+    } catch { if (token === searchRevision && scopeToken === revision) state.textContent = "Local semantic search failed."; return false; }
+  }
+  async function verifyHit(hit) {
+    const scopeToken = revision;
+    const key = `${hit.scope}\u0000${hit.scope_id}\u0000${hit.memory_id}`;
+    freshness.set(key, "Checking current source revision…");
+    renderRelationships();
+    try {
+      const response = await fetchImpl(`/api/memory/record?${query({ scope: hit.scope, scope_id: hit.scope_id, id: hit.memory_id })}`,
+        { credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" } });
+      if (scopeToken !== revision || loadedScope?.scope !== hit.scope || loadedScope?.scope_id !== hit.scope_id) return false;
+      if (!response.ok) {
+        freshness.set(key, response.status === 410 ? "Expired since search; content is unavailable." : failure(response.status));
+      } else {
+        const data = await response.json();
+        if (scopeToken !== revision || loadedScope?.scope !== hit.scope || loadedScope?.scope_id !== hit.scope_id) return false;
+        if (!validSummary(data) || data.id !== hit.memory_id || data.scope !== hit.scope || data.scope_id !== hit.scope_id
+            || typeof data.revision !== "string" || !/^[a-f0-9]{64}$/i.test(data.revision)) {
+          freshness.set(key, "Source recheck returned invalid metadata; current revision is unknown.");
+        } else if (data.expired) {
+          freshness.set(key, "Source is expired; content is unavailable.");
+        } else {
+          freshness.set(key, data.revision === hit.revision
+            ? `Source revision is current at recheck (${now().toISOString()}).`
+            : `Source changed since retrieval (${now().toISOString()}); search result may be stale.`);
+        }
+      }
+      renderRelationships();
+      return true;
+    } catch {
+      if (scopeToken === revision) { freshness.set(key, "Source recheck failed; freshness is unknown."); renderRelationships(); }
+      return false;
+    }
   }
   el("memory-refresh").addEventListener("click", () => void load());
   el("memory-save").addEventListener("click", () => void save());
   el("memory-remove").addEventListener("click", () => void remove());
   for (const id of ["memory-scope", "memory-scope-id"]) el(id).addEventListener("input", () => {
     if (busy) return;
-    ++revision; list.replaceChildren(); clearDetail(); state.textContent = "Scope changed. Refresh to load current records.";
+    ++revision; ++searchRevision; loadedScope = null; listedItems = []; retrievalHits = []; freshness.clear();
+    list.replaceChildren(); clearDetail(); state.textContent = "Scope changed. Refresh to load current records."; renderRelationships();
     if (el("semantic-results")) el("semantic-results").replaceChildren();
     if (el("semantic-search-state")) el("semantic-search-state").textContent = "Scope changed. Search results cleared.";
   });
   if (el("semantic-index")) el("semantic-index").addEventListener("click", () => void indexSelected());
   if (el("semantic-search")) el("semantic-search").addEventListener("click", () => void searchSemantic());
+  if (el("semantic-query")) el("semantic-query").addEventListener("input", () => {
+    ++searchRevision; retrievalHits = []; freshness.clear();
+    if (el("semantic-results")) el("semantic-results").replaceChildren();
+    if (el("semantic-search-state")) el("semantic-search-state").textContent = "Query changed. Search this exact scope again.";
+    renderRelationships();
+  });
   if (el("semantic-memory-status")) void refreshSemantic();
   clearDetail();
-  return { load, select, save, remove, refreshSemantic, indexSelected, searchSemantic };
+  return { load, select, save, remove, refreshSemantic, indexSelected, searchSemantic, verifyHit, renderRelationships };
 }
 if (typeof document !== "undefined") mountMemoryPage();

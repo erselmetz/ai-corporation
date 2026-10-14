@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { mountMemoryPage } from "../app/webui/static/memory.mjs";
 class Element {
-  constructor() { this.children=[]; this.text=""; this.value=""; this.listeners={}; }
+  constructor() { this.children=[]; this.text=""; this.value=""; this.listeners={}; this.dataset={}; this.className=""; }
   get textContent() { return this.text + this.children.map(x=>x.textContent).join(""); }
   set textContent(value) { this.text=value; this.children=[]; }
   append(...items) { this.children.push(...items); }
@@ -13,7 +13,7 @@ const item={id:"note",scope:"conversation",scope_id:"chat",type:"note",expires_a
 const record={...item,content:"<script>private</script>",revision:"a".repeat(64),source_id:"message",source_scope:"conversation",source_scope_id:"chat",source_reference:"message"};
 const response=(status,data)=>({ok:status>=200&&status<300,status,json:async()=>data});
 function setup(fetchImpl,confirmImpl=()=>true) {
-  const elements=Object.fromEntries(["memory-list","memory-state","memory-detail-state","memory-scope","memory-scope-id","memory-content","memory-expiry","memory-consent","memory-save","memory-remove","memory-refresh"].map(id=>[id,new Element()]));
+  const elements=Object.fromEntries(["memory-list","memory-state","memory-detail-state","memory-scope","memory-scope-id","memory-content","memory-expiry","memory-consent","memory-save","memory-remove","memory-refresh","memory-map-root","memory-map-state","memory-relationship-list"].map(id=>[id,new Element()]));
   elements["memory-scope"].value="conversation"; elements["memory-scope-id"].value="chat";
   const controller=mountMemoryPage({documentRef:{getElementById:id=>elements[id],createElement:()=>new Element()},fetchImpl,confirmImpl});
   return {controller,elements};
@@ -25,9 +25,12 @@ test("explicit scoped reads use session credentials and render text safely",asyn
   assert.equal(await controller.load(),true); assert.equal(await controller.select(item),true);
   assert.equal(calls[0].path,"/api/memory?scope=conversation&scope_id=chat&limit=50");
   assert.ok(calls.every(x=>x.options.credentials==="same-origin"));
+  assert.ok(calls.filter(x=>x.path.includes("/api/memory") && !x.options.method).every(x=>x.options.cache==="no-store"));
   assert.equal(elements["memory-content"].value,record.content);
   assert.equal(elements["memory-content"].children.length,0);
   assert.equal(elements["memory-consent"].checked,false);
+  assert.match(elements["memory-map-root"].textContent,/Selected conversation scope: chat/);
+  assert.match(elements["memory-relationship-list"].textContent,/Recorded in selected conversation scope/);
 });
 test("correction sends explicit consent and revision without owner spoofing",async()=>{
   let body;
@@ -46,6 +49,7 @@ for (const [status,message] of [[401,"Sign-in"],[403,"Access denied"],[500,"fail
     const {controller,elements}=setup(async()=>response(statusCode,{items:[item]}));
     await controller.load();statusCode=status;assert.equal(await controller.load(),false);
     assert.equal(elements["memory-list"].children.length,0);assert.match(elements["memory-state"].textContent,new RegExp(message));
+    assert.equal(elements["memory-map-root"].textContent,"");
   });
 }
 test("stale correction conflict clears cached content",async()=>{

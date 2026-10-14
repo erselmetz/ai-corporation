@@ -45,6 +45,10 @@ def test_default_authentication_fails_closed(setup):
         assert client.put("/api/memory/record?" + QUERY, json={}).status_code == 401
         assert client.get("/ui/memory").status_code == 200
         assert client.get("/ui/static/memory.mjs").status_code == 200
+        page = client.get("/ui/memory").text
+        assert 'id="memory-relationship-list"' in page
+        assert 'id="memory-map-root"' in page
+        assert "does not aggregate other conversations, Projects, or owners" in page
 
 
 def test_permission_and_owner_boundaries_reject_spoofing(setup):

@@ -25,8 +25,8 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-174-175");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 175 }, (_, index) => 175 - index));
-  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*170 completed.*2 deferred and incomplete.*3 planned/);
-  assert.match(elements["next-task"].textContent, /Next: Task 173/);
+  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*171 completed.*2 deferred and incomplete.*2 planned/);
+  assert.match(elements["next-task"].textContent, /Next: Task 174/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -140,16 +140,20 @@ test("publishes the completed settings milestone and remaining phases as planned
   assert.equal(settings.checkpoint, "task-171-unified-settings-operator-controls");
   assert.match(settings.validation.join(" "), /17 passed.*33 passed/);
   assert.match(settings.limitations.join(" "), /installer was not rebuilt/);
-  const planned = tasks.filter(task => task.number >= 173);
+  const planned = tasks.filter(task => task.number >= 174);
   assert.deepEqual(planned.map(task => [task.number, task.status]), [
-    [173, "planned"], [174, "planned"], [175, "planned"],
+    [174, "planned"], [175, "planned"],
   ]);
   const corporationMap = tasks.find(task => task.number === 172);
   assert.match(corporationMap.description, /interactive, evidence-backed 3D map/);
   assert.match(corporationMap.acceptance.join(" "), /zoom\/orbit\/pan.*filters\/layers/i);
   assert.match(corporationMap.acceptance.join(" "), /labeled 2D\/list fallback/);
   assert.match(corporationMap.outOfScope.join(" "), /Do not invent nodes, relationships, activity/);
-  const memoryMap = planned.find(task => task.number === 173);
+  const memoryMap = tasks.find(task => task.number === 173);
+  assert.equal(memoryMap.status, "completed");
+  assert.equal(memoryMap.checkpoint, "task-173-memory-knowledge-relationship-explorer");
+  assert.match(memoryMap.validation.join(" "), /104 passed.*206 passed/);
+  assert.match(memoryMap.limitations.join(" "), /at most 50 records/);
   assert.match(memoryMap.acceptance.join(" "), /provenance.*retrieval matches/);
   assert.match(memoryMap.outOfScope.join(" "), /Do not broaden Task 130/);
   const multimodal = planned.find(task => task.number === 174);

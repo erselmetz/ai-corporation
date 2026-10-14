@@ -771,6 +771,12 @@ def memory_page() -> HTMLResponse:
       <label for="semantic-query">Search this selected scope</label><input id="semantic-query" maxlength="1024">
       <button id="semantic-search" type="button">Search</button>
       <p id="semantic-search-state" role="status" aria-live="polite"></p><ol id="semantic-results" aria-label="Semantic retrieval results"></ol>
+      </section>
+      <section class="management-card" aria-labelledby="memory-relationships-title"><h2 id="memory-relationships-title">Source and retrieval relationships</h2>
+      <p>Enter one exact scope above and refresh to inspect only records returned for it. This view does not aggregate other conversations, Projects, or owners. Listed links come from returned scope/provenance fields; semantic matches are retrieval candidates, not verified facts. Record content is hidden here.</p>
+      <p id="memory-map-state" role="status" aria-live="polite">Choose a scope and refresh to load its authorized records.</p>
+      <div id="memory-map-root" class="memory-map-root" role="group" aria-label="Selected memory scope"></div>
+      <ol id="memory-relationship-list" class="memory-map-nodes" aria-label="Memory records and their recorded relationships"></ol>
       </section></main></body></html>""")
 
 
