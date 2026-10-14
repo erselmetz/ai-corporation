@@ -2495,7 +2495,7 @@ export const post100Tasks = [
     "title": "Crash recovery and measured performance readiness",
     "description": "Improve safe restart recovery and measure startup, memory, rendering, and model workloads before hardware-aware recommendations.",
     "category": "Phase I - Productization and Stable Release",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       119,
       126,
@@ -2511,12 +2511,21 @@ export const post100Tasks = [
       "Do not infer guaranteed hardware fit from model labels, telemetry, or slots."
     ],
     "decisions": [
-      "Set hardware matrix and thresholds from actual measurements."
+      "Publish no numerical hardware-support thresholds until repeatable measurements exist across explicit minimum hardware profiles; keep unmeasured model workload and hardware fit UNKNOWN."
     ],
     "area": "P25",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-169-crash-recovery-performance-readiness",
+    "validation": [
+      "Focused readiness evidence, system monitoring, execution queue, chat history, and local access regressions: 39 passed.",
+      "Readiness and Three.js browser modules: 13 passed; Python visualization page: 2 passed; desktop tests: 16 passed; public docs tests: 15 passed; Next.js static build and TypeScript checks passed.",
+      "Full deterministic Python suite excluding pre-existing syntax-invalid tests/test_automation_traces.py: 1,253 passed, 6 skipped, and the same 2 unrelated baseline failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service)."
+    ],
+    "limitations": [
+      "Startup timing covers only create_local_app factory setup; it excludes Python import/process launch, ASGI lifespan, and Electron startup. Process memory is a current OS working-set/RSS snapshot and excludes GPU memory and other processes.",
+      "Rendering evidence stays on the local visualization page, which reports only synchronous WebGL render timing; the readiness API does not collect frame pacing, GPU completion, or assistive-technology measurements.",
+      "No model inference benchmark was run. The configured Ollama inventory check was unavailable on this machine; assignments are recorded as conditions only, while model workload and hardware fit remain UNKNOWN. No thresholds or hardware readiness recommendations are published.",
+      "Preexisting claimed queue entries are surfaced as outcome-unknown for owner inspection. Another process may still own a claim; the report does not decide or resolve it. Existing interrupted chat history remains read-only and is never replayed."
+    ]
   },
   {
     "number": 170,
@@ -2714,7 +2723,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-168 are verified; Tasks 169-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Task 134 is deferred and incomplete; Tasks 135-169 are verified; Tasks 170-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

@@ -5,6 +5,8 @@ import logging
 import os
 from pathlib import Path
 import secrets
+from datetime import datetime, timezone
+import time
 
 from fastapi import HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -38,6 +40,8 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                      capability_grant_service=None, capability_audit_service=None,
                      emergency_stop_service=None, local_speech_provider=None,
                      data_portability_service=None):
+    startup_started = time.perf_counter()
+    app_started_at = datetime.now(timezone.utc)
     backend = LocalOwnerAuthentication(
         password, origin, **({"clock": clock} if clock else {}),
         **({"capability_authorization_service": capability_authorization_service}
@@ -99,6 +103,9 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
     application.state.data_portability_service = data_portability_service
     application.state.data_restore_requires_restart = False
     application.include_router(data_portability_router)
+    from app.api.local_readiness import router as local_readiness_router
+    application.state.local_app_started_at = app_started_at
+    application.include_router(local_readiness_router)
 
     @application.middleware("http")
     async def protect_local_request(request: Request, call_next):
@@ -238,6 +245,7 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                     "base-uri 'none'; frame-ancestors 'none'")
             return response
 
+    application.state.local_startup_setup_ms = max(0.0, (time.perf_counter() - startup_started) * 1000)
     return application
 
 

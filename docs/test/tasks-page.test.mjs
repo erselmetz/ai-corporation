@@ -25,8 +25,8 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-174-175");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 175 }, (_, index) => 175 - index));
-  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*167 completed.*1 deferred and incomplete.*7 planned/);
-  assert.match(elements["next-task"].textContent, /Next: Task 169/);
+  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*168 completed.*1 deferred and incomplete.*6 planned/);
+  assert.match(elements["next-task"].textContent, /Next: Task 170/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -121,6 +121,10 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.match(repositoryStudy.textContent, /exact-repository allowlist/);
   assert.match(repositoryStudy.textContent, /unapproved/);
   assert.match(repositoryStudy.textContent, /empty GitHub repository allowlist/);
+  const readiness = items.find(item => item.id === "task-169");
+  assert.equal(readiness.children[2].textContent, "Completed");
+  assert.match(readiness.textContent, /never replayed/i);
+  assert.match(readiness.textContent, /hardware fit remain UNKNOWN/i);
   assert.match(elements["roadmap-rules"].textContent, /Do not infer approval/);
   assert.match(elements["roadmap-rules"].textContent, /identical generated code is not guaranteed/);
 });

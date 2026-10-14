@@ -37,7 +37,7 @@ test("provider guidance separates setup choices, readiness evidence, and operato
   for (const text of ["Use a local Ollama service", "Use Google Gemini", "ordinary chat", "Registered provider", "Service availability", "Installed model", "Agent assignment", "Software capacity", "Measured hardware evidence", "Everyday use:", "does not yet have a general preferences page", "Advanced operator settings", "Resource settings", "Diagnostics and activity"]) {
     assert.ok(page.includes(text), `missing provider setup guidance: ${text}`);
   }
-  for (const href of ["/ui/provider-connections", "/ui/online-provider", "/ui/providers", "/ui/local-models", "/ui/assignment-policy", "/ui/login", "/ui/activity", "/ui/inventory", "/ui/backup"]) {
+  for (const href of ["/ui/provider-connections", "/ui/online-provider", "/ui/providers", "/ui/local-models", "/ui/assignment-policy", "/ui/login", "/ui/activity", "/ui/inventory", "/ui/readiness", "/ui/backup"]) {
     assert.ok(page.includes(`href="${href}"`), `missing existing operator page: ${href}`);
   }
   assert.match(page, /request slots represent software concurrency only/);

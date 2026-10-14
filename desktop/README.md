@@ -131,6 +131,12 @@ copy under `%LOCALAPPDATA%\ERSELMETZ AI\backups` and requires an app restart.
 The passphrase is never stored or recoverable. Provider data, credentials held
 outside the SQLite database, model files, and remote data are not covered.
 
+Task 169 adds the owner-only **Performance readiness** page. It reports local
+app-factory setup time, current process working-set/RSS where supported,
+recorded model assignments, and prior queue claims for inspection. It does not
+run a model or replay operations. Rendering evidence stays in the visualization
+page; model workload and hardware fit remain UNKNOWN without measured evidence.
+
 ## Verification
 
 Run deterministic tests with `npm --prefix desktop test` and the Python tests

@@ -13,7 +13,7 @@ def _navigation(active_path: str) -> str:
                 ("3D visualization", "/ui/visualization"), ("Memory", "/ui/memory"))),
         ("OPERATIONS", (("Tasks", "/ui/tasks"), ("Workflows", "/ui/workflows"),
                         ("Workflow map", "/ui/workflow-map"), ("Activity", "/ui/activity"))),
-        ("SYSTEM", (("Software inventory", "/ui/inventory"), ("Backup &amp; restore", "/ui/backup"), ("Documentation", "/ui/documentation"),
+        ("SYSTEM", (("Software inventory", "/ui/inventory"), ("Performance readiness", "/ui/readiness"), ("Backup &amp; restore", "/ui/backup"), ("Documentation", "/ui/documentation"),
                     ("Updates", "/ui/updates"), ("Preferences", "/ui/preferences"), ("Owner sign-in", "/ui/login"))),
     )
     parts = ['<nav class="navigation" aria-label="Main navigation"><h2>Navigate</h2><ul>']
@@ -982,6 +982,22 @@ def backup_page():
     </section>
     <section class="management-card"><h2>Limits</h2><p>Restore creates an encrypted pre-restore copy in the local ERSELMETZ AI backups folder. Restart the app after restore. Retention and deletion are owner-managed. Provider account data, API credentials held outside this database, downloaded model files, and remote data cannot be exported or erased here. No cloud destination is available.</p></section>
     <p id="backup-state" role="status" aria-live="polite"></p></main></body></html>""")
+
+
+@router.get("/ui/readiness", response_class=HTMLResponse)
+def readiness_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Performance readiness - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/readiness.mjs"></script></head><body>
+    <main class="content"><nav aria-label="Readiness navigation"><a href="/ui">Home</a> | <a href="/ui/visualization">Rendering evidence</a> | <a href="/ui/login">Owner sign-in</a></nav>
+    <p class="eyebrow">LOCAL EVIDENCE</p><h1>Performance readiness</h1>
+    <p>Refresh returns a response-only snapshot of this app run's setup time, current process memory, recorded model assignments, and prior queue claims. It is not persisted. It never runs a model, changes work, or estimates hardware fit.</p>
+    <button id="readiness-refresh" type="button">Refresh evidence</button>
+    <p id="readiness-state" role="status" aria-live="polite">Evidence has not been requested.</p>
+    <pre id="readiness-report" aria-live="polite"></pre>
+    <p>Rendering evidence is measured on this device in the 3D visualization page. Model workload performance and hardware fit remain UNKNOWN until a measured, owner-selected workload and supported hardware profile exist. Missing evidence is not a readiness result.</p>
+    </main></body></html>""")
 
 
 @router.get("/ui/employee-chat", response_class=HTMLResponse)
