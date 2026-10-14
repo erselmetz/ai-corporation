@@ -32,6 +32,7 @@ test("onboarding explains the shortest chat path and keeps operator controls sep
   assert.match(page, /href="\/desktop\/settings\/"/);
   assert.match(page, /href="\/ui\/provider-connections"/);
   assert.match(page, /href="\/ui\/employees"/);
+  assert.match(page, /href="\/ui\/visualization">Interactive system map/);
   assert.match(page, /does not dispatch Tasks/);
 });
 

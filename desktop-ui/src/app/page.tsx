@@ -167,6 +167,7 @@ export default function Home() {
           <a className="rail-link" href="/ui/employees">Employees</a>
           <a className="rail-link" href="/ui/positions">Positions</a>
           <a className="rail-link" href="/ui/structure">Organization map</a>
+          <a className="rail-link" href="/ui/visualization">Interactive system map</a>
           <a className="rail-link" href="/ui/providers">Providers &amp; models</a>
           <a className="rail-link" href="/ui/memory">Memory</a>
         </div>

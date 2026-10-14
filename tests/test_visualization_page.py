@@ -20,6 +20,12 @@ def test_visualization_page_is_3d_first_with_accessible_alternatives_and_setup_l
         html = response.text
         for fragment in ('id="viz-canvas"', 'tabindex="0"', 'id="viz-list"', 'id="viz-reduce-motion"',
                          'id="viz-effects"', 'id="viz-evidence-data"',
+                         'id="viz-layer-organization"', 'id="viz-layer-projects"', 'id="viz-layer-tasks"',
+                         'id="viz-layer-workflows"', 'id="viz-layer-providers"', 'id="viz-layer-capabilities"',
+                         'id="viz-layer-resources"', 'id="viz-layer-knowledge"', 'id="viz-zoom-in"',
+                         'id="viz-frame-measure"', 'id="viz-frame-metric"', 'Measure 300 frames',
+                         'id="viz-pan-down"', 'id="viz-search"', 'Find records by name, ID, type, or state',
+                         'Current APIs expose no department records', 'Separate source snapshots may have different timestamps',
                          'href="/ui/chat"', 'href="/ui/providers"'):
             assert fragment in html
         assert "<script" in html and "onclick" not in html.lower()

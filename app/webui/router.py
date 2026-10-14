@@ -1201,8 +1201,10 @@ def visualization_page():
     <a href="/ui/structure">Structure list</a> | <a href="/ui/workflow-map">Workflow list</a> |
     <a href="/ui/login">Local sign-in / sign-out</a></nav>
     <h1>Corporation visualization</h1>
-    <p>A 3D view of recorded positions, reporting links and workflow items. Only recorded state is drawn;
-    a node pulses once only when a refresh finds its recorded state changed. Nothing here can start or
+    <p>Explore current, authorized Corporation, organization, Project, Task, workflow, Provider/model,
+    Agent capability, software resource, and retained-knowledge records. Only source-backed relationships
+    are drawn. Provider registration is not availability; capability declarations do not grant authority;
+    request slots do not establish hardware fit; memory content is not shown. The map cannot start or
     approve work.</p>
     <p id="viz-status" role="status">Loading...</p>
     <div role="group" aria-label="View controls">
@@ -1211,11 +1213,31 @@ def visualization_page():
     <button id="viz-refresh" type="button">Refresh</button>
     <button id="viz-rotate-left" type="button">Rotate left</button>
     <button id="viz-rotate-right" type="button">Rotate right</button>
+    <button id="viz-zoom-in" type="button">Zoom in</button>
+    <button id="viz-zoom-out" type="button">Zoom out</button>
+    <button id="viz-pan-left" type="button">Pan left</button>
+    <button id="viz-pan-right" type="button">Pan right</button>
+    <button id="viz-pan-up" type="button">Pan up</button>
+    <button id="viz-pan-down" type="button">Pan down</button>
+    <button id="viz-frame-measure" type="button">Measure 300 frames</button>
     <label><input id="viz-effects" type="checkbox" checked> Visual effects</label>
     <label><input id="viz-reduce-motion" type="checkbox"> Reduce motion</label></div>
+    <fieldset class="viz-layers"><legend>Visible map layers</legend>
+    <label><input id="viz-layer-organization" type="checkbox" checked> Corporation, positions, Employees, Agents</label>
+    <label><input id="viz-layer-projects" type="checkbox" checked> Projects</label>
+    <label><input id="viz-layer-tasks" type="checkbox" checked> Tasks</label>
+    <label><input id="viz-layer-workflows" type="checkbox" checked> Workflows and execution evidence</label>
+    <label><input id="viz-layer-providers" type="checkbox" checked> Providers and model assignments</label>
+    <label><input id="viz-layer-capabilities" type="checkbox" checked> Agent capability declarations</label>
+    <label><input id="viz-layer-resources" type="checkbox" checked> Software slot budgets</label>
+    <label><input id="viz-layer-knowledge" type="checkbox" checked> Retained knowledge metadata</label></fieldset>
+    <label for="viz-search">Find records by name, ID, type, or state</label>
+    <input id="viz-search" type="search" maxlength="120" autocomplete="off">
+    <p>Drag to orbit; hold Shift and drag to pan; use the labeled controls for keyboard access. Filter layers or search names and IDs to inspect records beyond the 60-node render cap. Current APIs expose no department records. Separate source snapshots may have different timestamps and are not atomic.</p>
     <canvas id="viz-canvas" class="viz-canvas" tabindex="0" role="img" aria-label="3D map"></canvas>
     <section id="viz-list" aria-label="List view" hidden></section>
     <p id="viz-cost" role="status"></p>
+    <p id="viz-frame-metric" role="status">Frame pacing: not measured on this device.</p>
     <section aria-live="polite"><h2>Details</h2><div id="viz-detail">Select a node.</div></section>
     <section id="viz-evidence" aria-labelledby="viz-evidence-title">
     <h2 id="viz-evidence-title">Authorized map evidence</h2>

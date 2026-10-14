@@ -107,8 +107,21 @@ export function createThreeView({
   return {
     setModel,
     pulse,
+    renderFrame: renderOnce,
     select(id) { selected = id; applySelection(); renderOnce(); },
     rotate(radians) { if (built) { built.group.rotation.y += radians; renderOnce(); } },
+    tilt(radians) { if (built) { built.group.rotation.x = Math.max(-1, Math.min(1, built.group.rotation.x + radians)); renderOnce(); } },
+    zoom(steps) {
+      if (!built) return;
+      built.camera.position.z = Math.max(5, Math.min(36, built.camera.position.z + steps * 1.5));
+      renderOnce();
+    },
+    pan(x, y) {
+      if (!built) return;
+      built.group.position.x = Math.max(-12, Math.min(12, built.group.position.x + x));
+      built.group.position.y = Math.max(-12, Math.min(12, built.group.position.y + y));
+      renderOnce();
+    },
     resize(width, height) {
       renderer.setSize(width, height, false);
       if (built) { built.camera.aspect = width / Math.max(1, height); built.camera.updateProjectionMatrix(); }
@@ -122,8 +135,11 @@ export function createThreeView({
       return hit ? hit.object.userData.id : null;
     },
     cost() {
-      if (!costs.length) return { last: 0, average: 0, samples: 0 };
-      return { last: costs.at(-1), average: costs.reduce((a, b) => a + b, 0) / costs.length, samples: costs.length };
+      const info = renderer.info;
+      const resources = info ? { geometries: info.memory?.geometries ?? 0, textures: info.memory?.textures ?? 0,
+        calls: info.render?.calls ?? 0 } : null;
+      if (!costs.length) return { last: 0, average: 0, samples: 0, resources };
+      return { last: costs.at(-1), average: costs.reduce((a, b) => a + b, 0) / costs.length, samples: costs.length, resources };
     },
     dispose() { built?.dispose(); built = null; renderer.dispose(); },
   };

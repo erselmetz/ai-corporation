@@ -2609,7 +2609,7 @@ export const post100Tasks = [
     "title": "Interactive 3D corporation and execution map",
     "description": "Extend the reviewed visualization foundation into an interactive, evidence-backed 3D map of the organization and its live work relationships.",
     "category": "Phase K - Interactive Maps and Visualization",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       114,
       115,
@@ -2628,12 +2628,24 @@ export const post100Tasks = [
       "Do not choose or add a rendering dependency before Task 162 review and do not imply the map itself grants permissions."
     ],
     "decisions": [
-      "Select the visualization architecture and measurable device/performance thresholds after Task 162 evidence."
+      "Retain the existing vendored Three.js renderer based on Task 162 evidence; no dependency or framework migration is needed.",
+      "Carry forward Task 162 reference gates (p95 <=16.7 ms, p99 <=33.3 ms across 300 frames on a published minimum desktop profile; <=128 geometries, <=4 textures, <=240 render calls) as validation targets. The profile is not defined, and a single on-device measurement is diagnostic rather than release qualification."
     ],
     "area": "P27",
-    "checkpoint": null,
-    "validation": [],
-    "limitations": []
+    "checkpoint": "task-172-interactive-3d-corporation-execution-map",
+    "validation": [
+      "Deterministic scene and interaction tests: 14 passed, including source-backed links, layer/search filters, 60-node/119-link caps, 300-frame percentile reporting, cancellation, keyboard access, reduced motion, and WebGL fallback.",
+      "Python visualization route tests: 2 passed; protected API behavior is exercised through the existing read endpoints.",
+      "Desktop package tests: 17 passed; Next.js static production build and TypeScript checks passed; public documentation tests: 16 passed.",
+      "Full Python run: collection is blocked by a pre-existing SyntaxError in tests/test_automation_traces.py; excluding it yielded 1,253 passed, 6 skipped, and two unrelated known model-assignment failures (test_model_set_command and test_model_replacement_uses_existing_assignment_service)."
+    ],
+    "limitations": [
+      "Department records are not exposed by current APIs, so department nodes are omitted. Task and workflow records have no direct linkage field; no Task-to-workflow relationship is inferred.",
+      "Each protected source is read independently on demand. The map does not represent an atomic multi-source snapshot, and timestamps are shown only where the source API provides them.",
+      "The 60-node and 119-link render caps can omit records or relationships; layer filters and search select records for the current view. The list fallback exposes the same selected graph and omissions.",
+      "Agent capability nodes represent registry declarations, not grants. Retained knowledge content is excluded; only authorized metadata and exact source references appear. Resource nodes describe software slots, not hardware fit.",
+      "The 300-frame measurement is opt-in and device-local. Automated tests use deterministic timestamps; no physical-device, local-inference concurrency, minimum-hardware, screen-reader, or WCAG audit was performed."
+    ]
   },
   {
     "number": 173,
@@ -2740,7 +2752,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 are verified; Task 171 is complete and Task 172 is next; Tasks 172-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 are verified; Task 172 is complete and Task 173 is next; Tasks 173-175 remain planned expansion contracts grouped by capability phase; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
