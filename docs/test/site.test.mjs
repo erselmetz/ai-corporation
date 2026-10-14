@@ -155,6 +155,11 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 169).checkpoint, "task-169-crash-recovery-performance-readiness");
     assert.match(tasks.find(task => task.number === 169).decisions.join(" "), /no numerical hardware-support thresholds/);
     assert.match(tasks.find(task => task.number === 169).limitations.join(" "), /model workload and hardware fit remain UNKNOWN/);
+    const task170 = tasks.find(task => task.number === 170);
+    assert.equal(task170.status, "planned");
+    assert.ok(!task170.dependsOn.includes(134));
+    assert.match(task170.decisions.join(" "), /exclude app-managed capability-pack installation\/loading/);
+    assert.match(task170.limitations.join(" "), /No independent security\/privacy reviewer/);
     assert.equal(tasks.find(task => task.number === 163).status, "completed");
     assert.equal(tasks.find(task => task.number === 163).checkpoint, "task-163-original-assistant-identity");
     assert.match(tasks.find(task => task.number === 163).decisions.join(" "), /do not grant permissions/);
@@ -270,6 +275,15 @@ describe("documentation site", () => {
     assert.match(roadmap, /168 complete.*1 deferred.*6 planned/);
     assert.match(roadmap, /reports external Tesseract and traineddata requirements/);
     assert.doesNotMatch(roadmap, /Task 130.*semantic/i);
+  });
+
+  it("publishes release limitations without implying stable status or independent review", async () => {
+    const security = await (await fetch(`${baseUrl}/security.html`)).text();
+    assert.match(security, /local acceptance evidence only/);
+    assert.match(security, /not a public stable release/);
+    assert.match(security, /Task 134 remains deferred/);
+    assert.match(security, /independent security\/privacy reviewer/);
+    assert.match(security, /not that independent review/);
   });
 
   it("requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence", () => {

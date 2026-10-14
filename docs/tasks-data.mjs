@@ -2534,7 +2534,6 @@ export const post100Tasks = [
     "category": "Phase I - Productization and Stable Release",
     "status": "planned",
     "dependsOn": [
-      134,
       139,
       144,
       149,
@@ -2547,20 +2546,27 @@ export const post100Tasks = [
       169
     ],
     "acceptance": [
-      "Validate onboarding, optional pack failures, permissions, update/recovery, privacy, and accessibility.",
+      "Validate clean onboarding, permissions, update/recovery, privacy, and accessibility on the explicitly listed target. Deferred capability packs remain unavailable and are not installed or dynamically loaded.",
       "Publish tested platforms/providers, risks, skipped checks, limits, and recovery guidance.",
+      "Complete an independent security/privacy review by a reviewer who did not author the implementation; record the reviewed commit, scope, findings, severity, and disposition.",
       "Call stable only for demonstrated targets and capabilities."
     ],
     "outOfScope": [
+      "Do not add or claim the deferred Task 134 capability-pack lifecycle as part of this release.",
       "Do not mark unknown providers, hardware, autonomy, or platforms as ready."
     ],
     "decisions": [
-      "Set release gates after dependent evidence exists."
+      "Keep Task 134 deferred and exclude app-managed capability-pack installation/loading from the supported release until a verified artifact source, publisher trust anchor, and isolated loading boundary exist.",
+      "No stable-release claim is permitted until the independent review is completed and its findings are dispositioned."
     ],
     "area": "P25",
     "checkpoint": null,
     "validation": [],
-    "limitations": []
+    "limitations": [
+      "Task 134 remains deferred and incomplete. No app-managed capability-pack install, update, removal, or dynamic loading is supported or claimed.",
+      "No independent security/privacy reviewer has reviewed the implementation. Task 170 remains planned and the product is not declared a stable release.",
+      "The documented Windows 11 x64 installer is a local acceptance-tested unsigned artifact, not a public production release. No live provider/model workload or hardware-fit profile is release-verified."
+    ]
   },
   {
     "number": 171,
