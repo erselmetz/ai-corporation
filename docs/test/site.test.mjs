@@ -92,10 +92,10 @@ describe("documentation site", () => {
 
   it("records verified, deferred, and planned work without treating deferral as completion", () => {
     assert.equal(tasks.filter(task => task.status === "completed").length, 168);
-    assert.equal(tasks.filter(task => task.status === "deferred").length, 2);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 5);
+    assert.equal(tasks.filter(task => task.status === "deferred").length, 1);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 6);
     assert.equal(tasks.find(task => task.number === 134).status, "deferred");
-    assert.equal(tasks.find(task => task.number === 170).status, "deferred");
+    assert.equal(tasks.find(task => task.number === 170).status, "planned");
     assert.equal(tasks.find(task => task.number === 135).status, "completed");
     assert.equal(tasks.find(task => task.number === 156).status, "completed");
     assert.equal(tasks.find(task => task.number === 157).status, "completed");
@@ -157,7 +157,7 @@ describe("documentation site", () => {
     assert.match(tasks.find(task => task.number === 169).decisions.join(" "), /no numerical hardware-support thresholds/);
     assert.match(tasks.find(task => task.number === 169).limitations.join(" "), /model workload and hardware fit remain UNKNOWN/);
     const task170 = tasks.find(task => task.number === 170);
-    assert.equal(task170.status, "deferred");
+    assert.equal(task170.status, "planned");
     assert.ok(!task170.dependsOn.includes(134));
     assert.match(task170.decisions.join(" "), /exclude app-managed capability-pack installation\/loading/);
     assert.match(task170.limitations.join(" "), /No independent security\/privacy reviewer/);
@@ -173,7 +173,7 @@ describe("documentation site", () => {
     assert.match(visualizationReview.decisions.join(" "), /WCAG 2.2 AA/);
     assert.match(visualizationReview.limitations.join(" "), /not achieved measurements/);
     assert.equal(tasks.find(task => task.number === 158).checkpoint, "task-158-automation-review-traces");
-    assert.equal(nextTask.number, 171);
+    assert.equal(nextTask.number, 170);
     assert.ok(tasks.slice(0, 133).every(task => task.status === "completed"));
     assert.ok(tasks.slice(133).some(task => task.status === "planned"));
     assert.equal(tasks[51].number, 52);
@@ -253,10 +253,9 @@ describe("documentation site", () => {
   it("summarizes the roadmap while preserving the full task contracts", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
-    assert.match(html, /168 complete; 2 deferred; 5 planned/);
+    assert.match(html, /168 complete; 1 deferred; 6 planned/);
     assert.match(html, /Tasks 1-133 and 135-169 are verified/);
-    assert.match(html, /Tasks 134 and 170 are deferred/);
-    assert.match(html, /Tasks 171-175 are planned/);
+    assert.match(html, /Task 134 is deferred; Tasks 170-175 are planned/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
   });
@@ -266,7 +265,7 @@ describe("documentation site", () => {
       ["index.html", "documentation.html", "architecture.html", "roadmap.html", "updates.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
     assert.match(home, /Latest update.*Task 169/);
-    assert.match(home, /Next planned.*Task 171/);
+    assert.match(home, /Next planned.*Task 170/);
     assert.doesNotMatch(home, /Task 134/);
     assert.match(home, /Changelog/);
     assert.doesNotMatch(home, /Task 57|Task 100|Verified Tasks 101-133/);
@@ -277,8 +276,8 @@ describe("documentation site", () => {
     assert.match(updates, /Task 166.*2026-10-14/);
     assert.match(updates, /Task 156.*2026-10-14/);
     assert.match(updates, /Task 140.*2026-10-13/);
-    assert.match(roadmap, /Tasks 1-133 and 135-169 are complete.*Tasks 134 and 170 are deferred.*Tasks 171-175 are planned/);
-    assert.match(roadmap, /168 complete.*2 deferred.*5 planned/);
+    assert.match(roadmap, /Tasks 1-133 and 135-169 are complete.*Task 134 is deferred; Tasks 170-175 are planned/);
+    assert.match(roadmap, /168 complete.*1 deferred.*6 planned/);
     assert.match(roadmap, /reports external Tesseract and traineddata requirements/);
     assert.doesNotMatch(roadmap, /Task 130.*semantic/i);
   });
@@ -312,7 +311,7 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 162).checkpoint, "task-162-three-dimensional-map-review");
     assert.equal(tasks.find(task => task.number === 162).status, "completed");
     assert.equal(tasks.find(task => task.number === 158).checkpoint, "task-158-automation-review-traces");
-    assert.equal(nextTask.number, 171);
+    assert.equal(nextTask.number, 170);
     const task122 = post100Tasks.find(task => task.number === 122);
     assert.equal(task122.status, "completed");
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");
