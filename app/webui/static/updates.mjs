@@ -71,7 +71,7 @@ function renderUpdates(documentRef, list, entries) {
 export function mountUpdatesPage({
   documentRef = globalThis.document,
   fetchImpl = globalThis.fetch,
-}) {
+} = {}) {
   const list = documentRef.getElementById("updates-list");
   const listState = documentRef.getElementById("updates-list-state");
   const refreshButton = documentRef.getElementById("updates-refresh");

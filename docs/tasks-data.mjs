@@ -150,7 +150,7 @@ export const foundationTaskGroups = [
       ["Organization-Level Orchestration", "Coordinate work across organizational responsibilities and approved workflows."],
       ["Adaptive Workforce", "Adjust organizational capacity and role assignments under explicit governance."],
       ["Self-Improvement Pipeline", "Evolve the controlled proposal, sandbox, testing, review, and approval pipeline."],
-      ["ERSELMETZ AI CORPORATION Platform", "Develop a coherent, governed platform for operating a virtual/simulated AI organization."]
+      ["ERSELMETZ AI Platform", "Develop a coherent, governed platform for operating a virtual/simulated AI organization."]
     ]
   }
 ];

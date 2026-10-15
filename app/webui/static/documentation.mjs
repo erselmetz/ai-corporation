@@ -71,7 +71,7 @@ function renderDocumentList(documentRef, list, items, onSelect) {
 export function mountDocumentationPage({
   documentRef = globalThis.document,
   fetchImpl = globalThis.fetch,
-}) {
+} = {}) {
   const list = documentRef.getElementById("documentation-list");
   const listState = documentRef.getElementById("documentation-list-state");
   const refreshButton = documentRef.getElementById("documentation-refresh");

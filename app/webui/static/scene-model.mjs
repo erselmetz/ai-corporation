@@ -93,7 +93,9 @@ function boundedText(value, fallback = "not recorded", limit = 160) {
   return typeof value === "string" && value.trim() ? value.trim().slice(0, limit) : fallback;
 }
 
-function addNode(nodes, layer, id, kind, label, state, detail, source, xIndex, yIndex, snapshotAt = null) {
+function addNode(nodes, layer, id, kind, label, state, detail, source, xIndex,
+                 yIndex = ({ projects: 4, tasks: 5, workflows: 6, providers: 7,
+                   capabilities: 8, resources: 9, knowledge: 10 })[layer] ?? 0, snapshotAt = null) {
   nodes.push({ id, layer, kind, label: boundedText(label, kind), state: boundedText(state, "unknown", 40),
     detail: boundedText(detail, "No additional details recorded."), source, snapshot_at: snapshotAt,
     x: (xIndex % 6) * 2.4 - 6, y: -yIndex * 1.8, z: -Math.floor(xIndex / 6) * 2.4, slot: xIndex });

@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock, RLock
@@ -1238,7 +1238,11 @@ class CorporationApplicationService:
         from .owned_chat import ChatConflict
         try:
             with self._orchestrator.agents.assignment_change(agent_id):
-                with self.owned_chat().configuration_change(agent_id):
+                # Model management also supports runtimes without chat identity.
+                # Such runtimes cannot create owned chat, but still require the
+                # registry execution guard while changing an assignment.
+                with (self.owned_chat().configuration_change(agent_id)
+                      if self._corporation is not None else nullcontext()):
                     yield
         except AgentAssignmentBusy:
             raise ChatConflict(

@@ -157,7 +157,7 @@ export function mountTaskPage({
   documentRef = globalThis.document,
   fetchImpl = globalThis.fetch,
   confirmImpl = globalThis.confirm,
-}) {
+} = {}) {
   const list = documentRef.getElementById("task-list");
   const listState = documentRef.getElementById("task-list-state");
   const refreshButton = documentRef.getElementById("task-refresh");

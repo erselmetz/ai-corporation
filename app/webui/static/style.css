@@ -1082,7 +1082,7 @@ textarea::placeholder { color: #8192a6; }
   .dashboard-actions { justify-content: flex-start; }
   .setup-card { padding: 0.95rem; }
 }
-.safety-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; margin-block: 1rem; padding: 1rem; border: 1px solid var(--border, #334155); border-left: .3rem solid #d97706; border-radius: .75rem; background: var(--surface, #fff); }
+.safety-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; margin-block: 1rem; padding: 1rem; border: 1px solid var(--ui-line); border-left: .3rem solid #d97706; border-radius: .75rem; background: var(--ui-panel); }
 .safety-panel h2 { margin: .15rem 0 .4rem; }
 .safety-panel .eyebrow { margin: 0; }
 .safety-actions { display: flex; flex-wrap: wrap; align-content: center; gap: .5rem; }
@@ -1104,3 +1104,7 @@ textarea::placeholder { color: #8192a6; }
 .memory-map-node p { margin: .45rem 0 0; color: var(--ui-dim); line-height: 1.45; }
 .memory-map-node button { max-width: 100%; overflow-wrap: anywhere; }
 @media (max-width: 700px) { .safety-panel { grid-template-columns: 1fr; } .safety-actions { justify-content: flex-start; } .grant-list li { align-items: flex-start; flex-direction: column; } }
+
+/* Keep advanced JSON and diagnostic output within narrow screens. */
+.content pre { max-width: 100%; overflow-x: auto; }
+#assignment-policy-config { display: block; width: 100%; max-width: 100%; }

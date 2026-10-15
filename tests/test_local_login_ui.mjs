@@ -4,7 +4,7 @@ import { runInNewContext } from "node:vm";
 import test from "node:test";
 
 const source = await readFile(new URL("../app/webui/static/local-login.mjs", import.meta.url), "utf8");
-function setup(fetch) {
+function setup(fetch, { search = "", referrer = "" } = {}) {
   const handlers = {};
   const button = { disabled: false };
   const password = { value: "test-only-password" };
@@ -14,8 +14,9 @@ function setup(fetch) {
   const logout = { addEventListener: (_, callback) => { handlers.logout = callback; } };
   const elements = { "#local-login": form, "#password": password, "#login-state": state, "#local-logout": logout };
   const destinations = [];
-  runInNewContext(source, { document: { querySelector: (id) => elements[id] }, fetch,
-    window: { location: { assign: (url) => destinations.push(url) } } });
+  runInNewContext(source, { document: { querySelector: (id) => elements[id], referrer }, fetch,
+    URL, URLSearchParams,
+    window: { location: { origin: "http://127.0.0.1:8000", search, assign: (url) => destinations.push(url) } } });
   return { handlers, button, password, state, destinations };
 }
 
@@ -58,4 +59,19 @@ test("logout uses session CSRF and reports revoked session", async () => {
   assert.equal(calls[1].url, "/api/local/logout");
   assert.equal(calls[1].options.headers["X-Local-CSRF"], "test-only-csrf");
   assert.equal(ui.state.textContent, "Signed out");
+});
+
+test("sign-in returns to the same-origin app page and rejects external destinations", async () => {
+  for (const [options, expected] of [
+    [{ referrer: "http://127.0.0.1:8000/ui/chat" }, "/ui/chat"],
+    [{ search: "?next=%2Fui%2Fmemory" }, "/ui/memory"],
+    [{ search: "?next=https://example.com/ui/chat" }, "/ui"],
+    [{ search: "?next=//example.com/ui/chat" }, "/ui"],
+    [{ search: "?next=/ui/login" }, "/ui"],
+    [{ referrer: "http://example.com/ui/chat" }, "/ui"],
+  ]) {
+    const ui = setup(async () => ({ ok: true, json: async () => ({ signed_in: true }) }), options);
+    await ui.handlers.submit({ preventDefault() {} });
+    assert.deepEqual(ui.destinations, [expected]);
+  }
 });

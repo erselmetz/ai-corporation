@@ -56,6 +56,8 @@ test("corporation map includes only exact source-backed relationships and caps e
       provenance: { source_scope: "project", source_scope_id: "project-1", source_reference: "project-1" } }] },
   };
   const model = buildCorporationMapModel(sources);
+  assert.ok(model.nodes.every(node => [node.x, node.y, node.z].every(Number.isFinite)),
+    "Every layer must provide finite coordinates to the real renderer");
   assert.ok(model.nodes.some(node => node.id === "core:corp"));
   assert.ok(model.nodes.some(node => node.id === "emp:employee-1"));
   assert.ok(model.nodes.some(node => node.id === "agent:agent-1"));
@@ -92,6 +94,27 @@ test("real Three.js scene builds one mesh per node and effects can be disabled",
   assert.ok(full.group.children.length > plain.group.children.length);
   assert.equal(plain.group.children.length, 4 + 2);
   full.dispose(); plain.dispose();
+});
+
+test("initial resize survives model creation and frames all recorded nodes", () => {
+  let camera;
+  const FakeThree = { ...THREE, WebGLRenderer: class {
+    setPixelRatio() {} setSize() {} render(_scene, next) { camera = next; camera.updateMatrixWorld(); } dispose() {}
+  } };
+  const view = createThreeView({ THREE: FakeThree, canvas: {} });
+  const model = { nodes: [
+    { id: "left", x: -6, y: 0, z: 0 }, { id: "right", x: 6, y: -12, z: -4 },
+  ], edges: [] };
+  for (const [width, height] of [[1200, 448], [390, 448]]) {
+    view.resize(width, height);
+    view.setModel(model);
+    assert.equal(camera.aspect, width / height);
+    for (const node of model.nodes) {
+      const point = new THREE.Vector3(node.x, node.y, node.z).project(camera);
+      assert.ok(Math.abs(point.x) < 1 && Math.abs(point.y) < 1 && Math.abs(point.z) < 1);
+    }
+  }
+  view.dispose();
 });
 
 test("view records render cost and pulses only requested nodes", () => {

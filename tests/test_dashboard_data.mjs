@@ -196,7 +196,7 @@ test("preserves empty lists as successful data rather than converting failures t
 
 test("distinguishes authentication, authorization, and other failures per resource", async () => {
   const results = await loadDashboard(async (path) => {
-    if (path === "/api/status") return response(401, {});
+    if (path === "/api/status") return response(403, {});
     if (path === "/api/employees") return response(403, {});
     if (path === "/api/agents") return response(500, {});
     if (path === "/api/providers") throw new Error("network unavailable");
@@ -206,12 +206,31 @@ test("distinguishes authentication, authorization, and other failures per resour
     return response(200, { items: [] });
   });
 
-  assert.deepEqual(results.status, { error: "authentication" });
+  assert.deepEqual(results.status, { error: "forbidden" });
   assert.deepEqual(results.employees, { error: "forbidden" });
   assert.deepEqual(results.agents, { error: "failed" });
   assert.deepEqual(results.providers, { error: "failed" });
   assert.deepEqual(results.models, { error: "failed" });
   assert.deepEqual(results.tasks.data, { items: [] });
+});
+
+test("signed-out dashboard makes one identity request and clears and hides protected panels", async () => {
+  const calls = [];
+  const results = await loadDashboard(async path => {
+    calls.push(path);
+    return response(401, {});
+  });
+  assert.deepEqual(calls, ["/api/status"]);
+  assert.ok(Object.values(results).every(value => value.error === "authentication"));
+  const { document, panels } = dashboardDocument();
+  globalThis.document = document;
+  try {
+    renderDashboard(results);
+    for (const panel of panels.values()) {
+      assert.equal(panel.hidden, true);
+      assert.equal(panel.querySelector(".section-data").textContent.includes("Snapshot"), false);
+    }
+  } finally { delete globalThis.document; }
 });
 
 test("renders empty collections explicitly", () => {

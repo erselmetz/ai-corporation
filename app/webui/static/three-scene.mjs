@@ -59,7 +59,25 @@ export function createThreeView({
   let selected = null;
   let model = null;
   let effects = true;
+  let aspect = 1;
   const costs = [];
+
+  function frameModel() {
+    if (!built) return;
+    built.camera.aspect = aspect;
+    const points = model.nodes;
+    if (points.length) {
+      const bounds = axis => [Math.min(...points.map(p => p[axis])) - 1,
+        Math.max(...points.map(p => p[axis])) + 1];
+      const [left, right] = bounds("x"), [bottom, top] = bounds("y"), [back, front] = bounds("z");
+      const x = (left + right) / 2, y = (bottom + top) / 2;
+      const tangent = Math.tan(built.camera.fov * Math.PI / 360);
+      const distance = Math.max((right - left) / (2 * aspect * tangent), (top - bottom) / (2 * tangent));
+      built.camera.position.set(x, y, front + distance * 1.15);
+      built.camera.lookAt(x, y, (back + front) / 2);
+    }
+    built.camera.updateProjectionMatrix();
+  }
 
   function renderOnce() {
     if (!built) return;
@@ -83,6 +101,7 @@ export function createThreeView({
     built?.dispose();
     model = next;
     built = buildThreeScene(THREE, model, { effects });
+    frameModel();
     if (selected && !built.meshes.has(selected)) selected = null;
     applySelection();
     renderOnce();
@@ -123,8 +142,9 @@ export function createThreeView({
       renderOnce();
     },
     resize(width, height) {
+      aspect = Math.max(1, width) / Math.max(1, height);
       renderer.setSize(width, height, false);
-      if (built) { built.camera.aspect = width / Math.max(1, height); built.camera.updateProjectionMatrix(); }
+      frameModel();
       renderOnce();
     },
     pick(ndcX, ndcY) {

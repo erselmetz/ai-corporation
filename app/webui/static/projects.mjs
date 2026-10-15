@@ -83,7 +83,7 @@ function appendDefinition(documentRef, container, label, value) {
 export function mountProjectPage({
   documentRef = globalThis.document,
   fetchImpl = globalThis.fetch,
-}) {
+} = {}) {
   const list = documentRef.getElementById("project-list");
   const listState = documentRef.getElementById("project-list-state");
   const refreshButton = documentRef.getElementById("project-refresh");

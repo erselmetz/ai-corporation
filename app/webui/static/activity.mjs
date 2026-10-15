@@ -70,7 +70,7 @@ function renderActivity(documentRef, list, entries) {
 export function mountActivityPage({
   documentRef = globalThis.document,
   fetchImpl = globalThis.fetch,
-}) {
+} = {}) {
   const list = documentRef.getElementById("activity-list");
   const listState = documentRef.getElementById("activity-list-state");
   const refreshButton = documentRef.getElementById("activity-refresh");

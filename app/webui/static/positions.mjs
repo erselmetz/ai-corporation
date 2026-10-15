@@ -33,7 +33,7 @@ export function mountPositionManagementPage({
   documentRef = globalThis.document,
   fetchImpl = globalThis.fetch,
   confirmImpl = globalThis.confirm,
-}) {
+} = {}) {
   const byId = (id) => documentRef.getElementById(id);
   const pageState = byId("position-state");
   const list = byId("position-list");

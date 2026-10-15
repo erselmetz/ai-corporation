@@ -100,7 +100,7 @@ export function mountProviderModelPage({
   documentRef = globalThis.document,
   fetchImpl = globalThis.fetch,
   confirmImpl = globalThis.confirm,
-}) {
+} = {}) {
   const providerList = documentRef.getElementById("provider-list");
   const providerListState = documentRef.getElementById("provider-list-state");
   const providerDetail = documentRef.getElementById("provider-detail");

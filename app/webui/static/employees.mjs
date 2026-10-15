@@ -70,7 +70,7 @@ export function mountEmployeeManagementPage({
   documentRef = globalThis.document,
   fetchImpl = globalThis.fetch,
   confirmImpl = globalThis.confirm,
-}) {
+} = {}) {
   const listElement = documentRef.getElementById("employee-list");
   const listState = documentRef.getElementById("employee-list-state");
   const detailElement = documentRef.getElementById("employee-detail");

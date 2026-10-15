@@ -69,7 +69,7 @@ export function mountEmployeeChat({
   documentRef = globalThis.document,
   fetchImpl = globalThis.fetch,
   confirmImpl = globalThis.confirm,
-}) {
+} = {}) {
   const byId = (id) => documentRef.getElementById(id);
   const employeeSelect = byId("individual-employee");
   const conversationSelect = byId("individual-conversation");

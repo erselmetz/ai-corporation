@@ -1,6 +1,23 @@
 const form = document.querySelector("#local-login");
 const password = document.querySelector("#password");
 const state = document.querySelector("#login-state");
+function returnDestination() {
+  const origin = window.location.origin;
+  if (!origin) return "/ui";
+  const requested = new URLSearchParams(window.location.search ?? "").get("next");
+  const candidate = requested ?? document.referrer;
+  if (!candidate) return "/ui";
+  try {
+    const target = new URL(candidate, origin);
+    if (target.origin !== origin || target.username || target.password) return "/ui";
+    if (target.pathname === "/ui/login") return "/ui";
+    if (target.pathname === "/ui" || target.pathname.startsWith("/ui/")
+        || target.pathname === "/desktop/" || target.pathname === "/desktop/settings/") {
+      return target.pathname + target.search + target.hash;
+    }
+  } catch { /* Invalid destinations return to Home. */ }
+  return "/ui";
+}
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = form.querySelector("button");
@@ -17,7 +34,7 @@ form.addEventListener("submit", async (event) => {
     const response = await request;
     const body = await response.json();
     if (!response.ok) throw new Error(body.detail ?? "Sign-in failed");
-    window.location.assign("/ui");
+    window.location.assign(returnDestination());
   } catch (error) {
     state.textContent = error.message;
   } finally {

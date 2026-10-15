@@ -252,7 +252,7 @@ describe("documentation site", () => {
     assert.equal(tasks[98].title, "Self-Improvement Pipeline");
     assert.equal(tasks[98].description, "Evolve the controlled proposal, sandbox, testing, review, and approval pipeline.");
     assert.equal(tasks[98].status, "completed");
-    assert.equal(tasks[99].title, "ERSELMETZ AI CORPORATION Platform");
+    assert.equal(tasks[99].title, "ERSELMETZ AI Platform");
     assert.equal(tasks[99].description, "Develop a coherent, governed platform for operating a virtual/simulated AI organization.");
     assert.equal(tasks[99].status, "completed");
     assert.equal(tasks[129].title, "Optional vector memory and RAG foundation");

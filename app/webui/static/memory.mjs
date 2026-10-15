@@ -17,7 +17,7 @@ function failure(status) {
 }
 export function mountMemoryPage({ documentRef = globalThis.document, fetchImpl = globalThis.fetch,
                                   confirmImpl = message => globalThis.confirm(message),
-                                  now = () => new Date() }) {
+                                  now = () => new Date() } = {}) {
   const el = id => documentRef.getElementById(id);
   const list = el("memory-list"), state = el("memory-state"), detail = el("memory-detail-state");
   let selected = null, revision = 0, busy = false;

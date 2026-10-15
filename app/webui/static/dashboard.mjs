@@ -45,10 +45,22 @@ function validPayload(resource, payload) {
 }
 
 export async function loadDashboard(fetchImpl = globalThis.fetch) {
+  // A 401 identifies a signed-out browser before any panel requests fan out.
+  // A 403 is resource-specific and must not suppress other authorized panels.
+  let identityResponse;
+  try {
+    identityResponse = await fetchImpl(dashboardResources.status.path, {
+      credentials: "same-origin", headers: { Accept: "application/json" },
+    });
+  } catch { /* The normal per-resource error handling below reports failure. */ }
+  if (identityResponse?.status === 401) {
+    return Object.fromEntries([...Object.keys(dashboardResources), "memory"]
+      .map(name => [name, { error: "authentication" }]));
+  }
   const entries = await Promise.all(
     Object.entries(dashboardResources).map(async ([name, resource]) => {
       try {
-        const response = await fetchImpl(resource.path, {
+        const response = name === "status" ? identityResponse : await fetchImpl(resource.path, {
           credentials: "same-origin",
           headers: { Accept: "application/json" },
         });
@@ -126,6 +138,7 @@ function namedEntry(primary, secondary) {
 
 function setPanel(panelId, outcome, loadingText, render) {
   const panel = document.getElementById(panelId);
+  panel.hidden = outcome?.error === "authentication";
   const state = panel.querySelector(".section-state");
   const data = panel.querySelector(".section-data");
   data.replaceChildren();
@@ -180,6 +193,7 @@ function updateFreshnessLabels(now = Date.now()) {
 
 function setCombinedPanel(panelId, resources, render) {
   const panel = document.getElementById(panelId);
+  panel.hidden = resources.every(([, outcome]) => outcome.error === "authentication");
   const state = panel.querySelector(".section-state");
   const data = panel.querySelector(".section-data");
   data.replaceChildren();
@@ -187,6 +201,10 @@ function setCombinedPanel(panelId, resources, render) {
 
   const failures = resources.filter(([, outcome]) => outcome.error);
   const available = resources.filter(([, outcome]) => outcome.data);
+  if (panel.hidden) {
+    state.textContent = "";
+    return;
+  }
   data.hidden = false;
   const sourceReadTimes = available
     .map(([, outcome]) => Date.parse(outcome.observedAt))
