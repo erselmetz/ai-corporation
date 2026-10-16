@@ -17,6 +17,8 @@ test("Windows distribution is per-user, preserves owner data, and has no auto-up
   assert.equal("publish" in pkg.build, false);
   assert.equal("electron-updater" in (pkg.dependencies || {}), false);
   assert.equal(pkg.build.nsis.allowToChangeInstallationDirectory, false);
+  assert.ok(pkg.build.files.includes("ollama-installer.cjs"));
+  assert.ok(fs.existsSync(path.join(root, "ollama-installer.cjs")));
 });
 
 test("Electron renderer windows are isolated and navigation stays on owned content", () => {
@@ -36,8 +38,21 @@ test("preload exposes only bounded startup operations, never raw Electron IPC", 
   assert.match(preload, /ipcRenderer\.invoke\("desktop:get-setup-state"\)/);
   assert.match(preload, /ipcRenderer\.invoke\("desktop:start"/);
   assert.match(preload, /requestMicrophone: \(\) => ipcRenderer\.invoke\("desktop:request-microphone"\)/);
+  assert.match(preload, /previewOllamaInstaller: \(\) => ipcRenderer\.invoke\("desktop:ollama-installer-preview"\)/);
+  assert.match(preload, /installOllama: \(preview\) => ipcRenderer\.invoke\("desktop:ollama-installer-install", preview\)/);
   assert.doesNotMatch(preload, /contextBridge\.exposeInMainWorld\("desktopBridge",\s*ipcRenderer/);
   assert.doesNotMatch(preload, /sendSync|\.send\s*\(/);
+});
+
+test("Ollama installer bridge is app-origin restricted and presents verified details before execution", () => {
+  const main = read("main.cjs");
+  const handler = main.slice(main.indexOf('ipcMain.handle("desktop:ollama-installer-install"'));
+  assert.match(main, /function isTrustedApplication\(event\)/);
+  assert.match(main, /if \(!isTrustedApplication\(event\)\) return \{ ok: false, message: "Request denied\." \};/);
+  assert.ok(handler.indexOf("await ollamaInstaller.preview()") < handler.indexOf("await dialog.showMessageBox"));
+  assert.ok(handler.indexOf("await dialog.showMessageBox") < handler.indexOf("ollamaInstaller.install(verifiedPreview)"));
+  assert.match(handler, /without requesting elevation/);
+  assert.match(main, /preload: path\.join\(__dirname, "preload\.cjs"\)/);
 });
 
 test("microphone requests need an explicit native confirmation and one-use audio grant", () => {

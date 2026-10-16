@@ -82,12 +82,15 @@ def run_backend(*, port: int, ui_dir: Path, stdin=None, credential_store=None,
         raise DesktopStartupError("A bounded owner setup request is required")
     try:
         payload = json.loads(raw)
-        if not isinstance(payload, dict) or set(payload) - {"password", "confirmation"}:
+        if not isinstance(payload, dict) or set(payload) - {"password", "confirmation", "first_owner_run"}:
+            raise ValueError
+        if "first_owner_run" in payload and type(payload["first_owner_run"]) is not bool:
             raise ValueError
     except (ValueError, UnicodeDecodeError):
         raise DesktopStartupError("Owner setup request is invalid") from None
     del raw
     password = _prepare_owner(payload, credential_store)
+    first_owner_run = payload.get("first_owner_run", False)
     payload.clear()
     ownership = lease_factory() if lease_factory else CurrentUserLease(error_type=DesktopStartupError)
     listener = None
@@ -98,7 +101,8 @@ def run_backend(*, port: int, ui_dir: Path, stdin=None, credential_store=None,
         listener = _reserve_loopback(port)
         bound_port = listener.getsockname()[1]
         origin = f"http://{DEFAULT_HOST}:{bound_port}"
-        application = create_local_app(password=password, origin=origin, desktop_ui_dir=ui_dir)
+        application = create_local_app(password=password, origin=origin, desktop_ui_dir=ui_dir,
+                                       desktop_mode=True, first_owner_run=first_owner_run)
         del password
         for logger_name in ("uvicorn", "uvicorn.error", "uvicorn.access", "uvicorn.asgi"):
             logger = logging.getLogger(logger_name)

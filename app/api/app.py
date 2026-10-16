@@ -1010,6 +1010,9 @@ def create_app(
             application.state.application_service = runtime.application_service
         else:
             application.state.application_service = application_service
+        restore_local_setup = getattr(application.state, "restore_local_first_run", None)
+        if callable(restore_local_setup):
+            restore_local_setup(application.state.application_service)
         if application.state.capability_approval_service is None:
             approval_factory = getattr(application.state.application_service, "capability_approvals", None)
             application.state.capability_approval_service = (

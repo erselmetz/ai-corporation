@@ -2776,12 +2776,63 @@ export const post100Tasks = [
       "Keyboard navigation and screen-reader semantics were reviewed in code and automated checks, but no assistive technology session or independent accessibility audit was performed. Responsive breakpoints and reduced-motion rules were inspected, not tested across physical devices or every viewport.",
       "No usability or accessibility conformance claim is made. The full Python suite has a pre-existing collection SyntaxError in tests/test_automation_traces.py and two known unrelated model-assignment failures when that file is excluded."
     ]
+  },
+  {
+    "number": 176,
+    "title": "Zero-config first run and project cleanup",
+    "description": "Add an owner-controlled Windows first-run path from password setup to Coordinator Chat using either local Ollama or Google Gemini, while preserving existing authentication, consent, and provider boundaries.",
+    "category": "Phase M - First-run Setup and Project Cleanup",
+    "status": "planned",
+    "dependsOn": [
+      104,
+      105,
+      127,
+      129,
+      132,
+      133,
+      171
+    ],
+    "acceptance": [
+      "On the supported Windows 11 x64 desktop target, a first-run owner can choose local Ollama or online Gemini and reach an open Coordinator conversation after explicit setup actions; startup and ordinary later launches remain available without repeating non-secret configuration.",
+      "Ollama setup detects the supported standard install locations and loopback service; any Ollama installer download is previewed, retrieved only from an official fixed source, integrity-checked, launched without elevation, and run only after explicit owner confirmation.",
+      "Before a model pull begins, show the verified model identity and registry-manifest byte estimate, available-size evidence when known, destination limitations, and exact owner confirmation. Stream bounded progress, allow cancellation, recheck `/api/tags`, and report real installed-model state.",
+      "Gemini setup accepts only the existing supported key format, explicitly previews and confirms the model-catalog request, keeps credentials in memory by default, and persists a key only through an explicit current-Windows-user DPAPI opt-in. Per-turn cloud consent and spend limits remain unchanged.",
+      "After setup, restore only explicitly persisted provider/model configuration, the existing Coordinator assignment, and configured 1/1/1 global/provider/model ResourceManager slots. Controlled Task dispatch remains subject to its existing confirmation, Ollama-only, and Task 170 release-review limits; slot configuration does not grant dispatch authority or imply Gemini dispatch.",
+      "Provide distinct and recoverable offline, Ollama-not-installed, service-not-running, insufficient-space/space-unknown, pull-canceled/failed, unsupported-model, bad-key, and catalog-unavailable states with retry/skip paths. Hardware and GPU feasibility remain UNKNOWN unless directly observed.",
+      "Keep the default API authentication rejecting, preserve loopback-only binding, HttpOnly sessions, Origin/CSRF checks and existing permissions; any startup-to-browser authentication handoff must use the existing owner login contract and create no new principal or permission.",
+      "Shorten the root README to at most 150 lines, preserve removed detail in documentation, remove the duplicated Task 71 passage, reconcile roadmap status claims against `docs/tasks-data.mjs`, and add a concise project/license reference without publishing an unapproved license."
+    ],
+    "outOfScope": [
+      "Do not add elevation, silent software/model downloads, automatic Gemini calls, silent cloud fallback, or automatic Task execution/replay.",
+      "Do not claim hardware/GPU compatibility from model names or machine inventory; report UNKNOWN when no verified capability signal exists.",
+      "Do not broaden Task dispatch beyond its current loopback Ollama path, bypass owner confirmation, or mark deferred Task 170 stable-release review complete.",
+      "Do not store Gemini credentials in SQLite, logs, task records, backups, or ordinary configuration files; DPAPI persistence must be explicitly opt-in and owner-resettable.",
+      "Do not alter the default standalone API's fail-closed authentication or make Task 53 documentation portal writeable."
+    ],
+    "decisions": [
+      "The ordinary Gemini-key policy is memory-only. Restart persistence is available only if the owner explicitly opts in to current-Windows-user DPAPI protection; without that opt-in, the key must be re-entered after process restart.",
+      "Configured slots enable only the pre-existing controlled-dispatch behavior for eligible pending Tasks routed to loopback Ollama. Gemini remains chat-only for controlled dispatch under the existing contract.",
+      "Task 175 remains planned until representative owner and assistive-technology/device evaluation is completed; Task 176 implementation does not substitute for that evidence.",
+      "MIT licensing is not authorized until the owner explicitly confirms the license choice."
+    ],
+    "area": "P29",
+    "checkpoint": null,
+    "validation": [
+      "Implementation is complete in the worktree; automated validation passed: full Python suite 1,270 passed / 6 skipped / 0 failed; 175 browser-module tests passed; 16 public-doc tests passed.",
+      "Additional automated checks passed: 21 Electron tests, static Next.js production build and TypeScript checks, Python compilation, and git diff --check. No live paid Gemini request or Ollama download was made."
+    ],
+    "limitations": [
+      "Live paid Gemini calls, model inference, Ollama installation, and large model downloads are not required for deterministic tests and must remain owner-triggered integration actions.",
+      "Manual clean-profile Windows acceptance is NOT yet performed: real Ollama install/download/chat, Gemini chat, DPAPI restart persistence, and recovery checks for stopped Ollama, offline service, malformed/rejected Gemini keys remain pending. No manual acceptance is reported as passed.",
+      "Task completion requires truthful Windows packaging and clean-profile evidence; automated fakes alone do not establish that every Windows machine, Ollama runtime, GPU, or provider account will work.",
+      "Task 170 remains deferred and incomplete; Task 175 remains planned and incomplete."
+    ]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and 171-174 are verified; Task 175 is next and remains planned; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and 171-174 are verified; Tasks 175-176 remain planned, with Task 175 still the next sequential task; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
@@ -2803,7 +2854,8 @@ const futureRoadmapGroups = [
   { name: "Phase I - Productization and Stable Release", range: "167-170", tasks: post100Tasks.filter(task => task.category === "Phase I - Productization and Stable Release").map(({ title, description }) => [title, description]) },
   { name: "Phase J - Settings and Operator Controls", range: "171-171", tasks: post100Tasks.filter(task => task.category === "Phase J - Settings and Operator Controls").map(({ title, description }) => [title, description]) },
   { name: "Phase K - Interactive Maps and Visualization", range: "172-173", tasks: post100Tasks.filter(task => task.category === "Phase K - Interactive Maps and Visualization").map(({ title, description }) => [title, description]) },
-  { name: "Phase L - Multimodal Interface and Usability", range: "174-175", tasks: post100Tasks.filter(task => task.category === "Phase L - Multimodal Interface and Usability").map(({ title, description }) => [title, description]) }
+  { name: "Phase L - Multimodal Interface and Usability", range: "174-175", tasks: post100Tasks.filter(task => task.category === "Phase L - Multimodal Interface and Usability").map(({ title, description }) => [title, description]) },
+  { name: "Phase M - First-run Setup and Project Cleanup", range: "176-176", tasks: post100Tasks.filter(task => task.category === "Phase M - First-run Setup and Project Cleanup").map(({ title, description }) => [title, description]) }
 ];
 
 export const taskGroups = [...foundationTaskGroups, {

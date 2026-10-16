@@ -88,11 +88,34 @@ On first launch, create and confirm an owner password of 12–1024 characters.
 The existing credential store protects only its salted verifier with Windows
 DPAPI for the current Windows user. The password is passed to the Python sidecar
 over its private standard-input pipe; it is not put on a command line,
-environment variable, or persistent log. Starting the service on later launches
-requires the owner password, and the existing browser owner sign-in is still
-required for protected pages and actions. Browser sessions are cleared on app
-exit. Provider credentials and runtime state retain the existing application
-lifecycle and are not made durable by this package.
+environment variable, or persistent log. The desktop process uses that same
+verified owner password with the existing local-login contract to establish the
+normal HttpOnly owner session; it adds no identity or permission. Browser
+sessions are cleared on app exit.
+
+In the current source, a new desktop owner then sees the Task 176 Ollama/Gemini
+wizard. Ollama installer metadata is read from the official `ollama/ollama`
+GitHub release, the reviewed SHA-256 and size are checked before the installer
+is run, and a native confirmation precedes download and launch. The installer
+is started without elevation. The model size is previewed from the Ollama
+registry manifest before the separate explicit model-download confirmation.
+Gemini catalog discovery requires an explicit action; each chat turn retains
+its separate cloud-consent gate. Setup metadata and the existing model
+assignment/1-1-1 software slot limits are saved in SQLite. A Gemini key remains
+memory-only unless the owner opts into current-user DPAPI storage. Without that
+opt-in, the key must be re-entered after restart. Keys are not stored in SQLite
+or included in SQLite backups. The coordinator assignment and slots are
+restored on startup when saved configuration is available.
+
+Task 176 automated validation passed: Python 1,270 passed / 6 skipped / 0 failed,
+175 browser modules, 16 public docs, and 21 Electron tests. Manual clean-profile
+Windows acceptance has NOT been performed: real Ollama installation/download/chat,
+Gemini chat, DPAPI restart persistence, and recovery checks remain pending. This
+implementation does not qualify hardware/GPU compatibility,
+provider-account billing, or every Windows/Ollama environment. Gemini remains
+chat-only for controlled Task dispatch; the existing Ollama-only dispatch and
+Task 170 release-review boundaries remain unchanged. The general standalone
+API remains fail-closed and does not mount the desktop first-run routes.
 
 The installer does not configure automatic updates. Install a later trusted
 version manually. Uninstall leaves `%LOCALAPPDATA%\ERSELMETZ AI` in place,

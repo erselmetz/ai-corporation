@@ -38,6 +38,7 @@ class GeminiConnection:
     checked_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: float = field(default_factory=lambda: time.monotonic() + 3600)
     models: tuple[str, ...] = ()
+    restored_from_owner_configuration: bool = False
 
 
 class GeminiConnectionError(ValueError):
@@ -118,6 +119,29 @@ class GeminiConnectionManager:
         with self._lock:
             self._expire_locked()
             return self._connection
+
+    def restore_from_owner_configuration(self, api_key: str, models: tuple[str, ...]) -> GeminiConnection:
+        """Restore an explicitly DPAPI-protected credential without a startup network call."""
+        try:
+            configuration = GeminiAPIConfiguration(api_key)
+        except (ValueError, TypeError, GeminiModelCatalogError):
+            raise GeminiConnectionError("The saved Gemini credential is invalid; reconnect in first-run setup.") from None
+        if (not isinstance(models, tuple) or not 1 <= len(models) <= 100
+                or any(not isinstance(model, str) or not _MODEL_ID.fullmatch(model) for model in models)
+                or len(set(models)) != len(models)):
+            raise GeminiConnectionError("The saved Gemini model list is invalid; reconnect in first-run setup.")
+        connection = GeminiConnection(
+            configuration, expires_at=self._clock() + 3600, models=models,
+            restored_from_owner_configuration=True,
+        )
+        identity = hashlib.sha256(api_key.encode("utf-8")).digest()
+        with self._lock:
+            self._expire_locked()
+            if self._active or self._connection is not None or self._target is not None:
+                raise GeminiConnectionError("Gemini setup is already active; restart before restoring its saved connection.")
+            self._connection = connection
+            self._calls_by_key[identity] = 0
+        return connection
 
     def _expire_locked(self):
         if self._connection is not None and self._connection.expires_at <= self._clock():

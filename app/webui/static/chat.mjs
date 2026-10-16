@@ -266,7 +266,15 @@ export function mountChat({
         option(taskAgent, agent.id, `${agent.name} | ${agent.role}`);
       }
       for (const item of list.items) option(conversations, item.id, `${item.coordinator.name} - ${item.id.slice(0, 8)}`);
-      state.textContent = agentList.items.length ? "Choose an AI team member and start a conversation." : "No registered AI team member is available.";
+      const requestedConversation = new URLSearchParams(windowRef?.location?.search || "").get("conversation");
+      if (typeof requestedConversation === "string" && /^[a-f0-9]{32}$/.test(requestedConversation)
+          && list.items.some((item) => item.id === requestedConversation)) {
+        conversations.value = requestedConversation;
+        render(await request(`${base}/${encodeURIComponent(requestedConversation)}`));
+        state.textContent = "Coordinator conversation ready.";
+      } else {
+        state.textContent = agentList.items.length ? "Choose an AI team member and start a conversation." : "No registered AI team member is available.";
+      }
     });
   }
   async function start() {

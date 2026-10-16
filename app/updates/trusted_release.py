@@ -18,11 +18,11 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 
 from app.database.connection import DATABASE_PATH
+from app.database.init import CURRENT_CONFIGURATION_VERSION
 
 RELEASES_API = "https://api.github.com/repos/erselmetz/ai-corporation/releases/latest"
 PUBLIC_KEY_DER = "MCowBQYDK2VwAyEAzt6RxiEwcC77/sZ50IZTc5CEfOBxtNomA/uJC3Zw7s8="
 CURRENT_APP_VERSION = os.environ.get("ERSELMETZ_APP_VERSION", "0.1.0")
-CURRENT_CONFIGURATION_VERSION = 1
 MAX_METADATA_BYTES = 64 * 1024
 MAX_INSTALLER_BYTES = 2 * 1024 * 1024 * 1024
 ALLOWED_DOWNLOAD_HOSTS = frozenset({

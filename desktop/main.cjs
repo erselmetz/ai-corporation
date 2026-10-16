@@ -5,6 +5,7 @@ const path = require("node:path");
 const http = require("node:http");
 const { fileURLToPath } = require("node:url");
 const { createDisplayMediaRequestHandler } = require("./screen-capture.cjs");
+const { OllamaInstaller } = require("./ollama-installer.cjs");
 
 const HOST = "127.0.0.1";
 const PORT = 8765;
@@ -31,6 +32,14 @@ function isTrustedBootstrap(event) {
     if (actual.protocol !== "file:") return false;
     return path.resolve(fileURLToPath(actual)).toLowerCase()
       === path.resolve(path.join(__dirname, "bootstrap.html")).toLowerCase();
+  } catch { return false; }
+}
+
+function isTrustedApplication(event) {
+  if (!applicationWindow || event.sender !== applicationWindow.webContents) return false;
+  try {
+    const actual = new URL(event.sender.getURL());
+    return actual.origin === ORIGIN && actual.pathname.startsWith("/desktop/");
   } catch { return false; }
 }
 
@@ -122,6 +131,40 @@ async function waitForBackend(child, timeoutMs = 20000) {
   return false;
 }
 
+function authenticateDesktopOwner(password) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({ password });
+    const request = http.request(`${ORIGIN}/api/local/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: ORIGIN, "Content-Length": Buffer.byteLength(body) },
+      timeout: 5000,
+    }, (response) => {
+      response.resume();
+      response.on("end", async () => {
+        try {
+          if (response.statusCode !== 200) return reject(new Error("Owner session could not be established"));
+          const setCookie = response.headers["set-cookie"];
+          const pair = Array.isArray(setCookie) ? setCookie[0]?.split(";", 1)[0] : "";
+          const separator = pair.indexOf("=");
+          if (separator < 1) return reject(new Error("Owner session cookie was unavailable"));
+          await session.defaultSession.cookies.set({
+            url: ORIGIN,
+            name: pair.slice(0, separator),
+            value: pair.slice(separator + 1),
+            path: "/",
+            httpOnly: true,
+            sameSite: "strict",
+          });
+          resolve(true);
+        } catch { reject(new Error("Owner session could not be established")); }
+      });
+    });
+    request.on("timeout", () => request.destroy(new Error("Owner sign-in timed out")));
+    request.on("error", () => reject(new Error("Owner session could not be established")));
+    request.end(body);
+  });
+}
+
 function showStartup(message) {
   if (bootstrapWindow && !bootstrapWindow.isDestroyed()) bootstrapWindow.webContents.send("desktop:startup-state", message);
 }
@@ -138,6 +181,7 @@ async function startBackend(payload) {
   if (isFirstRun && payload.password !== payload.confirmation) return { started: false, message: "The password entries do not match." };
   if (!isFirstRun && payload.confirmation) return { started: false, message: "Enter only the saved owner password." };
   showStartup("Preparing the protected local owner credential…");
+  let ownerPassword = payload.password;
   let child;
   try {
     fs.mkdirSync(APP_DATA, { recursive: true });
@@ -145,7 +189,7 @@ async function startBackend(payload) {
     backend = child;
     handleChildErrors(child);
     child.once("exit", () => { if (backend === child) backend = null; });
-    child.stdin.write(`${JSON.stringify({ password: payload.password, confirmation: payload.confirmation })}\n`);
+    child.stdin.write(`${JSON.stringify({ password: payload.password, confirmation: payload.confirmation, first_owner_run: isFirstRun })}\n`);
     payload.password = "";
     payload.confirmation = "";
     showStartup("Starting private services on this computer…");
@@ -159,10 +203,13 @@ async function startBackend(payload) {
       if (bootstrapWindow && !bootstrapWindow.isDestroyed()) showStartup("The service did not become ready. Close another ERSELMETZ AI controller and retry.");
       return { started: false, message: "Local startup failed. Check that another ERSELMETZ AI controller is closed, then retry." };
     }
+    await authenticateDesktopOwner(ownerPassword);
+    ownerPassword = "";
     createApplicationWindow();
     if (bootstrapWindow && !bootstrapWindow.isDestroyed()) bootstrapWindow.close();
     return { started: true };
   } catch {
+    ownerPassword = "";
     payload.password = "";
     payload.confirmation = "";
     if (child && child.stdin && !child.stdin.destroyed) child.stdin.end();
@@ -176,7 +223,7 @@ function createApplicationWindow() {
     width: 1440, height: 960, minWidth: 850, minHeight: 620, show: false,
     title: "ERSELMETZ AI — Command Center",
     autoHideMenuBar: true,
-    webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true },
+    webPreferences: { preload: path.join(__dirname, "preload.cjs"), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true },
   });
   applicationWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   applicationWindow.webContents.on("will-navigate", (event, target) => {
@@ -260,6 +307,38 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
   );
   ipcMain.handle("desktop:get-setup-state", (event) => isTrustedBootstrap(event) && !fs.existsSync(CREDENTIAL));
   ipcMain.handle("desktop:start", (event, payload) => isTrustedBootstrap(event) ? startBackend(payload) : { started: false, message: "Request denied." });
+  const ollamaInstaller = new OllamaInstaller({
+    onProgress: (progress) => {
+      if (applicationWindow && !applicationWindow.isDestroyed()) applicationWindow.webContents.send("desktop:ollama-installer-progress", progress);
+    },
+  });
+  ipcMain.handle("desktop:ollama-installer-preview", async (event) => {
+    if (!isTrustedApplication(event)) return { ok: false, message: "Request denied." };
+    try { return { ok: true, preview: await ollamaInstaller.preview() }; }
+    catch { return { ok: false, message: "Official Ollama installer metadata or integrity data is unavailable. No installer was downloaded." }; }
+  });
+  ipcMain.handle("desktop:ollama-installer-install", async (event, preview) => {
+    if (!isTrustedApplication(event)) return { ok: false, message: "Request denied." };
+    if (!preview || typeof preview !== "object") return { ok: false, message: "Installer review is unavailable." };
+    let verifiedPreview;
+    try {
+      verifiedPreview = await ollamaInstaller.preview();
+      if (preview.version !== verifiedPreview.version || preview.source !== verifiedPreview.source
+          || preview.size_bytes !== verifiedPreview.size_bytes || preview.sha256 !== verifiedPreview.sha256) {
+        return { ok: false, message: "The Ollama release changed. Refresh and review the new installer details." };
+      }
+    } catch { return { ok: false, message: "Current official Ollama release integrity metadata is unavailable." }; }
+    const result = await dialog.showMessageBox(applicationWindow, {
+      type: "warning", buttons: ["Download and run verified installer", "Cancel"], defaultId: 1, cancelId: 1,
+      title: "Install Ollama for this user",
+      message: `Download and run Ollama ${verifiedPreview.version}?`,
+      detail: `Source: ${verifiedPreview.source}\nSize: ${verifiedPreview.size_bytes.toLocaleString()} bytes\nSHA-256: ${verifiedPreview.sha256}\n\nThe app will verify the digest and start the official installer without requesting elevation. Review any Windows prompt yourself.`,
+      noLink: true,
+    });
+    if (result.response !== 0) return { ok: false, canceled: true };
+    try { return { ok: true, ...(await ollamaInstaller.install(verifiedPreview)) }; }
+    catch (error) { return { ok: false, message: error instanceof Error ? error.message.slice(0, 220) : "Verified installer could not be started." }; }
+  });
   ipcMain.handle("desktop:request-camera", async (event) => {
     const frame = event.senderFrame;
     if (!applicationWindow || event.sender !== applicationWindow.webContents

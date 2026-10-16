@@ -1213,6 +1213,47 @@ production readiness. Build and user recovery
 instructions are in [desktop/README.md](desktop/README.md). The Task 126 GUI and
 legacy CLI are independent and are not managed by Electron.
 
+## First-run provider setup (Task 176, implemented; manual acceptance pending)
+
+The packaged desktop can mount owner-protected first-run routes only when
+`desktop_mode` is explicitly enabled. New desktop owner creation initializes a
+non-secret SQLite setup record; ordinary API mode does not mount the routes.
+The desktop shell verifies the startup password through the existing owner
+credential store, then uses the same password with the existing `/api/local/login`
+contract and transfers only the resulting session cookie into Electron's
+same-origin cookie store. No new principal, permission, or authentication
+endpoint is introduced, and browser sessions are still cleared at app exit.
+
+The Ollama flow checks the loopback service, previews an official Ollama
+registry manifest and disk-space evidence, requires separate owner actions for
+the installer and model pull, bounds streamed pull data, and confirms the
+installed model again through `/api/tags`. The Windows installer uses the
+official GitHub release metadata digest and a fixed approved redirect-host
+allowlist; missing integrity metadata fails closed, and the executable is
+started without elevation. Gemini discovery is an explicit model-catalog call;
+the configured model and optional current-user DPAPI credential are handled
+through the existing local Gemini connection manager. No prompt is sent during
+setup and per-turn cloud consent and spend limits remain in force.
+
+SQLite persists only provider/model setup metadata and the 1/1/1 configured
+resource slots. A non-persisted Gemini credential requires re-entry after
+restart; opted-in DPAPI state restores without a startup network check. The
+existing default Coordinator Agent is reassigned through public application/service
+paths; its Employee record references that Agent, so the association follows
+without a separate employee-provider record. Position definitions remain
+process-local: the first-run flow does not persist them because the existing
+position registry has no durable lifecycle, and adding one here would require
+separate owner-managed create/update/remove and migration semantics. Task dispatch behavior is unchanged: controlled dispatch still uses
+loopback Ollama only and still requires its existing confirmations. Software
+slot limits do not imply hardware readiness, provider health, or Gemini
+dispatch. Automated deterministic tests do not replace clean Windows-profile
+acceptance. Automated validation passed: full Python 1,270 passed / 6 skipped /
+0 failed, 175 browser-module tests, 16 public-doc tests, and 21 Electron tests.
+Manual clean-profile Windows acceptance has NOT been performed: real Ollama
+installation/download/chat, Gemini chat, DPAPI restart persistence, and recovery
+checks remain pending. Task 176 remains planned until that evidence is recorded.
+Tasks 170 and 175 remain incomplete under their existing status contracts.
+
 ## Optional voice interaction (Task 128)
 
 Voice is off until an owner starts it from an open coordinator conversation.

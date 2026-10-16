@@ -5,6 +5,17 @@ contextBridge.exposeInMainWorld("desktopBridge", Object.freeze({
   start: (password, confirmation) => ipcRenderer.invoke("desktop:start", { password, confirmation }),
   requestMicrophone: () => ipcRenderer.invoke("desktop:request-microphone"),
   requestCamera: () => ipcRenderer.invoke("desktop:request-camera"),
+  previewOllamaInstaller: () => ipcRenderer.invoke("desktop:ollama-installer-preview"),
+  installOllama: (preview) => ipcRenderer.invoke("desktop:ollama-installer-install", preview),
+  onOllamaInstallerProgress: (callback) => {
+    if (typeof callback !== "function") return () => {};
+    const listener = (_event, progress) => callback({
+      downloaded: Number(progress?.downloaded) || 0,
+      total: Number(progress?.total) || 0,
+    });
+    ipcRenderer.on("desktop:ollama-installer-progress", listener);
+    return () => ipcRenderer.removeListener("desktop:ollama-installer-progress", listener);
+  },
   onStartupState: (callback) => {
     if (typeof callback !== "function") return () => {};
     const listener = (_event, message) => callback(String(message).slice(0, 180));

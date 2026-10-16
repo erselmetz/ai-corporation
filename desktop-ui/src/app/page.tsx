@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import FirstRunWizard from "./first-run-wizard";
 
 type CheckState = "checking" | "ready" | "missing" | "required" | "denied" | "unavailable" | "unknown";
 type SetupSnapshot = {
@@ -55,10 +56,11 @@ async function boundedFetch(path: string): Promise<BoundedResponse> {
       headers: { Accept: "application/json" },
       signal: controller.signal,
     });
+    const body = await response.json().catch(() => null);
     return {
       ok: response.ok,
       status: response.status,
-      body: response.ok ? await response.json() : null,
+      body: response.ok ? body : null,
     };
   } finally {
     window.clearTimeout(timeout);
@@ -75,6 +77,7 @@ function checkRow(label: string, state: CheckState | "unknown", explanation: str
 export default function Home() {
   const [setup, setSetup] = useState<SetupSnapshot>(initialSetup);
   const [checking, setChecking] = useState(false);
+  const [firstRunRequired, setFirstRunRequired] = useState<boolean | null>(null);
 
   async function refreshSetup() {
     setChecking(true);
@@ -151,7 +154,21 @@ export default function Home() {
     }
   }
 
-  useEffect(() => { void refreshSetup(); }, []);
+  useEffect(() => {
+    let active = true;
+    boundedFetch("/api/local/first-run").then((response) => {
+      if (!active) return;
+      const data = response.body as { enabled?: boolean; completed?: boolean; skipped?: boolean; credential_needs_reentry?: boolean } | null;
+      const needsSetup = response.ok && data?.enabled === true
+        && (data.completed !== true || data.credential_needs_reentry === true) && data.skipped !== true;
+      setFirstRunRequired(needsSetup);
+      if (!needsSetup) void refreshSetup();
+    }).catch(() => { if (active) { setFirstRunRequired(false); void refreshSetup(); } });
+    return () => { active = false; };
+  }, []);
+
+  if (firstRunRequired === null) return <main className="first-run-loading" role="status">Starting your local workspace…</main>;
+  if (firstRunRequired) return <main className="first-run-shell"><FirstRunWizard /></main>;
 
   return <main className="shell">
     <aside className="rail" aria-label="Main navigation">

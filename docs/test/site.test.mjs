@@ -1,4 +1,4 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 import { createDocumentationServer } from "../server.mjs";
 import { taskGroups, tasks, foundationTasks, post100Tasks, nextTask, roadmapRules } from "../tasks-data.mjs";
@@ -84,16 +84,16 @@ describe("documentation site", () => {
   });
 
   it("preserves foundation tasks 1â€“100 and adds contiguous post-100 contracts", () => {
-    assert.equal(tasks.length, 175);
+    assert.equal(tasks.length, 176);
     assert.equal(foundationTasks.length, 100);
-    assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 175 }, (_, i) => i + 1));
-    assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 30, 4, 5, 5, 5, 6, 3, 4, 4, 4, 1, 2, 2]);
+    assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 176 }, (_, i) => i + 1));
+    assert.deepEqual(taskGroups.map((group) => group.tasks.length), [25, 11, 18, 6, 7, 7, 11, 10, 5, 30, 4, 5, 5, 5, 6, 3, 4, 4, 4, 1, 2, 2, 1]);
   });
 
   it("records verified, deferred, and planned work without treating deferral as completion", () => {
     assert.equal(tasks.filter(task => task.status === "completed").length, 172);
     assert.equal(tasks.filter(task => task.status === "deferred").length, 2);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 1);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 2);
     assert.equal(tasks.find(task => task.number === 134).status, "deferred");
     assert.equal(tasks.find(task => task.number === 170).status, "deferred");
     assert.equal(tasks.find(task => task.number === 171).status, "completed");
@@ -101,6 +101,8 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 173).status, "completed");
     assert.equal(tasks.find(task => task.number === 173).checkpoint, "task-173-memory-knowledge-relationship-explorer");
     assert.equal(tasks.find(task => task.number === 174).status, "completed");
+    assert.equal(tasks.find(task => task.number === 175).status, "planned");
+    assert.equal(tasks.find(task => task.number === 176).status, "planned");
     assert.equal(tasks.find(task => task.number === 174).checkpoint, "task-174-unified-multimodal-capability-controls");
     assert.equal(tasks.find(task => task.number === 172).checkpoint, "task-172-interactive-3d-corporation-execution-map");
     assert.equal(tasks.find(task => task.number === 171).checkpoint, "task-171-unified-settings-operator-controls");
@@ -264,9 +266,9 @@ describe("documentation site", () => {
   it("summarizes the roadmap while preserving the full task contracts", async () => {
     const response = await fetch(`${baseUrl}/tasks.html`);
     const html = await response.text();
-    assert.match(html, /172 complete; 2 deferred; 1 planned/);
+    assert.match(html, /172 complete; 2 deferred; 2 planned/);
     assert.match(html, /Tasks 1-133, 135-169, and 171-174 are verified/);
-    assert.match(html, /Tasks 134 and 170 are deferred; Task 175 is planned/);
+    assert.match(html, /Tasks 134 and 170 are deferred; Tasks 175 and 176 are planned/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
   });
@@ -275,22 +277,24 @@ describe("documentation site", () => {
     const [home, documentation, architecture, roadmap, updates] = await Promise.all(
       ["index.html", "documentation.html", "architecture.html", "roadmap.html", "updates.html"].map(async page =>
         (await fetch(`${baseUrl}/${page}`)).text()));
-    assert.match(home, /Latest update.*Task 174/);
+    assert.match(home, /Latest update.*Task 176 implemented; manual acceptance pending/);
     assert.match(home, /Next planned.*Task 175/);
     assert.doesNotMatch(home, /Task 134/);
     assert.match(home, /Changelog/);
     assert.doesNotMatch(home, /Task 57|Task 100|Verified Tasks 101-133/);
     assert.match(documentation, /local-first application with a Python backend and an Electron desktop interface/);
     assert.match(architecture, /Python service owns AI and application logic/);
-    assert.match(updates, /Task 174.*2026-10-15/);
+    assert.match(updates, /Task 176 implemented.*2026-10-16.*AUTOMATED VALIDATION PASSED; MANUAL ACCEPTANCE PENDING/);
+    assert.match(updates, /1,270 Python passed \/ 6 skipped \/ 0 failed/);
+    assert.match(updates, /Manual clean-profile Windows acceptance has NOT been performed/);
     assert.match(updates, /Task 167.*2026-10-14/);
     assert.match(updates, /Task 166.*2026-10-14/);
     assert.match(updates, /Task 156.*2026-10-14/);
     assert.match(updates, /Task 140.*2026-10-13/);
-    assert.match(roadmap, /Tasks 1-133, 135-169, and 171-174 are complete.*Tasks 134 and 170 are deferred; Task 175 is planned/);
+    assert.match(roadmap, /Tasks 1-133, 135-169, and 171-174 are complete.*Tasks 134 and 170 are deferred; Tasks 175 and 176 are planned/);
     assert.match(roadmap, /Latest complete.*Task 174/);
     assert.match(roadmap, /Next planned.*Task 175/);
-    assert.match(roadmap, /172 complete.*2 deferred.*1 planned/);
+    assert.match(roadmap, /172 complete.*2 deferred.*2 planned/);
     assert.match(roadmap, /reports external Tesseract and traineddata requirements/);
     assert.doesNotMatch(roadmap, /Task 130.*semantic/i);
   });
@@ -464,7 +468,7 @@ describe("documentation site", () => {
         assert.ok(task.validation.length > 0 && task.limitations.length > 0);
       } else {
         assert.equal(task.checkpoint, null);
-        if (task.number === 175) {
+        if (task.number === 175 || task.number === 176) {
           assert.ok(task.validation.length > 0 && task.limitations.length > 0);
         } else {
           assert.deepEqual(task.validation, []);

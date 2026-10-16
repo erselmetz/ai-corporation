@@ -1,6 +1,6 @@
 from .connection import get_connection
 
-CURRENT_CONFIGURATION_VERSION = 1
+CURRENT_CONFIGURATION_VERSION = 2
 
 
 def initialize_database() -> None:
@@ -190,6 +190,24 @@ def initialize_database() -> None:
             )
         """)
         connection.execute("CREATE INDEX IF NOT EXISTS execution_queue_fifo ON execution_queue(corporation_id, state, sequence)")
+
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS local_first_run (
+                singleton INTEGER PRIMARY KEY CHECK(singleton = 1),
+                completed INTEGER NOT NULL DEFAULT 0 CHECK(completed IN (0, 1)),
+                skipped INTEGER NOT NULL DEFAULT 0 CHECK(skipped IN (0, 1)),
+                provider_type TEXT NOT NULL DEFAULT 'none' CHECK(provider_type IN ('none', 'ollama', 'gemini')),
+                provider_id TEXT,
+                model_id TEXT,
+                ollama_base_url TEXT,
+                gemini_models TEXT,
+                gemini_key_persisted INTEGER NOT NULL DEFAULT 0 CHECK(gemini_key_persisted IN (0, 1)),
+                global_slots INTEGER NOT NULL DEFAULT 1 CHECK(global_slots BETWEEN 1 AND 10000),
+                provider_slots INTEGER NOT NULL DEFAULT 1 CHECK(provider_slots BETWEEN 1 AND 10000),
+                model_slots INTEGER NOT NULL DEFAULT 1 CHECK(model_slots BETWEEN 1 AND 10000),
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
         # Version zero is the legacy additive schema. Keep its existing records
         # and publish the migrated version only after every DDL/DML step succeeds.

@@ -36,6 +36,8 @@ LOGIN_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 
 def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                      application_service=None, clock=None, desktop_ui_dir=None,
+                     desktop_mode: bool = False,
+                     first_owner_run: bool = False,
                      voice_connection_manager=None, capability_authorization_service=None,
                      capability_grant_service=None, capability_audit_service=None,
                      emergency_stop_service=None, local_speech_provider=None,
@@ -76,6 +78,70 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
     connection_manager = voice_connection_manager or GeminiConnectionManager()
     application.state.gemini_connection_manager = connection_manager
     application.state.local_online_provider = None
+    application.state.first_run_enabled = desktop_mode is True
+    application.state.first_run_setup_store = None
+    application.state.first_run_ollama_service = None
+    application.state.first_run_secret_store = None
+    application.state.first_run_reconnect_required = False
+    if desktop_mode is True:
+        from app.api.first_run import router as first_run_router
+        from app.application.services.first_run_setup import FirstRunSetupStore, OllamaFirstRunService
+        from app.local_owner_secret import LocalOwnerSecretStore, LocalOwnerSecretError
+
+        setup_store = FirstRunSetupStore()
+        application.state.first_run_setup_store = setup_store
+        application.state.first_run_ollama_service = OllamaFirstRunService()
+        try:
+            application.state.first_run_secret_store = LocalOwnerSecretStore()
+        except LocalOwnerSecretError:
+            application.state.first_run_secret_store = None
+
+        def restore_local_first_run(corporation):
+            setup_store.initialize_for_new_owner(first_owner_run=first_owner_run is True)
+            config = setup_store.get()
+            if config is None or not config.completed:
+                return
+            try:
+                if config.provider_type == "ollama" and config.model_id:
+                    corporation.replace_model("local_worker", "ollama", config.model_id)
+                    limits_provider = "ollama"
+                    limits_model = config.model_id
+                elif config.provider_type == "gemini" and config.model_id:
+                    secret_store = application.state.first_run_secret_store
+                    credential = secret_store.load() if secret_store is not None else None
+                    if not config.gemini_key_persisted or credential is None:
+                        application.state.first_run_reconnect_required = True
+                        return
+                    connection_manager.restore_from_owner_configuration(
+                        credential, config.gemini_models,
+                    )
+                    from app.application.services.local_online_provider import LocalOnlineProviderService
+                    online = LocalOnlineProviderService(corporation, connection_manager)
+                    application.state.local_online_provider = online
+                    agent = corporation.get_agent("local_worker")
+                    online.connect_from_discovery(
+                        "local_worker", config.model_id,
+                        expected_provider_id=agent.provider,
+                        expected_model_id=agent.model,
+                    )
+                    limits_provider = "gemini"
+                    limits_model = config.model_id
+                    del credential
+                else:
+                    application.state.first_run_reconnect_required = True
+                    return
+                from app.resources import ModelLimit, ProviderLimit, ResourceLimits
+                corporation.resource_manager(ResourceLimits(
+                    global_slots=config.global_slots,
+                    providers=(ProviderLimit(limits_provider, config.provider_slots),),
+                    models=(ModelLimit(limits_provider, limits_model, config.model_slots),),
+                ))
+                application.state.first_run_reconnect_required = False
+            except Exception:
+                application.state.first_run_reconnect_required = True
+
+        application.state.restore_local_first_run = restore_local_first_run
+        application.include_router(first_run_router)
     application.include_router(create_local_online_provider_router(connection_manager))
     from app.api.local_voice import create_local_voice_router
     if local_speech_provider is None:

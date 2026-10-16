@@ -29,6 +29,7 @@ class LocalOnlineProviderService:
                     "generation_calls_used": 0, "generation_calls_limit": 5}
         return {"connected": selected is not None,
                 "models": list(connection.models),
+                "catalog_state": ("cached" if connection.restored_from_owner_configuration else "verified"),
                 "selected": {"agent_id": selected[0], "agent_name": selected[1],
                              "previous_provider": selected[2], "model_id": selected[4]} if selected else None,
                 "checked_at": connection.checked_at.isoformat(),
@@ -67,6 +68,19 @@ class LocalOnlineProviderService:
                 model_id,
                 expected_provider_id=expected_provider_id,
                 expected_model_id=expected_model_id,
+                refresh_catalog=True,
+            )
+
+    def connect_from_discovery(self, agent_id: str, model_id: str,
+                               *, expected_provider_id: str | None = None,
+                               expected_model_id: str | None = None):
+        """Connect using the catalog checked by the same explicit setup action."""
+        with self._assignment_lock:
+            return self._connect(
+                agent_id, model_id,
+                expected_provider_id=expected_provider_id,
+                expected_model_id=expected_model_id,
+                refresh_catalog=False,
             )
 
     def _connect(
@@ -76,6 +90,7 @@ class LocalOnlineProviderService:
         *,
         expected_provider_id: str | None = None,
         expected_model_id: str | None = None,
+        refresh_catalog: bool = True,
     ):
         # Refresh immediately before mutation; inventory shown earlier is only a hint.
         with self._corporation.agent_assignment_change(agent_id):
@@ -96,8 +111,9 @@ class LocalOnlineProviderService:
                 raise GeminiConnectionError("Disconnect the current coordinator before selecting another.")
             if self._corporation.provider_exists(self.PROVIDER_ID):
                 raise GeminiConnectionError("A Gemini provider is already configured outside local setup.")
-            connection = self._connection.refresh()
-            if model_id not in connection.models:
+            connection = (self._connection.refresh() if refresh_catalog
+                          else self._connection.connection())
+            if connection is None or model_id not in connection.models:
                 raise GeminiConnectionError("Selected model is no longer available; refresh the Gemini model list.")
             key = connection.configuration.api_key
             provider = self._connection.provider(key, model_id)

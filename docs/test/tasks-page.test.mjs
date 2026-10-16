@@ -22,10 +22,10 @@ function render() {
 test("shows all tasks in descending order and reports the next planned task", () => {
   const elements = render();
   const groups = elements["roadmap-groups"].children;
-  assert.equal(groups[0].id, "tasks-174-175");
+  assert.equal(groups[0].id, "tasks-176-176");
   const items = groups.flatMap(group => group.children[1].children);
-  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 175 }, (_, index) => 175 - index));
-  assert.match(elements["roadmap-summary"].textContent, /175 roadmap tasks.*172 completed.*2 deferred and incomplete.*1 planned/);
+  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 176 }, (_, index) => 176 - index));
+  assert.match(elements["roadmap-summary"].textContent, /176 roadmap tasks.*172 completed.*2 deferred and incomplete.*2 planned/);
   assert.match(elements["next-task"].textContent, /Next: Task 175/);
 });
 
@@ -142,7 +142,7 @@ test("publishes the completed settings milestone and remaining phases as planned
   assert.match(settings.limitations.join(" "), /installer was not rebuilt/);
   const planned = tasks.filter(task => task.number >= 174);
   assert.deepEqual(planned.map(task => [task.number, task.status]), [
-    [174, "completed"], [175, "planned"],
+    [174, "completed"], [175, "planned"], [176, "planned"],
   ]);
   const corporationMap = tasks.find(task => task.number === 172);
   assert.match(corporationMap.description, /interactive, evidence-backed 3D map/);

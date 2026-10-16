@@ -171,7 +171,7 @@ def test_legacy_database_moves_to_version_one_and_newer_database_fails_before_mu
         connection.execute("INSERT INTO tasks VALUES ('legacy', 'Keep', 'Keep data', NULL, 'pending', NULL, NULL)")
     initialize_database()
     with sqlite3.connect(database) as connection:
-        assert connection.execute("PRAGMA user_version").fetchone() == (1,)
+        assert connection.execute("PRAGMA user_version").fetchone() == (2,)
         assert connection.execute("SELECT title FROM tasks WHERE id='legacy'").fetchone() == ("Keep",)
 
     with sqlite3.connect(database) as connection:
