@@ -41,7 +41,7 @@ SUPPORTED_APP_TABLES = frozenset({
     "documentation_draft_documents", "documentation_draft_versions", "execution_queue",
     "managed_software", "managed_software_events", "managed_software_pins",
     "local_first_run", "owner_preferences", "owner_preferences_schema", "owner_suggestion_preferences",
-    "project_knowledge", "project_memory", "projects", "task_logs", "tasks",
+    "owner_knowledge", "project_knowledge", "project_memory", "projects", "task_logs", "tasks",
 })
 _SECRET_COLUMN = re.compile(r"(?:secret|password|credential|api[_-]?key|access[_-]?token|refresh[_-]?token)", re.I)
 _SECRET_VALUE = re.compile(

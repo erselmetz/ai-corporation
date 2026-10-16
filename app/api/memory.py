@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Annotated, Literal
 import sqlite3
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 
 from app.memory import MemoryScope, MemoryExpiredError
@@ -36,6 +36,7 @@ class MemorySummary(BaseModel):
     expires_at: datetime
     expired: bool
     can_manage: bool
+    source_reference: str | None = None
     provenance: MemoryProvenanceSummary | None = None
 
 
@@ -58,6 +59,14 @@ class MemoryEdit(BaseModel):
     expires_at: datetime
     retention_opt_in: StrictBool
     revision: str = Field(min_length=64, max_length=64)
+
+
+class OwnerKnowledgeCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    content: StrictStr = Field(min_length=1, max_length=8192)
+    source_name: StrictStr = Field(default="Owner note", min_length=1, max_length=128)
+    expires_at: datetime
+    retention_opt_in: StrictBool
 
 
 class SemanticIndexRequest(BaseModel):
@@ -113,6 +122,46 @@ def semantic_service(request: Request):
     if factory is None:
         return SemanticMemoryService(application.memory_management())
     return factory()
+
+
+@router.get("/owner")
+def list_owner_knowledge(principal: AuthenticatedPrincipal = Depends(require_permission("memory:read")),
+                         manager=Depends(service), index=Depends(semantic_service),
+                         now=Depends(get_memory_now)):
+    items = invoke(lambda: manager.list(actor_id=principal.identity, scope=MemoryScope.OWNER,
+                                        scope_id=principal.identity, limit=100, now=now))
+    return {"scope": MemoryScope.OWNER.value, "scope_id": principal.identity,
+            "items": items, "semantic": index.status()}
+
+
+@router.post("/owner")
+def create_owner_knowledge(body: OwnerKnowledgeCreate,
+                           principal: AuthenticatedPrincipal = Depends(require_permission("memory:manage")),
+                           manager=Depends(service), now=Depends(get_memory_now)):
+    from app.knowledge.intake import source_name
+    return invoke(lambda: manager.create_owner_note(
+        principal.identity, body.content, source_name=source_name(body.source_name),
+        expires_at=body.expires_at, retention_opt_in=body.retention_opt_in, now=now))
+
+
+@router.post("/owner/upload")
+async def upload_owner_knowledge(request: Request, file: UploadFile = File(...),
+                                 expires_at: datetime = Query(...),
+                                 retention_opt_in: bool = Query(...),
+                                 principal: AuthenticatedPrincipal = Depends(require_permission("memory:manage")),
+                                 manager=Depends(service), now=Depends(get_memory_now)):
+    from app.knowledge.intake import MAX_UPLOAD_BYTES, extract_upload
+    declared = request.headers.get("content-length")
+    if declared is not None and (not declared.isdigit() or int(declared) > MAX_UPLOAD_BYTES + 16_384):
+        raise HTTPException(413, "Knowledge upload exceeds the 1 MiB file limit")
+    data = await file.read(MAX_UPLOAD_BYTES + 1)
+    try:
+        content, name = extract_upload(file.filename, data)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
+    return invoke(lambda: manager.create_owner_note(
+        principal.identity, content, source_name=name, expires_at=expires_at,
+        retention_opt_in=retention_opt_in, now=now))
 
 
 def invoke(operation):
@@ -198,6 +247,7 @@ def index_memory(body: SemanticIndexRequest,
         raise HTTPException(503, "Local semantic indexing failed") from None
     return {"indexed": True, "memory_id": body.memory_id, "scope": body.scope.value,
             "scope_id": body.scope_id, "chunk_count": len(chunks),
+            "indexed_at": chunks[0].indexed_at.isoformat() if chunks else None,
             "model": index.status().get("model")}
 
 

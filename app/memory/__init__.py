@@ -8,6 +8,7 @@ from .models import (
     MemoryExpiredError,
     require_memory_access,
 )
+from .scoped_store import OwnerKnowledgeStore
 
 __all__ = [
     "ConversationMemoryStore",
@@ -17,5 +18,6 @@ __all__ = [
     "MemoryScope",
     "MemoryType",
     "MemoryExpiredError",
+    "OwnerKnowledgeStore",
     "require_memory_access",
 ]

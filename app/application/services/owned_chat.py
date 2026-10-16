@@ -122,6 +122,7 @@ class OwnedChatService:
                     "coordinator": agent,
                     "streaming_supported": getattr(provider, "supports_streaming", False) is True,
                     "image_input_supported": getattr(provider, "supports_image_input", False) is True,
+                    "local_model": getattr(provider, "is_local", False) is True,
                 }
 
     def list(self, owner: str):
@@ -149,14 +150,23 @@ class OwnedChatService:
                 "coordinator": entry.coordinator,
                 "streaming_supported": getattr(entry.provider, "supports_streaming", False) is True,
                 "image_input_supported": getattr(entry.provider, "supports_image_input", False) is True,
+                "local_model": getattr(entry.provider, "is_local", False) is True,
             }
+
+    def authorize_owner(self, owner, identifier):
+        """Check a conversation's owner without competing with its active turn lock."""
+        with self._catalog_lock:
+            entry = self._entries.get(identifier)
+            if entry is None or entry.owner != owner:
+                raise ChatNotFound("Conversation not found")
+            return True
 
     def get_status(self, owner, identifier):
         with self._access(owner, identifier):
             return self._chat.get_status(identifier)
 
     def send(self, owner, identifier, text, retrieved_context=None, *, presentation_preferences=None, image_ids=(),
-             image_consent=False, ocr_evidence=()):
+             image_consent=False, ocr_evidence=(), prompt_observer=None):
         with self._access(owner, identifier) as entry:
             with self.agent_request(entry.coordinator.id):
                 if image_ids:
@@ -192,7 +202,8 @@ class OwnedChatService:
                     finally:
                         for image in images:
                             self._image_store.remove(owner, identifier, image.id)
-                return self._send(entry, identifier, text, retrieved_context, presentation_preferences)
+                return self._send(entry, identifier, text, retrieved_context, presentation_preferences,
+                                  prompt_observer=prompt_observer)
 
     def stream(self, owner, identifier, text, retrieved_context=None, presentation_preferences=None):
         with self._access(owner, identifier) as entry:
@@ -209,7 +220,8 @@ class OwnedChatService:
                     else:
                         yield event
 
-    def _send(self, entry, identifier, text, retrieved_context=None, presentation_preferences=None):
+    def _send(self, entry, identifier, text, retrieved_context=None, presentation_preferences=None,
+              prompt_observer=None):
         current, provider = self._coordinator(entry.coordinator.id)
         if (current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model):
             raise ChatConflict("Coordinator assignment changed; start a new conversation")
@@ -217,7 +229,8 @@ class OwnedChatService:
             raise ChatConflict("Coordinator connection changed; start a new conversation")
         if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
             raise ChatLimit("Conversation message limit reached; start a new conversation")
-        record = self._chat.send(identifier, text, retrieved_context, presentation_preferences)
+        record = self._chat.send(identifier, text, retrieved_context, presentation_preferences,
+                                 prompt_observer=prompt_observer)
         return {"conversation": record, "coordinator": entry.coordinator}
 
     def close(self, owner, identifier):

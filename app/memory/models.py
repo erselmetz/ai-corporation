@@ -8,6 +8,7 @@ class MemoryScope(str, Enum):
     CONVERSATION = "conversation"
     PROJECT = "project"
     CORPORATION = "corporation"
+    OWNER = "owner"
 
 
 class MemoryType(str, Enum):

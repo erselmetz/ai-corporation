@@ -29,6 +29,7 @@ class ProviderVisionUnsupported(RuntimeError):
 
 
 class AIProvider(ABC):
+    is_local = False
     requires_explicit_cloud_consent = False
     supports_streaming = False
     supports_image_input = False

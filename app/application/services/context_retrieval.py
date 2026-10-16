@@ -61,6 +61,7 @@ class HybridContextRetrievalResult:
     stale_candidates: int
     candidate_limit_reached: bool
     byte_limit_reached: bool
+    result_limit_reached: bool
 
 
 class ContextRetrievalService:
@@ -193,7 +194,8 @@ class ContextRetrievalService:
             "hybrid" if semantic is not None else "lexical-only",
             len(lexical.hits), len(semantic_hits), stale,
             lexical.candidate_limit_reached or bool(semantic and semantic.candidate_limit_reached),
-            byte_limited)
+            byte_limited,
+            lexical.result_limit_reached or bool(semantic and semantic.result_limit_reached))
 
     def retrieve(self, query: str, *, actor_id: str, scope: MemoryScope,
                  scope_id: str, now: datetime, limit: int = 5):

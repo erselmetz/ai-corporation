@@ -52,6 +52,10 @@ function setup(handler = null, windowRef = globalThis.window) {
     "chat-task-context-query", "chat-task-context-scope", "chat-task-context-id",
     "chat-task-outcome", "chat-task-verification", "chat-task-evidence",
     "chat-stop-display", "repository-study-form", "repository-study-objective",
+    "chat-knowledge-enabled", "chat-knowledge-scopes", "chat-knowledge-owner",
+    "chat-knowledge-conversation", "chat-knowledge-extra-enabled", "chat-knowledge-extra-scope",
+    "chat-knowledge-extra-id", "chat-knowledge-preview", "chat-knowledge-state",
+    "chat-knowledge-preview-result", "chat-capture-local-prompt",
     "repository-study-owner", "repository-study-name", "repository-study-submit",
     "repository-study-state", "repository-study-result",
     "chat-stop-request", "voice-mode", "voice-language", "voice-start", "voice-stop",
@@ -62,9 +66,10 @@ function setup(handler = null, windowRef = globalThis.window) {
   ];
   const elements = Object.fromEntries(ids.map(id => [id, new Element(
     ["chat-agent", "chat-conversation", "chat-task-source", "chat-task-agent",
-      "chat-task-context-scope"].includes(id) ? "select" : "",
+      "chat-task-context-scope", "chat-knowledge-extra-scope"].includes(id) ? "select" : "",
   )]));
   elements["chat-history"].dataset = {};
+  for (const id of ["chat-knowledge-enabled", "chat-knowledge-owner", "chat-knowledge-conversation", "chat-knowledge-extra-enabled"]) elements[id].checked = false;
   const calls = [];
   elements["voice-mode"].value = "local";
   elements["voice-language"].value = "en-US";
@@ -169,6 +174,44 @@ test("streaming chat renders provider chunks and verifies the completed response
   assert.match(ui.elements["chat-history"].textContent, /assistant - completedfirst reply/);
   assert.match(ui.elements["chat-state"].textContent, /Stream completed/);
   assert.equal(ui.elements["chat-stop-display"].hidden, true);
+});
+
+test("knowledge requires an exact preview and displays returned citations in How I answered", async () => {
+  const trace = {
+    route: { agent_id: "worker", agent: "Actual Worker", provider: "ollama", model: "local-model", source: "owner selected" },
+    retrieval: { enabled: true, mode: "lexical-only", query: "Which port?", returned_chunks: [{ source: "private.md" }] },
+    sources: [{ source: "private.md", scope: "owner", chunk_reference: "note-1#1", score: 0.5 }],
+    truncation: {}, cloud: { provider_used: null, consent_given: false, private_knowledge_sent: false },
+    timing: { turn_elapsed_ms: 3 }, outcome: "completed", actions: { tools_run: false, tasks_created: false },
+  };
+  const preview = { digest: "a".repeat(64), trace: { context_bytes: 12 }, items: [{
+    source: "private.md", scope: "owner", chunk_reference: "note-1#1", content: "Port 8123",
+  }] };
+  const ui = setup((path, options) => {
+    if (path.endsWith("/knowledge-preview")) return response(preview);
+    if (path.endsWith("/messages")) return response({
+      ...snapshot([message("user", "completed", "Which port?"), message("assistant", "completed", "8123")]),
+      context_trace: trace,
+    });
+    return null;
+  });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-input"].value = "Which port?";
+  ui.elements["chat-knowledge-enabled"].checked = true;
+  ui.elements["chat-knowledge-enabled"].listeners.change();
+  ui.elements["chat-knowledge-owner"].checked = true;
+  ui.elements["chat-knowledge-owner"].listeners.change();
+  assert.equal(await ui.controller.send(), false);
+  assert.match(ui.elements["chat-state"].textContent, /Preview the exact selected knowledge/);
+  await ui.elements["chat-knowledge-preview"].listeners.click();
+  assert.match(ui.elements["chat-knowledge-preview-result"].textContent, /Port 8123/);
+  assert.equal(await ui.controller.send(), true);
+  const body = JSON.parse(ui.calls.find(call => call.path.endsWith("/messages")).options.body);
+  assert.equal(body.knowledge_enabled, true);
+  assert.equal(body.knowledge_preview_digest, "a".repeat(64));
+  assert.match(ui.elements["chat-history"].textContent, /How I answered/);
+  assert.match(ui.elements["chat-history"].textContent, /private.md.*note-1#1/);
 });
 
 test("Stop display hides chunks but continues consuming the provider response", async () => {
@@ -436,4 +479,30 @@ test("stopping a model wait aborts local waiting but records an unknown remote o
   assert.equal(messageCalls, 1);
   assert.equal(ui.elements["chat-input"].disabled, true);
   assert.match(ui.elements["chat-state"].textContent, /remote outcome is unknown.*No resend/);
+});
+
+test("exact assembled prompt is visible only after explicit local-model opt-in and is inert text", async () => {
+  const exactPrompt = '{"request":"<script>private prompt</script>"}';
+  const ui = setup((path, options) => {
+    if (path === "/api/chat/conversations" && options.method === "POST") {
+      return response({ ...snapshot(), local_model: true });
+    }
+    if (path.endsWith("/messages")) {
+      return response({ ...snapshot([message("user", "completed", "hello"),
+        message("assistant", "completed", "reply")]), local_model: true,
+      advanced_prompt: exactPrompt });
+    }
+    return null;
+  });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  const consent = ui.elements["chat-capture-local-prompt"];
+  assert.equal(consent.disabled, false);
+  consent.checked = true;
+  ui.elements["chat-input"].value = "hello";
+  assert.equal(await ui.controller.send(), true);
+  const post = ui.calls.find(call => call.path.endsWith("/messages"));
+  assert.equal(JSON.parse(post.options.body).capture_local_prompt, true);
+  assert.ok(ui.elements["chat-history"].textContent.includes(exactPrompt));
+  assert.equal(ui.elements["chat-history"].children.some(item => item.innerHTML), false);
 });

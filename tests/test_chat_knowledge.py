@@ -62,7 +62,11 @@ def test_no_automatic_retention_or_context(env):
     assert send(client, headers, cid).status_code == 200
     assert client.get(f"/api/chat/conversations/{cid}/retained").json()["items"] == []
     assert "retrieved_context" not in prompts[-1]
-    assert client.get(f"/api/chat/conversations/{cid}").json()["context_traces"] == {}
+    traces = client.get(f"/api/chat/conversations/{cid}").json()["context_traces"]
+    assert len(traces) == 1
+    trace = next(iter(traces.values()))
+    assert trace["retrieval"] == {"enabled": False, "reason": "Use my knowledge was off."}
+    assert trace["actions"] == {"tools_run": False, "tasks_created": False}
 
 
 def test_retention_requires_consent_and_bounded_expiry(env):

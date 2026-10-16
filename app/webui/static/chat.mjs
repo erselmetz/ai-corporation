@@ -32,6 +32,12 @@ export function mountChat({
   voiceProvenance.hidden = true;
   const cloudPanel = element("cloud-consent-panel");
   const cloudConsent = element("cloud-consent");
+  const knowledgeEnabled = element("chat-knowledge-enabled");
+  const knowledgeScopesPanel = element("chat-knowledge-scopes");
+  const knowledgePreviewButton = element("chat-knowledge-preview");
+  const knowledgeState = element("chat-knowledge-state");
+  const knowledgePreviewResult = element("chat-knowledge-preview-result");
+  const captureLocalPrompt = element("chat-capture-local-prompt");
   const taskSource = element("chat-task-source");
   const taskAgent = element("chat-task-agent");
   const taskPrepare = element("chat-task-prepare");
@@ -58,12 +64,13 @@ export function mountChat({
   const stopRequestButton = element("chat-stop-request");
   const buttons = [
     "chat-start", "chat-send", "chat-close", "chat-refresh",
-    "chat-stop-display", "repository-study-submit",
+    "chat-stop-display", "repository-study-submit", "chat-knowledge-preview",
   ].map(element);
   let busy = false;
   let selected = null;
   let canSend = false;
   let streamingSupported = false;
+  let localModelAvailable = false;
   let stopDisplay = null;
   let requiresCloudConsent = false;
   let canCreateTask = false;
@@ -74,6 +81,8 @@ export function mountChat({
   let emergencyStopped = false;
   let requestController = null;
   let presentationPreferences = { response_mode: "balanced", locale: "en-US", detail_level: "standard" };
+  const knowledgeSettings = new Map();
+  let knowledgePreview = null;
   const base = "/api/chat/conversations";
   const imageManager = mountChatImages({ documentRef, windowRef, fetchImpl, getConversation: () => selected });
   function clearVoiceProvenance() {
@@ -88,12 +97,22 @@ export function mountChat({
     selected = null;
     canSend = false;
     streamingSupported = false;
+    localModelAvailable = false;
     stopDisplay = null;
     stopDisplayButton.disabled = true;
     stopDisplayButton.hidden = true;
     requiresCloudConsent = false;
     cloudPanel.hidden = true;
     cloudConsent.checked = false;
+    knowledgePreview = null;
+    knowledgePreviewResult.replaceChildren();
+    knowledgePreviewResult.hidden = true;
+    captureLocalPrompt.checked = false;
+    captureLocalPrompt.disabled = true;
+    knowledgeEnabled.checked = false;
+    knowledgeScopesPanel.disabled = true;
+    knowledgePreviewButton.disabled = true;
+    knowledgeState.textContent = "Knowledge retrieval is off. Choose each scope explicitly; no knowledge is added automatically.";
     input.disabled = true;
     repositoryStudyResult.textContent = "";
     repositoryStudyState.textContent = "";
@@ -149,13 +168,33 @@ export function mountChat({
     if (!record || !agent || typeof record.id !== "string" || !Array.isArray(record.messages)
         || !["open", "closed"].includes(record.status)) throw new Error("Invalid conversation response.");
     selected = record.id;
+    if (!knowledgeSettings.has(record.id)) knowledgeSettings.set(record.id, {
+      enabled: false, owner: false, conversation: false, extra: false,
+      extraScope: "project", extraId: "",
+    });
+    const savedKnowledge = knowledgeSettings.get(record.id);
+    knowledgeEnabled.checked = savedKnowledge.enabled;
+    element("chat-knowledge-owner").checked = savedKnowledge.owner;
+    element("chat-knowledge-conversation").checked = savedKnowledge.conversation;
+    element("chat-knowledge-extra-enabled").checked = savedKnowledge.extra;
+    element("chat-knowledge-extra-scope").value = savedKnowledge.extraScope;
+    element("chat-knowledge-extra-id").value = savedKnowledge.extraId;
+    knowledgePreview = null;
     streamingSupported = result.streaming_supported === true;
+    localModelAvailable = result.local_model === true;
+    captureLocalPrompt.disabled = busy || !localModelAvailable;
+    captureLocalPrompt.checked = false;
     requiresCloudConsent = isGeminiProvider(agent.provider);
     cloudPanel.hidden = !requiresCloudConsent;
     cloudConsent.checked = false;
     conversations.value = record.id;
     element("chat-identity").textContent = `Coordinator: ${agent.name} (${agent.role}) | ${agent.provider} / ${agent.model} | ${record.status}`;
     history.replaceChildren();
+    const traces = { ...(result.context_traces || {}) };
+    if (result.context_trace && record.messages.length) {
+      const latestReply = [...record.messages].reverse().find(message => message.role === "assistant");
+      if (latestReply?.id) traces[latestReply.id] = result.context_trace;
+    }
     taskSource.replaceChildren();
     option(taskSource, "", "Select a completed chat proposal");
     for (const message of record.messages) {
@@ -168,6 +207,20 @@ export function mountChat({
       const content = documentRef.createElement("p");
       content.textContent = message.content;
       item.append(label, content);
+      const trace = typeof message.id === "string" ? traces[message.id] : null;
+      if (trace && (message.role === "assistant" || message.status === "failed")) appendAnswerTrace(item, trace);
+      if (message.role === "assistant" && message === [...record.messages].reverse().find(row => row.role === "assistant")
+          && typeof result.advanced_prompt === "string") {
+        const advanced = documentRef.createElement("details");
+        const summary = documentRef.createElement("summary");
+        summary.textContent = "Advanced: exact prompt sent to this local model";
+        const warning = documentRef.createElement("p");
+        warning.textContent = "This one-turn view includes recent chat history and selected knowledge. It is not saved in the trace; avoid sharing sensitive text.";
+        const prompt = documentRef.createElement("pre");
+        prompt.textContent = result.advanced_prompt;
+        advanced.append(summary, warning, prompt);
+        item.append(advanced);
+      }
       if (message.role === "assistant" && message.status === "completed"
           && presentationPreferences.detail_level === "brief") content.classList.add("response-detail-brief");
       if (message.role === "assistant" && message.status === "completed" && voiceController) {
@@ -196,7 +249,111 @@ export function mountChat({
     taskControls();
     repositoryStudyControls();
     voiceController?.updateControls();
+    updateKnowledgeControls();
     void imageManager?.refresh();
+  }
+  function currentKnowledgeScopes() {
+    const scopes = [];
+    if (element("chat-knowledge-owner").checked) scopes.push({ scope: "owner" });
+    if (element("chat-knowledge-conversation").checked) scopes.push({ scope: "conversation" });
+    if (element("chat-knowledge-extra-enabled").checked) scopes.push({
+      scope: element("chat-knowledge-extra-scope").value,
+      scope_id: element("chat-knowledge-extra-id").value.trim(),
+    });
+    return scopes;
+  }
+  function knowledgeSelectionKey(text = input.value) {
+    return JSON.stringify({ text, scopes: currentKnowledgeScopes() });
+  }
+  function updateKnowledgeControls() {
+    if (!knowledgeEnabled) return;
+    const enabled = knowledgeEnabled.checked === true;
+    knowledgeScopesPanel.disabled = busy || !canSend || !enabled;
+    knowledgePreviewButton.disabled = busy || !canSend || !enabled;
+    if (!enabled) {
+      knowledgePreview = null;
+      knowledgePreviewResult.hidden = true;
+      knowledgeState.textContent = "Knowledge retrieval is off. No knowledge is added to this turn.";
+    }
+  }
+  function appendAnswerTrace(article, trace) {
+    const panel = documentRef.createElement("details");
+    panel.className = "chat-answer-trace";
+    const summary = documentRef.createElement("summary"); summary.textContent = "How I answered"; panel.append(summary);
+    const route = trace.route || {};
+    const routeText = documentRef.createElement("p");
+    routeText.textContent = route.agent
+      ? `Route: ${route.agent} (${route.agent_id}) · ${route.provider || "provider unknown"} / ${route.model || "model unknown"}. ${route.source || "Route reason not recorded."}`
+      : "Route details were not recorded for this reply.";
+    panel.append(routeText);
+    const retrieval = trace.retrieval || {};
+    const retrievalText = documentRef.createElement("p");
+    retrievalText.textContent = retrieval.enabled === true
+      ? `Knowledge: ${retrieval.returned_chunks?.length || 0} chunks · ${retrieval.mode || "mode unknown"} · query: ${retrieval.query || "not recorded"}`
+      : retrieval.reason || "Knowledge retrieval was not used.";
+    panel.append(retrievalText);
+    if (Array.isArray(trace.sources) && trace.sources.length) {
+      const heading = documentRef.createElement("strong"); heading.textContent = "Sources used"; panel.append(heading);
+      const sources = documentRef.createElement("ol");
+      for (const source of trace.sources) {
+        const item = documentRef.createElement("li");
+        const label = source.source || source.origin_reference || source.memory_id || "Saved source";
+        const reference = source.chunk_reference || source.memory_id || "reference unavailable";
+        item.textContent = `${label} · ${source.scope || "scope unknown"} · ${reference}${source.score === undefined ? "" : ` · score ${source.score}`}${source.freshness ? ` · ${source.freshness}` : ""}`;
+        sources.append(item);
+      }
+      panel.append(sources);
+    } else if (retrieval.enabled === true) {
+      const empty = documentRef.createElement("p");
+      empty.textContent = "No relevant selected knowledge was found; the model was instructed not to guess from outside the selected notes.";
+      panel.append(empty);
+    }
+    const truncation = retrieval.truncation || {};
+    const truncated = Object.entries(truncation)
+      .filter(([key, value]) => value === true || (key === "duplicates_removed" && value > 0))
+      .map(([key, value]) => `${key}: ${value === true ? "limit reached" : value}`).join("; ");
+    const limitText = documentRef.createElement("p");
+    limitText.textContent = truncated ? `Limits: ${truncated}` : "Retrieval limits did not truncate selected context.";
+    panel.append(limitText);
+    const cloud = trace.cloud || {};
+    const cloudText = documentRef.createElement("p");
+    cloudText.textContent = cloud.provider_used
+      ? `Cloud provider: ${cloud.provider_used}; per-turn consent ${cloud.consent_given ? "given" : "not given"}; private knowledge sent ${cloud.private_knowledge_sent ? "yes" : "no"}.`
+      : "Cloud provider: none reported for this turn.";
+    panel.append(cloudText);
+    const timing = documentRef.createElement("p");
+    timing.textContent = `Turn duration: ${trace.timing?.turn_elapsed_ms ?? "unknown"} ms · outcome: ${trace.outcome || "unknown"}.`;
+    panel.append(timing);
+    const actions = documentRef.createElement("p");
+    actions.textContent = `Tools run: ${trace.actions?.tools_run === false ? "no" : "unknown"} · Tasks created: ${trace.actions?.tasks_created === false ? "no" : "unknown"}.`;
+    panel.append(actions);
+    const advanced = documentRef.createElement("p");
+    advanced.textContent = trace.advanced_prompt_retained === false && route.provider === "ollama"
+      ? "Exact prompt is available only when separately requested for a local turn; it is not retained in this trace."
+      : "Exact prompts are not retained in this trace.";
+    panel.append(advanced);
+    article.append(panel);
+  }
+  function renderKnowledgePreview(result) {
+    knowledgePreviewResult.replaceChildren();
+    knowledgePreviewResult.hidden = false;
+    const heading = documentRef.createElement("h3"); heading.textContent = "Exact knowledge preview"; knowledgePreviewResult.append(heading);
+    const note = documentRef.createElement("p");
+    note.textContent = result.items.length
+      ? `${result.items.length} selected excerpt(s), ${result.trace.context_bytes} UTF-8 bytes. No model was called.`
+      : "No relevant selected notes found. The model will be instructed not to guess from outside the selected knowledge.";
+    knowledgePreviewResult.append(note);
+    for (const source of result.items) {
+      const card = documentRef.createElement("article"); card.className = "chat-knowledge-preview-item";
+      const label = documentRef.createElement("strong"); label.textContent = `${source.source} · ${source.scope} · ${source.chunk_reference}`;
+      const text = documentRef.createElement("p"); text.textContent = source.content;
+      card.append(label, text); knowledgePreviewResult.append(card);
+    }
+    if (requiresCloudConsent && result.items.length) {
+      const cloud = documentRef.createElement("p");
+      cloud.textContent = "This exact excerpt will be sent to Google Gemini only if you also check the per-turn cloud consent and press Send.";
+      knowledgePreviewResult.append(cloud);
+    }
   }
   async function action(operation) {
     if (busy) return false;
@@ -209,9 +366,11 @@ export function mountChat({
     finally {
       busy = false;
       buttons.forEach(button => { button.disabled = false; });
+      captureLocalPrompt.disabled = !localModelAvailable;
       agents.disabled = false; conversations.disabled = false;
       taskControls();
       repositoryStudyControls();
+      updateKnowledgeControls();
       voiceController?.updateControls();
     }
   }
@@ -310,6 +469,15 @@ export function mountChat({
       }
       if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Consent to send this message and chat context to Google Gemini before continuing.");
       const imageIds = imageManager?.selectedIds() || [];
+      const useKnowledge = knowledgeEnabled.checked === true;
+      const knowledgeScopes = useKnowledge ? currentKnowledgeScopes() : [];
+      if (useKnowledge) {
+        if (imageIds.length) throw new Error("Knowledge-assisted turns cannot combine with temporary images.");
+        if (!knowledgeScopes.length) throw new Error("Select at least one exact knowledge scope before previewing.");
+        if (!knowledgePreview || knowledgePreview.key !== knowledgeSelectionKey(text)) {
+          throw new Error("Preview the exact selected knowledge for this message before Send.");
+        }
+      }
       if (imageIds.length && !imageManager.consented()) throw new Error("Select the per-turn image consent checkbox before sending selected images to the configured provider.");
       if (!imageIds.length && imageManager?.wantsLocalOcr()) throw new Error("Select an image before requesting local OCR.");
       const identifier = selected;
@@ -320,12 +488,18 @@ export function mountChat({
       input.disabled = true;
       try {
         const body = requiresCloudConsent ? { text, cloud_consent: true } : { text };
+        if (useKnowledge) Object.assign(body, {
+          knowledge_enabled: true, knowledge_scopes: knowledgeScopes,
+          knowledge_preview_digest: knowledgePreview.digest,
+        });
+        const capturePrompt = captureLocalPrompt.checked && captureLocalPrompt.disabled !== true;
+        if (capturePrompt) body.capture_local_prompt = true;
         if (imageIds.length) {
           body.image_ids = imageIds;
           body.image_consent = true;
           body.include_local_ocr = imageManager.wantsLocalOcr();
         }
-        if (streamingSupported && !imageIds.length) {
+        if (streamingSupported && !imageIds.length && !capturePrompt) {
           const outcome = await receiveStream(identifier, body, controller.signal);
           if (outcome.complete) {
             input.value = "";
@@ -384,6 +558,7 @@ export function mountChat({
         stopRequestButton.hidden = true;
         stopRequestButton.disabled = true;
         input.disabled = !canSend;
+        captureLocalPrompt.disabled = busy || !localModelAvailable;
       }
     });
   }
@@ -449,6 +624,7 @@ export function mountChat({
           conversation: event.conversation,
           coordinator: event.coordinator,
           streaming_supported: true,
+          ...(event.context_trace ? { context_trace: event.context_trace } : {}),
         };
       } else if (event.type === "error" && typeof event.message === "string") {
         streamError = event.message;
@@ -490,6 +666,22 @@ export function mountChat({
     return action(async () => {
       if (!selected) throw new Error("Select a conversation first.");
       render(await request(`${base}/${encodeURIComponent(selected)}/close`, {}));
+    });
+  }
+  async function previewKnowledge() {
+    return action(async () => {
+      if (!selected || !canSend || !knowledgeEnabled.checked) throw new Error("Select an open conversation and turn on Use my knowledge first.");
+      const text = input.value;
+      if (!text.trim() || new TextEncoder().encode(text).length > 8192) throw new Error("Enter a message of at most 8192 UTF-8 bytes before previewing.");
+      const scopes = currentKnowledgeScopes();
+      if (!scopes.length) throw new Error("Select at least one exact knowledge scope.");
+      knowledgePreview = null;
+      knowledgeState.textContent = "Checking only the selected owner-authorized scopes…";
+      const result = await request(`${base}/${encodeURIComponent(selected)}/knowledge-preview`, { query: text, scopes });
+      if (typeof result.digest !== "string" || !Array.isArray(result.items) || !result.trace) throw new Error("Invalid knowledge preview response.");
+      knowledgePreview = { digest: result.digest, key: knowledgeSelectionKey(text) };
+      renderKnowledgePreview(result);
+      knowledgeState.textContent = "Preview is ready. The server will recheck it before Send; any changed note requires a new preview.";
     });
   }
   async function prepareTaskProposal() {
@@ -588,6 +780,31 @@ export function mountChat({
   });
   taskPrepare.addEventListener("click", prepareTaskProposal);
   taskConfirm.addEventListener("click", confirmTaskProposal);
+  knowledgePreviewButton.addEventListener("click", previewKnowledge);
+  knowledgeEnabled.addEventListener("change", () => {
+    if (selected) knowledgeSettings.set(selected, { ...knowledgeSettings.get(selected), enabled: knowledgeEnabled.checked });
+    knowledgePreview = null; updateKnowledgeControls();
+  });
+  for (const id of ["chat-knowledge-owner", "chat-knowledge-conversation", "chat-knowledge-extra-enabled", "chat-knowledge-extra-scope", "chat-knowledge-extra-id"]) {
+    element(id).addEventListener("change", () => {
+      if (selected) knowledgeSettings.set(selected, {
+        enabled: knowledgeEnabled.checked, owner: element("chat-knowledge-owner").checked,
+        conversation: element("chat-knowledge-conversation").checked,
+        extra: element("chat-knowledge-extra-enabled").checked,
+        extraScope: element("chat-knowledge-extra-scope").value,
+        extraId: element("chat-knowledge-extra-id").value,
+      });
+      knowledgePreview = null; knowledgePreviewResult.hidden = true;
+      knowledgeState.textContent = "Scope selection changed. Preview again before sending.";
+    });
+    element(id).addEventListener("input", () => { knowledgePreview = null; knowledgePreviewResult.hidden = true; });
+  }
+  input.addEventListener("input", () => {
+    if (knowledgePreview && knowledgePreview.key !== knowledgeSelectionKey(input.value)) {
+      knowledgePreview = null; knowledgePreviewResult.hidden = true;
+      knowledgeState.textContent = "Message changed. Preview again before sending.";
+    }
+  });
   conversations.addEventListener("change", load);
   voiceController = mountVoiceControls({
     documentRef,

@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from uuid import uuid4
 
-from app.memory import MemoryScope, ConversationMemoryStore
+from app.memory import MemoryScope, ConversationMemoryStore, MemoryRecord, MemoryType, OwnerKnowledgeStore
 from app.memory.corporation_knowledge import CorporationKnowledgeStore
 from app.memory.scoped_store import ProjectKnowledgeStore
 from app.memory.management import memory_revision, update_private_memory
@@ -14,7 +15,7 @@ class MemoryManagementService:
         self._corporation_id = corporation_id
         self._semantic_invalidator = semantic_invalidator
 
-    def _store(self, scope, scope_id):
+    def _store(self, scope, scope_id, actor_id=None):
         if scope is MemoryScope.CONVERSATION:
             return ConversationMemoryStore()
         if scope is MemoryScope.PROJECT:
@@ -25,11 +26,15 @@ class MemoryManagementService:
             if scope_id != self._corporation_id:
                 raise KeyError("Memory unavailable in requested Corporation")
             return CorporationKnowledgeStore()
+        if scope is MemoryScope.OWNER:
+            if actor_id is None or scope_id != actor_id:
+                raise KeyError("Owner knowledge is unavailable")
+            return OwnerKnowledgeStore()
         raise ValueError("Unsupported memory scope")
 
     def list(self, *, actor_id, scope, scope_id, limit, now):
         _time(now)
-        store = self._store(scope, scope_id)
+        store = self._store(scope, scope_id, actor_id)
         records = store.list_scoped(actor_id=actor_id, scope_id=scope_id, limit=limit)
         items = []
         for record in records:
@@ -48,16 +53,21 @@ class MemoryManagementService:
                               expires_at=record.expires_at,
                               expired=now >= record.expires_at, can_manage=actor_id == record.owner_id,
                               provenance=provenance))
+        if scope is MemoryScope.OWNER:
+            for item, record in zip(items, records):
+                item["source_reference"] = record.source_id
         return items
 
     def inspect(self, memory_id, *, actor_id, scope, scope_id, now):
-        store = self._store(scope, scope_id)
+        store = self._store(scope, scope_id, actor_id)
         provenance = None
         if scope is MemoryScope.CONVERSATION:
             record = store.retrieve(memory_id, owner_id=actor_id, conversation_id=scope_id, now=now)
         elif scope is MemoryScope.PROJECT:
             record = ProjectKnowledgeService(self._orchestrator).retrieve(
                 memory_id, owner_id=actor_id, project_id=scope_id, now=now)
+        elif scope is MemoryScope.OWNER:
+            record = store.retrieve(memory_id, owner_id=actor_id, now=now)
         else:
             knowledge = store.retrieve(memory_id, actor_id=actor_id, corporation_id=scope_id, now=now)
             record = knowledge.record
@@ -84,12 +94,28 @@ class MemoryManagementService:
         return self.inspect(memory_id, actor_id=actor_id, scope=scope, scope_id=scope_id, now=now)
 
     def remove(self, memory_id, *, actor_id, scope, scope_id):
-        store = self._store(scope, scope_id)
+        store = self._store(scope, scope_id, actor_id)
         if scope is MemoryScope.CORPORATION:
             store.withdraw(memory_id, actor_id=actor_id, corporation_id=scope_id)
         elif scope is MemoryScope.PROJECT:
             store.forget(memory_id, owner_id=actor_id, project_id=scope_id)
+        elif scope is MemoryScope.OWNER:
+            store.forget(memory_id, owner_id=actor_id)
         else:
             store.forget(memory_id, owner_id=actor_id, conversation_id=scope_id)
         if self._semantic_invalidator is not None:
             self._semantic_invalidator(memory_id, scope=scope, scope_id=scope_id)
+
+    def create_owner_note(self, actor_id, content, *, source_name, expires_at, retention_opt_in, now):
+        if retention_opt_in is not True:
+            raise ValueError("Explicit retention consent is required")
+        _time(now)
+        if not isinstance(expires_at, datetime) or expires_at.tzinfo is None or expires_at.utcoffset() is None:
+            raise ValueError("Expiry must be timezone-aware")
+        if not timedelta(minutes=1) <= expires_at - now <= timedelta(days=30):
+            raise ValueError("Expiry must be between 1 minute and 30 days from now")
+        record = MemoryRecord(uuid4().hex, actor_id, MemoryScope.OWNER, actor_id,
+                              MemoryType.NOTE, content, source_name, now, expires_at, True)
+        OwnerKnowledgeStore().retain(record, now=now)
+        return self.inspect(record.id, actor_id=actor_id, scope=MemoryScope.OWNER,
+                            scope_id=actor_id, now=now)

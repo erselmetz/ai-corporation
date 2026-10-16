@@ -765,7 +765,7 @@ def memory_page() -> HTMLResponse:
       <main class="content"><a href="/ui">Back to dashboard</a><h1>Memory management</h1>
       <p>In default API mode, browser sign-in is not configured. Reads require memory:read; changes require memory:manage and owner authority. Owner identity comes from the authenticated session.</p>
       <section class="management-card"><h2>Inspect stored memory</h2>
-      <label for="memory-scope">Scope</label><select id="memory-scope"><option value="conversation">Conversation</option><option value="project">Project</option><option value="corporation">Corporation publication</option></select>
+      <label for="memory-scope">Scope</label><select id="memory-scope"><option value="owner">My saved knowledge</option><option value="conversation">Conversation</option><option value="project">Project</option><option value="corporation">Corporation publication</option></select>
       <label for="memory-scope-id">Conversation, Project, or Corporation ID</label><input id="memory-scope-id" autocomplete="off">
       <button id="memory-refresh" type="button">Refresh</button>
       <p id="memory-state" role="status" aria-live="polite">Choose a scope and enter its resource ID.</p><ul id="memory-list"></ul></section>
@@ -793,6 +793,36 @@ def memory_page() -> HTMLResponse:
       </section></main></body></html>""")
 
 
+@router.get("/ui/knowledge", response_class=HTMLResponse, include_in_schema=False)
+def owner_knowledge_page() -> HTMLResponse:
+    return HTMLResponse("""<!doctype html><html lang="en"><head>
+      <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>My knowledge - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+      <script type="module" src="/ui/static/knowledge.mjs"></script></head><body>
+      <main class="content"><nav aria-label="Knowledge navigation"><a href="/ui">Home</a> | <a href="/ui/chat">Coordinator chat</a> | <a href="/ui/login?next=/ui/knowledge">Owner sign-in</a></nav>
+      <p class="eyebrow">PRIVATE TO THIS OWNER</p><h1>My knowledge</h1>
+      <p>Save notes for later chat. Notes stay on this device, expire within 30 days, and are used only when you select a scope and turn on “Use my knowledge”.</p>
+      <section class="management-card" aria-labelledby="knowledge-add-title"><h2 id="knowledge-add-title">Add a note</h2>
+      <form id="knowledge-note-form"><label for="knowledge-source">Note title</label><input id="knowledge-source" maxlength="128" value="Owner note">
+      <label for="knowledge-content">Text or notes (up to 8192 UTF-8 bytes)</label><textarea id="knowledge-content" rows="7" maxlength="8192"></textarea>
+      <label for="knowledge-expiry">Keep for (days)</label><select id="knowledge-expiry"><option value="1">1 day</option><option value="7">7 days</option><option value="30" selected>30 days</option></select>
+      <label><input id="knowledge-consent" type="checkbox"> I consent to store this note locally until its expiry.</label>
+      <button id="knowledge-save" type="submit">Save note</button></form>
+      <hr><form id="knowledge-upload-form"><label for="knowledge-file">Or choose a .md, .txt, or text-based .pdf file (up to 1 MiB; PDF up to 20 pages)</label>
+      <input id="knowledge-file" type="file" accept=".md,.txt,.pdf,text/plain,text/markdown,application/pdf">
+      <button id="knowledge-upload" type="submit">Add selected file</button></form>
+      <p id="knowledge-state" role="status" aria-live="polite"></p></section>
+      <section class="management-card" aria-labelledby="knowledge-library-title"><h2 id="knowledge-library-title">Saved notes</h2>
+      <p id="knowledge-index-status" role="status" aria-live="polite">Checking local semantic index...</p>
+      <button id="knowledge-refresh" type="button">Refresh</button><ul id="knowledge-list"></ul>
+      <p id="knowledge-detail" role="status" aria-live="polite">Select a note to inspect its index or remove it.</p>
+      <button id="knowledge-index" type="button" disabled>Build or refresh local index</button>
+      <button id="knowledge-inspect" type="button" disabled>Check index status</button>
+      <button id="knowledge-delete" type="button" disabled>Forget selected note</button>
+      <p>Indexing is explicit, local-only, and synchronous. If the optional semantic index is unavailable, chat continues with lexical retrieval. Deleting a note also invalidates its derived index.</p></section>
+      </main></body></html>""")
+
+
 @router.get("/ui/chat", response_class=HTMLResponse)
 def coordinator_chat_page():
     return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -800,7 +830,7 @@ def coordinator_chat_page():
     <title>Chat - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
     <script type="module" src="/ui/static/chat.mjs"></script></head><body>
     <main class="content chat-content"><nav aria-label="Chat navigation">
-    <a href="/ui">Home</a> | <a href="/ui/login?next=/ui/chat">Owner sign-in</a> | <a href="/ui/preferences">Response preferences</a> | <a href="/ui/employee-chat">Employee chat</a> | <a href="/ui/providers">Providers &amp; models</a></nav>
+    <a href="/ui">Home</a> | <a href="/ui/login?next=/ui/chat">Owner sign-in</a> | <a href="/ui/preferences">Response preferences</a> | <a href="/ui/knowledge">My knowledge</a> | <a href="/ui/employee-chat">Employee chat</a> | <a href="/ui/providers">Providers &amp; models</a></nav>
     {safety_controls}
     <p class="eyebrow">YOUR AI WORKSPACE</p><h1>Chat with your AI team</h1>
     <p>Choose a registered AI team member, start a conversation, and send a message. The first reply checks whether its configured service can respond. Chat does not run generated instructions.</p>
@@ -813,6 +843,20 @@ def coordinator_chat_page():
     <section id="chat-history" aria-label="Conversation messages" aria-live="polite"></section>
     <form id="chat-form"><label for="chat-input">Message (up to 8192 UTF-8 bytes)</label>
     <textarea id="chat-input" rows="4" maxlength="8192" required></textarea>
+    <details class="chat-advanced" id="chat-knowledge-panel"><summary>Knowledge (off by default)</summary>
+    <label><input id="chat-knowledge-enabled" type="checkbox"> Use my knowledge for this conversation</label>
+    <fieldset id="chat-knowledge-scopes" disabled><legend>Select exact knowledge scopes</legend>
+      <label><input id="chat-knowledge-owner" type="checkbox"> My saved notes</label>
+      <label><input id="chat-knowledge-conversation" type="checkbox"> Retained notes in this conversation</label>
+      <label><input id="chat-knowledge-extra-enabled" type="checkbox"> One Project or Corporation scope</label>
+      <label for="chat-knowledge-extra-scope">Additional scope</label><select id="chat-knowledge-extra-scope"><option value="project">Project</option><option value="corporation">Corporation</option></select>
+      <label for="chat-knowledge-extra-id">Exact Project or Corporation ID</label><input id="chat-knowledge-extra-id" maxlength="256">
+    </fieldset>
+    <button id="chat-knowledge-preview" type="button" disabled>Preview knowledge for this message</button>
+    <p id="chat-knowledge-state" role="status" aria-live="polite">Knowledge retrieval is off. Choose each scope explicitly; no knowledge is added automatically.</p>
+    <section id="chat-knowledge-preview-result" aria-label="Exact selected knowledge preview" hidden></section>
+    <label><input id="chat-capture-local-prompt" type="checkbox" disabled> Include the exact assembled prompt for this local-model reply only (contains chat history and any selected notes).</label>
+    </details>
     <p id="chat-input-provenance" role="status" aria-live="polite" hidden></p>
     <button id="chat-send" type="submit">Send</button>
     <button id="chat-capture-screen" type="button" disabled>Capture display once</button>
@@ -910,7 +954,7 @@ def coordinator_chat_page():
     the Stop display control does not cancel provider generation; Stop waiting interrupts this app's request but cannot confirm remote cancellation. For the default local Agent, Ollama and llama3.2:3b must already be available;
     use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here; configure Gemini in its separate online setup page.</p></details>
     <p id="cloud-consent-panel" hidden><label><input id="cloud-consent" type="checkbox">
-    I consent to send this message, recent conversation history, and configured chat context to Google Gemini for this reply.</label></p>
+    I consent to send this message, recent conversation history, configured chat context, and the exact displayed knowledge preview to Google Gemini for this reply.</label></p>
     </main></body></html>""".replace("{safety_controls}", _emergency_controls()))
 
 

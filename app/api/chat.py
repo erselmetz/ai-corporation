@@ -5,6 +5,7 @@ import re
 from contextlib import contextmanager
 from datetime import datetime, timezone
 import json
+import time
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -21,7 +22,9 @@ from app.application.services.github_inspection import (
 )
 from app.application.services.repository_study import RepositoryStudyService
 from app.application.services.chat_history import ChatHistoryError
-from app.application.services.chat_knowledge import ContextRequest, KnowledgeNotFound
+from app.application.services.chat_knowledge import (
+    ContextRequest, KnowledgeNotFound, SelectedKnowledgeScope,
+)
 from app.application.services.owned_chat import (
     ChatConflict, ChatConsentRequired, ChatLimit, ChatNotFound, ChatUnavailable,
 )
@@ -80,6 +83,18 @@ class ChatContextBody(BaseModel):
     limit: int = Field(default=3, ge=1, le=3)
 
 
+class KnowledgeScopeBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    scope: MemoryScope
+    scope_id: str = Field(default="", max_length=256)
+
+
+class KnowledgePreviewBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    query: str = Field(min_length=1, max_length=8192)
+    scopes: list[KnowledgeScopeBody] = Field(min_length=1, max_length=3)
+
+
 class SendRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     text: str = Field(min_length=1, max_length=8192)
@@ -88,6 +103,10 @@ class SendRequest(BaseModel):
     image_consent: StrictBool = False
     include_local_ocr: StrictBool = False
     context: ChatContextBody | None = None
+    knowledge_enabled: StrictBool = False
+    knowledge_scopes: list[KnowledgeScopeBody] = Field(default_factory=list, max_length=3)
+    knowledge_preview_digest: str | None = Field(default=None, min_length=64, max_length=64)
+    capture_local_prompt: StrictBool = False
 
 
 class RetainRequest(BaseModel):
@@ -114,6 +133,67 @@ class CameraCaptureUploadRequest(ImageUploadRequest):
 
 def get_chat_now():
     return datetime.now(timezone.utc)
+
+
+def _selected_scopes(scopes):
+    return tuple(SelectedKnowledgeScope(item.scope, item.scope_id) for item in scopes)
+
+
+def _knowledge_preview(service, owner, identifier, query, scopes, now):
+    try:
+        result = service.chat_knowledge().retrieve_selected(
+            owner, identifier, query, _selected_scopes(scopes), now)
+    except PermissionError:
+        raise HTTPException(403, "Selected knowledge scope is not available to this owner.") from None
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
+    except Exception:
+        raise HTTPException(503, "Selected knowledge could not be retrieved safely.") from None
+    return result
+
+
+def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
+                            cloud_provider, cloud_consent, elapsed_ms, auto_context,
+                            retrieved, trace_request, now):
+    """Record only a failed/pending user turn; never serialize the raw exception."""
+    try:
+        record = service.owned_chat().get(owner, identifier)["conversation"]
+        message = next((item for item in reversed(record.messages)
+                        if item.role.value == "user" and item.status.value in {"failed", "pending"}), None)
+        if message is None:
+            return
+        if auto_context:
+            retrieval_trace = {"enabled": True, **auto_context["trace"]}
+        elif retrieved is not None:
+            retrieval_trace = knowledge.record_trace(owner, identifier, message.id,
+                                                     retrieved, trace_request, now)
+        else:
+            retrieval_trace = None
+        knowledge.record_turn_trace(
+            owner, identifier, message.id, coordinator=coordinator,
+            cloud_provider=cloud_provider, cloud_consent=cloud_consent,
+            elapsed_ms=elapsed_ms, retrieval=retrieval_trace,
+            outcome="failed" if message.status.value == "failed" else "unknown",
+            failure="Provider or chat runtime did not produce a verified reply; raw diagnostics are omitted.",
+            now=now)
+    except Exception:
+        # A diagnostic trace must never replace or disclose the original chat failure.
+        return
+
+
+@router.post("/{identifier}/knowledge-preview")
+def preview_knowledge(identifier: str, body: KnowledgePreviewBody,
+                      principal=Depends(require_permission("chat:send")),
+                      service=Depends(get_application_service), now=Depends(get_chat_now)):
+    if contains_gemini_key(body.query):
+        raise HTTPException(422, SECRET_PASTE_GUIDANCE)
+    with chat_errors():
+        result = _knowledge_preview(service, principal.identity, identifier,
+                                    body.query, body.scopes, now)
+        return {"digest": result["digest"], "items": result["preview"],
+                "trace": result["trace"],
+                "cloud_preview_only": True,
+                "note": "This exact preview is revalidated before Send; no provider was called."}
 
 
 class TaskProposalRequest(BaseModel):
@@ -338,17 +418,31 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
     body = parse(SendRequest, payload)
     if contains_gemini_key(body.text) or (body.context and contains_gemini_key(body.context.query)):
         raise HTTPException(422, SECRET_PASTE_GUIDANCE)
+    if body.knowledge_enabled and (body.context is not None or body.image_ids):
+        raise HTTPException(422, "Knowledge-assisted turns cannot combine with separate context or images.")
+    if body.knowledge_enabled and (not body.knowledge_scopes or not body.knowledge_preview_digest):
+        raise HTTPException(422, "Preview the selected knowledge scopes before sending.")
+    if not body.knowledge_enabled and (body.knowledge_scopes or body.knowledge_preview_digest):
+        raise HTTPException(422, "Knowledge scope and preview are required only when Use my knowledge is on.")
+    if body.capture_local_prompt and (body.image_ids or body.context):
+        raise HTTPException(422, "Exact prompt capture is unavailable for image or separate-context turns.")
     with chat_errors():
+        started_at = time.perf_counter()
         presentation = _presentation_preferences(request, principal.identity)
         current = service.owned_chat().get(principal.identity, identifier)
-        if (
-            service.provider_requires_explicit_cloud_consent(
-                current["coordinator"].provider
-            )
-            and body.cloud_consent is not True
-        ):
+        if body.capture_local_prompt and not current.get("local_model"):
+            raise HTTPException(422, "Exact prompt capture is available only for a configured local model.")
+        cloud_requires_consent = service.provider_requires_explicit_cloud_consent(
+            current["coordinator"].provider)
+        if cloud_requires_consent and body.cloud_consent is not True:
             raise HTTPException(403, "Explicit consent is required before sending this turn and recent chat context to Gemini.")
         knowledge = service.chat_knowledge()
+        auto_context = None
+        if body.knowledge_enabled:
+            auto_context = _knowledge_preview(service, principal.identity, identifier,
+                                               body.text, body.knowledge_scopes, now)
+            if auto_context["digest"] != body.knowledge_preview_digest:
+                raise HTTPException(409, "Selected knowledge changed after preview. Preview it again before sending.")
         retrieved = trace_request = None
         if body.context is not None:
             retrieved, trace_request = knowledge.retrieve(principal.identity, identifier, ContextRequest(
@@ -367,19 +461,62 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
             if body.include_local_ocr:
                 ocr = service.ocr()
                 ocr_evidence = tuple(ocr.recognize(image, language="eng") for image in images)
-            result = owned.send(principal.identity, identifier, body.text, presentation_preferences=presentation,
-                                image_ids=tuple(body.image_ids),
-                                image_consent=True, ocr_evidence=ocr_evidence)
+            try:
+                result = owned.send(principal.identity, identifier, body.text, presentation_preferences=presentation,
+                                    image_ids=tuple(body.image_ids),
+                                    image_consent=True, ocr_evidence=ocr_evidence)
+            except Exception:
+                _record_unverified_turn(
+                    service, knowledge, principal.identity, identifier,
+                    current["coordinator"],
+                    current["coordinator"].provider if cloud_requires_consent else None,
+                    body.cloud_consent, (time.perf_counter() - started_at) * 1000,
+                    None, None, None, now)
+                raise
+            messages = result["conversation"].messages
+            reply = next((message for message in reversed(messages)
+                          if message.role.value == "assistant" and message.status.value == "completed"), None)
+            if reply is not None:
+                result = {**result, "context_trace": knowledge.record_turn_trace(
+                    principal.identity, identifier, reply.id, coordinator=current["coordinator"],
+                    cloud_provider=current["coordinator"].provider if cloud_requires_consent else None,
+                    cloud_consent=body.cloud_consent,
+                    elapsed_ms=(time.perf_counter() - started_at) * 1000,
+                    retrieval=None, now=now)}
         else:
             if body.image_consent or body.include_local_ocr:
                 raise HTTPException(422, "Image consent and OCR require selected images.")
-            result = service.owned_chat().send(principal.identity, identifier, body.text,
-                                               knowledge.prompt_context(retrieved) if retrieved else None,
-                                               presentation_preferences=presentation)
-        if retrieved is not None:
-            reply = result["conversation"].messages[-1]
-            result = {**result, "context_trace": knowledge.record_trace(
-                principal.identity, identifier, reply.id, retrieved, trace_request, now)}
+            prompt_context = auto_context["prompt_context"] if auto_context else (
+                knowledge.prompt_context(retrieved) if retrieved else None)
+            captured_prompt = []
+            cloud_provider = current["coordinator"].provider if cloud_requires_consent else None
+            try:
+                result = service.owned_chat().send(
+                    principal.identity, identifier, body.text, prompt_context,
+                    presentation_preferences=presentation,
+                    prompt_observer=captured_prompt.append if body.capture_local_prompt else None)
+            except Exception:
+                _record_unverified_turn(
+                    service, knowledge, principal.identity, identifier, current["coordinator"],
+                    cloud_provider, body.cloud_consent, (time.perf_counter() - started_at) * 1000,
+                    auto_context, retrieved, trace_request, now)
+                raise
+            messages = result["conversation"].messages
+            reply = next((message for message in reversed(messages)
+                          if message.role.value == "assistant" and message.status.value == "completed"), None)
+            if reply is not None:
+                retrieval_trace = ({"enabled": True, **auto_context["trace"]} if auto_context else
+                                   knowledge.record_trace(principal.identity, identifier, reply.id,
+                                                          retrieved, trace_request, now) if retrieved is not None else None)
+                coordinator = current["coordinator"]
+                trace = knowledge.record_turn_trace(
+                    principal.identity, identifier, reply.id, coordinator=coordinator,
+                    cloud_provider=cloud_provider, cloud_consent=body.cloud_consent,
+                    elapsed_ms=(time.perf_counter() - started_at) * 1000,
+                    retrieval=retrieval_trace, now=now)
+                result = {**result, "context_trace": trace}
+            if captured_prompt:
+                result["advanced_prompt"] = captured_prompt[0]
         return result
 
 
@@ -392,23 +529,35 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
         raise HTTPException(422, "Image turns use the bounded non-streaming message endpoint.")
     if contains_gemini_key(body.text) or (body.context and contains_gemini_key(body.context.query)):
         raise HTTPException(422, SECRET_PASTE_GUIDANCE)
+    if body.knowledge_enabled and body.context is not None:
+        raise HTTPException(422, "Knowledge-assisted turns cannot combine with separate context.")
+    if body.knowledge_enabled and (not body.knowledge_scopes or not body.knowledge_preview_digest):
+        raise HTTPException(422, "Preview the selected knowledge scopes before sending.")
+    if not body.knowledge_enabled and (body.knowledge_scopes or body.knowledge_preview_digest):
+        raise HTTPException(422, "Knowledge scope and preview are required only when Use my knowledge is on.")
+    if body.capture_local_prompt:
+        raise HTTPException(422, "Exact prompt capture uses the one-turn response view; send without streaming.")
     with chat_errors():
+        started_at = time.perf_counter()
         presentation = _presentation_preferences(request, principal.identity)
         owned = service.owned_chat()
         current = owned.get(principal.identity, identifier)
         if not current.get("streaming_supported"):
             raise HTTPException(409, "The selected provider does not support response streaming.")
-        if (
-            service.provider_requires_explicit_cloud_consent(
-                current["coordinator"].provider
-            )
-            and body.cloud_consent is not True
-        ):
+        cloud_requires_consent = service.provider_requires_explicit_cloud_consent(
+            current["coordinator"].provider)
+        if cloud_requires_consent and body.cloud_consent is not True:
             raise HTTPException(
                 403,
                 "Explicit consent is required before sending this turn and recent chat context to Gemini.",
             )
         knowledge = service.chat_knowledge()
+        auto_context = None
+        if body.knowledge_enabled:
+            auto_context = _knowledge_preview(service, principal.identity, identifier,
+                                               body.text, body.knowledge_scopes, now)
+            if auto_context["digest"] != body.knowledge_preview_digest:
+                raise HTTPException(409, "Selected knowledge changed after preview. Preview it again before sending.")
         retrieved = trace_request = None
         if body.context is not None:
             retrieved, trace_request = knowledge.retrieve(
@@ -429,27 +578,45 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                 principal.identity,
                 identifier,
                 body.text,
-                knowledge.prompt_context(retrieved) if retrieved else None,
+                auto_context["prompt_context"] if auto_context else knowledge.prompt_context(retrieved) if retrieved else None,
                 presentation,
             ):
-                if event["type"] == "complete" and retrieved is not None:
+                if event["type"] == "complete":
                     completed = event["conversation"]
                     reply = completed.messages[-1]
+                    retrieval_trace = ({"enabled": True, **auto_context["trace"]} if auto_context else
+                                       knowledge.record_trace(principal.identity, identifier, reply.id,
+                                                              retrieved, trace_request, now) if retrieved is not None else None)
+                    coordinator = event["coordinator"]
+                    cloud_provider = coordinator.provider if cloud_requires_consent else None
+                    turn_trace = knowledge.record_turn_trace(
+                        principal.identity, identifier, reply.id, coordinator=coordinator,
+                        cloud_provider=cloud_provider, cloud_consent=body.cloud_consent,
+                        elapsed_ms=(time.perf_counter() - started_at) * 1000,
+                        retrieval=retrieval_trace, now=now)
                     event = {
                         **event,
-                        "context_trace": knowledge.record_trace(
-                            principal.identity, identifier, reply.id, retrieved, trace_request, now
-                        ),
+                        "context_trace": turn_trace,
                     }
                 yield json.dumps(
                     jsonable_encoder(event), ensure_ascii=True, separators=(",", ":")
                 ) + "\n"
         except ProviderCapacityError:
+            _record_unverified_turn(
+                service, knowledge, principal.identity, identifier, current["coordinator"],
+                current["coordinator"].provider if cloud_requires_consent else None,
+                body.cloud_consent, (time.perf_counter() - started_at) * 1000,
+                auto_context, retrieved, trace_request, now)
             yield json.dumps({
                 "type": "error",
                 "message": "Configured provider request-slot capacity is exhausted; no provider request was admitted.",
             }) + "\n"
         except Exception:
+            _record_unverified_turn(
+                service, knowledge, principal.identity, identifier, current["coordinator"],
+                current["coordinator"].provider if cloud_requires_consent else None,
+                body.cloud_consent, (time.perf_counter() - started_at) * 1000,
+                auto_context, retrieved, trace_request, now)
             yield json.dumps({
                 "type": "error",
                 "message": (

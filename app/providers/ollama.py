@@ -26,6 +26,10 @@ _MAX_STREAM_OUTPUT_BYTES = 8192
 
 class OllamaProvider(AIProvider):
     @property
+    def is_local(self) -> bool:
+        return self._is_loopback_endpoint()
+
+    @property
     def supports_image_input(self) -> bool:
         return self._is_loopback_endpoint()
 

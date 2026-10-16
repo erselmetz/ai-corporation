@@ -2827,12 +2827,54 @@ export const post100Tasks = [
       "Task completion requires truthful Windows packaging and clean-profile evidence; automated fakes alone do not establish that every Windows machine, Ollama runtime, GPU, or provider account will work.",
       "Task 170 remains deferred and incomplete; Task 175 remains planned and incomplete."
     ]
+  },
+  {
+    "number": 177,
+    "title": "Auto-RAG with citations and answer trace",
+    "description": "Add owner-opt-in retrieval over explicitly selected retained knowledge, usable local note intake, and a factual per-turn How I answered panel.",
+    "category": "Phase N - Auto-RAG and Answer Tracing",
+    "status": "planned",
+    "dependsOn": [62, 63, 66, 73, 103, 110, 130],
+    "acceptance": [
+      "Coordinator Chat keeps a default-off per-conversation Use my knowledge switch and retrieves only from owner-selected exact scopes, rechecking current owner access, expiry, withdrawal, and revision for every turn.",
+      "Retrieval combines the existing deterministic lexical path with optional configured semantic candidates; it ranks, deduplicates near-identical chunks, and caps the result to at most 3 selected scopes, 5 chunks, and 1,800 UTF-8 context bytes with truthful truncation evidence.",
+      "Retrieved excerpts are delimited structured untrusted reference data with citations; the model is told not to follow embedded instructions and to say when selected evidence is insufficient. Every successful turn shows sources, scope, chunk reference, scores, and freshness in How I answered.",
+      "An owner can add a private text note or bounded UTF-8 .md/.txt/text-based .pdf file, set expiry, explicitly consent to local retention, build or inspect the optional local semantic index on demand, and forget the source with derived-index invalidation.",
+      "A structured server-side per-turn trace reports the actual coordinator/provider/model, route source, selected query and chunks, truncation, cloud consent/provider use, elapsed time, sanitized failures, and that tools/tasks were not used. It never stores raw exceptions or prompts by default.",
+      "An exact assembled prompt is shown only for an explicitly opted-in local-model turn, in that one response only; prompt capture is unavailable for cloud/image turns and is not stored in the trace.",
+      "Owner-only access, CSRF/Origin protections, explicit retention and per-turn cloud consent, expiry/revocation checks, no automatic downloads, and existing Task/Tool authority boundaries remain enforced."
+    ],
+    "outOfScope": [
+      "Do not add automatic retrieval when the toggle is off, background indexing, model downloads, automatic retries, Task creation/execution, Tool use, or changes to Agent/model assignments.",
+      "Do not add web-page ingestion; the optional Task 88 allowlisted HTTPS path is not required here.",
+      "Do not implement the optional Part 4 3D view until Parts 1-3 and their device-performance/fallback acceptance have independent evidence; retain the accessible 2D trace.",
+      "Do not claim verified reasoning, citation correctness, semantic quality, or hardware/model suitability from generated text or deterministic fakes."
+    ],
+    "decisions": [
+      "Owner notes use a dedicated owner scope in the existing SQLite-backed memory system and are included in encrypted backups only with the existing explicit private-data option.",
+      "Semantic retrieval remains optional and uses the existing Task 130 provider when configured; lexical retrieval remains available without it.",
+      "Traces are bounded and process-local. Exact prompts are returned only in the explicit local one-turn response and are never retained for later inspection.",
+      "Task 177 remains planned until a real local-model acceptance demonstrates cited chat behavior; deterministic fake-provider tests are not that evidence. Task 176 clean-profile Windows acceptance remains independently pending."
+    ],
+    "area": "P30",
+    "checkpoint": null,
+    "validation": [
+      "Focused Task 177, owner-memory, Context Retrieval, chat-context, semantic-memory, backup, and owner-preference regressions: 97 passed, 1 warning.",
+      "Full Python suite: 1,281 passed, 8 skipped, 0 failed. Browser-module tests: 214 passed; public documentation tests: 16 passed. All automated provider/model tests are deterministic; no live provider/model request was made."
+    ],
+    "limitations": [
+      "A real Ollama installation and llama3.2:3b response were not run; citation quality and answer faithfulness remain unverified. Gemini was not called; cloud behavior uses an explicit fake path.",
+      "Semantic retrieval tests use deterministic embedding/vector fakes. They do not establish real embedding relevance or quality. Scanned PDFs are unsupported; PDF intake extracts text only.",
+      "Traces and exact one-turn prompt views do not survive app restart. Persisted notes and SQLite memory do; derived semantic storage depends on the configured local index provider.",
+      "Optional Task 88 web ingestion and optional Task 177 Part 4 3D visualization are not implemented. The current trace remains 2D and accessible.",
+      "Task 177 remains planned pending live local-model acceptance; Task 176 clean-profile Windows acceptance remains NOT performed."
+    ]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and 171-174 are verified; Tasks 175-176 remain planned, with Task 175 still the next sequential task; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and 171-174 are verified; Tasks 175-177 remain planned, with Task 175 still the earliest planned task by roadmap order. Task 176 clean-profile Windows acceptance and Task 177 real local-model acceptance remain pending; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
@@ -2855,7 +2897,8 @@ const futureRoadmapGroups = [
   { name: "Phase J - Settings and Operator Controls", range: "171-171", tasks: post100Tasks.filter(task => task.category === "Phase J - Settings and Operator Controls").map(({ title, description }) => [title, description]) },
   { name: "Phase K - Interactive Maps and Visualization", range: "172-173", tasks: post100Tasks.filter(task => task.category === "Phase K - Interactive Maps and Visualization").map(({ title, description }) => [title, description]) },
   { name: "Phase L - Multimodal Interface and Usability", range: "174-175", tasks: post100Tasks.filter(task => task.category === "Phase L - Multimodal Interface and Usability").map(({ title, description }) => [title, description]) },
-  { name: "Phase M - First-run Setup and Project Cleanup", range: "176-176", tasks: post100Tasks.filter(task => task.category === "Phase M - First-run Setup and Project Cleanup").map(({ title, description }) => [title, description]) }
+  { name: "Phase M - First-run Setup and Project Cleanup", range: "176-176", tasks: post100Tasks.filter(task => task.category === "Phase M - First-run Setup and Project Cleanup").map(({ title, description }) => [title, description]) },
+  { name: "Phase N - Auto-RAG and Answer Tracing", range: "177-177", tasks: post100Tasks.filter(task => task.category === "Phase N - Auto-RAG and Answer Tracing").map(({ title, description }) => [title, description]) }
 ];
 
 export const taskGroups = [...foundationTaskGroups, {

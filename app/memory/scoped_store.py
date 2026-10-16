@@ -11,7 +11,7 @@ class _ScopedMemoryStore:
 
     @property
     def _table(self):
-        return {MemoryScope.CONVERSATION: "conversation_memory", MemoryScope.PROJECT: "project_knowledge", MemoryScope.CORPORATION: "corporation_knowledge"}[self._scope]
+        return {MemoryScope.CONVERSATION: "conversation_memory", MemoryScope.PROJECT: "project_knowledge", MemoryScope.CORPORATION: "corporation_knowledge", MemoryScope.OWNER: "owner_knowledge"}[self._scope]
 
     @staticmethod
     def _request(memory_id: str, owner_id: str, scope_id: str):
@@ -149,3 +149,19 @@ class ProjectKnowledgeStore(_ScopedMemoryStore):
 
     def purge_expired(self, *, owner_id: str, project_id: str, now: datetime):
         return self._purge_expired(owner_id=owner_id, scope_id=project_id, now=now)
+
+
+class OwnerKnowledgeStore(_ScopedMemoryStore):
+    """Durable private notes; the scope id is always the authenticated owner id."""
+    _scope = MemoryScope.OWNER
+
+    def retain(self, record, *, now):
+        if record.scope_id != record.owner_id:
+            raise ValueError("Owner knowledge scope must match its owner")
+        return super().retain(record, now=now)
+
+    def retrieve(self, memory_id: str, *, owner_id: str, now: datetime):
+        return self._retrieve(memory_id, owner_id=owner_id, scope_id=owner_id, now=now)
+
+    def forget(self, memory_id: str, *, owner_id: str):
+        return self._forget(memory_id, owner_id=owner_id, scope_id=owner_id)

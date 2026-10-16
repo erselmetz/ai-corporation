@@ -35,6 +35,7 @@ class SemanticLifecycleSource:
     completed: int
     total: int
     detail: str
+    indexed_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -188,6 +189,14 @@ class SemanticMemoryService:
                     raise PermissionError
                 key = _source_key(actor_id, scope, scope_id, memory_id)
                 metadata = tuple(self._vectors.inspect_source(key, MAX_SOURCE_CHUNKS + 1))
+                indexed_at = None
+                if metadata:
+                    try:
+                        candidate_time = datetime.fromisoformat(metadata[0].get("indexed_at", ""))
+                        if candidate_time.tzinfo is not None and candidate_time.utcoffset() is not None:
+                            indexed_at = candidate_time
+                    except (TypeError, ValueError):
+                        pass
                 stale = self._metadata_is_stale(
                     metadata, actor_id=actor_id, scope=scope, scope_id=scope_id,
                     memory_id=memory_id, source_key=key, revision=detail["revision"])
@@ -199,7 +208,8 @@ class SemanticMemoryService:
                     len(metadata), stale_count, position, len(selected),
                     "No derived vectors are indexed for this retained source." if not metadata else
                     "Indexed metadata matches the current retained source." if not stale else
-                    "Index metadata is stale, incomplete, or exceeds the source chunk bound."))
+                    "Index metadata is stale, incomplete, or exceeds the source chunk bound.",
+                    indexed_at))
             except (KeyError, MemoryExpiredError, PermissionError):
                 failed += 1
                 results.append(SemanticLifecycleSource(
@@ -308,7 +318,7 @@ class SemanticMemoryService:
                           "memory_id": memory_id, "revision": detail["revision"],
                           "source_reference": detail["source_reference"], "position": position,
                           "total": len(pieces), "source_key": source_key,
-                          "embedding_model": self._safe_identity()}
+                          "embedding_model": self._safe_identity(), "indexed_at": now.isoformat()}
                          for position in range(len(pieces)))
         self._vectors.delete_source(source_key)
         self._vectors.upsert(ids, vectors, metadata)
@@ -384,7 +394,9 @@ class SemanticMemoryService:
             if len(hits) == limit:
                 break
         hits.sort(key=lambda hit: (-hit.relevance, hit.memory_id, hit.chunk_position))
-        return SemanticSearchResult(tuple(hits), "local", stale, len(candidates) == candidate_limit)
+        return SemanticSearchResult(tuple(hits), "local", stale,
+                                    len(candidates) == candidate_limit,
+                                    len(hits) == limit)
 
     def _delete_metadata_source(self, metadata):
         source_key = metadata.get("source_key")

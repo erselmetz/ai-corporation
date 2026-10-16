@@ -38,4 +38,5 @@ class SemanticSearchResult:
     capability: str
     stale_candidates: int
     candidate_limit_reached: bool
+    result_limit_reached: bool
 

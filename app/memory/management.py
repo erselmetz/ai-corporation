@@ -5,7 +5,7 @@ import json
 
 from app.database import get_connection
 from .models import MemoryRecord, MemoryScope, require_memory_access
-from .scoped_store import ConversationMemoryStore, ProjectKnowledgeStore
+from .scoped_store import ConversationMemoryStore, OwnerKnowledgeStore, ProjectKnowledgeStore
 
 
 class MemoryConflictError(ValueError):
@@ -24,11 +24,18 @@ def update_private_memory(memory_id: str, *, actor_id: str, scope: MemoryScope,
                           expires_at: datetime, now: datetime, retention_opt_in: bool):
     if scope is MemoryScope.CONVERSATION:
         store = ConversationMemoryStore()
+    elif scope is MemoryScope.OWNER:
+        store = OwnerKnowledgeStore()
     elif scope is MemoryScope.PROJECT:
         store = ProjectKnowledgeStore()
     else:
         raise MemoryConflictError("Published knowledge is immutable; withdraw and explicitly republish")
-    store._request(memory_id, actor_id, scope_id)
+    if scope is MemoryScope.OWNER:
+        if scope_id != actor_id:
+            raise KeyError("Memory unavailable")
+        store._request(memory_id, actor_id, actor_id)
+    else:
+        store._request(memory_id, actor_id, scope_id)
     if retention_opt_in is not True:
         raise ValueError("Explicit retention consent is required")
     connection = get_connection()

@@ -1,4 +1,4 @@
-const scopes = new Set(["conversation", "project", "corporation"]);
+const scopes = new Set(["owner", "conversation", "project", "corporation"]);
 function validSummary(item) {
   return item && typeof item.id === "string" && scopes.has(item.scope)
     && typeof item.scope_id === "string" && typeof item.type === "string"

@@ -197,12 +197,18 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                             and content_type == "audio/wav")
             backup_upload = (request.url.path in {"/api/local/backup/inspect", "/api/local/backup/restore"}
                              and content_type == "multipart/form-data")
+            knowledge_upload = (request.url.path == "/api/memory/owner/upload"
+                                and content_type == "multipart/form-data")
             if backup_upload:
                 from app.portability.backups import MAX_BACKUP_BYTES
                 content_length = request.headers.get("content-length", "")
                 if not content_length.isdecimal() or int(content_length) > MAX_BACKUP_BYTES + 1024 * 1024:
                     return JSONResponse({"detail": "Backup request exceeds the supported size"}, status_code=413)
-            if content_type != "application/json" and not voice_upload and not backup_upload:
+            if knowledge_upload:
+                content_length = request.headers.get("content-length", "")
+                if not content_length.isdecimal() or int(content_length) > 1_048_576 + 16_384:
+                    return JSONResponse({"detail": "Knowledge upload exceeds the 1 MiB file limit"}, status_code=413)
+            if content_type != "application/json" and not voice_upload and not backup_upload and not knowledge_upload:
                 return JSONResponse({"detail": "JSON request required"}, status_code=415)
             stopped = application.state.emergency_stop_service.stopped
             allowed_while_stopped = (
