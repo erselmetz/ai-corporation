@@ -15,7 +15,9 @@ a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; border-ra
   position: sticky; top: 0; display: flex; flex-direction: column;
   height: 100vh; padding: 31px 20px 24px;
   border-right: 1px solid var(--line); background: rgba(9, 14, 22, 0.88);
+  transition: transform 160ms ease, visibility 160ms;
 }
+.navigation-toggle, .navigation-backdrop { display: none; }
 .brand { display: flex; align-items: center; gap: 11px; font-size: 12px; font-weight: 800; letter-spacing: 0.12em; }
 .brand-mark {
   display: grid; width: 32px; height: 32px; place-items: center;
@@ -213,21 +215,24 @@ h1 span { color: #a4b4c7; }
   .settings-grid, .settings-values { grid-template-columns: 1fr; }
   .settings-heading { align-items: flex-start; flex-direction: column; }
   .guide-steps { grid-template-columns: 1fr; }
-  .shell { grid-template-columns: var(--ui-nav-width-compact) minmax(0, 1fr); }
-  .rail { padding-right: 15px; padding-left: 15px; }
-  .main-panel { padding-right: 4vw; padding-left: 4vw; }
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: fixed; z-index: 30; top: 0; bottom: 0; left: 0; width: min(var(--ui-nav-width), 86vw); height: 100dvh; transform: translateX(-105%); visibility: hidden; box-shadow: 18px 0 50px rgba(0, 0, 0, 0.34); }
+  .shell.navigation-open .rail { transform: translateX(0); visibility: visible; }
+  .navigation-backdrop { position: fixed; z-index: 25; inset: 0; display: block; width: 100%; height: 100%; border: 0; border-radius: 0; background: rgba(0, 0, 0, 0.46); }
+  .navigation-toggle { position: fixed; z-index: 40; top: 12px; left: 12px; display: inline-flex; min-height: 38px; align-items: center; padding: 7px 11px; border: 1px solid var(--line); border-radius: 7px; color: var(--text); background: var(--panel-raised); font-size: 11px; font-weight: 700; cursor: pointer; }
+  .main-panel { grid-column: 1; padding-top: 54px; padding-right: 4vw; padding-left: 4vw; }
 }
 @media (max-width: 720px) {
-  .shell { display: block; }
-  .rail { position: relative; display: grid; height: auto; grid-template-columns: 1fr auto; align-items: center; padding: 15px 16px; }
-  .rail-label, .rail-footer { display: none; }
-  .rail-navigation { display: flex; max-width: 100%; margin: 10px 0; }
-  .rail-group { display: flex; flex-wrap: wrap; }
-  .rail-group-label { display: none; }
-  .rail-link { padding: 8px 10px; white-space: nowrap; }
-  .brand { grid-column: 1; }
-  .rail::after { color: var(--cyan); content: "LOCAL · PRIVATE"; font: 9px ui-monospace, "Cascadia Code", Consolas, monospace; }
-  .main-panel { padding: 0 20px; }
+  .shell { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .rail { display: flex; flex-direction: column; padding: 31px 20px 24px; }
+  .rail-label, .rail-footer { display: block; }
+  .rail-navigation { display: grid; max-width: none; margin: 22px -5px 12px; }
+  .rail-group { display: grid; flex-wrap: initial; }
+  .rail-group-label { display: block; }
+  .rail-link { padding: 12px 11px; white-space: normal; }
+  .brand { grid-column: auto; }
+  .rail::after { content: none; }
+  .main-panel { padding: 54px 20px 0; }
   .topbar { height: 55px; }
   .hero { min-height: 380px; padding-top: 44px; }
   .orbital { top: 170px; right: -35px; width: 190px; height: 190px; opacity: 0.27; }

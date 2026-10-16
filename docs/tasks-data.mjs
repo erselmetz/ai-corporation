@@ -2869,12 +2869,40 @@ export const post100Tasks = [
       "Optional Task 88 web ingestion and optional Task 177 Part 4 3D visualization are not implemented. The current trace remains 2D and accessible.",
       "Task 177 remains planned pending live local-model acceptance; Task 176 clean-profile Windows acceptance remains NOT performed."
     ]
+  },
+  {
+    "number": 178,
+    "title": "Fix left navigation disappearing",
+    "description": "Keep navigation reachable across the Python UI and Next.js desktop routes, including narrow-window layouts and first-run transitions.",
+    "category": "Phase O - Navigation Reliability",
+    "status": "completed",
+    "dependsOn": [126, 159, 176],
+    "acceptance": [
+      "Reproduce the missing-navigation flow and record the root cause before changing code.",
+      "Render navigation from the shared application shell on every applicable route; keep a visible sidebar on wide windows and an accessible menu toggle on narrow windows.",
+      "Keep navigation reachable after route changes, responsive resizing, static-export routing, and first-run completion without duplicating page-specific sidebars.",
+      "Add a regression test for the failing route/layout case and run the full relevant test suites."
+    ],
+    "outOfScope": [
+      "Do not redesign navigation destinations or add product capabilities.",
+      "Do not claim manual native-window acceptance unless performed."
+    ],
+    "decisions": [],
+    "area": "P31",
+    "checkpoint": "task-178-nav-fix",
+    "validation": [
+      "Full Python suite: 1,282 passed, 8 skipped, 0 failed. Browser modules: 216 passed; Electron tests: 23 passed; public documentation tests: 16 passed.",
+      "Next.js static production export and TypeScript checks passed; Python compilation and git diff --check passed. Regression coverage includes shared Next layout, Python route injection, compact menu behavior, and existing browser layout checks."
+    ],
+    "limitations": [
+      "No manual interactive resize session in a native Electron window was performed; responsive behavior was checked by deterministic layout/browser tests and the static production build."
+    ]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and 171-174 are verified; Tasks 175-177 remain planned, with Task 175 still the earliest planned task by roadmap order. Task 176 clean-profile Windows acceptance and Task 177 real local-model acceptance remain pending; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and 171-174 are verified; Tasks 175-177 remain planned and Task 178 is verified complete, with Task 175 still the earliest planned task by roadmap order. Task 176 clean-profile Windows acceptance and Task 177 real local-model acceptance remain pending; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
@@ -2898,7 +2926,8 @@ const futureRoadmapGroups = [
   { name: "Phase K - Interactive Maps and Visualization", range: "172-173", tasks: post100Tasks.filter(task => task.category === "Phase K - Interactive Maps and Visualization").map(({ title, description }) => [title, description]) },
   { name: "Phase L - Multimodal Interface and Usability", range: "174-175", tasks: post100Tasks.filter(task => task.category === "Phase L - Multimodal Interface and Usability").map(({ title, description }) => [title, description]) },
   { name: "Phase M - First-run Setup and Project Cleanup", range: "176-176", tasks: post100Tasks.filter(task => task.category === "Phase M - First-run Setup and Project Cleanup").map(({ title, description }) => [title, description]) },
-  { name: "Phase N - Auto-RAG and Answer Tracing", range: "177-177", tasks: post100Tasks.filter(task => task.category === "Phase N - Auto-RAG and Answer Tracing").map(({ title, description }) => [title, description]) }
+  { name: "Phase N - Auto-RAG and Answer Tracing", range: "177-177", tasks: post100Tasks.filter(task => task.category === "Phase N - Auto-RAG and Answer Tracing").map(({ title, description }) => [title, description]) },
+  { name: "Phase O - Navigation Reliability", range: "178-178", tasks: post100Tasks.filter(task => task.category === "Phase O - Navigation Reliability").map(({ title, description }) => [title, description]) }
 ];
 
 export const taskGroups = [...foundationTaskGroups, {

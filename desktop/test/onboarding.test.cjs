@@ -6,6 +6,7 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "../..");
 const page = fs.readFileSync(path.join(root, "desktop-ui/src/app/page.tsx"), "utf8");
 const settingsPage = fs.readFileSync(path.join(root, "desktop-ui/src/app/settings/page.tsx"), "utf8");
+const shell = fs.readFileSync(path.join(root, "desktop-ui/src/app/app-shell.tsx"), "utf8");
 
 test("first-run checks are bounded and report unsupported evidence as unknown", () => {
   assert.match(page, /setTimeout\(\(\) => controller\.abort\(\), 2500\)/);
@@ -32,8 +33,10 @@ test("onboarding explains the shortest chat path and keeps operator controls sep
   assert.match(page, /href="\/ui\/local-models"/);
   assert.match(page, /href="\/desktop\/settings\/"/);
   assert.match(page, /href="\/ui\/provider-connections"/);
-  assert.match(page, /href="\/ui\/employees"/);
-  assert.match(page, /href="\/ui\/visualization">Interactive system map/);
+  for (const destination of ["/ui/employees", "/ui/visualization", "/ui/projects"]) {
+    assert.ok(shell.includes(`"${destination}"`), `missing shared navigation destination: ${destination}`);
+  }
+  assert.match(shell, /Interactive system map/);
   assert.match(page, /does not dispatch Tasks/);
 });
 

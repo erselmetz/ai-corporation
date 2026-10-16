@@ -146,19 +146,7 @@ export default function SettingsPage() {
 
   useEffect(() => { void refresh(); }, []);
 
-  return <main className="shell">
-    <aside className="rail" aria-label="Main navigation">
-      <a className="brand" href="/desktop/"><span className="brand-mark">E</span><span>ERSELMETZ<span className="muted"> AI</span></span></a>
-      <p className="rail-label">COMMAND CENTER</p>
-      <nav className="rail-navigation" aria-label="Main navigation">
-        <div className="rail-group"><span className="rail-group-label">PRIMARY</span><a className="rail-link" href="/desktop/">Home</a><a className="rail-link" href="/ui/chat">Chat</a><a className="rail-link" href="/ui/projects">Projects</a></div>
-        <div className="rail-group"><span className="rail-group-label">AI</span><a className="rail-link" href="/ui/employees">Employees</a><a className="rail-link" href="/ui/positions">Positions</a><a className="rail-link" href="/ui/structure">Organization map</a><a className="rail-link" href="/ui/visualization">Interactive system map</a><a className="rail-link" href="/ui/providers">Providers &amp; models</a><a className="rail-link" href="/ui/memory">Memory</a></div>
-        <div className="rail-group"><span className="rail-group-label">OPERATIONS</span><a className="rail-link" href="/ui/tasks">Tasks</a><a className="rail-link" href="/ui/workflows">Workflows</a><a className="rail-link" href="/ui/workflow-map">Workflow map</a><a className="rail-link" href="/ui/activity">Activity</a></div>
-        <div className="rail-group"><span className="rail-group-label">SYSTEM</span><a className="rail-link active" aria-current="page" href="/desktop/settings/">Settings</a><a className="rail-link" href="/ui/inventory">Software inventory</a><a className="rail-link" href="/ui/readiness">Performance readiness</a><a className="rail-link" href="/ui/backup">Backup &amp; restore</a><a className="rail-link" href="/ui/documentation">Documentation</a><a className="rail-link" href="/ui/updates">Updates</a><a className="rail-link" href="/ui/login">Owner sign-in</a></div>
-      </nav>
-      <div className="rail-footer"><span className="pulse" /> LOCAL RUNTIME<br /><small>Loopback only · owner controlled</small></div>
-    </aside>
-    <section className="main-panel settings-page">
+  return <main className="settings-page">
       <header className="topbar"><span>OWNER SETTINGS</span><a className="login-link" href="/ui/login">Owner sign in <span aria-hidden="true">↗</span></a></header>
       <div className="settings-heading"><div><p className="eyebrow"><span className="eyebrow-line" /> ONE PLACE · CLEAR PERMISSIONS</p><h1>Settings</h1><p>Everyday preferences stay simple. Advanced controls remain grouped by the systems they manage.</p></div><button className="readiness-refresh" type="button" onClick={() => void refresh()} disabled={checking}>{checking ? "Refreshing…" : "Refresh values"}</button></div>
       <section className="settings-section" aria-labelledby="everyday-heading"><div className="section-heading"><div><p className="eyebrow">OWNER PREFERENCES</p><h2 id="everyday-heading">Everyday use</h2></div></div>
@@ -179,6 +167,5 @@ export default function SettingsPage() {
         </div>
       </section>
       <footer className="footer"><span>ERSELMETZ AI · SETTINGS</span><span>Only existing authorized APIs are used. Unavailable data stays explicit.</span></footer>
-    </section>
   </main>;
 }

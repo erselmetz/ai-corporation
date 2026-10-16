@@ -4,8 +4,16 @@ from fastapi.responses import HTMLResponse
 router = APIRouter()
 
 
-def _navigation(active_path: str) -> str:
+def _navigation(active_path: str, *, desktop_settings_available: bool = True) -> str:
     """Render the same concise, route-accurate navigation on every app page."""
+    system_links = [
+        ("Settings", "/desktop/settings/"), ("Software inventory", "/ui/inventory"),
+        ("Performance readiness", "/ui/readiness"), ("Backup &amp; restore", "/ui/backup"),
+        ("Documentation", "/ui/documentation"), ("Updates", "/ui/updates"),
+        ("Preferences", "/ui/preferences"), ("Owner sign-in", "/ui/login"),
+    ]
+    if not desktop_settings_available:
+        system_links = system_links[1:]
     groups = (
         ("PRIMARY", (("Home", "/ui"), ("Chat", "/ui/chat"), ("Projects", "/ui/projects"))),
         ("AI", (("Employees", "/ui/employees"), ("Positions", "/ui/positions"),
@@ -13,8 +21,7 @@ def _navigation(active_path: str) -> str:
                 ("3D visualization", "/ui/visualization"), ("Memory", "/ui/memory"))),
         ("OPERATIONS", (("Tasks", "/ui/tasks"), ("Workflows", "/ui/workflows"),
                         ("Workflow map", "/ui/workflow-map"), ("Activity", "/ui/activity"))),
-        ("SYSTEM", (("Software inventory", "/ui/inventory"), ("Performance readiness", "/ui/readiness"), ("Backup &amp; restore", "/ui/backup"), ("Documentation", "/ui/documentation"),
-                    ("Updates", "/ui/updates"), ("Preferences", "/ui/preferences"), ("Owner sign-in", "/ui/login"))),
+        ("SYSTEM", tuple(system_links)),
     )
     parts = ['<nav class="navigation" aria-label="Main navigation"><h2>Navigate</h2><ul>']
     for label, links in groups:

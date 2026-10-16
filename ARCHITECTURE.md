@@ -47,6 +47,10 @@ The CLI also uses `CorporationApplicationService` for application operations. Th
 
 The FastAPI application in `app.api` serves a dashboard at `/ui`, Corporation management pages, and app-owned static assets below `/ui/static`. Browser modules request protected Corporation data only from API endpoints; they do not access registries, SQLite, providers, or other Core internals. `/` and `/health` remain public; resource routes use application-service dependencies and do not directly manipulate internal registries. Authentication uses an injectable backend and rejects by default. Authorization checks the authenticated principal's required permission. The default API has no configured production identity provider or browser sign-in/session implementation; UI pages therefore report authentication-required, forbidden, or other failures and never represent failures as empty data. Task 160 extends the dashboard with independent protected reads for conversation, approval, system, and Corporation-memory summaries; its new system route requires `system:read`, and local owner mode includes that low-risk read permission. The public Node.js documentation site in `docs/` remains a separate application.
 
+### UI layout and navigation
+
+The Electron Next.js static export places the navigation in the root application layout so route changes do not drop it; at narrow widths the rail becomes a keyboard-accessible menu. Python-served `/ui` routes receive the same responsive navigation shell from the local application middleware. The Python shell links to desktop Settings only when the static export is mounted. These UI shells own navigation presentation while page content and protected data continue to use their existing route and API boundaries.
+
 ### API boundary
 
 The Task API implements:

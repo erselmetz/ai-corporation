@@ -230,6 +230,64 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
             "img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
         return response
 
+    @application.middleware("http")
+    async def shared_local_navigation(request: Request, call_next):
+        response = await call_next(request)
+        path = request.url.path
+        if path != "/ui" and not path.startswith("/ui/"):
+            return response
+        if not response.headers.get("content-type", "").lower().startswith("text/html"):
+            return response
+        body = getattr(response, "body", None)
+        if not isinstance(body, bytes):
+            body_parts = []
+            async for chunk in response.body_iterator:
+                body_parts.append(chunk)
+            body = b"".join(body_parts)
+
+        import re
+        from app.webui.router import _navigation
+
+        try:
+            html = body.decode("utf-8")
+        except UnicodeDecodeError:
+            return response
+        if re.search(r"<body\b[^>]*>", html, re.IGNORECASE) is None:
+            return response
+
+        # Replace page-local copies with one shared navigation shell so every
+        # Python UI route, including post-wizard chat, has the same navigation.
+        html = re.sub(
+            r'<nav class="navigation" aria-label="Main navigation">.*?</nav>',
+            "", html, count=1, flags=re.IGNORECASE | re.DOTALL,
+        )
+        navigation = _navigation(path, desktop_settings_available=desktop_ui_dir is not None).replace(
+            '<nav class="navigation"',
+            '<nav id="shared-navigation" class="navigation shared-navigation"', 1,
+        )
+        menu = ('<button id="shared-navigation-toggle" class="navigation-toggle" '
+                'type="button" aria-controls="shared-navigation" aria-expanded="false">Menu</button>')
+        module = '<script type="module" src="/ui/static/navigation.mjs"></script>'
+        markup = menu + navigation + module
+
+        def add_body_class(match):
+            attributes = match.group(1)
+            class_match = re.search(r'\bclass\s*=\s*(["\'])(.*?)\1', attributes, re.IGNORECASE)
+            if class_match:
+                value = class_match.group(2)
+                attributes = (attributes[:class_match.start(2)] + value + " has-shared-navigation"
+                              + attributes[class_match.end(2):])
+            else:
+                attributes += ' class="has-shared-navigation"'
+            return "<body" + attributes + ">"
+
+        html = re.sub(r"<body\b([^>]*)>", add_body_class, html, count=1, flags=re.IGNORECASE)
+        html = re.sub(r"(<body\b[^>]*>)", lambda match: match.group(1) + markup,
+                      html, count=1, flags=re.IGNORECASE)
+        headers = {key: value for key, value in response.headers.items()
+                   if key.lower() not in {"content-length", "content-type"}}
+        return HTMLResponse(html, status_code=response.status_code, headers=headers)
+
     @application.exception_handler(422)
     async def sanitized_validation(_request, _error):
         return JSONResponse({"detail": "Invalid request fields"}, status_code=422)

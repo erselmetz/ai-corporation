@@ -1105,6 +1105,43 @@ textarea::placeholder { color: #8192a6; }
 .memory-map-node button { max-width: 100%; overflow-wrap: anywhere; }
 @media (max-width: 700px) { .safety-panel { grid-template-columns: 1fr; } .safety-actions { justify-content: flex-start; } .grant-list li { align-items: flex-start; flex-direction: column; } }
 
+/* One navigation shell is injected for all local UI routes. */
+body.has-shared-navigation { min-width: 0; padding-left: var(--ui-nav-width); }
+body.has-shared-navigation .navigation.shared-navigation {
+  position: fixed; z-index: 60; top: 0; bottom: 0; left: 0; width: var(--ui-nav-width);
+  max-height: 100vh; overflow-y: auto; border: 0; border-right: 1px solid var(--ui-line);
+  border-radius: 0; padding: 1.5rem 0.75rem; background: rgba(9, 14, 22, 0.98);
+}
+body.has-shared-navigation .layout {
+  grid-template-columns: minmax(0, 1fr); gap: 0; max-width: none;
+  margin: 0; padding: 1.25rem clamp(0.75rem, 3vw, 2.5rem);
+}
+.navigation-toggle { display: none; }
+@media (max-width: 64rem) {
+  body.has-shared-navigation { padding-top: 3.5rem; padding-left: 0; }
+  body.has-shared-navigation .navigation.shared-navigation {
+    top: 0; bottom: 0; width: min(var(--ui-nav-width), 86vw); max-height: 100dvh;
+    transform: translateX(-105%); visibility: hidden; transition: transform 160ms ease, visibility 160ms;
+    box-shadow: 18px 0 50px rgba(0, 0, 0, 0.34);
+  }
+  body.has-shared-navigation.navigation-open .navigation.shared-navigation {
+    transform: translateX(0); visibility: visible;
+  }
+  .navigation-toggle {
+    position: fixed; z-index: 70; top: 0.75rem; left: 0.75rem; display: inline-flex;
+    min-height: 2.4rem; align-items: center; padding: 0.45rem 0.75rem;
+    border: 1px solid var(--ui-line); border-radius: var(--ui-radius-control);
+    color: var(--ui-text); background: var(--ui-panel-raised); font-size: 0.75rem; font-weight: 700;
+  }
+  body.has-shared-navigation .site-header { padding-left: 5rem; }
+  body.has-shared-navigation.navigation-open::before {
+    position: fixed; z-index: 50; inset: 0; content: ""; background: rgba(0, 0, 0, 0.46);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.has-shared-navigation .navigation.shared-navigation { transition-duration: 0.01ms; }
+}
+
 /* Keep advanced JSON and diagnostic output within narrow screens. */
 .content pre { max-width: 100%; overflow-x: auto; }
 #assignment-policy-config { display: block; width: 100%; max-width: 100%; }

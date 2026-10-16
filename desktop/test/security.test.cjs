@@ -67,13 +67,11 @@ test("microphone requests need an explicit native confirmation and one-use audio
 
 test("static Next export contains only local command-center destinations", () => {
   const config = read("../desktop-ui/next.config.ts");
-  const page = read("../desktop-ui/src/app/page.tsx");
+  const shell = read("../desktop-ui/src/app/app-shell.tsx");
   assert.match(config, /output:\s*["']export["']/);
   assert.match(config, /basePath:\s*["']\/desktop["']/);
-  assert.match(page, /href="\/ui\/chat"/);
-  assert.match(page, /href="\/ui\/login"/);
-  assert.match(page, /href="\/ui\/projects"/);
-  assert.match(page, /href="\/ui\/employees"/);
-  assert.match(page, /href="\/ui\/providers"/);
-  assert.doesNotMatch(page, /https?:\/\//);
+  for (const destination of ["/ui/chat", "/ui/login", "/ui/projects", "/ui/employees", "/ui/providers"]) {
+    assert.ok(shell.includes(`"${destination}"`), `missing command-center destination: ${destination}`);
+  }
+  assert.doesNotMatch(shell, /https?:\/\//);
 });

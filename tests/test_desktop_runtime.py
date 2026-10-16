@@ -94,6 +94,30 @@ def test_built_next_export_assets_are_served_from_the_local_api_origin():
         )
 
 
+def test_navigation_is_present_after_transition_from_exported_home_to_python_chat():
+    export = Path(__file__).resolve().parents[1] / "desktop-ui" / "out"
+    app = create_local_app(password=PASSWORD, origin="http://127.0.0.1:8765",
+                           desktop_ui_dir=export)
+    with TestClient(app, base_url="http://127.0.0.1:8765", client=("127.0.0.1", 50100)) as client:
+        home = client.get("/desktop/")
+        assert home.status_code == 200
+        assert 'id="desktop-navigation"' in home.text
+        assert 'href="/ui/chat"' in home.text or any(
+            asset.endswith(".js") and 'href:"/ui/chat"' in client.get(asset).text
+            for asset in re.findall(r'(?:src|href)="([^\"]+/_next/[^\"]+\.js)"', home.text)
+        )
+
+        chat = client.get("/ui/chat?conversation=previously-created")
+        assert chat.status_code == 200
+        assert 'id="shared-navigation"' in chat.text
+        assert 'id="shared-navigation-toggle"' in chat.text
+        assert 'src="/ui/static/navigation.mjs"' in chat.text
+        assert 'href="/ui/chat" aria-current="page"' in chat.text
+        assert 'aria-label="Chat navigation"' in chat.text
+        assert "script-src 'self'" in chat.headers["content-security-policy"]
+        assert client.get("/ui/static/navigation.mjs").status_code == 200
+
+
 def test_electron_design_tokens_are_generated_from_python_canonical_source():
     root = Path(__file__).resolve().parents[1]
     canonical = (root / "app" / "webui" / "static" / "design-tokens.css").read_text(encoding="utf-8")
