@@ -1,4 +1,4 @@
-# ERSELMETZ AI
+﻿# ERSELMETZ AI
 
 ERSELMETZ AI is a local-first desktop workspace for coordinating AI providers, models, people, projects and Tasks through a Python backend and an Electron interface.
 
@@ -27,7 +27,7 @@ These features are scoped foundations. Provider registration, a model name, or c
 
 ## Known limits and roadmap status
 
-Tasks 1–133, 135–169 and 171–174 are recorded complete in the roadmap. Tasks 134 and 170 remain deferred and incomplete. Task 175 remains planned pending representative owner and accessibility/device evaluation. Task 176 is implemented and automated validation passed; its roadmap status remains planned until manual clean-profile Windows acceptance is recorded.
+Tasks 1–174 are recorded as complete except Tasks 134 and 170, which remain deferred and incomplete. Tasks 175–178 are planned acceptance gates: Task 175 usability/accessibility evaluation follows manual acceptance of Tasks 176–178; Task 176 implementation and automated checks are complete but clean-profile Windows checks are pending; Task 177 Parts 1–3 implementation and automated checks are present but real local-model acceptance is pending; Task 178 navigation implementation and automated checks are present but native Electron resize acceptance is pending. Task 179 (this docs sync) is complete. Tasks 180–189 are planned; Task 190 is design-only. See [the roadmap](docs/roadmap.html) and [all task records](docs/tasks.html).
 
 The application does not provide distributed Task execution control, automatic cloud fallback, or verified GPU compatibility. Live Gemini calls, Ollama model downloads, and clean-profile Windows installer behavior are not covered by deterministic tests.
 

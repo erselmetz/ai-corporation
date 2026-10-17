@@ -1,4 +1,4 @@
-import { taskGroups, tasks, nextTask, roadmapRules } from "./tasks-data.mjs";
+import { taskGroups, tasks, nextTask, roadmapRules, recommendedOrder } from "./tasks-data.mjs";
 
 const container = document.querySelector("#roadmap-groups");
 const summary = document.querySelector("#roadmap-summary");
@@ -68,7 +68,7 @@ for (const group of [...taskGroups].reverse()) {
     title.textContent = task.title;
     const status = document.createElement("span");
     status.className = `status status-${task.status === "completed" ? "complete" : task.status === "deferred" ? "deferred" : "planned"}`;
-    status.textContent = task.status === "completed" ? "Completed" : task.status === "deferred" ? "Deferred — incomplete" : "Planned";
+    status.textContent = task.status === "completed" ? "Completed" : task.status === "deferred" ? "Deferred — incomplete" : task.status === "design_only" ? "Design only" : "Planned";
     const description = document.createElement("span");
     description.className = "task-description";
     description.textContent = task.description;
@@ -80,6 +80,8 @@ for (const group of [...taskGroups].reverse()) {
       textNode("p", `Planning area: ${task.area} · Depends on Tasks ${task.dependsOn.join(", ")}`, details);
       contractList(details, "Acceptance checks", task.acceptance);
       contractList(details, "Out of scope", task.outOfScope);
+      contractList(details, "Risks", task.risks);
+      contractList(details, "Manual verification required", task.manualVerification);
       contractList(details, "Owner decisions before dependent code", task.decisions);
       if (task.checkpoint) {
         const link = textNode("a", `Verified checkpoint: ${task.checkpoint}`, details);
@@ -99,4 +101,11 @@ for (const group of [...taskGroups].reverse()) {
 const completeCount = tasks.filter((task) => task.status === "completed").length;
 const deferredCount = tasks.filter((task) => task.status === "deferred").length;
 const plannedCount = tasks.filter((task) => task.status === "planned").length;
-summary.textContent = `${tasks.length} roadmap tasks · ${completeCount} completed scoped checkpoints · ${deferredCount} deferred and incomplete · ${plannedCount} planned`;
+const designOnlyCount = tasks.filter((task) => task.status === "design_only").length;
+summary.textContent = `${tasks.length} roadmap tasks · ${completeCount} completed scoped checkpoints · ${deferredCount} deferred and incomplete · ${plannedCount} planned · ${designOnlyCount} design only`;
+const introTitle = document.querySelector("#task-page-title");
+if (introTitle) introTitle.textContent = `Tasks 1-${tasks.length}`;
+const introStatus = document.querySelector("#task-page-status");
+if (introStatus) introStatus.textContent = summary.textContent;
+const nextTaskReason = recommendedOrder.find(item => item.number === nextTask?.number)?.reason;
+if (nextTaskReason) textNode("p", nextTaskReason, nextPanel);

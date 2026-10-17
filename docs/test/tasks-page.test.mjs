@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
-import { taskGroups, tasks, nextTask, roadmapRules } from "../tasks-data.mjs";
+import { taskGroups, tasks, nextTask, roadmapRules, recommendedOrder } from "../tasks-data.mjs";
 
 class Element {
   constructor(tag) { this.tag = tag; this.children = []; this.text = ""; }
@@ -14,7 +14,7 @@ class Element {
 const source = (await readFile(new URL("../tasks-page.js", import.meta.url), "utf8")).replace(/^import[^\n]+\n/, "");
 function render() {
   const elements = Object.fromEntries(["roadmap-groups", "roadmap-summary", "category-index", "next-task", "roadmap-rules"].map(id => [id, new Element("div")]));
-  runInNewContext(source, { taskGroups, tasks, nextTask, roadmapRules,
+  runInNewContext(source, { taskGroups, tasks, nextTask, roadmapRules, recommendedOrder,
     document: { querySelector: selector => elements[selector.slice(1)], createElement: tag => new Element(tag) } });
   return elements;
 }
@@ -22,11 +22,11 @@ function render() {
 test("shows all tasks in descending order and reports the next planned task", () => {
   const elements = render();
   const groups = elements["roadmap-groups"].children;
-  assert.equal(groups[0].id, "tasks-178-178");
+  assert.equal(groups[0].id, "tasks-190-190");
   const items = groups.flatMap(group => group.children[1].children);
-  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 178 }, (_, index) => 178 - index));
-  assert.match(elements["roadmap-summary"].textContent, /178 roadmap tasks.*173 completed.*2 deferred and incomplete.*3 planned/);
-  assert.match(elements["next-task"].textContent, /Next: Task 175/);
+  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 190 }, (_, index) => 190 - index));
+  assert.match(elements["roadmap-summary"].textContent, /190 roadmap tasks.*173 completed.*2 deferred and incomplete.*14 planned.*1 design only/);
+  assert.match(elements["next-task"].textContent, /Next: Task 178/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -142,10 +142,19 @@ test("publishes the completed settings milestone and remaining phases as planned
   assert.match(settings.limitations.join(" "), /installer was not rebuilt/);
   const planned = tasks.filter(task => task.number >= 174);
   assert.deepEqual(planned.map(task => [task.number, task.status]), [
-    [174, "completed"], [175, "planned"], [176, "planned"], [177, "planned"], [178, "completed"],
+    [174, "completed"], [175, "planned"], [176, "planned"], [177, "planned"], [178, "planned"], [179, "completed"],
+    [180, "planned"], [181, "planned"], [182, "planned"], [183, "planned"], [184, "planned"], [185, "planned"],
+    [186, "planned"], [187, "planned"], [188, "planned"], [189, "planned"], [190, "design_only"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, null);
-  assert.equal(tasks.find(task => task.number === 178).checkpoint, "task-178-nav-fix");
+  assert.equal(tasks.find(task => task.number === 178).checkpoint, null);
+  for (const task of tasks.filter(task => task.number >= 180)) {
+    assert.ok(task.acceptance.length, `Task ${task.number} has acceptance checks`);
+    assert.ok(task.outOfScope.length, `Task ${task.number} has exclusions`);
+    assert.ok(task.risks.length, `Task ${task.number} has risks`);
+    assert.ok(task.manualVerification.length, `Task ${task.number} has manual checks`);
+  }
+  assert.deepEqual(recommendedOrder.map(({ number }) => number), [178, 176, 177, 175, 180, 184, 181, 182, 183, 185, 186, 187, 188, 189, 190]);
   const corporationMap = tasks.find(task => task.number === 172);
   assert.match(corporationMap.description, /interactive, evidence-backed 3D map/);
   assert.match(corporationMap.acceptance.join(" "), /zoom\/orbit\/pan.*filters\/layers/i);

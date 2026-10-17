@@ -2751,6 +2751,7 @@ export const post100Tasks = [
       174
     ],
     "acceptance": [
+      "Run this evaluation only after Tasks 176, 177, and 178 have each completed their documented manual acceptance; record the evidence links before starting representative-owner sessions.",
       "Test first-run readiness, basic chat, provider/model configuration, permission review, troubleshooting, and navigation with representative new and experienced owners.",
       "Evaluate keyboard-only use, screen-reader semantics, responsive layouts, contrast, reduced motion, and understandable loading/empty/error/denied states.",
       "Clearly communicate that app-managed capability packs are unavailable; do not present pack installation or management as a supported user journey.",
@@ -2823,7 +2824,7 @@ export const post100Tasks = [
     ],
     "limitations": [
       "Live paid Gemini calls, model inference, Ollama installation, and large model downloads are not required for deterministic tests and must remain owner-triggered integration actions.",
-      "Manual clean-profile Windows acceptance is NOT yet performed: real Ollama install/download/chat, Gemini chat, DPAPI restart persistence, and recovery checks for stopped Ollama, offline service, malformed/rejected Gemini keys remain pending. No manual acceptance is reported as passed.",
+      "Manual clean-profile Windows acceptance is NOT yet performed. Pending checks: (1) install flow shows Ollama source, size, and digest; (2) model download displays progress; (3) wizard opens Coordinator Chat; (4) a local chat reply succeeds; (5) Gemini key validation and catalog confirmation; (6) explicit cloud-turn approval and Gemini reply; (7) after restart the Ollama wizard is gone and chat works; (8) after restart with DPAPI enabled the Gemini wizard is gone and chat works; (9) stopped Ollama shows a clear error and Retry works; (10) offline service shows a clear error and Retry works; (11) malformed Gemini key shows a clear error; (12) rejected Gemini key shows a clear error without exposing the key. No manual acceptance is reported as passed.",
       "Task completion requires truthful Windows packaging and clean-profile evidence; automated fakes alone do not establish that every Windows machine, Ollama runtime, GPU, or provider account will work.",
       "Task 170 remains deferred and incomplete; Task 175 remains planned and incomplete."
     ]
@@ -2847,7 +2848,7 @@ export const post100Tasks = [
     "outOfScope": [
       "Do not add automatic retrieval when the toggle is off, background indexing, model downloads, automatic retries, Task creation/execution, Tool use, or changes to Agent/model assignments.",
       "Do not add web-page ingestion; the optional Task 88 allowlisted HTTPS path is not required here.",
-      "Do not implement the optional Part 4 3D view until Parts 1-3 and their device-performance/fallback acceptance have independent evidence; retain the accessible 2D trace.",
+      "Do not include a 3D globe in Task 177; the former Part 4 is a separate planned Task 186 and is not a prerequisite for Task 175.",
       "Do not claim verified reasoning, citation correctness, semantic quality, or hardware/model suitability from generated text or deterministic fakes."
     ],
     "decisions": [
@@ -2866,7 +2867,7 @@ export const post100Tasks = [
       "A real Ollama installation and llama3.2:3b response were not run; citation quality and answer faithfulness remain unverified. Gemini was not called; cloud behavior uses an explicit fake path.",
       "Semantic retrieval tests use deterministic embedding/vector fakes. They do not establish real embedding relevance or quality. Scanned PDFs are unsupported; PDF intake extracts text only.",
       "Traces and exact one-turn prompt views do not survive app restart. Persisted notes and SQLite memory do; derived semantic storage depends on the configured local index provider.",
-      "Optional Task 88 web ingestion and optional Task 177 Part 4 3D visualization are not implemented. The current trace remains 2D and accessible.",
+      "Optional Task 88 web ingestion and the former Task 177 Part 4 3D globe are not implemented. The globe is now a separate planned Task 186. The current trace remains 2D and accessible.",
       "Task 177 remains planned pending live local-model acceptance; Task 176 clean-profile Windows acceptance remains NOT performed."
     ]
   },
@@ -2875,7 +2876,7 @@ export const post100Tasks = [
     "title": "Fix left navigation disappearing",
     "description": "Keep navigation reachable across the Python UI and Next.js desktop routes, including narrow-window layouts and first-run transitions.",
     "category": "Phase O - Navigation Reliability",
-    "status": "completed",
+    "status": "planned",
     "dependsOn": [126, 159, 176],
     "acceptance": [
       "Reproduce the missing-navigation flow and record the root cause before changing code.",
@@ -2889,20 +2890,249 @@ export const post100Tasks = [
     ],
     "decisions": [],
     "area": "P31",
-    "checkpoint": "task-178-nav-fix",
+    "checkpoint": null,
     "validation": [
       "Full Python suite: 1,282 passed, 8 skipped, 0 failed. Browser modules: 216 passed; Electron tests: 23 passed; public documentation tests: 16 passed.",
       "Next.js static production export and TypeScript checks passed; Python compilation and git diff --check passed. Regression coverage includes shared Next layout, Python route injection, compact menu behavior, and existing browser layout checks."
     ],
     "limitations": [
-      "No manual interactive resize session in a native Electron window was performed; responsive behavior was checked by deterministic layout/browser tests and the static production build."
+      "The shared navigation fix is implemented locally and automated validation passed, but Task 178 remains planned pending manual native Electron resize acceptance and confirmation that the corrected build is the one distributed."
     ]
+  },
+  {
+    "number": 179,
+    "title": "Sync public docs and extend the roadmap",
+    "description": "Make the public task pages, status summaries, README, and changelog agree with the authoritative task records, then publish the reviewed future roadmap without implementing future capabilities.",
+    "category": "Phase P - Roadmap Maintenance",
+    "status": "completed",
+    "dependsOn": [],
+    "acceptance": [
+      "The task page, home, roadmap, and changelog render status from docs/tasks-data.mjs; a public-docs regression fails when any task is missing from any required view.",
+      "Tasks 175-178 show their honest implementation and acceptance state; Task 175 is ordered after manual acceptance of Tasks 176-178.",
+      "Tasks 180-190 are published as planned or design-only contracts with goals, acceptance, exclusions, dependencies, risks, and manual verification.",
+      "The recommended order and rationale are derived from the authoritative roadmap and no future runtime capability is implemented."
+    ],
+    "outOfScope": ["No runtime changes, Task 177 implementation, installer changes, provider calls, downloads, or permission changes."],
+    "decisions": [],
+    "area": "P32",
+    "checkpoint": "task-179-roadmap-sync",
+    "validation": ["Public documentation tests: 17 passed, 0 failed. Browser UI modules: 180 passed, 0 failed. Electron tests: 23 passed, 0 failed. Full Python suite: 1,282 passed, 8 skipped, 0 failed (2 warnings). `git diff --check`, JavaScript syntax checks, and update-manifest JSON parse passed."],
+    "limitations": ["This docs checkpoint does not publish to origin or prove any pending manual acceptance. origin/main remains three commits behind this task base; these docs will not appear on the live public site until the local commits are pushed and deployment completes."]
+  },
+  {
+    "number": 180,
+    "title": "Hardware profile and model recommendation",
+    "description": "Report directly observed CPU, GPU, RAM, and disk facts with source and freshness, then recommend an Ollama model size with an explicit CPU-use warning where applicable.",
+    "category": "Phase Q - Hardware-Aware Local Models",
+    "status": "planned",
+    "dependsOn": [176],
+    "decisions": [],
+    "acceptance": [
+      "Show each detected CPU/GPU/RAM/disk value with its observation source and timestamp; unsupported or unavailable fields remain UNKNOWN.",
+      "Provide a bounded Ollama model-size recommendation with stated assumptions and a clear warning when inference is expected to run on CPU.",
+      "Do not claim a model will fit or run well without verified capacity evidence; provide a manual confirmation before any separate download flow."
+    ],
+    "outOfScope": ["No model download, install, pull, automatic selection, GPU benchmark, cloud routing, or hardware telemetry upload."],
+    "risks": ["OS inventory may be incomplete or stale; recommendation thresholds can mislead across quantization/runtime variants."],
+    "manualVerification": ["On representative CPU-only and GPU systems, compare displayed inventory against OS tools and inspect whether recommendation uncertainty and CPU warnings are understandable."],
+    "area": "P33", "checkpoint": null, "validation": [],
+    "limitations": ["Requires Task 176 first-run foundation; hardware inventory and recommendation accuracy need real supported Windows hardware checks."]
+  },
+  {
+    "number": 181,
+    "title": "Consent-based routing suggestions for small models",
+    "description": "Keep simple prompts on the configured default local model and suggest a larger local model or Gemini for harder prompts only after per-turn owner consent.",
+    "category": "Phase R - Reviewed Model Routing",
+    "status": "planned",
+    "dependsOn": [177, 180],
+    "decisions": [],
+    "acceptance": [
+      "Keep the configured local model as the default route for simple prompts; explain any suggested alternate and its reason as an uncertain suggestion.",
+      "Require explicit per-turn owner consent before sending any prompt to another local model or Gemini; show provider/model and data destination before confirmation.",
+      "Declining, unavailable checks, or uncertain classification preserve the original route without retries, fallback, or assignment mutation."
+    ],
+    "outOfScope": ["No automatic provider/model selection, ranking claims, silent cloud use, hidden prompt transfer, or Agent assignment changes."],
+    "risks": ["Prompt difficulty is uncertain; a routing suggestion can be wrong and cloud consent must remain distinct per turn."],
+    "manualVerification": ["Use simple and difficult prompts with local-only and Gemini configurations; verify the suggestion is explainable, opt-in, and creates no transfer when declined."],
+    "area": "P34", "checkpoint": null, "validation": [],
+    "limitations": ["Requires Task 177 RAG/trace and Task 180 hardware facts; no route-quality claim is implied."]
+  },
+  {
+    "number": 182,
+    "title": "Reviewed tools for small models",
+    "description": "Expose narrowly allowlisted web search, calculator, and local-file lookup to chat with visible trace entries; require owner confirmation for every side-effecting action.",
+    "category": "Phase S - Reviewed Tool Use",
+    "status": "planned",
+    "dependsOn": [177],
+    "decisions": [],
+    "acceptance": [
+      "Use fixed, documented tool adapters with explicit input/output limits, source provenance, and allowlisted web destinations; unsupported tools fail closed.",
+      "Show every proposed and completed tool call, parameters safe to display, result source, outcome, and timing in the real per-turn trace.",
+      "Require a fresh owner confirmation bound to the exact action for any side effect; deny by default when permission, scope, or result is unknown."
+    ],
+    "outOfScope": ["No arbitrary shell, code execution, background crawling, silent downloads, general filesystem access, or unreviewed side effects."],
+    "risks": ["Search results and files are untrusted input; even allowlisted remote content can contain prompt injection."],
+    "manualVerification": ["Verify each tool's allowlist and limits, trace accuracy, denial behavior, and explicit approval/cancel flow using benign sources and files."],
+    "area": "P35", "checkpoint": null, "validation": [],
+    "limitations": ["Requires Task 177 trace contract; web access must be loopback-safe, allowlisted, bounded, and consented where required."]
+  },
+  {
+    "number": 183,
+    "title": "Visible task scaffolding",
+    "description": "Break complex chat requests into visible plan, retrieve, and answer steps, recording actual events in the per-turn trace.",
+    "category": "Phase T - Transparent Task Scaffolding",
+    "status": "planned",
+    "dependsOn": [177, 182],
+    "decisions": [],
+    "acceptance": [
+      "Display a bounded plan before work and record each real plan, retrieval, tool, and answer step with source, status, and timing.",
+      "Allow the owner to cancel before each separately authorized action; no step is represented as completed without an observed outcome.",
+      "Failures and skipped steps remain visible, and retrieved/tool content is marked untrusted and cannot grant authority."
+    ],
+    "outOfScope": ["No hidden multi-agent work, automatic retries/replay, dependency enforcement, or autonomous approval."],
+    "risks": ["A plan may omit work or overstate progress unless trace states reflect actual operations."],
+    "manualVerification": ["Compare displayed steps and trace with actual provider/tool events for success, cancellation, denial, timeout, and partial failure."],
+    "area": "P36", "checkpoint": null, "validation": [],
+    "limitations": ["Depends on real Task 177 traces and reviewed Task 182 tools; plan text alone is not evidence of execution."]
+  },
+  {
+    "number": 184,
+    "title": "Complete persistence for operator state",
+    "description": "Persist currently in-memory positions, resource limits, proposals, and conversations with explicit migrations and a documented local data location.",
+    "category": "Phase U - Persistence and Migration",
+    "status": "planned",
+    "dependsOn": [176],
+    "decisions": [],
+    "acceptance": [
+      "Inventory each named in-memory domain record and define schema, owner scope, lifecycle, retention, and restart behavior before migration.",
+      "Use versioned additive migrations with backup/rollback behavior; preserve fail-closed ownership and authorization after restart.",
+      "Document the exact per-user data location and offer a safe, confirmed way to inspect and remove retained data where supported."
+    ],
+    "outOfScope": ["No cloud sync, cross-user sharing, credential persistence beyond existing policy, or automatic destructive cleanup."],
+    "risks": ["Schema migrations can lose or expose private data; persistent proposals can become stale or replayable."],
+    "manualVerification": ["On a clean Windows profile, restart between creation and use, inspect data location/permissions, exercise migration recovery and verify stale proposals remain unusable."],
+    "area": "P37", "checkpoint": null, "validation": [],
+    "limitations": ["Depends on Task 176's per-user configuration/data foundation; persistence behavior must be verified on Windows."]
+  },
+  {
+    "number": 185,
+    "title": "Installer, opt-in updates, and clean uninstall",
+    "description": "Plan signed installation, an opt-in update check, clean uninstall choices, local-only crash reports, and an explicit reset-app-data control.",
+    "category": "Phase V - Installation and Recovery",
+    "status": "planned",
+    "dependsOn": [176],
+    "decisions": [],
+    "acceptance": [
+      "Define publisher/signing and artifact verification; update checks are disabled until owner opt-in and never download or install silently.",
+      "Offer uninstall choices that explain retained user data and a separate confirmed reset-app-data operation with a recovery warning.",
+      "Crash reports stay local, bounded, redacted, and inspectable; no automatic upload or hidden telemetry is added."
+    ],
+    "outOfScope": ["No silent updates/downloads, telemetry upload, remote crash reporting, or data deletion without explicit confirmation."],
+    "risks": ["Signing key loss/compromise, incomplete data removal, and diagnostic leakage can harm trust."],
+    "manualVerification": ["Verify signatures on distributed artifacts, opt-in update behavior, uninstall/data-retention choices, local crash report contents, and reset recovery on clean Windows profiles."],
+    "area": "P38", "checkpoint": null, "validation": [],
+    "limitations": ["Depends on Task 176 installer and persisted data model; signing identities and update hosting require owner-controlled choices."]
+  },
+  {
+    "number": 186,
+    "title": "3D globe visual map",
+    "description": "Move the former optional Part 4 of Task 177 into an independent 3D globe view containing only real recorded entities and relationships.",
+    "category": "Phase W - Interactive 3D Map",
+    "status": "planned",
+    "dependsOn": [177],
+    "decisions": [],
+    "acceptance": [
+      "Render only permission-filtered recorded nodes, edges, status, and timestamps; unknown/missing telemetry is shown as unknown and never animated as activity.",
+      "Cap nodes, frame rate, pixel ratio, and rendering work; expose measured resource cost and fall back to the existing usable 2D view on WebGL failure or reduced motion.",
+      "Provide a keyboard-accessible labeled list with equivalent records and relationships; the visualization is read-only and has no execution authority."
+    ],
+    "outOfScope": ["No fabricated nodes/relationships, fake activity pulses, hidden polling, task execution controls, or removal of the 2D/list fallback."],
+    "risks": ["3D rendering can burden local inference and can make provenance or accessibility harder to inspect."],
+    "manualVerification": ["Measure capped rendering on minimum supported hardware during local inference; test WebGL failure, keyboard-only list navigation, reduced motion, and screen reader semantics."],
+    "area": "P39", "checkpoint": null, "validation": [],
+    "limitations": ["Requires Task 177's accepted factual trace and independent performance/accessibility evidence; no live activity source is assumed."]
+  },
+  {
+    "number": 187,
+    "title": "Opt-in local voice input",
+    "description": "Add optional local speech-to-text input with a visible microphone indicator and explicit capture controls.",
+    "category": "Phase X - Voice Interaction",
+    "status": "planned",
+    "dependsOn": [184],
+    "decisions": [],
+    "acceptance": [
+      "Voice input is disabled by default and uses only an explicitly configured local speech recognition provider unless a later consent contract permits otherwise.",
+      "Show an always-visible microphone/capture state, duration limit, permission state, and stop/cancel control while recording or transcribing.",
+      "Do not submit recognized text until the owner reviews and explicitly sends it; failures remain bounded and visible."
+    ],
+    "outOfScope": ["No always-on listening, background capture, default cloud transcription, or silent model download."],
+    "risks": ["Speech can include sensitive bystander information and local recognition may be inaccurate."],
+    "manualVerification": ["Verify opt-in, OS/browser microphone prompt, visible indicator, stop behavior, transcript review, offline behavior, and no network transfer."],
+    "area": "P40", "checkpoint": null, "validation": [],
+    "limitations": ["Depends on persistence for user controls; local speech model availability and performance need device testing."]
+  },
+  {
+    "number": 188,
+    "title": "Opt-in voice output",
+    "description": "Add optional text-to-speech playback for assistant responses with a clear stop control.",
+    "category": "Phase X - Voice Interaction",
+    "status": "planned",
+    "dependsOn": [187],
+    "decisions": [],
+    "acceptance": [
+      "Voice output is disabled by default and uses an explicitly selected device-local voice/provider.",
+      "Show playback state and provide a stop button that halts local playback promptly and clears queued speech.",
+      "Do not transmit response text to an online voice service without separate explicit per-use consent."
+    ],
+    "outOfScope": ["No always-on playback, silent downloads, cloud TTS by default, or claims of universal voice quality."],
+    "risks": ["Spoken responses can expose private content to nearby people; queued speech may outlive view changes."],
+    "manualVerification": ["Verify opt-in, voice selection, stop/queue clearing, restart preference behavior, offline operation, and privacy indicator."],
+    "area": "P40", "checkpoint": null, "validation": [],
+    "limitations": ["Depends on Task 187 controls and Task 184 persistence; voice availability and language quality are device-specific."]
+  },
+  {
+    "number": 189,
+    "title": "Opt-in local vision input",
+    "description": "Support image input through a local multimodal model with a clear preview showing what is sent and to which provider.",
+    "category": "Phase Y - Local Vision",
+    "status": "planned",
+    "dependsOn": [180, 181],
+    "decisions": [],
+    "acceptance": [
+      "Require explicit per-image selection and per-turn consent; preview image, selected local provider/model, size, and any preprocessing before send.",
+      "Use the hardware/profile and consent-based routing contracts; local transfer is the default and any cloud transfer requires distinct explicit confirmation.",
+      "Keep image retention bounded and visible, expose the actual provider/model and outcome in the trace, and report unsupported vision models without fallback."
+    ],
+    "outOfScope": ["No continuous camera/screen capture, automatic image upload, silent preprocessing, or inference of model capability from its name."],
+    "risks": ["Images can contain sensitive data; provider choice, retention, and model capability may be unclear."],
+    "manualVerification": ["Inspect the preview and trace for local and any separately consented provider path; verify cancel, expiry, unsupported-model, and no-transfer behavior."],
+    "area": "P41", "checkpoint": null, "validation": [],
+    "limitations": ["Requires verified Task 180 hardware guidance and Task 181 consent-based routing; image/model compatibility remains unknown until tested."]
+  },
+  {
+    "number": 190,
+    "title": "Code-execution agent threat model and design",
+    "description": "Design an Open Interpreter-style code-execution capability under a reviewed threat model before any implementation is considered.",
+    "category": "Phase Z - Code Execution Design Gate",
+    "status": "design_only",
+    "dependsOn": [182],
+    "decisions": [],
+    "acceptance": [
+      "Publish a threat model and design covering OS sandboxing, per-action owner confirmation bound to exact inputs, explicit filesystem scope, network policy, secret isolation, audit evidence, and a reliable kill switch.",
+      "Review sandbox escape, prompt injection, resource exhaustion, data exfiltration, cancellation, crash recovery, and safe failure scenarios with the owner before implementation can be proposed.",
+      "Keep Task 190 design-only until that review is recorded; this roadmap entry grants no execution capability or authority."
+    ],
+    "outOfScope": ["No code execution, shell/tool adapter, package installation, filesystem write, process spawn, autonomous approval, or runtime permission."],
+    "risks": ["Execution can compromise all data and processes available to the host if isolation or confirmation fails."],
+    "manualVerification": ["A security review must inspect the proposed sandbox on the target OS, verify kill-switch behavior and filesystem/network boundaries, and explicitly approve or reject the design before any implementation task."],
+    "area": "P42", "checkpoint": null, "validation": [],
+    "limitations": ["Design only; no implementation until the threat model and controls are reviewed and approved."]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs, docs/tasks.html and the relevant existing code before implementing a task. Post-100 scope/status comes from post100Tasks; completed, deferred, and planned states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and 171-174 are verified; Tasks 175-177 remain planned and Task 178 is verified complete, with Task 175 still the earliest planned task by roadmap order. Task 176 clean-profile Windows acceptance and Task 177 real local-model acceptance remain pending; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-174 and 179 are verified; Tasks 175-178 remain planned in the recommended acceptance sequence; Tasks 180-189 are planned and Task 190 is design-only. Task 176 clean-profile Windows acceptance, Task 177 real local-model acceptance, and Task 178 native Electron resize acceptance remain pending; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
@@ -2927,7 +3157,18 @@ const futureRoadmapGroups = [
   { name: "Phase L - Multimodal Interface and Usability", range: "174-175", tasks: post100Tasks.filter(task => task.category === "Phase L - Multimodal Interface and Usability").map(({ title, description }) => [title, description]) },
   { name: "Phase M - First-run Setup and Project Cleanup", range: "176-176", tasks: post100Tasks.filter(task => task.category === "Phase M - First-run Setup and Project Cleanup").map(({ title, description }) => [title, description]) },
   { name: "Phase N - Auto-RAG and Answer Tracing", range: "177-177", tasks: post100Tasks.filter(task => task.category === "Phase N - Auto-RAG and Answer Tracing").map(({ title, description }) => [title, description]) },
-  { name: "Phase O - Navigation Reliability", range: "178-178", tasks: post100Tasks.filter(task => task.category === "Phase O - Navigation Reliability").map(({ title, description }) => [title, description]) }
+  { name: "Phase O - Navigation Reliability", range: "178-178", tasks: post100Tasks.filter(task => task.category === "Phase O - Navigation Reliability").map(({ title, description }) => [title, description]) },
+  { name: "Phase P - Roadmap Maintenance", range: "179-179", tasks: post100Tasks.filter(task => task.category === "Phase P - Roadmap Maintenance").map(({ title, description }) => [title, description]) },
+  { name: "Phase Q - Hardware-Aware Local Models", range: "180-180", tasks: post100Tasks.filter(task => task.category === "Phase Q - Hardware-Aware Local Models").map(({ title, description }) => [title, description]) },
+  { name: "Phase R - Reviewed Model Routing", range: "181-181", tasks: post100Tasks.filter(task => task.category === "Phase R - Reviewed Model Routing").map(({ title, description }) => [title, description]) },
+  { name: "Phase S - Reviewed Tool Use", range: "182-182", tasks: post100Tasks.filter(task => task.category === "Phase S - Reviewed Tool Use").map(({ title, description }) => [title, description]) },
+  { name: "Phase T - Transparent Task Scaffolding", range: "183-183", tasks: post100Tasks.filter(task => task.category === "Phase T - Transparent Task Scaffolding").map(({ title, description }) => [title, description]) },
+  { name: "Phase U - Persistence and Migration", range: "184-184", tasks: post100Tasks.filter(task => task.category === "Phase U - Persistence and Migration").map(({ title, description }) => [title, description]) },
+  { name: "Phase V - Installation and Recovery", range: "185-185", tasks: post100Tasks.filter(task => task.category === "Phase V - Installation and Recovery").map(({ title, description }) => [title, description]) },
+  { name: "Phase W - Interactive 3D Map", range: "186-186", tasks: post100Tasks.filter(task => task.category === "Phase W - Interactive 3D Map").map(({ title, description }) => [title, description]) },
+  { name: "Phase X - Voice Interaction", range: "187-188", tasks: post100Tasks.filter(task => task.category === "Phase X - Voice Interaction").map(({ title, description }) => [title, description]) },
+  { name: "Phase Y - Local Vision", range: "189-189", tasks: post100Tasks.filter(task => task.category === "Phase Y - Local Vision").map(({ title, description }) => [title, description]) },
+  { name: "Phase Z - Code Execution Design Gate", range: "190-190", tasks: post100Tasks.filter(task => task.category === "Phase Z - Code Execution Design Gate").map(({ title, description }) => [title, description]) }
 ];
 
 export const taskGroups = [...foundationTaskGroups, {
@@ -2936,4 +3177,21 @@ export const taskGroups = [...foundationTaskGroups, {
   tasks: post100Tasks.filter(task => task.number <= 130).map(({ title, description }) => [title, description]),
 }, ...futureRoadmapGroups];
 export const tasks = [...foundationTasks, ...post100Tasks];
-export const nextTask = post100Tasks.find((task) => task.status === "planned");
+export const recommendedOrder = [
+  { number: 178, reason: "Complete the navigation acceptance gate before asking owners to test the setup journey." },
+  { number: 176, reason: "Verify fresh-profile install, provider setup, restart, and recovery before building on onboarding." },
+  { number: 177, reason: "Accept RAG and factual traces before routing, tools, and visible multi-step work depend on them." },
+  { number: 175, reason: "Evaluate complete user journeys after the setup, navigation, and chat foundations have manual evidence." },
+  { number: 180, reason: "Establish truthful hardware observations before recommending local model sizes." },
+  { number: 184, reason: "Define durable state and migrations before adding more operator preferences and long-lived workflows." },
+  { number: 181, reason: "Use accepted RAG traces and hardware facts to make consent-based route suggestions." },
+  { number: 182, reason: "Add only reviewed, bounded tools with visible trace evidence and explicit side-effect approval." },
+  { number: 183, reason: "Compose retrieval and reviewed tools into visible steps backed by real events." },
+  { number: 185, reason: "Finalize distribution, opt-in updates, uninstall, and local recovery controls after data behavior is defined." },
+  { number: 186, reason: "Build the optional 3D map only after factual traces and performance/accessibility limits are established." },
+  { number: 187, reason: "Add opt-in local speech input after settings and persistence can retain its controls safely." },
+  { number: 188, reason: "Add speech output after input controls and their consent/privacy pattern are verified." },
+  { number: 189, reason: "Gate image transfer on hardware evidence and reviewed provider-routing consent." },
+  { number: 190, reason: "Keep code execution at a design-only security gate until its sandbox and owner controls are reviewed." }
+];
+export const nextTask = recommendedOrder.map(({ number }) => post100Tasks.find(task => task.number === number)).find(task => task && task.status !== "completed" && task.status !== "deferred");
