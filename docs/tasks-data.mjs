@@ -2834,7 +2834,7 @@ export const post100Tasks = [
     "title": "Auto-RAG with citations and answer trace",
     "description": "Add owner-opt-in retrieval over explicitly selected retained knowledge, usable local note intake, and a factual per-turn How I answered panel.",
     "category": "Phase N - Auto-RAG and Answer Tracing",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [62, 63, 66, 73, 103, 110, 130],
     "acceptance": [
       "Coordinator Chat keeps a default-off per-conversation Use my knowledge switch and retrieves only from owner-selected exact scopes, rechecking current owner access, expiry, withdrawal, and revision for every turn.",
@@ -2855,20 +2855,20 @@ export const post100Tasks = [
       "Owner notes use a dedicated owner scope in the existing SQLite-backed memory system and are included in encrypted backups only with the existing explicit private-data option.",
       "Semantic retrieval remains optional and uses the existing Task 130 provider when configured; lexical retrieval remains available without it.",
       "Traces are bounded and process-local. Exact prompts are returned only in the explicit local one-turn response and are never retained for later inspection.",
-      "Task 177 remains planned until a real local-model acceptance demonstrates cited chat behavior; deterministic fake-provider tests are not that evidence. Task 176 clean-profile Windows acceptance remains independently pending."
+      "Task 177 was completed after an isolated real local-model acceptance demonstrated a retrieved source in the factual answer trace; deterministic fake-provider tests alone were not treated as that evidence. Task 176 clean-profile Windows acceptance remains independently pending."
     ],
     "area": "P30",
-    "checkpoint": null,
+    "checkpoint": "task-177-auto-rag-trace",
     "validation": [
-      "Focused Task 177, owner-memory, Context Retrieval, chat-context, semantic-memory, backup, and owner-preference regressions: 97 passed, 1 warning.",
-      "Full Python suite: 1,281 passed, 8 skipped, 0 failed. Browser-module tests: 214 passed; public documentation tests: 16 passed. All automated provider/model tests are deterministic; no live provider/model request was made."
+      "Isolated real local-model acceptance (2026-10-17): with a temporary SQLite profile and a retained owner note stating that the Orion test server uses port 8123, Ollama llama3.2:3b returned the matching answer. The trace identified Ollama/model, the exact source and chunk reference, retrieval score and expiry, and recorded no Task or Tool side effect. The temporary profile was removed.",
+      "Focused Task 177 and directly related knowledge/context regressions: 65 passed, 1 existing Starlette deprecation warning. Full Python suite: 1,287 passed, 3 skipped, 0 failed, 2 deprecation warnings. Browser-module tests: 216 passed; public documentation tests: 17 passed."
     ],
     "limitations": [
-      "A real Ollama installation and llama3.2:3b response were not run; citation quality and answer faithfulness remain unverified. Gemini was not called; cloud behavior uses an explicit fake path.",
+      "One real Ollama llama3.2:3b response was verified against one synthetic retained fact; this does not establish general answer faithfulness, citation correctness, semantic quality, speed, or hardware suitability. The live UI was not manually inspected in a browser. Gemini was not called; cloud behavior uses an explicit fake path.",
       "Semantic retrieval tests use deterministic embedding/vector fakes. They do not establish real embedding relevance or quality. Scanned PDFs are unsupported; PDF intake extracts text only.",
       "Traces and exact one-turn prompt views do not survive app restart. Persisted notes and SQLite memory do; derived semantic storage depends on the configured local index provider.",
       "Optional Task 88 web ingestion and the former Task 177 Part 4 3D globe are not implemented. The globe is now a separate planned Task 186. The current trace remains 2D and accessible.",
-      "Task 177 remains planned pending live local-model acceptance; Task 176 clean-profile Windows acceptance remains NOT performed."
+      "Task 176 clean-profile Windows acceptance remains NOT performed. Task 177 is complete for its scoped contract; broader citation quality remains unverified."
     ]
   },
   {
@@ -3132,7 +3132,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-174 and 179 are verified; Tasks 175-178 remain planned in the recommended acceptance sequence; Tasks 180-189 are planned and Task 190 is design-only. Task 176 clean-profile Windows acceptance, Task 177 real local-model acceptance, and Task 178 native Electron resize acceptance remain pending; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-174, 177, and 179 are verified; Tasks 175, 176, and 178 remain planned in the recommended acceptance sequence; Tasks 180-189 are planned and Task 190 is design-only. Task 176 clean-profile Windows acceptance and Task 178 native Electron resize acceptance remain pending; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
