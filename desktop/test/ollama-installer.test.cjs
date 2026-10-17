@@ -5,7 +5,7 @@ const { EventEmitter } = require("node:events");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { OllamaInstaller, RELEASE_API } = require("../ollama-installer.cjs");
+const { OllamaInstaller, RELEASE_API, MAX_INSTALLER_BYTES } = require("../ollama-installer.cjs");
 
 function release(bytes) {
   return { tag_name: "v1.2.3", assets: [{
@@ -25,6 +25,17 @@ test("Ollama installer preview is pinned to official release metadata and exact 
   assert.equal(preview.publisher, "ollama/ollama GitHub release");
   assert.equal(preview.size_bytes, bytes.length);
   assert.equal(preview.sha256, release(bytes).assets[0].digest.slice(7));
+});
+
+test("installer preview accepts a bounded large release and refuses sizes above its cap", async () => {
+  const bytes = Buffer.from("metadata-only fixture");
+  const metadata = release(bytes);
+  metadata.assets[0].size = MAX_INSTALLER_BYTES;
+  const installer = new OllamaInstaller({ fetchImpl: async () =>
+    new Response(JSON.stringify(metadata), { status: 200 }) });
+  assert.equal((await installer.preview()).size_bytes, MAX_INSTALLER_BYTES);
+  metadata.assets[0].size = MAX_INSTALLER_BYTES + 1;
+  await assert.rejects(installer.preview(), /size or SHA-256 digest is unavailable/);
 });
 
 test("installer verifies exact downloaded bytes before launching without shell or elevation", async () => {

@@ -1,4 +1,4 @@
-import { tasks, recommendedOrder } from "./tasks-data.mjs";
+import { tasks, nextTask, recommendedOrder } from "./tasks-data.mjs";
 
 export function renderTaskDirectory(list, taskRecords = tasks) {
   const document = list.ownerDocument;
@@ -61,7 +61,7 @@ if (typeof document !== "undefined") {
     latestNumber.textContent = `Task ${latestTask.number}`;
     latestTitle.textContent = latestTask.title;
   }
-  const next = tasks.find(task => task.number === 178);
+  const next = nextTask;
   const nextNumber = document.querySelector("#next-task-number");
   const nextTitle = document.querySelector("#next-task-title");
   const nextDescription = document.querySelector("#next-task-description");

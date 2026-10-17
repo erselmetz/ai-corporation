@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -179,6 +180,8 @@ class OllamaFirstRunService:
                         if len(payload) + len(chunk) > self.MAX_MANIFEST_BYTES:
                             raise ValueError("manifest too large")
                         payload.extend(chunk)
+            if not digest and payload:
+                digest = "sha256:" + hashlib.sha256(payload).hexdigest()
             data = json.loads(payload)
             if not isinstance(data, dict):
                 raise ValueError("manifest invalid")

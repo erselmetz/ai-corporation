@@ -2819,12 +2819,14 @@ export const post100Tasks = [
     "area": "P29",
     "checkpoint": null,
     "validation": [
-      "Implementation is complete in the worktree; automated validation passed: full Python suite 1,270 passed / 6 skipped / 0 failed; 175 browser-module tests passed; 16 public-doc tests passed.",
-      "Additional automated checks passed: 21 Electron tests, static Next.js production build and TypeScript checks, Python compilation, and git diff --check. No live paid Gemini request or Ollama download was made."
+      "Implementation work in the worktree has automated validation: full Python suite 1,293 passed / 3 skipped / 0 failed (2 deprecation warnings); browser modules, public docs, and Electron suites: 257 passed / 0 failed (216 + 17 + 24).",
+      "Additional checks passed: static Next.js production build and TypeScript checks, Python compilation, frozen-backend build, installed-package smoke against a separately built Windows installer, JSON/JavaScript syntax checks, and git diff --check. The live official Ollama release and model-manifest preview returned bounded metadata with an exact digest; no installer/model download or paid Gemini request was made.",
+      "Partial installed-package acceptance (2026-10-17): built and installed the current Windows x64 package into temporary install and LOCALAPPDATA directories under the current Windows account. Set the owner password, chose Ollama, explicitly selected the already-installed llama3.2:3b model, and received a real local chat reply. Restart required the owner password but did not repeat provider setup; a new Coordinator conversation produced another local reply. Uninstall retained owner data and reinstall recovered it. This was not a separate clean Windows user profile and did not exercise app-managed Ollama installation/model download or Gemini.",
+      "Current-source package acceptance (2026-10-18): Next.js static production build and TypeScript checks passed; PyInstaller and Windows x64 installer builds succeeded. The current installer was installed and exercised in temporary install/app-data directories: owner setup, selection of an already-installed Ollama model, a real local Coordinator reply, restart without repeating provider setup, uninstall retention, and reinstall recovery passed. This is still the current Windows account, not a separate clean Windows user profile."
     ],
     "limitations": [
       "Live paid Gemini calls, model inference, Ollama installation, and large model downloads are not required for deterministic tests and must remain owner-triggered integration actions.",
-      "Manual clean-profile Windows acceptance is NOT yet performed. Pending checks: (1) install flow shows Ollama source, size, and digest; (2) model download displays progress; (3) wizard opens Coordinator Chat; (4) a local chat reply succeeds; (5) Gemini key validation and catalog confirmation; (6) explicit cloud-turn approval and Gemini reply; (7) after restart the Ollama wizard is gone and chat works; (8) after restart with DPAPI enabled the Gemini wizard is gone and chat works; (9) stopped Ollama shows a clear error and Retry works; (10) offline service shows a clear error and Retry works; (11) malformed Gemini key shows a clear error; (12) rejected Gemini key shows a clear error without exposing the key. No manual acceptance is reported as passed.",
+      "Clean-profile Windows acceptance remains pending. The current-source package smoke verified owner setup, an already-installed Ollama model, a real local reply, restart with provider setup retained, uninstall retention, and reinstall recovery, but used temporary app-data under the existing Windows account. Pending: a separate clean Windows user profile; packaged installer preview followed by explicitly confirmed Ollama installation and model download/progress/cancel/recheck; Gemini key/catalog confirmation, cloud-turn approval and reply, and DPAPI restart persistence; live stopped/offline Ollama recovery with Retry; malformed and rejected Gemini key errors with secret redaction. No Gemini key is configured here, and no paid request, installer download, or model download was made.",
       "Task completion requires truthful Windows packaging and clean-profile evidence; automated fakes alone do not establish that every Windows machine, Ollama runtime, GPU, or provider account will work.",
       "Task 170 remains deferred and incomplete; Task 175 remains planned and incomplete."
     ]
@@ -2876,7 +2878,7 @@ export const post100Tasks = [
     "title": "Fix left navigation disappearing",
     "description": "Keep navigation reachable across the Python UI and Next.js desktop routes, including narrow-window layouts and first-run transitions.",
     "category": "Phase O - Navigation Reliability",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [126, 159, 176],
     "acceptance": [
       "Reproduce the missing-navigation flow and record the root cause before changing code.",
@@ -2890,13 +2892,14 @@ export const post100Tasks = [
     ],
     "decisions": [],
     "area": "P31",
-    "checkpoint": null,
+    "checkpoint": "task-178-nav-fix",
     "validation": [
       "Full Python suite: 1,282 passed, 8 skipped, 0 failed. Browser modules: 216 passed; Electron tests: 23 passed; public documentation tests: 16 passed.",
-      "Next.js static production export and TypeScript checks passed; Python compilation and git diff --check passed. Regression coverage includes shared Next layout, Python route injection, compact menu behavior, and existing browser layout checks."
+      "Next.js static production export and TypeScript checks passed; Python compilation and git diff --check passed. Regression coverage includes shared Next layout, Python route injection, compact menu behavior, and existing browser layout checks.",
+      "On 2026-10-18, the corrected packaged Windows Electron app was opened with a temporary profile and resized at the native window level. Wide and narrow layouts were checked on both Next.js and Python UI routes; route change and first-run skip transition were included. The narrow menu opened, navigation was reachable, and Escape closed it."
     ],
     "limitations": [
-      "The shared navigation fix is implemented locally and automated validation passed, but Task 178 remains planned pending manual native Electron resize acceptance and confirmation that the corrected build is the one distributed."
+      "Native resize behavior was verified in the locally packaged Windows app using an automated Win32/Playwright flow; no human mouse-drag or representative-owner usability study was performed. The tested installer is a local review build and has not been published or distributed."
     ]
   },
   {
@@ -2917,7 +2920,7 @@ export const post100Tasks = [
     "area": "P32",
     "checkpoint": "task-179-roadmap-sync",
     "validation": ["Public documentation tests: 17 passed, 0 failed. Browser UI modules: 180 passed, 0 failed. Electron tests: 23 passed, 0 failed. Full Python suite: 1,282 passed, 8 skipped, 0 failed (2 warnings). `git diff --check`, JavaScript syntax checks, and update-manifest JSON parse passed."],
-    "limitations": ["This docs checkpoint does not publish to origin or prove any pending manual acceptance. origin/main remains three commits behind this task base; these docs will not appear on the live public site until the local commits are pushed and deployment completes."]
+    "limitations": ["At the original Task 179 checkpoint, the docs commit had not yet been pushed. It is now present on origin/main (HEAD and origin/main match); live-site deployment was not independently checked in this follow-up, and this checkpoint does not prove any pending manual acceptance."]
   },
   {
     "number": 180,
@@ -2935,8 +2938,12 @@ export const post100Tasks = [
     "outOfScope": ["No model download, install, pull, automatic selection, GPU benchmark, cloud routing, or hardware telemetry upload."],
     "risks": ["OS inventory may be incomplete or stale; recommendation thresholds can mislead across quantization/runtime variants."],
     "manualVerification": ["On representative CPU-only and GPU systems, compare displayed inventory against OS tools and inspect whether recommendation uncertainty and CPU warnings are understandable."],
-    "area": "P33", "checkpoint": null, "validation": [],
-    "limitations": ["Requires Task 176 first-run foundation; hardware inventory and recommendation accuracy need real supported Windows hardware checks."]
+    "area": "P33", "checkpoint": null,
+    "validation": [
+      "Read-only implementation and focused tests are present in the worktree. Full Python suite: 1,293 passed, 3 skipped, 0 failed (2 deprecation warnings); browser, public-docs, and Electron suites: 257 passed, 0 failed.",
+      "Next.js static production build, TypeScript, PyInstaller backend build, and Windows x64 installer build passed. On this Windows GPU-equipped host, reported CPU/GPU names, physical RAM, and free space at the Ollama model destination matched Windows WMI, memory, and drive counters. The recommendation correctly left usable VRAM and Ollama accelerator use unknown and used current available RAM conservatively."
+    ],
+    "limitations": ["Task 176 remains planned, so Task 180 cannot complete its declared dependency. Only one GPU-equipped Windows host was checked; representative CPU-only host behavior and broader recommendation accuracy remain unverified. The profile reports no GPU memory amount because the available WMI AdapterRAM field is not trustworthy."]
   },
   {
     "number": 181,
@@ -3132,7 +3139,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-174, 177, and 179 are verified; Tasks 175, 176, and 178 remain planned in the recommended acceptance sequence; Tasks 180-189 are planned and Task 190 is design-only. Task 176 clean-profile Windows acceptance and Task 178 native Electron resize acceptance remain pending; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-174, 177, and 179 are verified; Task 178 is completed in the recommended acceptance sequence; Tasks 175 and 176 remain planned, Tasks 180-189 are planned, and Task 190 is design-only. Task 176 clean-profile Windows acceptance remains pending; Task 178 native resize was verified in a local packaged Windows build, though no representative-owner usability study was performed; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",

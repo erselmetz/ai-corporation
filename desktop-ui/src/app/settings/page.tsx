@@ -35,6 +35,55 @@ function readError(status: number): Result {
   return { state: "failed", message: "The source could not be read. Retry or open its page for details.", source: "Existing API response" };
 }
 
+function formatBytes(bytes: unknown): string {
+  if (typeof bytes !== "number" || !Number.isFinite(bytes) || bytes < 0) return "UNKNOWN";
+  return `${(bytes / (1024 ** 3)).toFixed(1)} GiB`;
+}
+
+function summarizeHardwareProfile(body: Payload): Result {
+  const fields = [body.cpu, body.gpu, body.memory, body.disk];
+  if (!fields.every(record)) return { state: "unknown", message: "Hardware observations have an unsupported shape.", source: "/api/system/hardware-profile" };
+  const [cpu, gpu, memory, disk] = fields as Payload[];
+  const describe = (label: string, observation: Payload, value: string) => {
+    const checked = typeof observation.observed_at === "string" ? observation.observed_at : "timestamp unknown";
+    if (observation.state !== "observed") {
+      const reason = typeof observation.reason === "string" ? observation.reason : "No supported observation is available.";
+      return `${label}: UNKNOWN — ${reason}; checked ${checked}`;
+    }
+    const source = typeof observation.source === "string" ? observation.source : "source unknown";
+    return `${label}: ${value}; source ${source}; observed ${checked}`;
+  };
+  const cpuValue = record(cpu.value)
+    ? `${typeof cpu.value.name === "string" ? cpu.value.name : "CPU name unknown"}${typeof cpu.value.logical_processors === "number" ? `, ${cpu.value.logical_processors} logical processors` : ""}`
+    : "CPU details unknown";
+  const gpuValue = Array.isArray(gpu.value)
+    ? gpu.value.length ? gpu.value.map(item => record(item) && typeof item.name === "string" ? item.name : "GPU name unknown").join("; ") : "No hardware GPU adapter reported"
+    : "GPU details unknown";
+  const memoryValue = record(memory.value)
+    ? `${formatBytes(memory.value.total_bytes)} total, ${formatBytes(memory.value.available_bytes)} currently available`
+    : "Memory totals unknown";
+  const diskValue = record(disk.value)
+    ? `${formatBytes(disk.value.free_bytes)} free of ${formatBytes(disk.value.total_bytes)} at the ${disk.value.destination === "custom" ? "configured" : "default"} Ollama model destination`
+    : "Disk capacity unknown";
+  const recommendation = record(body.recommendation) ? body.recommendation : {};
+  const modelClass = typeof recommendation.ollama_model_class === "string" ? recommendation.ollama_model_class : "UNKNOWN";
+  const warning = typeof recommendation.cpu_warning === "string" ? recommendation.cpu_warning : "CPU/GPU execution mode is unknown.";
+  const basis = typeof recommendation.basis === "string" ? recommendation.basis : "No recommendation basis was returned.";
+  const fitClaim = typeof recommendation.fit_claim === "string" ? recommendation.fit_claim : "A recommendation does not guarantee fit or performance.";
+  const observed = fields.filter(field => field.state === "observed").length;
+  return {
+    state: observed ? "ready" : "unknown",
+    message: `Suggested Ollama class: ${modelClass}. ${warning} ${basis} ${fitClaim} This check does not install or download anything.`,
+    source: typeof body.observed_at === "string" ? `Local snapshot ${body.observed_at}` : "/api/system/hardware-profile",
+    values: {
+      CPU: describe("CPU", cpu, cpuValue),
+      GPU: describe("GPU", gpu, gpuValue),
+      Memory: describe("Memory", memory, memoryValue),
+      Disk: describe("Disk", disk, diskValue),
+    },
+  };
+}
+
 async function readSummary(path: string, permission: string, permissions: Set<string>, summarize: (body: Payload) => Result): Promise<Result> {
   if (!permissions.has(permission)) return {
     state: "denied", message: `This session does not have ${permission}. The source page enforces the same permission.`, source: "Owner session permissions",
@@ -71,6 +120,7 @@ export default function SettingsPage() {
   const [capabilities, setCapabilities] = useState<Result>(initial);
   const [resources, setResources] = useState<Result>(initial);
   const [activity, setActivity] = useState<Result>(initial);
+  const [hardware, setHardware] = useState<Result>(initial);
   const [checking, setChecking] = useState(false);
 
   async function refresh() {
@@ -81,13 +131,13 @@ export default function SettingsPage() {
         || !response.body.permissions.every(item => typeof item === "string")) {
         const result = response.status === 401 ? readError(401) : readError(response.status);
         setSession(result);
-        setPreferences(result); setProviders(result); setModels(result); setConnections(result); setPolicy(result); setCapabilities(result); setResources(result); setActivity(result);
+        setPreferences(result); setProviders(result); setModels(result); setConnections(result); setPolicy(result); setCapabilities(result); setResources(result); setActivity(result); setHardware(result);
         return;
       }
       setSession({ state: "ready", message: "Signed-in owner session is active. Access remains limited to the permissions returned by the local session.", source: "/api/local/session",
         values: { "Owner identity": typeof response.body.identity === "string" ? response.body.identity : "Available", "Session permissions": String(response.body.permissions.length) } });
       const permissions = new Set(response.body.permissions as string[]);
-      const [nextPreferences, nextProviders, nextModels, nextConnections, nextPolicy, nextCapabilities, nextResources, nextActivity] = await Promise.all([
+      const [nextPreferences, nextProviders, nextModels, nextConnections, nextPolicy, nextCapabilities, nextResources, nextActivity, nextHardware] = await Promise.all([
         readSummary("/api/local/preferences", "chat:read", permissions, body => {
           const value = body.preferences;
           if (!record(value) || typeof value.response_mode !== "string" || typeof value.locale !== "string"
@@ -132,13 +182,14 @@ export default function SettingsPage() {
           return { state: latest ? "ready" : "empty", message: record(latest) && typeof latest.created_at === "string"
             ? `Latest recorded activity timestamp: ${latest.created_at}.` : "No recent activity record is available.", source: "/api/activity?limit=1" };
         }),
+        readSummary("/api/system/hardware-profile", "system:read", permissions, summarizeHardwareProfile),
       ]);
       setPreferences(nextPreferences); setProviders(nextProviders); setModels(nextModels); setConnections(nextConnections);
-      setPolicy(nextPolicy); setCapabilities(nextCapabilities); setResources(nextResources); setActivity(nextActivity);
+      setPolicy(nextPolicy); setCapabilities(nextCapabilities); setResources(nextResources); setActivity(nextActivity); setHardware(nextHardware);
     } catch {
       const result: Result = { state: "failed", message: "Owner session could not be checked. Confirm the local app is running, then retry or sign in again.", source: "/api/local/session" };
       setSession(result); setPreferences(result); setProviders(result); setModels(result); setConnections(result);
-      setPolicy(result); setCapabilities(result); setResources(result); setActivity(result);
+      setPolicy(result); setCapabilities(result); setResources(result); setActivity(result); setHardware(result);
     } finally {
       setChecking(false);
     }
@@ -161,6 +212,7 @@ export default function SettingsPage() {
           <SettingCard title="Assignment recommendations" description="Review-only policy state and candidate count." result={policy} href="/ui/assignment-policy" linkLabel="Review recommendation policy" />
           <SettingCard title="Capability access" description="Current session-scoped grants and owner controls." result={capabilities} href="/desktop/" linkLabel="Review session controls" />
           <SettingCard title="Resources" description="Configured software capacity from the current system snapshot." result={resources} href="/ui/readiness" linkLabel="Open resource evidence" />
+          <SettingCard title="Hardware profile and model guidance" description="Read-only local CPU, GPU, memory, and Ollama destination observations with source and time. Values are not stored or uploaded." result={hardware} href="/desktop/settings/" linkLabel="Refresh profile" />
           <SettingCard title="Security and permissions" description="Current owner-session state and existing permission boundaries." result={session} href="/ui/login" linkLabel="Review owner access" />
           <SettingCard title="Diagnostics and activity" description="Recent activity and measured readiness, with safe diagnostics available from Backup & restore." result={activity} href="/ui/activity" linkLabel="Open activity & diagnostics" />
           <SettingCard title="Backup and recovery" description="Encrypted local backup and explicit restore controls." result={{ state: "unknown", message: "No backup is created or inspected from this overview.", source: "Owner-controlled backup page" }} href="/ui/backup" linkLabel="Open backup & restore" />

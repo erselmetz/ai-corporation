@@ -115,25 +115,54 @@ def _owner_setup(page, playwright, debug_port: int, *, first_run: bool):
         raise RuntimeError(f"Electron startup did not complete: {message}; open pages: {pages}") from None
 
 
-def _verify_app(page, *, must_sign_in: bool):
-    page.get_by_role("heading", name=re.compile(r"Welcome to ERSELMETZ AI")).wait_for(timeout=15_000)
+def _verify_app(page):
+    wizard_heading = page.get_by_role("heading", name="Set up your Coordinator")
+    welcome_heading = page.get_by_role("heading", name=re.compile(r"Welcome to ERSELMETZ AI"))
+    deadline = time.monotonic() + 15
+    while not wizard_heading.count() and not welcome_heading.count() and time.monotonic() < deadline:
+        time.sleep(0.1)
+    first_run_wizard = wizard_heading.count() > 0
+    if first_run_wizard:
+        page.get_by_role("button", name="Use Ollama (local)").click()
+        page.get_by_role("button", name="Use verified installed model").wait_for(timeout=20_000)
+        page.get_by_role("button", name="Use verified installed model").click()
+        page.wait_for_url(re.compile(r".*/ui/chat\?conversation=.+"), timeout=20_000)
+        page.locator("#chat-input").fill("Reply with only: local first-run chat works.")
+        page.locator("#chat-send").click()
+        _wait_for_assistant_reply(page)
+    else:
+        if not welcome_heading.count():
+            raise RuntimeError("The installed application opened neither first-run setup nor the completed workspace")
     session_status = page.evaluate("fetch('/api/local/session').then(response => response.status)")
-    if must_sign_in and session_status != 401:
-        raise RuntimeError("A prior owner session survived application restart")
-    page.goto(ORIGIN + "/ui/login")
-    page.locator("#password").fill(PASSWORD)
-    page.get_by_role("button", name="Sign in").click()
-    try:
-        page.wait_for_url(ORIGIN + "/ui", timeout=10_000)
-    except Exception:
-        message = page.locator("#login-state").inner_text()
-        raise RuntimeError(f"Owner sign-in failed in the installed application: {message or 'no session redirect'}") from None
-    if page.evaluate("fetch('/api/local/session').then(response => response.status)") != 200:
+    if session_status != 200:
         raise RuntimeError("The installed application did not establish an authenticated owner session")
+    state = page.evaluate("fetch('/api/local/first-run').then(response => response.json())")
+    if not state.get("completed"):
+        raise RuntimeError("First-run setup was not retained after application restart")
+    if not first_run_wizard:
+        page.goto(ORIGIN + "/ui/chat")
+        page.locator("#chat-agent option[value='local_worker']").wait_for(state="attached", timeout=15_000)
+        page.locator("#chat-agent").select_option("local_worker")
+        page.locator("#chat-start").click()
+        page.locator("#chat-input:enabled").wait_for(timeout=15_000)
+        page.locator("#chat-input").fill("Reply with only: restart chat works.")
+        page.locator("#chat-send").click()
+        try:
+            _wait_for_assistant_reply(page, timeout=45_000)
+        except Exception:
+            state_text = page.locator("#chat-state").inner_text(timeout=2_000)
+            history_text = page.locator("#chat-history").inner_text(timeout=2_000)
+            raise RuntimeError(f"Restarted local chat did not reply: {state_text}; history: {history_text[:500]}") from None
     for route in ("/ui/chat", "/ui/providers", "/ui/online-provider", "/ui/local-models"):
         response = page.goto(ORIGIN + route)
         if response is None or response.status != 200:
             raise RuntimeError("A shared chat/provider page is missing from the installed application")
+
+
+def _wait_for_assistant_reply(page, *, timeout=120_000):
+    page.locator(
+        '#chat-history article.chat-message:has(> strong:text-is("assistant - completed")) > p'
+    ).wait_for(timeout=timeout)
 
 
 def _stop_window(page, process):
@@ -188,7 +217,9 @@ def main():
         raise SystemExit("The installer smoke test requires Windows")
     root = Path(__file__).resolve().parents[2]
     release = root / "desktop" / "release"
-    installers = list(release.glob("ERSELMETZ-AI-Setup-*-win-x64.exe"))
+    configured_installer = os.environ.get("ERSELMETZ_SMOKE_INSTALLER")
+    installers = ([Path(configured_installer)] if configured_installer else
+                  list(release.glob("ERSELMETZ-AI-Setup-*-win-x64.exe")))
     if len(installers) != 1:
         raise SystemExit("Build exactly one Windows installer before running this smoke test")
     with tempfile.TemporaryDirectory(prefix="erselmetz-installer-smoke-", ignore_cleanup_errors=True) as temporary:
@@ -209,7 +240,7 @@ def main():
                 if bootstrap.evaluate("window.desktopBridge.getSetupState()") is not True:
                     raise RuntimeError("A fresh installed profile did not expose first-run owner setup")
                 app_browser, app_page = _owner_setup(bootstrap, playwright, debug_port, first_run=True)
-                _verify_app(app_page, must_sign_in=False)
+                _verify_app(app_page)
                 _stop_window(app_page, process)
                 app_browser.close()
             finally:
@@ -227,7 +258,7 @@ def main():
                 if bootstrap.evaluate("window.desktopBridge.getSetupState()") is not False:
                     raise RuntimeError("An existing installed profile did not request owner-password verification")
                 app_browser, app_page = _owner_setup(bootstrap, playwright, debug_port, first_run=False)
-                _verify_app(app_page, must_sign_in=True)
+                _verify_app(app_page)
                 _stop_window(app_page, process)
                 app_browser.close()
             finally:
@@ -249,7 +280,7 @@ def main():
             _browser, context = _wait_for_context(playwright, debug_port)
             bootstrap = _wait_browser_page(context, lambda url: url.endswith("bootstrap.html"))
             app_browser, app_page = _owner_setup(bootstrap, playwright, debug_port, first_run=False)
-            _verify_app(app_page, must_sign_in=True)
+            _verify_app(app_page)
             _stop_window(app_page, process)
             app_browser.close()
     print("Installed Electron first-run, auth/chat/providers, graceful stop/restart, uninstall retention, and reinstall recovery passed.")

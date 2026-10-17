@@ -52,7 +52,7 @@ test("provider guidance links everyday preferences to the grouped settings hub",
 });
 
 test("settings hub reads current values only through existing permission-checked endpoints", () => {
-  for (const route of ["/api/local/session", "/api/local/preferences", "/api/providers", "/api/models", "/api/local/provider-connections", "/api/local/assignment-policy", "/api/capabilities/grants", "/api/system/monitor"]) {
+  for (const route of ["/api/local/session", "/api/local/preferences", "/api/providers", "/api/models", "/api/local/provider-connections", "/api/local/assignment-policy", "/api/capabilities/grants", "/api/system/monitor", "/api/system/hardware-profile"]) {
     assert.ok(settingsPage.includes(route), `missing current settings source: ${route}`);
   }
   for (const permission of ["chat:read", "provider:read", "model:read", "provider-connection:read", "assignment-policy:read", "capability-grant:manage", "system:read"]) {
@@ -65,6 +65,10 @@ test("settings hub reads current values only through existing permission-checked
   assert.doesNotMatch(settingsPage, /method:\s*["'](POST|PUT|PATCH|DELETE)["']/i);
   assert.doesNotMatch(settingsPage, /api_key|password/i);
   assert.match(settingsPage, /hardware feasibility remains unknown/i);
+  assert.match(settingsPage, /Hardware profile and model guidance/);
+  assert.match(settingsPage, /not stored or uploaded/i);
+  assert.match(settingsPage, /UNKNOWN/);
+  assert.match(settingsPage, /recommendation\.fit_claim/);
   assert.match(settingsPage, /No backup is created or inspected from this overview/);
 });
 

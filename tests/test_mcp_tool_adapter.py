@@ -195,10 +195,12 @@ def test_timeout_is_enforced_and_sanitized() -> None:
 
     @server.tool()
     async def slow() -> str:
-        await anyio.sleep(1)
+        await anyio.sleep(3)
         return "done"
 
-    tool = _client(server, frozenset({"slow"}), timeout_seconds=0.05).discover_tools()[0]
+    # Leave enough time for the in-memory MCP handshake under full-suite load;
+    # the tool itself still exceeds the configured invocation deadline.
+    tool = _client(server, frozenset({"slow"}), timeout_seconds=2).discover_tools()[0]
 
     with pytest.raises(MCPTransportError, match="MCP server request failed"):
         tool.execute()

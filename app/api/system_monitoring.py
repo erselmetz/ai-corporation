@@ -2,6 +2,10 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.application.services.hardware_profile import (
+    collect_hardware_profile,
+    profile_to_dict,
+)
 from app.application.services.system_monitoring import SystemMonitoringReport
 from .security import require_permission
 
@@ -46,3 +50,11 @@ def system_monitor(request: Request):
         return _snapshot(request.app.state.application_service.monitor_system())
     except (RuntimeError, TypeError, ValueError):
         raise HTTPException(503, "System snapshot unavailable") from None
+
+
+@router.get("/hardware-profile", dependencies=[Depends(require_permission("system:read"))])
+def hardware_profile():
+    try:
+        return profile_to_dict(collect_hardware_profile())
+    except (OSError, RuntimeError, TypeError, ValueError):
+        raise HTTPException(503, "Hardware profile is unavailable") from None

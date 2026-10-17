@@ -81,7 +81,12 @@ def _stop(process):
 
 def _exercise(opener):
     status, html, _headers = _request(opener, "/desktop/")
-    if status != 200 or b"Welcome to ERSELMETZ AI." not in html or b"/desktop/_next/static" not in html:
+    if (
+        status != 200
+        or b"<title>ERSELMETZ AI</title>" not in html
+        or b'id="desktop-navigation"' not in html
+        or b"/desktop/_next/static" not in html
+    ):
         raise RuntimeError("Static desktop command center did not render")
     css_path = next((line.split(b' href="', 1)[1].split(b'"', 1)[0]
                      for line in html.split(b"<link")

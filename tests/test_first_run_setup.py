@@ -66,6 +66,23 @@ def test_ollama_manifest_preview_is_bounded_and_reports_exact_registry_metadata(
     assert "OLLAMA_MODELS" in preview["destination"] or "custom" in preview["destination"]
 
 
+def test_ollama_manifest_preview_hashes_received_manifest_when_registry_omits_digest(monkeypatch):
+    import hashlib
+    import json
+    body = json.dumps({"schemaVersion": 2, "layers": [{"size": 4096}]}, separators=(",", ":")).encode()
+
+    def client_factory(**kwargs):
+        return httpx.Client(transport=httpx.MockTransport(lambda _request: httpx.Response(
+            200, content=body,
+        )), **kwargs)
+
+    service = OllamaFirstRunService(client_factory=client_factory)
+    monkeypatch.setattr(service, "_available_default_space", lambda: 1_000_000)
+    preview = service.preview_model()
+    assert preview["manifest_digest"] == "sha256:" + hashlib.sha256(body).hexdigest()
+    assert preview["manifest_bytes"] == 4096
+
+
 def test_ollama_success_progress_is_not_installation_confirmation():
     progress = OllamaFirstRunService._progress(b'{"status":"success","completed":3,"total":3}')
     assert progress["event"] == "progress"

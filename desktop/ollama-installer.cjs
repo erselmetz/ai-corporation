@@ -7,7 +7,7 @@ const { pipeline } = require("node:stream/promises");
 const { spawn } = require("node:child_process");
 
 const RELEASE_API = "https://api.github.com/repos/ollama/ollama/releases/latest";
-const MAX_INSTALLER_BYTES = 1024 * 1024 * 1024;
+const MAX_INSTALLER_BYTES = 2 * 1024 * 1024 * 1024;
 const MAX_RELEASE_METADATA_BYTES = 1024 * 1024;
 const ALLOWED_DOWNLOAD_HOSTS = new Set(["github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com"]);
 
