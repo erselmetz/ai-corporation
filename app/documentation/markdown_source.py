@@ -3,6 +3,7 @@ from pathlib import Path
 
 from app.application.services.documentation import (
     DocumentationDocument,
+    DocumentationDocumentTooLarge,
     DocumentationNotFound,
     DocumentationSourceUnavailable,
     DocumentationSummary,
@@ -56,6 +57,30 @@ class MarkdownDocumentationSource:
             title=self._title(content, document_id),
             content=content,
         )
+
+    def get_document_bounded(self, document_id: str, max_characters: int) -> DocumentationDocument:
+        if type(max_characters) is not int or not 1 <= max_characters <= 200_000:
+            raise ValueError("Documentation lookup limit is invalid")
+        root = self._resolved_root()
+        if not _DOCUMENT_ID.fullmatch(document_id):
+            raise DocumentationNotFound
+        candidate = root / f"{document_id}.md"
+        if candidate.is_symlink():
+            raise DocumentationNotFound
+        try:
+            resolved = candidate.resolve(strict=True)
+        except (OSError, RuntimeError):
+            raise DocumentationNotFound from None
+        if resolved.parent != root or resolved.suffix != ".md" or not resolved.is_file():
+            raise DocumentationNotFound
+        try:
+            with resolved.open("r", encoding="utf-8") as stream:
+                content = stream.read(max_characters + 1)
+        except (OSError, UnicodeError):
+            raise DocumentationSourceUnavailable from None
+        if len(content) > max_characters:
+            raise DocumentationDocumentTooLarge
+        return DocumentationDocument(document_id, self._title(content, document_id), content)
 
     def _resolved_root(self) -> Path:
         if self._root.is_symlink():

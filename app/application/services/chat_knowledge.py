@@ -285,7 +285,7 @@ class ChatKnowledgeService:
 
     def record_turn_trace(self, owner, conversation_id, reply_id, *, coordinator,
                           cloud_provider, cloud_consent, elapsed_ms, retrieval, outcome="completed",
-                          failure=None, now=None):
+                          failure=None, tools=None, now=None):
         self._application.owned_chat().authorize_owner(owner, conversation_id)
         if retrieval and "enabled" not in retrieval:
             retrieval = {
@@ -309,11 +309,17 @@ class ChatKnowledgeService:
             "retrieval": retrieval or {"enabled": False, "reason": "Use my knowledge was off."},
             "cloud": {"provider_used": _safe_text(cloud_provider, 128) if cloud_provider else None,
                       "consent_given": bool(cloud_consent),
-                      "private_knowledge_sent": bool(retrieval and retrieval.get("returned_chunks")) and bool(cloud_provider)},
+                      "private_knowledge_sent": bool(
+                          (retrieval and retrieval.get("returned_chunks"))
+                          or any(item.get("outcome") == "completed"
+                                 and str(item.get("source", "")).startswith("corporation_docs:")
+                                 for item in (tools or []))
+                      ) and bool(cloud_provider)},
             "timing": {"turn_elapsed_ms": max(0, int(elapsed_ms))},
             "outcome": outcome,
             "failure": _safe_text(failure, 256) if failure else None,
-            "actions": {"tools_run": False, "tasks_created": False},
+            "tools": list(tools or []),
+            "actions": {"tools_run": bool(tools), "tasks_created": False},
             "advanced_prompt_retained": False,
         }
         if retrieval:

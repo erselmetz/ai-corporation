@@ -37,6 +37,13 @@ export function mountChat({
   const knowledgePreviewButton = element("chat-knowledge-preview");
   const knowledgeState = element("chat-knowledge-state");
   const knowledgePreviewResult = element("chat-knowledge-preview-result");
+  const calculatorEnabled = element("chat-tool-calculator-enabled");
+  const calculatorExpression = element("chat-tool-calculator-expression");
+  const documentToolEnabled = element("chat-tool-document-enabled");
+  const documentToolId = element("chat-tool-document-id");
+  const documentToolQuery = element("chat-tool-document-query");
+  const toolsState = element("chat-tools-state");
+  const reviewedToolsPanel = element("chat-reviewed-tools");
   const captureLocalPrompt = element("chat-capture-local-prompt");
   const taskSource = element("chat-task-source");
   const taskAgent = element("chat-task-agent");
@@ -75,6 +82,8 @@ export function mountChat({
   let requiresCloudConsent = false;
   let canCreateTask = false;
   let canStudyRepositories = false;
+  let canReadDocumentation = false;
+  let documentsLoaded = false;
   let currentProposal = null;
   let voiceController = null;
   const voiceSources = [];
@@ -327,6 +336,19 @@ export function mountChat({
     const actions = documentRef.createElement("p");
     actions.textContent = `Tools run: ${trace.actions?.tools_run === false ? "no" : "unknown"} · Tasks created: ${trace.actions?.tasks_created === false ? "no" : "unknown"}.`;
     panel.append(actions);
+    if (Array.isArray(trace.tools) && trace.tools.length) {
+      const heading = documentRef.createElement("strong");
+      heading.textContent = "Reviewed tool calls";
+      panel.append(heading);
+      const calls = documentRef.createElement("ol");
+      for (const tool of trace.tools) {
+        const item = documentRef.createElement("li");
+        const parameters = Object.entries(tool.parameters || {}).map(([key, value]) => `${key}: ${value}`).join("; ");
+        item.textContent = `${tool.tool || "unknown tool"} (${parameters || "no parameters"}) · ${tool.source || "source unknown"} · ${tool.outcome || "outcome unknown"} · ${tool.duration_ms ?? "?"} ms · ${tool.result_characters ?? "?"} result characters${tool.message ? ` · ${tool.message}` : ""}`;
+        calls.append(item);
+      }
+      panel.append(calls);
+    }
     const advanced = documentRef.createElement("p");
     advanced.textContent = trace.advanced_prompt_retained === false && route.provider === "ollama"
       ? "Exact prompt is available only when separately requested for a local turn; it is not retained in this trace."
@@ -401,9 +423,12 @@ export function mountChat({
           && session.permissions.includes("chat-task:create");
         canStudyRepositories = Array.isArray(session.permissions)
           && session.permissions.includes("github:read");
+        canReadDocumentation = Array.isArray(session.permissions)
+          && session.permissions.includes("documentation:read");
       } catch {
         canCreateTask = false;
         canStudyRepositories = false;
+        canReadDocumentation = false;
       }
       taskState.textContent = canCreateTask
         ? "Prepare and inspect a proposal before explicit confirmation."
@@ -412,6 +437,12 @@ export function mountChat({
         ? "Repository study is limited to repositories already in the configured allowlist."
         : "Repository study is unavailable: this session lacks github:read permission.";
       repositoryStudyControls();
+      if (!canReadDocumentation) {
+        documentToolEnabled.disabled = true;
+        documentToolId.disabled = true;
+        documentToolQuery.disabled = true;
+        toolsState.textContent = "Calculator is available; local documentation lookup requires documentation:read permission.";
+      }
       const agentList = await request("/api/agents");
       const list = await request(base);
       if (!Array.isArray(agentList.items) || !Array.isArray(list.items)) throw new Error("Invalid chat list response.");
@@ -467,8 +498,22 @@ export function mountChat({
         input.value = "";
         throw new Error("This message looks like it contains a Gemini API key. It was not saved or sent. Use the Gemini online setup page to connect a key.");
       }
-      if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Consent to send this message and chat context to Google Gemini before continuing.");
+      if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Consent to send this message, chat context, and any selected tool results to Google Gemini before continuing.");
       const imageIds = imageManager?.selectedIds() || [];
+      const reviewedTools = [];
+      if (calculatorEnabled.checked === true) {
+        const expression = calculatorExpression.value.trim();
+        if (!expression) throw new Error("Enter an arithmetic expression before selecting the calculator.");
+        reviewedTools.push({ kind: "calculator", expression });
+      }
+      if (documentToolEnabled.checked === true) {
+        const documentId = documentToolId.value;
+        const query = documentToolQuery.value.trim();
+        if (!canReadDocumentation) throw new Error("This session cannot read local documentation.");
+        if (!documentId || !query) throw new Error("Select one local document and enter terms to find.");
+        reviewedTools.push({ kind: "local-document-lookup", document_id: documentId, query });
+      }
+      if (reviewedTools.length && imageIds.length) throw new Error("Reviewed tools cannot be combined with image turns.");
       const useKnowledge = knowledgeEnabled.checked === true;
       const knowledgeScopes = useKnowledge ? currentKnowledgeScopes() : [];
       if (useKnowledge) {
@@ -492,6 +537,7 @@ export function mountChat({
           knowledge_enabled: true, knowledge_scopes: knowledgeScopes,
           knowledge_preview_digest: knowledgePreview.digest,
         });
+        if (reviewedTools.length) body.reviewed_tools = reviewedTools;
         const capturePrompt = captureLocalPrompt.checked && captureLocalPrompt.disabled !== true;
         if (capturePrompt) body.capture_local_prompt = true;
         if (imageIds.length) {
@@ -499,7 +545,7 @@ export function mountChat({
           body.image_consent = true;
           body.include_local_ocr = imageManager.wantsLocalOcr();
         }
-        if (streamingSupported && !imageIds.length && !capturePrompt) {
+        if (streamingSupported && !imageIds.length && !capturePrompt && !reviewedTools.length) {
           const outcome = await receiveStream(identifier, body, controller.signal);
           if (outcome.complete) {
             input.value = "";
@@ -760,6 +806,30 @@ export function mountChat({
       taskState.textContent = "Confirmed Task created as pending. No execution occurred.";
     });
   }
+  reviewedToolsPanel.addEventListener("toggle", async () => {
+    if (!reviewedToolsPanel.open || !canReadDocumentation || documentsLoaded) return;
+    toolsState.textContent = "Loading authorized local documentation titles…";
+    try {
+      const result = await request("/api/documentation");
+      if (!Array.isArray(result.items)) throw new Error("Invalid documentation list.");
+      documentToolId.replaceChildren();
+      const empty = documentRef.createElement("option");
+      empty.value = "";
+      empty.textContent = "Choose one file";
+      documentToolId.append(empty);
+      for (const item of result.items) {
+        if (typeof item.id !== "string" || typeof item.title !== "string") continue;
+        const option = documentRef.createElement("option");
+        option.value = item.id;
+        option.textContent = item.title;
+        documentToolId.append(option);
+      }
+      documentsLoaded = true;
+      toolsState.textContent = `${result.items.length} top-level local documentation file(s) available. The exact selected file is read only when you send this turn.`;
+    } catch {
+      toolsState.textContent = "Local documentation titles could not be loaded. No file was read.";
+    }
+  });
   element("chat-start").addEventListener("click", start);
   element("chat-form").addEventListener("submit", send);
   repositoryStudyForm.addEventListener("submit", studyRepository);

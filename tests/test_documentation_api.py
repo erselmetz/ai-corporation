@@ -142,6 +142,24 @@ def test_missing_invalid_traversal_and_absolute_document_ids_are_not_found(
     assert all("Do not expose this file" not in response.text for response in responses)
 
 
+def test_bounded_document_reader_limits_content_and_rejects_outside_paths(tmp_path):
+    from app.application.services.documentation import DocumentationDocumentTooLarge, DocumentationNotFound
+
+    root = tmp_path / "corporation_docs"
+    root.mkdir()
+    (root / "safe.md").write_text("# Safe\nA bounded local source.\n", encoding="utf-8")
+    (root / "large.md").write_text("x" * 12, encoding="utf-8")
+    outside = tmp_path / "outside.md"
+    outside.write_text("secret", encoding="utf-8")
+    source = MarkdownDocumentationSource(root)
+
+    assert source.get_document_bounded("safe", 100).content == "# Safe\nA bounded local source.\n"
+    with pytest.raises(DocumentationDocumentTooLarge):
+        source.get_document_bounded("large", 10)
+    with pytest.raises(DocumentationNotFound):
+        source.get_document_bounded("../outside", 100)
+
+
 def test_empty_source_is_a_successful_empty_list(tmp_path):
     root = tmp_path / "empty"
     root.mkdir()

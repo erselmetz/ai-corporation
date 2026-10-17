@@ -56,6 +56,8 @@ function setup(handler = null, windowRef = globalThis.window) {
     "chat-knowledge-conversation", "chat-knowledge-extra-enabled", "chat-knowledge-extra-scope",
     "chat-knowledge-extra-id", "chat-knowledge-preview", "chat-knowledge-state",
     "chat-knowledge-preview-result", "chat-capture-local-prompt",
+    "chat-reviewed-tools", "chat-tool-calculator-enabled", "chat-tool-calculator-expression",
+    "chat-tool-document-enabled", "chat-tool-document-id", "chat-tool-document-query", "chat-tools-state",
     "repository-study-owner", "repository-study-name", "repository-study-submit",
     "repository-study-state", "repository-study-result",
     "chat-stop-request", "voice-mode", "voice-language", "voice-start", "voice-stop",
@@ -66,7 +68,7 @@ function setup(handler = null, windowRef = globalThis.window) {
   ];
   const elements = Object.fromEntries(ids.map(id => [id, new Element(
     ["chat-agent", "chat-conversation", "chat-task-source", "chat-task-agent",
-      "chat-task-context-scope", "chat-knowledge-extra-scope"].includes(id) ? "select" : "",
+      "chat-task-context-scope", "chat-knowledge-extra-scope", "chat-tool-document-id"].includes(id) ? "select" : "",
   )]));
   elements["chat-history"].dataset = {};
   for (const id of ["chat-knowledge-enabled", "chat-knowledge-owner", "chat-knowledge-conversation", "chat-knowledge-extra-enabled"]) elements[id].checked = false;
@@ -81,7 +83,7 @@ function setup(handler = null, windowRef = globalThis.window) {
     if (path === "/api/agents") return response({ items: [agent] });
     if (path === "/api/local/session") return response({
       csrf: "test-csrf",
-      permissions: ["chat-task:create", "github:read"],
+      permissions: ["chat-task:create", "github:read", "documentation:read"],
     });
     if (path === "/api/local/preferences") return response({ preferences: {
       response_mode: "balanced", locale: "en-US", detail_level: "standard",
@@ -212,6 +214,45 @@ test("knowledge requires an exact preview and displays returned citations in How
   assert.equal(body.knowledge_preview_digest, "a".repeat(64));
   assert.match(ui.elements["chat-history"].textContent, /How I answered/);
   assert.match(ui.elements["chat-history"].textContent, /private.md.*note-1#1/);
+});
+
+test("reviewed tool calls are explicit, one-turn, and routed through non-streaming chat", async () => {
+  const ui = setup((path, options) => {
+    if (path === "/api/chat/conversations" && options.method === "POST") return response({ ...snapshot(), streaming_supported: true });
+    if (path.endsWith("/messages")) return response({
+      ...snapshot([message("user", "completed", "Calculate it"), message("assistant", "completed", "The result is 36.")]),
+      context_trace: { tools: [{ tool: "calculator", parameters: { expression: "(12 + 6) * 2" }, source: "local calculator", outcome: "completed", duration_ms: 0, result_characters: 2 }], actions: { tools_run: true, tasks_created: false } },
+    });
+    return null;
+  });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-input"].value = "Calculate it";
+  ui.elements["chat-tool-calculator-enabled"].checked = true;
+  ui.elements["chat-tool-calculator-expression"].value = "(12 + 6) * 2";
+  assert.equal(await ui.controller.send(), true);
+  const post = ui.calls.find(call => call.path.endsWith("/messages"));
+  assert.deepEqual(JSON.parse(post.options.body).reviewed_tools, [{ kind: "calculator", expression: "(12 + 6) * 2" }]);
+  assert.match(ui.elements["chat-history"].textContent, /Reviewed tool calls.*calculator.*completed/);
+});
+
+test("local document choices load only after opening reviewed tools with documentation permission", async () => {
+  let calls = 0;
+  const ui = setup(path => {
+    if (path === "/api/documentation") {
+      calls += 1;
+      return response({ items: [{ id: "guide", title: "Local guide" }] });
+    }
+    return null;
+  });
+  await ui.controller.initialLoad;
+  assert.equal(calls, 0);
+  ui.elements["chat-reviewed-tools"].open = true;
+  await ui.elements["chat-reviewed-tools"].listeners.toggle();
+  assert.equal(calls, 1);
+  assert.equal(ui.elements["chat-tool-document-id"].children[1].value, "guide");
+  await ui.elements["chat-reviewed-tools"].listeners.toggle();
+  assert.equal(calls, 1);
 });
 
 test("Stop display hides chunks but continues consuming the provider response", async () => {

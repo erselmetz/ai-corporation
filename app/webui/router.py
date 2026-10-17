@@ -850,6 +850,17 @@ def coordinator_chat_page():
     <section id="chat-history" aria-label="Conversation messages" aria-live="polite"></section>
     <form id="chat-form"><label for="chat-input">Message (up to 8192 UTF-8 bytes)</label>
     <textarea id="chat-input" rows="4" maxlength="8192" required></textarea>
+    <details class="chat-advanced" id="chat-reviewed-tools"><summary>Reviewed read-only tools (off by default)</summary>
+    <p>Only the calculator and one exact file selected from the read-only corporation_docs portal are available here. Results are untrusted input. Web search, arbitrary file access, code execution, and side effects are unavailable.</p>
+    <fieldset><legend>Use a tool for this message only</legend>
+      <label><input id="chat-tool-calculator-enabled" type="checkbox"> Calculate an expression</label>
+      <label for="chat-tool-calculator-expression">Arithmetic expression</label><input id="chat-tool-calculator-expression" maxlength="256" placeholder="(12 + 8) * 3">
+      <label><input id="chat-tool-document-enabled" type="checkbox"> Search one selected local documentation file</label>
+      <label for="chat-tool-document-id">File from corporation_docs</label><select id="chat-tool-document-id"><option value="">Load documents after opening this section</option></select>
+      <label for="chat-tool-document-query">Terms to find (max 160 characters)</label><input id="chat-tool-document-query" maxlength="160">
+    </fieldset>
+    <p id="chat-tools-state" role="status" aria-live="polite">Tools stay off until selected. Documentation lookup requires documentation:read and never leaves the local app unless this turn is explicitly consented to Gemini.</p>
+    </details>
     <details class="chat-advanced" id="chat-knowledge-panel"><summary>Knowledge (off by default)</summary>
     <label><input id="chat-knowledge-enabled" type="checkbox"> Use my knowledge for this conversation</label>
     <fieldset id="chat-knowledge-scopes" disabled><legend>Select exact knowledge scopes</legend>
@@ -961,7 +972,7 @@ def coordinator_chat_page():
     the Stop display control does not cancel provider generation; Stop waiting interrupts this app's request but cannot confirm remote cancellation. For the default local Agent, Ollama and llama3.2:3b must already be available;
     use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here; configure Gemini in its separate online setup page.</p></details>
     <p id="cloud-consent-panel" hidden><label><input id="cloud-consent" type="checkbox">
-    I consent to send this message, recent conversation history, configured chat context, and the exact displayed knowledge preview to Google Gemini for this reply.</label></p>
+    I consent to send this message, recent conversation history, configured chat context, selected reviewed-tool results, and the exact displayed knowledge preview to Google Gemini for this reply.</label></p>
     </main></body></html>""".replace("{safety_controls}", _emergency_controls()))
 
 

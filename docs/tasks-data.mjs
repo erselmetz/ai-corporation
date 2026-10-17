@@ -2967,21 +2967,22 @@ export const post100Tasks = [
   {
     "number": 182,
     "title": "Reviewed tools for small models",
-    "description": "Expose narrowly allowlisted web search, calculator, and local-file lookup to chat with visible trace entries; require owner confirmation for every side-effecting action.",
+    "description": "Expose explicit bounded calculator and owner-authorized lookup in one selected top-level corporation_docs file to chat with visible trace entries. Web search is excluded from this task.",
     "category": "Phase S - Reviewed Tool Use",
     "status": "planned",
     "dependsOn": [177],
-    "decisions": [],
+    "decisions": ["Owner-approved scope is local calculator and selected corporation_docs lookup only; web search is excluded."],
     "acceptance": [
-      "Use fixed, documented tool adapters with explicit input/output limits, source provenance, and allowlisted web destinations; unsupported tools fail closed.",
-      "Show every proposed and completed tool call, parameters safe to display, result source, outcome, and timing in the real per-turn trace.",
-      "Require a fresh owner confirmation bound to the exact action for any side effect; deny by default when permission, scope, or result is unknown."
+      "Expose only a bounded arithmetic calculator and exact-file lookup selected from the existing top-level corporation_docs portal; require documentation:read for the file lookup and fail closed for every unsupported tool.",
+      "Show each explicitly selected tool call, redacted safe parameters, source, outcome, and elapsed time in the real per-turn trace; label file results as untrusted context.",
+      "The implemented calls are read-only. Any future side-effecting tool must require fresh owner confirmation bound to its exact action and deny by default when permission, scope, or result is unknown."
     ],
-    "outOfScope": ["No arbitrary shell, code execution, background crawling, silent downloads, general filesystem access, or unreviewed side effects."],
-    "risks": ["Search results and files are untrusted input; even allowlisted remote content can contain prompt injection."],
-    "manualVerification": ["Verify each tool's allowlist and limits, trace accuracy, denial behavior, and explicit approval/cancel flow using benign sources and files."],
-    "area": "P35", "checkpoint": null, "validation": [],
-    "limitations": ["Requires Task 177 trace contract; web access must be loopback-safe, allowlisted, bounded, and consented where required."]
+    "outOfScope": ["Web search, arbitrary shell, code execution, background crawling, silent downloads, general filesystem access, and unreviewed side effects."],
+    "risks": ["Selected local documentation is untrusted input and may contain prompt injection; sending it to an online provider requires the existing per-turn cloud consent."],
+    "manualVerification": ["In the owner UI, calculate a benign expression and search one selected corporation_docs file; verify the exact source, bounded snippets, and per-turn trace. Verify documentation lookup is denied without documentation:read, an outside file ID is unavailable, web search has no UI path, and no tool changes data."],
+    "area": "P35", "checkpoint": null,
+    "validation": ["Implementation progress: a bounded arithmetic calculator and explicit lookup in one owner-authorized top-level corporation_docs file are wired to chat and per-turn traces. Web search is excluded from this task. Automated focused coverage passes; live owner acceptance has not been performed."],
+    "limitations": ["Task remains planned pending manual owner verification; web search is outside the approved scope. No arbitrary local-file scope or side-effecting tool is exposed. There is no side-effect approval dialog because the approved tools are read-only."]
   },
   {
     "number": 183,

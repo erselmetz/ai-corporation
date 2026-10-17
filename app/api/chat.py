@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 import json
 import time
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
@@ -22,9 +22,14 @@ from app.application.services.github_inspection import (
 )
 from app.application.services.repository_study import RepositoryStudyService
 from app.application.services.chat_history import ChatHistoryError
+from app.application.services.capability_authorization import (
+    CapabilityAuthorizationDenied,
+    DEFAULT_CAPABILITY_AUTHORIZATION,
+)
 from app.application.services.chat_knowledge import (
     ContextRequest, KnowledgeNotFound, SelectedKnowledgeScope,
 )
+from app.application.services.reviewed_chat_tools import run_reviewed_tools
 from app.application.services.owned_chat import (
     ChatConflict, ChatConsentRequired, ChatLimit, ChatNotFound, ChatUnavailable,
 )
@@ -95,6 +100,25 @@ class KnowledgePreviewBody(BaseModel):
     scopes: list[KnowledgeScopeBody] = Field(min_length=1, max_length=3)
 
 
+class CalculatorToolRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    kind: Literal["calculator"]
+    expression: str = Field(min_length=1, max_length=256)
+
+
+class LocalDocumentToolRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    kind: Literal["local-document-lookup"]
+    document_id: str = Field(min_length=1, max_length=256)
+    query: str = Field(min_length=1, max_length=160)
+
+
+ReviewedToolRequest = Annotated[
+    CalculatorToolRequest | LocalDocumentToolRequest,
+    Field(discriminator="kind"),
+]
+
+
 class SendRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     text: str = Field(min_length=1, max_length=8192)
@@ -107,6 +131,7 @@ class SendRequest(BaseModel):
     knowledge_scopes: list[KnowledgeScopeBody] = Field(default_factory=list, max_length=3)
     knowledge_preview_digest: str | None = Field(default=None, min_length=64, max_length=64)
     capture_local_prompt: StrictBool = False
+    reviewed_tools: list[ReviewedToolRequest] = Field(default_factory=list, max_length=2)
 
 
 class RetainRequest(BaseModel):
@@ -154,7 +179,7 @@ def _knowledge_preview(service, owner, identifier, query, scopes, now):
 
 def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
                             cloud_provider, cloud_consent, elapsed_ms, auto_context,
-                            retrieved, trace_request, now):
+                            retrieved, trace_request, now, tools=None):
     """Record only a failed/pending user turn; never serialize the raw exception."""
     try:
         record = service.owned_chat().get(owner, identifier)["conversation"]
@@ -173,6 +198,7 @@ def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
             owner, identifier, message.id, coordinator=coordinator,
             cloud_provider=cloud_provider, cloud_consent=cloud_consent,
             elapsed_ms=elapsed_ms, retrieval=retrieval_trace,
+            tools=tools,
             outcome="failed" if message.status.value == "failed" else "unknown",
             failure="Provider or chat runtime did not produce a verified reply; raw diagnostics are omitted.",
             now=now)
@@ -426,6 +452,8 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
         raise HTTPException(422, "Knowledge scope and preview are required only when Use my knowledge is on.")
     if body.capture_local_prompt and (body.image_ids or body.context):
         raise HTTPException(422, "Exact prompt capture is unavailable for image or separate-context turns.")
+    if body.reviewed_tools and body.image_ids:
+        raise HTTPException(422, "Reviewed tools cannot be combined with image turns.")
     with chat_errors():
         started_at = time.perf_counter()
         presentation = _presentation_preferences(request, principal.identity)
@@ -435,7 +463,36 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
         cloud_requires_consent = service.provider_requires_explicit_cloud_consent(
             current["coordinator"].provider)
         if cloud_requires_consent and body.cloud_consent is not True:
-            raise HTTPException(403, "Explicit consent is required before sending this turn and recent chat context to Gemini.")
+            raise HTTPException(403, "Explicit consent is required before sending this turn, recent chat context, and any selected tool results to Gemini.")
+        tool_trace, tool_context = [], None
+        if body.reviewed_tools:
+            if any(item.kind == "local-document-lookup" for item in body.reviewed_tools):
+                authorizer = getattr(request.app.state, "capability_authorization_service",
+                                     DEFAULT_CAPABILITY_AUTHORIZATION)
+                try:
+                    authorizer.require(identity=principal.identity, permissions=principal.permissions,
+                                       capability_id="documentation:read", scope_type="principal",
+                                       scope_id=principal.identity, session_grants=principal.session_grants)
+                except CapabilityAuthorizationDenied:
+                    audit = getattr(request.app.state, "capability_audit_service", None)
+                    if audit is not None:
+                        try:
+                            audit.record(actor_id=principal.identity, capability_id="documentation:read",
+                                         permission_decision="deny", action_state="authorization",
+                                         result_state="denied", safe_reference="chat-local-document-lookup")
+                        except (RuntimeError, OSError, ValueError):
+                            raise HTTPException(503, "Capability audit unavailable") from None
+                    raise HTTPException(403, "This session cannot read the selected local documentation.") from None
+                audit = getattr(request.app.state, "capability_audit_service", None)
+                if audit is not None:
+                    try:
+                        audit.record(actor_id=principal.identity, capability_id="documentation:read",
+                                     permission_decision="allow", action_state="authorization",
+                                     result_state="allowed", safe_reference="chat-local-document-lookup")
+                    except (RuntimeError, OSError, ValueError):
+                        raise HTTPException(503, "Capability audit unavailable") from None
+            tool_trace, tool_context = run_reviewed_tools(
+                body.reviewed_tools, getattr(request.app.state, "documentation_service", None))
         knowledge = service.chat_knowledge()
         auto_context = None
         if body.knowledge_enabled:
@@ -488,6 +545,8 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                 raise HTTPException(422, "Image consent and OCR require selected images.")
             prompt_context = auto_context["prompt_context"] if auto_context else (
                 knowledge.prompt_context(retrieved) if retrieved else None)
+            if tool_context:
+                prompt_context = f"{prompt_context}\n\n{tool_context}" if prompt_context else tool_context
             captured_prompt = []
             cloud_provider = current["coordinator"].provider if cloud_requires_consent else None
             try:
@@ -499,7 +558,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                 _record_unverified_turn(
                     service, knowledge, principal.identity, identifier, current["coordinator"],
                     cloud_provider, body.cloud_consent, (time.perf_counter() - started_at) * 1000,
-                    auto_context, retrieved, trace_request, now)
+                    auto_context, retrieved, trace_request, now, tool_trace)
                 raise
             messages = result["conversation"].messages
             reply = next((message for message in reversed(messages)
@@ -513,7 +572,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                     principal.identity, identifier, reply.id, coordinator=coordinator,
                     cloud_provider=cloud_provider, cloud_consent=body.cloud_consent,
                     elapsed_ms=(time.perf_counter() - started_at) * 1000,
-                    retrieval=retrieval_trace, now=now)
+                    retrieval=retrieval_trace, tools=tool_trace, now=now)
                 result = {**result, "context_trace": trace}
             if captured_prompt:
                 result["advanced_prompt"] = captured_prompt[0]
@@ -525,6 +584,8 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                    principal=Depends(require_permission("chat:send")),
                    service=Depends(get_application_service), now=Depends(get_chat_now)):
     body = parse(SendRequest, payload)
+    if body.reviewed_tools:
+        raise HTTPException(422, "Reviewed tools use the bounded non-streaming message endpoint.")
     if body.image_ids or body.image_consent or body.include_local_ocr:
         raise HTTPException(422, "Image turns use the bounded non-streaming message endpoint.")
     if contains_gemini_key(body.text) or (body.context and contains_gemini_key(body.context.query)):

@@ -325,6 +325,8 @@ describe("documentation site", () => {
     assert.match(documentation, /local-first application with a Python backend and an Electron desktop interface/);
     assert.match(architecture, /Python service owns AI and application logic/);
     assert.match(updates, /Task 179/);
+    assert.match(updates, /task-182-progress/);
+    assert.match(updates, /Web search is disabled.*Task 182 remains planned/);
     assert.match(updates, /Task 178.*2026-10-17/);
     assert.match(updates, /Task 176 implemented.*2026-10-16.*AUTOMATED VALIDATION PASSED; MANUAL ACCEPTANCE PENDING/);
     assert.match(updates, /Manual clean-profile Windows acceptance has NOT been performed/);
@@ -506,7 +508,7 @@ describe("documentation site", () => {
         assert.ok(task.validation.length > 0 && task.limitations.length > 0);
       } else {
         assert.equal(task.checkpoint, null);
-        if ([175, 176, 177, 178, 179, 180].includes(task.number)) {
+        if ([175, 176, 177, 178, 179, 180, 182].includes(task.number)) {
           assert.ok(task.validation.length > 0 && task.limitations.length > 0);
         } else {
           assert.deepEqual(task.validation, []);
