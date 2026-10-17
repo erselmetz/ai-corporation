@@ -205,6 +205,9 @@ def test_provider_failure_trace_is_sanitized_and_outcome_is_explicit(env, monkey
     user_message = conversation["conversation"]["messages"][-1]
     trace = conversation["context_traces"][user_message["id"]]
     assert trace["outcome"] == "failed"
+    assert trace["steps"][-1]["step"] == "answer"
+    assert trace["steps"][-1]["status"] == "failed"
+    assert trace["steps"][-1]["duration_ms"] >= 0
     assert "raw diagnostics are omitted" in trace["failure"]
     assert "NEVER_EXPOSE_THIS" not in failed.text + json.dumps(conversation)
 
@@ -238,6 +241,11 @@ def test_explicit_preview_and_auto_retrieval_are_untrusted_cited_and_bounded(env
     assert trace["retrieval"]["mode"] == "lexical-only"
     assert trace["sources"][0]["source"] == "field-notes.md"
     assert trace["sources"][0]["score"] > 0
+    assert [(step["step"], step["status"]) for step in trace["steps"]] == [
+        ("plan", "completed"), ("retrieve", "completed"), ("tools", "skipped"), ("answer", "completed")]
+    assert trace["steps"][1]["source"] == "field-notes.md"
+    assert trace["steps"][1]["result_count"] == 1
+    assert all(step["duration_ms"] >= 0 for step in trace["steps"])
     assert len(runtime.tasks.all()) == tasks_before
 
 

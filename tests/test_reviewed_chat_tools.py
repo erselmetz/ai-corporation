@@ -115,6 +115,9 @@ def test_chat_records_explicit_calculator_and_selected_document_lookup(monkeypat
     assert trace["actions"]["tasks_created"] is False
     assert [item["outcome"] for item in trace["tools"]] == ["completed", "completed"], trace["tools"]
     assert trace["tools"][1]["source"] == "corporation_docs:guide"
+    assert [item["step"] for item in trace["steps"]] == ["plan", "retrieve", "calculator", "local-document-lookup", "answer"]
+    assert [item["status"] for item in trace["steps"]] == ["completed", "skipped", "completed", "completed", "completed"]
+    assert all(isinstance(item["duration_ms"], int) and item["duration_ms"] >= 0 for item in trace["steps"])
     assembled = json.loads(prompts[0])
     assert "untrusted reference data" in json.dumps(assembled)
     assert "port 8123" in json.dumps(assembled)

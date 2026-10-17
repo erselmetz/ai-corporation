@@ -295,6 +295,19 @@ export function mountChat({
       ? `Route: ${route.agent} (${route.agent_id}) · ${route.provider || "provider unknown"} / ${route.model || "model unknown"}. ${route.source || "Route reason not recorded."}`
       : "Route details were not recorded for this reply.";
     panel.append(routeText);
+    if (Array.isArray(trace.steps)) {
+      const heading = documentRef.createElement("strong");
+      heading.textContent = "Workflow steps";
+      panel.append(heading);
+      const steps = documentRef.createElement("ol");
+      for (const step of trace.steps) {
+        const item = documentRef.createElement("li");
+        const timing = step.duration_ms === undefined ? "timing unavailable" : `${step.duration_ms} ms`;
+        item.textContent = `${step.step || "unknown step"} · ${step.status || "status unknown"} · ${step.source || step.reason || "no source"} · ${timing}`;
+        steps.append(item);
+      }
+      panel.append(steps);
+    }
     const retrieval = trace.retrieval || {};
     const retrievalText = documentRef.createElement("p");
     retrievalText.textContent = retrieval.enabled === true
@@ -526,6 +539,23 @@ export function mountChat({
       if (imageIds.length && !imageManager.consented()) throw new Error("Select the per-turn image consent checkbox before sending selected images to the configured provider.");
       if (!imageIds.length && imageManager?.wantsLocalOcr()) throw new Error("Select an image before requesting local OCR.");
       const identifier = selected;
+      const plannedSteps = [
+        "1. Plan: follow this bounded, single-coordinator chat flow.",
+        useKnowledge
+          ? `2. Retrieve only the selected scopes: ${knowledgeScopes.map(scope => `${scope.scope}:${scope.scope_id || "current owner"}`).join(", ")}; the server will recheck the preview.`
+          : "2. Skip knowledge retrieval; no knowledge scope is selected.",
+        reviewedTools.length
+          ? `3. Run only these reviewed read-only tools: ${reviewedTools.map(tool => tool.kind === "local-document-lookup" ? `${tool.kind} (${tool.document_id})` : tool.kind).join(", ")}.`
+          : "3. Skip tools; no reviewed tool is selected.",
+      ];
+      if (imageIds.length) plannedSteps.push("4. Send only the selected temporary image(s), with the consent you checked.");
+      plannedSteps.push(`${plannedSteps.length + 1}. Send this message and selected context to the configured coordinator, then show the answer and observed trace.`);
+      plannedSteps.push("No Task execution, background work, automatic retry, or unselected tool use will occur.");
+      const routeLabel = (element("chat-identity").textContent || "Configured coordinator").slice(0, 240);
+      if (!confirmImpl(`Review this chat plan before work begins:\n${plannedSteps.join("\n")}\n\nRoute: ${routeLabel}\n\nContinue? Cancel prevents retrieval, tool calls, and provider work.`)) {
+        state.textContent = "Cancelled before retrieval, tool calls, or provider work. Nothing was sent.";
+        return;
+      }
       const controller = new AbortController();
       requestController = controller;
       stopRequestButton.hidden = false;

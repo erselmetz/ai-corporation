@@ -46,6 +46,11 @@ def test_local_owner_signin_chat_safe_reply_close_and_logout(tmp_path):
             browser = playwright.chromium.launch()
             try:
                 page = browser.new_page(viewport={"width": 1200, "height": 1000})
+                def approve_reviewed_chat_plan(dialog):
+                    assert "Review this chat plan before work begins" in dialog.message
+                    assert "No Task execution" in dialog.message
+                    dialog.accept()
+                page.on("dialog", approve_reviewed_chat_plan)
                 page.goto(origin + "/ui/login")
                 page.locator("#password").fill("test-only-browser-password")
                 page.get_by_role("button", name="Sign in", exact=True).click()

@@ -3000,8 +3000,9 @@ export const post100Tasks = [
     "outOfScope": ["No hidden multi-agent work, automatic retries/replay, dependency enforcement, or autonomous approval."],
     "risks": ["A plan may omit work or overstate progress unless trace states reflect actual operations."],
     "manualVerification": ["Compare displayed steps and trace with actual provider/tool events for success, cancellation, denial, timeout, and partial failure."],
-    "area": "P36", "checkpoint": null, "validation": [],
-    "limitations": ["Depends on real Task 177 traces and reviewed Task 182 tools; plan text alone is not evidence of execution."]
+    "area": "P36", "checkpoint": null,
+    "validation": ["Implementation progress: Coordinator Chat displays a bounded deterministic workflow plan and requires confirmation before retrieval, selected reviewed tools, or provider work. Per-turn traces now report actual plan, retrieval, tool, and answer steps with sources, outcomes, and timings; failures and skipped steps remain distinguishable. Focused automated tests pass for pre-work cancellation, real retrieval/tool trace order, and sanitized provider failure. Manual owner verification has not been performed."],
+    "limitations": ["Task remains planned pending manual owner verification of plan clarity, cancellation, and success/failure trace accuracy. Task 182 remains planned pending its separate manual tool acceptance. No hidden agent execution, automatic retry, replay, task creation, or additional authority is introduced."]
   },
   {
     "number": 184,

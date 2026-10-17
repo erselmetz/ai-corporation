@@ -42,7 +42,7 @@ const completedStreamEvent = {
     ],
   },
 };
-function setup(handler = null, windowRef = globalThis.window) {
+function setup(handler = null, windowRef = globalThis.window, confirmImpl = () => true) {
   const ids = [
     "chat-state", "chat-history", "chat-agent", "chat-conversation", "chat-input", "chat-input-provenance",
     "chat-start", "chat-send", "chat-close", "chat-refresh", "chat-identity",
@@ -73,6 +73,7 @@ function setup(handler = null, windowRef = globalThis.window) {
   elements["chat-history"].dataset = {};
   for (const id of ["chat-knowledge-enabled", "chat-knowledge-owner", "chat-knowledge-conversation", "chat-knowledge-extra-enabled"]) elements[id].checked = false;
   const calls = [];
+  const planConfirmations = [];
   elements["voice-mode"].value = "local";
   elements["voice-language"].value = "en-US";
   elements["voice-budget-cents"].value = "5";
@@ -98,8 +99,11 @@ function setup(handler = null, windowRef = globalThis.window) {
     return response(snapshot());
   };
   const documentRef = { getElementById: id => elements[id], documentElement: {}, createElement: tag => new Element(tag) };
-  const controller = mountChat({ documentRef, fetchImpl, confirmImpl: () => true, windowRef });
-  return { controller, elements, calls };
+  const controller = mountChat({ documentRef, fetchImpl, confirmImpl: message => {
+    planConfirmations.push(message);
+    return confirmImpl(message);
+  }, windowRef });
+  return { controller, elements, calls, planConfirmations };
 }
 
 test("local transcript is added after an unsent typed draft and never submits the chat", async () => {
@@ -144,10 +148,23 @@ test("start and send use same-origin, session CSRF and actual coordinator identi
   assert.ok(ui.elements["chat-history"].textContent.includes(untrusted));
   assert.equal(ui.elements["chat-input"].value, "");
   assert.equal(ui.elements["chat-input-provenance"].hidden, true);
+  assert.match(ui.planConfirmations[0], /Review this chat plan before work begins/);
+  assert.match(ui.planConfirmations[0], /Cancel prevents retrieval, tool calls, and provider work/);
   const post = ui.calls.find(call => call.path.endsWith("/messages"));
   assert.equal(post.options.credentials, "same-origin");
   assert.equal(post.options.headers["X-Local-CSRF"], "test-csrf");
   assert.deepEqual(JSON.parse(post.options.body), { text: "Hello" });
+});
+
+test("canceling the reviewed chat plan starts no retrieval, tools, or provider request", async () => {
+  const ui = setup(null, globalThis.window, () => false);
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-input"].value = "Do not send this";
+  assert.equal(await ui.controller.send(), true);
+  assert.match(ui.planConfirmations[0], /Send this message and selected context/);
+  assert.equal(ui.calls.some(call => call.path.endsWith("/messages") || call.path.endsWith("/messages/stream")), false);
+  assert.match(ui.elements["chat-state"].textContent, /Cancelled.*Nothing was sent/);
 });
 
 test("streaming chat renders provider chunks and verifies the completed response", async () => {
@@ -221,7 +238,14 @@ test("reviewed tool calls are explicit, one-turn, and routed through non-streami
     if (path === "/api/chat/conversations" && options.method === "POST") return response({ ...snapshot(), streaming_supported: true });
     if (path.endsWith("/messages")) return response({
       ...snapshot([message("user", "completed", "Calculate it"), message("assistant", "completed", "The result is 36.")]),
-      context_trace: { tools: [{ tool: "calculator", parameters: { expression: "(12 + 6) * 2" }, source: "local calculator", outcome: "completed", duration_ms: 0, result_characters: 2 }], actions: { tools_run: true, tasks_created: false } },
+      context_trace: {
+        steps: [{ step: "plan", status: "completed", source: "bounded configured chat workflow", duration_ms: 0 },
+          { step: "retrieve", status: "skipped", reason: "No selected retrieval", duration_ms: 0 },
+          { step: "calculator", status: "completed", source: "local calculator", duration_ms: 0 },
+          { step: "answer", status: "completed", source: "ollama / configured-model", duration_ms: 1 }],
+        tools: [{ tool: "calculator", parameters: { expression: "(12 + 6) * 2" }, source: "local calculator", outcome: "completed", duration_ms: 0, result_characters: 2 }],
+        actions: { tools_run: true, tasks_created: false },
+      },
     });
     return null;
   });
@@ -233,7 +257,9 @@ test("reviewed tool calls are explicit, one-turn, and routed through non-streami
   assert.equal(await ui.controller.send(), true);
   const post = ui.calls.find(call => call.path.endsWith("/messages"));
   assert.deepEqual(JSON.parse(post.options.body).reviewed_tools, [{ kind: "calculator", expression: "(12 + 6) * 2" }]);
+  assert.match(ui.planConfirmations[0], /calculator/);
   assert.match(ui.elements["chat-history"].textContent, /Reviewed tool calls.*calculator.*completed/);
+  assert.match(ui.elements["chat-history"].textContent, /Workflow steps.*plan.*retrieve.*calculator.*answer/);
 });
 
 test("local document choices load only after opening reviewed tools with documentation permission", async () => {

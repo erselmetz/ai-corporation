@@ -177,9 +177,47 @@ def _knowledge_preview(service, owner, identifier, query, scopes, now):
     return result
 
 
+def _workflow_steps(retrieval, tools, coordinator, *, retrieval_ms=0,
+                    answer_ms=None, answer_status="completed"):
+    steps = [{"step": "plan", "status": "completed", "source": "bounded configured chat workflow",
+              "duration_ms": 0}]
+    if retrieval:
+        sources = retrieval.get("returned_chunks", retrieval.get("sources", []))
+        labels = []
+        for source in sources[:5] if isinstance(sources, list) else []:
+            if isinstance(source, dict):
+                label = source.get("source") or source.get("origin_reference") or source.get("memory_id")
+                if label:
+                    labels.append(str(label)[:128])
+        steps.append({"step": "retrieve", "status": "completed",
+                      "source": ", ".join(labels)[:512] if labels else "selected knowledge (no matching excerpts)",
+                      "result_count": len(sources) if isinstance(sources, list) else 0,
+                      "duration_ms": max(0, int(retrieval_ms))})
+    else:
+        steps.append({"step": "retrieve", "status": "skipped", "source": None,
+                      "reason": "No separate knowledge retrieval was selected.", "duration_ms": 0})
+    if tools:
+        for item in tools[:2]:
+            steps.append({"step": item.get("tool", "tool"),
+                          "status": "completed" if item.get("outcome") == "completed" else "failed",
+                          "source": str(item.get("source", "source unknown"))[:256],
+                          "duration_ms": max(0, int(item.get("duration_ms", 0))),
+                          "result_characters": max(0, int(item.get("result_characters", 0)))})
+    else:
+        steps.append({"step": "tools", "status": "skipped", "source": None,
+                      "reason": "No reviewed tools were selected.", "duration_ms": 0})
+    answer_step = {"step": "answer", "status": answer_status,
+                   "source": "configured coordinator (see route details)"}
+    if answer_ms is not None:
+        answer_step["duration_ms"] = max(0, int(answer_ms))
+    steps.append(answer_step)
+    return steps
+
+
 def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
                             cloud_provider, cloud_consent, elapsed_ms, auto_context,
-                            retrieved, trace_request, now, tools=None):
+                            retrieved, trace_request, now, tools=None, retrieval_ms=0,
+                            answer_ms=None):
     """Record only a failed/pending user turn; never serialize the raw exception."""
     try:
         record = service.owned_chat().get(owner, identifier)["conversation"]
@@ -199,6 +237,10 @@ def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
             cloud_provider=cloud_provider, cloud_consent=cloud_consent,
             elapsed_ms=elapsed_ms, retrieval=retrieval_trace,
             tools=tools,
+            steps=_workflow_steps(retrieval_trace, tools, coordinator,
+                                  retrieval_ms=retrieval_ms,
+                                  answer_ms=answer_ms,
+                                  answer_status="failed" if message.status.value == "failed" else "unknown"),
             outcome="failed" if message.status.value == "failed" else "unknown",
             failure="Provider or chat runtime did not produce a verified reply; raw diagnostics are omitted.",
             now=now)
@@ -491,9 +533,8 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                                      result_state="allowed", safe_reference="chat-local-document-lookup")
                     except (RuntimeError, OSError, ValueError):
                         raise HTTPException(503, "Capability audit unavailable") from None
-            tool_trace, tool_context = run_reviewed_tools(
-                body.reviewed_tools, getattr(request.app.state, "documentation_service", None))
         knowledge = service.chat_knowledge()
+        retrieval_started_at = time.perf_counter()
         auto_context = None
         if body.knowledge_enabled:
             auto_context = _knowledge_preview(service, principal.identity, identifier,
@@ -504,6 +545,9 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
         if body.context is not None:
             retrieved, trace_request = knowledge.retrieve(principal.identity, identifier, ContextRequest(
                 body.context.query, body.context.scope, body.context.scope_id, body.context.limit), now)
+        retrieval_ms = max(0, int((time.perf_counter() - retrieval_started_at) * 1000))
+        tool_trace, tool_context = run_reviewed_tools(
+            body.reviewed_tools, getattr(request.app.state, "documentation_service", None))
         if body.image_ids:
             if body.image_consent is not True:
                 raise HTTPException(403, "Explicit per-turn consent is required before selected images are sent to the configured provider.")
@@ -518,6 +562,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
             if body.include_local_ocr:
                 ocr = service.ocr()
                 ocr_evidence = tuple(ocr.recognize(image, language="eng") for image in images)
+            answer_started_at = time.perf_counter()
             try:
                 result = owned.send(principal.identity, identifier, body.text, presentation_preferences=presentation,
                                     image_ids=tuple(body.image_ids),
@@ -528,7 +573,8 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                     current["coordinator"],
                     current["coordinator"].provider if cloud_requires_consent else None,
                     body.cloud_consent, (time.perf_counter() - started_at) * 1000,
-                    None, None, None, now)
+                    None, None, None, now, retrieval_ms=retrieval_ms,
+                    answer_ms=(time.perf_counter() - answer_started_at) * 1000)
                 raise
             messages = result["conversation"].messages
             reply = next((message for message in reversed(messages)
@@ -539,7 +585,10 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                     cloud_provider=current["coordinator"].provider if cloud_requires_consent else None,
                     cloud_consent=body.cloud_consent,
                     elapsed_ms=(time.perf_counter() - started_at) * 1000,
-                    retrieval=None, now=now)}
+                    retrieval=None,
+                    steps=_workflow_steps(None, [], current["coordinator"], retrieval_ms=retrieval_ms,
+                                          answer_ms=(time.perf_counter() - answer_started_at) * 1000),
+                    now=now)}
         else:
             if body.image_consent or body.include_local_ocr:
                 raise HTTPException(422, "Image consent and OCR require selected images.")
@@ -549,6 +598,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                 prompt_context = f"{prompt_context}\n\n{tool_context}" if prompt_context else tool_context
             captured_prompt = []
             cloud_provider = current["coordinator"].provider if cloud_requires_consent else None
+            answer_started_at = time.perf_counter()
             try:
                 result = service.owned_chat().send(
                     principal.identity, identifier, body.text, prompt_context,
@@ -558,7 +608,8 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                 _record_unverified_turn(
                     service, knowledge, principal.identity, identifier, current["coordinator"],
                     cloud_provider, body.cloud_consent, (time.perf_counter() - started_at) * 1000,
-                    auto_context, retrieved, trace_request, now, tool_trace)
+                    auto_context, retrieved, trace_request, now, tool_trace, retrieval_ms,
+                    (time.perf_counter() - answer_started_at) * 1000)
                 raise
             messages = result["conversation"].messages
             reply = next((message for message in reversed(messages)
@@ -572,7 +623,11 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                     principal.identity, identifier, reply.id, coordinator=coordinator,
                     cloud_provider=cloud_provider, cloud_consent=body.cloud_consent,
                     elapsed_ms=(time.perf_counter() - started_at) * 1000,
-                    retrieval=retrieval_trace, tools=tool_trace, now=now)
+                    retrieval=retrieval_trace, tools=tool_trace,
+                    steps=_workflow_steps(retrieval_trace, tool_trace, coordinator,
+                                          retrieval_ms=retrieval_ms,
+                                          answer_ms=(time.perf_counter() - answer_started_at) * 1000),
+                    now=now)
                 result = {**result, "context_trace": trace}
             if captured_prompt:
                 result["advanced_prompt"] = captured_prompt[0]
@@ -613,6 +668,7 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                 "Explicit consent is required before sending this turn and recent chat context to Gemini.",
             )
         knowledge = service.chat_knowledge()
+        retrieval_started_at = time.perf_counter()
         auto_context = None
         if body.knowledge_enabled:
             auto_context = _knowledge_preview(service, principal.identity, identifier,
@@ -632,9 +688,11 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                 ),
                 now,
             )
+        retrieval_ms = max(0, int((time.perf_counter() - retrieval_started_at) * 1000))
 
     def events():
         try:
+            answer_started_at = time.perf_counter()
             for event in owned.stream(
                 principal.identity,
                 identifier,
@@ -654,7 +712,11 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                         principal.identity, identifier, reply.id, coordinator=coordinator,
                         cloud_provider=cloud_provider, cloud_consent=body.cloud_consent,
                         elapsed_ms=(time.perf_counter() - started_at) * 1000,
-                        retrieval=retrieval_trace, now=now)
+                        retrieval=retrieval_trace,
+                        steps=_workflow_steps(retrieval_trace, [], coordinator,
+                                              retrieval_ms=retrieval_ms,
+                                              answer_ms=(time.perf_counter() - answer_started_at) * 1000),
+                        now=now)
                     event = {
                         **event,
                         "context_trace": turn_trace,
@@ -667,7 +729,8 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                 service, knowledge, principal.identity, identifier, current["coordinator"],
                 current["coordinator"].provider if cloud_requires_consent else None,
                 body.cloud_consent, (time.perf_counter() - started_at) * 1000,
-                auto_context, retrieved, trace_request, now)
+                auto_context, retrieved, trace_request, now, retrieval_ms=retrieval_ms,
+                answer_ms=(time.perf_counter() - answer_started_at) * 1000)
             yield json.dumps({
                 "type": "error",
                 "message": "Configured provider request-slot capacity is exhausted; no provider request was admitted.",
@@ -677,7 +740,8 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                 service, knowledge, principal.identity, identifier, current["coordinator"],
                 current["coordinator"].provider if cloud_requires_consent else None,
                 body.cloud_consent, (time.perf_counter() - started_at) * 1000,
-                auto_context, retrieved, trace_request, now)
+                auto_context, retrieved, trace_request, now, retrieval_ms=retrieval_ms,
+                answer_ms=(time.perf_counter() - answer_started_at) * 1000)
             yield json.dumps({
                 "type": "error",
                 "message": (

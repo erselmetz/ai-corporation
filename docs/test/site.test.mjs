@@ -508,7 +508,7 @@ describe("documentation site", () => {
         assert.ok(task.validation.length > 0 && task.limitations.length > 0);
       } else {
         assert.equal(task.checkpoint, null);
-        if ([175, 176, 177, 178, 179, 180, 182].includes(task.number)) {
+        if ([175, 176, 177, 178, 179, 180, 182, 183].includes(task.number)) {
           assert.ok(task.validation.length > 0 && task.limitations.length > 0);
         } else {
           assert.deepEqual(task.validation, []);
