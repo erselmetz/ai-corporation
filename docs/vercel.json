@@ -9,7 +9,8 @@
           "*.html",
           "site.css",
           "tasks-data.mjs",
-          "tasks-page.js"
+          "tasks-page.js",
+          "roadmap-status.js"
         ]
       }
     }
