@@ -125,6 +125,8 @@ same profile. To reset owner setup, exit the application and remove only
 application data only as a separate, intentional Windows user action after
 backup; it may contain durable app records.
 
+The packaged backend database is at %LOCALAPPDATA%\ERSELMETZ AI\projects\ai_corporation.db. It contains local positions, configured slot limits, short-lived proposal review metadata, and Employee conversations only when the owner explicitly selects Retain this conversation. Retained chat is unencrypted and remains until explicitly deleted from Employee Chat or the app data folder is removed. Recovered Employee conversations are read-only; uncertain turns are never replayed. SQLite schema upgrades are additive and transactional: a failed migration rolls back without advancing the schema version. The existing encrypted Backup & Restore flow can include private records only after explicit selection; use it before manual recovery or app-data removal. Active slot allocations, provider credentials, and capability grants are not persisted.
+
 Voice controls are available only after selecting a chat conversation. Local
 recognition requires a supported on-device Chromium language pack; it never
 falls back to a remote service. Installing a language pack is an explicit

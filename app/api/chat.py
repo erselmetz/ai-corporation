@@ -392,6 +392,13 @@ def start_conversation(payload=Depends(bounded_body),
         return service.owned_chat().start(principal.identity, body.agent_id)
 
 
+@router.get("/task-proposals")
+def list_task_proposals(principal=Depends(require_permission("chat:read")),
+                        service=Depends(get_application_service)):
+    with chat_errors():
+        return {"items": service.chat_task_proposals().list_history(principal.identity)}
+
+
 @router.get("/{identifier}")
 def get_conversation(identifier: str, principal=Depends(require_permission("chat:read")),
                      service=Depends(get_application_service), now=Depends(get_chat_now)):

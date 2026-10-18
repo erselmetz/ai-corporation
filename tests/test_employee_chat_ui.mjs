@@ -31,6 +31,7 @@ function setup({ supportsStreaming = false } = {}) {
     "individual-chat-input", "individual-chat-send", "individual-cloud-consent-panel",
     "individual-cloud-consent", "individual-chat-new", "individual-chat-refresh",
     "individual-chat-close",
+    "individual-chat-delete-history", "individual-chat-retain",
     "individual-chat-stop-display",
   ];
   const elements = Object.fromEntries(ids.map((id) => [
@@ -52,10 +53,13 @@ function setup({ supportsStreaming = false } = {}) {
   };
   const employee = { id: "employee-1", name: "<script>Employee</script>", role: "Worker" };
   let created = false;
+  let retained = false;
   const snapshot = () => ({
     conversation: structuredClone(conversation),
     employee,
     agent,
+    history_retained: retained,
+    read_only: false,
   });
   const fetchImpl = async (path, options = {}) => {
     calls.push({ path, options });
@@ -67,12 +71,17 @@ function setup({ supportsStreaming = false } = {}) {
       body = { csrf: "csrf-token" };
     } else if (path === "/api/employee-chat/conversations" && options.method === "POST") {
       created = true;
+      retained = JSON.parse(options.body).history_opt_in === true;
       status = 201;
       body = snapshot();
     } else if (path === "/api/employee-chat/conversations") {
       body = { items: created ? [{
         conversation_id: conversation.id, employee, agent, status: conversation.status,
+        history_retained: retained, read_only: false,
       }] : [] };
+    } else if (path.endsWith("/history") && options.method === "DELETE") {
+      created = false;
+      body = { deleted: JSON.parse(options.body).confirm === true };
     } else if (path === "/api/employee-chat/conversations/conversation-1/messages") {
       const request = JSON.parse(options.body);
       conversation.messages.push(
@@ -124,7 +133,11 @@ test("Employee chat uses CSRF, inert rendering and explicit per-turn Gemini cons
   await ui.controller.initialLoad;
   assert.equal(ui.elements["individual-chat-new"].disabled, false);
   assert.equal(ui.elements["individual-cloud-consent-panel"].hidden, true);
+  ui.elements["individual-chat-retain"].checked = true;
   assert.equal(await ui.controller.startConversation(), true);
+  const start = ui.calls.find((call) => call.path === "/api/employee-chat/conversations" && call.options.method === "POST");
+  assert.deepEqual(JSON.parse(start.options.body), { employee_id: "employee-1", history_opt_in: true });
+  assert.equal(ui.elements["individual-chat-delete-history"].disabled, false);
   assert.equal(ui.elements["individual-cloud-consent-panel"].hidden, false);
   assert.equal(ui.elements["individual-chat-send"].disabled, true);
   assert.match(ui.elements["individual-chat-identity"].textContent, /<script>Employee<\/script>/);
@@ -172,4 +185,17 @@ test("Employee chat streams only from an advertised provider and handles the fin
   );
   assert.match(ui.elements["individual-chat-state"].textContent, /Stream completed/);
   assert.equal(ui.elements["individual-chat-stop-display"].hidden, true);
+});
+
+test("retained Employee history requires opt-in and explicit confirmed deletion", async () => {
+  const ui = setup();
+  await ui.controller.initialLoad;
+  ui.elements["individual-chat-retain"].checked = true;
+  assert.equal(await ui.controller.startConversation(), true);
+  assert.equal(ui.elements["individual-chat-delete-history"].disabled, false);
+  assert.equal(await ui.controller.deleteRetainedHistory(), true);
+  const deletion = ui.calls.find((call) => call.path.endsWith("/history"));
+  assert.equal(deletion.options.method, "DELETE");
+  assert.deepEqual(JSON.parse(deletion.options.body), { confirm: true });
+  assert.equal(ui.elements["individual-chat-history"].children.length, 0);
 });

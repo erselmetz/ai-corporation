@@ -59,12 +59,15 @@ class CorporationPosition:
 
 
 class PositionRegistry:
-    def __init__(self, employees: EmployeeRegistry | None):
+    def __init__(self, employees: EmployeeRegistry | None, *, persistence=None):
         if employees is not None and not isinstance(employees, EmployeeRegistry):
             raise TypeError("employees must be an EmployeeRegistry or None")
         self._employees = employees
+        self._persistence = persistence
         self._positions: dict[str, CorporationPosition] = {}
         self._lock = RLock()
+        if persistence is not None:
+            self._restore(persistence.load_positions())
 
     @staticmethod
     def _validate_fields(
@@ -131,6 +134,11 @@ class PositionRegistry:
                 revision=1,
             )
             self._positions[position.id] = position
+            try:
+                self._persist()
+            except Exception:
+                del self._positions[position.id]
+                raise
             return position
 
     def update(
@@ -153,6 +161,11 @@ class PositionRegistry:
             )
             updated = self._revise(current, *fields, active=current.active)
             self._positions[position_id] = updated
+            try:
+                self._persist()
+            except Exception:
+                self._positions[position_id] = current
+                raise
             return updated
 
     def deactivate(self, position_id: str, expected_revision: int) -> CorporationPosition:
@@ -177,6 +190,11 @@ class PositionRegistry:
                 active=False,
             )
             self._positions[position_id] = updated
+            try:
+                self._persist()
+            except Exception:
+                self._positions[position_id] = current
+                raise
             return updated
 
     def remove(self, position_id: str) -> None:
@@ -194,6 +212,11 @@ class PositionRegistry:
                     "Reassign or remove reporting positions before removal"
                 )
             del self._positions[position_id]
+            try:
+                self._persist()
+            except Exception:
+                self._positions[position_id] = current
+                raise
 
     @contextmanager
     def employee_reference_guard(self, employee_id: str):
@@ -203,6 +226,78 @@ class PositionRegistry:
                     "Resolve position assignments before removing this Employee"
                 )
             yield
+
+    def _persist(self) -> None:
+        if self._persistence is None:
+            return
+        self._persistence.save_positions(tuple(_position_record(item) for item in self._positions.values()))
+
+    def _restore(self, records) -> None:
+        """Restore persisted state only through the registry's domain validation."""
+        if not isinstance(records, tuple) or len(records) > MAX_POSITIONS:
+            raise RuntimeError("Stored position state is invalid")
+        restored: dict[str, CorporationPosition] = {}
+        try:
+            for record in records:
+                if not isinstance(record, dict):
+                    raise ValueError
+                identifier = record["id"]
+                title, responsibilities, parent, employee = self._validate_fields(
+                    record["title"], tuple(record["responsibilities"]),
+                    record["reports_to_position_id"], record["employee_id"],
+                )
+                active, revision = record["active"], record["revision"]
+                if type(active) is not bool or type(revision) is not int or revision < 1:
+                    raise ValueError
+                if not isinstance(identifier, str) or not identifier.strip() or identifier in restored:
+                    raise ValueError
+                raw_history = record["history"]
+                if not isinstance(raw_history, list) or len(raw_history) != revision - 1 or len(raw_history) > MAX_POSITION_HISTORY:
+                    raise ValueError
+                history_items = []
+                for index, item in enumerate(raw_history):
+                    old_title, old_responsibilities, old_parent, old_employee = self._validate_fields(
+                        item["title"], tuple(item["responsibilities"]),
+                        item["reports_to_position_id"], item["employee_id"],
+                    )
+                    if (type(item["revision"]) is not int or item["revision"] != index + 1
+                            or type(item["active"]) is not bool
+                            or not isinstance(item["recorded_at"], str)
+                            or not item["recorded_at"]):
+                        raise ValueError
+                    history_items.append(PositionRevision(
+                        item["revision"], old_title, old_responsibilities, old_parent,
+                        old_employee, item["active"], item["recorded_at"],
+                    ))
+                history = tuple(history_items)
+                restored[identifier] = CorporationPosition(
+                    identifier, title, responsibilities, parent, employee,
+                    active, revision, history,
+                )
+            previous = self._positions
+            self._positions = restored
+            for item in restored.values():
+                self._validate_references(
+                    item.id, item.reports_to_position_id, item.employee_id,
+                    active=item.active,
+                )
+            self._positions = previous
+            # Validate the hierarchy as a whole, including cycles that may have
+            # entered through a stale/corrupt or manually edited database.
+            for identifier in restored:
+                seen = set()
+                cursor = identifier
+                while cursor is not None:
+                    if cursor in seen:
+                        raise ValueError
+                    seen.add(cursor)
+                    parent = restored.get(cursor)
+                    cursor = parent.reports_to_position_id if parent else None
+            self._positions = restored
+        except Exception:
+            self._positions = {}
+            raise RuntimeError("Stored position state failed validation; no records were loaded") from None
+
 
     def _require(self, position_id: str) -> CorporationPosition:
         try:
@@ -273,3 +368,24 @@ class PositionRegistry:
             revision=current.revision + 1,
             history=(*current.history, revision),
         )
+
+
+def _position_record(item: CorporationPosition) -> dict:
+    return {
+        "id": item.id,
+        "title": item.title,
+        "responsibilities": list(item.responsibilities),
+        "reports_to_position_id": item.reports_to_position_id,
+        "employee_id": item.employee_id,
+        "active": item.active,
+        "revision": item.revision,
+        "history": [{
+            "revision": revision.revision,
+            "title": revision.title,
+            "responsibilities": list(revision.responsibilities),
+            "reports_to_position_id": revision.reports_to_position_id,
+            "employee_id": revision.employee_id,
+            "active": revision.active,
+            "recorded_at": revision.recorded_at,
+        } for revision in item.history],
+    }

@@ -39,6 +39,8 @@ SUPPORTED_APP_TABLES = frozenset({
     "chat_history_schema", "conversation_memory", "corporation_knowledge",
     "corporation_knowledge_provenance", "corporation_knowledge_readers",
     "documentation_draft_documents", "documentation_draft_versions", "execution_queue",
+    "operator_conversations", "operator_positions", "operator_resource_limits",
+    "operator_task_proposals",
     "managed_software", "managed_software_events", "managed_software_pins",
     "local_first_run", "owner_preferences", "owner_preferences_schema", "owner_suggestion_preferences",
     "owner_knowledge", "project_knowledge", "project_memory", "projects", "task_logs", "tasks",

@@ -53,11 +53,16 @@ class ChatTaskProposalService:
     MAX_CREATED_FINGERPRINTS = 1000
     PROPOSAL_TTL = timedelta(minutes=15)
 
-    def __init__(self, application, *, clock=lambda: datetime.now(timezone.utc)):
+    def __init__(self, application, *, clock=lambda: datetime.now(timezone.utc), persistence=None):
         self._application = application
         self._clock = clock
         self._proposals: dict[str, _Proposal] = {}
-        self._created_fingerprints: set[str] = set()
+        self._persistence = persistence
+        if persistence is not None:
+            persistence.invalidate_unfinished_proposals()
+            self._created_fingerprints = set(persistence.created_fingerprints())
+        else:
+            self._created_fingerprints = set()
         self._lock = RLock()
 
     def create(
@@ -193,8 +198,31 @@ class ChatTaskProposalService:
                 and len({item.owner_id for item in self._proposals.values()}) >= self.MAX_OWNERS
             ):
                 raise ChatTaskProposalConflict("Task proposal owner limit reached")
+            if self._persistence is not None:
+                self._persistence.save_proposal(
+                    owner_id=owner_id,
+                    proposal_id=identifier,
+                    conversation_id=conversation_id,
+                    digest=digest,
+                    fingerprint=fingerprint,
+                    summary={
+                        "objective": objective,
+                        "project_id": project[0],
+                        "agent_id": agent[0],
+                        "coordinator_id": coordinator[0],
+                        "outcome": asdict(criteria),
+                    },
+                    created_at=now,
+                    expires_at=expires_at,
+                )
             self._proposals[identifier] = record
         return _public(identifier, record)
+
+    def list_history(self, owner_id: str) -> tuple[dict, ...]:
+        _text(owner_id, "owner_id", 256)
+        if self._persistence is None:
+            return ()
+        return self._persistence.list_proposals(owner_id, self._now())
 
     def confirm(
         self,
@@ -223,6 +251,8 @@ class ChatTaskProposalService:
                 raise ChatTaskProposalNotFound("Task proposal not found")
             if now >= record.expires_at:
                 self._proposals.pop(proposal_id, None)
+                if self._persistence is not None:
+                    self._persistence.expire_proposal(proposal_id)
                 raise ChatTaskProposalExpired("Task proposal expired; prepare it again")
             if proposal_digest != record.digest:
                 raise ChatTaskProposalConflict("Confirmed proposal differs from the reviewed proposal")
@@ -232,6 +262,12 @@ class ChatTaskProposalService:
             if len(self._created_fingerprints) >= self.MAX_CREATED_FINGERPRINTS:
                 raise ChatTaskProposalConflict("Task proposal creation limit reached for this app run")
 
+            if self._persistence is not None:
+                try:
+                    self._persistence.consume_proposal(proposal_id)
+                except ValueError:
+                    self._proposals.pop(proposal_id, None)
+                    raise ChatTaskProposalConflict("Proposal is no longer available; prepare it again") from None
             self._proposals.pop(proposal_id)
             self._created_fingerprints.add(record.fingerprint)
             task = self._application.create_task(
@@ -317,6 +353,8 @@ class ChatTaskProposalService:
         return now
 
     def _prune(self, now: datetime) -> None:
+        if self._persistence is not None:
+            self._persistence.prune_proposals(now)
         expired = [identifier for identifier, item in self._proposals.items()
                    if item.expires_at <= now]
         for identifier in expired:

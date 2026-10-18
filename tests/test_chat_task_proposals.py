@@ -149,6 +149,11 @@ def test_reviewed_owner_proposal_creates_one_pending_task_without_provider_execu
         assert "scope-note" in task.description
         assert len(runtime.tasks.all()) == before + 1
         assert len(provider_calls) == 1
+        durable = runtime.application_service.operator_state_store().list_proposals("local-owner")
+        assert len(durable) == 1
+        assert durable[0]["state"] == "consumed"
+        assert durable[0]["summary"]["objective"] == body["objective"]
+        assert "authorized_context" not in durable[0]["summary"]
 
         replay = client.post(
             confirm_url,
@@ -190,6 +195,13 @@ def test_closed_conversation_makes_a_prepared_proposal_stale_without_creation(mo
         )
         assert proposal_response.status_code == 200, proposal_response.text
         proposal = proposal_response.json()
+        restarted = create_corporation_runtime()
+        restarted.application_service.chat_task_proposals()
+        durable = restarted.application_service.operator_state_store().list_proposals("local-owner")
+        assert len(durable) == 1
+        assert durable[0]["proposal_id"] == proposal["proposal_id"]
+        assert durable[0]["state"] == "restart-invalidated"
+        assert restarted.application_service.operator_state_store().created_fingerprints() == frozenset()
         assert client.post(
             f"/api/chat/conversations/{conversation_id}/close",
             json={},

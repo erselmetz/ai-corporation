@@ -1095,13 +1095,16 @@ def employee_chat_page():
     Messages and history are isolated per conversation and owner. Reassignments do not move an
     existing conversation; start a new one to use a changed Agent connection. Chats do not create
     Tasks, execute tools, or include Employee profiles or Task content automatically.</p>
+    <p>Conversation text is stored only when you select local history retention. Retained chat is unencrypted in the local app database until you explicitly delete it; no cloud sync is used.</p>
+    <label><input id="individual-chat-retain" type="checkbox"> Retain this conversation on this Windows profile so it can be reviewed after restart</label>
     <label for="individual-employee">Employee with an assigned Agent</label>
     <select id="individual-employee"></select>
     <button id="individual-chat-new" type="button">Start individual conversation</button>
-    <label for="individual-conversation">Your individual conversations for this app run</label>
+    <label for="individual-conversation">Your individual conversations</label>
     <select id="individual-conversation"></select>
     <button id="individual-chat-refresh" type="button">Refresh</button>
     <button id="individual-chat-close" type="button" disabled>Close conversation</button>
+    <button id="individual-chat-delete-history" type="button" disabled>Delete retained history</button>
     <p id="individual-chat-identity"></p>
     <p id="individual-chat-state" role="status" aria-live="polite"></p>
     <section id="individual-chat-history" aria-label="Individual conversation messages" aria-live="polite"></section>
@@ -1113,7 +1116,7 @@ def employee_chat_page():
     </form>
     <p id="individual-cloud-consent-panel" hidden><label><input id="individual-cloud-consent" type="checkbox">
     I consent to send this message and recent history from this individual conversation to Google Gemini for this reply.</label></p>
-    <p>History is held in memory for this app run only. Gemini requires per-turn consent and remains
+    <p>Unretained history is held in memory for this app run only. Retained history is read-only after restart. Gemini requires per-turn consent and remains
     subject to its connection expiry, request limit, and owner-managed billing controls.</p>
     </main></body></html>""")
 

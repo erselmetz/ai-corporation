@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from threading import Lock, RLock
 from uuid import uuid4
 
@@ -24,6 +25,7 @@ from .owned_chat import (
     ChatConsentRequired,
     ChatLimit,
     ChatNotFound,
+    ChatStorageError,
     ChatUnavailable,
 )
 
@@ -50,6 +52,8 @@ class EmployeeChatSnapshot:
     conversation: ChatConversationSummary
     employee: EmployeeChatIdentity
     agent: EmployeeChatAssignment
+    history_retained: bool = False
+    read_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -58,6 +62,8 @@ class EmployeeChatListItem:
     employee: EmployeeChatIdentity
     agent: EmployeeChatAssignment
     status: ConversationStatus
+    history_retained: bool = False
+    read_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -66,6 +72,9 @@ class _OwnedEmployeeConversation:
     employee: EmployeeChatIdentity
     agent: EmployeeChatAssignment
     provider: object = field(repr=False, compare=False)
+    history_retained: bool = False
+    read_only: bool = False
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     lock: Lock = field(default_factory=Lock, repr=False, compare=False)
 
 
@@ -82,6 +91,8 @@ class OwnedEmployeeChatService:
         providers: ProviderRegistry,
         orchestrator: Orchestrator,
         agent_request,
+        *,
+        persistence=None,
     ):
         self._employees = employees
         self._agents = agents
@@ -91,6 +102,8 @@ class OwnedEmployeeChatService:
         self._chat = EmployeeChatService(employees, agents)
         self._entries: dict[str, _OwnedEmployeeConversation] = {}
         self._catalog_lock = RLock()
+        self._persistence = persistence
+        self._restored_owners: set[str] = set()
 
     def _assignment(self, agent_id: str):
         try:
@@ -112,12 +125,15 @@ class OwnedEmployeeChatService:
             provider,
         )
 
-    def start(self, owner: str, employee_id: str) -> EmployeeChatSnapshot:
+    def start(self, owner: str, employee_id: str, *, history_opt_in: bool = False) -> EmployeeChatSnapshot:
         if not isinstance(owner, str) or not owner.strip():
             raise ValueError("Owner identity is required")
         if not isinstance(employee_id, str) or not employee_id.strip():
             raise ValueError("Employee identity is required")
+        if type(history_opt_in) is not bool:
+            raise ValueError("Conversation history choice must be explicit")
         with self._catalog_lock:
+            self._restore_owner(owner)
             if len(self._entries) >= self.MAX_CONVERSATIONS:
                 raise ChatLimit("Individual conversation limit reached for this app run")
             try:
@@ -140,13 +156,25 @@ class OwnedEmployeeChatService:
                     identifier, employee_id=employee_id
                 )
                 entry = _OwnedEmployeeConversation(
-                    owner, employee_snapshot, agent_snapshot, provider
+                    owner, employee_snapshot, agent_snapshot, provider,
+                    history_retained=history_opt_in,
                 )
                 self._entries[identifier] = entry
-                return EmployeeChatSnapshot(conversation, employee_snapshot, agent_snapshot)
+                snapshot = EmployeeChatSnapshot(
+                    conversation, employee_snapshot, agent_snapshot,
+                    history_retained=history_opt_in,
+                )
+                try:
+                    self._persist(entry, snapshot)
+                except Exception:
+                    self._entries.pop(identifier, None)
+                    self._chat.discard_restored_conversation(identifier)
+                    raise ChatStorageError("Conversation state could not be stored; no provider request was made") from None
+                return snapshot
 
     def list(self, owner: str) -> tuple[EmployeeChatListItem, ...]:
         with self._catalog_lock:
+            self._restore_owner(owner)
             items = []
             for identifier, entry in self._entries.items():
                 if entry.owner != owner:
@@ -159,6 +187,8 @@ class OwnedEmployeeChatService:
                             entry.employee,
                             entry.agent,
                             conversation.status,
+                            entry.history_retained,
+                            entry.read_only,
                         )
                     )
             return tuple(items)
@@ -166,6 +196,7 @@ class OwnedEmployeeChatService:
     @contextmanager
     def _access(self, owner: str, identifier: str):
         with self._catalog_lock:
+            self._restore_owner(owner)
             entry = self._entries.get(identifier)
             if entry is None or entry.owner != owner:
                 raise ChatNotFound("Conversation not found")
@@ -182,7 +213,106 @@ class OwnedEmployeeChatService:
                 self._chat.get_conversation(identifier),
                 entry.employee,
                 entry.agent,
+                history_retained=entry.history_retained,
+                read_only=entry.read_only,
             )
+
+    def delete_history(self, owner: str, identifier: str) -> None:
+        with self._access(owner, identifier) as entry:
+            if not entry.history_retained or self._persistence is None:
+                raise ChatNotFound("Retained conversation not found")
+            try:
+                self._persistence.delete_conversation(owner, identifier)
+            except Exception:
+                raise ChatStorageError("Retained conversation history could not be deleted") from None
+            with self._catalog_lock:
+                self._entries.pop(identifier, None)
+                self._chat.discard_restored_conversation(identifier)
+
+    def _restore_owner(self, owner: str) -> None:
+        if self._persistence is None or owner in self._restored_owners:
+            self._restored_owners.add(owner)
+            return
+        try:
+            records = self._persistence.load_conversations(owner)
+        except Exception:
+            raise ChatStorageError("Stored Employee conversation history is unavailable") from None
+        restored_ids = []
+        for record in records:
+            try:
+                conversation = record["conversation"]
+                employee = EmployeeChatIdentity(**record["employee"])
+                agent = EmployeeChatAssignment(**record["agent"])
+                if any(not isinstance(value, str) or not value.strip() or len(value) > 256
+                       for value in (employee.id, employee.name, employee.role,
+                                     agent.id, agent.name, agent.role,
+                                     agent.provider_id, agent.model_id)):
+                    raise ValueError
+                if type(agent.supports_streaming) is not bool:
+                    raise ValueError
+                if len(conversation["messages"]) > self.MAX_MESSAGES:
+                    raise ValueError
+                messages = tuple((item["id"], MessageRole(item["role"]), item["content"],
+                                  MessageStatus(item["status"]))
+                                 for item in conversation["messages"])
+                if any(not isinstance(message_id, str) or not message_id.strip()
+                       or len(message_id) > 256 or not isinstance(content, str)
+                       or not content.strip() or len(content.encode("utf-8")) > self.MAX_MESSAGE_BYTES
+                       for message_id, _role, content, _status in messages):
+                    raise ValueError
+                restored = self._chat.restore_conversation(
+                    conversation["id"], employee_id=employee.id,
+                    agent_id=agent.id, status=ConversationStatus(conversation["status"]),
+                    messages=messages,
+                )
+                created_at = datetime.fromisoformat(record["created_at"])
+                if created_at.tzinfo is None:
+                    raise ValueError
+                self._entries[restored.id] = _OwnedEmployeeConversation(
+                    owner, employee, agent, None, history_retained=True,
+                    read_only=True, created_at=created_at,
+                )
+                restored_ids.append(restored.id)
+            except Exception:
+                for conversation_id in restored_ids:
+                    self._entries.pop(conversation_id, None)
+                    self._chat.discard_restored_conversation(conversation_id)
+                raise ChatStorageError("Stored Employee conversation failed validation; no history was loaded") from None
+        self._restored_owners.add(owner)
+
+    def _persist(self, entry: _OwnedEmployeeConversation, snapshot: EmployeeChatSnapshot) -> None:
+        if not entry.history_retained or self._persistence is None:
+            return
+        conversation = snapshot.conversation
+        try:
+            self._persistence.save_conversation(
+                owner_id=entry.owner,
+                conversation_id=conversation.id,
+                created_at=entry.created_at,
+                record={
+                "created_at": entry.created_at.isoformat(),
+                "employee": {
+                    "id": entry.employee.id, "name": entry.employee.name,
+                    "role": entry.employee.role,
+                },
+                "agent": {
+                    "id": entry.agent.id, "name": entry.agent.name,
+                    "role": entry.agent.role, "provider_id": entry.agent.provider_id,
+                    "model_id": entry.agent.model_id,
+                    "supports_streaming": entry.agent.supports_streaming,
+                },
+                "conversation": {
+                    "id": conversation.id,
+                    "status": conversation.status.value,
+                    "messages": [{
+                        "id": item.id, "role": item.role.value,
+                        "content": item.content, "status": item.status.value,
+                    } for item in conversation.messages],
+                },
+                },
+            )
+        except Exception:
+            raise ChatStorageError("Conversation history could not be saved; inspect its status before resending") from None
 
     def _assert_assignment(self, entry: _OwnedEmployeeConversation) -> None:
         try:
@@ -217,6 +347,8 @@ class OwnedEmployeeChatService:
         if len(text.encode("utf-8")) > self.MAX_MESSAGE_BYTES:
             raise ValueError("Message exceeds byte limit")
         with self._access(owner, identifier) as entry:
+            if entry.read_only:
+                raise ChatConflict("Recovered history is read-only; start a new conversation to continue")
             with self._agent_request(entry.agent.id):
                 self._assert_assignment(entry)
                 conversation = self._chat.get_conversation(identifier)
@@ -250,6 +382,7 @@ class OwnedEmployeeChatService:
                 self._chat.add_message(
                     identifier, user_id, MessageRole.USER, text
                 )
+                self._persist_current(entry, identifier)
                 try:
                     reply = self._orchestrator.run_agent(entry.agent.id, prompt)
                     if not isinstance(reply, str) or not reply.strip():
@@ -260,11 +393,13 @@ class OwnedEmployeeChatService:
                     self._chat.transition_message(
                         identifier, user_id, MessageStatus.FAILED
                     )
+                    self._persist_current(entry, identifier)
                     raise
                 except Exception:
                     self._chat.transition_message(
                         identifier, user_id, MessageStatus.FAILED
                     )
+                    self._persist_current(entry, identifier)
                     raise RuntimeError(
                         "Individual chat response failed; no automatic retry occurred"
                     ) from None
@@ -277,10 +412,13 @@ class OwnedEmployeeChatService:
                 self._chat.transition_message(
                     identifier, reply_id, MessageStatus.COMPLETED
                 )
+                self._persist_current(entry, identifier)
                 return EmployeeChatSnapshot(
                     self._chat.get_conversation(identifier),
                     entry.employee,
                     entry.agent,
+                    history_retained=entry.history_retained,
+                    read_only=entry.read_only,
                 )
 
     def stream(
@@ -296,6 +434,8 @@ class OwnedEmployeeChatService:
         if len(text.encode("utf-8")) > self.MAX_MESSAGE_BYTES:
             raise ValueError("Message exceeds byte limit")
         with self._access(owner, identifier) as entry:
+            if entry.read_only:
+                raise ChatConflict("Recovered history is read-only; start a new conversation to continue")
             if not entry.agent.supports_streaming:
                 raise ChatUnavailable("The assigned provider does not support response streaming")
             with self._agent_request(entry.agent.id):
@@ -324,6 +464,7 @@ class OwnedEmployeeChatService:
                     raise ValueError("Prompt exceeds byte limit")
                 user_id, reply_id = uuid4().hex, uuid4().hex
                 self._chat.add_message(identifier, user_id, MessageRole.USER, text)
+                self._persist_current(entry, identifier)
                 output = []
                 output_bytes = 0
                 try:
@@ -344,6 +485,7 @@ class OwnedEmployeeChatService:
                     self._chat.transition_message(
                         identifier, user_id, MessageStatus.FAILED
                     )
+                    self._persist_current(entry, identifier)
                     raise
                 except Exception:
                     raise RuntimeError(
@@ -361,18 +503,35 @@ class OwnedEmployeeChatService:
                 self._chat.transition_message(
                     identifier, reply_id, MessageStatus.COMPLETED
                 )
+                self._persist_current(entry, identifier)
                 yield {
                     "type": "complete",
                     "snapshot": EmployeeChatSnapshot(
                         self._chat.get_conversation(identifier),
                         entry.employee,
                         entry.agent,
+                        history_retained=entry.history_retained,
+                        read_only=entry.read_only,
                     ),
                 }
 
     def close(self, owner: str, identifier: str) -> EmployeeChatSnapshot:
         with self._access(owner, identifier) as entry:
+            if entry.read_only:
+                raise ChatConflict("Recovered history is read-only; delete it or start a new conversation")
             conversation = self._chat.close_conversation(identifier)
+            self._persist(entry, EmployeeChatSnapshot(
+                conversation, entry.employee, entry.agent,
+                history_retained=entry.history_retained,
+            ))
             return EmployeeChatSnapshot(
-                conversation, entry.employee, entry.agent
+                conversation, entry.employee, entry.agent,
+                history_retained=entry.history_retained,
             )
+
+    def _persist_current(self, entry: _OwnedEmployeeConversation, identifier: str) -> None:
+        self._persist(entry, EmployeeChatSnapshot(
+            self._chat.get_conversation(identifier), entry.employee, entry.agent,
+            history_retained=entry.history_retained,
+            read_only=entry.read_only,
+        ))

@@ -1,6 +1,6 @@
 from .connection import get_connection
 
-CURRENT_CONFIGURATION_VERSION = 2
+CURRENT_CONFIGURATION_VERSION = 3
 
 
 def initialize_database() -> None:
@@ -225,8 +225,56 @@ def initialize_database() -> None:
             )
         """)
 
-        # Version zero is the legacy additive schema. Keep its existing records
-        # and publish the migrated version only after every DDL/DML step succeeds.
+        # Task 184: additive operator-state records. Each domain stores its own
+        # versioned JSON payload so existing in-memory/domain validation remains
+        # authoritative. The enclosing SQLite transaction makes schema upgrade
+        # rollback atomic; no secrets or active resource allocations are stored.
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS operator_positions (
+                corporation_id TEXT NOT NULL,
+                position_id TEXT NOT NULL,
+                record_json TEXT NOT NULL CHECK(json_valid(record_json)),
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (corporation_id, position_id)
+            )
+        """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS operator_resource_limits (
+                corporation_id TEXT PRIMARY KEY,
+                limits_json TEXT NOT NULL CHECK(json_valid(limits_json)),
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS operator_task_proposals (
+                corporation_id TEXT NOT NULL,
+                owner_id TEXT NOT NULL,
+                proposal_id TEXT NOT NULL,
+                conversation_id TEXT NOT NULL,
+                digest TEXT NOT NULL,
+                fingerprint TEXT NOT NULL,
+                summary_json TEXT NOT NULL CHECK(json_valid(summary_json)),
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                state TEXT NOT NULL CHECK(state IN ('prepared', 'consumed', 'expired', 'restart-invalidated')),
+                PRIMARY KEY (corporation_id, proposal_id)
+            )
+        """)
+        connection.execute("CREATE INDEX IF NOT EXISTS operator_proposals_owner_expiry ON operator_task_proposals(corporation_id, owner_id, expires_at)")
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS operator_conversations (
+                corporation_id TEXT NOT NULL,
+                owner_id TEXT NOT NULL,
+                conversation_id TEXT NOT NULL,
+                conversation_json TEXT NOT NULL CHECK(json_valid(conversation_json)),
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                PRIMARY KEY (corporation_id, conversation_id)
+            )
+        """)
+        connection.execute("CREATE INDEX IF NOT EXISTS operator_conversations_owner_expiry ON operator_conversations(corporation_id, owner_id, expires_at)")
+
+        # Publish the migrated version only after every additive DDL/DML step succeeds.
         connection.execute(f"PRAGMA user_version = {CURRENT_CONFIGURATION_VERSION}")
         connection.commit()
 

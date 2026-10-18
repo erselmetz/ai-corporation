@@ -85,6 +85,52 @@ class EmployeeChatService:
         self._sessions[conversation_id] = session
         return self._summary(session)
 
+    def restore_conversation(
+        self,
+        conversation_id: str,
+        *,
+        employee_id: str,
+        agent_id: str,
+        status: ConversationStatus,
+        messages: tuple[tuple[str, MessageRole, str, MessageStatus], ...],
+    ) -> ChatConversationSummary:
+        """Rehydrate a validated, read-only history snapshot after restart."""
+        self._validate_id(conversation_id, "Conversation")
+        self._validate_id(employee_id, "Employee")
+        self._validate_id(agent_id, "Agent")
+        if not isinstance(status, ConversationStatus) or not isinstance(messages, tuple):
+            raise ValueError("Stored conversation state is invalid")
+        if conversation_id in self._sessions:
+            raise ValueError("Conversation already exists")
+        conversation = Conversation(conversation_id)
+        seen = set()
+        for item in messages:
+            if (not isinstance(item, tuple) or len(item) != 4
+                    or not isinstance(item[1], MessageRole)
+                    or not isinstance(item[3], MessageStatus)):
+                raise ValueError("Stored message state is invalid")
+            message_id, role, content, message_status = item
+            if message_id in seen:
+                raise ValueError("Stored conversation contains duplicate messages")
+            seen.add(message_id)
+            message = Message(message_id, role, content)
+            if message_status in (MessageStatus.COMPLETED, MessageStatus.FAILED):
+                message.transition(message_status)
+            conversation.add_message(message)
+        if status is ConversationStatus.CLOSED:
+            if any(message.status is MessageStatus.PENDING for message in conversation.messages):
+                raise ValueError("Closed conversation cannot contain pending messages")
+            conversation.close()
+        self._sessions[conversation_id] = _ChatSession(
+            conversation, ChatTarget(agent_id=agent_id, employee_id=employee_id)
+        )
+        return self._summary(self._sessions[conversation_id])
+
+    def discard_restored_conversation(self, conversation_id: str) -> None:
+        """Remove a not-yet-exposed in-memory session after failed recovery."""
+        self._sessions.pop(conversation_id, None)
+        self._context.pop(conversation_id, None)
+
     def get_conversation(self, conversation_id: str) -> ChatConversationSummary:
         return self._summary(self._get_session(conversation_id))
 

@@ -221,6 +221,8 @@ class EmployeeChatResponse(BaseModel):
     conversation: EmployeeChatConversationResponse
     employee: EmployeeChatIdentityResponse
     agent: EmployeeChatAgentResponse
+    history_retained: bool = False
+    read_only: bool = False
 
 
 class EmployeeChatListItemResponse(BaseModel):
@@ -228,6 +230,8 @@ class EmployeeChatListItemResponse(BaseModel):
     employee: EmployeeChatIdentityResponse
     agent: EmployeeChatAgentResponse
     status: Literal["open", "closed"]
+    history_retained: bool = False
+    read_only: bool = False
 
 
 class EmployeeChatListResponse(BaseModel):

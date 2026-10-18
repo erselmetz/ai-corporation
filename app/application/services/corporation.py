@@ -174,8 +174,13 @@ class CorporationApplicationService:
             raise TypeError("tool_registry must be a ToolRegistry or None")
         self._orchestrator = orchestrator
         employees = getattr(orchestrator, "employees", None)
+        self._operator_state_store = None
+        if corporation is not None:
+            from .operator_state_store import OperatorStateStore
+            self._operator_state_store = OperatorStateStore(corporation.id)
         self._positions = PositionRegistry(
-            employees if isinstance(employees, EmployeeRegistry) else None
+            employees if isinstance(employees, EmployeeRegistry) else None,
+            persistence=self._operator_state_store,
         )
         self._tool_registry = tool_registry
         if capability_authorization_service is None:
@@ -759,11 +764,33 @@ class CorporationApplicationService:
         )
 
     def resource_manager(self, limits=None):
-        from app.resources import ResourceManager
+        from app.resources import ModelLimit, ProviderLimit, ResourceLimits, ResourceManager
         if self._resource_manager is None:
+            if limits is None and self._operator_state_store is not None:
+                stored = self._operator_state_store.load_resource_limits()
+                if stored is not None:
+                    try:
+                        limits = ResourceLimits(
+                            stored["global_slots"],
+                            tuple(ProviderLimit(item["provider_id"], item["slots"])
+                                  for item in stored["providers"]),
+                            tuple(ModelLimit(item["provider_id"], item["model_id"], item["slots"])
+                                  for item in stored["models"]),
+                        )
+                    except (KeyError, TypeError, ValueError):
+                        raise RuntimeError("Stored resource limits failed validation") from None
             if limits is None:
                 raise RuntimeError("Resource limits are not configured")
-            self._resource_manager = ResourceManager(limits, self._orchestrator.providers)
+            manager = ResourceManager(limits, self._orchestrator.providers)
+            if self._operator_state_store is not None:
+                self._operator_state_store.save_resource_limits({
+                    "global_slots": limits.global_slots,
+                    "providers": [{"provider_id": item.provider_id, "slots": item.slots}
+                                  for item in limits.providers],
+                    "models": [{"provider_id": item.provider_id, "model_id": item.model_id,
+                                "slots": item.slots} for item in limits.models],
+                })
+            self._resource_manager = manager
             from .controlled_execution import ControlledExecution
             self._controlled_execution = ControlledExecution(self._orchestrator, self._resource_manager)
         elif limits is not None:
@@ -960,8 +987,14 @@ class CorporationApplicationService:
         with self._chat_task_proposal_lock:
             if self._chat_task_proposals is None:
                 from .chat_task_proposals import ChatTaskProposalService
-                self._chat_task_proposals = ChatTaskProposalService(self)
+                self._chat_task_proposals = ChatTaskProposalService(
+                    self, persistence=self._operator_state_store
+                )
             return self._chat_task_proposals
+
+    def operator_state_store(self):
+        """Expose the local persistence boundary to application services only."""
+        return self._operator_state_store
 
     def owned_employee_chat(self):
         """Return the principal-owned Employee chat facade for this app run."""
@@ -978,6 +1011,7 @@ class CorporationApplicationService:
                     self._orchestrator.providers,
                     self._orchestrator,
                     owned_chat.agent_request,
+                    persistence=self._operator_state_store,
                 )
             return self._owned_employee_chat
 

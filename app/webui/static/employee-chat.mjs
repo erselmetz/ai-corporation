@@ -83,6 +83,8 @@ export function mountEmployeeChat({
   const newButton = byId("individual-chat-new");
   const refreshButton = byId("individual-chat-refresh");
   const closeButton = byId("individual-chat-close");
+  const deleteHistoryButton = byId("individual-chat-delete-history");
+  const retainHistory = byId("individual-chat-retain");
   const stopDisplayButton = byId("individual-chat-stop-display");
   let stopDisplay = null;
   let employees = [];
@@ -91,13 +93,15 @@ export function mountEmployeeChat({
   let busy = false;
 
   function controls() {
-    const open = current?.conversation.status === "open";
+    const open = current?.conversation.status === "open" && current?.read_only !== true;
     const uncertain = current?.conversation.messages.some((item) => item.status === "pending");
     employeeSelect.disabled = busy;
     conversationSelect.disabled = busy || !conversations.length;
     newButton.disabled = busy || !employeeSelect.value;
     refreshButton.disabled = busy;
     closeButton.disabled = busy || !open;
+    deleteHistoryButton.disabled = busy || current?.history_retained !== true;
+    retainHistory.disabled = busy;
     message.disabled = busy || !open || uncertain;
     byId("individual-chat-send").disabled =
       busy || !open || uncertain
@@ -154,6 +158,10 @@ export function mountEmployeeChat({
       `Agent ${snapshot.agent.name} (${snapshot.agent.id}) · ` +
       `${snapshot.agent.provider_id}/${snapshot.agent.model_id} · ` +
       `${snapshot.conversation.status}`;
+    retainHistory.checked = snapshot.history_retained === true;
+    if (snapshot.read_only === true) {
+      setState(state, "Recovered retained history is read-only. Start a new conversation to continue; this turn was not replayed.");
+    }
     consentPanel.hidden = !isGeminiProvider(snapshot.agent.provider_id);
     consent.checked = false;
     if (snapshot.conversation.messages.some((item) => item.status === "pending")) {
@@ -245,7 +253,11 @@ export function mountEmployeeChat({
       if (!validSnapshot(snapshot)) throw new Error("Invalid conversation response.");
       current = snapshot;
       renderHistory(snapshot);
-      setState(state, "Conversation loaded.");
+      if (snapshot.read_only === true) {
+        setState(state, "Recovered retained history is read-only. Start a new conversation to continue; this turn was not replayed.");
+      } else {
+        setState(state, "Conversation loaded.");
+      }
       return true;
     } catch (error) {
       current = null;
@@ -268,13 +280,15 @@ export function mountEmployeeChat({
     try {
       const snapshot = await request("/api/employee-chat/conversations", {
         method: "POST",
-        body: { employee_id: employeeSelect.value },
+        body: { employee_id: employeeSelect.value, history_opt_in: retainHistory.checked },
       });
       if (!validSnapshot(snapshot)) throw new Error("Invalid conversation response.");
       current = snapshot;
       await refreshAfterMutation();
       renderHistory(snapshot);
-      setState(state, "New isolated Employee conversation started.");
+      setState(state, snapshot.history_retained
+        ? "Conversation started. Its text is retained unencrypted on this profile until you delete it."
+        : "New isolated Employee conversation started; its text remains in memory for this app run only.");
       return true;
     } catch (error) {
       setState(
@@ -486,7 +500,7 @@ export function mountEmployeeChat({
       busy ||
       !current ||
       current.conversation.status !== "open" ||
-      !confirmImpl("Close this conversation? Its in-memory history will be retained for this app run.")
+      !confirmImpl("Close this conversation? Its current retention choice will remain in effect.")
     ) {
       return false;
     }
@@ -517,12 +531,39 @@ export function mountEmployeeChat({
     }
   }
 
+  async function deleteRetainedHistory() {
+    if (!current?.history_retained || busy
+        || !confirmImpl("Remove this conversation and its locally retained messages from the local database? This cannot be undone.")) return false;
+    busy = true;
+    controls();
+    try {
+      const result = await request(
+        `/api/employee-chat/conversations/${encodeURIComponent(current.conversation.id)}/history`,
+        { method: "DELETE", body: { confirm: true } },
+      );
+      if (result.deleted !== true) throw new Error("History deletion was not confirmed.");
+      current = null;
+      history.replaceChildren();
+      identity.textContent = "";
+      await refreshAfterMutation();
+      setState(state, "Retained conversation history deleted from the local database.");
+      return true;
+    } catch (error) {
+      setState(state, error.status ? errorMessage(error.status) : "History could not be deleted. Refresh and retry.", "error-state");
+      return false;
+    } finally {
+      busy = false;
+      controls();
+    }
+  }
+
   conversationSelect.addEventListener("change", () => {
     loadConversation(conversationSelect.value);
   });
   newButton.addEventListener("click", startConversation);
   refreshButton.addEventListener("click", refresh);
   closeButton.addEventListener("click", closeConversation);
+  deleteHistoryButton.addEventListener("click", deleteRetainedHistory);
   form.addEventListener("submit", send);
   stopDisplayButton.addEventListener("click", () => stopDisplay?.());
   consent.addEventListener("change", controls);
@@ -535,6 +576,7 @@ export function mountEmployeeChat({
     startConversation,
     send,
     closeConversation,
+    deleteRetainedHistory,
   };
 }
 

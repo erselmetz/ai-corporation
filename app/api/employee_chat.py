@@ -4,7 +4,7 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator
 from starlette.responses import StreamingResponse
 
 from app.application.services.owned_chat import (
@@ -12,6 +12,7 @@ from app.application.services.owned_chat import (
     ChatConsentRequired,
     ChatLimit,
     ChatNotFound,
+    ChatStorageError,
     ChatUnavailable,
 )
 from app.providers.base import ProviderCapacityError, ProviderCapacityUnknown
@@ -33,6 +34,7 @@ router = APIRouter(prefix="/api/employee-chat/conversations")
 class StartRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     employee_id: str = Field(min_length=1, max_length=256)
+    history_opt_in: StrictBool = False
 
     @field_validator("employee_id")
     @classmethod
@@ -55,6 +57,11 @@ class SendRequest(BaseModel):
         return value
 
 
+class DeleteHistoryRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirm: StrictBool
+
+
 def _parse(model, payload: bytes):
     try:
         return model.model_validate_json(payload)
@@ -70,6 +77,8 @@ def _chat_errors():
         raise HTTPException(403, str(error)) from None
     except ChatNotFound:
         raise HTTPException(404, "Conversation or Employee not found") from None
+    except ChatStorageError as error:
+        raise HTTPException(503, str(error)) from None
     except ChatConflict as error:
         raise HTTPException(409, str(error)) from None
     except ChatLimit as error:
@@ -120,6 +129,8 @@ def _snapshot_response(snapshot) -> EmployeeChatResponse:
             model_id=snapshot.agent.model_id,
             supports_streaming=snapshot.agent.supports_streaming,
         ),
+        history_retained=snapshot.history_retained,
+        read_only=snapshot.read_only,
     )
 
 
@@ -140,6 +151,8 @@ def _list_item_response(item) -> EmployeeChatListItemResponse:
             supports_streaming=item.agent.supports_streaming,
         ),
         status=item.status.value,
+        history_retained=item.history_retained,
+        read_only=item.read_only,
     )
 
 
@@ -171,7 +184,8 @@ def start_conversation(
     with _chat_errors():
         return _snapshot_response(
             service.owned_employee_chat().start(
-                principal.identity, body.employee_id
+                principal.identity, body.employee_id,
+                history_opt_in=body.history_opt_in,
             )
         )
 
@@ -281,3 +295,17 @@ def close_conversation(
         return _snapshot_response(
             service.owned_employee_chat().close(principal.identity, identifier)
         )
+
+
+@router.delete("/{identifier}/history")
+def delete_retained_history(
+    identifier: str,
+    body: DeleteHistoryRequest,
+    principal=Depends(require_permission("employee-chat:close")),
+    service=Depends(get_application_service),
+):
+    if body.confirm is not True:
+        raise HTTPException(422, "Explicit confirmation is required to delete retained chat history")
+    with _chat_errors():
+        service.owned_employee_chat().delete_history(principal.identity, identifier)
+        return {"deleted": True}

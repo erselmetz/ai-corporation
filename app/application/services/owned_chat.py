@@ -29,6 +29,10 @@ class ChatUnavailable(ValueError):
     pass
 
 
+class ChatStorageError(RuntimeError):
+    pass
+
+
 class ChatConsentRequired(ValueError):
     pass
 

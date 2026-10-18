@@ -3012,7 +3012,11 @@ export const post100Tasks = [
     "category": "Phase U - Persistence and Migration",
     "status": "planned",
     "dependsOn": [176],
-    "decisions": [],
+    "decisions": [
+      "Inventory and lifecycle: positions are corporation-scoped, retain revision history, and follow the existing deactivate/remove rules; resource limits are corporation-scoped configuration, while active allocations and allocation-ID history remain process-local; Task proposals are owner-scoped, retain only a bounded review summary and replay-prevention metadata, expire under the existing 15-minute TTL, and are invalidated at startup; Employee conversations are owner-scoped and persisted only after explicit per-conversation opt-in, remain until explicit deletion, and recover read-only with uncertain pending turns never replayed.",
+      "Schema version 3 adds SQLite tables for positions, resource limits, proposals, and retained Employee conversations. DDL is additive in the existing SQLite transaction; failed migrations roll back without advancing the schema version. No unencrypted sidecar backup or automatic app-data cleanup is added.",
+      "Packaged Windows data location is %LOCALAPPDATA%\\ERSELMETZ AI\\projects\\ai_corporation.db because Electron starts the backend with the app-data folder as its working directory. Retained Employee chat is unencrypted; credentials, provider objects, active allocations, and retrieved proposal context are excluded."
+    ],
     "acceptance": [
       "Inventory each named in-memory domain record and define schema, owner scope, lifecycle, retention, and restart behavior before migration.",
       "Use versioned additive migrations with backup/rollback behavior; preserve fail-closed ownership and authorization after restart.",
@@ -3021,8 +3025,13 @@ export const post100Tasks = [
     "outOfScope": ["No cloud sync, cross-user sharing, credential persistence beyond existing policy, or automatic destructive cleanup."],
     "risks": ["Schema migrations can lose or expose private data; persistent proposals can become stale or replayable."],
     "manualVerification": ["On a clean Windows profile, restart between creation and use, inspect data location/permissions, exercise migration recovery and verify stale proposals remain unusable."],
-    "area": "P37", "checkpoint": null, "validation": [],
-    "limitations": ["Depends on Task 176's per-user configuration/data foundation; persistence behavior must be verified on Windows."]
+    "area": "P37", "checkpoint": null,
+    "validation": [
+      "Implementation progress: schema version 3 persistently stores corporation positions and configured global/provider/model slot limits, owner-scoped proposal summaries and replay state, and only explicitly retained Employee conversations. Recreated services restore positions and limits; active resource reservations remain empty; retained Employee histories are owner-filtered, read-only after restart, and require explicit deletion. Prepared proposals are invalidated at startup and cannot be confirmed or replayed.",
+      "Validation: full Python suite 1,311 passed / 5 skipped / 0 failed (2 existing deprecation warnings); browser modules 220 passed; public documentation tests 17 passed; Electron tests 24 passed. Python compileall, Employee-chat browser regression, JavaScript syntax, and git diff --check passed. Focused deterministic tests cover restart recovery, owner isolation, opt-in retention, confirmed deletion, proposal invalidation, active-slot reset, schema versioning, and migration rollback.",
+      "No live Ollama/Gemini call, credential, download, cloud sync, or telemetry was used."
+    ],
+    "limitations": ["Task remains planned pending Task 176 clean-profile Windows acceptance and Task 184 manual verification of per-user data location/permissions, restart between creation and use, and migration recovery. The Windows filesystem ACL, installed-package path, and recovery UX were not verified in a fresh Windows user profile. SQLite content is unencrypted; retained chat requires explicit opt-in and remains until the owner deletes it."]
   },
   {
     "number": 185,

@@ -20,6 +20,7 @@ After setup, the app assigns the existing Coordinator and opens a conversation. 
 - Local owner authentication, permission-checked APIs, and a loopback-only desktop backend.
 - Coordinator and individual Employee chat, with explicit cloud consent for Gemini turns.
 - Provider/model configuration, Task and Project management, organization and workflow maps, memory, and operator settings.
+- Local SQLite persistence for corporate positions and configured slot limits; pending proposals become unusable after restart, and Employee chat retention is owner-opt-in and read-only after restart.
 - Explicit local Ollama Task dispatch under its existing confirmation and capacity rules. Gemini remains chat-only for that dispatch path.
 - SQLite persistence for supported configuration and Task data. Gemini credentials are excluded from SQLite and backups.
 
@@ -27,7 +28,9 @@ These features are scoped foundations. Provider registration, a model name, or c
 
 ## Known limits and roadmap status
 
-Tasks 1–174 are recorded as complete except Tasks 134 and 170, which remain deferred and incomplete. Task 177 is complete after a real local Ollama turn demonstrated the answer trace and retrieved source; this single turn does not establish general answer or citation quality. Task 178 is complete after the corrected packaged Windows app passed native-window resize checks across the Next.js and Python routes, including the narrow navigation toggle and first-run transition. Task 182's reviewed local tools and Task 183's visible chat plan/trace have implementation progress but remain planned pending manual owner checks. Task 176 remains planned pending clean-profile Windows acceptance; Task 175 remains planned until the setup journey is accepted and representative usability/accessibility evidence is gathered. Task 179 (this docs sync) is complete. Tasks 180–189 are planned; Task 190 is design-only. See [the roadmap](docs/roadmap.html) and [all task records](docs/tasks.html).
+Tasks 1–174 are recorded as complete except Tasks 134 and 170, which remain deferred and incomplete. Task 177 is complete after a real local Ollama turn demonstrated the answer trace and retrieved source; this single turn does not establish general answer or citation quality. Task 178 is complete after the corrected packaged Windows app passed native-window resize checks across the Next.js and Python routes, including the narrow navigation toggle and first-run transition. Tasks 182–184 have implementation progress but remain planned pending their manual acceptance; Task 184 also depends on Task 176's clean-profile Windows checks. Task 176 remains planned pending clean-profile Windows acceptance; Task 175 remains planned until the setup journey is accepted and representative usability/accessibility evidence is gathered. Task 179 (the docs sync) is complete. Tasks 180–189 are planned; Task 190 is design-only. See [the roadmap](docs/roadmap.html) and [all task records](docs/tasks.html).
+
+On the packaged Windows app, SQLite data is stored at %LOCALAPPDATA%\ERSELMETZ AI\projects\ai_corporation.db. Retained Employee chat is unencrypted, requires an explicit per-conversation choice, stays on this profile until deleted, and is read-only after restart. The owner can review and explicitly delete retained chat in Employee Chat; use the encrypted Backup & Restore page before manually removing the app data folder. Credentials and active resource allocations are not persisted.
 
 The application does not provide distributed Task execution control, automatic cloud fallback, or verified GPU compatibility. Live Gemini calls, Ollama model downloads, and clean-profile Windows installer behavior are not covered by deterministic tests.
 
