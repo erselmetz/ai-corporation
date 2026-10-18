@@ -33,6 +33,25 @@ class OllamaProvider(AIProvider):
     def supports_image_input(self) -> bool:
         return self._is_loopback_endpoint()
 
+    def supports_model_image_input(self, model: str) -> bool | None:
+        """Use Ollama's reported model capabilities; never infer from the model name."""
+        if (not self._is_loopback_endpoint() or not isinstance(model, str)
+                or not model.strip() or len(model.encode("utf-8")) > 256):
+            return None
+        try:
+            payload = self._bounded_request("POST", "/api/show", {"model": model})
+            data = json.loads(payload)
+            capabilities = data.get("capabilities") if isinstance(data, dict) else None
+            if not isinstance(capabilities, list) or len(capabilities) > 32:
+                return None
+            if any(not isinstance(item, str) or len(item) > 64 for item in capabilities):
+                return None
+            return "vision" in capabilities
+        except httpx.HTTPError:
+            return None
+        except (ValueError, TypeError, KeyError, json.JSONDecodeError):
+            return None
+
     def __init__(
         self,
         base_url: str = _DEFAULT_BASE_URL,
@@ -287,6 +306,8 @@ class OllamaProvider(AIProvider):
             if len(data) > ChatImageStore.MAX_IMAGE_BYTES or total > 8 * 1024 * 1024:
                 raise ValueError("Selected images exceed the byte limit")
             encoded.append(base64.b64encode(data).decode("ascii"))
+        if self.supports_model_image_input(model) is not True:
+            raise RuntimeError("Ollama did not report vision support for the selected model; no image was sent")
         try:
             with httpx.Client(timeout=120.0, trust_env=False, follow_redirects=False) as client:
                 with client.stream(

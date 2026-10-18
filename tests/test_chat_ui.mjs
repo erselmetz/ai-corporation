@@ -274,6 +274,7 @@ test("knowledge requires an exact preview and displays returned citations in How
     retrieval: { enabled: true, mode: "lexical-only", query: "Which port?", returned_chunks: [{ source: "private.md" }] },
     sources: [{ source: "private.md", scope: "owner", chunk_reference: "note-1#1", score: 0.5 }],
     truncation: {}, cloud: { provider_used: null, consent_given: false, private_knowledge_sent: false },
+    vision: { used: true, provider: "ollama", model: "vision-model", destination: "local", outcome: "completed", image_count: 1, retention: "discarded_after_one_use" },
     timing: { turn_elapsed_ms: 3 }, outcome: "completed", actions: { tools_run: false, tasks_created: false },
   };
   const preview = { digest: "a".repeat(64), trace: { context_bytes: 12 }, items: [{
@@ -304,6 +305,7 @@ test("knowledge requires an exact preview and displays returned citations in How
   assert.equal(body.knowledge_preview_digest, "a".repeat(64));
   assert.match(ui.elements["chat-history"].textContent, /How I answered/);
   assert.match(ui.elements["chat-history"].textContent, /private.md.*note-1#1/);
+  assert.match(ui.elements["chat-history"].textContent, /Image input: ollama \/ vision-model \(local\) · completed · 1 image\(s\) · discarded_after_one_use/);
 });
 
 test("reviewed tool calls are explicit, one-turn, and routed through non-streaming chat", async () => {

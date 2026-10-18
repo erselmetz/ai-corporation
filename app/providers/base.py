@@ -45,6 +45,10 @@ class AIProvider(ABC):
     def generate_with_images(self, model: str, prompt: str, images, *, ocr_evidence=()) -> str:
         raise ProviderVisionUnsupported("Image input is unsupported by this provider")
 
+    def supports_model_image_input(self, model: str) -> bool | None:
+        """Report explicit model capability; None means the capability is unknown."""
+        return True if self.supports_image_input is True else False
+
     def check_availability(self) -> AvailabilityResult:
         """Return UNKNOWN unless this provider implements a truthful health check."""
         return AvailabilityResult()

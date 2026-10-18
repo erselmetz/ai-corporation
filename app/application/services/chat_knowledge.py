@@ -285,7 +285,8 @@ class ChatKnowledgeService:
 
     def record_turn_trace(self, owner, conversation_id, reply_id, *, coordinator,
                           cloud_provider, cloud_consent, elapsed_ms, retrieval, outcome="completed",
-                          failure=None, tools=None, steps=None, now=None, turn_route=None):
+                          failure=None, tools=None, steps=None, now=None, turn_route=None,
+                          vision=None):
         self._application.owned_chat().authorize_owner(owner, conversation_id)
         if retrieval and "enabled" not in retrieval:
             retrieval = {
@@ -318,6 +319,7 @@ class ChatKnowledgeService:
                       ) and bool(cloud_provider)},
             "timing": {"turn_elapsed_ms": max(0, int(elapsed_ms))},
             "outcome": outcome,
+            "vision": vision or {"used": False},
             "failure": _safe_text(failure, 256) if failure else None,
             "tools": list(tools or []),
             "steps": list(steps or []),

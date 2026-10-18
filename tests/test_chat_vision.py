@@ -24,6 +24,7 @@ def png():
 
 class VisionProvider(AIProvider):
     supports_image_input = True
+    is_local = True
 
     def __init__(self):
         self.calls = []
@@ -101,6 +102,12 @@ def test_image_turn_requires_explicit_per_turn_consent_and_discards_after_use():
         assert provider.calls[0][2][0]._data == png()
         assert client.get(image_path, headers=headers).json()["items"] == []
         assert sent.json()["image_transfer"]["retention"] == "discarded_after_one_use"
+        trace = sent.json()["context_trace"]
+        assert trace["vision"] == {
+            "used": True, "provider": "ollama", "model": "llama3.2:3b",
+            "destination": "local", "outcome": "completed", "image_count": 1,
+            "retention": "discarded_after_one_use",
+        }
         provider.fail = True
         retry_image = client.post(image_path, json={
             "media_type": "image/png", "data_base64": base64.b64encode(png()).decode(),
@@ -111,6 +118,61 @@ def test_image_turn_requires_explicit_per_turn_consent_and_discards_after_use():
         assert failed.status_code == 502
         assert len(provider.calls) == 2
         assert client.get(image_path, headers=headers).json()["items"] == []
+        failed_traces = client.get(f"{root}/{identifier}", headers=headers).json()["context_traces"]
+        failed_vision = next(trace["vision"] for trace in failed_traces.values()
+                             if trace.get("vision", {}).get("outcome") == "failed")
+        assert failed_vision == {
+            "used": True, "provider": "ollama", "model": "llama3.2:3b",
+            "destination": "local", "outcome": "failed", "image_count": 1,
+            "retention": "discarded_after_one_use",
+        }
+
+
+def test_preview_is_owner_scoped_uncached_and_reports_exact_destination():
+    _runtime, _provider, app = setup()
+    with TestClient(app) as client:
+        root = "/api/chat/conversations"
+        owner = {"x-owner": "alice"}
+        identifier = client.post(root, json={"agent_id": "local_worker"}, headers=owner).json()["conversation"]["id"]
+        image = client.post(f"{root}/{identifier}/images", json={
+            "media_type": "image/png", "data_base64": base64.b64encode(png()).decode(),
+        }, headers=owner).json()
+        image_id = image["image"]["id"]
+        listing = client.get(f"{root}/{identifier}/images", headers=owner).json()
+        assert listing["destination"] == {
+            "provider_id": "ollama", "model_id": "llama3.2:3b", "local": True,
+            "state": "supported",
+        }
+        preview = client.get(f"{root}/{identifier}/images/{image_id}/preview", headers=owner)
+        assert preview.status_code == 200 and preview.content == png()
+        assert preview.headers["cache-control"] == "no-store"
+        assert preview.headers["x-content-type-options"] == "nosniff"
+        assert client.get(f"{root}/{identifier}/images/{image_id}/preview", headers={"x-owner": "bob"}).status_code == 404
+
+
+def test_unsupported_model_capability_blocks_image_transfer_without_fallback():
+    class UnsupportedVisionProvider(VisionProvider):
+        def supports_model_image_input(self, model):
+            return False
+
+    runtime = create_corporation_runtime()
+    provider = UnsupportedVisionProvider()
+    runtime.providers.remove("ollama")
+    runtime.providers.register("ollama", provider)
+    app = create_app(application_service=runtime.application_service, authentication_backend=Authentication())
+    with TestClient(app) as client:
+        root = "/api/chat/conversations"
+        headers = {"x-owner": "alice"}
+        identifier = client.post(root, json={"agent_id": "local_worker"}, headers=headers).json()["conversation"]["id"]
+        image_id = client.post(f"{root}/{identifier}/images", json={
+            "media_type": "image/png", "data_base64": base64.b64encode(png()).decode(),
+        }, headers=headers).json()["image"]["id"]
+        result = client.post(f"{root}/{identifier}/messages", json={
+            "text": "Describe", "image_ids": [image_id], "image_consent": True,
+        }, headers=headers)
+        assert result.status_code == 409
+        assert "no image was sent" in result.json()["detail"].lower()
+        assert provider.calls == []
 
 
 def test_selected_image_ocr_is_local_labeled_untrusted_and_never_stored():
@@ -158,6 +220,7 @@ def test_camera_and_image_endpoints_do_not_allow_bad_capture_timestamps_or_unsel
 def test_gemini_image_turn_requires_both_image_and_cloud_consent():
     class CloudVisionProvider(VisionProvider):
         requires_explicit_cloud_consent = True
+        is_local = False
 
     runtime = create_corporation_runtime()
     provider = CloudVisionProvider()
@@ -173,6 +236,8 @@ def test_gemini_image_turn_requires_both_image_and_cloud_consent():
         }, headers=headers).json()["image"]["id"]
         url = f"{root}/{identifier}/messages"
         body = {"text": "Describe", "image_ids": [image_id], "image_consent": True}
+        destination = client.get(f"{root}/{identifier}/images", headers=headers).json()["destination"]
+        assert destination["local"] is False and destination["state"] == "supported"
         cloud_denied = client.post(url, json=body, headers=headers)
         assert cloud_denied.status_code == 403
         assert provider.calls == []

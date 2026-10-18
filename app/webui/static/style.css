@@ -1067,6 +1067,9 @@ textarea::placeholder { color: #8192a6; }
 .chat-advanced > summary { padding: 0.85rem 1rem; color: var(--ui-cyan); cursor: pointer; font-weight: 650; }
 .chat-advanced[open] > section, .chat-advanced[open] > p { margin: 0 0.8rem 0.8rem; }
 .chat-advanced > section.panel { border-color: var(--ui-line); border-radius: 0.55rem; background: rgba(19, 31, 46, 0.72); }
+.chat-image-transfer-preview { display: grid; gap: 0.6rem; margin-block: 0.75rem; padding: 0.75rem; border: 1px solid var(--ui-line); border-radius: 0.55rem; }
+.chat-image-transfer-preview img { display: block; max-width: min(100%, 32rem); max-height: 24rem; object-fit: contain; }
+.chat-image-transfer-preview p { margin-block: 0.35rem; }
 .login-content { width: min(100% - 1.5rem, 34rem); min-height: 0; margin: clamp(1rem, 8vh, 5rem) auto; }
 .login-content > p:not(.eyebrow) { color: #a8bacb; line-height: 1.65; }
 .login-content form { display: grid; gap: 0.75rem; margin: 1.5rem 0 1rem; }

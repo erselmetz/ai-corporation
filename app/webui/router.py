@@ -891,8 +891,9 @@ def coordinator_chat_page():
       <h2 id="chat-images-heading">Temporary images</h2>
       <label for="chat-image-file">Attach JPEG or PNG (up to 2 MiB)</label><input id="chat-image-file" type="file" accept="image/jpeg,image/png">
       <button id="chat-image-upload" type="button">Attach selected image</button><div id="chat-image-list" aria-live="polite"></div>
+      <div id="chat-image-transfer-preview" class="chat-image-transfer-preview" hidden></div>
       <div id="chat-image-consent-panel" hidden>
-        <label><input id="chat-image-consent" type="checkbox"> For this reply only, send the selected image(s) and recent chat context to the configured model provider.</label>
+        <label><input id="chat-image-consent" type="checkbox"> For this reply only, send the selected image(s) and recent conversation context to the provider shown above.</label>
         <label><input id="chat-image-ocr" type="checkbox"> Run optional local OCR and include its text as untrusted image evidence.</label>
       </div>
       <p id="chat-image-status" role="status" aria-live="polite">No temporary images attached.</p>

@@ -351,6 +351,12 @@ export function mountChat({
       ? `Cloud provider: ${cloud.provider_used}; per-turn consent ${cloud.consent_given ? "given" : "not given"}; private knowledge sent ${cloud.private_knowledge_sent ? "yes" : "no"}.`
       : "Cloud provider: none reported for this turn.";
     panel.append(cloudText);
+    const vision = trace.vision || {};
+    if (vision.used === true) {
+      const visionText = documentRef.createElement("p");
+      visionText.textContent = `Image input: ${vision.provider || "provider unknown"} / ${vision.model || "model unknown"} (${vision.destination || "destination unknown"}) · ${vision.outcome || "outcome unknown"} · ${vision.image_count ?? "?"} image(s) · ${vision.retention || "retention unknown"}.`;
+      panel.append(visionText);
+    }
     const timing = documentRef.createElement("p");
     timing.textContent = `Turn duration: ${trace.timing?.turn_elapsed_ms ?? "unknown"} ms · outcome: ${trace.outcome || "unknown"}.`;
     panel.append(timing);

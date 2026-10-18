@@ -102,7 +102,11 @@ class Orchestrator:
             if expected_assignment is not None and (agent.provider, agent.model) != expected_assignment:
                 raise RuntimeError("Agent assignment changed before image execution; request was not sent")
             provider = agent.resolve_provider(self.providers)
-            if getattr(provider, "supports_image_input", False) is not True:
+            model_capability = getattr(provider, "supports_model_image_input", None)
+            supported = model_capability(agent.model) if callable(model_capability) else (
+                getattr(provider, "supports_image_input", False) is True
+            )
+            if supported is not True:
                 raise ProviderVisionUnsupported("The selected provider does not support image input")
             return provider.generate_with_images(agent.model, prompt, images, ocr_evidence=ocr_evidence)
 

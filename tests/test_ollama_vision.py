@@ -10,10 +10,13 @@ PNG = b"\x89PNG\r\n\x1a\n\x00\x00\x00\x00IHDR\x00\x00\x00\x01\x00\x00\x00\x01\x0
 
 
 class Response:
-    def __init__(self, payload): self.payload = payload
+    def __init__(self, payload, status=200): self.payload = payload; self.status = status
     def __enter__(self): return self
     def __exit__(self, *args): return False
-    def raise_for_status(self): pass
+    def raise_for_status(self):
+        if self.status >= 400:
+            import httpx
+            raise httpx.HTTPStatusError("failed", request=None, response=None)
     def iter_bytes(self): yield self.payload
 
 
@@ -24,27 +27,60 @@ class Client:
     def stream(self, method, url, *, json):
         self.request = (method, url, json)
         clients.append(self)
+        if url.endswith("/api/show"):
+            return Response(show_response)
         return Response(b'{"response":"vision result"}')
 
 
 clients = []
+show_response = b'{"capabilities":["completion","vision"]}'
 
 
 def test_ollama_vision_request_is_bounded_and_uses_explicit_selected_images(monkeypatch):
     import app.providers.ollama as module
+    global show_response
     clients.clear()
+    show_response = b'{"capabilities":["completion","vision"]}'
     monkeypatch.setattr(module.httpx, "Client", Client)
     store = ChatImageStore()
     image = store.attach("owner", "chat", PNG, "image/png")
-    provider = OllamaProvider()
+    provider = OllamaProvider("http://localhost:11434")
     assert provider.supports_image_input is True
     assert provider.generate_with_images("vision-model", "describe", (image,)) == "vision result"
-    method, url, payload = clients[0].request
+    method, url, payload = clients[-1].request
     assert method == "POST" and url.endswith("/api/generate")
     assert payload["stream"] is False and payload["model"] == "vision-model"
     assert payload["images"] == [base64.b64encode(PNG).decode("ascii")]
     assert clients[0].options["trust_env"] is False
     assert clients[0].options["follow_redirects"] is False
+
+
+def test_ollama_model_vision_capability_uses_show_metadata_and_unknown_fails_closed(monkeypatch):
+    import app.providers.ollama as module
+    global show_response
+    clients.clear()
+    monkeypatch.setattr(module.httpx, "Client", Client)
+    provider = OllamaProvider("http://localhost:11434")
+    show_response = b'{"capabilities":["completion","vision"]}'
+    assert provider.supports_model_image_input("text-model-named-vision") is True
+    assert clients[-1].request == ("POST", "http://localhost:11434/api/show", {"model": "text-model-named-vision"})
+    show_response = b'{"capabilities":["completion"]}'
+    assert provider.supports_model_image_input("vision-looking-name") is False
+    show_response = b'{"model":"text-only"}'
+    assert provider.supports_model_image_input("text-only") is None
+
+
+def test_ollama_model_vision_capability_requires_loopback_and_bounded_metadata(monkeypatch):
+    import app.providers.ollama as module
+    global show_response
+    clients.clear()
+    monkeypatch.setattr(module.httpx, "Client", Client)
+    provider = OllamaProvider("https://remote.example")
+    assert provider.supports_model_image_input("model") is None
+    assert clients == []
+    provider = OllamaProvider("http://localhost:11434")
+    show_response = b'{"capabilities":' + b'[' + b'"x",' * 100 + b'"vision"]}'
+    assert provider.supports_model_image_input("model") is None
 
 
 def test_ollama_vision_rejects_unbounded_inputs_and_non_loopback_before_network(monkeypatch):

@@ -3349,13 +3349,14 @@ export const post100Tasks = [
     "title": "Opt-in local vision input",
     "description": "Support image input through a local multimodal model with a clear preview showing what is sent and to which provider.",
     "category": "Phase Y - Local Vision",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       180,
       181
     ],
     "decisions": [
-      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed.",
+      "Use the conversation's explicitly configured provider/model for image turns. Ollama vision support is checked from its bounded /api/show capabilities metadata; unsupported or unknown capability fails closed without fallback. A configured cloud provider needs the existing image-specific consent and separate per-turn cloud consent. Task 181 alternate routes remain text-only; Task 180 hardware/profile evidence does not establish image capability or performance."
     ],
     "acceptance": [
       "Require explicit per-image selection and per-turn consent; preview image, selected local provider/model, size, and any preprocessing before send.",
@@ -3369,16 +3370,24 @@ export const post100Tasks = [
       "Images can contain sensitive data; provider choice, retention, and model capability may be unclear."
     ],
     "area": "P41",
-    "checkpoint": null,
-    "validation": [],
+    "checkpoint": "task-189-opt-in-local-vision-input",
+    "validation": [
+      "Added an owner-scoped no-store image preview and transfer summary showing the exact configured provider/model, local or online destination, MIME type, dimensions, original byte size, expiry, and whether local OCR is selected. The original image is sent unchanged; no crop, resize, redaction, or other preprocessing is performed.",
+      "Each image remains unselected until explicitly selected and requires per-turn image consent. Cloud image transfer also requires the separate existing Gemini cloud-consent checkbox. Ollama capability is read on demand from model-reported /api/show capabilities; unsupported or unknown vision support is blocked before image transfer, with no model-name inference or fallback.",
+      "Successful and failed image turns record actual provider/model, local/online destination, outcome, image count, and retention in the existing How I answered trace. Selected attachments remain bounded in process memory and are discarded after one provider attempt; previews are owner-scoped and sent with no-store headers.",
+      "Focused Task 189 and affected regressions: Python 57 passed; browser image/chat/vision modules: 26 passed. Full validation: Python 1,328 passed / 8 skipped / 0 failed (2 deprecation warnings); browser modules 231 passed / 0 failed; Electron 33 passed / 0 failed; public docs 17 passed / 0 failed. Python compilation, JavaScript syntax, and git diff --check passed."
+    ],
     "limitations": [
-      "Requires verified Task 180 hardware guidance and Task 181 consent-based routing; image/model compatibility remains unknown until tested."
+      "No live Ollama model, Gemini account/model, or provider transfer was exercised. Deterministic fakes validate API contracts only and do not prove real model vision quality, compatibility, speed, hardware fit, or provider retention. Gemini capability is declared by its existing adapter; a per-model vision capability catalog is unavailable, so unsupported-model rejection is reported without fallback when the provider responds.",
+      "Image turns use the configured conversation provider/model only; Task 181 alternate routing remains text-only. There is no automatic local-model discovery/selection, model download, or image transformation. Hardware profile guidance is not evidence of model-specific vision support.",
+      "Reproducible follow-up issue: select an alternate route under Task 181, attach/select an image, then send; the API rejects the combination with HTTP 422 because image turns use only the configured coordinator. This is explicit current behavior, not a fallback. A future image-route task should reuse route consent and per-model vision evidence before enabling alternate image destinations.",
+      "No real Windows/browser image preview, screen-reader review, clean-account session, or representative-user evaluation was performed."
     ],
     "automatedVerification": [
-      "AI-run verification: Inspect the preview and trace for local and any separately consented provider path; verify cancel, expiry, unsupported-model, and no-transfer behavior."
+      "AI-run verification: deterministic API/provider and browser UI tests cover owner-scoped no-store previews, local/online destination disclosure, exact MIME/dimensions/size, local OCR disclosure, explicit selection and consent, separate cloud consent, expiry/one-attempt retention, successful and failed vision traces, unsupported and unknown model capability, and no-transfer/no-fallback behavior."
     ],
     "followUpValidation": [
-      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+      "Live loopback Ollama /api/show and actual multimodal inference, cloud Gemini account behavior and retention, representative GPU/CPU hardware cost, real browser preview/accessibility, clean-profile owner permissions, and representative-user comprehension remain unverified enhancement work; fake checks establish contracts only."
     ]
   },
   {
@@ -3421,7 +3430,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and Tasks 171-188 are completed scoped checkpoints except deferred Task 170; Task 189 remains planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and Tasks 171-189 are completed scoped checkpoints except deferred Task 170; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-190, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",

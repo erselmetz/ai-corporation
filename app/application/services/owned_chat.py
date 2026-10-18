@@ -203,6 +203,9 @@ class OwnedChatService:
                             "image_transfer": {
                                 "image_ids": [image.id for image in images],
                                 "provider_id": current.provider,
+                                "model_id": current.model,
+                                "local": getattr(provider, "is_local", False) is True,
+                                "outcome": "completed",
                                 "ocr_regions_included": sum(len(item.regions) for item in ocr_evidence),
                                 "ocr_statuses": [{
                                     "image_id": item.image_id, "status": item.status.value,
@@ -265,6 +268,20 @@ class OwnedChatService:
     def list_images(self, owner, identifier):
         with self._access(owner, identifier):
             return self._image_store.list_for(owner, identifier)
+
+    def image_capability(self, owner, identifier):
+        with self._access(owner, identifier) as entry:
+            probe = getattr(entry.provider, "supports_model_image_input", None)
+            supported = probe(entry.coordinator.model) if callable(probe) else (
+                True if getattr(entry.provider, "supports_image_input", False) is True else False
+            )
+            state = "supported" if supported is True else "unsupported" if supported is False else "unknown"
+            return {
+                "provider_id": entry.coordinator.provider,
+                "model_id": entry.coordinator.model,
+                "local": getattr(entry.provider, "is_local", False) is True,
+                "state": state,
+            }
 
     def selected_images_for_ocr(self, owner, identifier, image_ids):
         with self._access(owner, identifier):

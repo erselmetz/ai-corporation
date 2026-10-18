@@ -9,6 +9,7 @@ import time
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from starlette.responses import Response
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator
 from starlette.responses import StreamingResponse
@@ -227,7 +228,7 @@ def _workflow_steps(retrieval, tools, coordinator, *, retrieval_ms=0,
 def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
                             cloud_provider, cloud_consent, elapsed_ms, auto_context,
                             retrieved, trace_request, now, tools=None, retrieval_ms=0,
-                            answer_ms=None, turn_route=None):
+                            answer_ms=None, turn_route=None, vision=None):
     """Record only a failed/pending user turn; never serialize the raw exception."""
     try:
         record = service.owned_chat().get(owner, identifier)["conversation"]
@@ -255,7 +256,7 @@ def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
             turn_route=turn_route,
             outcome="failed" if message.status.value == "failed" else "unknown",
             failure="Provider or chat runtime did not produce a verified reply; raw diagnostics are omitted.",
-            now=now)
+            now=now, vision=vision)
     except Exception:
         # A diagnostic trace must never replace or disclose the original chat failure.
         return
@@ -517,11 +518,28 @@ def list_images(identifier: str,
                 principal=Depends(require_permission("chat:read")),
                 service=Depends(get_application_service)):
     with chat_errors():
+        capability = service.owned_chat().image_capability(principal.identity, identifier)
         return {
             "items": [item.snapshot() for item in
                       service.owned_chat().list_images(principal.identity, identifier)],
-            "provider_transfer_supported": service.owned_chat().get(principal.identity, identifier).get("image_input_supported", False),
+            "destination": capability,
+            "provider_transfer_supported": capability["state"] == "supported",
         }
+
+
+@router.get("/{identifier}/images/{image_id}/preview")
+def preview_image(identifier: str, image_id: str,
+                  principal=Depends(require_permission("chat:read")),
+                  service=Depends(get_application_service)):
+    with chat_errors():
+        image = service.owned_chat().selected_images_for_ocr(
+            principal.identity, identifier, (image_id,)
+        )[0]
+        return Response(
+            content=image._data,
+            media_type=image.media_type,
+            headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
+        )
 
 
 @router.post("/{identifier}/images")
@@ -534,9 +552,11 @@ def attach_image(identifier: str, payload=Depends(bounded_image_body),
         item = service.owned_chat().attach_image(
             principal.identity, identifier, data, body.media_type
         )
+        capability = service.owned_chat().image_capability(principal.identity, identifier)
         return {
             "image": item.snapshot(),
-            "provider_transfer_supported": service.owned_chat().get(principal.identity, identifier).get("image_input_supported", False),
+            "destination": capability,
+            "provider_transfer_supported": capability["state"] == "supported",
             "message": "Image is attached temporarily; it is sent only when selected and explicitly consented for one chat turn.",
         }
 
@@ -673,9 +693,12 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
             if body.context is not None:
                 raise HTTPException(422, "Image turns cannot include separately retrieved context.")
             owned = service.owned_chat()
-            current_chat = owned.get(principal.identity, identifier)
-            if not current_chat.get("image_input_supported"):
-                raise HTTPException(409, "The configured provider does not support image input.")
+            capability = owned.image_capability(principal.identity, identifier)
+            if capability["state"] != "supported":
+                detail = ("The selected provider/model does not report vision support. No image was sent."
+                          if capability["state"] == "unsupported" else
+                          "Vision support for the selected provider/model could not be verified. No image was sent.")
+                raise HTTPException(409, detail)
             images = owned.selected_images_for_ocr(principal.identity, identifier, tuple(body.image_ids))
             ocr_evidence = ()
             if body.include_local_ocr:
@@ -687,13 +710,24 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                                     image_ids=tuple(body.image_ids),
                                     image_consent=True, ocr_evidence=ocr_evidence)
             except Exception:
+                image_provider, image_model = turn_route or (
+                    current["coordinator"].provider, current["coordinator"].model
+                )
+                remaining = {item.id for item in owned.list_images(principal.identity, identifier)}
+                image_retention = ("still_temporary_until_expiry_or_removal"
+                                   if any(item in remaining for item in body.image_ids)
+                                   else "discarded_after_one_use")
                 _record_unverified_turn(
                     service, knowledge, principal.identity, identifier,
                     current["coordinator"],
-                    current["coordinator"].provider if cloud_requires_consent else None,
+                    image_provider if service.provider_requires_explicit_cloud_consent(image_provider) else None,
                     body.cloud_consent, (time.perf_counter() - started_at) * 1000,
                     None, None, None, now, retrieval_ms=retrieval_ms,
-                    answer_ms=(time.perf_counter() - answer_started_at) * 1000)
+                    answer_ms=(time.perf_counter() - answer_started_at) * 1000,
+                    vision={"used": True, "provider": image_provider, "model": image_model,
+                            "destination": "local" if service.provider_is_local(image_provider) else "online",
+                            "outcome": "failed", "image_count": len(body.image_ids),
+                            "retention": image_retention})
                 raise
             messages = result["conversation"].messages
             reply = next((message for message in reversed(messages)
@@ -707,6 +741,15 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                     retrieval=None,
                     steps=_workflow_steps(None, [], current["coordinator"], retrieval_ms=retrieval_ms,
                                           answer_ms=(time.perf_counter() - answer_started_at) * 1000),
+                    vision={
+                        "used": True,
+                        "provider": result["image_transfer"]["provider_id"],
+                        "model": result["image_transfer"]["model_id"],
+                        "destination": "local" if result["image_transfer"]["local"] else "online",
+                        "outcome": result["image_transfer"]["outcome"],
+                        "image_count": len(result["image_transfer"]["image_ids"]),
+                        "retention": result["image_transfer"]["retention"],
+                    },
                     now=now)}
         else:
             if body.image_consent or body.include_local_ocr:
