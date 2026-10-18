@@ -81,7 +81,8 @@ for (const group of [...taskGroups].reverse()) {
       contractList(details, "Acceptance checks", task.acceptance);
       contractList(details, "Out of scope", task.outOfScope);
       contractList(details, "Risks", task.risks);
-      contractList(details, "Manual verification required", task.manualVerification);
+      contractList(details, "AI-run verification", task.automatedVerification);
+      contractList(details, "Follow-up validation (unverified coverage)", task.followUpValidation);
       contractList(details, "Owner decisions before dependent code", task.decisions);
       if (task.checkpoint) {
         const link = textNode("a", `Verified checkpoint: ${task.checkpoint}`, details);

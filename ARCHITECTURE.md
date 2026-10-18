@@ -1217,7 +1217,7 @@ production readiness. Build and user recovery
 instructions are in [desktop/README.md](desktop/README.md). The Task 126 GUI and
 legacy CLI are independent and are not managed by Electron.
 
-## First-run provider setup (Task 176, implemented; manual acceptance pending)
+## First-run provider setup (Task 176, scoped development acceptance complete)
 
 The packaged desktop can mount owner-protected first-run routes only when
 `desktop_mode` is explicitly enabled. New desktop owner creation initializes a
@@ -1250,13 +1250,19 @@ position registry has no durable lifecycle, and adding one here would require
 separate owner-managed create/update/remove and migration semantics. Task dispatch behavior is unchanged: controlled dispatch still uses
 loopback Ollama only and still requires its existing confirmations. Software
 slot limits do not imply hardware readiness, provider health, or Gemini
-dispatch. Automated deterministic tests do not replace clean Windows-profile
-acceptance. Automated validation passed: full Python 1,270 passed / 6 skipped /
-0 failed, 175 browser-module tests, 16 public-doc tests, and 21 Electron tests.
-Manual clean-profile Windows acceptance has NOT been performed: real Ollama
-installation/download/chat, Gemini chat, DPAPI restart persistence, and recovery
-checks remain pending. Task 176 remains planned until that evidence is recorded.
-Tasks 170 and 175 remain incomplete under their existing status contracts.
+dispatch. The preserved Windows installer passed a packaged smoke using a
+temporary install/app-data profile under the current account: owner setup, an
+existing local-model reply, restart without provider reconfiguration, a second
+chat reply, uninstall data retention, and reinstall recovery. Its SHA-256 and
+the current-user ACL inspection are recorded in `docs/tasks-data.mjs`; the
+artifact's source commit provenance is unavailable. Deterministic tests cover
+Ollama pull progress/cancellation/confirmation/retry, Gemini catalog failure
+redaction, and opt-in DPAPI credential storage. The actual Ollama installer and
+model were not downloaded, and no Gemini key or paid request was used. A clean
+secondary account, live Gemini, and offline-provider recovery remain unverified
+follow-up, not development gates under the revised acceptance policy. Task 176
+is complete for its scoped development contract. Tasks 170 and 175 retain their
+separate incomplete/planned scopes.
 
 ## Optional voice interaction (Task 128)
 
@@ -1514,7 +1520,7 @@ The owner-only `/ui/knowledge` page stores text notes or bounded UTF-8 Markdown,
 
 Successful and failed turns receive bounded process-local structured traces containing the actual Coordinator route, retrieval query/chunks/scores/sources/freshness, truncation, cloud-use and consent state, elapsed time, sanitized failure status, and the absence of Task/Tool actions. Raw exceptions and prompts are excluded. An owner may explicitly request the exact assembled prompt for one Ollama response; it is returned only with that response and is never retained. The accessible default presentation remains the 2D text/details panel. Optional Task 88 web intake and Task 177 Part 4 3D trace visualization are not implemented.
 
-Automated tests use deterministic fake Providers, embeddings, vector storage, and text-PDF fixtures. One scoped local Ollama llama3.2:3b turn was manually checked against a synthetic retained fact; this does not establish real-model citation quality or general model behavior. Task 177 is complete for its scoped contract. Traces and one-turn prompt views do not survive restart; retained notes do. Task 176 clean-profile Windows acceptance remains independently pending.
+Automated tests use deterministic fake Providers, embeddings, vector storage, and text-PDF fixtures. One scoped local Ollama llama3.2:3b turn was manually checked against a synthetic retained fact; this does not establish real-model citation quality or general model behavior. Task 177 is complete for its scoped contract. Traces and one-turn prompt views do not survive restart; retained notes do. Task 176 clean-secondary-account and live-provider coverage remain unverified follow-up and do not block scoped development acceptance.
 
 ## Visible chat workflow scaffolding (Task 183, implementation progress)
 

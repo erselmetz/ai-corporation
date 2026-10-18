@@ -25,8 +25,8 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-190-190");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 190 }, (_, index) => 190 - index));
-  assert.match(elements["roadmap-summary"].textContent, /190 roadmap tasks.*175 completed.*2 deferred and incomplete.*12 planned.*1 design only/);
-  assert.match(elements["next-task"].textContent, /Next: Task 176/);
+  assert.match(elements["roadmap-summary"].textContent, /190 roadmap tasks.*176 completed.*2 deferred and incomplete.*11 planned.*1 design only/);
+  assert.match(elements["next-task"].textContent, /Next: Task 175/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -131,6 +131,9 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.match(readiness.textContent, /never replayed/i);
   assert.match(readiness.textContent, /hardware fit remain UNKNOWN/i);
   assert.match(elements["roadmap-rules"].textContent, /Do not infer approval/);
+  assert.match(elements["roadmap-rules"].textContent, /without required human QA sign-off/);
+  assert.match(elements["roadmap-rules"].textContent, /Do not mark tasks complete by policy change alone/);
+  assert.match(elements["roadmap-rules"].textContent, /Task 190 remains design-only/);
   assert.match(elements["roadmap-rules"].textContent, /identical generated code is not guaranteed/);
 });
 
@@ -142,7 +145,7 @@ test("publishes the completed settings milestone and remaining phases as planned
   assert.match(settings.limitations.join(" "), /installer was not rebuilt/);
   const planned = tasks.filter(task => task.number >= 174);
   assert.deepEqual(planned.map(task => [task.number, task.status]), [
-    [174, "completed"], [175, "planned"], [176, "planned"], [177, "completed"], [178, "completed"], [179, "completed"],
+    [174, "completed"], [175, "planned"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
     [180, "planned"], [181, "planned"], [182, "planned"], [183, "planned"], [184, "planned"], [185, "planned"],
     [186, "planned"], [187, "planned"], [188, "planned"], [189, "planned"], [190, "design_only"],
   ]);
@@ -154,7 +157,9 @@ test("publishes the completed settings milestone and remaining phases as planned
     assert.ok(task.acceptance.length, `Task ${task.number} has acceptance checks`);
     assert.ok(task.outOfScope.length, `Task ${task.number} has exclusions`);
     assert.ok(task.risks.length, `Task ${task.number} has risks`);
-    assert.ok(task.manualVerification.length, `Task ${task.number} has manual checks`);
+    assert.ok(task.automatedVerification.length, `Task ${task.number} has AI-run checks`);
+    assert.equal(task.manualVerification, undefined);
+    assert.ok(task.followUpValidation.length);
   }
   assert.deepEqual(recommendedOrder.map(({ number }) => number), [178, 176, 177, 175, 180, 184, 181, 182, 183, 185, 186, 187, 188, 189, 190]);
   const corporationMap = tasks.find(task => task.number === 172);

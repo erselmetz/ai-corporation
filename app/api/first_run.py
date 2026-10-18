@@ -161,35 +161,34 @@ def ollama_pull(
     if body.confirmed is not True:
         raise HTTPException(409, "Explicit model download confirmation is required")
     pull_service = request.app.state.first_run_ollama_service
+    manifest_digest = body.manifest_digest
+    manifest_bytes = body.manifest_bytes
 
     def stream():
         finished = False
-        try:
-            for line in pull_service.pull(
-                expected_digest=body.manifest_digest,
-                expected_bytes=body.manifest_bytes,
-            ):
-                try:
-                    event = json.loads(line)
-                except ValueError:
-                    yield json.dumps({"event": "error", "message": "Download progress was invalid."}) + "\n"
-                    return
-                if event.get("event") == "complete":
-                    try:
-                        result = _complete_ollama_setup(request, principal, application, pull_service.MODEL_ID)
-                        event = {**event, **result}
-                        finished = True
-                    except HTTPException as error:
-                        yield json.dumps({"event": "error", "message": error.detail}) + "\n"
-                        return
-                    except Exception:
-                        yield json.dumps({"event": "error", "message": "The model is installed, but first-run setup could not be finalized. Retry setup from the local app."}) + "\n"
-                        return
-                yield json.dumps(event, separators=(",", ":")) + "\n"
-            if not finished:
+        for line in pull_service.pull(
+            expected_digest=manifest_digest,
+            expected_bytes=manifest_bytes,
+        ):
+            try:
+                event = json.loads(line)
+            except ValueError:
+                yield json.dumps({"event": "error", "message": "Download progress was invalid."}) + "\n"
                 return
-        finally:
-            del body
+            if event.get("event") == "complete":
+                try:
+                    result = _complete_ollama_setup(request, principal, application, pull_service.MODEL_ID)
+                    event = {**event, **result}
+                    finished = True
+                except HTTPException as error:
+                    yield json.dumps({"event": "error", "message": error.detail}) + "\n"
+                    return
+                except Exception:
+                    yield json.dumps({"event": "error", "message": "The model is installed, but first-run setup could not be finalized. Retry setup from the local app."}) + "\n"
+                    return
+            yield json.dumps(event, separators=(",", ":")) + "\n"
+        if not finished:
+            return
 
     return StreamingResponse(stream(), media_type="application/x-ndjson",
                              headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})

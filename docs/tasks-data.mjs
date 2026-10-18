@@ -2736,8 +2736,8 @@ export const post100Tasks = [
   },
   {
     "number": 175,
-    "title": "End-user usability and accessibility evaluation",
-    "description": "Evaluate the finished user journeys with evidence from beginner setup, everyday chat, operator controls, and organization/knowledge views.",
+    "title": "AI-run usability and accessibility regression evaluation",
+    "description": "Evaluate supported user journeys through reproducible AI-run UI automation, accessibility checks and heuristic review; track representative-user research separately.",
     "category": "Phase L - Multimodal Interface and Usability",
     "status": "planned",
     "dependsOn": [
@@ -2751,8 +2751,8 @@ export const post100Tasks = [
       174
     ],
     "acceptance": [
-      "Run this evaluation only after Tasks 176, 177, and 178 have each completed their documented manual acceptance; record the evidence links before starting representative-owner sessions.",
-      "Test first-run readiness, basic chat, provider/model configuration, permission review, troubleshooting, and navigation with representative new and experienced owners.",
+      "Run after the automated development acceptance of Tasks 176, 177 and 178; link evidence for the exact source or artifact tested.",
+      "Exercise first-run readiness, basic chat, provider/model configuration, permission review, troubleshooting and navigation through scripted beginner and experienced-owner scenarios, without claiming actual representative-user participation.",
       "Evaluate keyboard-only use, screen-reader semantics, responsive layouts, contrast, reduced motion, and understandable loading/empty/error/denied states.",
       "Clearly communicate that app-managed capability packs are unavailable; do not present pack installation or management as a supported user journey.",
       "Record reproducible findings, severity, limitations, and verified follow-up fixes; do not claim usability or accessibility conformance without evidence."
@@ -2763,7 +2763,8 @@ export const post100Tasks = [
       "Do not evaluate or claim the deferred Task 134 capability-pack lifecycle."
     ],
     "decisions": [
-      "Task 134 is deferred and excluded from the supported user journeys; the UI must describe packs as unavailable until their trust and loading boundaries are implemented."
+      "Task 134 is deferred and excluded from the supported user journeys; the UI must describe packs as unavailable until their trust and loading boundaries are implemented.",
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
     ],
     "area": "P28",
     "checkpoint": null,
@@ -2773,9 +2774,12 @@ export const post100Tasks = [
       "Focused UI regressions: 31 Python tests and 15 voice/safety browser-module tests passed; full browser-module suite: 206 passed; Electron tests: 17 passed; Next.js static production build and TypeScript checks passed; public documentation tests: 16 passed; update-manifest tests: 6 passed; git diff --check passed."
     ],
     "limitations": [
-      "No representative new or experienced owner participated. The first acceptance criterion is incomplete; Task 175 remains planned and must not be represented as completed.",
+      "No representative new or experienced owner participated. Task 175 remains planned until its revised AI-run acceptance matrix and evidence are recorded; user research is optional follow-up, not a development gate.",
       "Keyboard navigation and screen-reader semantics were reviewed in code and automated checks, but no assistive technology session or independent accessibility audit was performed. Responsive breakpoints and reduced-motion rules were inspected, not tested across physical devices or every viewport.",
       "No usability or accessibility conformance claim is made. The full Python suite has a pre-existing collection SyntaxError in tests/test_automation_traces.py and two known unrelated model-assignment failures when that file is excluded."
+    ],
+    "followUpValidation": [
+      "Representative-owner studies, real assistive-technology sessions and physical-device coverage remain unverified; automated completion makes no usability or accessibility conformance claim."
     ]
   },
   {
@@ -2783,7 +2787,7 @@ export const post100Tasks = [
     "title": "Zero-config first run and project cleanup",
     "description": "Add an owner-controlled Windows first-run path from password setup to Coordinator Chat using either local Ollama or Google Gemini, while preserving existing authentication, consent, and provider boundaries.",
     "category": "Phase M - First-run Setup and Project Cleanup",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       104,
       105,
@@ -2813,22 +2817,31 @@ export const post100Tasks = [
     "decisions": [
       "The ordinary Gemini-key policy is memory-only. Restart persistence is available only if the owner explicitly opts in to current-Windows-user DPAPI protection; without that opt-in, the key must be re-entered after process restart.",
       "Configured slots enable only the pre-existing controlled-dispatch behavior for eligible pending Tasks routed to loopback Ollama. Gemini remains chat-only for controlled dispatch under the existing contract.",
-      "Task 175 remains planned until representative owner and assistive-technology/device evaluation is completed; Task 176 implementation does not substitute for that evidence.",
-      "MIT licensing is not authorized until the owner explicitly confirms the license choice."
+      "Task 175 remains planned until its AI-run evaluation is recorded; Task 176 implementation does not substitute for that evidence.",
+      "MIT licensing is not authorized until the owner explicitly confirms the license choice.",
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
     ],
     "area": "P29",
-    "checkpoint": null,
+    "checkpoint": "task-176-zero-config-first-run-ai-acceptance",
     "validation": [
       "Implementation work in the worktree has automated validation: full Python suite 1,293 passed / 3 skipped / 0 failed (2 deprecation warnings); browser modules, public docs, and Electron suites: 257 passed / 0 failed (216 + 17 + 24).",
       "Additional checks passed: static Next.js production build and TypeScript checks, Python compilation, frozen-backend build, installed-package smoke against a separately built Windows installer, JSON/JavaScript syntax checks, and git diff --check. The live official Ollama release and model-manifest preview returned bounded metadata with an exact digest; no installer/model download or paid Gemini request was made.",
       "Partial installed-package acceptance (2026-10-17): built and installed the current Windows x64 package into temporary install and LOCALAPPDATA directories under the current Windows account. Set the owner password, chose Ollama, explicitly selected the already-installed llama3.2:3b model, and received a real local chat reply. Restart required the owner password but did not repeat provider setup; a new Coordinator conversation produced another local reply. Uninstall retained owner data and reinstall recovered it. This was not a separate clean Windows user profile and did not exercise app-managed Ollama installation/model download or Gemini.",
-      "Current-source package acceptance (2026-10-18): Next.js static production build and TypeScript checks passed; PyInstaller and Windows x64 installer builds succeeded. The current installer was installed and exercised in temporary install/app-data directories: owner setup, selection of an already-installed Ollama model, a real local Coordinator reply, restart without repeating provider setup, uninstall retention, and reinstall recovery passed. This is still the current Windows account, not a separate clean Windows user profile."
+      "Current-source package acceptance (2026-10-18): Next.js static production build and TypeScript checks passed; PyInstaller and Windows x64 installer builds succeeded. The current installer was installed and exercised in temporary install/app-data directories: owner setup, selection of an already-installed Ollama model, a real local Coordinator reply, restart without repeating provider setup, uninstall retention, and reinstall recovery passed. This is still the current Windows account, not a separate clean Windows user profile.",
+      "Re-run packaged Windows acceptance (2026-10-18): the preserved installer `ERSELMETZ-AI-Setup-0.1.0-win-x64.exe` (162,986,424 bytes; SHA-256 `C550611C90C70DBEB58B888C0B88F027D8AEF4C459BC9A65486DD9EB376C732B`) passed `desktop/scripts/smoke-installer.py`: fresh owner setup, existing local llama3.2:3b reply, restart without repeating setup, second chat reply, uninstall data retention and reinstall recovery. The smoke used a temporary install and app-data profile under the current Windows account; source commit provenance for this preserved artifact is unavailable.",
+      "Windows OS ACL inspection used PowerShell `Get-Acl` on `%LOCALAPPDATA%\\ERSELMETZ AI`, its `projects` directory, and `projects\\ai_corporation.db`: current user owns each and has FullControl; inherited CodexSandboxUsers access is ReadAndExecute/Synchronize; SYSTEM and Administrators have FullControl. Task 184 separately verifies isolated app-data across actual Python process restart. No clean secondary Windows account was used.",
+      "Focused Task 176 tests: 18 passed, covering fake Ollama manifest/progress/cancel/recheck, explicit pull confirmation and Retry, Gemini catalog/error sanitization and assignment behavior, plus current-user DPAPI round-trip for explicitly retained credentials.",
+      "Final automated validation (2026-10-18): full Python suite 1,319 passed / 5 skipped / 0 failed (2 deprecation warnings); browser modules 220 passed; public docs 17 passed; Electron 24 passed. Packaged Windows smoke, Python compilation, JavaScript syntax checks, and git diff --check passed."
     ],
     "limitations": [
       "Live paid Gemini calls, model inference, Ollama installation, and large model downloads are not required for deterministic tests and must remain owner-triggered integration actions.",
-      "Clean-profile Windows acceptance remains pending. The current-source package smoke verified owner setup, an already-installed Ollama model, a real local reply, restart with provider setup retained, uninstall retention, and reinstall recovery, but used temporary app-data under the existing Windows account. Pending: a separate clean Windows user profile; packaged installer preview followed by explicitly confirmed Ollama installation and model download/progress/cancel/recheck; Gemini key/catalog confirmation, cloud-turn approval and reply, and DPAPI restart persistence; live stopped/offline Ollama recovery with Retry; malformed and rejected Gemini key errors with secret redaction. No Gemini key is configured here, and no paid request, installer download, or model download was made.",
-      "Task completion requires truthful Windows packaging and clean-profile evidence; automated fakes alone do not establish that every Windows machine, Ollama runtime, GPU, or provider account will work.",
-      "Task 170 remains deferred and incomplete; Task 175 remains planned and incomplete."
+      "Broader clean-profile/live-provider integration coverage remains unverified follow-up; it does not require human QA sign-off. The current-source package smoke verified owner setup, an already-installed Ollama model, a real local reply, restart with provider setup retained, uninstall retention, and reinstall recovery, but used temporary app-data under the existing Windows account. Pending: a separate clean Windows user profile; packaged installer preview followed by explicitly confirmed Ollama installation and model download/progress/cancel/recheck; Gemini key/catalog confirmation, cloud-turn approval and reply, and DPAPI restart persistence; live stopped/offline Ollama recovery with Retry; malformed and rejected Gemini key errors with secret redaction. No Gemini key is configured here, and no paid request, installer download, or model download was made.",
+      "Development completion requires truthful automated Windows packaging and isolated-state evidence; automated fakes alone do not establish that every Windows machine, Ollama runtime, GPU, or provider account will work.",
+      "Task 170 remains deferred and incomplete. Task 175 remains planned for its separate scripted usability/accessibility evaluation. Real Gemini account/catalog/chat, real Ollama installer/model download, offline/stopped-provider retries, separate clean-account coverage, assistive technology and representative-user research remain unverified follow-up; no paid request, installer download or model download was made for this checkpoint."
+    ],
+    "automatedVerification": [
+      "Run packaged Windows setup, restart, data-retention and recovery against isolated app-data, inspect installed paths and ACLs using OS APIs, and record artifact/source identity. A separate Windows account or VM is optional follow-up coverage.",
+      "Exercise Ollama installation/pull progress/cancel/recheck and Gemini catalog/consent/DPAPI/error paths through controlled adapters and UI automation. Record real integrations separately; credentials, paid calls and downloads are not prerequisites for deterministic acceptance."
     ]
   },
   {
@@ -2837,7 +2850,15 @@ export const post100Tasks = [
     "description": "Add owner-opt-in retrieval over explicitly selected retained knowledge, usable local note intake, and a factual per-turn How I answered panel.",
     "category": "Phase N - Auto-RAG and Answer Tracing",
     "status": "completed",
-    "dependsOn": [62, 63, 66, 73, 103, 110, 130],
+    "dependsOn": [
+      62,
+      63,
+      66,
+      73,
+      103,
+      110,
+      130
+    ],
     "acceptance": [
       "Coordinator Chat keeps a default-off per-conversation Use my knowledge switch and retrieves only from owner-selected exact scopes, rechecking current owner access, expiry, withdrawal, and revision for every turn.",
       "Retrieval combines the existing deterministic lexical path with optional configured semantic candidates; it ranks, deduplicates near-identical chunks, and caps the result to at most 3 selected scopes, 5 chunks, and 1,800 UTF-8 context bytes with truthful truncation evidence.",
@@ -2857,7 +2878,7 @@ export const post100Tasks = [
       "Owner notes use a dedicated owner scope in the existing SQLite-backed memory system and are included in encrypted backups only with the existing explicit private-data option.",
       "Semantic retrieval remains optional and uses the existing Task 130 provider when configured; lexical retrieval remains available without it.",
       "Traces are bounded and process-local. Exact prompts are returned only in the explicit local one-turn response and are never retained for later inspection.",
-      "Task 177 was completed after an isolated real local-model acceptance demonstrated a retrieved source in the factual answer trace; deterministic fake-provider tests alone were not treated as that evidence. Task 176 clean-profile Windows acceptance remains independently pending."
+      "Task 177 was completed after an isolated real local-model acceptance demonstrated a retrieved source in the factual answer trace; deterministic fake-provider tests alone were not treated as that evidence. Task 176 clean-secondary-account and live-provider coverage remain unverified follow-up and do not block scoped development acceptance."
     ],
     "area": "P30",
     "checkpoint": "task-177-auto-rag-trace",
@@ -2870,7 +2891,7 @@ export const post100Tasks = [
       "Semantic retrieval tests use deterministic embedding/vector fakes. They do not establish real embedding relevance or quality. Scanned PDFs are unsupported; PDF intake extracts text only.",
       "Traces and exact one-turn prompt views do not survive app restart. Persisted notes and SQLite memory do; derived semantic storage depends on the configured local index provider.",
       "Optional Task 88 web ingestion and the former Task 177 Part 4 3D globe are not implemented. The globe is now a separate planned Task 186. The current trace remains 2D and accessible.",
-      "Task 176 clean-profile Windows acceptance remains NOT performed. Task 177 is complete for its scoped contract; broader citation quality remains unverified."
+      "Task 176 is complete for its scoped contract; clean-secondary-account and live-provider coverage remain unverified follow-up. Task 177 is complete for its scoped contract; broader citation quality remains unverified."
     ]
   },
   {
@@ -2879,7 +2900,11 @@ export const post100Tasks = [
     "description": "Keep navigation reachable across the Python UI and Next.js desktop routes, including narrow-window layouts and first-run transitions.",
     "category": "Phase O - Navigation Reliability",
     "status": "completed",
-    "dependsOn": [126, 159, 176],
+    "dependsOn": [
+      126,
+      159,
+      176
+    ],
     "acceptance": [
       "Reproduce the missing-navigation flow and record the root cause before changing code.",
       "Render navigation from the shared application shell on every applicable route; keep a visible sidebar on wide windows and an accessible menu toggle on narrow windows.",
@@ -2911,16 +2936,22 @@ export const post100Tasks = [
     "dependsOn": [],
     "acceptance": [
       "The task page, home, roadmap, and changelog render status from docs/tasks-data.mjs; a public-docs regression fails when any task is missing from any required view.",
-      "Tasks 175-178 show their honest implementation and acceptance state; Task 175 is ordered after manual acceptance of Tasks 176-178.",
-      "Tasks 180-190 are published as planned or design-only contracts with goals, acceptance, exclusions, dependencies, risks, and manual verification.",
+      "Tasks 175-178 show their honest implementation and acceptance state; Task 175 is ordered after automated development acceptance of Tasks 176-178.",
+      "Tasks 180-190 are published as planned or design-only contracts with goals, acceptance, exclusions, dependencies, risks, and AI-run verification.",
       "The recommended order and rationale are derived from the authoritative roadmap and no future runtime capability is implemented."
     ],
-    "outOfScope": ["No runtime changes, Task 177 implementation, installer changes, provider calls, downloads, or permission changes."],
+    "outOfScope": [
+      "No runtime changes, Task 177 implementation, installer changes, provider calls, downloads, or permission changes."
+    ],
     "decisions": [],
     "area": "P32",
     "checkpoint": "task-179-roadmap-sync",
-    "validation": ["Public documentation tests: 17 passed, 0 failed. Browser UI modules: 180 passed, 0 failed. Electron tests: 23 passed, 0 failed. Full Python suite: 1,282 passed, 8 skipped, 0 failed (2 warnings). `git diff --check`, JavaScript syntax checks, and update-manifest JSON parse passed."],
-    "limitations": ["At the original Task 179 checkpoint, the docs commit had not yet been pushed. It is now present on origin/main (HEAD and origin/main match); live-site deployment was not independently checked in this follow-up, and this checkpoint does not prove any pending manual acceptance."]
+    "validation": [
+      "Public documentation tests: 17 passed, 0 failed. Browser UI modules: 180 passed, 0 failed. Electron tests: 23 passed, 0 failed. Full Python suite: 1,282 passed, 8 skipped, 0 failed (2 warnings). `git diff --check`, JavaScript syntax checks, and update-manifest JSON parse passed."
+    ],
+    "limitations": [
+      "At the original Task 179 checkpoint, the docs commit had not yet been pushed. It is now present on origin/main (HEAD and origin/main match); live-site deployment was not independently checked in this follow-up, and this checkpoint does not prove any pending manual acceptance."
+    ]
   },
   {
     "number": 180,
@@ -2928,23 +2959,39 @@ export const post100Tasks = [
     "description": "Report directly observed CPU, GPU, RAM, and disk facts with source and freshness, then recommend an Ollama model size with an explicit CPU-use warning where applicable.",
     "category": "Phase Q - Hardware-Aware Local Models",
     "status": "planned",
-    "dependsOn": [176],
-    "decisions": [],
+    "dependsOn": [
+      176
+    ],
+    "decisions": [
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
+    ],
     "acceptance": [
       "Show each detected CPU/GPU/RAM/disk value with its observation source and timestamp; unsupported or unavailable fields remain UNKNOWN.",
       "Provide a bounded Ollama model-size recommendation with stated assumptions and a clear warning when inference is expected to run on CPU.",
       "Do not claim a model will fit or run well without verified capacity evidence; provide a manual confirmation before any separate download flow."
     ],
-    "outOfScope": ["No model download, install, pull, automatic selection, GPU benchmark, cloud routing, or hardware telemetry upload."],
-    "risks": ["OS inventory may be incomplete or stale; recommendation thresholds can mislead across quantization/runtime variants."],
-    "manualVerification": ["On representative CPU-only and GPU systems, compare displayed inventory against OS tools and inspect whether recommendation uncertainty and CPU warnings are understandable."],
-    "area": "P33", "checkpoint": null,
+    "outOfScope": [
+      "No model download, install, pull, automatic selection, GPU benchmark, cloud routing, or hardware telemetry upload."
+    ],
+    "risks": [
+      "OS inventory may be incomplete or stale; recommendation thresholds can mislead across quantization/runtime variants."
+    ],
+    "area": "P33",
+    "checkpoint": null,
     "validation": [
-      "Implemented; automated validation passed; manual verification pending. The owner-protected on-demand profile reports local CPU, GPU, RAM, and Ollama destination disk facts with source, timestamp, and UNKNOWN states; the size guidance is bounded, warns about CPU use, and never claims model fit or starts downloads.",
+      "Historical checkpoint: implemented; automated validation passed; manual verification was pending under the previous contract. Current completion uses the revised AI-run acceptance policy. The owner-protected on-demand profile reports local CPU, GPU, RAM, and Ollama destination disk facts with source, timestamp, and UNKNOWN states; the size guidance is bounded, warns about CPU use, and never claims model fit or starts downloads.",
       "Automated validation: full Python suite 1,311 passed / 5 skipped / 0 failed (2 deprecation warnings); browser modules 220 passed; public docs 17 passed; Electron tests 24 passed. Python compilation, focused hardware-profile tests, JavaScript syntax, and git diff --check passed.",
       "Prior recorded manual check covered one GPU-equipped Windows host: CPU/GPU names, physical RAM, and destination free space matched OS counters; usable VRAM and Ollama accelerator use remained UNKNOWN. This was not a CPU-only test."
     ],
-    "limitations": ["Task remains planned pending Task 176 clean-profile Windows acceptance and manual comparison on representative CPU-only and GPU systems. CPU-only host behavior and broader recommendation accuracy remain unverified. The profile reports no GPU memory amount because the available WMI AdapterRAM field is not trustworthy."]
+    "limitations": [
+      "Task remains planned pending evidence review against the revised AI-run acceptance contract. No human QA sign-off is required. CPU-only host behavior and broader recommendation accuracy remain unverified. The profile reports no GPU memory amount because the available WMI AdapterRAM field is not trustworthy."
+    ],
+    "automatedVerification": [
+      "Compare host inventory with independent OS counters where available; use CPU-only, GPU, missing and stale inventory fixtures to verify UNKNOWN states and bounded guidance. Automate UI checks for uncertainty and CPU warnings; broader physical-host coverage remains unverified follow-up."
+    ],
+    "followUpValidation": [
+      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ]
   },
   {
     "number": 181,
@@ -2952,18 +2999,36 @@ export const post100Tasks = [
     "description": "Keep simple prompts on the configured default local model and suggest a larger local model or Gemini for harder prompts only after per-turn owner consent.",
     "category": "Phase R - Reviewed Model Routing",
     "status": "planned",
-    "dependsOn": [177, 180],
-    "decisions": [],
+    "dependsOn": [
+      177,
+      180
+    ],
+    "decisions": [
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
+    ],
     "acceptance": [
       "Keep the configured local model as the default route for simple prompts; explain any suggested alternate and its reason as an uncertain suggestion.",
       "Require explicit per-turn owner consent before sending any prompt to another local model or Gemini; show provider/model and data destination before confirmation.",
       "Declining, unavailable checks, or uncertain classification preserve the original route without retries, fallback, or assignment mutation."
     ],
-    "outOfScope": ["No automatic provider/model selection, ranking claims, silent cloud use, hidden prompt transfer, or Agent assignment changes."],
-    "risks": ["Prompt difficulty is uncertain; a routing suggestion can be wrong and cloud consent must remain distinct per turn."],
-    "manualVerification": ["Use simple and difficult prompts with local-only and Gemini configurations; verify the suggestion is explainable, opt-in, and creates no transfer when declined."],
-    "area": "P34", "checkpoint": null, "validation": [],
-    "limitations": ["Requires Task 177 RAG/trace and Task 180 hardware facts; no route-quality claim is implied."]
+    "outOfScope": [
+      "No automatic provider/model selection, ranking claims, silent cloud use, hidden prompt transfer, or Agent assignment changes."
+    ],
+    "risks": [
+      "Prompt difficulty is uncertain; a routing suggestion can be wrong and cloud consent must remain distinct per turn."
+    ],
+    "area": "P34",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [
+      "Requires Task 177 RAG/trace and Task 180 hardware facts; no route-quality claim is implied."
+    ],
+    "automatedVerification": [
+      "AI-run verification: Use simple and difficult prompts with local-only and Gemini configurations; verify the suggestion is explainable, opt-in, and creates no transfer when declined."
+    ],
+    "followUpValidation": [
+      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ]
   },
   {
     "number": 182,
@@ -2971,19 +3036,38 @@ export const post100Tasks = [
     "description": "Expose explicit bounded calculator and owner-authorized lookup in one selected top-level corporation_docs file to chat with visible trace entries. Web search is excluded from this task.",
     "category": "Phase S - Reviewed Tool Use",
     "status": "planned",
-    "dependsOn": [177],
-    "decisions": ["Owner-approved scope is local calculator and selected corporation_docs lookup only; web search is excluded."],
+    "dependsOn": [
+      177
+    ],
+    "decisions": [
+      "Owner-approved scope is local calculator and selected corporation_docs lookup only; web search is excluded.",
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
+    ],
     "acceptance": [
       "Expose only a bounded arithmetic calculator and exact-file lookup selected from the existing top-level corporation_docs portal; require documentation:read for the file lookup and fail closed for every unsupported tool.",
       "Show each explicitly selected tool call, redacted safe parameters, source, outcome, and elapsed time in the real per-turn trace; label file results as untrusted context.",
       "The implemented calls are read-only. Any future side-effecting tool must require fresh owner confirmation bound to its exact action and deny by default when permission, scope, or result is unknown."
     ],
-    "outOfScope": ["Web search, arbitrary shell, code execution, background crawling, silent downloads, general filesystem access, and unreviewed side effects."],
-    "risks": ["Selected local documentation is untrusted input and may contain prompt injection; sending it to an online provider requires the existing per-turn cloud consent."],
-    "manualVerification": ["In the owner UI, calculate a benign expression and search one selected corporation_docs file; verify the exact source, bounded snippets, and per-turn trace. Verify documentation lookup is denied without documentation:read, an outside file ID is unavailable, web search has no UI path, and no tool changes data."],
-    "area": "P35", "checkpoint": null,
-    "validation": ["Implementation progress: a bounded arithmetic calculator and explicit lookup in one owner-authorized top-level corporation_docs file are wired to chat and per-turn traces. Web search is excluded from this task. Automated focused coverage passes; live owner acceptance has not been performed."],
-    "limitations": ["Task remains planned pending manual owner verification; web search is outside the approved scope. No arbitrary local-file scope or side-effecting tool is exposed. There is no side-effect approval dialog because the approved tools are read-only."]
+    "outOfScope": [
+      "Web search, arbitrary shell, code execution, background crawling, silent downloads, general filesystem access, and unreviewed side effects."
+    ],
+    "risks": [
+      "Selected local documentation is untrusted input and may contain prompt injection; sending it to an online provider requires the existing per-turn cloud consent."
+    ],
+    "area": "P35",
+    "checkpoint": null,
+    "validation": [
+      "Implementation progress: a bounded arithmetic calculator and explicit lookup in one owner-authorized top-level corporation_docs file are wired to chat and per-turn traces. Web search is excluded from this task. Automated focused coverage passes; live owner acceptance has not been performed."
+    ],
+    "limitations": [
+      "Task remains planned pending evidence review against the revised AI-run acceptance contract. No human QA sign-off is required. No arbitrary local-file scope or side-effecting tool is exposed. There is no side-effect approval dialog because the approved tools are read-only."
+    ],
+    "automatedVerification": [
+      "AI-run verification: In the owner UI, calculate a benign expression and search one selected corporation_docs file; verify the exact source, bounded snippets, and per-turn trace. Verify documentation lookup is denied without documentation:read, an outside file ID is unavailable, web search has no UI path, and no tool changes data."
+    ],
+    "followUpValidation": [
+      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ]
   },
   {
     "number": 183,
@@ -2991,19 +3075,38 @@ export const post100Tasks = [
     "description": "Break complex chat requests into visible plan, retrieve, and answer steps, recording actual events in the per-turn trace.",
     "category": "Phase T - Transparent Task Scaffolding",
     "status": "planned",
-    "dependsOn": [177, 182],
-    "decisions": [],
+    "dependsOn": [
+      177,
+      182
+    ],
+    "decisions": [
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
+    ],
     "acceptance": [
       "Display a bounded plan before work and record each real plan, retrieval, tool, and answer step with source, status, and timing.",
       "Allow the owner to cancel before each separately authorized action; no step is represented as completed without an observed outcome.",
       "Failures and skipped steps remain visible, and retrieved/tool content is marked untrusted and cannot grant authority."
     ],
-    "outOfScope": ["No hidden multi-agent work, automatic retries/replay, dependency enforcement, or autonomous approval."],
-    "risks": ["A plan may omit work or overstate progress unless trace states reflect actual operations."],
-    "manualVerification": ["Compare displayed steps and trace with actual provider/tool events for success, cancellation, denial, timeout, and partial failure."],
-    "area": "P36", "checkpoint": null,
-    "validation": ["Implementation progress: Coordinator Chat displays a bounded deterministic workflow plan and requires confirmation before retrieval, selected reviewed tools, or provider work. Per-turn traces now report actual plan, retrieval, tool, and answer steps with sources, outcomes, and timings; failures and skipped steps remain distinguishable. Focused automated tests pass for pre-work cancellation, real retrieval/tool trace order, and sanitized provider failure. Manual owner verification has not been performed."],
-    "limitations": ["Task remains planned pending manual owner verification of plan clarity, cancellation, and success/failure trace accuracy. Task 182 remains planned pending its separate manual tool acceptance. No hidden agent execution, automatic retry, replay, task creation, or additional authority is introduced."]
+    "outOfScope": [
+      "No hidden multi-agent work, automatic retries/replay, dependency enforcement, or autonomous approval."
+    ],
+    "risks": [
+      "A plan may omit work or overstate progress unless trace states reflect actual operations."
+    ],
+    "area": "P36",
+    "checkpoint": null,
+    "validation": [
+      "Implementation progress: Coordinator Chat displays a bounded deterministic workflow plan and requires confirmation before retrieval, selected reviewed tools, or provider work. Per-turn traces now report actual plan, retrieval, tool, and answer steps with sources, outcomes, and timings; failures and skipped steps remain distinguishable. Focused automated tests pass for pre-work cancellation, real retrieval/tool trace order, and sanitized provider failure. Manual owner verification has not been performed."
+    ],
+    "limitations": [
+      "Task remains planned pending evidence review against the revised AI-run acceptance contract. No human QA sign-off is required. Task 182 remains planned pending its separate automated acceptance evidence review. No hidden agent execution, automatic retry, replay, task creation, or additional authority is introduced."
+    ],
+    "automatedVerification": [
+      "AI-run verification: Compare displayed steps and trace with actual provider/tool events for success, cancellation, denial, timeout, and partial failure."
+    ],
+    "followUpValidation": [
+      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ]
   },
   {
     "number": 184,
@@ -3011,27 +3114,42 @@ export const post100Tasks = [
     "description": "Persist currently in-memory positions, resource limits, proposals, and conversations with explicit migrations and a documented local data location.",
     "category": "Phase U - Persistence and Migration",
     "status": "planned",
-    "dependsOn": [176],
+    "dependsOn": [
+      176
+    ],
     "decisions": [
       "Inventory and lifecycle: positions are corporation-scoped, retain revision history, and follow the existing deactivate/remove rules; resource limits are corporation-scoped configuration, while active allocations and allocation-ID history remain process-local; Task proposals are owner-scoped, retain only a bounded review summary and replay-prevention metadata, expire under the existing 15-minute TTL, and are invalidated at startup; Employee conversations are owner-scoped and persisted only after explicit per-conversation opt-in, remain until explicit deletion, and recover read-only with uncertain pending turns never replayed.",
       "Schema version 3 adds SQLite tables for positions, resource limits, proposals, and retained Employee conversations. DDL is additive in the existing SQLite transaction; failed migrations roll back without advancing the schema version. No unencrypted sidecar backup or automatic app-data cleanup is added.",
-      "Packaged Windows data location is %LOCALAPPDATA%\\ERSELMETZ AI\\projects\\ai_corporation.db because Electron starts the backend with the app-data folder as its working directory. Retained Employee chat is unencrypted; credentials, provider objects, active allocations, and retrieved proposal context are excluded."
+      "Packaged Windows data location is %LOCALAPPDATA%\\ERSELMETZ AI\\projects\\ai_corporation.db because Electron starts the backend with the app-data folder as its working directory. Retained Employee chat is unencrypted; credentials, provider objects, active allocations, and retrieved proposal context are excluded.",
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
     ],
     "acceptance": [
       "Inventory each named in-memory domain record and define schema, owner scope, lifecycle, retention, and restart behavior before migration.",
       "Use versioned additive migrations with backup/rollback behavior; preserve fail-closed ownership and authorization after restart.",
       "Document the exact per-user data location and offer a safe, confirmed way to inspect and remove retained data where supported."
     ],
-    "outOfScope": ["No cloud sync, cross-user sharing, credential persistence beyond existing policy, or automatic destructive cleanup."],
-    "risks": ["Schema migrations can lose or expose private data; persistent proposals can become stale or replayable."],
-    "manualVerification": ["On a clean Windows profile, restart between creation and use, inspect data location/permissions, exercise migration recovery and verify stale proposals remain unusable."],
-    "area": "P37", "checkpoint": null,
+    "outOfScope": [
+      "No cloud sync, cross-user sharing, credential persistence beyond existing policy, or automatic destructive cleanup."
+    ],
+    "risks": [
+      "Schema migrations can lose or expose private data; persistent proposals can become stale or replayable."
+    ],
+    "area": "P37",
+    "checkpoint": null,
     "validation": [
       "Implementation progress: schema version 3 persistently stores corporation positions and configured global/provider/model slot limits, owner-scoped proposal summaries and replay state, and only explicitly retained Employee conversations. Recreated services restore positions and limits; active resource reservations remain empty; retained Employee histories are owner-filtered, read-only after restart, and require explicit deletion. Prepared proposals are invalidated at startup and cannot be confirmed or replayed.",
       "Validation: full Python suite 1,311 passed / 5 skipped / 0 failed (2 existing deprecation warnings); browser modules 220 passed; public documentation tests 17 passed; Electron tests 24 passed. Python compileall, Employee-chat browser regression, JavaScript syntax, and git diff --check passed. Focused deterministic tests cover restart recovery, owner isolation, opt-in retention, confirmed deletion, proposal invalidation, active-slot reset, schema versioning, and migration rollback.",
       "No live Ollama/Gemini call, credential, download, cloud sync, or telemetry was used."
     ],
-    "limitations": ["Task remains planned pending Task 176 clean-profile Windows acceptance and Task 184 manual verification of per-user data location/permissions, restart between creation and use, and migration recovery. The Windows filesystem ACL, installed-package path, and recovery UX were not verified in a fresh Windows user profile. SQLite content is unencrypted; retained chat requires explicit opt-in and remains until the owner deletes it."]
+    "limitations": [
+      "Task remains planned pending evidence review against the revised AI-run acceptance contract. No human QA sign-off is required. The Windows filesystem ACL, installed-package path, and recovery UX were not verified in a fresh Windows user profile. SQLite content is unencrypted; retained chat requires explicit opt-in and remains until the owner deletes it."
+    ],
+    "automatedVerification": [
+      "Use isolated Windows app-data and real process restarts to verify retained state and unusable stale proposals. Inspect installed data location and ACLs through OS APIs. Inject migration failures, verify rollback and schema version, then exercise recovery and record evidence. Separate clean-account coverage is optional follow-up."
+    ],
+    "followUpValidation": [
+      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ]
   },
   {
     "number": 185,
@@ -3039,18 +3157,35 @@ export const post100Tasks = [
     "description": "Plan signed installation, an opt-in update check, clean uninstall choices, local-only crash reports, and an explicit reset-app-data control.",
     "category": "Phase V - Installation and Recovery",
     "status": "planned",
-    "dependsOn": [176],
-    "decisions": [],
+    "dependsOn": [
+      176
+    ],
+    "decisions": [
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
+    ],
     "acceptance": [
       "Define publisher/signing and artifact verification; update checks are disabled until owner opt-in and never download or install silently.",
       "Offer uninstall choices that explain retained user data and a separate confirmed reset-app-data operation with a recovery warning.",
       "Crash reports stay local, bounded, redacted, and inspectable; no automatic upload or hidden telemetry is added."
     ],
-    "outOfScope": ["No silent updates/downloads, telemetry upload, remote crash reporting, or data deletion without explicit confirmation."],
-    "risks": ["Signing key loss/compromise, incomplete data removal, and diagnostic leakage can harm trust."],
-    "manualVerification": ["Verify signatures on distributed artifacts, opt-in update behavior, uninstall/data-retention choices, local crash report contents, and reset recovery on clean Windows profiles."],
-    "area": "P38", "checkpoint": null, "validation": [],
-    "limitations": ["Depends on Task 176 installer and persisted data model; signing identities and update hosting require owner-controlled choices."]
+    "outOfScope": [
+      "No silent updates/downloads, telemetry upload, remote crash reporting, or data deletion without explicit confirmation."
+    ],
+    "risks": [
+      "Signing key loss/compromise, incomplete data removal, and diagnostic leakage can harm trust."
+    ],
+    "area": "P38",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [
+      "Depends on Task 176 installer and persisted data model; signing identities and update hosting require owner-controlled choices."
+    ],
+    "automatedVerification": [
+      "AI-run verification: Verify signatures on distributed artifacts, opt-in update behavior, uninstall/data-retention choices, local crash report contents, and reset recovery on clean Windows profiles."
+    ],
+    "followUpValidation": [
+      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ]
   },
   {
     "number": 186,
@@ -3058,18 +3193,35 @@ export const post100Tasks = [
     "description": "Move the former optional Part 4 of Task 177 into an independent 3D globe view containing only real recorded entities and relationships.",
     "category": "Phase W - Interactive 3D Map",
     "status": "planned",
-    "dependsOn": [177],
-    "decisions": [],
+    "dependsOn": [
+      177
+    ],
+    "decisions": [
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
+    ],
     "acceptance": [
       "Render only permission-filtered recorded nodes, edges, status, and timestamps; unknown/missing telemetry is shown as unknown and never animated as activity.",
       "Cap nodes, frame rate, pixel ratio, and rendering work; expose measured resource cost and fall back to the existing usable 2D view on WebGL failure or reduced motion.",
       "Provide a keyboard-accessible labeled list with equivalent records and relationships; the visualization is read-only and has no execution authority."
     ],
-    "outOfScope": ["No fabricated nodes/relationships, fake activity pulses, hidden polling, task execution controls, or removal of the 2D/list fallback."],
-    "risks": ["3D rendering can burden local inference and can make provenance or accessibility harder to inspect."],
-    "manualVerification": ["Measure capped rendering on minimum supported hardware during local inference; test WebGL failure, keyboard-only list navigation, reduced motion, and screen reader semantics."],
-    "area": "P39", "checkpoint": null, "validation": [],
-    "limitations": ["Requires Task 177's accepted factual trace and independent performance/accessibility evidence; no live activity source is assumed."]
+    "outOfScope": [
+      "No fabricated nodes/relationships, fake activity pulses, hidden polling, task execution controls, or removal of the 2D/list fallback."
+    ],
+    "risks": [
+      "3D rendering can burden local inference and can make provenance or accessibility harder to inspect."
+    ],
+    "area": "P39",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [
+      "Requires Task 177's accepted factual trace and independent performance/accessibility evidence; no live activity source is assumed."
+    ],
+    "automatedVerification": [
+      "Automate WebGL failure, keyboard list navigation, reduced motion and accessible semantics; measure capped rendering on available hardware. Minimum-device and physical assistive-technology coverage remains unverified follow-up."
+    ],
+    "followUpValidation": [
+      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ]
   },
   {
     "number": 187,
@@ -3077,18 +3229,35 @@ export const post100Tasks = [
     "description": "Add optional local speech-to-text input with a visible microphone indicator and explicit capture controls.",
     "category": "Phase X - Voice Interaction",
     "status": "planned",
-    "dependsOn": [184],
-    "decisions": [],
+    "dependsOn": [
+      184
+    ],
+    "decisions": [
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
+    ],
     "acceptance": [
       "Voice input is disabled by default and uses only an explicitly configured local speech recognition provider unless a later consent contract permits otherwise.",
       "Show an always-visible microphone/capture state, duration limit, permission state, and stop/cancel control while recording or transcribing.",
       "Do not submit recognized text until the owner reviews and explicitly sends it; failures remain bounded and visible."
     ],
-    "outOfScope": ["No always-on listening, background capture, default cloud transcription, or silent model download."],
-    "risks": ["Speech can include sensitive bystander information and local recognition may be inaccurate."],
-    "manualVerification": ["Verify opt-in, OS/browser microphone prompt, visible indicator, stop behavior, transcript review, offline behavior, and no network transfer."],
-    "area": "P40", "checkpoint": null, "validation": [],
-    "limitations": ["Depends on persistence for user controls; local speech model availability and performance need device testing."]
+    "outOfScope": [
+      "No always-on listening, background capture, default cloud transcription, or silent model download."
+    ],
+    "risks": [
+      "Speech can include sensitive bystander information and local recognition may be inaccurate."
+    ],
+    "area": "P40",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [
+      "Depends on persistence for user controls; local speech model availability and performance need device testing."
+    ],
+    "automatedVerification": [
+      "AI-run verification: Verify opt-in, OS/browser microphone prompt, visible indicator, stop behavior, transcript review, offline behavior, and no network transfer."
+    ],
+    "followUpValidation": [
+      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ]
   },
   {
     "number": 188,
@@ -3096,18 +3265,35 @@ export const post100Tasks = [
     "description": "Add optional text-to-speech playback for assistant responses with a clear stop control.",
     "category": "Phase X - Voice Interaction",
     "status": "planned",
-    "dependsOn": [187],
-    "decisions": [],
+    "dependsOn": [
+      187
+    ],
+    "decisions": [
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
+    ],
     "acceptance": [
       "Voice output is disabled by default and uses an explicitly selected device-local voice/provider.",
       "Show playback state and provide a stop button that halts local playback promptly and clears queued speech.",
       "Do not transmit response text to an online voice service without separate explicit per-use consent."
     ],
-    "outOfScope": ["No always-on playback, silent downloads, cloud TTS by default, or claims of universal voice quality."],
-    "risks": ["Spoken responses can expose private content to nearby people; queued speech may outlive view changes."],
-    "manualVerification": ["Verify opt-in, voice selection, stop/queue clearing, restart preference behavior, offline operation, and privacy indicator."],
-    "area": "P40", "checkpoint": null, "validation": [],
-    "limitations": ["Depends on Task 187 controls and Task 184 persistence; voice availability and language quality are device-specific."]
+    "outOfScope": [
+      "No always-on playback, silent downloads, cloud TTS by default, or claims of universal voice quality."
+    ],
+    "risks": [
+      "Spoken responses can expose private content to nearby people; queued speech may outlive view changes."
+    ],
+    "area": "P40",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [
+      "Depends on Task 187 controls and Task 184 persistence; voice availability and language quality are device-specific."
+    ],
+    "automatedVerification": [
+      "AI-run verification: Verify opt-in, voice selection, stop/queue clearing, restart preference behavior, offline operation, and privacy indicator."
+    ],
+    "followUpValidation": [
+      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ]
   },
   {
     "number": 189,
@@ -3115,18 +3301,36 @@ export const post100Tasks = [
     "description": "Support image input through a local multimodal model with a clear preview showing what is sent and to which provider.",
     "category": "Phase Y - Local Vision",
     "status": "planned",
-    "dependsOn": [180, 181],
-    "decisions": [],
+    "dependsOn": [
+      180,
+      181
+    ],
+    "decisions": [
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
+    ],
     "acceptance": [
       "Require explicit per-image selection and per-turn consent; preview image, selected local provider/model, size, and any preprocessing before send.",
       "Use the hardware/profile and consent-based routing contracts; local transfer is the default and any cloud transfer requires distinct explicit confirmation.",
       "Keep image retention bounded and visible, expose the actual provider/model and outcome in the trace, and report unsupported vision models without fallback."
     ],
-    "outOfScope": ["No continuous camera/screen capture, automatic image upload, silent preprocessing, or inference of model capability from its name."],
-    "risks": ["Images can contain sensitive data; provider choice, retention, and model capability may be unclear."],
-    "manualVerification": ["Inspect the preview and trace for local and any separately consented provider path; verify cancel, expiry, unsupported-model, and no-transfer behavior."],
-    "area": "P41", "checkpoint": null, "validation": [],
-    "limitations": ["Requires verified Task 180 hardware guidance and Task 181 consent-based routing; image/model compatibility remains unknown until tested."]
+    "outOfScope": [
+      "No continuous camera/screen capture, automatic image upload, silent preprocessing, or inference of model capability from its name."
+    ],
+    "risks": [
+      "Images can contain sensitive data; provider choice, retention, and model capability may be unclear."
+    ],
+    "area": "P41",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [
+      "Requires verified Task 180 hardware guidance and Task 181 consent-based routing; image/model compatibility remains unknown until tested."
+    ],
+    "automatedVerification": [
+      "AI-run verification: Inspect the preview and trace for local and any separately consented provider path; verify cancel, expiry, unsupported-model, and no-transfer behavior."
+    ],
+    "followUpValidation": [
+      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ]
   },
   {
     "number": 190,
@@ -3134,29 +3338,48 @@ export const post100Tasks = [
     "description": "Design an Open Interpreter-style code-execution capability under a reviewed threat model before any implementation is considered.",
     "category": "Phase Z - Code Execution Design Gate",
     "status": "design_only",
-    "dependsOn": [182],
-    "decisions": [],
+    "dependsOn": [
+      182
+    ],
+    "decisions": [
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
+    ],
     "acceptance": [
       "Publish a threat model and design covering OS sandboxing, per-action owner confirmation bound to exact inputs, explicit filesystem scope, network policy, secret isolation, audit evidence, and a reliable kill switch.",
-      "Review sandbox escape, prompt injection, resource exhaustion, data exfiltration, cancellation, crash recovery, and safe failure scenarios with the owner before implementation can be proposed.",
-      "Keep Task 190 design-only until that review is recorded; this roadmap entry grants no execution capability or authority."
+      "Run an AI security design review covering sandbox escape, prompt injection, resource exhaustion, exfiltration, cancellation, crash recovery and safe failure; record unresolved risks and proposed mitigations.",
+      "Complete only the design deliverable after recorded AI review; Task 190 stays design-only and any runtime implementation requires a separately authorized task."
     ],
-    "outOfScope": ["No code execution, shell/tool adapter, package installation, filesystem write, process spawn, autonomous approval, or runtime permission."],
-    "risks": ["Execution can compromise all data and processes available to the host if isolation or confirmation fails."],
-    "manualVerification": ["A security review must inspect the proposed sandbox on the target OS, verify kill-switch behavior and filesystem/network boundaries, and explicitly approve or reject the design before any implementation task."],
-    "area": "P42", "checkpoint": null, "validation": [],
-    "limitations": ["Design only; no implementation until the threat model and controls are reviewed and approved."]
+    "outOfScope": [
+      "No code execution, shell/tool adapter, package installation, filesystem write, process spawn, autonomous approval, or runtime permission."
+    ],
+    "risks": [
+      "Execution can compromise all data and processes available to the host if isolation or confirmation fails."
+    ],
+    "area": "P42",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [
+      "Design only. AI review completes the design checkpoint; authority for future execution implementation remains a separate owner decision."
+    ],
+    "automatedVerification": [
+      "Review the proposed target-OS isolation, kill switch and filesystem/network boundaries against explicit adversarial scenarios. Record design evidence and unknowns; no execution capability is implemented or approved by this review."
+    ],
+    "followUpValidation": [
+      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-174, 177, and 179 are verified; Task 178 is completed in the recommended acceptance sequence; Tasks 175 and 176 remain planned, Tasks 180-189 are planned, and Task 190 is design-only. Task 176 clean-profile Windows acceptance remains pending; Task 178 native resize was verified in a local packaged Windows build, though no representative-owner usability study was performed; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-174, 176-179 are completed scoped checkpoints; Task 175 and Tasks 180-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
+  "developmentAcceptance": "For Tasks 175-190, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
+  "enhancementLoop": "After scoped development acceptance, continue to the next dependency-ready task without waiting for human QA. Record reproducible defects and regression cases for later review by different AI models; identify model/reviewer when available and never claim independent review that did not occur.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
-  "completion": "Completed requires actual acceptance evidence, truthful limitations/skips, required documentation/update records, and a reviewed task checkpoint. Verify pushed HEAD matches origin/main and the working tree is clean. Never mark complete solely because code exists or an AI says it worked.",
-  "failures": "Preserve work and stop on genuine implementation failures, unclear security invariants, roadmap ambiguity or material architectural decisions. Correct obsolete/incorrect test expectations only when the approved contract proves why; never bypass immutable domain state to get green tests.",
+  "completion": "Completed requires actual acceptance evidence, truthful limitations/skips, required documentation/update records, and a reviewed task checkpoint. A local checkpoint is sufficient for development acceptance; push or deployment is separate and must be authorized and verified when performed. Never mark complete solely because code exists or an AI says it worked.",
+  "failures": "Diagnose and fix implementation failures autonomously, rerun affected checks, and continue. Escalate only unavailable essential evidence, unclear security invariants or unresolved material product/authority decisions; preserve work and record the exact blocker. Correct obsolete/incorrect test expectations only when the approved contract proves why; never bypass immutable domain state to get green tests.",
   "boundaries": "Keep public docs separate from runtime and the Task 53 portal file-based/read-only. Preserve default-deny auth, explicit permissions, ownership, provenance, expiry and legacy domain/execution contracts. Avoid unnecessary dependencies, silent replay/cloud fallback and self-granted authority.",
   "handoff": "Record task number, base/current checkpoint, exact reviewed scope, touched files, commands/results/skips, remaining limitations/decisions, uncommitted work and next task. Different implementations must satisfy the same contract; identical generated code is not guaranteed."
 };
@@ -3200,7 +3423,7 @@ export const recommendedOrder = [
   { number: 178, reason: "Complete the navigation acceptance gate before asking owners to test the setup journey." },
   { number: 176, reason: "Verify fresh-profile install, provider setup, restart, and recovery before building on onboarding." },
   { number: 177, reason: "Accept RAG and factual traces before routing, tools, and visible multi-step work depend on them." },
-  { number: 175, reason: "Evaluate complete user journeys after the setup, navigation, and chat foundations have manual evidence." },
+  { number: 175, reason: "Evaluate complete user journeys after the setup, navigation, and chat foundations have automated acceptance evidence." },
   { number: 180, reason: "Establish truthful hardware observations before recommending local model sizes." },
   { number: 184, reason: "Define durable state and migrations before adding more operator preferences and long-lived workflows." },
   { number: 181, reason: "Use accepted RAG traces and hardware facts to make consent-based route suggestions." },

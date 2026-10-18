@@ -89,6 +89,173 @@ def test_ollama_success_progress_is_not_installation_confirmation():
     assert progress["status"] == "success"
 
 
+def test_ollama_pull_progress_rechecks_installed_inventory_and_uses_only_the_fake_transport(monkeypatch):
+    import json
+
+    digest = "sha256:" + "b" * 64
+    manifest = json.dumps({"schemaVersion": 2, "layers": [{"size": 3072}]}).encode()
+    requests = []
+
+    def dispatch(request):
+        requests.append((request.method, request.url.host, request.url.path))
+        if request.method == "GET":
+            return httpx.Response(200, headers={"docker-content-digest": digest}, content=manifest)
+        return httpx.Response(200, content=(
+            b'{"status":"pulling manifest"}\n'
+            b'{"status":"downloading","completed":1536,"total":3072}\n'
+            b'{"status":"success","completed":3072,"total":3072}\n'
+        ))
+
+    class Provider:
+        def local_model_inventory(self):
+            return type("Inventory", (), {
+                "state": "available", "models": ("llama3.2:3b",),
+                "source": "fake", "reason": None,
+            })()
+
+    def client_factory(**kwargs):
+        return httpx.Client(transport=httpx.MockTransport(dispatch), **kwargs)
+
+    service = OllamaFirstRunService(provider=Provider(), client_factory=client_factory)
+    monkeypatch.setattr(service, "_available_default_space", lambda: 8192)
+    preview = service.preview_model()
+    events = [json.loads(line) for line in service.pull(
+        expected_digest=preview["manifest_digest"], expected_bytes=preview["manifest_bytes"],
+    )]
+
+    assert [event["event"] for event in events] == ["progress", "progress", "progress", "complete"]
+    assert events[1]["completed"] == 1536 and events[1]["total"] == 3072
+    assert events[-1]["message"] == "Ollama confirmed the recommended model is installed."
+    assert requests == [
+        ("GET", "registry.ollama.ai", "/v2/library/llama3.2/manifests/3b"),
+        ("GET", "registry.ollama.ai", "/v2/library/llama3.2/manifests/3b"),
+        ("POST", "127.0.0.1", "/api/pull"),
+    ]
+
+
+def test_ollama_pull_cancel_closes_response_without_claiming_completion(monkeypatch):
+    digest = "sha256:" + "c" * 64
+    manifest = b'{"schemaVersion":2,"layers":[{"size":3072}]}'
+    closed = {"pull": False}
+
+    class PullStream(httpx.SyncByteStream):
+        def __iter__(self):
+            yield b'{"status":"downloading","completed":10,"total":100}\n'
+            yield b'{"status":"downloading","completed":20,"total":100}\n'
+
+        def close(self):
+            closed["pull"] = True
+
+    def dispatch(request):
+        if request.method == "GET":
+            return httpx.Response(200, headers={"docker-content-digest": digest}, content=manifest)
+        return httpx.Response(200, stream=PullStream())
+
+    class Provider:
+        def local_model_inventory(self):
+            return type("Inventory", (), {
+                "state": "available", "models": (), "source": "fake", "reason": None,
+            })()
+
+    service = OllamaFirstRunService(
+        provider=Provider(), client_factory=lambda **kwargs: httpx.Client(
+            transport=httpx.MockTransport(dispatch), **kwargs,
+        ),
+    )
+    monkeypatch.setattr(service, "_available_default_space", lambda: 8192)
+    preview = service.preview_model()
+    stream = service.pull(expected_digest=preview["manifest_digest"], expected_bytes=preview["manifest_bytes"])
+    assert '"event":"progress"' in next(stream)
+    stream.close()
+    assert closed["pull"] is True
+
+
+def test_gemini_first_run_rejects_invalid_key_and_sanitizes_catalog_failure(monkeypatch, database):
+    runtime = create_corporation_runtime()
+    application = create_local_app(
+        password=PASSWORD, origin=ORIGIN,
+        application_service=runtime.application_service,
+        desktop_mode=True, first_owner_run=True,
+    )
+
+    def fail_catalog(_self, _api_key):
+        raise RuntimeError(f"provider rejected secret {KEY}")
+
+    monkeypatch.setattr("app.application.services.local_online_provider.LocalOnlineProviderService.discover", fail_catalog)
+    before = runtime.application_service.get_model_assignment("local_worker")
+    with TestClient(application, base_url=ORIGIN, client=("127.0.0.1", 50105)) as client:
+        headers = login(client)
+        invalid = client.post("/api/local/first-run/gemini/complete", headers=headers,
+                              json={"api_key": "not-a-google-key", "remember_key": False})
+        assert invalid.status_code == 422
+        rejected = client.post("/api/local/first-run/gemini/complete", headers=headers,
+                               json={"api_key": KEY, "remember_key": False})
+        assert rejected.status_code == 503
+        assert KEY not in rejected.text
+        assert "provider rejected secret" not in rejected.text
+    assert runtime.application_service.get_model_assignment("local_worker") == before
+
+
+def test_ollama_first_run_retry_recovers_and_pull_requires_confirmation(database):
+    import json
+
+    runtime = create_corporation_runtime()
+    application = create_local_app(
+        password=PASSWORD, origin=ORIGIN,
+        application_service=runtime.application_service,
+        desktop_mode=True, first_owner_run=True,
+    )
+
+    class Ollama:
+        MODEL_ID = "llama3.2:3b"
+
+        def __init__(self):
+            self.status_calls = 0
+            self.pull_calls = 0
+
+        def status(self):
+            self.status_calls += 1
+            if self.status_calls == 1:
+                return {"state": "unavailable", "service_running": False,
+                        "model_installed": None, "source": None, "reason": "Ollama is not running."}
+            return {"state": "available", "service_running": True,
+                    "model_installed": False, "source": "fake", "reason": None}
+
+        def pull(self, *, expected_digest, expected_bytes):
+            self.pull_calls += 1
+            assert expected_digest == "sha256:" + "e" * 64
+            assert expected_bytes == 3072
+            yield json.dumps({"event": "progress", "completed": 100, "total": 3072}) + "\n"
+            yield json.dumps({"event": "complete", "message": "Fake model installed."}) + "\n"
+
+    ollama = Ollama()
+    application.state.first_run_ollama_service = ollama
+    with TestClient(application, base_url=ORIGIN, client=("127.0.0.1", 50106)) as client:
+        headers = login(client)
+        failed = client.post("/api/local/first-run/ollama/status", headers=headers, json={})
+        recovered = client.post("/api/local/first-run/ollama/status", headers=headers, json={})
+        assert failed.status_code == recovered.status_code == 200
+        assert failed.json()["state"] == "unavailable"
+        assert recovered.json()["state"] == "available"
+        payload = {
+            "confirmed": False,
+            "manifest_digest": "sha256:" + "e" * 64,
+            "manifest_bytes": 3072,
+        }
+        denied = client.post("/api/local/first-run/ollama/pull", headers=headers, json=payload)
+        assert denied.status_code == 409
+        assert ollama.pull_calls == 0
+        payload["confirmed"] = True
+        accepted = client.post("/api/local/first-run/ollama/pull", headers=headers, json=payload)
+        assert accepted.status_code == 200, accepted.text
+        assert '"completed":100' in accepted.text
+        assert '"setup_complete":true' in accepted.text
+        assert ollama.pull_calls == 1
+        assert client.get("/api/local/first-run", headers=headers).json()["completed"] is True
+    assignment = runtime.application_service.get_model_assignment("local_worker")
+    assert (assignment.provider_id, assignment.model_id) == ("ollama", "llama3.2:3b")
+
+
 def test_first_run_routes_exist_only_for_explicit_desktop_mode(database):
     runtime = create_corporation_runtime()
     desktop = create_local_app(password=PASSWORD, origin=ORIGIN,
