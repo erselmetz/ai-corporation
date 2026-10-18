@@ -378,8 +378,15 @@ def test_failed_reply_safe_history_no_retry_and_closure(setup):
         response = client.post(path + "/messages", json={"text": "Hello"}, headers={"x-test-owner": "alice"})
         assert response.status_code == 502
         assert "secret-provider" not in response.text
-        messages = client.get(path, headers={"x-test-owner": "alice"}).json()["conversation"]["messages"]
+        stored = client.get(path, headers={"x-test-owner": "alice"}).json()
+        messages = stored["conversation"]["messages"]
         assert len(messages) == 1 and messages[0]["status"] == "failed"
+        trace = stored["context_traces"][messages[0]["id"]]
+        assert trace["outcome"] == "failed"
+        assert [step["status"] for step in trace["steps"]] == ["completed", "skipped", "skipped", "failed"]
+        assert trace["steps"][-1]["duration_ms"] >= 0
+        assert "secret-provider" not in json.dumps(trace)
+        assert "raw diagnostics are omitted" in trace["failure"]
         assert client.post(path + "/close", headers={"x-test-owner": "alice"}).status_code == 200
         assert len(provider.calls) == 1
 

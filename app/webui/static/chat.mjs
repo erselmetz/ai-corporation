@@ -354,6 +354,11 @@ export function mountChat({
     const timing = documentRef.createElement("p");
     timing.textContent = `Turn duration: ${trace.timing?.turn_elapsed_ms ?? "unknown"} ms · outcome: ${trace.outcome || "unknown"}.`;
     panel.append(timing);
+    if (typeof trace.failure === "string" && trace.failure.trim()) {
+      const failure = documentRef.createElement("p");
+      failure.textContent = `Failure: ${trace.failure}`;
+      panel.append(failure);
+    }
     const actions = documentRef.createElement("p");
     actions.textContent = `Tools run: ${trace.actions?.tools_run === false ? "no" : "unknown"} · Tasks created: ${trace.actions?.tasks_created === false ? "no" : "unknown"}.`;
     panel.append(actions);

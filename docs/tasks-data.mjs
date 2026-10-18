@@ -3090,7 +3090,7 @@ export const post100Tasks = [
     "title": "Visible task scaffolding",
     "description": "Break complex chat requests into visible plan, retrieve, and answer steps, recording actual events in the per-turn trace.",
     "category": "Phase T - Transparent Task Scaffolding",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       177,
       182
@@ -3110,18 +3110,18 @@ export const post100Tasks = [
       "A plan may omit work or overstate progress unless trace states reflect actual operations."
     ],
     "area": "P36",
-    "checkpoint": null,
+    "checkpoint": "task-183-visible-chat-workflow-scaffolding",
     "validation": [
-      "Implementation progress: Coordinator Chat displays a bounded deterministic workflow plan and requires confirmation before retrieval, selected reviewed tools, or provider work. Per-turn traces now report actual plan, retrieval, tool, and answer steps with sources, outcomes, and timings; failures and skipped steps remain distinguishable. Focused automated tests pass for pre-work cancellation, real retrieval/tool trace order, and sanitized provider failure. Manual owner verification has not been performed."
+      "Completed scoped Task 183 after implementation/evidence review. Coordinator Chat displays a bounded deterministic plan and requires owner confirmation before selected retrieval, tools, or provider work. Per-turn traces record observed plan, retrieval, tool and answer outcomes, source labels, and elapsed timing; skipped steps remain skipped, failures remain failed/unknown, and failed-turn trace summaries are visible without raw provider diagnostics. Focused Python trace/tool/chat tests: 37 passed; focused chat UI tests: 24 passed. Full Python suite: 1,329 passed, 3 skipped, 0 failed; browser modules: 223 passed; Electron: 26 passed; public docs: 17 passed. No live Gemini call, live model, or representative-owner study was run."
     ],
     "limitations": [
-      "Task remains planned pending evidence review against the revised AI-run acceptance contract. No human QA sign-off is required. Task 182 remains planned pending its separate automated acceptance evidence review. No hidden agent execution, automatic retry, replay, task creation, or additional authority is introduced."
+      "The plan and trace are deterministic workflow metadata, not model-generated reasoning or proof of answer quality. Traces remain process-local and disappear after restart. No hidden agent execution, automatic retry, replay, Task creation, or additional authority is introduced. Live-provider response behavior remains unverified follow-up and is not claimed by deterministic tests."
     ],
     "automatedVerification": [
-      "AI-run verification: Compare displayed steps and trace with actual provider/tool events for success, cancellation, denial, timeout, and partial failure."
+      "AI-run verification: `python -m pytest -q tests/test_chat_knowledge.py tests/test_owned_chat.py tests/test_reviewed_chat_tools.py` verifies real retrieval+tool+answer trace order and timings plus failed provider step status, sanitized failure, and no retry. `node --test tests/test_chat_ui.mjs` verifies pre-work cancellation (including a selected calculator), failed-turn trace rendering, and no resubmission."
     ],
     "followUpValidation": [
-      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+      "No live Gemini, provider timeout on a real service, or representative-owner workflow study was performed. These remain explicitly unverified follow-up; deterministic tests do not establish live-provider behavior or answer quality and no human QA sign-off is required for scoped development completion."
     ]
   },
   {

@@ -1534,11 +1534,11 @@ Coordinator Chat exposes only a bounded arithmetic calculator and lookup in one 
 
 The UI requires explicit tool selection and displays the selected work in its owner confirmation before sending. Gemini still requires separate per-turn cloud consent before selected documentation content is transferred. No web search, arbitrary file access, shell/code execution, background crawling, downloads, or side effects are exposed. Deterministic API/provider/browser tests passed; no live Gemini transfer was performed. Checkpoint: `task-182-reviewed-chat-tools`.
 
-## Visible chat workflow scaffolding (Task 183, implementation progress)
+## Visible chat workflow scaffolding (Task 183)
 
 Before a chat turn begins, Coordinator Chat shows a bounded deterministic plan and asks the owner to continue or cancel. Cancellation happens before knowledge retrieval, selected reviewed-tool calls, or provider work. Existing exact-scope knowledge preview, per-turn Gemini consent, and capability checks remain authoritative. The app does not create a model-generated plan, Task, background job, or hidden agent workflow.
 
-The per-turn How I answered trace reports the actual plan, retrieval, each selected tool, and answer step with status, source, and elapsed time. Empty or unselected steps are labeled skipped; tool/provider failures remain failed or unknown rather than being reported as completed. Retrieved and tool content remains untrusted. The trace is process-local like the existing Task 177 trace and is not durable across restart. Task 183 remains planned for continued review of plan clarity, cancellation, and success/failure trace accuracy. Task 182's bounded read-only tool contract is complete under deterministic AI-run validation; no live Gemini transfer was performed.
+The per-turn How I answered trace reports the displayed plan, actual retrieval, each selected tool, and answer step with status, source, and elapsed time. Empty or unselected steps are labeled skipped; tool/provider failures remain failed or unknown rather than being reported as completed. Failed-turn summaries are rendered on the failed user message without exposing raw provider diagnostics. Retrieved and tool content remains untrusted. The trace is process-local like the existing Task 177 trace and is not durable across restart. No hidden agent execution, automatic retry/replay, Task creation, or approval bypass is added. Deterministic cancellation, combined retrieval/tool traces, and sanitized provider failure coverage passed. Live Gemini/provider behavior and representative-owner workflow feedback remain unverified. Checkpoint: `task-183-visible-chat-workflow-scaffolding`.
 
 ## Task 184: durable operator state (implementation progress)
 

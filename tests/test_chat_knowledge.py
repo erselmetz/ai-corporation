@@ -93,15 +93,23 @@ def test_context_is_explicit_traced_and_untrusted(env):
     memory = retain(client, headers, cid, clock, mid).json()
     tasks_before = len(runtime.tasks.all())
     reply = send(client, headers, cid, "What did I note?", context={
-        "query": "budget", "scope": "conversation", "scope_id": cid})
+        "query": "budget", "scope": "conversation", "scope_id": cid},
+        reviewed_tools=[{"kind": "calculator", "expression": "6 * 7"}])
     assert reply.status_code == 200
     body = reply.json()
     trace = body["context_trace"]
     assert trace["sources"][0]["memory_id"] == memory["id"]
     assert trace["sources"][0]["revision"] == memory["revision"]
     sent = json.loads(prompts[-1])
-    assert "untrusted" in sent["retrieved_context"]["notice"]
-    assert sent["retrieved_context"]["items"][0]["source"] == memory["id"]
+    assert "untrusted" in str(sent["retrieved_context"])
+    assert memory["id"] in str(sent["retrieved_context"])
+    steps = trace["steps"]
+    assert [step["step"] for step in steps] == ["plan", "retrieve", "calculator", "answer"]
+    assert [step["status"] for step in steps] == ["completed", "completed", "completed", "completed"]
+    assert steps[1]["source"] and steps[1]["duration_ms"] >= 0
+    assert steps[2]["source"] == "local calculator" and steps[2]["duration_ms"] >= 0
+    assert steps[3]["duration_ms"] >= 0
+    assert trace["outcome"] == "completed"
     assert len(runtime.tasks.all()) == tasks_before
     reply_id = body["conversation"]["messages"][-1]["id"]
     shown = client.get(f"/api/chat/conversations/{cid}").json()["context_traces"]

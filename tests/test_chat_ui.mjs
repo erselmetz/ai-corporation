@@ -468,7 +468,18 @@ test("pending send prevents duplicate turns and selection changes; provider fail
   let finish;
   const ui = setup((path) => {
     if (path.endsWith("/messages")) return new Promise(resolve => { finish = resolve; });
-    if (path.endsWith("/conversation")) return response(snapshot([message("user", "failed", "Hello")]));
+    if (path.endsWith("/conversation")) return response({
+      ...snapshot([message("user", "failed", "Hello")]),
+      context_traces: { user: {
+        outcome: "failed", failure: "Provider or chat runtime did not produce a verified reply; raw diagnostics are omitted.",
+        steps: [
+          { step: "plan", status: "completed", source: "bounded configured chat workflow", duration_ms: 0 },
+          { step: "retrieve", status: "skipped", reason: "No separate knowledge retrieval was selected.", duration_ms: 0 },
+          { step: "tools", status: "skipped", reason: "No reviewed tools were selected.", duration_ms: 0 },
+          { step: "answer", status: "failed", source: "configured coordinator", duration_ms: 2 },
+        ], timing: { turn_elapsed_ms: 2 }, actions: { tools_run: false, tasks_created: false },
+      } },
+    });
     return null;
   });
   await ui.controller.initialLoad;
@@ -485,6 +496,8 @@ test("pending send prevents duplicate turns and selection changes; provider fail
   assert.equal(await pending, false);
   assert.equal(ui.calls.filter(call => call.path.endsWith("/messages")).length, 1);
   assert.match(ui.elements["chat-history"].textContent, /user - failed/);
+  assert.match(ui.elements["chat-history"].textContent, /How I answered.*answer.*failed/);
+  assert.match(ui.elements["chat-history"].textContent, /Failure: Provider or chat runtime did not produce a verified reply/);
   assert.match(ui.elements["chat-state"].textContent, /No automatic retry/);
   assert.equal(ui.elements["chat-input"].value, "Hello");
   assert.equal(ui.elements["chat-input"].disabled, false);
