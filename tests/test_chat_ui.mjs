@@ -119,7 +119,7 @@ test("local transcript is added after an unsent typed draft and never submits th
     static async available() { return "available"; }
     static async install() { return true; }
     processLocally = false;
-    start() {}
+    start() { this.onstart?.(); }
     abort() { this.onend?.(); }
     constructor() { recognition = this; }
   }

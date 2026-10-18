@@ -12,7 +12,7 @@ class Element {
 test("safety panel stops, revokes grants, reports activity, and confirms resume", async () => {
   const elements = Object.fromEntries(["emergency-stop", "emergency-resume", "emergency-state",
     "emergency-grants", "emergency-permissions", "emergency-activity", "capability-microphone-support",
-    "capability-microphone-activity", "capability-camera-support", "capability-camera-activity",
+    "capability-microphone-activity", "capability-microphone-state", "capability-microphone-stop", "capability-camera-support", "capability-camera-activity",
     "capability-screen-support", "capability-screen-activity", "capability-playback-support",
     "capability-playback-activity", "capability-vision-support", "capability-automation-support",
     "capability-automation-activity"].map(id => [id, new Element()]));
@@ -64,6 +64,18 @@ test("safety panel stops, revokes grants, reports activity, and confirms resume"
   assert.match(elements["emergency-activity"].textContent, /Microphone: active/);
   assert.equal(elements["capability-microphone-activity"].textContent, "Active");
   assert.match(elements["emergency-activity"].textContent, /request may still be running/);
+  await listeners["ersel:voice-activity"]({ detail: { microphone: "active", voice_stage: "audio-capture", microphone_permission: "granted", capture_elapsed_seconds: 4, capture_limit_seconds: 10 } });
+  assert.equal(elements["capability-microphone-state"].textContent, "Recording (4/10 seconds); permission granted.");
+  assert.equal(elements["capability-microphone-stop"].hidden, false);
+  const dispatched = [];
+  windowRef.Event = class { constructor(type) { this.type = type; } };
+  windowRef.dispatchEvent = event => dispatched.push(event.type);
+  elements["capability-microphone-stop"].listeners.click();
+  assert.deepEqual(dispatched, ["ersel:voice-stop"]);
+  await listeners["ersel:voice-activity"]({ detail: { microphone: "inactive", voice_stage: "cloud-request", microphone_permission: "granted" } });
+  assert.match(elements["capability-microphone-state"].textContent, /Transcribing; microphone inactive/);
+  await listeners["ersel:voice-activity"]({ detail: { microphone: "inactive", voice_stage: "idle", microphone_permission: "denied" } });
+  assert.match(elements["capability-microphone-state"].textContent, /Voice off; permission denied/);
   listeners["ersel:screen-capture-activity"]({ detail: { state: "denied" } });
   assert.equal(elements["capability-screen-activity"].textContent, "Denied");
   listeners["ersel:camera-activity"]({ detail: { state: "failed" } });

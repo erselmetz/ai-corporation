@@ -3270,7 +3270,7 @@ export const post100Tasks = [
     "title": "Opt-in local voice input",
     "description": "Add optional local speech-to-text input with a visible microphone indicator and explicit capture controls.",
     "category": "Phase X - Voice Interaction",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       184
     ],
@@ -3289,16 +3289,20 @@ export const post100Tasks = [
       "Speech can include sensitive bystander information and local recognition may be inaccurate."
     ],
     "area": "P40",
-    "checkpoint": null,
-    "validation": [],
+    "checkpoint": "task-187-opt-in-local-voice-input",
+    "validation": [
+      "The shared owner safety panel now exposes voice phase, permission state, a live capture duration capped at 10 seconds, and a direct stop/cancel control even while the detailed voice settings are collapsed. Browser microphone permission is reported as pending until recognition starts; denied and failed states remain distinct.",
+      "Existing local recognition requires processLocally=true, local model use requires explicit selection, and neither falls back to cloud. Transcript content remains an editable chat draft until the owner explicitly sends it. Existing Gemini transcription still requires separate per-recording consent and an app-run budget; no provider request was made for this checkpoint.",
+      "Full validation: Python 1,324 passed / 8 skipped / 0 failed (2 deprecation warnings); browser modules 229 passed / 0 failed; Electron 33 passed / 0 failed; public docs 17 passed / 0 failed. Focused voice/emergency-stop browser tests: 17 passed; Python route/page tests: 3 passed. Python compilation, JavaScript syntax, and git diff --check passed."
+    ],
     "limitations": [
-      "Depends on persistence for user controls; local speech model availability and performance need device testing."
+      "Physical microphone/OS permission prompts, local recognition while offline, device audio quality and language accuracy remain unverified on target Windows/browser hardware."
     ],
     "automatedVerification": [
-      "AI-run verification: Verify opt-in, OS/browser microphone prompt, visible indicator, stop behavior, transcript review, offline behavior, and no network transfer."
+      "AI-run verification: deterministic browser fakes cover permission pending/granted/denied, capture elapsed time and 10-second bound, stop/cancel, transcript review before send, and local-mode absence of transcription network calls."
     ],
     "followUpValidation": [
-      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+      "Physical Windows/browser microphone prompt and permission-reset behavior, local-recognition quality while actually offline, device-specific hardware/audio compatibility, and representative-owner workflow remain unverified follow-up. Fakes validate the UI contract only and do not prove real OS/provider integration."
     ]
   },
   {
@@ -3414,7 +3418,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-183 and Tasks 184-186 are completed scoped checkpoints except deferred Task 170; Tasks 187-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and Tasks 171-187 are completed scoped checkpoints except deferred Task 170; Tasks 188-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-190, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",

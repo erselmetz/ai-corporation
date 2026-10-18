@@ -39,6 +39,9 @@ export function mountVoiceControls({
   confirmImpl = globalThis.confirm ?? (() => false),
   setTimeoutImpl = setTimeout,
   clearTimeoutImpl = clearTimeout,
+  setIntervalImpl = setInterval,
+  clearIntervalImpl = clearInterval,
+  nowImpl = Date.now,
 } = {}) {
   const element = id => documentRef.getElementById(id);
   const mode = element("voice-mode");
@@ -82,6 +85,9 @@ export function mountVoiceControls({
   let microphoneOutcome = "unknown";
   let remoteOutcomeUnknown = false;
   let localCaptureTimer = null;
+  let captureClock = null;
+  let captureStartedAt = null;
+  let permissionState = "unknown";
   let captureStartup = 0;
   let savedVoicePreference = null;
 
@@ -90,6 +96,10 @@ export function mountVoiceControls({
     if (typeof windowRef?.dispatchEvent !== "function" || typeof EventType !== "function") return;
     windowRef.dispatchEvent(new EventType("ersel:voice-activity", { detail: {
       microphone: ["local-capture", "audio-capture", "audio-stopping"].includes(stage) ? "active" : microphoneOutcome,
+      voice_stage: stage,
+      microphone_permission: permissionState,
+      capture_elapsed_seconds: captureStartedAt === null ? 0 : Math.min(MAX_SECONDS, Math.floor((nowImpl() - captureStartedAt) / 1000)),
+      capture_limit_seconds: MAX_SECONDS,
       local_playback: windowRef?.speechSynthesis?.speaking || windowRef?.speechSynthesis?.pending
         ? "active" : "off",
       remote_request: remoteOutcomeUnknown ? "possibly-processing-after-local-stop"
@@ -161,7 +171,7 @@ export function mountVoiceControls({
         : !windowRef?.navigator?.mediaDevices?.getUserMedia);
     install.hidden = !localMode || !Recognition || !Recognition.available
       || localAvailability !== "downloadable" || stage !== "idle";
-    stopButton.hidden = ["idle", "starting", "installing"].includes(stage);
+    stopButton.hidden = ["idle", "installing"].includes(stage);
     stopButton.disabled = stage === "idle";
     transcribe.hidden = stage !== "audio-ready";
     if (!transcribe.hidden) transcribe.textContent = captureMode === "cloud"
@@ -233,10 +243,27 @@ export function mountVoiceControls({
 
   function setState(message) { state.textContent = message; }
 
+  function clearCaptureClock() {
+    if (captureClock !== null) clearIntervalImpl(captureClock);
+    captureClock = null;
+    captureStartedAt = null;
+  }
+
+  function startCaptureClock() {
+    clearCaptureClock();
+    captureStartedAt = nowImpl();
+    captureClock = setIntervalImpl(reportActivity, 1000);
+    reportActivity();
+  }
+
   async function authorizeMicrophone() {
     if (typeof windowRef?.desktopBridge?.requestMicrophone !== "function") return;
     const permitted = await windowRef.desktopBridge.requestMicrophone();
-    if (permitted !== true) throw new Error("Microphone access was not approved. Typed chat remains available.");
+    if (permitted !== true) {
+      permissionState = "denied";
+      throw new Error("Microphone access was not approved. Typed chat remains available.");
+    }
+    permissionState = "granted";
   }
 
   async function beginLocal(startupId) {
@@ -283,9 +310,26 @@ export function mountVoiceControls({
     recognition.interimResults = false;
     recognition.continuous = false;
     recognition.maxAlternatives = 1;
-    stage = "local-capture";
+    permissionState = "requesting";
+    stage = "local-capture-pending";
     updateControls();
-    setState("Listening locally on this device. Audio is not sent to a service or saved by this app.");
+    setState(permissionState === "granted"
+      ? "Listening locally on this device for up to 10 seconds. Audio is not sent to a service or saved by this app."
+      : "Waiting for this browser's microphone permission. Capture is limited to 10 seconds.");
+    recognition.onstart = () => {
+      if (stage !== "local-capture-pending") return;
+      stage = "local-capture";
+      permissionState = "granted";
+      microphoneOutcome = "active";
+      startCaptureClock();
+      setState("Listening locally on this device for up to 10 seconds. Audio is not sent to a service or saved by this app.");
+      updateControls();
+      localCaptureTimer = setTimeoutImpl(() => {
+        if (stage !== "local-capture") return;
+        void stop();
+        setState("The 10-second local capture limit was reached. The transcript was not sent or saved.");
+      }, MAX_CAPTURE_MS);
+    };
     recognition.onresult = event => {
       if (stage !== "local-capture") return;
       const transcript = event.results?.[0]?.[0]?.transcript?.trim();
@@ -296,26 +340,28 @@ export function mountVoiceControls({
     };
     recognition.onerror = event => {
       microphoneOutcome = event.error === "not-allowed" || event.error === "service-not-allowed" ? "denied" : "failed";
+      if (microphoneOutcome === "denied") permissionState = "denied";
+      else permissionState = "failed";
+      clearCaptureClock();
+      if (localCaptureTimer !== null) clearTimeoutImpl(localCaptureTimer);
+      localCaptureTimer = null;
+      stage = "idle";
       setState(event.error === "not-allowed" || event.error === "service-not-allowed"
         ? "Microphone access was denied. Typed chat remains available."
         : "Local speech recognition failed. Nothing was sent or saved; typed chat remains available.");
-      reportActivity();
+      updateControls();
     };
     recognition.onend = () => {
+      clearCaptureClock();
       if (localCaptureTimer !== null) clearTimeoutImpl(localCaptureTimer);
       localCaptureTimer = null;
-      if (stage === "local-capture") stage = "idle";
+      if (["local-capture", "local-capture-pending"].includes(stage)) stage = "idle";
       if (microphoneOutcome === "unknown" || microphoneOutcome === "active") microphoneOutcome = "inactive";
       recognition = null;
       updateControls();
     };
     try {
       recognition.start();
-      localCaptureTimer = setTimeoutImpl(() => {
-        if (stage !== "local-capture") return;
-        void stop();
-        setState("The 10-second local capture limit was reached. The transcript was not sent or saved.");
-      }, MAX_CAPTURE_MS);
     }
     catch { recognition = null; stage = "idle"; updateControls(); throw new Error("Local speech recognition could not start."); }
   }
@@ -361,6 +407,9 @@ export function mountVoiceControls({
     capturedFrames = 0;
     recording = true;
     stage = "audio-capture";
+    permissionState = "granted";
+    microphoneOutcome = "active";
+    startCaptureClock();
     processor.onaudioprocess = event => {
       if (!recording) return;
       const data = event.inputBuffer.getChannelData(0);
@@ -387,6 +436,7 @@ export function mountVoiceControls({
 
   async function stopTracks() {
     recording = false;
+    clearCaptureClock();
     try { source?.disconnect(); processor?.disconnect(); gain?.disconnect(); } catch { /* already disconnected */ }
     for (const track of stream?.getTracks?.() || []) track.stop();
     stream = null;
@@ -481,12 +531,12 @@ export function mountVoiceControls({
   }
 
   async function stop() {
-    if (["local-capture", "audio-capture", "audio-stopping", "starting"].includes(stage)) {
+    if (["local-capture", "local-capture-pending", "audio-capture", "audio-stopping", "starting"].includes(stage)) {
       microphoneOutcome = "inactive";
     }
     if (localCaptureTimer !== null) clearTimeoutImpl(localCaptureTimer);
     localCaptureTimer = null;
-    if (stage === "local-capture") {
+    if (stage === "local-capture" || stage === "local-capture-pending") {
       stage = "idle";
       recognition?.abort();
       recognition = null;
@@ -528,6 +578,7 @@ export function mountVoiceControls({
     updateOutputStatus(speechOutput.stop());
     updateControls();
   });
+  windowRef?.addEventListener?.("ersel:voice-stop", () => { void stop(); });
   windowRef?.addEventListener?.("ersel:emergency-resumed", () => {
     emergencyStopped = false;
     updateControls();
@@ -571,7 +622,7 @@ export function mountVoiceControls({
   }
 
   function clear() {
-    if (stage === "local-capture" || stage === "audio-capture" || stage === "audio-stopping" || stage === "audio-ready") void stop();
+    if (["starting", "local-capture-pending", "local-capture", "audio-capture", "audio-stopping", "audio-ready", "audio-preparing"].includes(stage)) void stop();
     else if (stage === "cloud-request") requestController?.abort();
     updateOutputStatus(speechOutput.stop());
     stage = "idle"; audioBlob = null; updateControls();
@@ -581,6 +632,7 @@ export function mountVoiceControls({
     if (emergencyStopped) { setState("Emergency stop is active. Resume protected actions before starting voice."); return; }
     if (!canUseChat()) { setState("Start or select an open conversation before using voice."); return; }
     microphoneOutcome = "unknown";
+    permissionState = "requesting";
     const startupId = ++captureStartup;
     stage = "starting"; updateControls();
     try {
@@ -591,6 +643,8 @@ export function mountVoiceControls({
       stage = "idle";
       microphoneOutcome = error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError"
         ? "denied" : "failed";
+      if (microphoneOutcome === "denied") permissionState = "denied";
+      else if (permissionState === "requesting") permissionState = "failed";
       setState(error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError"
         ? "Microphone access was denied. Typed chat remains available."
         : error.message || "Voice interaction failed. Typed chat remains available.");

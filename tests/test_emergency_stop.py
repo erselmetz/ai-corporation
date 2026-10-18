@@ -95,6 +95,9 @@ def test_dashboard_and_chat_expose_unified_capability_controls_and_capture_state
         assert 'id="capability-playback-activity" role="status"' not in page
         assert 'id="emergency-activity" role="status" aria-live="polite"' in page
         assert 'id="capability-microphone-activity"' in page
+        assert 'id="capability-microphone-state"' in page
+        assert 'id="capability-microphone-stop" type="button" hidden>Stop / cancel voice</button>' in page
+        assert "Voice off; permission not checked. Capture limit: 10 seconds." in page
         assert 'id="capability-camera-activity"' in page
         assert 'id="capability-screen-activity"' in page
         assert 'id="capability-playback-activity"' in page

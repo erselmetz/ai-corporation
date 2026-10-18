@@ -12,6 +12,8 @@ export function mountEmergencyStop({
   const grants = documentRef.getElementById("emergency-grants");
   const permissions = documentRef.getElementById("emergency-permissions");
   const activity = documentRef.getElementById("emergency-activity");
+  const microphoneStop = documentRef.getElementById("capability-microphone-stop");
+  const microphoneState = documentRef.getElementById("capability-microphone-state");
   let stopped = false;
   let capture = { microphone: "unknown", screen: "unknown", camera: "unknown", local_playback: "unknown", remote_request: "none" };
   let previousStopped = null;
@@ -50,6 +52,19 @@ export function mountEmergencyStop({
       ? "Available in chat; model support varies" : "Not available on this page; open Chat");
     setIndicator("automation", "Unavailable in this app UI", "Inactive");
     setIndicator("microphone", available.microphone ? "Available in this browser" : "Unsupported in this browser", activityLabel(capture.microphone));
+    if (microphoneState) {
+      const stage = capture.voice_stage || "idle";
+      const activeCapture = ["local-capture", "audio-capture", "audio-stopping"].includes(stage);
+      const transcribing = ["audio-preparing", "cloud-request", "local-model-request"].includes(stage);
+      const permission = ({ unknown: "not checked", requesting: "request pending", granted: "granted", denied: "denied", failed: "check failed" })[capture.microphone_permission] || "unknown";
+      const elapsed = Math.min(10, Number.isFinite(capture.capture_elapsed_seconds) ? capture.capture_elapsed_seconds : 0);
+      microphoneState.textContent = activeCapture
+        ? `Recording (${elapsed}/10 seconds); permission ${permission}.`
+        : transcribing ? `Transcribing; microphone inactive; permission ${permission}.`
+          : ["starting", "local-capture-pending"].includes(stage) ? `Starting voice; permission ${permission}; capture limit 10 seconds.`
+            : `Voice off; permission ${permission}; capture limit 10 seconds.`;
+    }
+    if (microphoneStop) microphoneStop.hidden = !["starting", "local-capture-pending", "local-capture", "audio-capture", "audio-stopping", "audio-ready", "audio-preparing", "cloud-request", "local-model-request"].includes(capture.voice_stage);
     setIndicator("camera", available.camera ? "Available in this browser" : "Unsupported in this browser", activityLabel(capture.camera));
     setIndicator("screen", available.screen ? "Available in this browser" : "Unsupported in this browser", activityLabel(capture.screen));
     setIndicator("playback", available.playback ? "Available on this device" : "Unsupported on this device", activityLabel(capture.local_playback));
@@ -194,9 +209,14 @@ export function mountEmergencyStop({
   }
 
   windowRef?.addEventListener?.("ersel:voice-activity", event => {
+    const previous = [capture.microphone, capture.voice_stage, capture.local_playback, capture.remote_request].join("|");
     capture = { ...capture, ...(event.detail || {}) };
     renderCapabilities();
-    return refresh();
+    if (previous !== [capture.microphone, capture.voice_stage, capture.local_playback, capture.remote_request].join("|")) renderActivity();
+  });
+  microphoneStop?.addEventListener("click", () => {
+    const EventType = windowRef?.Event || globalThis.Event;
+    if (typeof EventType === "function") windowRef?.dispatchEvent?.(new EventType("ersel:voice-stop"));
   });
   windowRef?.addEventListener?.("ersel:screen-capture-activity", event => {
     capture = { ...capture, screen: event.detail?.state || "unknown" };

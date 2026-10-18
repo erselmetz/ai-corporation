@@ -42,7 +42,7 @@ def _emergency_controls() -> str:
       <p>Inspect support, current activity, permissions, and session grants. Voice and media stay off until you start them.</p>
       <p id="emergency-state" role="status" aria-live="polite">Loading safety status…</p>
       <ul id="capability-indicators" class="capability-indicators" aria-label="Multimodal support and current activity">
-        <li><strong>Microphone</strong><span id="capability-microphone-support">Checking support</span><span id="capability-microphone-activity">Unknown</span><span>Local recognition; cloud transcription needs separate consent.</span></li>
+        <li><strong>Microphone</strong><span id="capability-microphone-support">Checking support</span><span id="capability-microphone-activity">Unknown</span><span id="capability-microphone-state">Voice off; permission not checked. Capture limit: 10 seconds.</span><button id="capability-microphone-stop" type="button" hidden>Stop / cancel voice</button><span>Local recognition; cloud transcription needs separate consent.</span></li>
         <li><strong>Camera</strong><span id="capability-camera-support">Checking support</span><span id="capability-camera-activity">Unknown</span><span>One local frame; provider transfer requires per-turn consent.</span></li>
         <li><strong>Screen capture</strong><span id="capability-screen-support">Checking support</span><span id="capability-screen-activity">Unknown</span><span>One local frame; provider transfer requires per-turn consent.</span></li>
         <li><strong>Speech playback</strong><span id="capability-playback-support">Checking support</span><span id="capability-playback-activity">Unknown</span><span>Local device voices only; no online fallback.</span></li>

@@ -9,7 +9,8 @@ class Element {
   append(...items) { this.children.push(...items); }
 }
 
-function harness({ fetchImpl, windowRef, confirmImpl = () => true, setTimeoutImpl, clearTimeoutImpl } = {}) {
+function harness({ fetchImpl, windowRef, confirmImpl = () => true, setTimeoutImpl, clearTimeoutImpl,
+  setIntervalImpl = () => 1, clearIntervalImpl = () => {}, nowImpl = Date.now } = {}) {
   const ids = ["voice-mode", "voice-language", "voice-start", "voice-stop", "voice-transcribe",
     "voice-install-local", "voice-cloud-consent", "voice-budget-form", "voice-budget-cents",
     "voice-budget-save", "voice-budget-state", "voice-state", "voice-stop-playback",
@@ -22,7 +23,7 @@ function harness({ fetchImpl, windowRef, confirmImpl = () => true, setTimeoutImp
   elements["voice-output-language"].value = "en-US";
   const documentRef = { getElementById: id => elements[id], createElement: () => new Element() };
   const transcripts = [];
-  const controller = mountVoiceControls({ documentRef, windowRef, fetchImpl, confirmImpl, setTimeoutImpl, clearTimeoutImpl,
+  const controller = mountVoiceControls({ documentRef, windowRef, fetchImpl, confirmImpl, setTimeoutImpl, clearTimeoutImpl, setIntervalImpl, clearIntervalImpl, nowImpl,
     onTranscript: (text, source) => transcripts.push({ text, source }), canUseChat: () => true });
   return { elements, controller, transcripts };
 }
@@ -46,7 +47,7 @@ test("local mode requires processLocally and never falls back to cloud", async (
     static async install() { return true; }
     processLocally = false;
     constructor() { activeRecognition = this; }
-    start() { this.started = true; }
+    start() { this.started = true; this.onstart?.(); }
     abort() { this.aborted = true; this.onend?.(); }
   }
   const requests = [];
@@ -72,7 +73,7 @@ test("local microphone capture ends after its ten-second limit", async () => {
     static async install() { return true; }
     processLocally = false;
     constructor() { activeRecognition = this; }
-    start() {}
+    start() { this.onstart?.(); }
     abort() { this.aborted = true; this.onend?.(); }
   }
   const ui = harness({ windowRef: { SpeechRecognition: Recognition },
@@ -83,6 +84,42 @@ test("local microphone capture ends after its ten-second limit", async () => {
   assert.equal(activeRecognition.aborted, true);
   assert.match(ui.elements["voice-state"].textContent, /10-second local capture limit/);
   assert.deepEqual(ui.transcripts, []);
+});
+
+test("microphone activity exposes permission, capture duration, and transcription state", async () => {
+  let activeRecognition;
+  let tick;
+  let cleared = false;
+  let now = 1_000;
+  const events = [];
+  class Recognition {
+    static async available() { return "available"; }
+    static async install() { return true; }
+    processLocally = false;
+    constructor() { activeRecognition = this; }
+    start() {}
+    abort() { this.onend?.(); }
+  }
+  class CustomEvent { constructor(type, options) { this.type = type; this.detail = options.detail; } }
+  const windowRef = { SpeechRecognition: Recognition, CustomEvent, dispatchEvent: event => events.push(event) };
+  const ui = harness({ windowRef, nowImpl: () => now,
+    setIntervalImpl(callback, duration) { assert.equal(duration, 1000); tick = callback; return 7; },
+    clearIntervalImpl(id) { assert.equal(id, 7); cleared = true; } });
+  await ui.elements["voice-start"].listeners.click();
+  assert.equal(events.at(-1).detail.voice_stage, "local-capture-pending");
+  assert.equal(events.at(-1).detail.microphone_permission, "requesting");
+  assert.equal(events.at(-1).detail.capture_limit_seconds, 10);
+  activeRecognition.onstart();
+  assert.equal(events.at(-1).detail.voice_stage, "local-capture");
+  assert.equal(events.at(-1).detail.microphone_permission, "granted");
+  now = 4_500;
+  tick();
+  assert.equal(events.at(-1).detail.capture_elapsed_seconds, 3);
+  activeRecognition.onresult({ results: [[{ transcript: "review this" }]] });
+  await ui.elements["voice-stop"].listeners.click();
+  assert.deepEqual(ui.transcripts, [{ text: "review this", source: "local" }]);
+  assert.equal(events.at(-1).detail.voice_stage, "idle");
+  assert.equal(cleared, true);
 });
 
 test("stopping during local capability detection cancels startup", async () => {
@@ -98,6 +135,25 @@ test("stopping during local capability detection cancels startup", async () => {
   const startup = ui.elements["voice-start"].listeners.click();
   await Promise.resolve();
   await ui.elements["voice-stop"].listeners.click();
+  resolveAvailability("available");
+  await startup;
+  assert.equal(started, false);
+  assert.match(ui.elements["voice-state"].textContent, /startup stopped/i);
+});
+
+test("clearing a chat cancels pending microphone startup before capture can begin", async () => {
+  let resolveAvailability;
+  let started = false;
+  class Recognition {
+    static available() { return new Promise(resolve => { resolveAvailability = resolve; }); }
+    static async install() { return true; }
+    processLocally = false;
+    start() { started = true; }
+  }
+  const ui = harness({ windowRef: { SpeechRecognition: Recognition } });
+  const startup = ui.elements["voice-start"].listeners.click();
+  await Promise.resolve();
+  ui.controller.clear();
   resolveAvailability("available");
   await startup;
   assert.equal(started, false);
@@ -141,7 +197,7 @@ test("sensitive local transcript is discarded before it enters chat", async () =
     static async install() { return true; }
     processLocally = false;
     constructor() { recognition = this; }
-    start() {}
+    start() { this.onstart?.(); }
     abort() { this.onend?.(); }
   }
   const ui = harness({ windowRef: { SpeechRecognition: Recognition }, fetchImpl: async () => ({ ok: true, json: async () => ({ cloud_budget: {} }) }) });
