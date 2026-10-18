@@ -2963,7 +2963,7 @@ export const post100Tasks = [
     "title": "Hardware profile and model recommendation",
     "description": "Report directly observed CPU, GPU, RAM, and disk facts with source and freshness, then recommend an Ollama model size with an explicit CPU-use warning where applicable.",
     "category": "Phase Q - Hardware-Aware Local Models",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       176
     ],
@@ -2982,14 +2982,18 @@ export const post100Tasks = [
       "OS inventory may be incomplete or stale; recommendation thresholds can mislead across quantization/runtime variants."
     ],
     "area": "P33",
-    "checkpoint": null,
+    "checkpoint": "task-180-hardware-profile-ai-acceptance",
     "validation": [
-      "Historical checkpoint: implemented; automated validation passed; manual verification was pending under the previous contract. Current completion uses the revised AI-run acceptance policy. The owner-protected on-demand profile reports local CPU, GPU, RAM, and Ollama destination disk facts with source, timestamp, and UNKNOWN states; the size guidance is bounded, warns about CPU use, and never claims model fit or starts downloads.",
-      "Automated validation: full Python suite 1,311 passed / 5 skipped / 0 failed (2 deprecation warnings); browser modules 220 passed; public docs 17 passed; Electron tests 24 passed. Python compilation, focused hardware-profile tests, JavaScript syntax, and git diff --check passed.",
-      "Prior recorded manual check covered one GPU-equipped Windows host: CPU/GPU names, physical RAM, and destination free space matched OS counters; usable VRAM and Ollama accelerator use remained UNKNOWN. This was not a CPU-only test."
+      "Implementation source reviewed in commit 15f49fc044c41ae4d4f936a67fbda71f241640d8; no further provider, routing, persistence, download, or telemetry behavior was added for this checkpoint.",
+      "Focused deterministic service/API tests: `python -m pytest -q tests/test_hardware_profile.py tests/test_hardware_profile_api.py` passed 5; coverage includes source/timestamps, UNKNOWN states, bounded guidance, low-disk note, path redaction, and existing system:read authentication.",
+      "Desktop UI regressions: 7 tests passed, including 2 new actual settings-summary checks for per-field provenance, CPU-only warning, UNKNOWN fields, and no-download text. Full Electron suite: 26 passed; desktop UI TypeScript check passed.",
+      "Read-only local Windows comparison: CPU/GPU model names and total physical RAM matched WMI/OS counters. Ollama destination total/free disk values matched the C: volume within normal sampling-time change. Available RAM is time-sensitive. The adapter does not claim GPU memory or actual Ollama accelerator use.",
+      "Latest full-suite baseline at Task 176 acceptance: Python 1,319 passed / 5 skipped / 0 failed (2 warnings); browser modules 220 passed; public docs 17 passed. Current public-docs tests after this record: 17 passed. No live inference, download, routing change, or telemetry upload occurred."
     ],
     "limitations": [
-      "Task remains planned pending evidence review against the revised AI-run acceptance contract. No human QA sign-off is required. CPU-only host behavior and broader recommendation accuracy remain unverified. The profile reports no GPU memory amount because the available WMI AdapterRAM field is not trustworthy."
+      "Physical CPU-only host behavior and recommendation accuracy across systems, model quantizations, and workloads remain unverified follow-up. The local check covered one GPU-equipped Windows host only.",
+      "Usable VRAM and whether Ollama actually uses a GPU remain UNKNOWN; WMI AdapterRAM is intentionally not trusted. A detected GPU is not evidence of accelerated inference or model fit.",
+      "The RAM-based size suggestion is heuristic guidance, not compatibility, performance, or fit proof. Disk space is only a current local observation and no download is initiated."
     ],
     "automatedVerification": [
       "Compare host inventory with independent OS counters where available; use CPU-only, GPU, missing and stale inventory fixtures to verify UNKNOWN states and bounded guidance. Automate UI checks for uncertainty and CPU warnings; broader physical-host coverage remains unverified follow-up."
@@ -3377,7 +3381,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-179 are completed scoped checkpoints except deferred Task 170; Tasks 180-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-180 are completed scoped checkpoints except deferred Task 170; Tasks 181-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-190, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",

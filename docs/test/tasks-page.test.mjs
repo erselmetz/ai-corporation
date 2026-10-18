@@ -25,8 +25,8 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-190-190");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 190 }, (_, index) => 190 - index));
-  assert.match(elements["roadmap-summary"].textContent, /190 roadmap tasks.*177 completed.*2 deferred and incomplete.*10 planned.*1 design only/);
-  assert.match(elements["next-task"].textContent, /Next: Task 180/);
+  assert.match(elements["roadmap-summary"].textContent, /190 roadmap tasks.*178 completed.*2 deferred and incomplete.*9 planned.*1 design only/);
+  assert.match(elements["next-task"].textContent, /Next: Task 184/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -146,7 +146,7 @@ test("publishes the completed settings milestone and remaining phases as planned
   const planned = tasks.filter(task => task.number >= 174);
   assert.deepEqual(planned.map(task => [task.number, task.status]), [
     [174, "completed"], [175, "completed"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
-    [180, "planned"], [181, "planned"], [182, "planned"], [183, "planned"], [184, "planned"], [185, "planned"],
+    [180, "completed"], [181, "planned"], [182, "planned"], [183, "planned"], [184, "planned"], [185, "planned"],
     [186, "planned"], [187, "planned"], [188, "planned"], [189, "planned"], [190, "design_only"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, "task-177-auto-rag-trace");

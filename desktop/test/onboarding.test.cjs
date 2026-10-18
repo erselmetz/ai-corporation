@@ -6,6 +6,7 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "../..");
 const page = fs.readFileSync(path.join(root, "desktop-ui/src/app/page.tsx"), "utf8");
 const settingsPage = fs.readFileSync(path.join(root, "desktop-ui/src/app/settings/page.tsx"), "utf8");
+const hardwareSummary = fs.readFileSync(path.join(root, "desktop-ui/src/app/settings/hardware-summary.ts"), "utf8");
 const shell = fs.readFileSync(path.join(root, "desktop-ui/src/app/app-shell.tsx"), "utf8");
 
 test("first-run checks are bounded and report unsupported evidence as unknown", () => {
@@ -66,9 +67,10 @@ test("settings hub reads current values only through existing permission-checked
   assert.doesNotMatch(settingsPage, /api_key|password/i);
   assert.match(settingsPage, /hardware feasibility remains unknown/i);
   assert.match(settingsPage, /Hardware profile and model guidance/);
+  assert.match(settingsPage, /summarizeHardwareProfile/);
   assert.match(settingsPage, /not stored or uploaded/i);
-  assert.match(settingsPage, /UNKNOWN/);
-  assert.match(settingsPage, /recommendation\.fit_claim/);
+  assert.match(hardwareSummary, /UNKNOWN/);
+  assert.match(hardwareSummary, /recommendation\.fit_claim/);
   assert.match(settingsPage, /No backup is created or inspected from this overview/);
 });
 
