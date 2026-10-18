@@ -3122,7 +3122,7 @@ export const post100Tasks = [
     "title": "Complete persistence for operator state",
     "description": "Persist currently in-memory positions, resource limits, proposals, and conversations with explicit migrations and a documented local data location.",
     "category": "Phase U - Persistence and Migration",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       176
     ],
@@ -3144,14 +3144,18 @@ export const post100Tasks = [
       "Schema migrations can lose or expose private data; persistent proposals can become stale or replayable."
     ],
     "area": "P37",
-    "checkpoint": null,
+    "checkpoint": "task-184-operator-state-ai-acceptance",
     "validation": [
-      "Implementation progress: schema version 3 persistently stores corporation positions and configured global/provider/model slot limits, owner-scoped proposal summaries and replay state, and only explicitly retained Employee conversations. Recreated services restore positions and limits; active resource reservations remain empty; retained Employee histories are owner-filtered, read-only after restart, and require explicit deletion. Prepared proposals are invalidated at startup and cannot be confirmed or replayed.",
-      "Validation: full Python suite 1,311 passed / 5 skipped / 0 failed (2 existing deprecation warnings); browser modules 220 passed; public documentation tests 17 passed; Electron tests 24 passed. Python compileall, Employee-chat browser regression, JavaScript syntax, and git diff --check passed. Focused deterministic tests cover restart recovery, owner isolation, opt-in retention, confirmed deletion, proposal invalidation, active-slot reset, schema versioning, and migration rollback.",
-      "No live Ollama/Gemini call, credential, download, cloud sync, or telemetry was used."
+      "Implementation source was reviewed in checkpoint commit efed521; no new persistence architecture or schema behavior was added for this evidence checkpoint.",
+      "Focused Task 184 persistence/proposal regressions: `python -m pytest -q tests/test_operator_state_persistence.py tests/test_chat_task_proposals.py` passed 10, including real separate-interpreter restart, additive schema rollback, opt-in conversation storage, owner isolation, read-only recovery, slot reset, proposal invalidation, and consumed-fingerprint replay prevention.",
+      "Employee history UI regressions: `node --test tests/test_employee_chat_ui.mjs` passed 3, including retention opt-in and explicit confirmed deletion. Full Python suite: 1,321 passed / 3 skipped / 0 failed (2 warnings); browser modules 220 passed; Electron tests 26 passed; public docs 17 passed.",
+      "Windows app-data inspection confirmed `%LOCALAPPDATA%\ERSELMETZ AI\projects\ai_corporation.db` exists. `Get-Acl` showed the current Windows account owns the file with FullControl; inherited CodexSandboxUsers has ReadAndExecute/Synchronize, while SYSTEM and Administrators have FullControl. A separate user profile was not used.",
+      "No live model call, credential persistence, cloud sync, download, or telemetry was used. Retained Employee messages are stored only after explicit per-conversation opt-in and are not encrypted by this local SQLite database."
     ],
     "limitations": [
-      "Task remains planned pending evidence review against the revised AI-run acceptance contract. No human QA sign-off is required. The Windows filesystem ACL, installed-package path, and recovery UX were not verified in a fresh Windows user profile. SQLite content is unencrypted; retained chat requires explicit opt-in and remains until the owner deletes it."
+      "No separate clean Windows account was used; filesystem ACL and installed data-path checks cover the current account only. Cross-account access behavior remains unverified follow-up.",
+      "SQLite content is local but unencrypted. Retained Employee chat requires explicit opt-in, stays until explicit deletion, and is read-only after restart. The database must be protected by the Windows profile and owner-controlled backups.",
+      "Migration rollback was tested with an injected schema failure and prior schema version fixture; an upgrade against an independently preserved production database was not performed."
     ],
     "automatedVerification": [
       "Use isolated Windows app-data and real process restarts to verify retained state and unusable stale proposals. Inspect installed data location and ACLs through OS APIs. Inject migration failures, verify rollback and schema version, then exercise recovery and record evidence. Separate clean-account coverage is optional follow-up."
@@ -3381,7 +3385,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-180 are completed scoped checkpoints except deferred Task 170; Tasks 181-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-180 and Task 184 are completed scoped checkpoints except deferred Task 170; Tasks 181-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-190, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
