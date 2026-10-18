@@ -3051,7 +3051,7 @@ export const post100Tasks = [
     "title": "Reviewed tools for small models",
     "description": "Expose explicit bounded calculator and owner-authorized lookup in one selected top-level corporation_docs file to chat with visible trace entries. Web search is excluded from this task.",
     "category": "Phase S - Reviewed Tool Use",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       177
     ],
@@ -3071,18 +3071,18 @@ export const post100Tasks = [
       "Selected local documentation is untrusted input and may contain prompt injection; sending it to an online provider requires the existing per-turn cloud consent."
     ],
     "area": "P35",
-    "checkpoint": null,
+    "checkpoint": "task-182-reviewed-chat-tools",
     "validation": [
-      "Implementation progress: a bounded arithmetic calculator and explicit lookup in one owner-authorized top-level corporation_docs file are wired to chat and per-turn traces. Web search is excluded from this task. Automated focused coverage passes; live owner acceptance has not been performed."
+      "Completed scoped Task 182 after implementation/evidence review. The calculator accepts only bounded arithmetic; exact-file lookup reads one selected document through the existing read-only documentation service and requires documentation:read. Tool results are marked untrusted, traces include bounded/redacted parameters, source, outcome and elapsed time, unsupported tools fail closed, and the UI obtains owner confirmation before the selected tools run. No web search or side-effecting tool is exposed. Focused reviewed-tool/API/knowledge tests: 21 passed; focused chat UI tests: 24 passed. Full Python suite: 1,329 passed, 3 skipped, 0 failed; browser modules: 223 passed; Electron: 26 passed; public docs: 17 passed. No live Gemini call or external-provider transfer was performed."
     ],
     "limitations": [
-      "Task remains planned pending evidence review against the revised AI-run acceptance contract. No human QA sign-off is required. No arbitrary local-file scope or side-effecting tool is exposed. There is no side-effect approval dialog because the approved tools are read-only."
+      "Local documentation content is untrusted and may contain prompt injection. If selected results are sent to Gemini, the existing separate per-turn cloud consent is required. No live Gemini transfer was performed. No arbitrary local-file scope or side-effecting tool is exposed; there is no side-effect approval dialog because the approved tools are read-only."
     ],
     "automatedVerification": [
-      "AI-run verification: In the owner UI, calculate a benign expression and search one selected corporation_docs file; verify the exact source, bounded snippets, and per-turn trace. Verify documentation lookup is denied without documentation:read, an outside file ID is unavailable, web search has no UI path, and no tool changes data."
+      "AI-run verification: `python -m pytest -q tests/test_reviewed_chat_tools.py tests/test_chat_knowledge.py` covers bounded arithmetic, exact selected-file reads, path-like and oversized document rejection, documentation:read denial, prompt-injection labeling, redacted parameters, unsupported web search, real per-turn trace sources/outcomes/timing, and no Task creation. `node --test tests/test_chat_ui.mjs` covers explicit tool selection, confirmation, trace rendering, and documentation listing only after opening the tool section with permission."
     ],
     "followUpValidation": [
-      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+      "No live Gemini transfer was performed; actual external-provider handling of selected private document excerpts remains unverified. This does not block the deterministic read-only tool contract, and no human QA sign-off is required under the revised development policy."
     ]
   },
   {

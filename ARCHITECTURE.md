@@ -1522,17 +1522,23 @@ Successful and failed turns receive bounded process-local structured traces cont
 
 Automated tests use deterministic fake Providers, embeddings, vector storage, and text-PDF fixtures. One scoped local Ollama llama3.2:3b turn was manually checked against a synthetic retained fact; this does not establish real-model citation quality or general model behavior. Task 177 is complete for its scoped contract. Traces and one-turn prompt views do not survive restart; retained notes do. Task 176 clean-secondary-account and live-provider coverage remain unverified follow-up and do not block scoped development acceptance.
 
-## Visible chat workflow scaffolding (Task 183, implementation progress)
-
-Before a chat turn begins, Coordinator Chat shows a bounded deterministic plan and asks the owner to continue or cancel. Cancellation happens before knowledge retrieval, selected reviewed-tool calls, or provider work. Existing exact-scope knowledge preview, per-turn Gemini consent, and capability checks remain authoritative. The app does not create a model-generated plan, Task, background job, or hidden agent workflow.
-
-The per-turn How I answered trace reports the actual plan, retrieval, each selected tool, and answer step with status, source, and elapsed time. Empty or unselected steps are labeled skipped; tool/provider failures remain failed or unknown rather than being reported as completed. Retrieved and tool content remains untrusted. The trace is process-local like the existing Task 177 trace and is not durable across restart. Task 183 remains planned pending manual owner review of plan clarity, cancellation, and success/failure trace accuracy. Task 182's separate manual tool acceptance is also pending.
-
 ## Consent-based chat routing suggestions (Task 181)
 
 Coordinator Chat can run a bounded deterministic complexity heuristic only when the owner explicitly requests suggestions for the current prompt and that conversation uses a configured local Coordinator. Simple or uncertain prompts keep that route. For complex prompts, the UI may offer a currently observed larger local model only when both the configured and installed model IDs contain explicit comparable parameter-size tokens, or a currently configured Gemini catalog entry. These are uncertain suggestions, not quality rankings, compatibility, fit, or performance claims. No prompt is sent to an alternate provider during suggestion generation. A Gemini-configured Coordinator is never silently replaced with a local model to enable suggestions.
 
 An alternate is selected for one chat turn, displayed with exact provider/model and destination, and dispatched only after the normal owner confirmation. Gemini additionally requires the separate cloud-consent checkbox. The API rechecks that local models are installed or Gemini models remain in the configured connection catalog before sending. Unavailable/unknown routes fail without fallback or retry. Agent assignments remain unchanged; the Task 177 trace records the actual per-turn route. Alternate routes use the reviewed non-streaming endpoint; image turns are rejected for alternates. Automated deterministic tests cover this contract; live Gemini, live inference, model quality, hardware fit, and route latency remain unverified.
+
+## Reviewed local chat tools (Task 182)
+
+Coordinator Chat exposes only a bounded arithmetic calculator and lookup in one owner-selected top-level `corporation_docs` item through the existing read-only Documentation Application Service. The lookup requires `documentation:read`; unsupported tool kinds, multiple duplicate calls, unbounded inputs, path-like IDs, and oversized documents fail closed. Selected tool calls appear in the real per-turn trace with redacted parameters, source, outcome, and elapsed time. Returned document excerpts are bounded and labeled untrusted reference data.
+
+The UI requires explicit tool selection and displays the selected work in its owner confirmation before sending. Gemini still requires separate per-turn cloud consent before selected documentation content is transferred. No web search, arbitrary file access, shell/code execution, background crawling, downloads, or side effects are exposed. Deterministic API/provider/browser tests passed; no live Gemini transfer was performed. Checkpoint: `task-182-reviewed-chat-tools`.
+
+## Visible chat workflow scaffolding (Task 183, implementation progress)
+
+Before a chat turn begins, Coordinator Chat shows a bounded deterministic plan and asks the owner to continue or cancel. Cancellation happens before knowledge retrieval, selected reviewed-tool calls, or provider work. Existing exact-scope knowledge preview, per-turn Gemini consent, and capability checks remain authoritative. The app does not create a model-generated plan, Task, background job, or hidden agent workflow.
+
+The per-turn How I answered trace reports the actual plan, retrieval, each selected tool, and answer step with status, source, and elapsed time. Empty or unselected steps are labeled skipped; tool/provider failures remain failed or unknown rather than being reported as completed. Retrieved and tool content remains untrusted. The trace is process-local like the existing Task 177 trace and is not durable across restart. Task 183 remains planned for continued review of plan clarity, cancellation, and success/failure trace accuracy. Task 182's bounded read-only tool contract is complete under deterministic AI-run validation; no live Gemini transfer was performed.
 
 ## Task 184: durable operator state (implementation progress)
 

@@ -174,6 +174,19 @@ test("canceling the reviewed chat plan starts no retrieval, tools, or provider r
   assert.match(ui.elements["chat-state"].textContent, /Cancelled.*Nothing was sent/);
 });
 
+test("canceling a plan with a selected calculator does not submit the tool or chat turn", async () => {
+  const ui = setup(null, globalThis.window, () => false);
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-input"].value = "Calculate this";
+  ui.elements["chat-tool-calculator-enabled"].checked = true;
+  ui.elements["chat-tool-calculator-expression"].value = "6 * 7";
+  assert.equal(await ui.controller.send(), true);
+  assert.match(ui.planConfirmations[0], /calculator/);
+  assert.equal(ui.calls.some(call => call.path.endsWith("/messages") || call.path.endsWith("/messages/stream")), false);
+  assert.match(ui.elements["chat-state"].textContent, /Cancelled.*Nothing was sent/);
+});
+
 test("alternate route is opt-in per turn and displayed before confirmation", async () => {
   const ui = setup((path) => {
     if (path.endsWith("/route-suggestions")) return response({
