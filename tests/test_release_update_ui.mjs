@@ -11,6 +11,7 @@ class Element {
 function page() {
   const ids = ["release-check", "release-state", "release-preview", "release-version", "release-notes", "release-migration", "release-prepare", "release-prepare-state"];
   const elements = Object.fromEntries(ids.map((id) => [id, new Element()]));
+  elements["release-state"].textContent = "No release check has been performed.";
   return { elements, documentRef: { getElementById: (id) => elements[id] } };
 }
 
@@ -35,6 +36,20 @@ test("renders only verified release data and enables preparation for authorized 
   assert.equal(elements["release-notes"].textContent, "Signed notes.");
   assert.equal(elements["release-prepare"].disabled, false);
   assert.match(elements["release-state"].textContent, /verified/);
+});
+
+test("release page performs no network check until the owner explicitly selects the check button", async () => {
+  const { elements, documentRef } = page();
+  const calls = [];
+  const controller = mountReleaseUpdatePage({ documentRef, fetchImpl: async (url) => {
+    calls.push(url);
+    return new Response("{}", { status: 500 });
+  } });
+  assert.deepEqual(calls, []);
+  assert.match(elements["release-state"].textContent, /No release check has been performed/);
+  await elements["release-check"].click();
+  assert.deepEqual(calls, ["/api/updates/release"]);
+  assert.equal(await controller.checkRelease(), false);
 });
 
 test("prepares only an explicitly selected checked version and includes the session CSRF token", async () => {

@@ -6,6 +6,12 @@ import { summarizeHardwareProfile } from "./hardware-summary";
 type State = "loading" | "ready" | "empty" | "sign-in" | "denied" | "failed" | "unknown";
 type Result = { state: State; message: string; source: string; values?: Record<string, string> };
 type Payload = Record<string, unknown>;
+type CrashReport = { occurredAt: string; source: string; event: string; reason: string; appVersion: string; exitCode: number | null };
+type DesktopRecoveryBridge = {
+  readCrashReports: () => Promise<{ ok: boolean; localOnly?: boolean; message?: string; reports?: CrashReport[] }>;
+  openDiagnosticsFolder: () => Promise<{ ok: boolean; message?: string }>;
+  resetAppData: () => Promise<{ ok: boolean; restarting?: boolean; canceled?: boolean; message?: string }>;
+};
 
 const initial = (): Result => ({ state: "loading", message: "Loading current values…", source: "" });
 
@@ -74,6 +80,10 @@ export default function SettingsPage() {
   const [activity, setActivity] = useState<Result>(initial);
   const [hardware, setHardware] = useState<Result>(initial);
   const [checking, setChecking] = useState(false);
+  const [crashReports, setCrashReports] = useState<CrashReport[]>([]);
+  const [diagnosticsMessage, setDiagnosticsMessage] = useState("Loading local crash reports…");
+  const [recoveryMessage, setRecoveryMessage] = useState("");
+  const [recoveryBusy, setRecoveryBusy] = useState(false);
 
   async function refresh() {
     setChecking(true);
@@ -148,6 +158,42 @@ export default function SettingsPage() {
   }
 
   useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    const bridge = (window as Window & { desktopBridge?: Partial<DesktopRecoveryBridge> }).desktopBridge;
+    if (!bridge?.readCrashReports) {
+      setDiagnosticsMessage("Local crash reports are available only in the installed desktop app.");
+      return;
+    }
+    void bridge.readCrashReports().then(result => {
+      if (!result.ok || !Array.isArray(result.reports)) {
+        setDiagnosticsMessage(result.message || "Sign in with system:read permission to inspect local reports.");
+        return;
+      }
+      setCrashReports(result.reports);
+      setDiagnosticsMessage(result.reports.length ? "Reports are stored locally and contain only bounded event metadata." : "No handled crash events have been recorded.");
+    }).catch(() => setDiagnosticsMessage("Local crash reports could not be read. Retry from this page."));
+  }, []);
+
+  async function openDiagnostics() {
+    const bridge = (window as Window & { desktopBridge?: Partial<DesktopRecoveryBridge> }).desktopBridge;
+    if (!bridge?.openDiagnosticsFolder) return;
+    try {
+      const result = await bridge.openDiagnosticsFolder();
+      if (!result.ok) setDiagnosticsMessage(result.message || "The local diagnostics folder could not be opened.");
+    } catch { setDiagnosticsMessage("The local diagnostics folder could not be opened."); }
+  }
+
+  async function resetAppData() {
+    const bridge = (window as Window & { desktopBridge?: Partial<DesktopRecoveryBridge> }).desktopBridge;
+    if (!bridge?.resetAppData || recoveryBusy) return;
+    setRecoveryBusy(true);
+    setRecoveryMessage("Waiting for the native confirmation…");
+    try {
+      const result = await bridge.resetAppData();
+      setRecoveryMessage(result.restarting ? "The app is closing. First-run setup will open after local data is removed." : result.message || "Reset was not started.");
+    } catch { setRecoveryMessage("Reset could not be started. Your data was kept."); }
+    finally { setRecoveryBusy(false); }
+  }
 
   return <main className="settings-page">
       <header className="topbar"><span>OWNER SETTINGS</span><a className="login-link" href="/ui/login">Owner sign in <span aria-hidden="true">↗</span></a></header>
@@ -169,6 +215,23 @@ export default function SettingsPage() {
           <SettingCard title="Diagnostics and activity" description="Recent activity and measured readiness, with safe diagnostics available from Backup & restore." result={activity} href="/ui/activity" linkLabel="Open activity & diagnostics" />
           <SettingCard title="Backup and recovery" description="Encrypted local backup and explicit restore controls." result={{ state: "unknown", message: "No backup is created or inspected from this overview.", source: "Owner-controlled backup page" }} href="/ui/backup" linkLabel="Open backup & restore" />
         </div>
+      </section>
+      <section className="settings-section" aria-labelledby="recovery-heading"><div className="section-heading"><div><p className="eyebrow">LOCAL RECOVERY</p><h2 id="recovery-heading">Diagnostics and app data</h2></div></div>
+        <article className="settings-card recovery-card">
+          <h3>Local crash reports</h3>
+          <p>Only handled failure type, source, app version, time, and a bounded exit code are stored. Messages, stack traces, prompts, credentials, paths, and provider responses are excluded. Reports never upload automatically.</p>
+          <p className="settings-message" role="status">{diagnosticsMessage}</p>
+          {crashReports.length > 0 && <ol className="crash-report-list">{crashReports.map((report, index) => <li key={`${report.occurredAt}-${index}`}>
+            <strong>{report.event}</strong> · {report.source} · {report.reason} · {report.appVersion} · {report.occurredAt}{report.exitCode === null ? "" : ` · exit ${report.exitCode}`}
+          </li>)}</ol>}
+          <button className="readiness-refresh" type="button" onClick={() => void openDiagnostics()}>Open local diagnostics folder</button>
+        </article>
+        <article className="settings-card recovery-card">
+          <h3>Reset app data</h3>
+          <p>This removes the local owner credential, database, retained conversations, backups, staged update installers, and crash reports. Export a recovery backup first if you want to keep data. A separate native confirmation is required; the app restarts at first-run setup.</p>
+          <button className="readiness-refresh danger-action" type="button" onClick={() => void resetAppData()} disabled={recoveryBusy}>{recoveryBusy ? "Waiting…" : "Reset all app data"}</button>
+          {recoveryMessage && <p className="settings-message" role="status">{recoveryMessage}</p>}
+        </article>
       </section>
       <footer className="footer"><span>ERSELMETZ AI · SETTINGS</span><span>Only existing authorized APIs are used. Unavailable data stays explicit.</span></footer>
   </main>;

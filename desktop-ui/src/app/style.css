@@ -107,6 +107,9 @@ a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; border-ra
 .settings-intro { max-width: 900px; margin: -4px 0 16px; color: #9eacbb; font-size: 11px; line-height: 1.65; }
 .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
 .settings-card { min-width: 0; padding: 15px; border: 1px solid var(--line); border-radius: 9px; background: linear-gradient(145deg, rgba(18, 29, 43, 0.85), rgba(10, 16, 25, 0.72)); }
+.recovery-card { margin-top: 10px; }
+.crash-report-list { max-height: 220px; overflow: auto; padding-left: 22px; color: #c7d2df; font-size: 10px; line-height: 1.7; overflow-wrap: anywhere; }
+.danger-action { border-color: rgba(255, 120, 120, 0.45); color: #ffb2b2; }
 .settings-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .settings-card h3 { margin: 0; font-size: 13px; }
 .settings-state { flex: 0 0 auto; color: #b5a2f4; font: 700 8px ui-monospace, "Cascadia Code", Consolas, monospace; letter-spacing: 0.06em; text-transform: uppercase; }

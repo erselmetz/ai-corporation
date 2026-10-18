@@ -1494,9 +1494,9 @@ The existing authorized workflow-map service supplies process-local work-item, a
 
 `TrustedReleaseService` checks only `https://api.github.com/repos/erselmetz/ai-corporation/releases/latest`. It accepts bounded release metadata and assets from the fixed repository, follows only HTTPS GitHub asset redirects, verifies a detached Ed25519 signature against the public key embedded in the application, checks the release tag/version binding, and verifies the Windows x64 installer SHA-256 while streaming it to a temporary path. It never reads API credentials, follows an arbitrary origin, installs, retries, downgrades, or changes provider/model/task state. `GET /api/updates/release` requires `updates:read`; explicit preparation requires `updates:manage` and same-origin CSRF. The protected Updates page uses `textContent` for all signed strings.
 
-Preparation accepts only a newer signed release whose declared configuration source version matches the local SQLite `PRAGMA user_version` and whose target is supported by this build. It creates a SQLite online backup and verifies `PRAGMA quick_check` before moving the verified installer into `%LOCALAPPDATA%\\ERSELMETZ AI\\updates`. The owner closes the app and runs that file manually. The backup covers the SQLite database only; provider-side data, external model files, and files outside the database are not covered. Recovery requires a manual reinstall and, if needed, a manual SQLite restore. This does not guarantee that a prior executable can read a database after a future schema-changing migration; no downgrade is attempted.
+Preparation accepts only a newer signed release whose declared configuration source version matches the local SQLite `PRAGMA user_version` and whose target is supported by this build. It creates a SQLite online backup and verifies `PRAGMA quick_check` before moving the verified installer into `%LOCALAPPDATA%\ERSELMETZ AI\\updates`. The owner closes the app and runs that file manually. The backup covers the SQLite database only; provider-side data, external model files, and files outside the database are not covered. Recovery requires a manual reinstall and, if needed, a manual SQLite restore. This does not guarantee that a prior executable can read a database after a future schema-changing migration; no downgrade is attempted.
 
-The legacy additive database initialization is migration version 0 to 1. Its schema changes and `user_version` update run in one transaction; a database declaring a newer version fails before mutation. The initial signed release format supports only the current version 1 configuration schema. `desktop/scripts/sign-release-manifest.cjs` creates the signed manifest for a manually published GitHub release. The Ed25519 private key is stored outside the repository under the current Windows user's `%LOCALAPPDATA%\\ERSELMETZ AI\\release-signing` directory. The generated PEM is unencrypted at rest; its directory ACL is restricted to the current Windows user and SYSTEM. Keep an encrypted offline backup and rotate the key if this profile is exposed. The key is not included in the release package. No automatic updater or public release feed is activated; until a matching signed GitHub release exists, on-demand checks return a safe unavailable result. The NSIS installer is still unsigned by Windows Authenticode, so the in-app signature verifies publisher-controlled release integrity but does not suppress Windows publisher warnings. Checkpoint: `task-167-trusted-updates-config-migration`.
+The legacy additive database initialization is migration version 0 to 1. Its schema changes and `user_version` update run in one transaction; a database declaring a newer version fails before mutation. The initial signed release format supports only the current version 1 configuration schema. `desktop/scripts/sign-release-manifest.cjs` creates the signed manifest for a manually published GitHub release. The Ed25519 private key is stored outside the repository under the current Windows user's `%LOCALAPPDATA%\ERSELMETZ AI\\release-signing` directory. The generated PEM is unencrypted at rest; its directory ACL is restricted to the current Windows user and SYSTEM. Keep an encrypted offline backup and rotate the key if this profile is exposed. The key is not included in the release package. No automatic updater or public release feed is activated; until a matching signed GitHub release exists, on-demand checks return a safe unavailable result. The NSIS installer is still unsigned by Windows Authenticode, so the in-app signature verifies publisher-controlled release integrity but does not suppress Windows publisher warnings. Checkpoint: `task-167-trusted-updates-config-migration`.
 
 ## Encrypted diagnostics, backup, and restore (Task 168)
 
@@ -1534,6 +1534,45 @@ Coordinator Chat exposes only a bounded arithmetic calculator and lookup in one 
 
 The UI requires explicit tool selection and displays the selected work in its owner confirmation before sending. Gemini still requires separate per-turn cloud consent before selected documentation content is transferred. No web search, arbitrary file access, shell/code execution, background crawling, downloads, or side effects are exposed. Deterministic API/provider/browser tests passed; no live Gemini transfer was performed. Checkpoint: `task-182-reviewed-chat-tools`.
 
+## Local recovery and release boundaries (Task 185)
+
+Release metadata is checked only after the owner selects **Check for release** on
+the protected Updates page. There is no background schedule. The existing pinned
+Ed25519 release manifest binds the exact Windows installer digest; preparing an
+update is a separate explicit operation, and the installer is run manually.
+The current installer remains unsigned with Windows Authenticode. A future
+publicly supported Windows release needs an owner-controlled publisher identity
+and certificate, private-key custody outside the repository, SHA-256 Authenticode
+signing with a trusted timestamp, and SignTool verification in addition to the
+existing Ed25519 manifest and digest check. No publisher identity or certificate
+has been selected or purchased.
+
+The per-user NSIS uninstaller defaults to keeping `%LOCALAPPDATA%\ERSELMETZ AI`
+and presents a distinct Yes/No choice explaining that No removes that fixed
+folder. Settings also provides a separate full reset: the owner must have the
+existing `backup:restore` permission and accept a native confirmation whose
+default is Cancel. The app stops the sidecar, starts a helper that waits for the
+parent process to release files, removes only the fixed per-user data directory,
+then relaunches into first-run setup. Reset removes owner credentials, database,
+backups, staged installers, and diagnostics; recovery must be exported before
+reset if wanted.
+
+Handled main-process exceptions/rejections, renderer process loss, and abnormal
+backend exits may append at most eight local records (8 KiB total) to
+`%LOCALAPPDATA%\ERSELMETZ AI\diagnostics\crash-reports.json`. The whitelist
+contains only event time/type, component, a bounded reason, app version, and an
+optional bounded exit code. Raw error text, stack, paths, prompts, credentials,
+and provider responses are omitted; reports have no upload path and are
+inspectable through the owner-protected desktop settings. These records are not
+OS minidumps and cannot capture abrupt power loss or a hard process termination.
+The uninstaller's keep choice preserves them; reset or the explicit remove-data
+uninstall choice deletes them.
+
+Task 185 automated contract tests passed. No Authenticode certificate or signed
+public artifact exists, and native NSIS UI plus destructive clean-profile reset
+and relaunch were not exercised in this environment. Those are release/Windows
+follow-up, not claimed as tested.
+
 ## Visible chat workflow scaffolding (Task 183)
 
 Before a chat turn begins, Coordinator Chat shows a bounded deterministic plan and asks the owner to continue or cancel. Cancellation happens before knowledge retrieval, selected reviewed-tool calls, or provider work. Existing exact-scope knowledge preview, per-turn Gemini consent, and capability checks remain authoritative. The app does not create a model-generated plan, Task, background job, or hidden agent workflow.
@@ -1546,4 +1585,4 @@ Packaged Electron starts the Python backend with `%LOCALAPPDATA%\ERSELMETZ AI` a
 
 The schema-version-3 additive tables store corporation-scoped position snapshots and resource-limit configuration, owner-scoped proposal summaries, and explicitly owner-retained Employee conversations. Position history follows the existing revision/deactivation lifecycle. Resource limits survive restart, but active reservations and allocation IDs do not. Proposals expire under their existing 15-minute limit; prepared proposals are invalidated at startup and cannot be confirmed after restart. Only metadata needed for replay protection and review is stored; retrieved context, credentials, and provider objects are excluded. Employee conversation history is unencrypted and written only after per-conversation owner opt-in; it remains until explicit deletion, is owner-scoped, and is read-only after restart. Pending turns remain uncertain and are never replayed.
 
-SQLite DDL is additive and runs in the existing `BEGIN IMMEDIATE` transaction. A failed migration rolls back and does not advance `PRAGMA user_version`; no unencrypted migration sidecar is created. Existing encrypted Backup & Restore includes these new records only when the owner explicitly selects private app data. The owner can review and delete retained Employee history in the UI, inspect positions through the authorized position pages, and inspect resource configuration through authorized settings. For other app-data removal, close the app and use Backup & Restore before separately confirming manual deletion of the app-data folder. This is local single-profile storage, not cross-user sharing or cloud sync. Automated restart and migration tests pass; Task 176 clean-profile Windows acceptance and Task 184 manual data-location/permission/recovery checks are still pending, so Task 184 remains planned.
+SQLite DDL is additive and runs in the existing `BEGIN IMMEDIATE` transaction. A failed migration rolls back and does not advance `PRAGMA user_version`; no unencrypted migration sidecar is created. Existing encrypted Backup & Restore includes these new records only when the owner explicitly selects private app data. The owner can review and delete retained Employee history in the UI, inspect positions through the authorized position pages, and inspect resource configuration through authorized settings. For other app-data removal, close the app and use Backup & Restore before separately confirming manual deletion of the app-data folder. This is local single-profile storage, not cross-user sharing or cloud sync. Task 184 reached scoped development completion under the revised AI-run acceptance policy. Automated restart and migration checks pass; separate-account and preserved production-database recovery remain unverified follow-up.

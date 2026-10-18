@@ -26,9 +26,11 @@ registries, and the repository's locked Python and Node dependencies. The
 installed app uses Windows current-user DPAPI and loopback services; other OS
 targets have not been evaluated for those behaviors.
 
-There is no automatic updater. The protected Updates page checks only
-`https://api.github.com/repos/erselmetz/ai-corporation/releases/latest` after an
-explicit owner request and verifies a detached Ed25519 signature using the
+There is no automatic updater or background release polling. The protected
+Updates page checks only
+`https://api.github.com/repos/erselmetz/ai-corporation/releases/latest` after the
+owner selects **Check for release now**; this is a one-check opt-in and is not
+persisted as a recurring subscription. It verifies a detached Ed25519 signature using the
 public key pinned in the app. The owner can explicitly prepare a newer
 compatible signed Windows x64 installer; the app rechecks its SHA-256, creates
 a verified SQLite online backup, and saves the installer under
@@ -118,12 +120,39 @@ Task 170 release-review boundaries remain unchanged. The general standalone
 API remains fail-closed and does not mount the desktop first-run routes.
 
 The installer does not configure automatic updates. Install a later trusted
-version manually. Uninstall leaves `%LOCALAPPDATA%\ERSELMETZ AI` in place,
-including the owner verifier and application data, so reinstall can recover the
-same profile. To reset owner setup, exit the application and remove only
-`%LOCALAPPDATA%\ERSELMETZ AI\owner-credential.dpapi`. Remove the remaining
-application data only as a separate, intentional Windows user action after
-backup; it may contain durable app records.
+version manually. The uninstaller asks whether to keep `%LOCALAPPDATA%\ERSELMETZ AI`;
+the default Yes preserves the owner verifier and application data for a later
+reinstall, while No removes that data folder. To repeat owner setup while
+keeping other data, exit the application and remove only
+`%LOCALAPPDATA%\ERSELMETZ AI\owner-credential.dpapi`. For a full reset while
+the app is installed, use the confirmed Settings action described below.
+
+Task 185 adds an explicit data choice in the per-user NSIS uninstaller. The
+prompt defaults to **Yes, keep local data**; choosing **No** removes the fixed
+`%LOCALAPPDATA%\ERSELMETZ AI` folder, including the owner verifier, database,
+backups, staged update installers, and local crash reports. The installed app's
+Settings page also has a separate **Reset all app data** action, guarded by the
+existing `backup:restore` owner permission and a native confirmation defaulting
+to Cancel. It stops the local sidecar, waits for the app process to release its
+files, clears only that per-user data folder, and relaunches at first-run setup.
+Export a recovery backup first if you need to keep durable records.
+
+Handled Electron main-process failures, renderer process loss, and abnormal
+backend exits may be recorded in
+`%LOCALAPPDATA%\ERSELMETZ AI\diagnostics\crash-reports.json`. The report is
+capped at eight records and 8 KiB, and stores only a timestamp, fixed event and
+component names, bounded reason, app version, and optional bounded exit code.
+It omits raw error text and stacks, prompts, credentials, provider responses,
+and paths. The owner can inspect records in Settings or open the local folder;
+the app never uploads them. Hard termination and power loss cannot be recorded.
+
+The release/update trust design requires an owner-selected Windows publisher
+identity and owner-controlled Authenticode certificate before any public signed
+installer release. The private key must stay outside the repository; a release
+must be SHA-256 signed with a trusted timestamp and verified with SignTool,
+alongside the existing pinned Ed25519 manifest and exact artifact digest. The
+current installer remains unsigned. No publisher, certificate, or paid account
+was selected or acquired; no public signed artifact exists.
 
 The packaged backend database is at %LOCALAPPDATA%\ERSELMETZ AI\projects\ai_corporation.db. It contains local positions, configured slot limits, short-lived proposal review metadata, and Employee conversations only when the owner explicitly selects Retain this conversation. Retained chat is unencrypted and remains until explicitly deleted from Employee Chat or the app data folder is removed. Recovered Employee conversations are read-only; uncertain turns are never replayed. SQLite schema upgrades are additive and transactional: a failed migration rolls back without advancing the schema version. The existing encrypted Backup & Restore flow can include private records only after explicit selection; use it before manual recovery or app-data removal. Active slot allocations, provider credentials, and capability grants are not persisted.
 

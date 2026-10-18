@@ -79,3 +79,15 @@ test("first-run overview does not mutate provider or model configuration", () =>
   assert.doesNotMatch(page, /fetch\([^)]*(?:connect|download|assign|health-check)/i);
   assert.match(page, /Nothing is downloaded, connected, or reassigned automatically/);
 });
+
+test("settings exposes local-only recovery records and a separate owner-confirmed full reset", () => {
+  assert.match(settingsPage, /Local crash reports/);
+  assert.match(settingsPage, /Messages, stack traces, prompts, credentials, paths, and provider responses are excluded/);
+  assert.match(settingsPage, /Reports never upload automatically/);
+  assert.match(settingsPage, /Reset all app data/);
+  assert.match(settingsPage, /Export a recovery backup first/);
+  assert.match(settingsPage, /resetAppData\(\)/);
+  const main = fs.readFileSync(path.join(root, "desktop/main.cjs"), "utf8");
+  assert.match(main, /ownerHasPermission\("backup:restore"\)/);
+  assert.match(main, /buttons: \["Cancel", "Reset app data"\], defaultId: 0, cancelId: 0/);
+});

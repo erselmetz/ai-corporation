@@ -353,8 +353,8 @@ def updates_page() -> HTMLResponse:
               </section>
               <section class="management-card" aria-labelledby="trusted-release-title">
                 <h2 id="trusted-release-title">Signed application release</h2>
-                <p>Check the fixed ERSELMETZ AI GitHub release origin. The app verifies a pinned Ed25519 signature before showing notes or migration details. Preparing an update downloads only a verified Windows x64 installer and creates a local SQLite recovery backup; installation remains a manual owner action.</p>
-                <button id="release-check" type="button">Check for release</button>
+                <p>No background checks run. Select this button to make one owner-requested check against the fixed ERSELMETZ AI GitHub release origin. The app verifies a pinned Ed25519 signature before showing notes or migration details. Preparing an update downloads only a verified Windows x64 installer and creates a local SQLite recovery backup; installation remains a separate manual owner action.</p>
+                <button id="release-check" type="button">Check for release now</button>
                 <p id="release-state" class="section-state" role="status" aria-live="polite">No release check has been performed.</p>
                 <div id="release-preview" hidden>
                   <h3 id="release-version"></h3>

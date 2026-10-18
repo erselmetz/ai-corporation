@@ -1,4 +1,4 @@
-const { app, BrowserWindow, desktopCapturer, dialog, ipcMain, session } = require("electron");
+const { app, BrowserWindow, desktopCapturer, dialog, ipcMain, session, shell } = require("electron");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -6,11 +6,15 @@ const http = require("node:http");
 const { fileURLToPath } = require("node:url");
 const { createDisplayMediaRequestHandler } = require("./screen-capture.cjs");
 const { OllamaInstaller } = require("./ollama-installer.cjs");
+const { appendLocalCrashReport, readLocalCrashReports } = require("./local-diagnostics.cjs");
+const { RESET_HELPER_ARGUMENT, resolveAppDataDirectory, waitForParentAndRemoveAppData } = require("./local-reset.cjs");
 
 const HOST = "127.0.0.1";
 const PORT = 8765;
 const ORIGIN = `http://${HOST}:${PORT}`;
-const APP_DATA = path.join(process.env.LOCALAPPDATA || app.getPath("userData"), "ERSELMETZ AI");
+const APP_DATA = process.env.LOCALAPPDATA
+  ? resolveAppDataDirectory(process.env.LOCALAPPDATA)
+  : path.join(app.getPath("userData"), "ERSELMETZ AI");
 const CREDENTIAL = path.join(APP_DATA, "owner-credential.dpapi");
 let bootstrapWindow;
 let applicationWindow;
@@ -20,10 +24,54 @@ let quitting = false;
 let microphoneGrantUntil = 0;
 let cameraGrantUntil = 0;
 
-app.setName("ERSELMETZ AI");
-app.setPath("userData", path.join(APP_DATA, "desktop"));
-const hasSingleInstanceLock = app.requestSingleInstanceLock();
-if (!hasSingleInstanceLock) app.quit();
+function resetHelperMode() {
+  const marker = process.argv.indexOf(RESET_HELPER_ARGUMENT);
+  if (marker < 0) return false;
+  const parentPid = Number(process.argv[marker + 1]);
+  process.stdout.write("RESET_HELPER_READY\n");
+  void (async () => {
+    try {
+      if (!process.env.LOCALAPPDATA || !Number.isInteger(parentPid) || parentPid <= 0) { app.exit(2); return; }
+      const removed = await waitForParentAndRemoveAppData(process.env.LOCALAPPDATA, APP_DATA, parentPid);
+      if (!removed) { app.exit(3); return; }
+      const args = app.isPackaged ? [] : [path.resolve(__dirname, "..")];
+      const relaunched = spawn(process.execPath, args, { detached: true, windowsHide: true, stdio: "ignore", shell: false });
+      const started = await new Promise((resolve) => {
+        relaunched.once("spawn", () => resolve(true));
+        relaunched.once("error", () => resolve(false));
+      });
+      if (!started) { app.exit(4); return; }
+      relaunched.unref();
+      app.exit(0);
+    } catch { app.exit(5); }
+  })();
+  return true;
+}
+
+const isResetHelper = resetHelperMode();
+if (!isResetHelper) {
+  app.setName("ERSELMETZ AI");
+  app.setPath("userData", path.join(APP_DATA, "desktop"));
+}
+const hasSingleInstanceLock = isResetHelper ? false : app.requestSingleInstanceLock();
+if (!isResetHelper && !hasSingleInstanceLock) app.quit();
+
+function appendCrashRecord(source, event, reason = "unknown", exitCode = null) {
+  try {
+    appendLocalCrashReport(APP_DATA, { source, event, reason, exitCode, appVersion: require("./package.json").version });
+  } catch { /* diagnostics must never prevent normal shutdown or recovery */ }
+}
+
+if (!isResetHelper) {
+  process.on("uncaughtException", () => {
+    appendCrashRecord("main", "uncaught-exception");
+    app.quit();
+  });
+  process.on("unhandledRejection", () => {
+    appendCrashRecord("main", "unhandled-rejection");
+    app.quit();
+  });
+}
 
 function isTrustedBootstrap(event) {
   if (!bootstrapWindow || event.sender !== bootstrapWindow.webContents) return false;
@@ -165,6 +213,34 @@ function authenticateDesktopOwner(password) {
   });
 }
 
+async function ownerHasPermission(permission) {
+  try {
+    const cookies = await session.defaultSession.cookies.get({ url: ORIGIN });
+    if (!cookies.some((cookie) => cookie.name === "ersel_local_session" && typeof cookie.value === "string" && cookie.value.length > 0)) return false;
+    const cookieHeader = cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
+    return await new Promise((resolve) => {
+      const request = http.get(`${ORIGIN}/api/local/session`, {
+        headers: { Accept: "application/json", Origin: ORIGIN, Cookie: cookieHeader }, timeout: 2500,
+      }, (response) => {
+        let body = "";
+        response.setEncoding("utf8");
+        response.on("data", (chunk) => {
+          if (body.length < 8192) body += chunk.slice(0, 8192 - body.length);
+          else request.destroy();
+        });
+        response.on("end", () => {
+          try {
+            const result = JSON.parse(body);
+            resolve(response.statusCode === 200 && Array.isArray(result.permissions) && result.permissions.includes(permission));
+          } catch { resolve(false); }
+        });
+      });
+      request.on("timeout", () => request.destroy());
+      request.on("error", () => resolve(false));
+    });
+  } catch { return false; }
+}
+
 function showStartup(message) {
   if (bootstrapWindow && !bootstrapWindow.isDestroyed()) bootstrapWindow.webContents.send("desktop:startup-state", message);
 }
@@ -188,7 +264,13 @@ async function startBackend(payload) {
     child = spawnBackend();
     backend = child;
     handleChildErrors(child);
-    child.once("exit", () => { if (backend === child) backend = null; });
+    child.once("exit", (code, signal) => {
+      if (backend === child) backend = null;
+      if (!quitting && (signal || (code !== null && code !== 0))) {
+        appendCrashRecord("backend", "backend-exit", signal ? "killed" : "abnormal-exit",
+          Number.isInteger(code) ? Math.max(-1, Math.min(255, code)) : null);
+      }
+    });
     child.stdin.write(`${JSON.stringify({ password: payload.password, confirmation: payload.confirmation, first_owner_run: isFirstRun })}\n`);
     payload.password = "";
     payload.confirmation = "";
@@ -226,6 +308,11 @@ function createApplicationWindow() {
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true },
   });
   applicationWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  applicationWindow.webContents.on("render-process-gone", (_event, details) => {
+    const allowedReasons = new Set(["clean-exit", "abnormal-exit", "killed", "crashed", "oom", "launch-failed", "integrity-failure"]);
+    appendCrashRecord("renderer", "renderer-gone", allowedReasons.has(details?.reason) ? details.reason : "unknown",
+      Number.isInteger(details?.exitCode) ? Math.max(-1, Math.min(255, details.exitCode)) : null);
+  });
   applicationWindow.webContents.on("will-navigate", (event, target) => {
     try { if (new URL(target).origin !== ORIGIN) event.preventDefault(); }
     catch { event.preventDefault(); }
@@ -307,6 +394,61 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
   );
   ipcMain.handle("desktop:get-setup-state", (event) => isTrustedBootstrap(event) && !fs.existsSync(CREDENTIAL));
   ipcMain.handle("desktop:start", (event, payload) => isTrustedBootstrap(event) ? startBackend(payload) : { started: false, message: "Request denied." });
+  ipcMain.handle("desktop:read-crash-reports", (event) => {
+    if (!isTrustedApplication(event)) return { ok: false, message: "Request denied.", reports: [] };
+    return ownerHasPermission("system:read").then((allowed) => allowed
+      ? { ok: true, localOnly: true, reports: readLocalCrashReports(APP_DATA) }
+      : { ok: false, message: "Sign in with system:read permission to inspect local reports.", reports: [] });
+  });
+  ipcMain.handle("desktop:open-diagnostics-folder", async (event) => {
+    if (!isTrustedApplication(event)) return { ok: false, message: "Request denied." };
+    if (!await ownerHasPermission("system:read")) return { ok: false, message: "Sign in with system:read permission to open local diagnostics." };
+    try {
+      const directory = path.join(APP_DATA, "diagnostics");
+      fs.mkdirSync(directory, { recursive: true });
+      const error = await shell.openPath(directory);
+      return error ? { ok: false, message: "The local diagnostics folder could not be opened." } : { ok: true };
+    } catch { return { ok: false, message: "The local diagnostics folder could not be opened." }; }
+  });
+  ipcMain.handle("desktop:reset-app-data", async (event) => {
+    if (!isTrustedApplication(event)) return { ok: false, message: "Request denied." };
+    if (!process.env.LOCALAPPDATA) return { ok: false, message: "Full app-data reset is supported only for the Windows per-user installation." };
+    if (!await ownerHasPermission("backup:restore")) return { ok: false, message: "Sign in with backup:restore permission to reset application data." };
+    const confirmation = await dialog.showMessageBox(applicationWindow, {
+      type: "warning", buttons: ["Cancel", "Reset app data"], defaultId: 0, cancelId: 0,
+      title: "Reset all ERSELMETZ AI data?",
+      message: "This removes the local owner account and all ERSELMETZ AI application data.",
+      detail: "This permanently removes the local database, owner credential, conversations, backups, update installers, and local diagnostic reports. It cannot be undone. Choose Cancel to keep the data. The app will close and reopen at first-run setup.",
+      noLink: true,
+    });
+    if (confirmation.response !== 1) return { ok: false, canceled: true, message: "App data was kept." };
+    if (!await stopBackend()) return { ok: false, message: "The local service did not stop safely. Data was kept; close the app after it finishes and retry." };
+    try { await session.defaultSession.clearStorageData(); }
+    catch { return { ok: false, message: "The owner session could not be cleared. Data was kept." }; }
+    let helper;
+    try {
+      const helperArgs = app.isPackaged
+        ? [RESET_HELPER_ARGUMENT, String(process.pid)]
+        : [path.resolve(__dirname, ".."), RESET_HELPER_ARGUMENT, String(process.pid)];
+      helper = spawn(process.execPath, helperArgs, { detached: true, windowsHide: true, stdio: ["ignore", "pipe", "ignore"], shell: false });
+    } catch { return { ok: false, message: "Reset helper could not be started. Data was kept." }; }
+    const ready = await new Promise((resolve) => {
+      let output = "";
+      const timeout = setTimeout(() => resolve(false), 3000);
+      helper.stdout.setEncoding("utf8");
+      helper.stdout.on("data", (chunk) => {
+        output = (output + chunk).slice(-80);
+        if (output.includes("RESET_HELPER_READY")) { clearTimeout(timeout); resolve(true); }
+      });
+      helper.once("error", () => { clearTimeout(timeout); resolve(false); });
+      helper.once("exit", () => { clearTimeout(timeout); resolve(false); });
+    });
+    if (!ready) { try { helper.kill(); } catch {} return { ok: false, message: "Reset helper did not become ready. Data was kept." }; }
+    helper.unref();
+    quitting = true;
+    app.exit(0);
+    return { ok: true, restarting: true };
+  });
   const ollamaInstaller = new OllamaInstaller({
     onProgress: (progress) => {
       if (applicationWindow && !applicationWindow.isDestroyed()) applicationWindow.webContents.send("desktop:ollama-installer-progress", progress);
@@ -372,12 +514,12 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
   makeBootstrapWindow();
 });
 
-app.on("second-instance", () => {
+if (!isResetHelper) app.on("second-instance", () => {
   const window = applicationWindow || bootstrapWindow;
   if (window) { if (window.isMinimized()) window.restore(); window.focus(); }
 });
 
-app.on("before-quit", (event) => {
+if (!isResetHelper) app.on("before-quit", (event) => {
   if (quitting || !backend) return;
   event.preventDefault();
   if (quitAfterShutdown) return;
@@ -397,4 +539,4 @@ app.on("before-quit", (event) => {
   });
 });
 
-app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
+if (!isResetHelper) app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });

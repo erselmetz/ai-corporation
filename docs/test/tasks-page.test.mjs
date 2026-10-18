@@ -25,8 +25,8 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-190-190");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 190 }, (_, index) => 190 - index));
-  assert.match(elements["roadmap-summary"].textContent, /190 roadmap tasks.*182 completed.*2 deferred and incomplete.*5 planned.*1 design only/);
-  assert.match(elements["next-task"].textContent, /Next: Task 185/);
+  assert.match(elements["roadmap-summary"].textContent, /190 roadmap tasks.*183 completed.*2 deferred and incomplete.*4 planned.*1 design only/);
+  assert.match(elements["next-task"].textContent, /Next: Task 186/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -137,7 +137,7 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.match(elements["roadmap-rules"].textContent, /identical generated code is not guaranteed/);
 });
 
-test("publishes the completed settings milestone and remaining phases as planned", () => {
+test("publishes completed milestones and remaining phases with their current status", () => {
   const settings = tasks.find(task => task.number === 171);
   assert.equal(settings.status, "completed");
   assert.equal(settings.checkpoint, "task-171-unified-settings-operator-controls");
@@ -146,7 +146,7 @@ test("publishes the completed settings milestone and remaining phases as planned
   const planned = tasks.filter(task => task.number >= 174);
   assert.deepEqual(planned.map(task => [task.number, task.status]), [
     [174, "completed"], [175, "completed"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
-    [180, "completed"], [181, "completed"], [182, "completed"], [183, "completed"], [184, "completed"], [185, "planned"],
+    [180, "completed"], [181, "completed"], [182, "completed"], [183, "completed"], [184, "completed"], [185, "completed"],
     [186, "planned"], [187, "planned"], [188, "planned"], [189, "planned"], [190, "design_only"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, "task-177-auto-rag-trace");
@@ -154,6 +154,7 @@ test("publishes the completed settings milestone and remaining phases as planned
   assert.equal(tasks.find(task => task.number === 181).checkpoint, "task-181-consent-based-model-routing");
   assert.equal(tasks.find(task => task.number === 182).checkpoint, "task-182-reviewed-chat-tools");
   assert.equal(tasks.find(task => task.number === 183).checkpoint, "task-183-visible-chat-workflow-scaffolding");
+  assert.equal(tasks.find(task => task.number === 185).checkpoint, "task-185-local-recovery-and-update-controls");
   assert.match(tasks.find(task => task.number === 178).validation.join(" "), /native window level/);
   assert.match(tasks.find(task => task.number === 178).limitations.join(" "), /not been published or distributed/);
   for (const task of tasks.filter(task => task.number >= 180)) {

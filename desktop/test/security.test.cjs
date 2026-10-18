@@ -19,6 +19,14 @@ test("Windows distribution is per-user, preserves owner data, and has no auto-up
   assert.equal(pkg.build.nsis.allowToChangeInstallationDirectory, false);
   assert.ok(pkg.build.files.includes("ollama-installer.cjs"));
   assert.ok(fs.existsSync(path.join(root, "ollama-installer.cjs")));
+  assert.ok(pkg.build.files.includes("local-diagnostics.cjs"));
+  assert.ok(pkg.build.files.includes("local-reset.cjs"));
+  assert.equal(pkg.build.nsis.include, "scripts/uninstaller.nsh");
+  const uninstaller = read("scripts/uninstaller.nsh");
+  assert.match(uninstaller, /MB_DEFBUTTON1/);
+  assert.match(uninstaller, /Yes keeps this data/);
+  assert.match(uninstaller, /No permanently removes/);
+  assert.match(uninstaller, /RMDir \/r "\$LOCALAPPDATA\\ERSELMETZ AI"/);
 });
 
 test("Electron renderer windows are isolated and navigation stays on owned content", () => {
@@ -42,6 +50,33 @@ test("preload exposes only bounded startup operations, never raw Electron IPC", 
   assert.match(preload, /installOllama: \(preview\) => ipcRenderer\.invoke\("desktop:ollama-installer-install", preview\)/);
   assert.doesNotMatch(preload, /contextBridge\.exposeInMainWorld\("desktopBridge",\s*ipcRenderer/);
   assert.doesNotMatch(preload, /sendSync|\.send\s*\(/);
+  assert.match(preload, /readCrashReports: \(\) => ipcRenderer\.invoke\("desktop:read-crash-reports"\)/);
+  assert.match(preload, /openDiagnosticsFolder: \(\) => ipcRenderer\.invoke\("desktop:open-diagnostics-folder"\)/);
+  assert.match(preload, /resetAppData: \(\) => ipcRenderer\.invoke\("desktop:reset-app-data"\)/);
+});
+
+test("local recovery IPC is app-origin and owner-permission guarded with native reset confirmation", () => {
+  const main = read("main.cjs");
+  const reports = main.slice(main.indexOf('ipcMain.handle("desktop:read-crash-reports"'), main.indexOf('ipcMain.handle("desktop:open-diagnostics-folder"'));
+  const openFolder = main.slice(main.indexOf('ipcMain.handle("desktop:open-diagnostics-folder"'), main.indexOf('ipcMain.handle("desktop:reset-app-data"'));
+  const reset = main.slice(main.indexOf('ipcMain.handle("desktop:reset-app-data"'), main.indexOf('const ollamaInstaller'));
+  assert.match(reports, /isTrustedApplication\(event\)/);
+  assert.match(reports, /ownerHasPermission\("system:read"\)/);
+  assert.match(openFolder, /ownerHasPermission\("system:read"\)/);
+  assert.match(reset, /ownerHasPermission\("backup:restore"\)/);
+  assert.match(reset, /dialog\.showMessageBox/);
+  assert.match(reset, /defaultId: 0, cancelId: 0/);
+  assert.match(reset, /if \(!await stopBackend\(\)\)/);
+  assert.match(reset, /RESET_HELPER_ARGUMENT/);
+  assert.match(reset, /app\.exit\(0\)/);
+  assert.match(main, /waitForParentAndRemoveAppData\(process\.env\.LOCALAPPDATA, APP_DATA, parentPid\)/);
+  const resetModule = read("local-reset.cjs");
+  assert.match(resetModule, /path\.basename\(target\).*APP_DATA_DIRECTORY_NAME/i);
+  assert.match(resetModule, /target\.toLowerCase\(\) !== expected\.toLowerCase\(\)/);
+  assert.match(resetModule, /fs\.rmSync\(target, \{ recursive: true, force: true/);
+  assert.match(main, /appendLocalCrashReport\(APP_DATA/);
+  const crashHandler = main.slice(main.indexOf("function appendCrashRecord"), main.indexOf("function isTrustedBootstrap"));
+  assert.doesNotMatch(crashHandler, /error\.stack|error\.message/);
 });
 
 test("Ollama installer bridge is app-origin restricted and presents verified details before execution", () => {

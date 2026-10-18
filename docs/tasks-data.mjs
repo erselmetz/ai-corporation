@@ -3176,7 +3176,7 @@ export const post100Tasks = [
     "title": "Installer, opt-in updates, and clean uninstall",
     "description": "Plan signed installation, an opt-in update check, clean uninstall choices, local-only crash reports, and an explicit reset-app-data control.",
     "category": "Phase V - Installation and Recovery",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       176
     ],
@@ -3195,15 +3195,29 @@ export const post100Tasks = [
       "Signing key loss/compromise, incomplete data removal, and diagnostic leakage can harm trust."
     ],
     "area": "P38",
-    "checkpoint": null,
-    "validation": [],
+    "checkpoint": "task-185-local-recovery-and-update-controls",
+    "validation": [
+      "Full Python suite: 1,327 passed, 5 skipped, 0 failed (2 dependency deprecation warnings).",
+      "Browser-module tests: 224 passed; Electron tests: 33 passed; public documentation tests: 17 passed.",
+      "Desktop UI TypeScript no-emit check, Electron and report/reset-helper syntax checks, deterministic crash-report and exact-path reset tests, and git diff --check passed.",
+      "An isolated Next.js production-build attempt was not completed: the temporary dependency junction was rejected by Turbopack and webpack path resolution. Existing desktop-ui/.next and desktop-ui/out artifacts were left untouched.",
+      "The full Python suite also ran three existing localhost Ollama integration tests because the local service was reachable; they were not needed for Task 185 and are not used as its feature evidence. No paid or external network call was made. Future full-suite runs will set OLLAMA_BASE_URL to an unavailable loopback port so those tests skip by default."
+    ],
     "limitations": [
-      "Depends on Task 176 installer and persisted data model; signing identities and update hosting require owner-controlled choices."
+      "The Windows package remains Authenticode-unsigned. The publisher identity, certificate procurement, custody and public release are owner-controlled decisions; no certificate was selected or purchased.",
+      "The release signature and artifact verification contracts are tested with deterministic keys, but no published signed Windows installer was available for verification.",
+      "Native NSIS choice rendering, full data reset/relaunch on a clean Windows profile, and real installer/uninstaller behavior remain unverified follow-up.",
+      "The Next.js production static build was not verified because the isolated build clone could not resolve the external node_modules junction; TypeScript compilation and Electron settings contract tests passed.",
+      "The Python suite skips two image-processing tests because Pillow is not installed and three symlink-security tests because Windows reports WinError 1314; their behavior is not established by this run."
     ],
     "automatedVerification": [
-      "AI-run verification: Verify signatures on distributed artifacts, opt-in update behavior, uninstall/data-retention choices, local crash report contents, and reset recovery on clean Windows profiles."
+      "AI-run verification: Confirm no release request occurs on page load and one check requires an explicit click; verify release signature before preview and separate explicit prepare confirmation.",
+      "Verify the NSIS uninstall prompt defaults to keeping data and its separate delete choice targets only the fixed per-user ERSELMETZ AI data folder.",
+      "Verify bounded local diagnostics whitelist only event metadata, omit raw errors/secrets/paths, and are readable only through trusted app UI with system:read.",
+      "Verify full reset requires backup:restore, defaults native confirmation to Cancel, stops the backend, removes only the fixed app-data directory after parent exit, then relaunches into first-run."
     ],
     "followUpValidation": [
+      "Real Authenticode signing and publisher identity, public signed artifact verification, NSIS UI behavior, and destructive reset/restart on a clean Windows profile remain unverified; their impact is release readiness and actual Windows shell behavior, not the deterministic contracts tested here.",
       "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
     ]
   },
@@ -3392,7 +3406,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-181 and Task 184 are completed scoped checkpoints except deferred Task 170; Tasks 182-183 and Tasks 185-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-183 and Tasks 184-185 are completed scoped checkpoints except deferred Task 170; Tasks 186-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-190, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
