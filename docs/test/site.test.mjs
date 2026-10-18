@@ -60,7 +60,7 @@ describe("documentation site", () => {
   });
 
   it("serves required page assets and does not expose paths outside the allowlist", async () => {
-    for (const asset of ["site.css", "tasks-data.mjs", "tasks-page.js", "roadmap-status.js"]) {
+    for (const asset of ["site.css", "tasks-data.mjs", "tasks-page.js", "roadmap-status.js", "design/task-190-code-execution-threat-model.md"]) {
       assert.equal((await fetch(`${baseUrl}/${asset}`)).status, 200);
     }
     assert.equal((await fetch(`${baseUrl}/../README.md`)).status, 404);
@@ -216,6 +216,8 @@ describe("documentation site", () => {
     assert.equal(nextTask.number, 190);
     assert.ok(tasks.slice(0, 133).every(task => task.status === "completed"));
     assert.equal(tasks.find(task => task.number === 190).status, "design_only");
+    assert.equal(tasks.find(task => task.number === 190).checkpoint, "task-190-code-execution-threat-model");
+    assert.match(tasks.find(task => task.number === 190).validation.join(" "), /self-review/);
     assert.equal(tasks.filter(task => task.status === "planned").length, 0);
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
@@ -331,6 +333,16 @@ describe("documentation site", () => {
     assert.doesNotMatch(html, /173 complete; 2 deferred; 3 planned/);
     assert.match(html, /id="next-task"/);
     assert.match(html, /id="roadmap-rules"/);
+  });
+
+  it("publishes the Task 190 design gate without claiming execution authority", async () => {
+    const design = await (await fetch(`${baseUrl}/design/task-190-code-execution-threat-model.md`)).text();
+    assert.match(design, /Status: design only/);
+    assert.match(design, /AI security design review/);
+    assert.match(design, /not an independent-model review/);
+    assert.match(design, /never fall back to host execution/);
+    assert.match(design, /Runtime implementation requires a distinct owner-authorized roadmap task/);
+    assert.equal((await fetch(`${baseUrl}/design/task-190-code-execution-threat-model.md`)).status, 200);
   });
 
   it("keeps public overview pages concise and aligned with the latest roadmap status", async () => {
@@ -528,6 +540,9 @@ describe("documentation site", () => {
       assert.ok(task.dependsOn.every(number => Number.isInteger(number) && number >= 1 && number <= tasks.length && number !== task.number));
       if (task.status === "completed") {
         assert.match(task.checkpoint, /^(?:[a-f0-9]{7,40}|task-[1-9][0-9]*-[a-z][a-z0-9-]*)$/);
+        assert.ok(task.validation.length > 0 && task.limitations.length > 0);
+      } else if (task.status === "design_only") {
+        assert.match(task.checkpoint, /^task-[1-9][0-9]*-[a-z][a-z0-9-]*$/);
         assert.ok(task.validation.length > 0 && task.limitations.length > 0);
       } else {
         assert.equal(task.checkpoint, null);

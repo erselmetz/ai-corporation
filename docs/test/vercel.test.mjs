@@ -13,6 +13,7 @@ test("Vercel default export serves public assets and preserves read-only boundar
     const filenames = await readdir(new URL("../", import.meta.url));
     const assets = filenames.filter((name) => name.endsWith(".html"));
     assets.push("site.css", "tasks-data.mjs", "tasks-page.js", "roadmap-status.js");
+    assets.push("design/task-190-code-execution-threat-model.md");
     for (const asset of ["", ...assets]) {
       const response = await fetch(`${baseUrl}/${asset}`);
       assert.equal(response.status, 200, `${asset || "/"} should load`);
@@ -45,5 +46,5 @@ test("Vercel function bundle explicitly includes the public file assets", async 
   const config = JSON.parse(await readFile(new URL("../vercel.json", import.meta.url), "utf8"));
   const build = config.builds.find(({ src }) => src === "server.mjs");
   assert.equal(build.use, "@vercel/node");
-  assert.deepEqual(build.config.includeFiles, ["*.html", "site.css", "tasks-data.mjs", "tasks-page.js", "roadmap-status.js"]);
+  assert.deepEqual(build.config.includeFiles, ["*.html", "site.css", "tasks-data.mjs", "tasks-page.js", "roadmap-status.js", "design/task-190-code-execution-threat-model.md"]);
 });

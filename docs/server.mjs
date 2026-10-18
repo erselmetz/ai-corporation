@@ -23,6 +23,7 @@ const publicFiles = new Map([
   ["/tasks-data.mjs", ["tasks-data.mjs", "text/javascript; charset=utf-8"]],
   ["/tasks-page.js", ["tasks-page.js", "text/javascript; charset=utf-8"]],
   ["/roadmap-status.js", ["roadmap-status.js", "text/javascript; charset=utf-8"]],
+  ["/design/task-190-code-execution-threat-model.md", ["design/task-190-code-execution-threat-model.md", "text/markdown; charset=utf-8"]],
 ]);
 
 export default async function handleDocumentationRequest(request, response) {

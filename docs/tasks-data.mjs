@@ -3414,16 +3414,22 @@ export const post100Tasks = [
       "Execution can compromise all data and processes available to the host if isolation or confirmation fails."
     ],
     "area": "P42",
-    "checkpoint": null,
-    "validation": [],
+    "checkpoint": "task-190-code-execution-threat-model",
+    "validation": [
+      "Inspected app/integrations/sandbox_executor.py, docker_sandbox.py, sandbox.py, app/application/services/maintenance_sandbox.py, and app/api/maintenance_experiments.py. The generic executor blocks; the optional Docker path is Linux maintenance-test-only and does not establish a Windows general-purpose code-execution boundary.",
+      "Published docs/design/task-190-code-execution-threat-model.md with exact-action consent, Windows isolation prerequisites, filesystem/network/secret boundaries, resource limits, audit, kill/cancellation, crash recovery, and safe-result handling.",
+      "Recorded adversarial self-review by Codex GPT-6 on 2026-10-18; it is not independent review, penetration testing, or implementation evidence. Public docs tests: 18 passed; git diff --check passed."
+    ],
     "limitations": [
-      "Design only. AI review completes the design checkpoint; authority for future execution implementation remains a separate owner decision."
+      "Design only. This checkpoint grants no execution authority; runtime implementation needs a separate owner-authorized roadmap task.",
+      "Security review was an author self-review only; no independent model, Windows native implementation, penetration test, or red-team validation was performed.",
+      "Supported Windows editions, virtualization availability, sandbox policy enforcement, kill behavior under host/app crashes, and resource quotas remain unverified implementation risks."
     ],
     "automatedVerification": [
       "Review the proposed target-OS isolation, kill switch and filesystem/network boundaries against explicit adversarial scenarios. Record design evidence and unknowns; no execution capability is implemented or approved by this review."
     ],
     "followUpValidation": [
-      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+      "Before implementation, obtain an independent security review and verify the isolation backend, policy, kill behavior, path handling, crash recovery, Windows edition support, and quotas on supported Windows builds."
     ]
   }
 ];

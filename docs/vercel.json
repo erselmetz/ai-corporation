@@ -10,7 +10,8 @@
           "site.css",
           "tasks-data.mjs",
           "tasks-page.js",
-          "roadmap-status.js"
+          "roadmap-status.js",
+          "design/task-190-code-execution-threat-model.md"
         ]
       }
     }
