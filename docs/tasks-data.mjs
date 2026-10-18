@@ -3310,7 +3310,7 @@ export const post100Tasks = [
     "title": "Opt-in voice output",
     "description": "Add optional text-to-speech playback for assistant responses with a clear stop control.",
     "category": "Phase X - Voice Interaction",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       187
     ],
@@ -3329,16 +3329,19 @@ export const post100Tasks = [
       "Spoken responses can expose private content to nearby people; queued speech may outlive view changes."
     ],
     "area": "P40",
-    "checkpoint": null,
-    "validation": [],
+    "checkpoint": "task-188-opt-in-local-voice-output",
+    "validation": [
+      "Speech remains silent until the owner explicitly selects a local device voice and requests playback for a reply. Only voices marked localService are accepted; the adapter has no online provider or fallback. A saved voice selection is restored only when the same local voice is currently available, and restoration does not start speech.",
+      "The shared capability panel reports local playback and exposes Stop/clear-queue while the detailed controls are collapsed. Stop cancels the current utterance and clears queued text; bounded queue limits remain in force. Full validation: Python 1,324 passed / 8 skipped / 0 failed (2 deprecation warnings); browser modules 230 passed / 0 failed; Electron 33 passed / 0 failed; public docs 17 passed / 0 failed. Focused voice/output/capability tests: 23 passed; Python route/page tests: 3 passed. Python compilation, JavaScript syntax, and git diff --check passed."
+    ],
     "limitations": [
-      "Depends on Task 187 controls and Task 184 persistence; voice availability and language quality are device-specific."
+      "Physical speakers/headphones, system voice installation, offline playback on representative Windows/browser configurations, voice-language quality, and acoustic privacy in the owner's environment were not tested."
     ],
     "automatedVerification": [
-      "AI-run verification: Verify opt-in, voice selection, stop/queue clearing, restart preference behavior, offline operation, and privacy indicator."
+      "AI-run verification: deterministic fakes verify no playback by default, local-only voice filtering, explicit voice selection, saved local voice restoration only when present, active/inactive status, shared Stop/clear-queue behavior, and no network or online fallback."
     ],
     "followUpValidation": [
-      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+      "Real device voice availability, restart on a separately installed profile, offline operation on target devices, speaker/headphone leakage risk, language quality, and representative-owner usability remain unverified follow-up. Fakes do not prove physical audio behavior."
     ]
   },
   {
@@ -3418,7 +3421,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and Tasks 171-187 are completed scoped checkpoints except deferred Task 170; Tasks 188-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and Tasks 171-188 are completed scoped checkpoints except deferred Task 170; Task 189 remains planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-190, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",

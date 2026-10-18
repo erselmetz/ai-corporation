@@ -14,6 +14,8 @@ export function mountEmergencyStop({
   const activity = documentRef.getElementById("emergency-activity");
   const microphoneStop = documentRef.getElementById("capability-microphone-stop");
   const microphoneState = documentRef.getElementById("capability-microphone-state");
+  const playbackStop = documentRef.getElementById("capability-playback-stop");
+  const playbackState = documentRef.getElementById("capability-playback-state");
   let stopped = false;
   let capture = { microphone: "unknown", screen: "unknown", camera: "unknown", local_playback: "unknown", remote_request: "none" };
   let previousStopped = null;
@@ -65,6 +67,12 @@ export function mountEmergencyStop({
             : `Voice off; permission ${permission}; capture limit 10 seconds.`;
     }
     if (microphoneStop) microphoneStop.hidden = !["starting", "local-capture-pending", "local-capture", "audio-capture", "audio-stopping", "audio-ready", "audio-preparing", "cloud-request", "local-model-request"].includes(capture.voice_stage);
+    if (playbackState) playbackState.textContent = capture.local_playback === "active"
+      ? "Local speech playback is active."
+      : capture.local_playback === "off" || capture.local_playback === "inactive"
+        ? "Playback inactive; device-local voices only."
+        : "Playback state unknown until chat reports it.";
+    if (playbackStop) playbackStop.hidden = capture.local_playback !== "active";
     setIndicator("camera", available.camera ? "Available in this browser" : "Unsupported in this browser", activityLabel(capture.camera));
     setIndicator("screen", available.screen ? "Available in this browser" : "Unsupported in this browser", activityLabel(capture.screen));
     setIndicator("playback", available.playback ? "Available on this device" : "Unsupported on this device", activityLabel(capture.local_playback));
@@ -217,6 +225,10 @@ export function mountEmergencyStop({
   microphoneStop?.addEventListener("click", () => {
     const EventType = windowRef?.Event || globalThis.Event;
     if (typeof EventType === "function") windowRef?.dispatchEvent?.(new EventType("ersel:voice-stop"));
+  });
+  playbackStop?.addEventListener("click", () => {
+    const EventType = windowRef?.Event || globalThis.Event;
+    if (typeof EventType === "function") windowRef?.dispatchEvent?.(new EventType("ersel:playback-stop"));
   });
   windowRef?.addEventListener?.("ersel:screen-capture-activity", event => {
     capture = { ...capture, screen: event.detail?.state || "unknown" };

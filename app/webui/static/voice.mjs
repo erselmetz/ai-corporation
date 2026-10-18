@@ -100,8 +100,7 @@ export function mountVoiceControls({
       microphone_permission: permissionState,
       capture_elapsed_seconds: captureStartedAt === null ? 0 : Math.min(MAX_SECONDS, Math.floor((nowImpl() - captureStartedAt) / 1000)),
       capture_limit_seconds: MAX_SECONDS,
-      local_playback: windowRef?.speechSynthesis?.speaking || windowRef?.speechSynthesis?.pending
-        ? "active" : "off",
+      local_playback: speechOutput.status().state === "speaking" ? "active" : "off",
       remote_request: remoteOutcomeUnknown ? "possibly-processing-after-local-stop"
         : stage === "cloud-request" ? "possibly-processing" : "none",
     } }));
@@ -155,6 +154,7 @@ export function mountVoiceControls({
         : "Cloud transcription is off until you set an app-run request budget. This budget does not cap the provider invoice.";
       budget.disabled = cloudBudget.configured;
       budgetSave.disabled = cloudBudget.configured;
+      updateOutputStatus();
       return true;
     } catch (error) {
       budgetState.textContent = error.message;
@@ -184,6 +184,15 @@ export function mountVoiceControls({
   }
 
   function updateOutputStatus(snapshot = speechOutput.status()) {
+    if (savedVoicePreference?.voice_mode === "local" && savedVoicePreference.voice_id && !snapshot.selected_voice
+      && snapshot.voices.some(voice => voice.voice_uri === savedVoicePreference.voice_id)) {
+      try {
+        snapshot = speechOutput.configure({
+          voiceURI: savedVoicePreference.voice_id,
+          language: savedVoicePreference.voice_language || outputLanguage?.value.trim() || "en-US",
+        });
+      } catch { /* A stale or invalid saved preference stays unselected and visible. */ }
+    }
     if (outputVoice) {
       outputVoice.replaceChildren();
       const placeholder = documentRef.createElement("option");
@@ -197,10 +206,6 @@ export function mountVoiceControls({
         outputVoice.append(option);
       }
       outputVoice.value = snapshot.selected_voice || "";
-      if (savedVoicePreference?.voice_mode === "local" && savedVoicePreference.voice_id) {
-        const preferred = snapshot.voices.find(voice => voice.voice_uri === savedVoicePreference.voice_id);
-        if (preferred) outputVoice.value = preferred.voice_uri;
-      }
       outputVoice.disabled = snapshot.voices.length === 0;
     }
     if (outputState) {
@@ -218,6 +223,7 @@ export function mountVoiceControls({
       outputState.textContent = labels[snapshot.state] || "Offline speech output status is unknown.";
     }
     if (stopPlayback) stopPlayback.disabled = snapshot.state !== "speaking";
+    reportActivity();
   }
 
   function configureOutput() {
@@ -579,6 +585,10 @@ export function mountVoiceControls({
     updateControls();
   });
   windowRef?.addEventListener?.("ersel:voice-stop", () => { void stop(); });
+  windowRef?.addEventListener?.("ersel:playback-stop", () => {
+    updateOutputStatus(speechOutput.stop());
+    setState("Local speech playback stopped and queued reply text cleared.");
+  });
   windowRef?.addEventListener?.("ersel:emergency-resumed", () => {
     emergencyStopped = false;
     updateControls();

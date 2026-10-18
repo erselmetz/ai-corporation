@@ -14,7 +14,7 @@ test("safety panel stops, revokes grants, reports activity, and confirms resume"
     "emergency-grants", "emergency-permissions", "emergency-activity", "capability-microphone-support",
     "capability-microphone-activity", "capability-microphone-state", "capability-microphone-stop", "capability-camera-support", "capability-camera-activity",
     "capability-screen-support", "capability-screen-activity", "capability-playback-support",
-    "capability-playback-activity", "capability-vision-support", "capability-automation-support",
+    "capability-playback-activity", "capability-playback-state", "capability-playback-stop", "capability-vision-support", "capability-automation-support",
     "capability-automation-activity"].map(id => [id, new Element()]));
   const documentRef = { getElementById: id => elements[id], createElement: tag => new Element(tag) };
   const listeners = {};
@@ -72,6 +72,14 @@ test("safety panel stops, revokes grants, reports activity, and confirms resume"
   windowRef.dispatchEvent = event => dispatched.push(event.type);
   elements["capability-microphone-stop"].listeners.click();
   assert.deepEqual(dispatched, ["ersel:voice-stop"]);
+  await listeners["ersel:voice-activity"]({ detail: { microphone: "inactive", local_playback: "active", voice_stage: "idle" } });
+  assert.equal(elements["capability-playback-state"].textContent, "Local speech playback is active.");
+  assert.equal(elements["capability-playback-stop"].hidden, false);
+  elements["capability-playback-stop"].listeners.click();
+  assert.deepEqual(dispatched, ["ersel:voice-stop", "ersel:playback-stop"]);
+  await listeners["ersel:voice-activity"]({ detail: { local_playback: "off" } });
+  assert.match(elements["capability-playback-state"].textContent, /Playback inactive; device-local voices only/);
+  assert.equal(elements["capability-playback-stop"].hidden, true);
   await listeners["ersel:voice-activity"]({ detail: { microphone: "inactive", voice_stage: "cloud-request", microphone_permission: "granted" } });
   assert.match(elements["capability-microphone-state"].textContent, /Transcribing; microphone inactive/);
   await listeners["ersel:voice-activity"]({ detail: { microphone: "inactive", voice_stage: "idle", microphone_permission: "denied" } });

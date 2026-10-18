@@ -429,28 +429,57 @@ test("stopping at the capture-finalization boundary discards audio instead of ma
 test("reply audio uses an installed local voice and can be stopped", async () => {
   let spoken;
   let cancelled = 0;
+  let stopFromCapabilityPanel;
+  const activityEvents = [];
   class Utterance { constructor(text) { this.text = text; } }
+  class CustomEvent { constructor(type, options) { this.type = type; this.detail = options.detail; } }
   const speechSynthesis = {
     getVoices: () => [{ localService: true, voiceURI: "local-voice", name: "Local voice", lang: "en-US" }],
     addEventListener() {},
     speak(item) { spoken = item; },
     cancel() { cancelled += 1; },
   };
-  const ui = harness({ windowRef: { speechSynthesis, SpeechSynthesisUtterance: Utterance },
+  const windowRef = { speechSynthesis, SpeechSynthesisUtterance: Utterance, CustomEvent,
+    addEventListener(name, callback) { if (name === "ersel:playback-stop") stopFromCapabilityPanel = callback; },
+    dispatchEvent(event) { activityEvents.push(event); } };
+  const ui = harness({ windowRef,
     fetchImpl: async () => ({ ok: true, json: async () => ({ cloud_budget: { configured: false } }) }) });
   assert.match(ui.elements["voice-output-state"].textContent, /Choose an installed local voice/);
   ui.elements["voice-output-voice"].value = "local-voice";
   await ui.elements["voice-output-voice"].listeners.change();
   assert.equal(ui.controller.speak("A local answer"), true);
+  assert.equal(activityEvents.at(-1).detail.local_playback, "active");
   assert.equal(spoken.text, "A local answer");
   assert.equal(spoken.voice.voiceURI, "local-voice");
   assert.equal(spoken.lang, "en-US");
   assert.equal(ui.controller.speak("A second reviewed reply"), true);
   assert.match(ui.elements["voice-output-state"].textContent, /1 more replies queued/);
-  ui.elements["voice-stop-playback"].listeners.click();
+  stopFromCapabilityPanel();
   assert.equal(cancelled, 1);
+  assert.equal(activityEvents.at(-1).detail.local_playback, "off");
   assert.match(ui.elements["voice-output-state"].textContent, /stopped.*queued reply text was cleared/i);
   assert.match(ui.elements["voice-state"].textContent, /playback stopped/);
+});
+
+test("a saved local voice is restored only when that device-local voice is still available", async () => {
+  let spoken;
+  class Utterance { constructor(text) { this.text = text; } }
+  const windowRef = { speechSynthesis: {
+    getVoices: () => [{ localService: true, voiceURI: "device-local", name: "Device voice", lang: "fil-PH" }],
+    speak(item) { spoken = item; },
+    cancel() {},
+  }, SpeechSynthesisUtterance: Utterance };
+  const fetchImpl = async path => path === "/api/local/preferences"
+    ? { ok: true, json: async () => ({ preferences: { voice_mode: "local", voice_language: "fil-PH", voice_id: "device-local" } }) }
+    : { ok: true, json: async () => ({ cloud_budget: { configured: false } }) };
+  const ui = harness({ windowRef, fetchImpl });
+  await ui.controller.loadBudget();
+  assert.equal(ui.elements["voice-output-voice"].value, "device-local");
+  assert.match(ui.elements["voice-output-state"].textContent, /Offline device speech is ready/);
+  assert.equal(ui.controller.speak("An explicitly requested reply"), true);
+  assert.equal(spoken.text, "An explicitly requested reply");
+  assert.equal(spoken.voice.voiceURI, "device-local");
+  assert.equal(spoken.lang, "fil-PH");
 });
 
 test("missing local speech output is visible and does not try an online fallback", () => {

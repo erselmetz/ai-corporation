@@ -25,8 +25,8 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-190-190");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 190 }, (_, index) => 190 - index));
-  assert.match(elements["roadmap-summary"].textContent, /190 roadmap tasks.*185 completed.*2 deferred and incomplete.*2 planned.*1 design only/);
-  assert.match(elements["next-task"].textContent, /Next: Task 188/);
+  assert.match(elements["roadmap-summary"].textContent, /190 roadmap tasks.*186 completed.*2 deferred and incomplete.*1 planned.*1 design only/);
+  assert.match(elements["next-task"].textContent, /Next: Task 189/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -147,7 +147,7 @@ test("publishes completed milestones and remaining phases with their current sta
   assert.deepEqual(planned.map(task => [task.number, task.status]), [
     [174, "completed"], [175, "completed"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
     [180, "completed"], [181, "completed"], [182, "completed"], [183, "completed"], [184, "completed"], [185, "completed"],
-    [186, "completed"], [187, "completed"], [188, "planned"], [189, "planned"], [190, "design_only"],
+    [186, "completed"], [187, "completed"], [188, "completed"], [189, "planned"], [190, "design_only"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, "task-177-auto-rag-trace");
   assert.equal(tasks.find(task => task.number === 178).checkpoint, "task-178-nav-fix");
@@ -157,6 +157,7 @@ test("publishes completed milestones and remaining phases with their current sta
   assert.equal(tasks.find(task => task.number === 185).checkpoint, "task-185-local-recovery-and-update-controls");
   assert.equal(tasks.find(task => task.number === 186).checkpoint, "task-186-globe-visual-map");
   assert.equal(tasks.find(task => task.number === 187).checkpoint, "task-187-opt-in-local-voice-input");
+  assert.equal(tasks.find(task => task.number === 188).checkpoint, "task-188-opt-in-local-voice-output");
   assert.match(tasks.find(task => task.number === 178).validation.join(" "), /native window level/);
   assert.match(tasks.find(task => task.number === 178).limitations.join(" "), /not been published or distributed/);
   for (const task of tasks.filter(task => task.number >= 180)) {
