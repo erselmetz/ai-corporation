@@ -2940,10 +2940,11 @@ export const post100Tasks = [
     "manualVerification": ["On representative CPU-only and GPU systems, compare displayed inventory against OS tools and inspect whether recommendation uncertainty and CPU warnings are understandable."],
     "area": "P33", "checkpoint": null,
     "validation": [
-      "Read-only implementation and focused tests are present in the worktree. Full Python suite: 1,293 passed, 3 skipped, 0 failed (2 deprecation warnings); browser, public-docs, and Electron suites: 257 passed, 0 failed.",
-      "Next.js static production build, TypeScript, PyInstaller backend build, and Windows x64 installer build passed. On this Windows GPU-equipped host, reported CPU/GPU names, physical RAM, and free space at the Ollama model destination matched Windows WMI, memory, and drive counters. The recommendation correctly left usable VRAM and Ollama accelerator use unknown and used current available RAM conservatively."
+      "Implemented; automated validation passed; manual verification pending. The owner-protected on-demand profile reports local CPU, GPU, RAM, and Ollama destination disk facts with source, timestamp, and UNKNOWN states; the size guidance is bounded, warns about CPU use, and never claims model fit or starts downloads.",
+      "Automated validation: full Python suite 1,311 passed / 5 skipped / 0 failed (2 deprecation warnings); browser modules 220 passed; public docs 17 passed; Electron tests 24 passed. Python compilation, focused hardware-profile tests, JavaScript syntax, and git diff --check passed.",
+      "Prior recorded manual check covered one GPU-equipped Windows host: CPU/GPU names, physical RAM, and destination free space matched OS counters; usable VRAM and Ollama accelerator use remained UNKNOWN. This was not a CPU-only test."
     ],
-    "limitations": ["Task 176 remains planned, so Task 180 cannot complete its declared dependency. Only one GPU-equipped Windows host was checked; representative CPU-only host behavior and broader recommendation accuracy remain unverified. The profile reports no GPU memory amount because the available WMI AdapterRAM field is not trustworthy."]
+    "limitations": ["Task remains planned pending Task 176 clean-profile Windows acceptance and manual comparison on representative CPU-only and GPU systems. CPU-only host behavior and broader recommendation accuracy remain unverified. The profile reports no GPU memory amount because the available WMI AdapterRAM field is not trustworthy."]
   },
   {
     "number": 181,
