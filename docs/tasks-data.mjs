@@ -2739,7 +2739,7 @@ export const post100Tasks = [
     "title": "AI-run usability and accessibility regression evaluation",
     "description": "Evaluate supported user journeys through reproducible AI-run UI automation, accessibility checks and heuristic review; track representative-user research separately.",
     "category": "Phase L - Multimodal Interface and Usability",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       132,
       133,
@@ -2748,7 +2748,10 @@ export const post100Tasks = [
       171,
       172,
       173,
-      174
+      174,
+      176,
+      177,
+      178
     ],
     "acceptance": [
       "Run after the automated development acceptance of Tasks 176, 177 and 178; link evidence for the exact source or artifact tested.",
@@ -2767,16 +2770,18 @@ export const post100Tasks = [
       "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
     ],
     "area": "P28",
-    "checkpoint": null,
+    "checkpoint": "task-175-ai-usability-accessibility-regression-evaluation",
     "validation": [
       "Expert heuristic walkthrough on 2026-10-15 covered first-run readiness, owner sign-in, chat, provider/model setup, permission review, troubleshooting links, navigation, organization and knowledge maps. It is not a representative owner study.",
       "Reproducible findings and verified fixes: (medium) open desktop first-run Setup checks: unsupported app-managed capability packs appeared Unknown; now Unavailable, with browser speech packs identified separately. (medium) #647488 small text measured 3.56:1 against #121d2b, below 4.5:1; shared #77889c now measures at least 4.68:1 on reviewed dark surfaces. (low) open /ui or /ui/chat and inspect Capability controls: four media indicators plus the aggregate status all announced changes; per-indicator live roles were removed while the aggregate remains announced. (low) Chat voice controls now label optional language downloads browser-managed.",
-      "Focused UI regressions: 31 Python tests and 15 voice/safety browser-module tests passed; full browser-module suite: 206 passed; Electron tests: 17 passed; Next.js static production build and TypeScript checks passed; public documentation tests: 16 passed; update-manifest tests: 6 passed; git diff --check passed."
+      "AI-run scripted UI evaluation on source checkpoint efad6ad: `node --test tests/test_chat_ui.mjs tests/test_employee_chat_ui.mjs desktop/test/onboarding.test.cjs desktop/test/navigation.test.cjs` passed 31/31. Coverage includes first-run/settings guidance, capability-pack unavailable state, accessible shared navigation, CSRF and permission-denied paths, chat plan cancellation, per-turn cloud consent, provider errors without replay, and retained-history opt-in/deletion.",
+      "Existing review evidence: focused voice/safety browser checks 15 passed; full browser-module suite 220 passed; Electron tests 24 passed; Next.js production build and TypeScript checks passed; public docs 17 passed. The current-source packaged Windows Task 176 smoke exercised first-run setup, local chat, restart, uninstall retention, and reinstall recovery under the existing Windows account.",
+      "Heuristic findings and fixes retained from 2026-10-15: unsupported app-managed packs now say Unavailable; reviewed small-text contrast is at least 4.68:1 on inspected dark surfaces; only aggregate capability status announces changes; optional speech-language downloads are identified as browser-managed. These are scoped checks, not accessibility certification."
     ],
     "limitations": [
-      "No representative new or experienced owner participated. Task 175 remains planned until its revised AI-run acceptance matrix and evidence are recorded; user research is optional follow-up, not a development gate.",
-      "Keyboard navigation and screen-reader semantics were reviewed in code and automated checks, but no assistive technology session or independent accessibility audit was performed. Responsive breakpoints and reduced-motion rules were inspected, not tested across physical devices or every viewport.",
-      "No usability or accessibility conformance claim is made. The full Python suite has a pre-existing collection SyntaxError in tests/test_automation_traces.py and two known unrelated model-assignment failures when that file is excluded."
+      "No representative new or experienced owner participated; user research remains follow-up.",
+      "Keyboard navigation and screen-reader semantics were reviewed in source and automated checks, but no real assistive-technology session or independent accessibility audit was performed. Responsive breakpoints and reduced motion were inspected and covered by code-level/browser tests, not exercised across physical devices or every viewport. No usability or accessibility conformance claim is made.",
+      "Full Python suite baseline at Task 176 acceptance: 1,319 passed / 5 skipped / 0 failed (2 warnings); it was not rerun for this documentation/evaluation-only checkpoint."
     ],
     "followUpValidation": [
       "Representative-owner studies, real assistive-technology sessions and physical-device coverage remain unverified; automated completion makes no usability or accessibility conformance claim."
@@ -2817,7 +2822,7 @@ export const post100Tasks = [
     "decisions": [
       "The ordinary Gemini-key policy is memory-only. Restart persistence is available only if the owner explicitly opts in to current-Windows-user DPAPI protection; without that opt-in, the key must be re-entered after process restart.",
       "Configured slots enable only the pre-existing controlled-dispatch behavior for eligible pending Tasks routed to loopback Ollama. Gemini remains chat-only for controlled dispatch under the existing contract.",
-      "Task 175 remains planned until its AI-run evaluation is recorded; Task 176 implementation does not substitute for that evidence.",
+      "Task 175 AI-run evaluation is recorded in checkpoint task-175-ai-usability-accessibility-regression-evaluation; representative-user and assistive-technology research remain optional follow-up.",
       "MIT licensing is not authorized until the owner explicitly confirms the license choice.",
       "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
     ],
@@ -2837,7 +2842,7 @@ export const post100Tasks = [
       "Live paid Gemini calls, model inference, Ollama installation, and large model downloads are not required for deterministic tests and must remain owner-triggered integration actions.",
       "Broader clean-profile/live-provider integration coverage remains unverified follow-up; it does not require human QA sign-off. The current-source package smoke verified owner setup, an already-installed Ollama model, a real local reply, restart with provider setup retained, uninstall retention, and reinstall recovery, but used temporary app-data under the existing Windows account. Pending: a separate clean Windows user profile; packaged installer preview followed by explicitly confirmed Ollama installation and model download/progress/cancel/recheck; Gemini key/catalog confirmation, cloud-turn approval and reply, and DPAPI restart persistence; live stopped/offline Ollama recovery with Retry; malformed and rejected Gemini key errors with secret redaction. No Gemini key is configured here, and no paid request, installer download, or model download was made.",
       "Development completion requires truthful automated Windows packaging and isolated-state evidence; automated fakes alone do not establish that every Windows machine, Ollama runtime, GPU, or provider account will work.",
-      "Task 170 remains deferred and incomplete. Task 175 remains planned for its separate scripted usability/accessibility evaluation. Real Gemini account/catalog/chat, real Ollama installer/model download, offline/stopped-provider retries, separate clean-account coverage, assistive technology and representative-user research remain unverified follow-up; no paid request, installer download or model download was made for this checkpoint."
+      "Task 170 remains deferred and incomplete. Real Gemini account/catalog/chat, real Ollama installer/model download, offline/stopped-provider retries, separate clean-account coverage, assistive technology and representative-user research remain unverified follow-up; no paid request, installer download or model download was made for this checkpoint."
     ],
     "automatedVerification": [
       "Run packaged Windows setup, restart, data-retention and recovery against isolated app-data, inspect installed paths and ACLs using OS APIs, and record artifact/source identity. A separate Windows account or VM is optional follow-up coverage.",
@@ -3372,7 +3377,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-174, 176-179 are completed scoped checkpoints; Task 175 and Tasks 180-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-179 are completed scoped checkpoints except deferred Task 170; Tasks 180-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-190, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
