@@ -161,6 +161,10 @@ class _ConnectionProvider(AIProvider):
         return getattr(self._provider, "requires_explicit_cloud_consent", False) is True
 
     @property
+    def is_local(self) -> bool:
+        return getattr(self._provider, "is_local", False) is True
+
+    @property
     def supports_streaming(self) -> bool:
         return getattr(self._provider, "supports_streaming", False) is True
 

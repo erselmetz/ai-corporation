@@ -9,7 +9,12 @@ class Element {
   set innerHTML(_) { throw new Error("HTML injection is forbidden"); }
   append(...items) { this.children.push(...items); if (this.tag === "select" && this.children.length === 1) this.value = items[0].value; }
   replaceChildren() { this.children = []; this.text = ""; if (this.tag === "select") this.value = ""; }
-  addEventListener(event, handler) { this.listeners[event] = handler; }
+  addEventListener(event, handler) {
+    const existing = this.listeners[event];
+    this.listeners[event] = existing
+      ? (...args) => { existing(...args); handler(...args); }
+      : handler;
+  }
 }
 const agent = { id: "worker", name: "Actual Worker", role: "Worker", provider: "fake", model: "configured-model" };
 const snapshot = (messages = [], status = "open", coordinator = agent) => ({ coordinator, conversation: { id: "conversation", status, messages } });
@@ -46,6 +51,7 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
   const ids = [
     "chat-state", "chat-history", "chat-agent", "chat-conversation", "chat-input", "chat-input-provenance",
     "chat-start", "chat-send", "chat-close", "chat-refresh", "chat-identity",
+    "chat-route-check", "chat-route-select", "chat-route-state",
     "chat-form", "cloud-consent-panel", "cloud-consent", "chat-task-source",
     "chat-task-agent", "chat-task-prepare", "chat-task-confirm", "chat-task-review",
     "chat-task-state", "chat-task-objective", "chat-task-project",
@@ -68,7 +74,8 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
   ];
   const elements = Object.fromEntries(ids.map(id => [id, new Element(
     ["chat-agent", "chat-conversation", "chat-task-source", "chat-task-agent",
-      "chat-task-context-scope", "chat-knowledge-extra-scope", "chat-tool-document-id"].includes(id) ? "select" : "",
+      "chat-task-context-scope", "chat-knowledge-extra-scope", "chat-tool-document-id",
+      "chat-route-select"].includes(id) ? "select" : "",
   )]));
   elements["chat-history"].dataset = {};
   for (const id of ["chat-knowledge-enabled", "chat-knowledge-owner", "chat-knowledge-conversation", "chat-knowledge-extra-enabled"]) elements[id].checked = false;
@@ -165,6 +172,59 @@ test("canceling the reviewed chat plan starts no retrieval, tools, or provider r
   assert.match(ui.planConfirmations[0], /Send this message and selected context/);
   assert.equal(ui.calls.some(call => call.path.endsWith("/messages") || call.path.endsWith("/messages/stream")), false);
   assert.match(ui.elements["chat-state"].textContent, /Cancelled.*Nothing was sent/);
+});
+
+test("alternate route is opt-in per turn and displayed before confirmation", async () => {
+  const ui = setup((path) => {
+    if (path.endsWith("/route-suggestions")) return response({
+      complexity: "complex",
+      reason: "Complexity heuristic matched; difficulty is uncertain.",
+      suggested: { provider_id: "ollama", model_id: "qwen2.5:7b" },
+      candidates: [{ provider_id: "ollama", model_id: "qwen2.5:7b",
+        destination: "local Ollama service", kind: "local" }],
+    });
+    if (path.endsWith("/messages")) return response(snapshot([
+      message("user", "completed", "Compare these options"),
+      message("assistant", "completed", "A grounded comparison"),
+    ]));
+    return null;
+  });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-input"].value = "Compare these options";
+  assert.equal(await ui.elements["chat-route-check"].listeners.click(), true);
+  assert.match(ui.elements["chat-route-state"].textContent, /uncertain/i);
+  ui.elements["chat-input"].value = "A different prompt";
+  ui.elements["chat-input"].listeners.input();
+  assert.equal(ui.elements["chat-route-select"].disabled, true);
+  ui.elements["chat-input"].value = "Compare these options";
+  assert.equal(await ui.elements["chat-route-check"].listeners.click(), true);
+  ui.elements["chat-route-select"].value = "ollama\nqwen2.5:7b";
+  assert.equal(await ui.controller.send(), true);
+  const confirmation = ui.planConfirmations.at(-1);
+  assert.match(confirmation, /ollama \/ qwen2\.5:7b/);
+  assert.match(confirmation, /local Ollama service/);
+  const sent = JSON.parse(ui.calls.find(call => call.path.endsWith("/messages")).options.body);
+  assert.equal(sent.route_provider_id, "ollama");
+  assert.equal(sent.route_model_id, "qwen2.5:7b");
+  assert.equal(sent.route_consent, true);
+  assert.equal(sent.cloud_consent, undefined);
+});
+
+test("declining an alternate route confirmation performs no provider request", async () => {
+  const ui = setup((path) => path.endsWith("/route-suggestions") ? response({
+    complexity: "complex", reason: "Uncertain heuristic", suggested: null,
+    candidates: [{ provider_id: "ollama", model_id: "qwen2.5:7b",
+      destination: "local Ollama service", kind: "local" }],
+  }) : null, globalThis.window, () => false);
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-input"].value = "Compare these options";
+  await ui.elements["chat-route-check"].listeners.click();
+  ui.elements["chat-route-select"].value = "ollama\nqwen2.5:7b";
+  assert.equal(await ui.controller.send(), true);
+  assert.match(ui.planConfirmations.at(-1), /ollama \/ qwen2\.5:7b/);
+  assert.equal(ui.calls.some(call => call.path.endsWith("/messages") || call.path.endsWith("/messages/stream")), false);
 });
 
 test("streaming chat renders provider chunks and verifies the completed response", async () => {

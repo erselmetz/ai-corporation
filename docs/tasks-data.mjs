@@ -3007,16 +3007,17 @@ export const post100Tasks = [
     "title": "Consent-based routing suggestions for small models",
     "description": "Keep simple prompts on the configured default local model and suggest a larger local model or Gemini for harder prompts only after per-turn owner consent.",
     "category": "Phase R - Reviewed Model Routing",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       177,
       180
     ],
     "decisions": [
-      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed."
+      "Owner-directed workflow revision (2026-10-18): use the roadmap AI-run development acceptance policy; routine testing, debugging and review require no human QA sign-off. Historical validation below is evidence only for the checks actually performed.",
+      "The optional classifier is a deterministic local heuristic, not a model-quality or hardware-fit assessment. The configured coordinator remains the default and alternate model use requires per-turn confirmation."
     ],
     "acceptance": [
-      "Keep the configured local model as the default route for simple prompts; explain any suggested alternate and its reason as an uncertain suggestion.",
+      "Keep the configured local model as the default route for simple prompts. Only a clear deterministic complexity cue may produce an uncertain suggestion; simple or uncertain classification preserves the configured route.",
       "Require explicit per-turn owner consent before sending any prompt to another local model or Gemini; show provider/model and data destination before confirmation.",
       "Declining, unavailable checks, or uncertain classification preserve the original route without retries, fallback, or assignment mutation."
     ],
@@ -3027,13 +3028,19 @@ export const post100Tasks = [
       "Prompt difficulty is uncertain; a routing suggestion can be wrong and cloud consent must remain distinct per turn."
     ],
     "area": "P34",
-    "checkpoint": null,
-    "validation": [],
+    "checkpoint": "task-181-consent-based-model-routing",
+    "validation": [
+      "Focused Python route-suggestion and owned-chat tests verify simple prompts retain the default, only explicit installed larger-size IDs are suggested, missing/unavailable routes do not fall back, alternate local execution requires per-turn route consent, Agent assignments remain unchanged, and the observed route is recorded in the real chat trace.",
+      "Browser chat test verifies the route destination/model is displayed before confirmation, route choices are cleared when the prompt changes, route consent is sent only after confirmation, and cloud consent remains a separate checkbox.",
+      "Full Python suite: 1,329 passed, 3 skipped, 0 failed; browser-module suite: 222 passed; Electron suite: 26 passed; public-docs suite: 17 passed. Focused Python route/chat tests: 30 passed. Focused chat UI tests: 23 passed. Python compilation, JavaScript syntax checks and git diff --check passed. No live Gemini request, paid call, model download or inference was performed."
+    ],
     "limitations": [
-      "Requires Task 177 RAG/trace and Task 180 hardware facts; no route-quality claim is implied."
+      "Prompt difficulty is heuristic and may be wrong. Local-size suggestions require explicit comparable parameter-size tokens in both configured and currently observed installed-model identifiers; unknown sizes are never described as larger. Hardware feasibility, output quality and latency are not evaluated.",
+      "Route suggestions are offered only when the conversation's configured Coordinator is local; selecting an online Coordinator does not silently switch it back to local or enable these suggestions.",
+      "The route suggestion check reads bounded local Ollama inventory only when the owner asks for suggestions. Configured Gemini candidates come only from the current app-run provider connection/catalog. Provider accounts, live Gemini execution, physical hardware behavior and runtime latency remain unverified follow-up."
     ],
     "automatedVerification": [
-      "AI-run verification: Use simple and difficult prompts with local-only and Gemini configurations; verify the suggestion is explainable, opt-in, and creates no transfer when declined."
+      "AI-run verification: Deterministic fakes cover simple/complex/uncertain prompts, installed larger local IDs, route confirmation, separate Gemini consent, owner-scoped suggestion access, unavailable routes, no retry/fallback, unchanged Agent assignments, and trace provenance. Live-provider and hardware outcomes remain unverified follow-up."
     ],
     "followUpValidation": [
       "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
@@ -3385,7 +3392,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-180 and Task 184 are completed scoped checkpoints except deferred Task 170; Tasks 181-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-181 and Task 184 are completed scoped checkpoints except deferred Task 170; Tasks 182-183 and Tasks 185-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-190, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",

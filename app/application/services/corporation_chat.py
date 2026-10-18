@@ -148,7 +148,8 @@ class CorporationChatService:
                                 review.agent_id, review.id)
 
     def send(self, conversation_id: str, text: str, retrieved_context=None, presentation_preferences=None,
-             prompt_observer=None):
+             prompt_observer=None, turn_route: tuple[str, str] | None = None,
+             expected_assignment: tuple[str, str] | None = None):
         record = self.get(conversation_id)
         if record.status is not ConversationStatus.OPEN:
             raise ValueError("Cannot send to a closed conversation")
@@ -178,7 +179,16 @@ class CorporationChatService:
             self._chat.transition_message(conversation_id, user_id, MessageStatus.FAILED)
             raise
         try:
-            reply = self._orchestrator.run_agent(record.coordinator_agent_id, prompt)
+            if turn_route is None:
+                reply = self._orchestrator.run_agent(record.coordinator_agent_id, prompt)
+            else:
+                if expected_assignment is None:
+                    raise ValueError("The configured Agent assignment snapshot is required")
+                reply = self._orchestrator.run_agent_for_turn(
+                    record.coordinator_agent_id, prompt,
+                    provider_id=turn_route[0], model_id=turn_route[1],
+                    expected_assignment=expected_assignment,
+                )
             if not isinstance(reply, str) or not reply.strip():
                 raise ValueError("Provider returned no reply")
             if len(reply.encode("utf-8")) > 8192:

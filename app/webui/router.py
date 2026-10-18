@@ -850,6 +850,12 @@ def coordinator_chat_page():
     <section id="chat-history" aria-label="Conversation messages" aria-live="polite"></section>
     <form id="chat-form"><label for="chat-input">Message (up to 8192 UTF-8 bytes)</label>
     <textarea id="chat-input" rows="4" maxlength="8192" required></textarea>
+    <details class="chat-advanced" id="chat-route-panel"><summary>Optional model suggestion (checked only when requested)</summary>
+      <p>Prompt difficulty is uncertain. Suggestions use a local heuristic and observed installed/configured models; they do not prove quality or hardware fit. The configured model remains the default.</p>
+      <button id="chat-route-check" type="button">Check suggestions for this prompt</button>
+      <label for="chat-route-select">Optional route for this turn only</label><select id="chat-route-select" disabled><option value="">Use configured model</option></select>
+      <p id="chat-route-state" role="status" aria-live="polite">No route check has run. No prompt has been sent to another provider.</p>
+    </details>
     <details class="chat-advanced" id="chat-reviewed-tools"><summary>Reviewed read-only tools (off by default)</summary>
     <p>Only the calculator and one exact file selected from the read-only corporation_docs portal are available here. Results are untrusted input. Web search, arbitrary file access, code execution, and side effects are unavailable.</p>
     <fieldset><legend>Use a tool for this message only</legend>
@@ -972,7 +978,7 @@ def coordinator_chat_page():
     the Stop display control does not cancel provider generation; Stop waiting interrupts this app's request but cannot confirm remote cancellation. For the default local Agent, Ollama and llama3.2:3b must already be available;
     use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here; configure Gemini in its separate online setup page.</p></details>
     <p id="cloud-consent-panel" hidden><label><input id="cloud-consent" type="checkbox">
-    I consent to send this message, recent conversation history, configured chat context, selected reviewed-tool results, and the exact displayed knowledge preview to Google Gemini for this reply.</label></p>
+    I consent to send this message, recent conversation history, configured chat context, selected reviewed-tool results, and the exact displayed knowledge preview to Google Gemini for this reply only.</label></p>
     </main></body></html>""".replace("{safety_controls}", _emergency_controls()))
 
 

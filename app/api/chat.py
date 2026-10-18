@@ -30,6 +30,7 @@ from app.application.services.chat_knowledge import (
     ContextRequest, KnowledgeNotFound, SelectedKnowledgeScope,
 )
 from app.application.services.reviewed_chat_tools import run_reviewed_tools
+from app.application.services.chat_route_suggestions import suggest_route
 from app.application.services.owned_chat import (
     ChatConflict, ChatConsentRequired, ChatLimit, ChatNotFound, ChatUnavailable,
 )
@@ -132,6 +133,14 @@ class SendRequest(BaseModel):
     knowledge_preview_digest: str | None = Field(default=None, min_length=64, max_length=64)
     capture_local_prompt: StrictBool = False
     reviewed_tools: list[ReviewedToolRequest] = Field(default_factory=list, max_length=2)
+    route_provider_id: str | None = Field(default=None, min_length=1, max_length=256)
+    route_model_id: str | None = Field(default=None, min_length=1, max_length=256)
+    route_consent: StrictBool = False
+
+
+class RouteSuggestionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: str = Field(min_length=1, max_length=8192)
 
 
 class RetainRequest(BaseModel):
@@ -178,7 +187,7 @@ def _knowledge_preview(service, owner, identifier, query, scopes, now):
 
 
 def _workflow_steps(retrieval, tools, coordinator, *, retrieval_ms=0,
-                    answer_ms=None, answer_status="completed"):
+                    answer_ms=None, answer_status="completed", turn_route=None):
     steps = [{"step": "plan", "status": "completed", "source": "bounded configured chat workflow",
               "duration_ms": 0}]
     if retrieval:
@@ -207,7 +216,8 @@ def _workflow_steps(retrieval, tools, coordinator, *, retrieval_ms=0,
         steps.append({"step": "tools", "status": "skipped", "source": None,
                       "reason": "No reviewed tools were selected.", "duration_ms": 0})
     answer_step = {"step": "answer", "status": answer_status,
-                   "source": "configured coordinator (see route details)"}
+                   "source": (f"owner-approved per-turn route {turn_route[0]}/{turn_route[1]}"
+                              if turn_route else "configured coordinator (see route details)")}
     if answer_ms is not None:
         answer_step["duration_ms"] = max(0, int(answer_ms))
     steps.append(answer_step)
@@ -217,7 +227,7 @@ def _workflow_steps(retrieval, tools, coordinator, *, retrieval_ms=0,
 def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
                             cloud_provider, cloud_consent, elapsed_ms, auto_context,
                             retrieved, trace_request, now, tools=None, retrieval_ms=0,
-                            answer_ms=None):
+                            answer_ms=None, turn_route=None):
     """Record only a failed/pending user turn; never serialize the raw exception."""
     try:
         record = service.owned_chat().get(owner, identifier)["conversation"]
@@ -240,7 +250,9 @@ def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
             steps=_workflow_steps(retrieval_trace, tools, coordinator,
                                   retrieval_ms=retrieval_ms,
                                   answer_ms=answer_ms,
-                                  answer_status="failed" if message.status.value == "failed" else "unknown"),
+                                  answer_status="failed" if message.status.value == "failed" else "unknown",
+                                  turn_route=turn_route),
+            turn_route=turn_route,
             outcome="failed" if message.status.value == "failed" else "unknown",
             failure="Provider or chat runtime did not produce a verified reply; raw diagnostics are omitted.",
             now=now)
@@ -262,6 +274,99 @@ def preview_knowledge(identifier: str, body: KnowledgePreviewBody,
                 "trace": result["trace"],
                 "cloud_preview_only": True,
                 "note": "This exact preview is revalidated before Send; no provider was called."}
+
+
+@router.post("/{identifier}/route-suggestions")
+def route_suggestions(identifier: str, request: Request, body: RouteSuggestionRequest,
+                      principal=Depends(require_permission("chat:send")),
+                      service=Depends(get_application_service)):
+    """Return local-only complexity hints and currently observed alternatives."""
+    if contains_gemini_key(body.text):
+        raise HTTPException(422, SECRET_PASTE_GUIDANCE)
+    with chat_errors():
+        current = service.owned_chat().get(principal.identity, identifier)
+    coordinator = current["coordinator"]
+    if current.get("local_model") is not True:
+        return {"complexity": "unknown",
+                "reason": "Route suggestions require a configured local coordinator; the current route is unchanged.",
+                "suggested": None, "candidates": [],
+                "default": {"provider_id": coordinator.provider, "model_id": coordinator.model,
+                            "destination": "configured coordinator"}}
+    inventory = service.local_model_inventory(coordinator.provider)
+    local_models = inventory.models if inventory.state == "available" and inventory.supported else ()
+    suggestion = suggest_route(body.text, coordinator.model, tuple(local_models))
+    candidates = []
+    if suggestion.complexity == "complex":
+        from app.application.services.chat_route_suggestions import model_parameter_size
+        for model in local_models:
+            size, current_size = model_parameter_size(model), model_parameter_size(coordinator.model)
+            if model != coordinator.model and current_size is not None and size is not None and size > current_size:
+                candidates.append({"provider_id": coordinator.provider, "model_id": model,
+                                   "destination": "local Ollama service", "kind": "local"})
+        connections = getattr(request.app.state, "provider_connections_service", None)
+        if connections is not None:
+            try:
+                for item in connections.list():
+                    if item["provider_type"] != "gemini" or item["state"] != "available":
+                        continue
+                    for model in item["models"]:
+                        candidates.append({"provider_id": item["provider_id"], "model_id": model,
+                                           "destination": "Google Gemini online service", "kind": "cloud"})
+            except (KeyError, TypeError, ValueError):
+                pass
+    candidates = candidates[:20]
+    suggested = next((item for item in candidates if item["kind"] == "local"), None)
+    if suggested is None:
+        suggested = next((item for item in candidates if item["kind"] == "cloud"), None)
+    return {"complexity": suggestion.complexity, "reason": suggestion.reason,
+            "suggested": suggested, "candidates": candidates,
+            "default": {"provider_id": coordinator.provider, "model_id": coordinator.model,
+                        "destination": "configured coordinator"}}
+
+
+def _validate_turn_route(request, service, current, body):
+    if body.route_provider_id is None and body.route_model_id is None:
+        if body.route_consent:
+            raise HTTPException(422, "Route consent requires an alternate provider and model.")
+        return None
+    if not body.route_provider_id or not body.route_model_id:
+        raise HTTPException(422, "Both alternate provider and model are required.")
+    if body.route_consent is not True:
+        raise HTTPException(403, "Explicit per-turn consent is required before using an alternate model.")
+    coordinator = current["coordinator"]
+    if current.get("local_model") is not True:
+        raise HTTPException(422, "Alternate suggestions require the configured local coordinator to remain the default.")
+    route_classification = suggest_route(body.text, coordinator.model, ()).complexity
+    if route_classification != "complex":
+        raise HTTPException(422, "Only a prompt with a complex cue may use an alternate route; keep the configured model for simple or uncertain prompts.")
+    if (body.route_provider_id, body.route_model_id) == (coordinator.provider, coordinator.model):
+        raise HTTPException(422, "Choose an alternate model; the configured model is already the default.")
+    if not service.provider_exists(body.route_provider_id):
+        raise HTTPException(503, "Selected provider is unavailable; the configured route was not changed.")
+    if service.provider_requires_explicit_cloud_consent(body.route_provider_id):
+        if body.cloud_consent is not True:
+            raise HTTPException(403, "Separate per-turn cloud consent is required for this Gemini transfer.")
+        connections = getattr(request.app.state, "provider_connections_service", None)
+        try:
+            item = next((entry for entry in connections.list()
+                         if entry["provider_id"] == body.route_provider_id), None) if connections else None
+        except (KeyError, TypeError, ValueError):
+            item = None
+        if item is None or item.get("provider_type") != "gemini" or item.get("state") != "available" \
+                or body.route_model_id not in item.get("models", []):
+            raise HTTPException(503, "Selected Gemini model is unavailable; no alternate route was used.")
+    else:
+        if not service.provider_is_local(body.route_provider_id):
+            raise HTTPException(422, "Alternate routes are limited to installed local models or consented Gemini.")
+        inventory = service.local_model_inventory(body.route_provider_id)
+        if not inventory.supported or inventory.state != "available" or body.route_model_id not in inventory.models:
+            raise HTTPException(503, "Selected local model is unavailable; no alternate route was used.")
+        from app.application.services.chat_route_suggestions import model_parameter_size
+        current_size = model_parameter_size(coordinator.model)
+        alternate_size = model_parameter_size(body.route_model_id)
+        if current_size is None or alternate_size is None or alternate_size <= current_size:
+            raise HTTPException(422, "Only an explicitly sized larger local model may be selected; the configured route remains unchanged.")
+    return body.route_provider_id, body.route_model_id
 
 
 class TaskProposalRequest(BaseModel):
@@ -507,10 +612,17 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
         started_at = time.perf_counter()
         presentation = _presentation_preferences(request, principal.identity)
         current = service.owned_chat().get(principal.identity, identifier)
+        turn_route = _validate_turn_route(request, service, current, body)
+        if turn_route and body.image_ids:
+            raise HTTPException(422, "Temporary images use the configured provider route; alternate model routing is text-only.")
         if body.capture_local_prompt and not current.get("local_model"):
             raise HTTPException(422, "Exact prompt capture is available only for a configured local model.")
+        if (body.capture_local_prompt and turn_route
+                and service.provider_requires_explicit_cloud_consent(turn_route[0])):
+            raise HTTPException(422, "Exact prompt capture is unavailable for an online alternate route.")
+        route_provider_id = turn_route[0] if turn_route else current["coordinator"].provider
         cloud_requires_consent = service.provider_requires_explicit_cloud_consent(
-            current["coordinator"].provider)
+            route_provider_id)
         if cloud_requires_consent and body.cloud_consent is not True:
             raise HTTPException(403, "Explicit consent is required before sending this turn, recent chat context, and any selected tool results to Gemini.")
         tool_trace, tool_context = [], None
@@ -604,19 +716,20 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
             if tool_context:
                 prompt_context = f"{prompt_context}\n\n{tool_context}" if prompt_context else tool_context
             captured_prompt = []
-            cloud_provider = current["coordinator"].provider if cloud_requires_consent else None
+            cloud_provider = route_provider_id if cloud_requires_consent else None
             answer_started_at = time.perf_counter()
             try:
                 result = service.owned_chat().send(
                     principal.identity, identifier, body.text, prompt_context,
                     presentation_preferences=presentation,
-                    prompt_observer=captured_prompt.append if body.capture_local_prompt else None)
+                    prompt_observer=captured_prompt.append if body.capture_local_prompt else None,
+                    turn_route=turn_route, route_consent=body.route_consent)
             except Exception:
                 _record_unverified_turn(
                     service, knowledge, principal.identity, identifier, current["coordinator"],
                     cloud_provider, body.cloud_consent, (time.perf_counter() - started_at) * 1000,
                     auto_context, retrieved, trace_request, now, tool_trace, retrieval_ms,
-                    (time.perf_counter() - answer_started_at) * 1000)
+                    (time.perf_counter() - answer_started_at) * 1000, turn_route=turn_route)
                 raise
             messages = result["conversation"].messages
             reply = next((message for message in reversed(messages)
@@ -633,7 +746,9 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                     retrieval=retrieval_trace, tools=tool_trace,
                     steps=_workflow_steps(retrieval_trace, tool_trace, coordinator,
                                           retrieval_ms=retrieval_ms,
-                                          answer_ms=(time.perf_counter() - answer_started_at) * 1000),
+                                          answer_ms=(time.perf_counter() - answer_started_at) * 1000,
+                                          turn_route=turn_route),
+                    turn_route=turn_route,
                     now=now)
                 result = {**result, "context_trace": trace}
             if captured_prompt:
@@ -646,6 +761,8 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                    principal=Depends(require_permission("chat:send")),
                    service=Depends(get_application_service), now=Depends(get_chat_now)):
     body = parse(SendRequest, payload)
+    if body.route_provider_id is not None or body.route_model_id is not None or body.route_consent:
+        raise HTTPException(422, "Per-turn alternate model routing uses the reviewed non-streaming endpoint.")
     if body.reviewed_tools:
         raise HTTPException(422, "Reviewed tools use the bounded non-streaming message endpoint.")
     if body.image_ids or body.image_consent or body.include_local_ocr:

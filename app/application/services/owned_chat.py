@@ -170,7 +170,15 @@ class OwnedChatService:
             return self._chat.get_status(identifier)
 
     def send(self, owner, identifier, text, retrieved_context=None, *, presentation_preferences=None, image_ids=(),
-             image_consent=False, ocr_evidence=(), prompt_observer=None):
+             image_consent=False, ocr_evidence=(), prompt_observer=None, turn_route=None,
+             route_consent=False):
+        if turn_route is not None:
+            if (route_consent is not True or not isinstance(turn_route, tuple) or len(turn_route) != 2
+                    or any(not isinstance(value, str) or not value.strip() or len(value) > 256
+                           for value in turn_route)):
+                raise ChatConsentRequired("Explicit per-turn route consent and a bounded provider/model are required")
+        elif route_consent is True:
+            raise ValueError("Route consent requires an alternate provider and model")
         with self._access(owner, identifier) as entry:
             with self.agent_request(entry.coordinator.id):
                 if image_ids:
@@ -207,7 +215,7 @@ class OwnedChatService:
                         for image in images:
                             self._image_store.remove(owner, identifier, image.id)
                 return self._send(entry, identifier, text, retrieved_context, presentation_preferences,
-                                  prompt_observer=prompt_observer)
+                                  prompt_observer=prompt_observer, turn_route=turn_route)
 
     def stream(self, owner, identifier, text, retrieved_context=None, presentation_preferences=None):
         with self._access(owner, identifier) as entry:
@@ -225,7 +233,7 @@ class OwnedChatService:
                         yield event
 
     def _send(self, entry, identifier, text, retrieved_context=None, presentation_preferences=None,
-              prompt_observer=None):
+              prompt_observer=None, turn_route=None):
         current, provider = self._coordinator(entry.coordinator.id)
         if (current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model):
             raise ChatConflict("Coordinator assignment changed; start a new conversation")
@@ -234,8 +242,13 @@ class OwnedChatService:
         if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
             raise ChatLimit("Conversation message limit reached; start a new conversation")
         record = self._chat.send(identifier, text, retrieved_context, presentation_preferences,
-                                 prompt_observer=prompt_observer)
-        return {"conversation": record, "coordinator": entry.coordinator}
+                                 prompt_observer=prompt_observer, turn_route=turn_route,
+                                 expected_assignment=(entry.coordinator.provider, entry.coordinator.model)
+                                 if turn_route is not None else None)
+        result = {"conversation": record, "coordinator": entry.coordinator}
+        if turn_route is not None:
+            result["turn_route"] = {"provider_id": turn_route[0], "model_id": turn_route[1]}
+        return result
 
     def close(self, owner, identifier):
         with self._access(owner, identifier) as entry:

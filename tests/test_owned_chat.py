@@ -7,9 +7,10 @@ from fastapi.testclient import TestClient
 
 from app.api.app import create_app
 from app.api.security import AuthenticatedPrincipal
-from app.application.services.owned_chat import ChatConflict, ChatLimit, ChatNotFound
+from app.application.services.owned_chat import ChatConflict, ChatConsentRequired, ChatLimit, ChatNotFound
 from app.local import create_local_app
 from app.providers import AIProvider
+from app.providers.inventory import LocalModelInventory
 from app.resources import ModelLimit, ProviderLimit, ResourceLimits
 from app.runtime.factory import create_corporation_runtime
 
@@ -51,6 +52,14 @@ class StreamingProvider(Provider):
             yield "reply"
         finally:
             self.stream_closed = True
+
+
+class InstalledLocalProvider(Provider):
+    is_local = True
+
+    def local_model_inventory(self):
+        return LocalModelInventory("available", ("llama3.2:3b", "qwen2.5:7b"), True,
+                                   source="deterministic-test-fixture", reason=None)
 
 
 @pytest.fixture
@@ -113,6 +122,147 @@ def test_owned_chat_roundtrip_and_no_execution_or_capacity_side_effect(setup):
     assert runtime.application_service.list_agents() == agents
     assert runtime.application_service.list_tasks() == tasks
     assert len(provider.calls) == 1
+
+
+def test_route_suggestions_are_uncertain_local_hints_and_alternates_are_per_turn_only():
+    runtime = create_corporation_runtime()
+    configured = InstalledLocalProvider()
+    alternate = InstalledLocalProvider()
+    runtime.providers.remove("ollama")
+    runtime.providers.register("ollama", configured)
+    runtime.providers.register("ollama-secondary", alternate)
+    original = runtime.application_service.get_agent("local_worker")
+    with client_for(runtime) as client:
+        identifier = start(client).json()["conversation"]["id"]
+        headers = {"x-test-owner": "alice"}
+        easy = client.post(f"/api/chat/conversations/{identifier}/route-suggestions",
+                           json={"text": "What is 2 + 2?"}, headers=headers)
+        assert easy.status_code == 200
+        assert easy.json()["complexity"] == "simple"
+        assert easy.json()["candidates"] == []
+
+        harder = client.post(f"/api/chat/conversations/{identifier}/route-suggestions",
+                             json={"text": "Compare these designs and explain the trade-offs."},
+                             headers=headers)
+        assert harder.status_code == 200
+        assert harder.json()["complexity"] == "complex"
+        assert "uncertain" in harder.json()["reason"]
+        assert harder.json()["suggested"]["model_id"] == "qwen2.5:7b"
+        assert configured.calls == alternate.calls == []
+
+        simple_route = client.post(f"/api/chat/conversations/{identifier}/messages",
+                                   json={"text": "What is 2 + 2?", "route_provider_id": "ollama-secondary",
+                                         "route_model_id": "qwen2.5:7b", "route_consent": True}, headers=headers)
+        assert simple_route.status_code == 422
+        uncertain_route = client.post(f"/api/chat/conversations/{identifier}/messages",
+                                      json={"text": "Describe the current configuration in a neutral and fairly detailed way without requesting a recommendation, comparison, or implementation action, and focus only on what is already present.",
+                                            "route_provider_id": "ollama-secondary",
+                                            "route_model_id": "qwen2.5:7b", "route_consent": True}, headers=headers)
+        assert uncertain_route.status_code == 422
+        assert alternate.calls == configured.calls == []
+
+        denied = client.post(f"/api/chat/conversations/{identifier}/messages",
+                             json={"text": "Compare designs", "route_provider_id": "ollama-secondary",
+                                   "route_model_id": "qwen2.5:7b"}, headers=headers)
+        assert denied.status_code == 403
+        assert alternate.calls == []
+
+        unavailable = client.post(f"/api/chat/conversations/{identifier}/messages",
+                                  json={"text": "Compare designs", "route_provider_id": "ollama-secondary",
+                                        "route_model_id": "missing:70b", "route_consent": True}, headers=headers)
+        assert unavailable.status_code == 503
+        assert alternate.calls == configured.calls == []
+
+        not_larger = client.post(
+            f"/api/chat/conversations/{identifier}/messages",
+            json={"text": "Compare designs", "route_provider_id": "ollama-secondary",
+                  "route_model_id": "llama3.2:3b", "route_consent": True}, headers=headers)
+        assert not_larger.status_code == 422
+        assert alternate.calls == configured.calls == []
+
+        cloud = Provider()
+        cloud.requires_explicit_cloud_consent = True
+        runtime.providers.register("gemini-test", cloud)
+        cloud_denied = client.post(f"/api/chat/conversations/{identifier}/messages",
+                                   json={"text": "Compare designs", "route_provider_id": "gemini-test",
+                                         "route_model_id": "gemini-2.5-flash", "route_consent": True},
+                                   headers=headers)
+        assert cloud_denied.status_code == 403
+        assert cloud.calls == []
+
+        class GeminiConnections:
+            def list(self):
+                return ({"provider_id": "gemini-test", "provider_type": "gemini",
+                         "state": "available", "models": ["gemini-2.5-flash"]},)
+
+        client.app.state.provider_connections_service = GeminiConnections()
+        cloud_allowed = client.post(
+            f"/api/chat/conversations/{identifier}/messages",
+            json={"text": "Compare designs", "route_provider_id": "gemini-test",
+                  "route_model_id": "gemini-2.5-flash", "route_consent": True,
+                  "cloud_consent": True}, headers=headers)
+        assert cloud_allowed.status_code == 200
+        assert len(cloud.calls) == 1
+        trace = cloud_allowed.json()["context_trace"]
+        assert trace["route"]["provider"] == "gemini-test"
+        assert trace["route"]["model"] == "gemini-2.5-flash"
+        assert trace["cloud"]["provider_used"] == "gemini-test"
+        assert trace["cloud"]["consent_given"] is True
+
+        sent = client.post(f"/api/chat/conversations/{identifier}/messages",
+                           json={"text": "Compare designs", "route_provider_id": "ollama-secondary",
+                                 "route_model_id": "qwen2.5:7b", "route_consent": True}, headers=headers)
+        assert sent.status_code == 200
+        assert len(alternate.calls) == 1
+        assert configured.calls == []
+        assert sent.json()["context_trace"]["route"]["provider"] == "ollama-secondary"
+        assert sent.json()["context_trace"]["route"]["model"] == "qwen2.5:7b"
+        assert "turn only" in sent.json()["context_trace"]["route"]["source"]
+        assert runtime.application_service.get_agent("local_worker") == original
+
+
+def test_coordinator_chat_page_exposes_explicit_route_review_controls():
+    runtime = create_corporation_runtime()
+    with client_for(runtime) as client:
+        page = client.get("/ui/chat")
+    assert page.status_code == 200
+    assert 'id="chat-route-check"' in page.text
+    assert 'id="chat-route-select"' in page.text
+    assert 'id="chat-route-state" role="status"' in page.text
+    assert "configured model remains the default" in page.text
+
+
+def test_owned_chat_service_requires_explicit_route_consent_before_alternate_dispatch(setup):
+    runtime, provider = setup
+    owned = runtime.application_service.owned_chat()
+    identifier = owned.start("alice", "local_worker")["conversation"].id
+    with pytest.raises(ChatConsentRequired, match="Explicit per-turn route consent"):
+        owned.send("alice", identifier, "Compare these", turn_route=("ollama", "qwen2.5:7b"))
+    assert provider.calls == []
+
+
+def test_suggestions_do_not_reroute_a_nonlocal_configured_coordinator():
+    runtime = create_corporation_runtime()
+    cloud = Provider()
+    cloud.requires_explicit_cloud_consent = True
+    runtime.providers.register("gemini-test", cloud)
+    runtime.application_service.assign_model("local_worker", "gemini-test", "gemini-2.5-flash")
+    assigned = runtime.application_service.get_agent("local_worker")
+    with client_for(runtime) as client:
+        identifier = start(client).json()["conversation"]["id"]
+        headers = {"x-test-owner": "alice"}
+        result = client.post(f"/api/chat/conversations/{identifier}/route-suggestions",
+                             json={"text": "Compare the two designs"}, headers=headers)
+        assert result.status_code == 200
+        assert result.json()["complexity"] == "unknown"
+        assert result.json()["candidates"] == []
+        rejected = client.post(f"/api/chat/conversations/{identifier}/messages",
+                               json={"text": "Compare the two designs", "route_provider_id": "ollama",
+                                     "route_model_id": "llama3.2:3b", "route_consent": True},
+                               headers=headers)
+        assert rejected.status_code == 422
+        assert runtime.application_service.get_agent("local_worker") == assigned
+        assert cloud.calls == []
 
 
 def test_streaming_endpoint_returns_real_chunks_and_persists_only_final_reply():

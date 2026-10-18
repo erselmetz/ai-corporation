@@ -45,6 +45,10 @@ export function mountChat({
   const toolsState = element("chat-tools-state");
   const reviewedToolsPanel = element("chat-reviewed-tools");
   const captureLocalPrompt = element("chat-capture-local-prompt");
+  const routeSelect = element("chat-route-select");
+  const routeState = element("chat-route-state");
+  const routeAlternatives = new Map();
+  let configuredCloudRoute = false;
   const taskSource = element("chat-task-source");
   const taskAgent = element("chat-task-agent");
   const taskPrepare = element("chat-task-prepare");
@@ -111,6 +115,8 @@ export function mountChat({
     stopDisplayButton.disabled = true;
     stopDisplayButton.hidden = true;
     requiresCloudConsent = false;
+    configuredCloudRoute = false;
+    resetRouteAlternatives("No route check has run. No prompt has been sent to another provider.", true);
     cloudPanel.hidden = true;
     cloudConsent.checked = false;
     knowledgePreview = null;
@@ -194,8 +200,10 @@ export function mountChat({
     captureLocalPrompt.disabled = busy || !localModelAvailable;
     captureLocalPrompt.checked = false;
     requiresCloudConsent = isGeminiProvider(agent.provider);
+    configuredCloudRoute = requiresCloudConsent;
     cloudPanel.hidden = !requiresCloudConsent;
     cloudConsent.checked = false;
+    resetRouteAlternatives("Check this turn's prompt before selecting an optional route.", false);
     conversations.value = record.id;
     element("chat-identity").textContent = `Coordinator: ${agent.name} (${agent.role}) | ${agent.provider} / ${agent.model} | ${record.status}`;
     history.replaceChildren();
@@ -511,7 +519,10 @@ export function mountChat({
         input.value = "";
         throw new Error("This message looks like it contains a Gemini API key. It was not saved or sent. Use the Gemini online setup page to connect a key.");
       }
-      if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Consent to send this message, chat context, and any selected tool results to Google Gemini before continuing.");
+      const selectedRoute = routeAlternatives.get(routeSelect.value) || null;
+      requiresCloudConsent = selectedRoute ? selectedRoute.kind === "cloud" : configuredCloudRoute;
+      cloudPanel.hidden = !requiresCloudConsent;
+      if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Check the separate per-turn Gemini cloud consent before continuing.");
       const imageIds = imageManager?.selectedIds() || [];
       const reviewedTools = [];
       if (calculatorEnabled.checked === true) {
@@ -549,10 +560,13 @@ export function mountChat({
           : "3. Skip tools; no reviewed tool is selected.",
       ];
       if (imageIds.length) plannedSteps.push("4. Send only the selected temporary image(s), with the consent you checked.");
-      plannedSteps.push(`${plannedSteps.length + 1}. Send this message and selected context to the configured coordinator, then show the answer and observed trace.`);
+      plannedSteps.push(`${plannedSteps.length + 1}. Send this message and selected context to ${selectedRoute ? `${selectedRoute.provider_id} / ${selectedRoute.model_id} (${selectedRoute.destination})` : "the configured coordinator"}, then show the answer and observed trace.`);
       plannedSteps.push("No Task execution, background work, automatic retry, or unselected tool use will occur.");
       const routeLabel = (element("chat-identity").textContent || "Configured coordinator").slice(0, 240);
-      if (!confirmImpl(`Review this chat plan before work begins:\n${plannedSteps.join("\n")}\n\nRoute: ${routeLabel}\n\nContinue? Cancel prevents retrieval, tool calls, and provider work.`)) {
+      const chosenRouteLabel = selectedRoute
+        ? `\nAlternate route for this turn: ${selectedRoute.provider_id} / ${selectedRoute.model_id}; destination: ${selectedRoute.destination}. Prompt, recent history, and selected context/tool results go there.`
+        : "\nRoute: configured model remains the default.";
+      if (!confirmImpl(`Review this chat plan before work begins:\n${plannedSteps.join("\n")}\n\nCoordinator: ${routeLabel}${chosenRouteLabel}\n\nContinue? Cancel prevents retrieval, tool calls, and provider work.`)) {
         state.textContent = "Cancelled before retrieval, tool calls, or provider work. Nothing was sent.";
         return;
       }
@@ -562,7 +576,13 @@ export function mountChat({
       stopRequestButton.disabled = false;
       input.disabled = true;
       try {
-        const body = requiresCloudConsent ? { text, cloud_consent: true } : { text };
+        const body = { text };
+        if (requiresCloudConsent) body.cloud_consent = true;
+        if (selectedRoute) Object.assign(body, {
+          route_provider_id: selectedRoute.provider_id,
+          route_model_id: selectedRoute.model_id,
+          route_consent: true,
+        });
         if (useKnowledge) Object.assign(body, {
           knowledge_enabled: true, knowledge_scopes: knowledgeScopes,
           knowledge_preview_digest: knowledgePreview.digest,
@@ -575,7 +595,7 @@ export function mountChat({
           body.image_consent = true;
           body.include_local_ocr = imageManager.wantsLocalOcr();
         }
-        if (streamingSupported && !imageIds.length && !capturePrompt && !reviewedTools.length) {
+        if (streamingSupported && !selectedRoute && !imageIds.length && !capturePrompt && !reviewedTools.length) {
           const outcome = await receiveStream(identifier, body, controller.signal);
           if (outcome.complete) {
             input.value = "";
@@ -760,6 +780,43 @@ export function mountChat({
       knowledgeState.textContent = "Preview is ready. The server will recheck it before Send; any changed note requires a new preview.";
     });
   }
+  async function checkRouteSuggestions() {
+    return action(async () => {
+      if (!selected || !canSend) throw new Error("Select an open conversation before checking route suggestions.");
+      const text = input.value;
+      if (!text.trim() || new TextEncoder().encode(text).length > 8192) throw new Error("Enter a message of at most 8192 UTF-8 bytes first.");
+      resetRouteAlternatives("Checking the current prompt; old suggestions were cleared.", true);
+      routeState.textContent = "Checking local installed-model evidence and configured Gemini catalog; no model will receive this prompt.";
+      const result = await request(`${base}/${encodeURIComponent(selected)}/route-suggestions`, { text });
+      if (!["simple", "complex", "unknown"].includes(result.complexity) || !Array.isArray(result.candidates)) throw new Error("Invalid route-suggestion response.");
+      routeAlternatives.clear();
+      routeSelect.replaceChildren();
+      option(routeSelect, "", "Use configured model (default)");
+      for (const item of result.candidates.slice(0, 20)) {
+        if (typeof item.provider_id !== "string" || typeof item.model_id !== "string"
+            || typeof item.destination !== "string" || !["local", "cloud"].includes(item.kind)) continue;
+        const key = `${item.provider_id}\n${item.model_id}`;
+        routeAlternatives.set(key, item);
+        option(routeSelect, key, `${item.provider_id} / ${item.model_id} — ${item.destination}`);
+      }
+      routeSelect.disabled = result.complexity !== "complex" || routeAlternatives.size === 0;
+      routeSelect.value = "";
+      requiresCloudConsent = configuredCloudRoute;
+      cloudPanel.hidden = !requiresCloudConsent;
+      cloudConsent.checked = false;
+      const suggestion = result.suggested
+        ? ` Optional uncertain suggestion: ${result.suggested.provider_id} / ${result.suggested.model_id}.`
+        : " No verified alternate is available; keep the configured route.";
+      routeState.textContent = `${result.complexity === "simple" ? "Simple" : result.complexity === "unknown" ? "Uncertain" : "Potentially complex"} prompt. ${result.reason}${suggestion} No provider received the prompt.`;
+    });
+  }
+  function resetRouteAlternatives(message, disabled) {
+    routeAlternatives.clear();
+    routeSelect.replaceChildren();
+    option(routeSelect, "", "Use configured model (default)");
+    routeSelect.disabled = disabled;
+    routeState.textContent = message;
+  }
   async function prepareTaskProposal() {
     return action(async () => {
       if (!selected || !canSend || !canCreateTask) {
@@ -861,6 +918,19 @@ export function mountChat({
     }
   });
   element("chat-start").addEventListener("click", start);
+  element("chat-route-check").addEventListener("click", checkRouteSuggestions);
+  input.addEventListener("input", () => {
+    resetRouteAlternatives("Prompt changed. Check suggestions again before selecting an alternate route.", true);
+    requiresCloudConsent = configuredCloudRoute;
+    cloudPanel.hidden = !requiresCloudConsent;
+    cloudConsent.checked = false;
+  });
+  routeSelect.addEventListener("change", () => {
+    const selectedRoute = routeAlternatives.get(routeSelect.value) || null;
+    requiresCloudConsent = selectedRoute ? selectedRoute.kind === "cloud" : configuredCloudRoute;
+    cloudPanel.hidden = !requiresCloudConsent;
+    cloudConsent.checked = false;
+  });
   element("chat-form").addEventListener("submit", send);
   repositoryStudyForm.addEventListener("submit", studyRepository);
   element("chat-close").addEventListener("click", close);

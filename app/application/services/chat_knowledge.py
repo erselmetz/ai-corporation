@@ -285,7 +285,7 @@ class ChatKnowledgeService:
 
     def record_turn_trace(self, owner, conversation_id, reply_id, *, coordinator,
                           cloud_provider, cloud_consent, elapsed_ms, retrieval, outcome="completed",
-                          failure=None, tools=None, steps=None, now=None):
+                          failure=None, tools=None, steps=None, now=None, turn_route=None):
         self._application.owned_chat().authorize_owner(owner, conversation_id)
         if retrieval and "enabled" not in retrieval:
             retrieval = {
@@ -303,9 +303,10 @@ class ChatKnowledgeService:
             "sources": [],
             "route": {"agent_id": _safe_text(coordinator.id, 128),
                       "agent": _safe_text(coordinator.name, 128),
-                      "provider": _safe_text(coordinator.provider, 128),
-                      "model": _safe_text(coordinator.model, 128),
-                      "source": "Coordinator selected by owner when this conversation started."},
+                      "provider": _safe_text(turn_route[0] if turn_route else coordinator.provider, 128),
+                      "model": _safe_text(turn_route[1] if turn_route else coordinator.model, 128),
+                      "source": ("Owner-approved alternate for this turn only; Agent assignment unchanged."
+                                 if turn_route else "Coordinator selected by owner when this conversation started.")},
             "retrieval": retrieval or {"enabled": False, "reason": "Use my knowledge was off."},
             "cloud": {"provider_used": _safe_text(cloud_provider, 128) if cloud_provider else None,
                       "consent_given": bool(cloud_consent),

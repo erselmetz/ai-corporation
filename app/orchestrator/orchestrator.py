@@ -55,6 +55,24 @@ class Orchestrator:
 
             return provider.generate(agent.model, prompt)
 
+    def run_agent_for_turn(
+        self, agent_id: str, prompt: str, *, provider_id: str, model_id: str,
+        expected_assignment: tuple[str, str],
+    ) -> str:
+        """Run one explicitly authorized chat turn on a temporary route.
+
+        The Agent assignment is checked under its execution guard and is never
+        changed. The caller must validate inventory and obtain per-turn consent.
+        """
+        if not provider_id or not model_id:
+            raise ValueError("An explicit provider and model are required")
+        with self.agents.execution(agent_id):
+            agent = self.agents.get(agent_id)
+            if (agent.provider, agent.model) != expected_assignment:
+                raise RuntimeError("Agent assignment changed before execution; task was not sent")
+            provider = self.providers.get(provider_id)
+            return provider.generate(model_id, prompt)
+
     def stream_agent(
         self,
         agent_id: str,
