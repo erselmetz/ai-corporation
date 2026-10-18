@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildCorporationMapModel, buildSceneModel, changedNodeIds, MAX_SCENE_EDGES, MAX_SCENE_NODES } from "../app/webui/static/scene-model.mjs";
-import { buildThreeScene, createThreeView } from "../app/webui/static/three-scene.mjs";
+import { buildThreeScene, createThreeView, GLOBE_NODE_RADIUS, projectGlobeNodes } from "../app/webui/static/three-scene.mjs";
 import { mountVisualization } from "../app/webui/static/visualization.mjs";
 import * as THREE from "../app/webui/static/vendor/three/three.module.js";
 
@@ -32,6 +32,10 @@ test("only recorded state changes count as changes", () => {
   assert.deepEqual(changedNodeIds(before, after), ["wi:a"]);
   assert.deepEqual(changedNodeIds(after, after), []);
   assert.deepEqual(changedNodeIds(null, after), []);
+  assert.deepEqual(changedNodeIds({ nodes: [{ id: "uncertain", state: "unknown" }] },
+    { nodes: [{ id: "uncertain", state: "running" }] }), [], "unknown telemetry does not create an activity pulse");
+  assert.deepEqual(changedNodeIds({ nodes: [{ id: "recorded", state: "running" }] },
+    { nodes: [{ id: "recorded", state: "unknown" }] }), [], "missing telemetry does not create an activity pulse");
 });
 
 test("corporation map includes only exact source-backed relationships and caps each selected layer view", () => {
@@ -92,28 +96,88 @@ test("real Three.js scene builds one mesh per node and effects can be disabled",
   const plain = buildThreeScene(THREE, model, { effects: false });
   assert.equal(full.meshes.size, 4);
   assert.ok(full.group.children.length > plain.group.children.length);
-  assert.equal(plain.group.children.length, 4 + 2);
+  assert.equal(plain.group.children.length, 4 + 2 + 1, "one bounded decorative globe shell, four records, and two recorded links");
+  assert.equal(plain.group.children.filter(child => child.type === "Line").length, model.edges.length);
+  for (const node of model.nodes) {
+    const position = plain.meshes.get(node.id).position;
+    assert.ok(Math.abs(Math.hypot(position.x, position.y, position.z) - GLOBE_NODE_RADIUS) < 1e-10);
+  }
   full.dispose(); plain.dispose();
+});
+
+test("globe positions contain only recorded nodes, remain stable by ID, and lie on the visual shell", () => {
+  const nodes = [{ id: "record:b", x: 100, y: -20, z: 4 }, { id: "record:a", x: -4, y: 30, z: 0 }];
+  const positions = projectGlobeNodes(nodes);
+  const reordered = projectGlobeNodes([...nodes].reverse());
+  assert.deepEqual([...positions.keys()].sort(), ["record:a", "record:b"]);
+  for (const [id, point] of positions) {
+    assert.deepEqual(reordered.get(id), point);
+    assert.ok(Math.abs(Math.hypot(point.x, point.y, point.z) - GLOBE_NODE_RADIUS) < 1e-10);
+  }
+  assert.deepEqual(projectGlobeNodes([]).size, 0);
+});
+
+test("Three.js renderer enforces node and recorded-edge ceilings even for oversized input", () => {
+  const nodes = Array.from({ length: MAX_SCENE_NODES + 20 }, (_, index) => ({ id: `real:${index}`, state: "unknown" }));
+  const edges = Array.from({ length: MAX_SCENE_EDGES + 40 }, (_, index) => ({
+    kind: "handoff", from: nodes[index % nodes.length].id, to: nodes[(index + 1) % nodes.length].id,
+  }));
+  const scene = buildThreeScene(THREE, { nodes, edges }, { effects: false });
+  assert.equal(scene.nodes.length, MAX_SCENE_NODES);
+  assert.ok(scene.edges.length <= MAX_SCENE_EDGES);
+  assert.ok(scene.group.children.filter(child => child.type === "Line").length <= MAX_SCENE_EDGES);
+  scene.dispose();
 });
 
 test("initial resize survives model creation and frames all recorded nodes", () => {
   let camera;
+  let clock = 0;
+  let ratio = null;
   const FakeThree = { ...THREE, WebGLRenderer: class {
-    setPixelRatio() {} setSize() {} render(_scene, next) { camera = next; camera.updateMatrixWorld(); } dispose() {}
+    setPixelRatio(value) { ratio = value; } setSize() {} render(_scene, next) { camera = next; camera.updateMatrixWorld(); } dispose() {}
   } };
-  const view = createThreeView({ THREE: FakeThree, canvas: {} });
+  const view = createThreeView({ THREE: FakeThree, canvas: {}, now: () => clock });
   const model = { nodes: [
     { id: "left", x: -6, y: 0, z: 0 }, { id: "right", x: 6, y: -12, z: -4 },
   ], edges: [] };
   for (const [width, height] of [[1200, 448], [390, 448]]) {
+    clock += 40;
     view.resize(width, height);
     view.setModel(model);
     assert.equal(camera.aspect, width / height);
+    const globePositions = projectGlobeNodes(model.nodes);
     for (const node of model.nodes) {
-      const point = new THREE.Vector3(node.x, node.y, node.z).project(camera);
+      const point = new THREE.Vector3(globePositions.get(node.id).x,
+        globePositions.get(node.id).y, globePositions.get(node.id).z).project(camera);
       assert.ok(Math.abs(point.x) < 1 && Math.abs(point.y) < 1 && Math.abs(point.z) < 1);
     }
   }
+  assert.equal(ratio, 1);
+  view.dispose();
+});
+
+test("interactive rendering is capped at 30 FPS and does not start a continuous frame loop", () => {
+  let clock = 0, renders = 0, rafCalls = 0;
+  const timers = [];
+  const FakeThree = { ...THREE, WebGLRenderer: class {
+    setPixelRatio(value) { assert.equal(value, 1); } setSize() {}
+    render() { renders += 1; } dispose() {}
+  } };
+  const view = createThreeView({ THREE: FakeThree, canvas: {}, now: () => clock,
+    requestFrame: callback => { rafCalls += 1; return callback; },
+    scheduleTimeout: (callback, delay) => { const timer = { callback, delay, canceled: false }; timers.push(timer); return timer; },
+    cancelTimeout: timer => { timer.canceled = true; },
+  });
+  view.setModel({ nodes: [{ id: "record:1", x: 0, y: 0, z: 0 }], edges: [] });
+  assert.equal(renders, 1);
+  assert.equal(rafCalls, 0);
+  clock = 5; view.rotate(0.1);
+  clock = 20; view.select("record:1");
+  assert.equal(renders, 1);
+  assert.equal(timers.length, 1, "rapid interactions coalesce into one delayed render");
+  assert.ok(timers[0].delay >= 1000 / 30 - 5);
+  clock = 34; timers[0].callback();
+  assert.equal(renders, 2);
   view.dispose();
 });
 

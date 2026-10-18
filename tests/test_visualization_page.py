@@ -18,7 +18,10 @@ def test_visualization_page_is_3d_first_with_accessible_alternatives_and_setup_l
         response = client.get("/ui/visualization")
         assert response.status_code == 200
         html = response.text
-        for fragment in ('id="viz-canvas"', 'tabindex="0"', 'id="viz-list"', 'id="viz-reduce-motion"',
+        for fragment in ('id="viz-canvas"', 'aria-label="3D organizational globe, not geographic"',
+                         'id="viz-mode-3d" type="button" aria-pressed="true">3D globe</button>',
+                         'The globe is a visual layout, not a geographic map', 'tabindex="0"',
+                         'id="viz-list"', 'Accessible list view of the same records and relationships', 'id="viz-reduce-motion"',
                          'id="viz-effects"', 'id="viz-evidence-data"',
                          'id="viz-layer-organization"', 'id="viz-layer-projects"', 'id="viz-layer-tasks"',
                          'id="viz-layer-workflows"', 'id="viz-layer-providers"', 'id="viz-layer-capabilities"',

@@ -1573,6 +1573,24 @@ public artifact exists, and native NSIS UI plus destructive clean-profile reset
 and relaunch were not exercised in this environment. Those are release/Windows
 follow-up, not claimed as tested.
 
+## Three-dimensional organizational globe (Task 186)
+
+The existing permission-filtered map now lays its capped recorded nodes out on
+a deterministic spherical shell. Positions are a visual arrangement only,
+not geographic coordinates or organizational measurements. Edges are drawn
+only when the source model contains that relationship; the decorative wireframe
+does not represent data. Unknown telemetry is labeled and transitions into or
+out of `unknown` do not trigger a pulse.
+
+The renderer independently caps input at 60 nodes and 119 recorded links, fixes
+pixel ratio at 1, throttles rendered frames to 30 FPS, and does not run a
+continuous animation loop. Reduced motion and WebGL failure use the existing
+keyboard-accessible record-and-relationship list. Scene resource counters and
+opt-in local frame pacing remain diagnostic; no GPU or inference-load result is
+claimed. The geometry, caps, throttle, accessible fallback, and unknown-state
+behavior passed deterministic tests. A real WebGL browser/device and physical
+assistive-technology review were not available.
+
 ## Visible chat workflow scaffolding (Task 183)
 
 Before a chat turn begins, Coordinator Chat shows a bounded deterministic plan and asks the owner to continue or cancel. Cancellation happens before knowledge retrieval, selected reviewed-tool calls, or provider work. Existing exact-scope knowledge preview, per-turn Gemini consent, and capability checks remain authoritative. The app does not create a model-generated plan, Task, background job, or hidden agent workflow.

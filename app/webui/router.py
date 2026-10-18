@@ -1298,7 +1298,7 @@ def visualization_page():
     approve work.</p>
     <p id="viz-status" role="status">Loading...</p>
     <div role="group" aria-label="View controls">
-    <button id="viz-mode-3d" type="button" aria-pressed="true">3D view</button>
+    <button id="viz-mode-3d" type="button" aria-pressed="true">3D globe</button>
     <button id="viz-mode-list" type="button" aria-pressed="false">List view</button>
     <button id="viz-refresh" type="button">Refresh</button>
     <button id="viz-rotate-left" type="button">Rotate left</button>
@@ -1323,9 +1323,9 @@ def visualization_page():
     <label><input id="viz-layer-knowledge" type="checkbox" checked> Retained knowledge metadata</label></fieldset>
     <label for="viz-search">Find records by name, ID, type, or state</label>
     <input id="viz-search" type="search" maxlength="120" autocomplete="off">
-    <p>Drag to orbit; hold Shift and drag to pan; use the labeled controls for keyboard access. Filter layers or search names and IDs to inspect records beyond the 60-node render cap. Current APIs expose no department records. Separate source snapshots may have different timestamps and are not atomic.</p>
-    <canvas id="viz-canvas" class="viz-canvas" tabindex="0" role="img" aria-label="3D map"></canvas>
-    <section id="viz-list" aria-label="List view" hidden></section>
+    <p>The globe is a visual layout, not a geographic map or measured organizational position. Recorded links are drawn between their source-backed records only. Drag to orbit; hold Shift and drag to pan; use the labeled controls for keyboard access. Filter layers or search names and IDs to inspect records beyond the 60-node render cap. Current APIs expose no department records. Separate source snapshots may have different timestamps and are not atomic.</p>
+    <canvas id="viz-canvas" class="viz-canvas" tabindex="0" role="img" aria-label="3D organizational globe, not geographic"></canvas>
+    <section id="viz-list" aria-label="Accessible list view of the same records and relationships" hidden></section>
     <p id="viz-cost" role="status"></p>
     <p id="viz-frame-metric" role="status">Frame pacing: not measured on this device.</p>
     <section aria-live="polite"><h2>Details</h2><div id="viz-detail">Select a node.</div></section>

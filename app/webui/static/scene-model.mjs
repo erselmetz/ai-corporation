@@ -84,7 +84,8 @@ export function buildSceneModel(structure, workflows, { maxNodes = MAX_SCENE_NOD
 export function changedNodeIds(previous, next) {
   if (!previous) return [];
   const before = new Map(previous.nodes.map(n => [n.id, n.state]));
-  return next.nodes.filter(n => before.has(n.id) && before.get(n.id) !== n.state).map(n => n.id);
+  return next.nodes.filter(n => before.has(n.id) && before.get(n.id) !== "unknown"
+    && n.state !== "unknown" && before.get(n.id) !== n.state).map(n => n.id);
 }
 
 const LAYERS = new Set(["organization", "projects", "tasks", "workflows", "providers", "capabilities", "resources", "knowledge"]);

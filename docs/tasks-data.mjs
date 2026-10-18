@@ -3224,9 +3224,9 @@ export const post100Tasks = [
   {
     "number": 186,
     "title": "3D globe visual map",
-    "description": "Move the former optional Part 4 of Task 177 into an independent 3D globe view containing only real recorded entities and relationships.",
+    "description": "Render permission-filtered recorded entities and source-backed relationships in a bounded, accessible 3D organizational globe.",
     "category": "Phase W - Interactive 3D Map",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       177
     ],
@@ -3245,16 +3245,24 @@ export const post100Tasks = [
       "3D rendering can burden local inference and can make provenance or accessibility harder to inspect."
     ],
     "area": "P39",
-    "checkpoint": null,
-    "validation": [],
+    "checkpoint": "task-186-globe-visual-map",
+    "validation": [
+      "Visualization model/scene regressions: 18 passed; protected page tests: 2 passed (1 Starlette deprecation warning).",
+      "Full Python suite: 1,324 passed, 8 skipped, 0 failed (2 dependency deprecation warnings); OLLAMA_BASE_URL was pointed at an unavailable loopback port so no live model inference ran.",
+      "Browser-module tests: 227 passed; Electron tests: 33 passed; public documentation tests: 17 passed.",
+      "git diff --check and Python/JavaScript syntax and import checks passed."
+    ],
     "limitations": [
-      "Requires Task 177's accepted factual trace and independent performance/accessibility evidence; no live activity source is assumed."
+      "Globe positions are a stable visual layout, not geographic coordinates or measured organizational distances. Relationships alone come from recorded source links.",
+      "No actual WebGL device render or minimum-hardware/inference-load benchmark was performed; deterministic tests use the vendored Three.js geometry with a fake WebGL renderer.",
+      "The accessible fallback is the labeled record-and-relationship list; no separate 2D graph renderer was added. Source snapshots remain independent on-demand reads, not a live event stream."
     ],
     "automatedVerification": [
-      "Automate WebGL failure, keyboard list navigation, reduced motion and accessible semantics; measure capped rendering on available hardware. Minimum-device and physical assistive-technology coverage remains unverified follow-up."
+      "Verify deterministic ID-stable spherical placement, recorded-only links, the 60-node/119-edge caps, pixel ratio 1, 30 FPS maximum rendering, no continuous frame loop, and no activity pulse into or out of unknown telemetry.",
+      "Verify WebGL failure and reduced motion use the keyboard-accessible labeled list with equivalent current records and recorded relationships."
     ],
     "followUpValidation": [
-      "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+      "Actual GPU/browser WebGL rendering under concurrent local inference, minimum-device performance, physical assistive-technology coverage, and representative-user evaluation remain unverified follow-up; no rendered-device performance or accessibility conformance claim is made."
     ]
   },
   {
@@ -3406,7 +3414,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-183 and Tasks 184-185 are completed scoped checkpoints except deferred Task 170; Tasks 186-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-183 and Tasks 184-186 are completed scoped checkpoints except deferred Task 170; Tasks 187-189 remain planned, and Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-190, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",

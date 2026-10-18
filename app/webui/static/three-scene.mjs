@@ -1,6 +1,31 @@
-import { colorFor } from "./scene-model.mjs";
+import { colorFor, MAX_SCENE_EDGES, MAX_SCENE_NODES } from "./scene-model.mjs";
 
 const EDGE_COLORS = { reporting: 0x818cf8, handoff: 0x22d3ee, delegation: 0xfbbf24 };
+export const GLOBE_NODE_RADIUS = 6;
+export const MAX_RENDER_FPS = 30;
+const GLOBE_SURFACE_RADIUS = 5.7;
+const MIN_RENDER_INTERVAL_MS = 1000 / MAX_RENDER_FPS;
+
+/** Assign stable, evenly distributed positions to the actual records in the supplied model. */
+export function projectGlobeNodes(nodes, radius = GLOBE_NODE_RADIUS) {
+  const ordered = [...nodes].sort((left, right) => {
+    const a = String(left.id ?? ""), b = String(right.id ?? "");
+    return a < b ? -1 : a > b ? 1 : 0;
+  });
+  const locations = new Map();
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  ordered.forEach((node, index) => {
+    const y = ordered.length ? 1 - 2 * (index + 0.5) / ordered.length : 0;
+    const horizontal = Math.sqrt(Math.max(0, 1 - y * y));
+    const angle = goldenAngle * index;
+    locations.set(node.id, {
+      x: radius * Math.cos(angle) * horizontal,
+      y: radius * y,
+      z: radius * Math.sin(angle) * horizontal,
+    });
+  });
+  return locations;
+}
 
 export function buildThreeScene(THREE, model, { effects = true } = {}) {
   const scene = new THREE.Scene();
@@ -15,7 +40,16 @@ export function buildThreeScene(THREE, model, { effects = true } = {}) {
   const halo = new THREE.RingGeometry(0.7, 0.78, 32);
   const meshes = new Map();
   const disposables = [sphere, halo];
-  for (const node of model.nodes) {
+  const globe = new THREE.Mesh(new THREE.SphereGeometry(GLOBE_SURFACE_RADIUS, 24, 16),
+    new THREE.MeshBasicMaterial({ color: 0x1e3a5f, wireframe: true, transparent: true, opacity: 0.24 }));
+  group.add(globe);
+  disposables.push(globe.geometry, globe.material);
+  const boundedNodes = model.nodes.slice(0, MAX_SCENE_NODES);
+  const nodeIds = new Set(boundedNodes.map(node => node.id));
+  const boundedEdges = model.edges.filter(edge => nodeIds.has(edge.from) && nodeIds.has(edge.to)).slice(0, MAX_SCENE_EDGES);
+  const locations = projectGlobeNodes(boundedNodes);
+  const positionedNodes = boundedNodes.map(node => ({ ...node, ...locations.get(node.id) }));
+  for (const node of positionedNodes) {
     const material = new THREE.MeshBasicMaterial({ color: colorFor(node.state) });
     disposables.push(material);
     const mesh = new THREE.Mesh(sphere, material);
@@ -31,7 +65,7 @@ export function buildThreeScene(THREE, model, { effects = true } = {}) {
       group.add(ring);
     }
   }
-  for (const edge of model.edges) {
+  for (const edge of boundedEdges) {
     const a = meshes.get(edge.from);
     const b = meshes.get(edge.to);
     if (!a || !b) continue;
@@ -46,12 +80,14 @@ export function buildThreeScene(THREE, model, { effects = true } = {}) {
     group.add(grid);
     disposables.push(grid.geometry, grid.material);
   }
-  return { scene, camera, group, meshes, dispose: () => disposables.forEach(d => d.dispose?.()) };
+  return { scene, camera, group, meshes, nodes: positionedNodes, edges: boundedEdges, dispose: () => disposables.forEach(d => d.dispose?.()) };
 }
 
 export function createThreeView({
   THREE, canvas, requestFrame = globalThis.requestAnimationFrame?.bind(globalThis),
   now = () => globalThis.performance.now(),
+  scheduleTimeout = globalThis.setTimeout?.bind(globalThis),
+  cancelTimeout = globalThis.clearTimeout?.bind(globalThis),
 }) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "low-power" });
   renderer.setPixelRatio(1);
@@ -61,6 +97,8 @@ export function createThreeView({
   let effects = true;
   let aspect = 1;
   const costs = [];
+  let lastRenderAt = -Infinity;
+  let renderTimeout = null;
 
   function frameModel() {
     if (!built) return;
@@ -81,8 +119,17 @@ export function createThreeView({
 
   function renderOnce() {
     if (!built) return;
-    const start = now();
+    const current = now();
+    const remaining = MIN_RENDER_INTERVAL_MS - (current - lastRenderAt);
+    if (remaining > 0) {
+      if (renderTimeout === null && scheduleTimeout) {
+        renderTimeout = scheduleTimeout(() => { renderTimeout = null; renderOnce(); }, remaining);
+      }
+      return;
+    }
+    const start = current;
     renderer.render(built.scene, built.camera);
+    lastRenderAt = start;
     costs.push(now() - start);
     if (costs.length > 30) costs.shift();
   }
@@ -99,8 +146,8 @@ export function createThreeView({
   function setModel(next, options = {}) {
     effects = options.effects ?? effects;
     built?.dispose();
-    model = next;
-    built = buildThreeScene(THREE, model, { effects });
+    built = buildThreeScene(THREE, next, { effects });
+    model = { ...next, nodes: built.nodes, edges: built.edges };
     frameModel();
     if (selected && !built.meshes.has(selected)) selected = null;
     applySelection();
@@ -161,6 +208,10 @@ export function createThreeView({
       if (!costs.length) return { last: 0, average: 0, samples: 0, resources };
       return { last: costs.at(-1), average: costs.reduce((a, b) => a + b, 0) / costs.length, samples: costs.length, resources };
     },
-    dispose() { built?.dispose(); built = null; renderer.dispose(); },
+    dispose() {
+      if (renderTimeout !== null) cancelTimeout?.(renderTimeout);
+      renderTimeout = null;
+      built?.dispose(); built = null; renderer.dispose();
+    },
   };
 }

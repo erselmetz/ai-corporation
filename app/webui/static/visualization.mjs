@@ -277,7 +277,7 @@ export async function mountVisualization({
     list.hidden = threeD;
     el("viz-mode-3d").setAttribute?.("aria-pressed", String(threeD));
     el("viz-mode-list").setAttribute?.("aria-pressed", String(!threeD));
-    canvas.setAttribute?.("aria-label", `3D map with ${model?.nodes.length ?? 0} recorded nodes. Use left and right arrow keys to move between nodes. Drag to orbit, hold Shift and drag to pan, or use the labeled controls. Switch to the list view for equivalent labeled records and relationships.`);
+    canvas.setAttribute?.("aria-label", `3D organizational globe with ${model?.nodes.length ?? 0} recorded nodes; placement is not geographic. Use left and right arrow keys to move between nodes. Drag to orbit, hold Shift and drag to pan, or use the labeled controls. Switch to the accessible list for equivalent records and relationships.`);
     renderCost();
   }
 
