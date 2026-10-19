@@ -65,7 +65,7 @@ def _start_coordinator_chat(application, owner_id: str) -> dict:
         raise HTTPException(503, "Setup is ready, but the Coordinator conversation could not be opened. Retry from Chat.") from None
 
 
-def _complete_ollama_setup(request: Request, principal, application, model_id: str) -> dict:
+def _complete_ollama_setup(request: Request, principal, application, model_id: str, *, open_conversation: bool = True) -> dict:
     application.replace_model("local_worker", "ollama", model_id)
     request.app.state.first_run_setup_store.complete_ollama(model_id)
     secret_store = getattr(request.app.state, "first_run_secret_store", None)
@@ -73,8 +73,10 @@ def _complete_ollama_setup(request: Request, principal, application, model_id: s
         secret_store.clear()
     _configure_slots(application, "ollama", model_id)
     request.app.state.first_run_reconnect_required = False
-    conversation = _start_coordinator_chat(application, principal.identity)
-    return {"setup_complete": True, "conversation_id": conversation["conversation"].id,
+    request.app.state.quick_setup_ready = True
+    conversation = _start_coordinator_chat(application, principal.identity) if open_conversation else None
+    return {"setup_complete": True,
+            "conversation_id": conversation["conversation"].id if conversation is not None else None,
             "provider_id": "ollama", "model_id": model_id}
 
 
@@ -112,10 +114,24 @@ def skip_setup(request: Request):
 
 
 @router.post("/ollama/status", dependencies=[Depends(require_permission("provider-connection:manage"))])
-def ollama_status(request: Request):
+def ollama_status(request: Request, principal=Depends(require_permission("provider-connection:manage")),
+                  application=Depends(get_application_service)):
     if _state(request) is None:
         raise HTTPException(404, "First-run setup is unavailable")
-    return request.app.state.first_run_ollama_service.status()
+    config = request.app.state.first_run_setup_store.get()
+    service = request.app.state.first_run_ollama_service
+    status_for_model = getattr(service, "status_for_model", None)
+    status = status_for_model(config.model_id if config else None) if callable(status_for_model) else service.status()
+    if (status.get("state") == "available" and not getattr(request.app.state, "quick_setup_ready", False)):
+        selector = getattr(service, "default_installed_chat_model", None)
+        choices = selector() if callable(selector) else ()
+        if choices:
+            try:
+                _complete_ollama_setup(request, principal, application, choices[0], open_conversation=False)
+                status = service.status_for_model(choices[0]) if callable(status_for_model) else service.status()
+            except Exception:
+                raise HTTPException(503, "Ollama is available, but local chat setup could not be completed. Press Retry.") from None
+    return status
 
 
 @router.post("/ollama/model-preview", dependencies=[Depends(require_permission("provider-connection:manage"))])

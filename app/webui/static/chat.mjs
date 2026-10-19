@@ -487,6 +487,8 @@ export function mountChat({
         option(agents, agent.id, label);
         option(taskAgent, agent.id, `${agent.name} | ${agent.role}`);
       }
+      const directDesktopLaunch = new URLSearchParams(windowRef?.location?.search || "").get("desktop") === "1";
+      if (directDesktopLaunch && agentList.items.some((agent) => agent.id === "local_worker")) agents.value = "local_worker";
       for (const item of list.items) option(conversations, item.id, `${item.coordinator.name} - ${item.id.slice(0, 8)}`);
       const requestedConversation = new URLSearchParams(windowRef?.location?.search || "").get("conversation");
       if (typeof requestedConversation === "string" && /^[a-f0-9]{32}$/.test(requestedConversation)
@@ -494,6 +496,15 @@ export function mountChat({
         conversations.value = requestedConversation;
         render(await request(`${base}/${encodeURIComponent(requestedConversation)}`));
         state.textContent = "Coordinator conversation ready.";
+      } else if (directDesktopLaunch && list.items.length > 0) {
+        conversations.value = list.items[0].id;
+        render(await request(`${base}/${encodeURIComponent(conversations.value)}`));
+        state.textContent = "Your latest Coordinator conversation is ready.";
+      } else if (directDesktopLaunch && list.items.length === 0 && agents.value) {
+        const result = await request(base, { agent_id: agents.value });
+        option(conversations, result.conversation.id, `${result.coordinator.name} - ${result.conversation.id.slice(0, 8)}`);
+        render(result);
+        state.textContent = "Coordinator Chat is ready. Type a message and press Send.";
       } else {
         state.textContent = agentList.items.length ? "Choose an AI team member and start a conversation." : "No registered AI team member is available.";
       }
@@ -577,7 +588,10 @@ export function mountChat({
       const chosenRouteLabel = selectedRoute
         ? `\nAlternate route for this turn: ${selectedRoute.provider_id} / ${selectedRoute.model_id}; destination: ${selectedRoute.destination}. Prompt, recent history, and selected context/tool results go there.`
         : "\nRoute: configured model remains the default.";
-      if (!confirmImpl(`Review this chat plan before work begins:\n${plannedSteps.join("\n")}\n\nCoordinator: ${routeLabel}${chosenRouteLabel}\n\nContinue? Cancel prevents retrieval, tool calls, and provider work.`)) {
+      const directLocalChat = new URLSearchParams(windowRef?.location?.search || "").get("desktop") === "1"
+        && !requiresCloudConsent && !selectedRoute && !imageIds.length && !reviewedTools.length
+        && !useKnowledge && captureLocalPrompt.checked !== true;
+      if (!directLocalChat && !confirmImpl(`Review this chat plan before work begins:\n${plannedSteps.join("\n")}\n\nCoordinator: ${routeLabel}${chosenRouteLabel}\n\nContinue? Cancel prevents retrieval, tool calls, and provider work.`)) {
         state.textContent = "Cancelled before retrieval, tool calls, or provider work. Nothing was sent.";
         return;
       }

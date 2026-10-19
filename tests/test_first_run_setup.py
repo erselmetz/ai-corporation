@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import httpx
 import pytest
 from fastapi.testclient import TestClient
@@ -87,6 +88,62 @@ def test_ollama_success_progress_is_not_installation_confirmation():
     progress = OllamaFirstRunService._progress(b'{"status":"success","completed":3,"total":3}')
     assert progress["event"] == "progress"
     assert progress["status"] == "success"
+
+
+def test_startup_model_selection_prefers_installed_default_and_never_downloads():
+    class Provider:
+        def __init__(self, models, metadata): self.models, self.metadata, self.calls = models, metadata, []
+        def local_model_inventory(self):
+            return type("Inventory", (), {"state": "available", "models": self.models})()
+        def _bounded_request(self, method, path, body=None, *, timeout=5.0):
+            self.calls.append((method, path, body))
+            if path == "/api/tags": return json.dumps({"models": self.metadata}).encode()
+            return json.dumps({"capabilities": ["completion"] if body["model"] in {"small-chat", "llama3.2:3b"} else ["embedding"]}).encode()
+
+    preferred = Provider(("large", "llama3.2:3b"), [])
+    assert OllamaFirstRunService(provider=preferred).default_installed_chat_model() == ("llama3.2:3b",)
+    assert preferred.calls == []
+    fallback = Provider(("large", "small-chat"), [
+        {"name": "large", "size": 900}, {"name": "small-chat", "size": 100},
+    ])
+    assert OllamaFirstRunService(provider=fallback).default_installed_chat_model() == ("small-chat",)
+    assert [call[1] for call in fallback.calls] == ["/api/tags", "/api/show"]
+    absent = Provider((), [])
+    assert OllamaFirstRunService(provider=absent).default_installed_chat_model() == ()
+
+
+def test_startup_model_selection_checks_smallest_candidates_until_chat_capable():
+    class Provider:
+        def local_model_inventory(self):
+            return type("Inventory", (), {"state": "available", "models": ("embed", "chat")})()
+        def _bounded_request(self, method, path, body=None, *, timeout=5.0):
+            if path == "/api/tags": return b'{"models":[{"name":"embed","size":10},{"name":"chat","size":20}]}'
+            return b'{"capabilities":["embedding"]}' if body["model"] == "embed" else b'{"capabilities":["completion"]}'
+    assert OllamaFirstRunService(provider=Provider()).default_installed_chat_model() == ("chat",)
+
+
+def test_desktop_startup_auto_setup_is_idempotent_and_persists_selected_model(database):
+    class Provider:
+        def local_model_inventory(self):
+            return type("Inventory", (), {"state": "available", "models": ("small-chat",)})()
+    class Setup(OllamaFirstRunService):
+        def __init__(self): super().__init__(provider=Provider())
+        def default_installed_chat_model(self, preferred="llama3.2:3b"): return ("small-chat",)
+    class Corporation:
+        def __init__(self): self.models = []; self.limits = []
+        def replace_model(self, agent, provider, model): self.models.append((agent, provider, model))
+        def resource_manager(self, limits): self.limits.append(limits)
+
+    app = create_local_app(password=PASSWORD, origin=ORIGIN, desktop_mode=True, first_owner_run=True)
+    app.state.first_run_ollama_service = Setup()
+    corporation = Corporation()
+    app.state.restore_local_first_run(corporation)
+    app.state.restore_local_first_run(corporation)
+    stored = app.state.first_run_setup_store.get()
+    assert stored.completed is True
+    assert stored.model_id == "small-chat"
+    assert corporation.models == [("local_worker", "ollama", "small-chat")] * 2
+    assert len(corporation.limits) == 2
 
 
 def test_ollama_pull_progress_rechecks_installed_inventory_and_uses_only_the_fake_transport(monkeypatch):

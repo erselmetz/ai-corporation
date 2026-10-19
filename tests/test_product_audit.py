@@ -74,6 +74,11 @@ def test_every_ui_page_browser_layout_and_script_health(tmp_path):
                 page = browser.new_page(viewport={"width": 1280, "height": 900})
                 errors = []
                 page.on("pageerror", lambda error: errors.append(f"{page.url}: {error.stack}"))
+                # This is a layout/script audit. Do not trigger host WMI or
+                # hardware inspection from a browser test; those contracts
+                # have separate deterministic service tests.
+                page.route("**/api/system/hardware-profile", lambda route: route.fulfill(
+                    status=200, content_type="application/json", body="{}"))
                 page.goto(origin + "/ui")
                 page.wait_for_function("document.querySelector('#setup-state').textContent.includes('SIGN')")
                 assert page.locator(".dashboard-grid .dashboard-card:visible").count() == 0
@@ -86,8 +91,12 @@ def test_every_ui_page_browser_layout_and_script_health(tmp_path):
                 page.wait_for_url(origin + "/ui/chat")
                 findings = []
                 for path in paths:
-                    page.goto(origin + path)
-                    page.wait_for_load_state("networkidle")
+                    # Settings hydrates bounded owner-protected summaries after
+                    # the document loads. Those requests are not part of the
+                    # static-page/layout health assertion, and networkidle can
+                    # remain pending when the browser keeps an API request open.
+                    page.goto(origin + path, wait_until="domcontentloaded")
+                    page.locator("h1").wait_for(state="visible")
                     assert page.locator("h1").count() == 1, path
                     for width in (1280, 768, 390):
                         page.set_viewport_size({"width": width, "height": 900})

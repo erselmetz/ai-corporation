@@ -163,6 +163,23 @@ test("start and send use same-origin, session CSRF and actual coordinator identi
   assert.deepEqual(JSON.parse(post.options.body), { text: "Hello" });
 });
 
+test("Electron direct launch opens a coordinator conversation and sends local chat without a setup confirmation", async () => {
+  const ui = setup((path, options) => {
+    if (path === "/api/chat/conversations" && options?.method === "POST") return response(snapshot());
+    if (path.endsWith("/messages")) return response(snapshot([
+      message("user", "completed", "hello"), message("assistant", "completed", "hi from local fake"),
+    ]));
+    return null;
+  }, { location: { search: "?desktop=1", pathname: "/ui/chat" } }, () => false);
+  assert.equal(await ui.controller.initialLoad, true);
+  assert.equal(ui.calls.some(call => call.path === "/api/chat/conversations" && call.options?.method === "POST"), true);
+  assert.match(ui.elements["chat-state"].textContent, /Coordinator Chat is ready/);
+  ui.elements["chat-input"].value = "hello";
+  assert.equal(await ui.controller.send({ preventDefault() {} }), true);
+  assert.equal(ui.planConfirmations.length, 0);
+  assert.match(ui.elements["chat-history"].textContent, /hi from local fake/);
+});
+
 test("canceling the reviewed chat plan starts no retrieval, tools, or provider request", async () => {
   const ui = setup(null, globalThis.window, () => false);
   await ui.controller.initialLoad;

@@ -92,8 +92,8 @@ class FirstRunSetupStore:
         )
 
     def complete_ollama(self, model_id: str) -> FirstRunConfiguration:
-        if model_id != "llama3.2:3b":
-            raise ValueError("Only the reviewed default first-run model is supported")
+        if not isinstance(model_id, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}", model_id):
+            raise ValueError("Ollama model identifier is invalid")
         self._update(
             """UPDATE local_first_run SET completed = 1, skipped = 0,
                provider_type = 'ollama', provider_id = 'ollama', model_id = ?,
@@ -158,14 +158,53 @@ class OllamaFirstRunService:
         self._client_factory = client_factory
 
     def status(self) -> dict:
+        return self.status_for_model(self.MODEL_ID)
+
+    def status_for_model(self, model_id: str | None) -> dict:
         inventory = self._provider.local_model_inventory()
+        selected_model = model_id if isinstance(model_id, str) and _MODEL_ID.fullmatch(model_id) else self.MODEL_ID
         return {
             "state": inventory.state,
             "service_running": inventory.state == "available",
-            "model_installed": self.MODEL_ID in inventory.models if inventory.state == "available" else None,
+            "model_id": selected_model,
+            "model_installed": selected_model in inventory.models if inventory.state == "available" else None,
             "source": inventory.source,
             "reason": inventory.reason,
         }
+
+    def default_installed_chat_model(self, preferred: str = MODEL_ID) -> tuple[str, ...]:
+        """Return bounded installed model IDs ordered by the reviewed default rule."""
+        endpoint = self._provider
+        inventory = endpoint.local_model_inventory()
+        if inventory.state != "available" or not inventory.models:
+            return ()
+        if preferred in inventory.models:
+            return (preferred,)
+        candidates = []
+        try:
+            raw = endpoint._bounded_request("GET", "/api/tags", timeout=2.0)
+            payload = json.loads(raw)
+            entries = payload.get("models") if isinstance(payload, dict) else None
+            if not isinstance(entries, list) or len(entries) > 100:
+                return ()
+            by_name = {entry.get("name"): entry.get("size") for entry in entries if isinstance(entry, dict)}
+            candidates = sorted(inventory.models, key=lambda model: (by_name.get(model, 2**63), model))[:100]
+        except Exception:
+            return ()
+        deadline = time.monotonic() + 5.0
+        for model in candidates:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            try:
+                raw = endpoint._bounded_request("POST", "/api/show", {"model": model}, timeout=min(1.0, remaining))
+                details = json.loads(raw)
+                capabilities = details.get("capabilities") if isinstance(details, dict) else None
+                if isinstance(capabilities, list) and "completion" in capabilities:
+                    return (model,)
+            except Exception:
+                continue
+        return ()
 
     def preview_model(self) -> dict:
         headers = {"Accept": "application/vnd.ollama.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json"}

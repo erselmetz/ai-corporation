@@ -3,6 +3,7 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
+const crypto = require("node:crypto");
 const { fileURLToPath } = require("node:url");
 const { createDisplayMediaRequestHandler } = require("./screen-capture.cjs");
 const { OllamaInstaller } = require("./ollama-installer.cjs");
@@ -46,6 +47,12 @@ function resetHelperMode() {
     } catch { app.exit(5); }
   })();
   return true;
+}
+
+function ollamaInstallationPresent() {
+  const roots = [process.env.LOCALAPPDATA, process.env.ProgramFiles, process.env["ProgramFiles(x86)"]].filter(Boolean);
+  return roots.some((root) => [path.join(root, "Programs", "Ollama", "ollama.exe"), path.join(root, "Ollama", "ollama.exe")]
+    .some((candidate) => { try { return fs.statSync(candidate).isFile(); } catch { return false; } }));
 }
 
 const isResetHelper = resetHelperMode();
@@ -179,40 +186,6 @@ async function waitForBackend(child, timeoutMs = 20000) {
   return false;
 }
 
-function authenticateDesktopOwner(password) {
-  return new Promise((resolve, reject) => {
-    const body = JSON.stringify({ password });
-    const request = http.request(`${ORIGIN}/api/local/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Origin: ORIGIN, "Content-Length": Buffer.byteLength(body) },
-      timeout: 5000,
-    }, (response) => {
-      response.resume();
-      response.on("end", async () => {
-        try {
-          if (response.statusCode !== 200) return reject(new Error("Owner session could not be established"));
-          const setCookie = response.headers["set-cookie"];
-          const pair = Array.isArray(setCookie) ? setCookie[0]?.split(";", 1)[0] : "";
-          const separator = pair.indexOf("=");
-          if (separator < 1) return reject(new Error("Owner session cookie was unavailable"));
-          await session.defaultSession.cookies.set({
-            url: ORIGIN,
-            name: pair.slice(0, separator),
-            value: pair.slice(separator + 1),
-            path: "/",
-            httpOnly: true,
-            sameSite: "strict",
-          });
-          resolve(true);
-        } catch { reject(new Error("Owner session could not be established")); }
-      });
-    });
-    request.on("timeout", () => request.destroy(new Error("Owner sign-in timed out")));
-    request.on("error", () => reject(new Error("Owner session could not be established")));
-    request.end(body);
-  });
-}
-
 async function ownerHasPermission(permission) {
   try {
     const cookies = await session.defaultSession.cookies.get({ url: ORIGIN });
@@ -247,17 +220,12 @@ function showStartup(message) {
 
 async function startBackend(payload) {
   if (backend) return { started: false, message: "The local service is already running." };
-  if (typeof payload?.password !== "string" || payload.password.length < 12 || payload.password.length > 1024) {
-    return { started: false, message: "Owner password must contain 12 to 1024 characters." };
-  }
-  if (typeof payload?.confirmation !== "string" || payload.confirmation.length > 1024) {
-    return { started: false, message: "The password confirmation is invalid." };
-  }
   const isFirstRun = !fs.existsSync(CREDENTIAL);
-  if (isFirstRun && payload.password !== payload.confirmation) return { started: false, message: "The password entries do not match." };
-  if (!isFirstRun && payload.confirmation) return { started: false, message: "Enter only the saved owner password." };
+  if (isFirstRun && payload?.password != null && payload.password !== "") return { started: false, message: "A new app starts without a password. Add an optional lock in Settings." };
+  if (!isFirstRun && (typeof payload?.password !== "string" || payload.password.length < 12 || payload.password.length > 1024)) return { started: false, message: "Enter the saved owner password." };
+  const startupToken = crypto.randomBytes(32).toString("base64url");
   showStartup("Preparing the protected local owner credential…");
-  let ownerPassword = payload.password;
+  let ownerPassword = isFirstRun ? null : payload.password;
   let child;
   try {
     fs.mkdirSync(APP_DATA, { recursive: true });
@@ -271,9 +239,8 @@ async function startBackend(payload) {
           Number.isInteger(code) ? Math.max(-1, Math.min(255, code)) : null);
       }
     });
-    child.stdin.write(`${JSON.stringify({ password: payload.password, confirmation: payload.confirmation, first_owner_run: isFirstRun })}\n`);
-    payload.password = "";
-    payload.confirmation = "";
+    child.stdin.write(`${JSON.stringify({ password: ownerPassword, confirmation: null, first_owner_run: isFirstRun, session_token: startupToken })}\n`);
+    if (payload) { payload.password = ""; payload.confirmation = ""; }
     showStartup("Starting private services on this computer…");
     if (!await waitForBackend(child)) {
       child.stdin.end();
@@ -285,15 +252,16 @@ async function startBackend(payload) {
       if (bootstrapWindow && !bootstrapWindow.isDestroyed()) showStartup("The service did not become ready. Close another ERSELMETZ AI controller and retry.");
       return { started: false, message: "Local startup failed. Check that another ERSELMETZ AI controller is closed, then retry." };
     }
-    await authenticateDesktopOwner(ownerPassword);
+    // The backend has already verified any configured password before it starts.
+    // Install only the fresh per-launch token as the HttpOnly renderer session.
+    await session.defaultSession.cookies.set({ url: ORIGIN, name: "ersel_local_session", value: startupToken, path: "/", httpOnly: true, sameSite: "strict" });
     ownerPassword = "";
     createApplicationWindow();
     if (bootstrapWindow && !bootstrapWindow.isDestroyed()) bootstrapWindow.close();
     return { started: true };
   } catch {
     ownerPassword = "";
-    payload.password = "";
-    payload.confirmation = "";
+    if (payload) { payload.password = ""; payload.confirmation = ""; }
     if (child && child.stdin && !child.stdin.destroyed) child.stdin.end();
     if (backend === child) backend = null;
     return { started: false, message: "Local startup failed. Check the installation and retry." };
@@ -317,7 +285,7 @@ function createApplicationWindow() {
     try { if (new URL(target).origin !== ORIGIN) event.preventDefault(); }
     catch { event.preventDefault(); }
   });
-  applicationWindow.loadURL(`${ORIGIN}/desktop/`);
+  applicationWindow.loadURL(`${ORIGIN}/ui/chat?desktop=1`);
   applicationWindow.once("ready-to-show", () => applicationWindow && applicationWindow.show());
   applicationWindow.on("closed", () => { applicationWindow = undefined; app.quit(); });
 }
@@ -393,6 +361,7 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
     })
   );
   ipcMain.handle("desktop:get-setup-state", (event) => isTrustedBootstrap(event) && !fs.existsSync(CREDENTIAL));
+  ipcMain.handle("desktop:ollama-installed", (event) => isTrustedApplication(event) && ollamaInstallationPresent());
   ipcMain.handle("desktop:start", (event, payload) => isTrustedBootstrap(event) ? startBackend(payload) : { started: false, message: "Request denied." });
   ipcMain.handle("desktop:read-crash-reports", (event) => {
     if (!isTrustedApplication(event)) return { ok: false, message: "Request denied.", reports: [] };
@@ -511,7 +480,10 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
     microphoneGrantUntil = Date.now() + 15_000;
     return true;
   });
-  makeBootstrapWindow();
+  if (fs.existsSync(CREDENTIAL)) makeBootstrapWindow();
+  else void startBackend({}).then((result) => {
+    if (!result.started) { dialog.showErrorBox("ERSELMETZ AI could not start", result.message); app.quit(); }
+  });
 });
 
 if (!isResetHelper) app.on("second-instance", () => {

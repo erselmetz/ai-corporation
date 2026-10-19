@@ -22,10 +22,10 @@ function render() {
 test("shows all tasks in descending order and reports the next planned task", () => {
   const elements = render();
   const groups = elements["roadmap-groups"].children;
-  assert.equal(groups[0].id, "tasks-190-190");
+  assert.equal(groups[0].id, "tasks-191-191");
   const items = groups.flatMap(group => group.children[1].children);
-  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 190 }, (_, index) => 190 - index));
-  assert.match(elements["roadmap-summary"].textContent, /190 roadmap tasks.*187 completed.*2 deferred and incomplete.*0 planned.*1 design only/);
+  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 191 }, (_, index) => 191 - index));
+  assert.match(elements["roadmap-summary"].textContent, /191 roadmap tasks.*188 completed.*2 deferred and incomplete.*0 planned.*1 design only/);
   assert.match(elements["next-task"].textContent, /Next: Task 190/);
 });
 
@@ -35,6 +35,8 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.match(tasks.find(task => task.number === 171).validation.join(" "), /Next.js static production build/);
   assert.match(tasks.find(task => task.number === 171).limitations.join(" "), /installer was not rebuilt/);
   assert.equal(tasks.find(task => task.number === 172).status, "completed");
+  assert.equal(tasks.find(task => task.number === 191).status, "completed");
+  assert.match(tasks.find(task => task.number === 191).limitations.join(" "), /Manual clean-Windows-profile acceptance remains pending/);
   assert.equal(tasks.find(task => task.number === 166).status, "completed");
   assert.equal(tasks.find(task => task.number === 166).checkpoint, "task-166-opt-in-proactive-suggestions");
   assert.match(tasks.find(task => task.number === 166).validation.join(" "), /194 passed/);
@@ -147,7 +149,7 @@ test("publishes completed milestones and remaining phases with their current sta
   assert.deepEqual(planned.map(task => [task.number, task.status]), [
     [174, "completed"], [175, "completed"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
     [180, "completed"], [181, "completed"], [182, "completed"], [183, "completed"], [184, "completed"], [185, "completed"],
-    [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"],
+    [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"], [191, "completed"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, "task-177-auto-rag-trace");
   assert.equal(tasks.find(task => task.number === 178).checkpoint, "task-178-nav-fix");

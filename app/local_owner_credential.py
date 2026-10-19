@@ -105,6 +105,15 @@ class LocalOwnerCredentialStore:
             except Exception:
                 raise OwnerCredentialError("The saved owner credential is unavailable or unreadable") from None
 
+    def remove(self, password: str) -> None:
+        with self._lock:
+            if not self.verify(password):
+                raise OwnerCredentialError("Owner password did not match")
+            try:
+                self.path.unlink()
+            except OSError:
+                raise OwnerCredentialError("The owner password lock could not be removed") from None
+
 
 def _validate_password(password: str) -> None:
     if not isinstance(password, str) or not 12 <= len(password) <= 1024:

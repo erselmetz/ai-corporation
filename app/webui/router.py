@@ -838,6 +838,7 @@ def coordinator_chat_page():
     <script type="module" src="/ui/static/chat.mjs"></script></head><body>
     <main class="content chat-content"><nav aria-label="Chat navigation">
     <a href="/ui">Home</a> | <a href="/ui/login?next=/ui/chat">Owner sign-in</a> | <a href="/ui/preferences">Response preferences</a> | <a href="/ui/knowledge">My knowledge</a> | <a href="/ui/employee-chat">Employee chat</a> | <a href="/ui/providers">Providers &amp; models</a></nav>
+    <section class="panel" id="local-quick-start" aria-labelledby="local-quick-start-title" hidden><h2 id="local-quick-start-title">Local model</h2><p id="local-quick-start-state" role="status" aria-live="polite">Checking Ollama at 127.0.0.1:11434…</p><button id="local-quick-start-action" type="button">Retry</button></section>
     {safety_controls}
     <p class="eyebrow">YOUR AI WORKSPACE</p><h1>Chat with your AI team</h1>
     <p>Choose a registered AI team member, start a conversation, and send a message. The first reply checks whether its configured service can respond. Chat does not run generated instructions.</p>
@@ -1019,7 +1020,7 @@ def inventory_page():
       <ul id="software-manager-limitations"></ul>
     </section>
     <section class="management-card"><h2>Inspection limits</h2><ul id="inventory-limitations"></ul></section>
-    </main></body></html>""")
+    </main><script type="module" src="/ui/static/quick-start.mjs"></script></body></html>""")
 
 
 @router.get("/ui/preferences", response_class=HTMLResponse)

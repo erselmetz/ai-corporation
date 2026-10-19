@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("desktopBridge", Object.freeze({
   getSetupState: () => ipcRenderer.invoke("desktop:get-setup-state"),
+  isOllamaInstalled: () => ipcRenderer.invoke("desktop:ollama-installed"),
   start: (password, confirmation) => ipcRenderer.invoke("desktop:start", { password, confirmation }),
   readCrashReports: () => ipcRenderer.invoke("desktop:read-crash-reports"),
   openDiagnosticsFolder: () => ipcRenderer.invoke("desktop:open-diagnostics-folder"),

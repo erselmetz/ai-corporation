@@ -3431,15 +3431,56 @@ export const post100Tasks = [
     "followUpValidation": [
       "Before implementation, obtain an independent security review and verify the isolation backend, policy, kill behavior, path handling, crash recovery, Windows edition support, and quotas on supported Windows builds."
     ]
+  },
+  {
+    "number": 191,
+    "title": "Direct-to-chat local quick start",
+    "description": "Start the protected Electron backend and open Coordinator Chat directly, automatically configuring only installed local Ollama resources without a first-run wizard or silent download.",
+    "category": "Phase AA - Direct-to-chat Quick Start",
+    "status": "completed",
+    "dependsOn": [176, 68, 72],
+    "decisions": [
+      "Task 191 supersedes Task 176's wizard-first provider setup where they conflict. Existing owner-password credentials remain required at launch; new installations use a random per-launch Electron session token and can enable a DPAPI-protected password lock in Settings.",
+      "Prefer installed llama3.2:3b; otherwise inspect bounded Ollama tags/show metadata and choose the smallest installed completion-capable model. Keep a saved model choice stable across restarts; never download or install automatically. Persist one-slot Ollama resource limits and defer manager construction until controlled execution needs it."
+    ],
+    "acceptance": [
+      "Electron starts the backend on loopback and opens Coordinator Chat directly; a new installation creates or resumes a coordinator conversation automatically.",
+      "Passwordless startup is limited to a random per-launch Electron session token held by Electron and the backend; loopback, Origin, CSRF and default-deny authentication remain enforced. Existing DPAPI password lock is still checked at launch and can be enabled or disabled explicitly in Settings.",
+      "Startup discovers only installed local Ollama models, chooses the preferred/default chat model truthfully, persists selection and software slot limits idempotently, and never changes provider/model assignments for optional Gemini use or performs silent downloads.",
+      "Chat surfaces stopped/not-installed/no-model states with one guarded action, routes installation through the existing verified installer and model download through the existing size/digest confirmation and progress flow, and labels CPU performance/hardware fit as unmeasured.",
+      "Plain local Coordinator chat can be sent without setup or a redundant planning dialog. Cloud turns, reviewed tools, knowledge retrieval, task proposals/dispatch, and other sensitive actions keep their existing consent and confirmation controls."
+    ],
+    "outOfScope": [
+      "No silent Ollama install/model download, Gemini key prompt or cloud fallback, provider auto-routing, hardware readiness claim, background task dispatch, secret logging, remote access, or authorization bypass.",
+      "Task 176's legacy first-run component remains available as historical code but is no longer the Electron launch flow."
+    ],
+    "risks": [
+      "Windows Ollama install paths vary; the installation presence check recognizes standard per-user and Program Files locations and may report an alternate custom location as not installed.",
+      "The per-launch token is held in Electron main process memory and passed to its child backend over the private parent pipe. Local malware running as the same Windows user remains outside this app's isolation boundary."
+    ],
+    "area": "P43",
+    "checkpoint": "task-191-direct-to-chat",
+    "validation": ["Full Python suite: 1,334 passed / 8 skipped / 0 failed (2 warnings; Ollama pointed to a closed loopback test port). Focused Task 191 Python regressions: 53 passed; targeted chat/quick-start browser tests: 28 passed; full browser-module suite: 235 passed; Electron tests: 34 passed; public-docs tests: 18 passed. Next.js static build and TypeScript checks passed; Python compilation/import checks and git diff --check passed."],
+    "limitations": [
+      "Manual clean-Windows-profile acceptance remains pending: real Ollama absent/stopped/install/model download and chat, Gemini key/cloud-consent chat, restart persistence with and without DPAPI lock, recovery after offline/bad credentials, and physical CPU/GPU inference speed were not performed.",
+      "Deterministic fakes validate routing, session and UI contracts only; they do not prove Ollama installation/service behavior, model quality, or live provider availability."
+    ],
+    "automatedVerification": [
+      "Use deterministic local-provider fakes to verify preferred-model selection, smallest chat-capable fallback, missing service/model states, idempotent persisted assignments and slots, token rejection/injection, password-lock transitions, direct chat creation and a successful fake local turn.",
+      "Verify the existing verified installer and exact manifest/digest-confirmed download are invoked only by explicit owner action, with bounded visible progress and no automatic retry or cloud routing."
+    ],
+    "followUpValidation": [
+      "Manual clean-profile Windows install/start/chat/restart, real Ollama service and model metadata/download/recovery, DPAPI lock restart, Gemini account consent behavior, alternate Ollama install locations, hardware latency and representative-user comprehension remain unverified follow-up."
+    ]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169 and Tasks 171-189 are completed scoped checkpoints except deferred Task 170; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169, 171-189 and 191 are completed scoped checkpoints except deferred Task 170; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its manual clean-profile Windows/live-provider acceptance remains pending; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
-  "developmentAcceptance": "For Tasks 175-190, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
+  "developmentAcceptance": "For Tasks 175-191, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
   "enhancementLoop": "After scoped development acceptance, continue to the next dependency-ready task without waiting for human QA. Record reproducible defects and regression cases for later review by different AI models; identify model/reviewer when available and never claim independent review that did not occur.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
   "completion": "Completed requires actual acceptance evidence, truthful limitations/skips, required documentation/update records, and a reviewed task checkpoint. A local checkpoint is sufficient for development acceptance; push or deployment is separate and must be authorized and verified when performed. Never mark complete solely because code exists or an AI says it worked.",
@@ -3474,7 +3515,8 @@ const futureRoadmapGroups = [
   { name: "Phase W - Interactive 3D Map", range: "186-186", tasks: post100Tasks.filter(task => task.category === "Phase W - Interactive 3D Map").map(({ title, description }) => [title, description]) },
   { name: "Phase X - Voice Interaction", range: "187-188", tasks: post100Tasks.filter(task => task.category === "Phase X - Voice Interaction").map(({ title, description }) => [title, description]) },
   { name: "Phase Y - Local Vision", range: "189-189", tasks: post100Tasks.filter(task => task.category === "Phase Y - Local Vision").map(({ title, description }) => [title, description]) },
-  { name: "Phase Z - Code Execution Design Gate", range: "190-190", tasks: post100Tasks.filter(task => task.category === "Phase Z - Code Execution Design Gate").map(({ title, description }) => [title, description]) }
+  { name: "Phase Z - Code Execution Design Gate", range: "190-190", tasks: post100Tasks.filter(task => task.category === "Phase Z - Code Execution Design Gate").map(({ title, description }) => [title, description]) },
+  { name: "Phase AA - Direct-to-chat Quick Start", range: "191-191", tasks: post100Tasks.filter(task => task.category === "Phase AA - Direct-to-chat Quick Start").map(({ title, description }) => [title, description]) }
 ];
 
 export const taskGroups = [...foundationTaskGroups, {

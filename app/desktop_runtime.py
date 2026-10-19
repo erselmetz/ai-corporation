@@ -38,10 +38,15 @@ def _read_message(stream, limit: int = MAX_STARTUP_REQUEST) -> dict:
     return payload
 
 
-def _prepare_owner(payload: dict, credential_store=None) -> str:
+def _prepare_owner(payload: dict, credential_store=None) -> str | None:
     store = credential_store or LocalOwnerCredentialStore()
     password = payload.get("password")
     confirmation = payload.get("confirmation")
+    if password in (None, "") and not store.exists():
+        token = payload.get("session_token")
+        if not isinstance(token, str) or not 43 <= len(token) <= 128 or not token.isascii():
+            raise DesktopStartupError("Desktop session token is invalid")
+        return None
     if not isinstance(password, str) or not 12 <= len(password) <= 1024:
         raise DesktopStartupError("Owner password must contain 12 to 1024 characters")
     try:
@@ -82,13 +87,16 @@ def run_backend(*, port: int, ui_dir: Path, stdin=None, credential_store=None,
         raise DesktopStartupError("A bounded owner setup request is required")
     try:
         payload = json.loads(raw)
-        if not isinstance(payload, dict) or set(payload) - {"password", "confirmation", "first_owner_run"}:
+        if not isinstance(payload, dict) or set(payload) - {"password", "confirmation", "first_owner_run", "session_token"}:
             raise ValueError
         if "first_owner_run" in payload and type(payload["first_owner_run"]) is not bool:
             raise ValueError
     except (ValueError, UnicodeDecodeError):
         raise DesktopStartupError("Owner setup request is invalid") from None
     del raw
+    startup_token = payload.get("session_token")
+    if startup_token is not None and (not isinstance(startup_token, str) or not 43 <= len(startup_token) <= 128 or not startup_token.isascii()):
+        raise DesktopStartupError("Desktop session token is invalid")
     password = _prepare_owner(payload, credential_store)
     first_owner_run = payload.get("first_owner_run", False)
     payload.clear()
@@ -102,7 +110,8 @@ def run_backend(*, port: int, ui_dir: Path, stdin=None, credential_store=None,
         bound_port = listener.getsockname()[1]
         origin = f"http://{DEFAULT_HOST}:{bound_port}"
         application = create_local_app(password=password, origin=origin, desktop_ui_dir=ui_dir,
-                                       desktop_mode=True, first_owner_run=first_owner_run)
+                                       desktop_mode=True, first_owner_run=first_owner_run,
+                                       desktop_session_token=startup_token)
         del password
         for logger_name in ("uvicorn", "uvicorn.error", "uvicorn.access", "uvicorn.asgi"):
             logger = logging.getLogger(logger_name)

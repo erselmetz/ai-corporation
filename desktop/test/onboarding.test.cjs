@@ -8,6 +8,15 @@ const page = fs.readFileSync(path.join(root, "desktop-ui/src/app/page.tsx"), "ut
 const settingsPage = fs.readFileSync(path.join(root, "desktop-ui/src/app/settings/page.tsx"), "utf8");
 const hardwareSummary = fs.readFileSync(path.join(root, "desktop-ui/src/app/settings/hardware-summary.ts"), "utf8");
 const shell = fs.readFileSync(path.join(root, "desktop-ui/src/app/app-shell.tsx"), "utf8");
+const main = fs.readFileSync(path.join(root, "desktop/main.cjs"), "utf8");
+
+test("new Electron launches start the loopback service and open Coordinator Chat with a per-launch token", () => {
+  assert.match(main, /crypto\.randomBytes\(32\)\.toString\("base64url"\)/);
+  assert.match(main, /session_token: startupToken/);
+  assert.match(main, /name: "ersel_local_session", value: startupToken[^\n]*httpOnly: true/);
+  assert.match(main, /applicationWindow\.loadURL\(`\$\{ORIGIN\}\/ui\/chat\?desktop=1`\)/);
+  assert.match(main, /if \(fs\.existsSync\(CREDENTIAL\)\) makeBootstrapWindow\(\)/);
+});
 
 test("first-run checks are bounded and report unsupported evidence as unknown", () => {
   assert.match(page, /setTimeout\(\(\) => controller\.abort\(\), 2500\)/);
@@ -52,7 +61,7 @@ test("provider guidance links everyday preferences to the grouped settings hub",
   assert.match(page, /availability is unknown/);
 });
 
-test("settings hub reads current values only through existing permission-checked endpoints", () => {
+test("settings hub reads scoped values and changes only the explicit desktop password lock", () => {
   for (const route of ["/api/local/session", "/api/local/preferences", "/api/providers", "/api/models", "/api/local/provider-connections", "/api/local/assignment-policy", "/api/capabilities/grants", "/api/system/monitor", "/api/system/hardware-profile"]) {
     assert.ok(settingsPage.includes(route), `missing current settings source: ${route}`);
   }
@@ -63,8 +72,11 @@ test("settings hub reads current values only through existing permission-checked
   assert.match(settingsPage, /cache: "no-store"/);
   assert.match(settingsPage, /status === 401/);
   assert.match(settingsPage, /status === 403/);
-  assert.doesNotMatch(settingsPage, /method:\s*["'](POST|PUT|PATCH|DELETE)["']/i);
-  assert.doesNotMatch(settingsPage, /api_key|password/i);
+  assert.match(settingsPage, /method: "POST"/);
+  assert.match(settingsPage, /\/api\/local\/desktop-lock/);
+  assert.match(settingsPage, /X-Local-CSRF/);
+  assert.match(settingsPage, /confirmation: lockEnabled \? null : lockConfirmation/);
+  assert.doesNotMatch(settingsPage, /api_key/i);
   assert.match(settingsPage, /hardware feasibility remains unknown/i);
   assert.match(settingsPage, /Hardware profile and model guidance/);
   assert.match(settingsPage, /summarizeHardwareProfile/);

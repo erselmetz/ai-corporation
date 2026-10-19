@@ -54,6 +54,7 @@ MAINTENANCE_EXPERIMENT_PERMISSIONS = frozenset({
     "maintenance:activate",
 })
 DOCUMENTATION_REVIEW_PERMISSIONS = frozenset({"documentation:review"})
+OWNER_LOCK_PERMISSIONS = frozenset({"owner-lock:manage"})
 
 
 @dataclass(frozen=True)
@@ -65,15 +66,18 @@ class LocalSession:
 
 class LocalOwnerAuthentication:
     SESSION_SECONDS = 3600
+    DESKTOP_SESSION_SECONDS = 12 * 60 * 60
     MAX_SESSIONS = 8
     MAX_FAILURES = 5
     LOCKOUT_SECONDS = 300
 
-    def __init__(self, password: str, origin: str, *, clock=time.monotonic,
+    def __init__(self, password: str | None, origin: str, *, startup_token: str | None = None, clock=time.monotonic,
                  capability_authorization_service: CapabilityAuthorizationService | None = None,
                  capability_grant_service: CapabilityGrantService | None = None):
-        if not isinstance(password, str) or not 12 <= len(password) <= 1024:
+        if password is not None and (not isinstance(password, str) or not 12 <= len(password) <= 1024):
             raise ValueError("Local password must contain 12 to 1024 characters")
+        if password is None and (not isinstance(startup_token, str) or len(startup_token) < 43 or len(startup_token) > 128):
+            raise ValueError("A bounded desktop session token is required")
         endpoint = urlsplit(origin)
         if (endpoint.scheme != "http" or endpoint.hostname not in {"127.0.0.1", "localhost"}
                 or endpoint.username or endpoint.password or endpoint.path
@@ -87,10 +91,15 @@ class LocalOwnerAuthentication:
         self.capability_grant_service = capability_grant_service or CapabilityGrantService(
             self.capability_authorization_service)
         self._salt = secrets.token_bytes(32)
-        self._digest = self._hash(password)
+        self._digest = self._hash(password) if password is not None else None
         self._sessions: dict[str, LocalSession] = {}
         self._failures: list[float] = []
         self._lock = threading.RLock()
+        if startup_token is not None:
+            if not isinstance(startup_token, str) or not 43 <= len(startup_token) <= 128 or not startup_token.isascii():
+                raise ValueError("Desktop session token is invalid")
+            self._sessions[startup_token] = LocalSession(
+                secrets.token_urlsafe(32), self.clock() + self.DESKTOP_SESSION_SECONDS, secrets.token_urlsafe(24))
         self.principal = AuthenticatedPrincipal(
             "local-owner",
             READ_PERMISSIONS | CHAT_PERMISSIONS | SCREEN_CAPTURE_PERMISSIONS | SEMANTIC_MEMORY_PERMISSIONS
@@ -105,6 +114,7 @@ class LocalOwnerAuthentication:
                          "capability-emergency:manage", "browser:act", "desktop:act"})
             | frozenset({"backup:export", "backup:restore"})
             | DOCUMENTATION_REVIEW_PERMISSIONS
+            | OWNER_LOCK_PERMISSIONS
             | MAINTENANCE_EXPERIMENT_PERMISSIONS)
 
     def _hash(self, password: str) -> bytes:
@@ -131,7 +141,7 @@ class LocalOwnerAuthentication:
             self._prune()
             if len(self._failures) >= self.MAX_FAILURES:
                 raise HTTPException(429, "Too many sign-in attempts; try again later")
-            if not hmac.compare_digest(self._hash(password), self._digest):
+            if self._digest is None or not hmac.compare_digest(self._hash(password), self._digest):
                 self._failures.append(self.clock())
                 raise HTTPException(401, "Invalid credentials")
             if len(self._sessions) >= self.MAX_SESSIONS:

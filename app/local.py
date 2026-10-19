@@ -21,6 +21,13 @@ class LoginRequest(BaseModel):
     password: str = Field(min_length=1, max_length=1024, repr=False)
 
 
+class DesktopLockRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool
+    password: str = Field(min_length=12, max_length=1024, repr=False)
+    confirmation: str | None = Field(default=None, max_length=1024, repr=False)
+
+
 LOGIN_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Owner sign-in — ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
@@ -34,7 +41,7 @@ LOGIN_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 </main><script type="module" src="/ui/static/local-login.mjs"></script></body></html>"""
 
 
-def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
+def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:8000", desktop_session_token: str | None = None,
                      application_service=None, clock=None, desktop_ui_dir=None,
                      desktop_mode: bool = False,
                      first_owner_run: bool = False,
@@ -42,10 +49,12 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                      capability_grant_service=None, capability_audit_service=None,
                      emergency_stop_service=None, local_speech_provider=None,
                      data_portability_service=None):
+    if desktop_session_token is not None and desktop_mode is not True:
+        raise ValueError("Passwordless session tokens are restricted to the desktop runtime")
     startup_started = time.perf_counter()
     app_started_at = datetime.now(timezone.utc)
     backend = LocalOwnerAuthentication(
-        password, origin, **({"clock": clock} if clock else {}),
+        password, origin, startup_token=desktop_session_token, **({"clock": clock} if clock else {}),
         **({"capability_authorization_service": capability_authorization_service}
            if capability_authorization_service is not None else {}),
         **({"capability_grant_service": capability_grant_service}
@@ -98,15 +107,28 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
 
         def restore_local_first_run(corporation):
             setup_store.initialize_for_new_owner(first_owner_run=first_owner_run is True)
+            application.state.quick_setup_ready = False
             config = setup_store.get()
-            if config is None or not config.completed:
+            if config is None:
                 return
             try:
-                if config.provider_type == "ollama" and config.model_id:
-                    corporation.replace_model("local_worker", "ollama", config.model_id)
+                if config.provider_type in {None, "none", "ollama"}:
+                    ollama_setup = application.state.first_run_ollama_service
+                    inventory = ollama_setup._provider.local_model_inventory()
+                    if config.model_id:
+                        model_id = config.model_id
+                    else:
+                        choices = ollama_setup.default_installed_chat_model()
+                        model_id = choices[0] if choices else (config.model_id or OllamaFirstRunService.MODEL_ID)
+                    corporation.replace_model("local_worker", "ollama", model_id)
+                    installed_and_selected = inventory.state == "available" and model_id in inventory.models
+                    if installed_and_selected:
+                        setup_store.complete_ollama(model_id)
                     limits_provider = "ollama"
-                    limits_model = config.model_id
+                    limits_model = model_id
                 elif config.provider_type == "gemini" and config.model_id:
+                    if not config.completed:
+                        return
                     secret_store = application.state.first_run_secret_store
                     credential = secret_store.load() if secret_store is not None else None
                     if not config.gemini_key_persisted or credential is None:
@@ -131,11 +153,23 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
                     application.state.first_run_reconnect_required = True
                     return
                 from app.resources import ModelLimit, ProviderLimit, ResourceLimits
-                corporation.resource_manager(ResourceLimits(
-                    global_slots=config.global_slots,
-                    providers=(ProviderLimit(limits_provider, config.provider_slots),),
-                    models=(ModelLimit(limits_provider, limits_model, config.model_slots),),
-                ))
+                if config.provider_type == "gemini" or config.completed or installed_and_selected:
+                    limits = ResourceLimits(
+                        global_slots=config.global_slots,
+                        providers=(ProviderLimit(limits_provider, config.provider_slots),),
+                        models=(ModelLimit(limits_provider, limits_model, config.model_slots),),
+                    )
+                    operator_state = getattr(corporation, "operator_state_store", None)
+                    state_store = operator_state() if callable(operator_state) else None
+                    if state_store is not None:
+                        state_store.save_resource_limits({
+                            "global_slots": limits.global_slots,
+                            "providers": [{"provider_id": item.provider_id, "slots": item.slots} for item in limits.providers],
+                            "models": [{"provider_id": item.provider_id, "model_id": item.model_id, "slots": item.slots} for item in limits.models],
+                        })
+                    else:
+                        corporation.resource_manager(limits)
+                    application.state.quick_setup_ready = True
                 application.state.first_run_reconnect_required = False
             except Exception:
                 application.state.first_run_reconnect_required = True
@@ -327,6 +361,42 @@ def create_local_app(*, password: str, origin: str = "http://127.0.0.1:8000",
         response = JSONResponse({"signed_in": False})
         response.delete_cookie(COOKIE, path="/", httponly=True, samesite="strict")
         return response
+
+    if desktop_mode:
+        @application.get("/api/local/desktop-lock")
+        def desktop_lock_state(request: Request):
+            if backend.authenticate(request) is None:
+                raise HTTPException(401, "Authentication required")
+            from app.local_owner_credential import LocalOwnerCredentialStore
+            return {"enabled": LocalOwnerCredentialStore().exists()}
+
+        @application.post("/api/local/desktop-lock")
+        async def update_desktop_lock(request: Request):
+            principal = backend.authenticate(request)
+            if principal is None or "owner-lock:manage" not in principal.permissions:
+                raise HTTPException(403, "Permission denied")
+            backend.require_csrf(request)
+            payload = bytearray()
+            async for chunk in request.stream():
+                if len(payload) + len(chunk) > 4096:
+                    raise HTTPException(413, "Password setting request too large")
+                payload.extend(chunk)
+            try:
+                body = DesktopLockRequest.model_validate_json(bytes(payload))
+            except ValueError:
+                raise HTTPException(422, "Invalid password setting") from None
+            from app.local_owner_credential import LocalOwnerCredentialStore, OwnerCredentialError
+            store = LocalOwnerCredentialStore()
+            try:
+                if body.enabled:
+                    if not isinstance(body.confirmation, str):
+                        raise HTTPException(422, "Confirm the new owner password")
+                    store.create(body.password, body.confirmation)
+                else:
+                    store.remove(body.password)
+            except OwnerCredentialError as error:
+                raise HTTPException(409, str(error)) from None
+            return {"enabled": body.enabled}
 
     if desktop_ui_dir is not None:
         import base64

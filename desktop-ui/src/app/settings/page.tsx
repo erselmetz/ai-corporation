@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { summarizeHardwareProfile } from "./hardware-summary";
 
 type State = "loading" | "ready" | "empty" | "sign-in" | "denied" | "failed" | "unknown";
@@ -84,6 +84,11 @@ export default function SettingsPage() {
   const [diagnosticsMessage, setDiagnosticsMessage] = useState("Loading local crash reports…");
   const [recoveryMessage, setRecoveryMessage] = useState("");
   const [recoveryBusy, setRecoveryBusy] = useState(false);
+  const [lockEnabled, setLockEnabled] = useState<boolean | null>(null);
+  const [lockPassword, setLockPassword] = useState("");
+  const [lockConfirmation, setLockConfirmation] = useState("");
+  const [lockMessage, setLockMessage] = useState("Loading password-lock setting…");
+  const [lockBusy, setLockBusy] = useState(false);
 
   async function refresh() {
     setChecking(true);
@@ -99,6 +104,13 @@ export default function SettingsPage() {
       setSession({ state: "ready", message: "Signed-in owner session is active. Access remains limited to the permissions returned by the local session.", source: "/api/local/session",
         values: { "Owner identity": typeof response.body.identity === "string" ? response.body.identity : "Available", "Session permissions": String(response.body.permissions.length) } });
       const permissions = new Set(response.body.permissions as string[]);
+      try {
+        const lock = await boundedGet("/api/local/desktop-lock");
+        if (lock.status === 200 && record(lock.body) && typeof lock.body.enabled === "boolean") {
+          setLockEnabled(lock.body.enabled);
+          setLockMessage(lock.body.enabled ? "Password required each time the desktop app starts." : "Password prompt is off for this local app; the Electron session remains protected by its per-launch token.");
+        } else setLockMessage("Password-lock settings are available only in the packaged desktop app.");
+      } catch { setLockMessage("Password-lock status could not be loaded."); }
       const [nextPreferences, nextProviders, nextModels, nextConnections, nextPolicy, nextCapabilities, nextResources, nextActivity, nextHardware] = await Promise.all([
         readSummary("/api/local/preferences", "chat:read", permissions, body => {
           const value = body.preferences;
@@ -155,6 +167,27 @@ export default function SettingsPage() {
     } finally {
       setChecking(false);
     }
+  }
+
+  async function updateLock(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (lockEnabled === null || lockBusy) return;
+    setLockBusy(true); setLockMessage("Updating password lock…");
+    try {
+      const sessionResponse = await fetch("/api/local/session", { credentials: "same-origin", cache: "no-store" });
+      const sessionBody = await sessionResponse.json() as Payload;
+      if (!sessionResponse.ok || typeof sessionBody.csrf !== "string") throw new Error("Owner session could not be verified. Refresh and retry.");
+      const response = await fetch("/api/local/desktop-lock", {
+        method: "POST", credentials: "same-origin", cache: "no-store",
+        headers: { "Content-Type": "application/json", "X-Local-CSRF": sessionBody.csrf },
+        body: JSON.stringify({ enabled: !lockEnabled, password: lockPassword, confirmation: lockEnabled ? null : lockConfirmation }),
+      });
+      const result = await response.json() as Payload;
+      if (!response.ok || typeof result.enabled !== "boolean") throw new Error(typeof result.detail === "string" ? result.detail : "Password-lock setting was not changed.");
+      setLockEnabled(result.enabled); setLockPassword(""); setLockConfirmation("");
+      setLockMessage(result.enabled ? "Password lock enabled. The app will require this password at its next launch." : "Password lock disabled. The app will start with its protected local session next time.");
+    } catch (error) { setLockMessage(error instanceof Error ? error.message : "Password-lock setting was not changed."); }
+    finally { setLockBusy(false); }
   }
 
   useEffect(() => { void refresh(); }, []);
@@ -215,6 +248,16 @@ export default function SettingsPage() {
           <SettingCard title="Diagnostics and activity" description="Recent activity and measured readiness, with safe diagnostics available from Backup & restore." result={activity} href="/ui/activity" linkLabel="Open activity & diagnostics" />
           <SettingCard title="Backup and recovery" description="Encrypted local backup and explicit restore controls." result={{ state: "unknown", message: "No backup is created or inspected from this overview.", source: "Owner-controlled backup page" }} href="/ui/backup" linkLabel="Open backup & restore" />
         </div>
+      </section>
+      <section className="settings-section" aria-labelledby="desktop-lock-heading"><div className="section-heading"><div><p className="eyebrow">LOCAL ACCESS</p><h2 id="desktop-lock-heading">Optional password lock</h2></div></div>
+        <article className="settings-card"><p>{lockMessage}</p>
+          {lockEnabled !== null && <form onSubmit={updateLock}>
+            <label htmlFor="desktop-lock-password">{lockEnabled ? "Current owner password" : "New owner password (12+ characters)"}</label>
+            <input id="desktop-lock-password" type="password" autoComplete={lockEnabled ? "current-password" : "new-password"} minLength={12} maxLength={1024} required value={lockPassword} onChange={event => setLockPassword(event.target.value)} />
+            {!lockEnabled && <><label htmlFor="desktop-lock-confirmation">Confirm new password</label><input id="desktop-lock-confirmation" type="password" autoComplete="new-password" minLength={12} maxLength={1024} required value={lockConfirmation} onChange={event => setLockConfirmation(event.target.value)} /></>}
+            <button type="submit" disabled={lockBusy}>{lockBusy ? "Saving…" : lockEnabled ? "Disable password lock" : "Enable password lock"}</button>
+          </form>}
+        </article>
       </section>
       <section className="settings-section" aria-labelledby="recovery-heading"><div className="section-heading"><div><p className="eyebrow">LOCAL RECOVERY</p><h2 id="recovery-heading">Diagnostics and app data</h2></div></div>
         <article className="settings-card recovery-card">
