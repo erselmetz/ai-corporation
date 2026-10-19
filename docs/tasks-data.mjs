@@ -3461,6 +3461,11 @@ export const post100Tasks = [
     "area": "P43",
     "checkpoint": "task-191-direct-to-chat",
     "validation": ["Full Python suite: 1,334 passed / 8 skipped / 0 failed (2 warnings; Ollama pointed to a closed loopback test port). Focused Task 191 Python regressions: 53 passed; targeted chat/quick-start browser tests: 28 passed; full browser-module suite: 235 passed; Electron tests: 34 passed; public-docs tests: 18 passed. Next.js static build and TypeScript checks passed; Python compilation/import checks and git diff --check passed."],
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": ["A real local llama3.2:3b request through Ollama returned the requested reply in 5.417 s; Ollama reported the model at 100% GPU on the RX 570."],
+      "unverified": ["The installed packaged Electron artifact predates Task 191. The current Electron launch, packaged app navigation to chat, and first reply in the packaged app were not verified.", "Clean-profile installation, restart persistence, password-lock behavior, and recovery remain unverified in this run."]
+    },
     "limitations": [
       "Manual clean-Windows-profile acceptance remains pending: real Ollama absent/stopped/install/model download and chat, Gemini key/cloud-consent chat, restart persistence with and without DPAPI lock, recovery after offline/bad credentials, and physical CPU/GPU inference speed were not performed.",
       "Deterministic fakes validate routing, session and UI contracts only; they do not prove Ollama installation/service behavior, model quality, or live provider availability."
@@ -3472,15 +3477,60 @@ export const post100Tasks = [
     "followUpValidation": [
       "Manual clean-profile Windows install/start/chat/restart, real Ollama service and model metadata/download/recovery, DPAPI lock restart, Gemini account consent behavior, alternate Ollama install locations, hardware latency and representative-user comprehension remain unverified follow-up."
     ]
+  },
+  {
+    "number": 192,
+    "title": "Real-world verification and enhancement pass",
+    "description": "Measure the real local Ollama, RAG, reviewed-tool, vision, voice, globe, and hardware journeys on the current Windows host, then make narrowly scoped, evidence-led enhancements.",
+    "category": "Phase AB - Real-world Verification",
+    "status": "planned",
+    "dependsOn": [191, 177, 180, 182, 186, 187, 188, 189],
+    "acceptance": [
+      "Record actual outcomes, model/provider identity, latency, errors, and provenance for Task 191 packaged direct-to-chat; three explicitly selected knowledge notes and five RAG questions; read-only arithmetic and documentation lookup with a real local model; and a local vision turn using an already installed vision-capable Ollama model. Do not make paid/cloud calls or download a model without explicit owner confirmation.",
+      "Record voice checks that are possible without a physical microphone and mark unavailable physical-device checks UNVERIFIED. Measure the existing capped 3D map on the installed RX 570 while a local model generates, verify the accessible list fallback, and compare reported hardware with OS inventory and Ollama's actual processor report.",
+      "Add an optional loopback-only Ollama embedding adapter that never pulls models itself; an embedding model pull requires explicit owner confirmation, no new heavy Python dependency, and lexical fallback remains available. Evaluate the Task 135 fixture with real embeddings and report Recall@5/MRR separately from deterministic fake-embedding results.",
+      "Evaluate concise prompts and retrieved-context formatting for the installed 3B model with a fixed 10-question with/without-retrieval set. Report each outcome honestly and do not claim quality improvement without measured evidence.",
+      "Fix only reproducible defects discovered during this pass, each as a narrow change with focused regression coverage. Preserve explicit consent, loopback-only access, no silent downloads, no secret logging, and truthful telemetry.",
+      "Keep automated deterministic/fake evidence separate from real hardware and live local-provider evidence in each task badge, changelog, and Task 192 record. Do not raise existing task statuses based solely on these checks."
+    ],
+    "outOfScope": [
+      "No paid/cloud calls, account changes, deployment, push, silent model/software downloads, GPU/hardware compatibility claims, fake telemetry, permission bypass, or automatic fallback.",
+      "Do not mark physical microphone, clean-profile, live-provider, or representative-user checks verified unless those exact checks were performed on this host."
+    ],
+    "risks": [
+      "The installed vision model is large relative to host RAM and may be too slow or fail under current memory/accelerator limits; stop safely on resource exhaustion and report the outcome.",
+      "Single-host measurements do not establish general hardware support, model quality, or performance on other systems."
+    ],
+    "area": "P44",
+    "checkpoint": null,
+    "decisions": [],
+    "validation": ["Task 192 embedding-adapter checkpoint: full Python suite 1,342 passed / 3 skipped / 0 failed (2 dependency deprecation warnings); browser-module suite 235 passed / 0 failed; Electron suite 34 passed / 0 failed; public-docs suite 21 passed / 0 failed; focused semantic suite 20 passed. Deterministic adapter tests cover fixed loopback target, bounded inputs/responses, configuration opt-in, and sanitized provider failures. Live nomic-embed-text Task 135 fixture results and limitations are recorded in realWorldVerification. git diff --check passed."],
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": ["Real local Ollama llama3.2:3b chat: requested 'hello' response returned in 5.417 s; model load 5.115 s; Ollama reported 100% GPU.", "Real local RAG over three temporary notes: Q1 Atlas port 8123 correct, 3.838 s, trace listed all three notes; Q2 Atlas maintenance Tuesday 14:30 correct, 3.887 s, trace listed all three; Q3 Cedar path D:\\Work\\Cedar was formatted incorrectly in the answer, 3.237 s, trace listed only Cedar; Q4 Cedar QA lead correct, 4.207 s, trace listed all three; Q5 rollback command 'revert deploy 42' correct, 4.526 s, trace listed all three. The intended source was present in all five traces; strict factual answers were 4/5 and four traces were overinclusive.", "Real local reviewed tools completed in 13.834 s: calculator returned 731 for (43 * 17), and exact read-only documentation lookup returned source corporation_docs:api-and-web-ui-boundaries. No Tasks were created and no cloud route was used. The answer was verbose and described the selected document structure rather than giving a concise response. An initial test-harness lookup used a nonexistent .md-suffixed ID and got the expected safe unavailable result; retry with the exact ID succeeded.", "Ollama inventory: gemma4:26b (18 GB reported, local, vision capability); llama3.2:3b (2.0 GB, local, no vision capability); cloud references gemma4:31b-cloud and glm-5.3-flash:cloud are not local models and were not called. Hardware: AMD Ryzen 5 PRO 4650G (6 cores/12 logical), Radeon RX 570 Series (reported 4 GB), 15.8 GB total RAM and 5.4 GiB available at inspection; C: has 42.6 GiB free. Ollama reported 100% GPU for llama3.2:3b.", "After explicit owner approval, pulled nomic-embed-text locally with Ollama: 274 MB, 768-dimensional nomic-bert, model ID 0a109f422b47; no Python package or cloud service was added. Real embedding endpoint returned four vectors in 3.399 s on first measured batch. On Task 135's three semantic fixture queries, real-model query latency was 60.8 to 65.5 ms (mean 63.4 ms); Recall@5 1.00, MRR 1.00, Precision@5 0.50, with no excluded-record leakage and stale candidates rejected. The fixture's deterministic fake baseline reports Recall@5 1.00, MRR 1.00, Precision@5 1.00. These small synthetic-fixture results do not establish general retrieval quality."],
+      "unverified": ["Packaged Task 191 direct-to-chat flow: existing installed package predates Task 191, and native/browser UI automation was unavailable.", "Vision end-to-end: gemma4:26b is the only installed local model reporting vision, but at 18.6 GB it is larger than system RAM; no load/image request was attempted. No vision model was downloaded.", "Voice input/output without a physical microphone/audio session; live 3D globe FPS/frame-time under inference and interactive list fallback; CPU-only hardware behavior."]
+    },
+    "automatedVerification": [
+      "Use the full Python, browser-module, Electron, and public-docs suites before each implementation checkpoint. Use deterministic fixtures/fakes for contract tests and report their counts separately from live local-model runs.",
+      "Test that the public docs render latest completed and next planned task from docs/tasks-data.mjs, all tasks have separate automated and real-world evidence badges, UTF-8 metadata/headers are present, and no known mojibake sequences occur in public docs or the update manifest."
+    ],
+    "followUpValidation": [
+      "Clean-profile Windows/Gemini/DPAPI, physical microphone and audio-device behavior, representative-user usability, cross-hardware performance, paid-provider behavior, and any model not already installed remain unverified unless directly tested; no such test is inferred from deterministic fixtures."
+    ],
+    "limitations": [
+      "Task 192 remains planned. Real-model RAG and reviewed-tool checks are single-host observations, not general answer-quality or compatibility claims.",
+      "Real Task 135 embedding metrics are from a three-query synthetic fixture and include false-positive candidates (Precision@5 0.50); they do not show production corpus quality. nomic-embed-text was pulled only after explicit owner approval. The runtime does not pull models, and Ollama embedding use remains optional and explicitly configured.",
+      "Packaged Electron chat, vision image flow, physical voice, globe performance, and CPU-only hardware behavior remain unverified as listed in realWorldVerification.unverified."
+    ]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169, 171-189 and 191 are completed scoped checkpoints except deferred Task 170; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its manual clean-profile Windows/live-provider acceptance remains pending; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169, 171-189 and 191 are completed scoped checkpoints except deferred Task 170; Task 190 is design-only; Task 192 is planned. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
-  "developmentAcceptance": "For Tasks 175-191, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; fakes establish contract behavior, not live integration. Record unavailable provider, clean-account, hardware and user-study coverage as unverified follow-up with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
+  "developmentAcceptance": "For Tasks 175-192, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
   "enhancementLoop": "After scoped development acceptance, continue to the next dependency-ready task without waiting for human QA. Record reproducible defects and regression cases for later review by different AI models; identify model/reviewer when available and never claim independent review that did not occur.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
   "completion": "Completed requires actual acceptance evidence, truthful limitations/skips, required documentation/update records, and a reviewed task checkpoint. A local checkpoint is sufficient for development acceptance; push or deployment is separate and must be authorized and verified when performed. Never mark complete solely because code exists or an AI says it worked.",
@@ -3516,7 +3566,8 @@ const futureRoadmapGroups = [
   { name: "Phase X - Voice Interaction", range: "187-188", tasks: post100Tasks.filter(task => task.category === "Phase X - Voice Interaction").map(({ title, description }) => [title, description]) },
   { name: "Phase Y - Local Vision", range: "189-189", tasks: post100Tasks.filter(task => task.category === "Phase Y - Local Vision").map(({ title, description }) => [title, description]) },
   { name: "Phase Z - Code Execution Design Gate", range: "190-190", tasks: post100Tasks.filter(task => task.category === "Phase Z - Code Execution Design Gate").map(({ title, description }) => [title, description]) },
-  { name: "Phase AA - Direct-to-chat Quick Start", range: "191-191", tasks: post100Tasks.filter(task => task.category === "Phase AA - Direct-to-chat Quick Start").map(({ title, description }) => [title, description]) }
+  { name: "Phase AA - Direct-to-chat Quick Start", range: "191-191", tasks: post100Tasks.filter(task => task.category === "Phase AA - Direct-to-chat Quick Start").map(({ title, description }) => [title, description]) },
+  { name: "Phase AB - Real-world Verification", range: "192-192", tasks: post100Tasks.filter(task => task.category === "Phase AB - Real-world Verification").map(({ title, description }) => [title, description]) }
 ];
 
 export const taskGroups = [...foundationTaskGroups, {
@@ -3540,6 +3591,7 @@ export const recommendedOrder = [
   { number: 187, reason: "Add opt-in local speech input after settings and persistence can retain its controls safely." },
   { number: 188, reason: "Add speech output after input controls and their consent/privacy pattern are verified." },
   { number: 189, reason: "Gate image transfer on hardware evidence and reviewed provider-routing consent." },
-  { number: 190, reason: "Keep code execution at a design-only security gate until its sandbox and owner controls are reviewed." }
+  { number: 190, reason: "Keep code execution at a design-only security gate until its sandbox and owner controls are reviewed." },
+  { number: 192, reason: "Measure real local behavior and report evidence separately from automated fixtures before considering product enhancements." }
 ];
-export const nextTask = recommendedOrder.map(({ number }) => post100Tasks.find(task => task.number === number)).find(task => task && task.status !== "completed" && task.status !== "deferred");
+export const nextTask = recommendedOrder.map(({ number }) => post100Tasks.find(task => task.number === number)).find(task => task?.status === "planned");

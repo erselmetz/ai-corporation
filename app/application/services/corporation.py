@@ -874,10 +874,26 @@ class CorporationApplicationService:
             import os
             from pathlib import Path
 
+            ollama_model = os.environ.get("ERSELMETZ_KNOWLEDGE_OLLAMA_MODEL", "").strip()
             model_path = os.environ.get("ERSELMETZ_KNOWLEDGE_EMBEDDING_MODEL", "").strip()
             vector_path = os.environ.get("ERSELMETZ_KNOWLEDGE_VECTOR_DIR", "").strip()
             manager = self.memory_management()
-            if not model_path or not vector_path:
+            if not vector_path:
+                self._semantic_memory_index = SemanticMemoryService(manager)
+                return self._semantic_memory_index
+            if ollama_model:
+                from app.knowledge.providers import OllamaEmbeddingProvider
+                from app.knowledge.vector_store import ChromaVectorStore
+                try:
+                    provider = OllamaEmbeddingProvider(ollama_model)
+                    store = ChromaVectorStore(vector_path)
+                except Exception:
+                    self._semantic_memory_index = SemanticMemoryService(
+                        manager, unavailable_reason="The configured local Ollama embedding capability could not be initialized.")
+                    return self._semantic_memory_index
+                self._semantic_memory_index = SemanticMemoryService(manager, provider, store)
+                return self._semantic_memory_index
+            if not model_path:
                 self._semantic_memory_index = SemanticMemoryService(manager)
                 return self._semantic_memory_index
             if not Path(model_path).expanduser().is_dir():

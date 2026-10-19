@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 import { taskGroups, tasks, nextTask, roadmapRules, recommendedOrder } from "../tasks-data.mjs";
+import { verificationLabels } from "../roadmap-status.js";
 
 class Element {
   constructor(tag) { this.tag = tag; this.children = []; this.text = ""; }
@@ -11,10 +12,10 @@ class Element {
   set innerHTML(_) { throw new Error("Task contracts must be rendered as text"); }
   append(...nodes) { this.children.push(...nodes); }
 }
-const source = (await readFile(new URL("../tasks-page.js", import.meta.url), "utf8")).replace(/^import[^\n]+\n/, "");
+const source = (await readFile(new URL("../tasks-page.js", import.meta.url), "utf8")).replace(/^import[^\n]+\n/gm, "");
 function render() {
   const elements = Object.fromEntries(["roadmap-groups", "roadmap-summary", "category-index", "next-task", "roadmap-rules"].map(id => [id, new Element("div")]));
-  runInNewContext(source, { taskGroups, tasks, nextTask, roadmapRules, recommendedOrder,
+  runInNewContext(source, { taskGroups, tasks, nextTask, roadmapRules, recommendedOrder, verificationLabels,
     document: { querySelector: selector => elements[selector.slice(1)], createElement: tag => new Element(tag) } });
   return elements;
 }
@@ -22,11 +23,16 @@ function render() {
 test("shows all tasks in descending order and reports the next planned task", () => {
   const elements = render();
   const groups = elements["roadmap-groups"].children;
-  assert.equal(groups[0].id, "tasks-191-191");
+  assert.equal(groups[0].id, "tasks-192-192");
   const items = groups.flatMap(group => group.children[1].children);
-  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 191 }, (_, index) => 191 - index));
-  assert.match(elements["roadmap-summary"].textContent, /191 roadmap tasks.*188 completed.*2 deferred and incomplete.*0 planned.*1 design only/);
-  assert.match(elements["next-task"].textContent, /Next: Task 190/);
+  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 192 }, (_, index) => 192 - index));
+  assert.match(elements["roadmap-summary"].textContent, /192 roadmap tasks.*188 completed.*2 deferred and incomplete.*1 planned.*1 design only/);
+  assert.match(elements["next-task"].textContent, /Next: Task 192/);
+  const newest = items[0];
+  assert.equal(newest.children[4].textContent, "AI-verified (deterministic/fake evidence recorded)");
+  assert.equal(newest.children[5].textContent, "Real hardware/live provider: partially verified");
+  const priorCheckpoint = items.find(item => item.id === "task-191");
+  assert.match(priorCheckpoint.children[4].textContent, /AI-verified/);
 });
 
 test("renders completion evidence separately from planned decision gates and exposes handoff rules", () => {
@@ -36,7 +42,9 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.match(tasks.find(task => task.number === 171).limitations.join(" "), /installer was not rebuilt/);
   assert.equal(tasks.find(task => task.number === 172).status, "completed");
   assert.equal(tasks.find(task => task.number === 191).status, "completed");
+  assert.equal(tasks.find(task => task.number === 191).realWorldVerification.status, "partial");
   assert.match(tasks.find(task => task.number === 191).limitations.join(" "), /Manual clean-Windows-profile acceptance remains pending/);
+  assert.equal(tasks.find(task => task.number === 192).status, "planned");
   assert.equal(tasks.find(task => task.number === 166).status, "completed");
   assert.equal(tasks.find(task => task.number === 166).checkpoint, "task-166-opt-in-proactive-suggestions");
   assert.match(tasks.find(task => task.number === 166).validation.join(" "), /194 passed/);
@@ -83,7 +91,7 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.match(completed.textContent, /876 Python passed/);
   const localSetup = items.find(item => item.id === "task-104");
   assert.match(localSetup.textContent, /Verified checkpoint: task-104-local-model-setup/);
-  assert.ok(localSetup.children[4].children.some(node => node.href === "https://github.com/erselmetz/ai-corporation/tree/task-104-local-model-setup"));
+  assert.ok(localSetup.children[6].children.some(node => node.href === "https://github.com/erselmetz/ai-corporation/tree/task-104-local-model-setup"));
   const onlineProvider = items.find(item => item.id === "task-105");
   assert.equal(onlineProvider.children[2].textContent, "Completed");
   assert.match(onlineProvider.textContent, /task-105-gemini-online-chat/);
@@ -149,7 +157,7 @@ test("publishes completed milestones and remaining phases with their current sta
   assert.deepEqual(planned.map(task => [task.number, task.status]), [
     [174, "completed"], [175, "completed"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
     [180, "completed"], [181, "completed"], [182, "completed"], [183, "completed"], [184, "completed"], [185, "completed"],
-    [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"], [191, "completed"],
+    [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"], [191, "completed"], [192, "planned"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, "task-177-auto-rag-trace");
   assert.equal(tasks.find(task => task.number === 178).checkpoint, "task-178-nav-fix");
@@ -171,7 +179,7 @@ test("publishes completed milestones and remaining phases with their current sta
     assert.equal(task.manualVerification, undefined);
     assert.ok(task.followUpValidation.length);
   }
-  assert.deepEqual(recommendedOrder.map(({ number }) => number), [178, 176, 177, 175, 180, 184, 181, 182, 183, 185, 186, 187, 188, 189, 190]);
+  assert.deepEqual(recommendedOrder.map(({ number }) => number), [178, 176, 177, 175, 180, 184, 181, 182, 183, 185, 186, 187, 188, 189, 190, 192]);
   const corporationMap = tasks.find(task => task.number === 172);
   assert.match(corporationMap.description, /interactive, evidence-backed 3D map/);
   assert.match(corporationMap.acceptance.join(" "), /zoom\/orbit\/pan.*filters\/layers/i);

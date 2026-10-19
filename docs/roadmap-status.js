@@ -1,5 +1,17 @@
 import { tasks, nextTask, recommendedOrder } from "./tasks-data.mjs";
 
+export function verificationLabels(task) {
+  const automated = task.validation?.length
+    ? "AI-verified (deterministic/fake evidence recorded)"
+    : "AI verification: not recorded";
+  const realWorld = task.realWorldVerification?.status === "verified"
+    ? "Real hardware/live provider: verified"
+    : task.realWorldVerification?.status === "partial"
+      ? "Real hardware/live provider: partially verified"
+      : "Real hardware/live provider: unverified";
+  return { automated, realWorld };
+}
+
 export function renderTaskDirectory(list, taskRecords = tasks) {
   const document = list.ownerDocument;
   for (const task of [...taskRecords].sort((a, b) => b.number - a.number)) {
@@ -47,6 +59,57 @@ export function renderRecommendedOrder(list, taskRecords = tasks, order = recomm
   }
 }
 
+export function renderLatestRoadmapRecords(container, taskRecords = tasks, limit = 2) {
+  const document = container.ownerDocument;
+  const recent = [...taskRecords].sort((a, b) => b.number - a.number).slice(0, limit);
+  for (const task of recent) {
+    const article = document.createElement("article");
+    article.className = "roadmap-record";
+    const link = document.createElement("a");
+    link.href = `tasks.html#task-${task.number}`;
+    link.textContent = `Task ${task.number}: ${task.title}`;
+    const status = document.createElement("span");
+    status.className = `status status-${task.status === "completed" ? "complete" : task.status === "deferred" ? "deferred" : "planned"}`;
+    status.textContent = statusLabel(task.status);
+    const description = document.createElement("p");
+    description.textContent = task.description;
+    const evidence = document.createElement("p");
+    evidence.className = "verification-summary";
+    const labels = verificationLabels(task);
+    evidence.textContent = `${labels.automated} · ${labels.realWorld}`;
+    article.append(link, status, description, evidence);
+    container.append(article);
+  }
+}
+
+export function renderLatestStatusCards(documentObject, taskRecords = tasks, upcomingTask = nextTask) {
+  const latestTask = [...taskRecords].filter(task => task.status === "completed").sort((a, b) => b.number - a.number)[0];
+  const latestNumber = documentObject.querySelector("#latest-task-number");
+  const latestTitle = documentObject.querySelector("#latest-task-title");
+  if (latestTask && latestNumber && latestTitle) {
+    latestNumber.textContent = `Task ${latestTask.number}`;
+    latestTitle.textContent = latestTask.title;
+    const latestLink = documentObject.querySelector("#latest-task-link");
+    if (latestLink) latestLink.href = `tasks.html#task-${latestTask.number}`;
+  }
+  const nextNumber = documentObject.querySelector("#next-task-number");
+  const nextTitle = documentObject.querySelector("#next-task-title");
+  const nextDescription = documentObject.querySelector("#next-task-description");
+  if (upcomingTask && nextNumber && nextTitle && nextDescription) {
+    nextNumber.textContent = `Task ${upcomingTask.number}`;
+    nextTitle.textContent = upcomingTask.title;
+    nextDescription.textContent = upcomingTask.description;
+    const nextLink = documentObject.querySelector("#next-task-link");
+    if (nextLink) nextLink.href = `tasks.html#task-${upcomingTask.number}`;
+  } else if (nextNumber && nextTitle && nextDescription) {
+    nextNumber.textContent = "No planned gate";
+    nextTitle.textContent = "No planned task";
+    nextDescription.textContent = "No task is currently marked planned in the authoritative roadmap.";
+  }
+  const taskCount = documentObject.querySelector("#all-task-count");
+  if (taskCount) taskCount.textContent = `Tasks 1-${taskRecords.length}`;
+}
+
 if (typeof document !== "undefined") {
   const list = document.querySelector("#task-status-index");
   if (list) renderTaskDirectory(list);
@@ -54,20 +117,7 @@ if (typeof document !== "undefined") {
   if (summary) renderStatusSummary(summary);
   const order = document.querySelector("#recommended-order");
   if (order) renderRecommendedOrder(order);
-  const latestTask = [...tasks].filter(task => task.status === "completed").sort((a, b) => b.number - a.number)[0];
-  const latestNumber = document.querySelector("#latest-task-number");
-  const latestTitle = document.querySelector("#latest-task-title");
-  if (latestTask && latestNumber && latestTitle) {
-    latestNumber.textContent = `Task ${latestTask.number}`;
-    latestTitle.textContent = latestTask.title;
-  }
-  const next = nextTask;
-  const nextNumber = document.querySelector("#next-task-number");
-  const nextTitle = document.querySelector("#next-task-title");
-  const nextDescription = document.querySelector("#next-task-description");
-  if (next && nextNumber && nextTitle && nextDescription) {
-    nextNumber.textContent = `Task ${next.number}`;
-    nextTitle.textContent = next.title;
-    nextDescription.textContent = next.description;
-  }
+  const recentRecords = document.querySelector("#latest-roadmap-records");
+  if (recentRecords) renderLatestRoadmapRecords(recentRecords);
+  renderLatestStatusCards(document);
 }

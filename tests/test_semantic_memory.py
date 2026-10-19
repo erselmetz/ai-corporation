@@ -320,6 +320,80 @@ def test_configured_but_missing_optional_dependencies_is_truthfully_unavailable(
     assert str(model_dir) not in str(status)
 
 
+def test_ollama_embedding_provider_is_bounded_local_only_and_never_downloads(monkeypatch):
+    import io
+    import json
+    import urllib.request
+    from app.knowledge.providers import OllamaEmbeddingProvider
+
+    calls = []
+
+    class Response(io.BytesIO):
+        pass
+
+    class Opener:
+        def open(self, request, timeout):
+            calls.append((request.full_url, request.get_method(), json.loads(request.data), timeout))
+            return Response(json.dumps({"embeddings": [[0.25, 0.75], [0.5, 0.5]]}).encode())
+
+    monkeypatch.setattr(urllib.request, "build_opener", lambda handler: Opener())
+    provider = OllamaEmbeddingProvider("nomic-embed-text")
+    vectors = provider.embed_batch(["dog puppy", "canine animal"])
+    assert vectors == ((0.25, 0.75), (0.5, 0.5))
+    assert provider.identity.startswith("ollama-embedding-")
+    assert "nomic-embed-text" not in provider.identity
+    assert calls == [("http://127.0.0.1:11434/api/embed", "POST",
+                      {"model": "nomic-embed-text", "input": ["dog puppy", "canine animal"]}, 60)]
+    with pytest.raises(ValueError):
+        provider.embed_batch([""])
+    with pytest.raises(ValueError):
+        OllamaEmbeddingProvider("\nmodel")
+
+
+def test_ollama_embedding_provider_hides_local_service_errors(monkeypatch):
+    import urllib.request
+    from app.knowledge.providers import OllamaEmbeddingProvider
+
+    class Opener:
+        def open(self, request, timeout):
+            raise OSError("secret-path-or-token")
+
+    monkeypatch.setattr(urllib.request, "build_opener", lambda handler: Opener())
+    with pytest.raises(RuntimeError, match="Local Ollama embedding request failed or timed out") as error:
+        OllamaEmbeddingProvider("nomic-embed-text").embed_one("dog")
+    assert "secret-path-or-token" not in str(error.value)
+
+
+def test_ollama_embedding_configuration_is_opt_in_and_uses_local_vector_store(tmp_path, monkeypatch):
+    import sys
+    import types
+
+    captured = {}
+
+    class Provider:
+        def __init__(self, model):
+            captured["model"] = model
+            self.identity = "ollama-embedding-test"
+
+    class Store:
+        def __init__(self, path):
+            captured["path"] = path
+
+    providers = types.ModuleType("app.knowledge.providers")
+    providers.OllamaEmbeddingProvider = Provider
+    stores = types.ModuleType("app.knowledge.vector_store")
+    stores.ChromaVectorStore = Store
+    monkeypatch.setitem(sys.modules, "app.knowledge.providers", providers)
+    monkeypatch.setitem(sys.modules, "app.knowledge.vector_store", stores)
+    monkeypatch.setenv("ERSELMETZ_KNOWLEDGE_OLLAMA_MODEL", "nomic-embed-text")
+    monkeypatch.setenv("ERSELMETZ_KNOWLEDGE_VECTOR_DIR", str(tmp_path / "vectors"))
+    monkeypatch.delenv("ERSELMETZ_KNOWLEDGE_EMBEDDING_MODEL", raising=False)
+    service = create_corporation_runtime().application_service.semantic_memory()
+    assert service.status()["state"] == "configured"
+    assert service.status()["model"] == "ollama-embedding-test"
+    assert captured == {"model": "nomic-embed-text", "path": str(tmp_path / "vectors")}
+
+
 def test_index_failures_do_not_expose_provider_secrets():
     runtime = create_corporation_runtime()
     retained("secret-test", "canine")

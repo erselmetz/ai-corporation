@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
+import { readFile, readdir } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { after, before, describe, it } from "node:test";
 import { createDocumentationServer } from "../server.mjs";
 import { taskGroups, tasks, foundationTasks, post100Tasks, nextTask, roadmapRules, recommendedOrder } from "../tasks-data.mjs";
-import { renderTaskDirectory, renderStatusSummary, renderRecommendedOrder } from "../roadmap-status.js";
+import { renderTaskDirectory, renderStatusSummary, renderRecommendedOrder, renderLatestRoadmapRecords, renderLatestStatusCards, verificationLabels } from "../roadmap-status.js";
 
 const pages = [
   "index.html",
@@ -20,6 +23,7 @@ const pages = [
 
 let server;
 let baseUrl;
+const docsRoot = fileURLToPath(new URL("..", import.meta.url));
 
 class StatusElement {
   constructor(tag) { this.tag = tag; this.children = []; this.ownerDocument = this; this.textContent = ""; }
@@ -48,8 +52,9 @@ describe("documentation site", () => {
     for (const filename of pages) {
       const response = await fetch(`${baseUrl}/${filename}`);
       assert.equal(response.status, 200, `${filename} should load`);
-      assert.match(response.headers.get("content-type") ?? "", /text\/html/);
+      assert.match(response.headers.get("content-type") ?? "", /text\/html;\s*charset=utf-8/i);
       const html = await response.text();
+      assert.match(html, /<meta charset="utf-8">/i, `${filename} must declare UTF-8`);
       for (const target of ["index.html", "documentation.html", "architecture.html", "roadmap.html", "tasks.html", "updates.html", "about.html"]) {
         assert.ok(html.includes(`href="${target}"`), `${filename} should link to primary page ${target}`);
       }
@@ -67,10 +72,65 @@ describe("documentation site", () => {
     assert.equal((await fetch(`${baseUrl}/README.md`)).status, 404);
   });
 
+  it("keeps public docs and the update manifest valid UTF-8 without known mojibake", async () => {
+    async function collectTextFiles(directory) {
+      const files = [];
+      for (const entry of await readdir(directory, { withFileTypes: true })) {
+        const fullPath = path.join(directory, entry.name);
+        if (entry.isDirectory()) files.push(...await collectTextFiles(fullPath));
+        else if (/\.(?:html|css|js|mjs|md|json)$/i.test(entry.name)) files.push(fullPath);
+      }
+      return files;
+    }
+    const files = [...await collectTextFiles(docsRoot), path.join(docsRoot, "..", "corporation_updates.json")];
+    const decoder = new TextDecoder("utf-8", { fatal: true });
+    const damaged = /\uFFFD|\u00C2[\u00A0-\u00BF]|\u00E2\u20AC[\u0080-\u00BF]|\u00C3[\u0080-\u00BF]|Task details \?|Tasks \d+\?\d+|Task \d+ \? 20\d\d/u;
+    for (const file of files) {
+      const contents = decoder.decode(await readFile(file));
+      assert.doesNotMatch(contents, damaged, `${path.relative(docsRoot, file)} contains invalid UTF-8/mojibake`);
+    }
+    const manifest = JSON.parse(await readFile(path.join(docsRoot, "..", "corporation_updates.json"), "utf8"));
+    assert.ok(Array.isArray(manifest.items));
+    assert.ok(manifest.items.some(item => item.title.startsWith("Task 192 real-world verification pass")));
+  });
+
+  it("renders evidence badges separately from task status", async () => {
+    for (const task of tasks) {
+      const labels = verificationLabels(task);
+      assert.ok(labels.automated && labels.realWorld, `Task ${task.number} lacks evidence labels`);
+      if (task.number === 192) {
+        assert.equal(labels.automated, "AI-verified (deterministic/fake evidence recorded)");
+        assert.equal(labels.realWorld, "Real hardware/live provider: partially verified");
+      }
+    }
+    const records = new StatusElement("div");
+    renderLatestRoadmapRecords(records, tasks, 2);
+    assert.equal(records.children.length, 2);
+    assert.match(records.children[0].children[0].textContent, /^Task 192:/);
+    assert.match(records.children[1].children[0].textContent, /^Task 191:/);
+    const [home, roadmap, taskPage] = await Promise.all(["index.html", "roadmap.html", "tasks.html"].map(async name => (await fetch(`${baseUrl}/${name}`)).text()));
+    assert.doesNotMatch(home, /Task 179|Task 176/);
+    assert.doesNotMatch(roadmap, /Task 179|Task 176|Tasks 1-190/);
+    assert.doesNotMatch(taskPage, /Tasks 1-129/);
+    assert.match(taskPage, /id="task-page-title"/);
+    assert.match(roadmap, /id="all-task-count"/);
+  });
+
+  it("derives latest completed and next planned cards from task records", () => {
+    const elements = Object.fromEntries(["latest-task-number", "latest-task-title", "latest-task-link", "next-task-number", "next-task-title", "next-task-description", "next-task-link", "all-task-count"].map(id => [id, new StatusElement("p")]));
+    const document = { querySelector: selector => elements[selector.slice(1)] };
+    renderLatestStatusCards(document, tasks, nextTask);
+    assert.equal(elements["latest-task-number"].textContent, "Task 191");
+    assert.equal(elements["latest-task-link"].href, "tasks.html#task-191");
+    assert.equal(elements["next-task-number"].textContent, "Task 192");
+    assert.equal(elements["next-task-link"].href, "tasks.html#task-192");
+    assert.equal(elements["all-task-count"].textContent, "Tasks 1-192");
+  });
+
   it("resolves local public links including generated task and category anchors", async () => {
     const generatedIds = new Set([
       ...tasks.map(task => `task-${task.number}`),
-      ...taskGroups.map(group => `tasks-${group.range.replace("Ã¢â‚¬â€œ", "-")}`),
+      ...taskGroups.map(group => `tasks-${group.range.replace("–", "-")}`),
     ]);
     const contents = new Map();
     for (const page of pages) contents.set(page, await (await fetch(`${baseUrl}/${page}`)).text());
@@ -90,17 +150,17 @@ describe("documentation site", () => {
     }
   });
 
-  it("preserves foundation tasks 1Ã¢â‚¬â€œ100 and adds contiguous post-100 contracts", () => {
-    assert.equal(tasks.length, 191);
+  it("preserves foundation tasks 1–100 and adds contiguous post-100 contracts", () => {
+    assert.equal(tasks.length, 192);
     assert.equal(foundationTasks.length, 100);
-    assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 191 }, (_, i) => i + 1));
-    assert.equal(taskGroups.flatMap(group => group.tasks).length, 191);
+    assert.deepEqual(tasks.map((task) => task.number), Array.from({ length: 192 }, (_, i) => i + 1));
+    assert.equal(taskGroups.flatMap(group => group.tasks).length, 192);
   });
 
   it("records verified, deferred, and planned work without treating deferral as completion", () => {
     assert.equal(tasks.filter(task => task.status === "completed").length, 188);
     assert.equal(tasks.filter(task => task.status === "deferred").length, 2);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 0);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 1);
     assert.equal(tasks.filter(task => task.status === "design_only").length, 1);
     assert.equal(tasks.find(task => task.number === 134).status, "deferred");
     assert.equal(tasks.find(task => task.number === 170).status, "deferred");
@@ -213,12 +273,14 @@ describe("documentation site", () => {
     assert.match(visualizationReview.decisions.join(" "), /WCAG 2.2 AA/);
     assert.match(visualizationReview.limitations.join(" "), /not achieved measurements/);
     assert.equal(tasks.find(task => task.number === 158).checkpoint, "task-158-automation-review-traces");
-    assert.equal(nextTask.number, 190);
+    assert.equal(nextTask.number, 192);
     assert.ok(tasks.slice(0, 133).every(task => task.status === "completed"));
     assert.equal(tasks.find(task => task.number === 190).status, "design_only");
+    assert.equal(tasks.find(task => task.number === 191).status, "completed");
+    assert.equal(tasks.find(task => task.number === 192).status, "planned");
     assert.equal(tasks.find(task => task.number === 190).checkpoint, "task-190-code-execution-threat-model");
     assert.match(tasks.find(task => task.number === 190).validation.join(" "), /self-review/);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 0);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 1);
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -304,7 +366,7 @@ describe("documentation site", () => {
     renderStatusSummary(summary, tasks);
     const order = new StatusElement("ol");
     renderRecommendedOrder(order, tasks, recommendedOrder);
-    assert.match(summary.textContent, /191 tasks/);
+    assert.match(summary.textContent, /192 tasks/);
     assert.equal(order.children.length, recommendedOrder.length);
     for (const page of ["index.html", "roadmap.html", "updates.html"]) {
       const html = await (await fetch(`${baseUrl}/${page}`)).text();
@@ -364,6 +426,7 @@ describe("documentation site", () => {
     assert.match(updates, /task-183-visible-chat-workflow-scaffolding.*SCOPED DEVELOPMENT ACCEPTANCE/);
     assert.match(updates, /Task 178.*2026-10-17/);
     assert.match(updates, /Task 191.*2026-10-19.*AUTOMATED DEVELOPMENT COMPLETE/);
+    assert.match(updates, /id="latest-roadmap-records"/);
     assert.match(updates, /manual clean-Windows profile, live Ollama\/Gemini, DPAPI restart/i);
     assert.match(updates, /Task 176.*2026-10-18.*COMPLETED SCOPED DEVELOPMENT ACCEPTANCE/);
     assert.match(updates, /real Gemini, and Ollama install\/model-download paths remain unverified follow-up/);
@@ -372,7 +435,7 @@ describe("documentation site", () => {
     assert.match(roadmap, /Next acceptance gate/);
     assert.match(roadmap, /Safety boundaries/);
     assert.doesNotMatch(roadmap, /Task 130.*semantic/i);
-    assert.equal(nextTask?.number, 190);
+    assert.equal(nextTask?.number, 192);
     assert.equal(tasks.find(task => task.number === 178)?.status, "completed");
   });
 
@@ -405,7 +468,7 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 162).checkpoint, "task-162-three-dimensional-map-review");
     assert.equal(tasks.find(task => task.number === 162).status, "completed");
     assert.equal(tasks.find(task => task.number === 158).checkpoint, "task-158-automation-review-traces");
-    assert.equal(nextTask.number, 190);
+    assert.equal(nextTask.number, 192);
     const task122 = post100Tasks.find(task => task.number === 122);
     assert.equal(task122.status, "completed");
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");
@@ -548,7 +611,7 @@ describe("documentation site", () => {
         assert.ok(task.validation.length > 0 && task.limitations.length > 0);
       } else {
         assert.equal(task.checkpoint, null);
-        if ([175, 176, 177, 178, 179, 180, 182, 183, 184].includes(task.number)) {
+        if ([175, 176, 177, 178, 179, 180, 182, 183, 184, 192].includes(task.number)) {
           assert.ok(task.validation.length > 0 && task.limitations.length > 0);
         } else {
           assert.deepEqual(task.validation, []);

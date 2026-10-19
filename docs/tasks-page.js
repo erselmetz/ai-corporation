@@ -1,4 +1,5 @@
 import { taskGroups, tasks, nextTask, roadmapRules, recommendedOrder } from "./tasks-data.mjs";
+import { verificationLabels } from "./roadmap-status.js";
 
 const container = document.querySelector("#roadmap-groups");
 const summary = document.querySelector("#roadmap-summary");
@@ -72,7 +73,14 @@ for (const group of [...taskGroups].reverse()) {
     const description = document.createElement("span");
     description.className = "task-description";
     description.textContent = task.description;
-    item.append(number, title, status, description);
+    const verification = verificationLabels(task);
+    const automatedBadge = document.createElement("span");
+    automatedBadge.className = "verification-badge verification-automated";
+    automatedBadge.textContent = verification.automated;
+    const realWorldBadge = document.createElement("span");
+    realWorldBadge.className = "verification-badge verification-real-world";
+    realWorldBadge.textContent = verification.realWorld;
+    item.append(number, title, status, description, automatedBadge, realWorldBadge);
     if (task.acceptance) {
       const details = document.createElement("details");
       details.className = "task-contract";
