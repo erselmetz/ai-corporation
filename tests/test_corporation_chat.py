@@ -14,7 +14,7 @@ def setup():
     orchestrator = MagicMock(spec=Orchestrator)
     orchestrator.agents = AgentRegistry()
     orchestrator.agents.register(Agent("agent", "Agent", "Worker", "ollama", "model"))
-    orchestrator.run_agent.return_value = "Explicit reply"
+    orchestrator.run_agent_chat.return_value = "Explicit reply"
     return CorporationChatService("corp", orchestrator), orchestrator
 
 
@@ -29,38 +29,31 @@ def test_organization_identity_history_and_no_task_execution(setup):
     assert all(m.status is MessageStatus.COMPLETED for m in result.messages)
     assert chat.get("two").messages == ()
     chat.send("one", "Next")
-    assert "Hello" in orchestrator.run_agent.call_args.args[1]
+    assert orchestrator.run_agent_chat.call_args.args[1][-1] == {"role": "user", "content": "Next"}
+    assert any(item["content"] == "Hello" for item in orchestrator.run_agent_chat.call_args.args[1])
     assert "Hello" not in str(chat.get("two"))
     orchestrator.create_task.assert_not_called()
     orchestrator.execute_task.assert_not_called()
 
 
 def test_owner_presentation_preferences_are_prompted_without_routing_or_authority_changes(setup):
-    import json
     chat, orchestrator = setup
     chat.start("one", "agent")
-    preferences = {"locale": "fil-PH", "style": "Use concise answers.",
-                   "detail": "Use a brief level of detail.",
+    preferences = {"locale": "fil-PH", "style": "Prefer concise answers while preserving necessary facts and safety details.",
+                   "detail": "Keep the response brief unless the request requires essential detail.",
                    "boundary": "Presentation only; no authority changes."}
     chat.send("one", "Kumusta?", presentation_preferences=preferences)
-    prompt = json.loads(orchestrator.run_agent.call_args.args[1])
-    assert prompt["presentation_preferences"] == preferences
-    assert prompt["request"] == "Kumusta?"
-    assert "Prefer a concise answer" in prompt["system_instruction"]
-    assert "finish each factual answer" in prompt["system_instruction"]
-    assert "one backslash per separator" in prompt["system_instruction"]
-    assert "JSON text C:\\\\Temp represents path C:\\Temp" in prompt["system_instruction"]
-    assert "Do not infer private system settings from general conventions" in prompt["system_instruction"]
-    assert orchestrator.run_agent.call_args.args[1].startswith('{"system_instruction":')
-    assert '","corporation_id":' in orchestrator.run_agent.call_args.args[1]
-    assert "provider" not in prompt["presentation_preferences"]
-    assert "permission" not in prompt["presentation_preferences"]
+    messages = orchestrator.run_agent_chat.call_args.args[1]
+    assert messages[0]["role"] == "system"
+    assert "Owner preferences: concise style; brief answers; Filipino locale." in messages[0]["content"]
+    assert messages[-1] == {"role": "user", "content": "Kumusta?"}
+    assert all(set(message) == {"role", "content"} for message in messages)
 
 
 @pytest.mark.parametrize("reply", [None, "", "x" * 8193])
 def test_invalid_provider_reply_records_failure_and_allows_closure(setup, reply):
     chat, orchestrator = setup
-    orchestrator.run_agent.return_value = reply
+    orchestrator.run_agent_chat.return_value = reply
     chat.start("one", "agent")
     with pytest.raises(RuntimeError, match="response failed"):
         chat.send("one", "Hello")
@@ -70,7 +63,7 @@ def test_invalid_provider_reply_records_failure_and_allows_closure(setup, reply)
 
 def test_provider_failure_does_not_expose_internal_error(setup):
     chat, orchestrator = setup
-    orchestrator.run_agent.side_effect = RuntimeError("sensitive internal details")
+    orchestrator.run_agent_chat.side_effect = RuntimeError("sensitive internal details")
     chat.start("one", "agent")
     with pytest.raises(RuntimeError, match="^Corporation chat response failed$"):
         chat.send("one", "Hello")
@@ -89,20 +82,20 @@ def test_validation_and_closed_chat_do_not_call_provider(setup):
     chat.close("one")
     with pytest.raises(ValueError, match="closed"):
         chat.send("one", "Hello")
-    orchestrator.run_agent.assert_not_called()
+    orchestrator.run_agent_chat.assert_not_called()
 
 
 def test_prompt_limit_rejects_atomically(setup):
     chat, orchestrator = setup
     chat.start("one", "agent")
-    orchestrator.run_agent.return_value = "x" * 8192
+    orchestrator.run_agent_chat.return_value = "x" * 8192
     chat.send("one", "x" * 8192)
     before = chat.get("one")
     chat.MAX_PROMPT_BYTES = 100
     with pytest.raises(ValueError, match="Prompt exceeds"):
         chat.send("one", "Next")
     assert chat.get("one") == before
-    assert orchestrator.run_agent.call_count == 1
+    assert orchestrator.run_agent_chat.call_count == 1
 
 
 def test_cli_uses_application_boundary(setup, capsys):
@@ -121,7 +114,7 @@ def test_runtime_application_facade_uses_configured_identity(monkeypatch):
     from app.runtime.factory import create_corporation_runtime
     from app.providers import OllamaProvider
     provider = MagicMock(return_value="Fake response")
-    monkeypatch.setattr(OllamaProvider, "generate", provider)
+    monkeypatch.setattr(OllamaProvider, "generate_chat", provider)
     runtime = create_corporation_runtime()
     chat = runtime.application_service.corporation_chat()
     assert chat is runtime.application_service.corporation_chat()

@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from app.api.app import create_app
 from app.api.security import AuthenticatedPrincipal
 from app.application.services.owned_chat import ChatConflict
-from app.chat_prompt import CHAT_SYSTEM_INSTRUCTION, build_chat_prompt
+from app.chat_prompt import build_chat_messages
 from app.local import create_local_app
 from app.providers import AIProvider, OllamaProvider
 from app.providers.inventory import LocalModelInventory
@@ -259,29 +259,46 @@ def test_ollama_runtime_malformed_or_unreachable_is_explicit_unknown(monkeypatch
     assert observed.state == "unknown" and not observed.models
 
 
-def test_ollama_chat_prompt_uses_the_separate_system_field(monkeypatch):
+def test_ollama_chat_uses_structured_messages_and_no_json_envelope(monkeypatch):
     requests = []
     real_client = httpx.Client
 
     def handler(request):
         requests.append(request)
-        return httpx.Response(200, json={"response": "ok"})
+        return httpx.Response(200, json={"message": {"role": "assistant", "content": "ok"}})
 
     def factory(**kwargs):
         return real_client(transport=httpx.MockTransport(handler), **kwargs)
 
     monkeypatch.setattr("app.providers.ollama.httpx.Client", factory)
-    prompt = build_chat_prompt({"request": "Hello"})
+    messages = build_chat_messages("Hello", [{"role": "user", "content": "previous"},
+                                               {"role": "assistant", "content": "reply"}])
     provider = OllamaProvider("http://127.0.0.1:11434")
-    assert provider.generate("llama3.2:3b", prompt) == "ok"
+    assert provider.generate_chat("llama3.2:3b", messages) == "ok"
     payload = json.loads(requests[0].read())
-    assert payload["system"] == CHAT_SYSTEM_INSTRUCTION
-    assert json.loads(payload["prompt"]) == {"request": "Hello"}
-    assert "system_instruction" not in payload["prompt"]
+    assert payload["messages"] == messages
+    assert payload["messages"][0]["role"] == "system"
+    assert payload["messages"][-1] == {"role": "user", "content": "Hello"}
+    assert payload == {"model": "llama3.2:3b", "messages": messages, "stream": False}
+    for internal in ("corporation_id", "context", "history", "request", "presentation_preferences"):
+        assert internal not in json.dumps(payload)
 
-    assert provider.generate("llama3.2:3b", "plain prompt") == "ok"
-    plain = json.loads(requests[1].read())
-    assert plain == {"model": "llama3.2:3b", "prompt": "plain prompt", "stream": False}
+
+def test_ollama_chat_stream_uses_chat_delta_content(monkeypatch):
+    requests = []
+    stream = (b'{"message":{"role":"assistant","content":"Hello"},"done":false}\n'
+              b'{"message":{"role":"assistant","content":" there!"},"done":true}\n')
+    real_client = httpx.Client
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200, content=stream)
+    monkeypatch.setattr("app.providers.ollama.httpx.Client", lambda **kwargs:
+                        real_client(transport=httpx.MockTransport(handler), **kwargs))
+    provider = OllamaProvider("http://127.0.0.1:11434")
+    messages = build_chat_messages("hello")
+    assert list(provider.generate_chat_stream("llama3.2:3b", messages)) == ["Hello", " there!"]
+    body = json.loads(requests[0].read())
+    assert body["messages"] == messages and body["stream"] is True
 
 
 def test_ollama_stream_yields_only_real_bounded_chunks_until_final_marker(monkeypatch):

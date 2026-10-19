@@ -73,6 +73,28 @@ class Orchestrator:
             provider = self.providers.get(provider_id)
             return provider.generate(model_id, prompt)
 
+    def run_agent_chat(
+        self, agent_id: str, messages: list[dict], *,
+        expected_assignment: tuple[str, str] | None = None,
+    ) -> str:
+        with self.agents.execution(agent_id):
+            agent = self.agents.get(agent_id)
+            if expected_assignment is not None and (agent.provider, agent.model) != expected_assignment:
+                raise RuntimeError("Agent assignment changed before execution; task was not sent")
+            return self.providers.get(agent.provider).generate_chat(agent.model, messages)
+
+    def run_agent_chat_for_turn(
+        self, agent_id: str, messages: list[dict], *, provider_id: str, model_id: str,
+        expected_assignment: tuple[str, str],
+    ) -> str:
+        if not provider_id or not model_id:
+            raise ValueError("An explicit provider and model are required")
+        with self.agents.execution(agent_id):
+            agent = self.agents.get(agent_id)
+            if (agent.provider, agent.model) != expected_assignment:
+                raise RuntimeError("Agent assignment changed before execution; task was not sent")
+            return self.providers.get(provider_id).generate_chat(model_id, messages)
+
     def stream_agent(
         self,
         agent_id: str,
@@ -94,6 +116,19 @@ class Orchestrator:
                 raise RuntimeError("Selected provider does not support response streaming")
             yield from provider.generate_stream(agent.model, prompt)
 
+    def stream_agent_chat(
+        self, agent_id: str, messages: list[dict], *,
+        expected_assignment: tuple[str, str] | None = None,
+    ):
+        with self.agents.execution(agent_id):
+            agent = self.agents.get(agent_id)
+            if expected_assignment is not None and (agent.provider, agent.model) != expected_assignment:
+                raise RuntimeError("Agent assignment changed before execution; task was not sent")
+            provider = agent.resolve_provider(self.providers)
+            if getattr(provider, "supports_streaming", False) is not True:
+                raise RuntimeError("Selected provider does not support response streaming")
+            yield from provider.generate_chat_stream(agent.model, messages)
+
     def run_agent_with_images(self, agent_id: str, prompt: str, images, *,
                               ocr_evidence=(), expected_assignment=None) -> str:
         """Send owner-selected image bytes only through an image-capable provider."""
@@ -109,6 +144,19 @@ class Orchestrator:
             if supported is not True:
                 raise ProviderVisionUnsupported("The selected provider does not support image input")
             return provider.generate_with_images(agent.model, prompt, images, ocr_evidence=ocr_evidence)
+
+    def run_agent_chat_with_images(self, agent_id: str, messages: list[dict], images, *,
+                                   ocr_evidence=(), expected_assignment=None) -> str:
+        with self.agents.execution(agent_id):
+            agent = self.agents.get(agent_id)
+            if expected_assignment is not None and (agent.provider, agent.model) != expected_assignment:
+                raise RuntimeError("Agent assignment changed before image execution; request was not sent")
+            provider = agent.resolve_provider(self.providers)
+            probe = getattr(provider, "supports_model_image_input", None)
+            supported = probe(agent.model) if callable(probe) else getattr(provider, "supports_image_input", False) is True
+            if supported is not True:
+                raise ProviderVisionUnsupported("The selected provider does not support image input")
+            return provider.generate_chat_with_images(agent.model, messages, images, ocr_evidence=ocr_evidence)
 
     def run_employee(self, employee: "Employee", prompt: str) -> str:
         """

@@ -7,7 +7,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from app.chat_prompt import split_ollama_chat_prompt
+from app.chat_prompt import validate_chat_messages
 from .availability import AvailabilityResult, AvailabilityState
 from .base import (
     AIProvider,
@@ -191,10 +191,7 @@ class OllamaProvider(AIProvider):
             raise ValueError("Invalid model identifier")
         if not isinstance(prompt, str) or len(prompt.encode("utf-8")) > 32768:
             raise ValueError("Prompt exceeds byte limit")
-        provider_prompt, system_instruction = split_ollama_chat_prompt(prompt)
-        request_body = {"model": model, "prompt": provider_prompt, "stream": True}
-        if system_instruction is not None:
-            request_body["system"] = system_instruction
+        request_body = {"model": model, "prompt": prompt, "stream": True}
         received_bytes = 0
         output_bytes = 0
         completed = False
@@ -272,10 +269,7 @@ class OllamaProvider(AIProvider):
         return bytes(payload)
 
     def generate(self, model: str, prompt: str) -> str:
-        provider_prompt, system_instruction = split_ollama_chat_prompt(prompt)
-        request_body = {"model": model, "prompt": provider_prompt, "stream": False}
-        if system_instruction is not None:
-            request_body["system"] = system_instruction
+        request_body = {"model": model, "prompt": prompt, "stream": False}
         with httpx.Client(
             timeout=120.0, trust_env=False, follow_redirects=False
         ) as client:
@@ -288,6 +282,106 @@ class OllamaProvider(AIProvider):
 
         return data["response"]
 
+    def generate_chat(self, model: str, messages) -> str:
+        if not isinstance(model, str) or not model.strip() or len(model.encode("utf-8")) > 256:
+            raise ValueError("Invalid model identifier")
+        normalized = validate_chat_messages(messages)
+        with httpx.Client(timeout=120.0, trust_env=False, follow_redirects=False) as client:
+            response = client.post(
+                f"{self.base_url}/api/chat",
+                json={"model": model, "messages": normalized, "stream": False},
+            )
+            response.raise_for_status()
+            data = response.json()
+        message = data.get("message") if isinstance(data, dict) else None
+        output = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(output, str) or not output.strip() or len(output.encode("utf-8")) > 8192:
+            raise ValueError("Ollama returned an invalid chat response")
+        return output
+
+    def generate_chat_stream(self, model: str, messages):
+        if not self.supports_streaming:
+            raise ProviderStreamingUnsupported(
+                "Ollama response streaming requires a configured loopback provider"
+            )
+        if not isinstance(model, str) or not model.strip() or len(model.encode("utf-8")) > 256:
+            raise ValueError("Invalid model identifier")
+        normalized = validate_chat_messages(messages)
+        received_bytes = 0
+        output_bytes = 0
+        completed = False
+        try:
+            with httpx.Client(timeout=_STREAM_TIMEOUT, trust_env=False,
+                              follow_redirects=False) as client:
+                with client.stream("POST", f"{self.base_url}/api/chat", json={
+                    "model": model, "messages": normalized, "stream": True,
+                }) as response:
+                    response.raise_for_status()
+                    for line in response.iter_lines():
+                        received_bytes += len(line.encode("utf-8")) + 1
+                        if received_bytes > _MAX_STREAM_RESPONSE_BYTES:
+                            raise ValueError("Provider stream exceeds byte limit")
+                        if not line:
+                            continue
+                        item = json.loads(line)
+                        message = item.get("message") if isinstance(item, dict) else None
+                        chunk = message.get("content") if isinstance(message, dict) else None
+                        done = item.get("done") if isinstance(item, dict) else None
+                        if "error" in item or not isinstance(chunk, str) or type(done) is not bool:
+                            raise ValueError("Malformed provider chat stream")
+                        output_bytes += len(chunk.encode("utf-8"))
+                        if output_bytes > _MAX_STREAM_OUTPUT_BYTES:
+                            raise ValueError("Provider output exceeds byte limit")
+                        if chunk:
+                            yield chunk
+                        if done:
+                            completed = True
+                            break
+            if not completed:
+                raise ValueError("Provider chat stream ended without a final marker")
+        except httpx.HTTPError:
+            raise RuntimeError("Ollama chat stream failed.") from None
+        except (ValueError, TypeError, KeyError, json.JSONDecodeError):
+            raise RuntimeError("Ollama returned an invalid or oversized chat stream.") from None
+
+    def generate_chat_with_images(self, model: str, messages, images, *, ocr_evidence=()) -> str:
+        from app.application.services.chat_images import ChatImageStore
+        if not self._is_loopback_endpoint():
+            raise RuntimeError("Image input requires a configured loopback Ollama provider")
+        if not isinstance(model, str) or not model.strip() or len(model.encode("utf-8")) > 256:
+            raise ValueError("Invalid model identifier")
+        normalized = validate_chat_messages(messages)
+        if not isinstance(images, tuple) or not 1 <= len(images) <= ChatImageStore.MAX_PER_CONVERSATION:
+            raise ValueError("Select one to four images")
+        if self.supports_model_image_input(model) is not True:
+            raise RuntimeError("Ollama did not report vision support for the selected model; no image was sent")
+        total = 0
+        encoded = []
+        for image in images:
+            data = getattr(image, "_data", None)
+            media_type = getattr(image, "media_type", None)
+            if not isinstance(data, bytes) or media_type not in {"image/png", "image/jpeg"}:
+                raise ValueError("Image attachment is invalid")
+            total += len(data)
+            if len(data) > ChatImageStore.MAX_IMAGE_BYTES or total > 8 * 1024 * 1024:
+                raise ValueError("Selected images exceed the byte limit")
+            encoded.append(base64.b64encode(data).decode("ascii"))
+        normalized[-1]["images"] = encoded
+        try:
+            with httpx.Client(timeout=120.0, trust_env=False, follow_redirects=False) as client:
+                response = client.post(f"{self.base_url}/api/chat", json={
+                    "model": model, "messages": normalized, "stream": False,
+                })
+                response.raise_for_status()
+                data = response.json()
+            message = data.get("message") if isinstance(data, dict) else None
+            output = message.get("content") if isinstance(message, dict) else None
+            if not isinstance(output, str) or not output.strip() or len(output.encode("utf-8")) > 8192:
+                raise ValueError("Ollama returned an invalid chat response")
+            return output
+        except httpx.HTTPError:
+            raise RuntimeError("Ollama image chat failed; check the configured local model.") from None
+
     def generate_with_images(self, model: str, prompt: str, images, *, ocr_evidence=()) -> str:
         """Send only caller-selected bounded images to the configured Ollama endpoint."""
         from app.application.services.chat_images import ChatImageStore
@@ -298,7 +392,6 @@ class OllamaProvider(AIProvider):
             raise ValueError("Invalid model identifier")
         if not isinstance(prompt, str) or len(prompt.encode("utf-8")) > 32768:
             raise ValueError("Prompt exceeds byte limit")
-        provider_prompt, system_instruction = split_ollama_chat_prompt(prompt)
         if not isinstance(images, tuple) or not 1 <= len(images) <= ChatImageStore.MAX_PER_CONVERSATION:
             raise ValueError("Select one to four images")
         total = 0
@@ -316,10 +409,8 @@ class OllamaProvider(AIProvider):
             raise RuntimeError("Ollama did not report vision support for the selected model; no image was sent")
         try:
             with httpx.Client(timeout=120.0, trust_env=False, follow_redirects=False) as client:
-                request_body = {"model": model, "prompt": provider_prompt,
+                request_body = {"model": model, "prompt": prompt,
                                 "stream": False, "images": encoded}
-                if system_instruction is not None:
-                    request_body["system"] = system_instruction
                 with client.stream("POST", f"{self.base_url}/api/generate",
                                    json=request_body) as response:
                     response.raise_for_status()

@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 
 from .availability import AvailabilityResult
 from .inventory import LocalModelInventory, LocalModelRuntime
+from app.chat_prompt import flatten_chat_messages, validate_chat_messages
 
 
 class ProviderCapacityError(RuntimeError):
@@ -38,6 +40,19 @@ class AIProvider(ABC):
     def generate(self, model: str, prompt: str) -> str:
         """Generate a response from the AI provider."""
         raise NotImplementedError
+
+    def generate_chat(self, model: str, messages: Sequence[dict]) -> str:
+        """Compatibility bridge; native chat providers override this method."""
+        return self.generate(model, flatten_chat_messages(validate_chat_messages(messages)))
+
+    def generate_chat_stream(self, model: str, messages: Sequence[dict]):
+        yield from self.generate_stream(model, flatten_chat_messages(validate_chat_messages(messages)))
+
+    def generate_chat_with_images(self, model: str, messages: Sequence[dict], images, *, ocr_evidence=()) -> str:
+        return self.generate_with_images(
+            model, flatten_chat_messages(validate_chat_messages(messages)), images,
+            ocr_evidence=ocr_evidence,
+        )
 
     def generate_stream(self, model: str, prompt: str):
         raise ProviderStreamingUnsupported("Response streaming is unsupported by this provider")

@@ -7,7 +7,7 @@ const source = await readFile(new URL("../app/webui/static/navigation.mjs", impo
 
 class Element {
   constructor(link = false) { this.link = link; }
-  closest(selector) { return selector === "a" && this.link ? this : null; }
+  closest(selector) { return (selector === "a" || selector.includes("a,")) && this.link ? this : null; }
 }
 
 function setup(matches = true) {

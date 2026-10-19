@@ -62,10 +62,10 @@ class FakeVectors:
 @pytest.fixture
 def env(monkeypatch):
     prompts = []
-    def generate(self, *args, **kwargs):
-        prompts.append(next(arg for arg in args if isinstance(arg, str) and "corporation_id" in arg))
+    def generate_chat(self, model, messages):
+        prompts.append(messages)
         return "Verified fixture reply."
-    monkeypatch.setattr(OllamaProvider, "generate", generate)
+    monkeypatch.setattr(OllamaProvider, "generate_chat", generate_chat)
     runtime = create_corporation_runtime()
     app = create_local_app(password=PASSWORD, application_service=runtime.application_service)
     clock = {"now": NOW}
@@ -153,8 +153,8 @@ def test_disabled_toggle_never_retrieves_and_each_reply_has_real_trace(env):
     reply = client.post(f"/api/chat/conversations/{cid}/messages", headers=headers,
                         json={"text": "Which port is the Orion server?"})
     assert reply.status_code == 200
-    prompt = json.loads(prompts[-1])
-    assert "retrieved_context" not in prompt
+    prompt = prompts[-1]
+    assert all("BEGIN UNTRUSTED RETRIEVED KNOWLEDGE" not in message["content"] for message in prompt)
     trace = reply.json()["context_trace"]
     assert trace["retrieval"] == {"enabled": False, "reason": "Use my knowledge was off."}
     assert trace["route"]["agent_id"] == "local_worker"
@@ -170,7 +170,7 @@ def test_exact_prompt_is_explicit_one_turn_local_only_and_never_in_trace(env):
                            json={"text": "show exact local prompt", "capture_local_prompt": True})
     assert response.status_code == 200
     payload = response.json()
-    assert payload["advanced_prompt"] == prompts[-1]
+    assert payload["advanced_prompt"] == json.dumps(prompts[-1], ensure_ascii=True, separators=(",", ":"))
     assert "show exact local prompt" in payload["advanced_prompt"]
     assert payload["context_trace"]["advanced_prompt_retained"] is False
     assert payload["advanced_prompt"] not in client.get(f"/api/chat/conversations/{cid}").text
@@ -194,10 +194,10 @@ def test_provider_failure_trace_is_sanitized_and_outcome_is_explicit(env, monkey
     client, headers, _, _, _, _ = env
     cid = start(client, headers)
 
-    def fail_with_secret(self, model, prompt):
+    def fail_with_secret(self, model, messages):
         raise RuntimeError("api_key=NEVER_EXPOSE_THIS")
 
-    monkeypatch.setattr(OllamaProvider, "generate", fail_with_secret)
+    monkeypatch.setattr(OllamaProvider, "generate_chat", fail_with_secret)
     failed = client.post(f"/api/chat/conversations/{cid}/messages", headers=headers,
                          json={"text": "try one reply"})
     assert failed.status_code == 502
@@ -231,12 +231,12 @@ def test_explicit_preview_and_auto_retrieval_are_untrusted_cited_and_bounded(env
         "knowledge_scopes": [{"scope": "owner"}], "knowledge_preview_digest": data["digest"],
     })
     assert response.status_code == 200
-    payload = json.loads(prompts[-1])
-    context = payload["retrieved_context"]
-    assert "untrusted" in context["notice"]
-    assert context["items"][0]["citation"] == "[1]"
-    assert context["items"][0]["chunk_reference"] == f"{note['id']}#1"
-    assert "8123" in context["items"][0]["content"]
+    payload = prompts[-1]
+    context = next(message["content"] for message in payload if "BEGIN UNTRUSTED RETRIEVED KNOWLEDGE" in message["content"])
+    assert "untrusted" in context.casefold()
+    assert "[1]" in context
+    assert "Source: field-notes.md" in context
+    assert "8123" in context
     trace = response.json()["context_trace"]
     assert trace["retrieval"]["mode"] == "lexical-only"
     assert trace["sources"][0]["source"] == "field-notes.md"

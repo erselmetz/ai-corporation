@@ -85,6 +85,27 @@ def test_generate_uses_fixed_https_header_bounded_body_and_no_credential_retenti
     assert manager.calls_used(manager.connection()) == 1
 
 
+def test_generate_chat_maps_system_history_and_latest_user_message(monkeypatch):
+    _manager, provider, calls, _ = setup(monkeypatch)
+    messages = [
+        {"role": "system", "content": "You are ERSELMETZ AI."},
+        {"role": "user", "content": "Earlier question"},
+        {"role": "assistant", "content": "Earlier answer"},
+        {"role": "user", "content": "hello"},
+    ]
+    assert provider.generate_chat(MODEL, messages) == "deterministic reply"
+    payload = calls[0][3]
+    assert payload["systemInstruction"] == {"parts": [{"text": "You are ERSELMETZ AI."}]}
+    assert payload["contents"] == [
+        {"role": "user", "parts": [{"text": "Earlier question"}]},
+        {"role": "model", "parts": [{"text": "Earlier answer"}]},
+        {"role": "user", "parts": [{"text": "hello"}]},
+    ]
+    assert all(key not in json.dumps(payload) for key in (
+        "corporation_id", "context", "history", "request", "presentation_preferences",
+    ))
+
+
 def test_request_cap_counts_failures_and_does_not_retry(monkeypatch):
     manager, provider, calls, _ = setup(monkeypatch, Response(b"{}", status_code=503))
     for _ in range(5):

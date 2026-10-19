@@ -835,22 +835,30 @@ def coordinator_chat_page():
     return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chat - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
-    <script type="module" src="/ui/static/chat.mjs"></script></head><body>
-    <main class="content chat-content"><nav aria-label="Chat navigation">
-    <a href="/ui">Home</a> | <a href="/ui/login?next=/ui/chat">Owner sign-in</a> | <a href="/ui/preferences">Response preferences</a> | <a href="/ui/knowledge">My knowledge</a> | <a href="/ui/employee-chat">Employee chat</a> | <a href="/ui/providers">Providers &amp; models</a></nav>
-    <section class="panel" id="local-quick-start" aria-labelledby="local-quick-start-title" hidden><h2 id="local-quick-start-title">Local model</h2><p id="local-quick-start-state" role="status" aria-live="polite">Checking Ollama at 127.0.0.1:11434…</p><button id="local-quick-start-action" type="button">Retry</button></section>
-    {safety_controls}
-    <p class="eyebrow">YOUR AI WORKSPACE</p><h1>Chat with your AI team</h1>
-    <p>Choose a registered AI team member, start a conversation, and send a message. The first reply checks whether its configured service can respond. Chat does not run generated instructions.</p>
-    <section class="panel" id="response-preferences-summary" aria-label="Current response preferences"><p id="response-preferences-label">Loading owner response preferences...</p><a href="/ui/preferences">Change preferences</a></section>
-    <label for="chat-agent">AI team member and assigned model</label><select id="chat-agent"></select>
-    <button id="chat-start" type="button">New conversation</button>
-    <label for="chat-conversation">Your conversations for this app run</label><select id="chat-conversation"></select>
-    <button id="chat-refresh" type="button">Refresh list</button><button id="chat-close" type="button">Close conversation</button>
-    <p id="chat-identity"></p><p id="chat-state" role="status" aria-live="polite"></p>
+    <link rel="stylesheet" href="/ui/static/chat-ui.css">
+    <script type="module" src="/ui/static/chat.mjs"></script></head><body class="chat-page has-shared-navigation">
+    <main class="chat-app"><aside id="chat-sidebar" class="chat-sidebar" aria-label="Chat navigation">
+      <a class="chat-brand" href="/ui">ERSELMETZ AI</a><button id="chat-start" type="button" class="chat-new-button" data-close-navigation>&#43; New chat</button>
+      <p class="chat-sidebar-label">Recent chats</p><div id="chat-conversation-list" class="chat-conversation-list" aria-label="Conversation list"></div>
+      <label class="visually-hidden" for="chat-conversation">Choose conversation</label><select id="chat-conversation" class="visually-hidden"></select>
+      <button id="chat-refresh" type="button" class="chat-sidebar-refresh">Refresh chats</button><button id="chat-close" type="button" class="chat-sidebar-close">Close conversation</button>
+      <div class="chat-sidebar-links" aria-label="More settings"><a href="/ui/chat" aria-current="page">Chat</a><a href="/ui/preferences">Preferences</a><a href="/ui/knowledge">Knowledge</a><a href="/ui/providers">Models</a><a href="/ui/employee-chat">Team chat</a><a href="/ui/login?next=/ui/chat">Owner sign-in</a></div>
+    </aside><section class="chat-workspace">
+    <header class="chat-header">
+      <label class="chat-model-label" for="chat-agent"><span class="visually-hidden">Coordinator model</span><select id="chat-agent" aria-label="Coordinator model"></select></label>
+      </header>
+    <div class="chat-body">
+    <div class="chat-quick-start" id="local-quick-start" aria-label="Local model status" hidden><p id="local-quick-start-state" role="status" aria-live="polite">Checking Ollama at 127.0.0.1:11434&hellip;</p><button id="local-quick-start-action" type="button">Retry</button></div>
+    <section class="panel" id="response-preferences-summary" aria-label="Current response preferences" hidden><p id="response-preferences-label">Loading owner response preferences...</p><a href="/ui/preferences">Change preferences</a></section>
+    <p id="chat-identity" class="visually-hidden"></p><p id="chat-state" role="status" aria-live="polite" class="chat-inline-state"></p>
+    <section id="chat-empty-state" class="chat-empty-state" aria-label="Start a conversation"><h1>What can I help with?</h1><p>Ask a question or choose a starting point.</p>
+      <div class="chat-examples"><button type="button" data-chat-example="Explain a topic simply">Explain a topic simply</button><button type="button" data-chat-example="Help me plan a project">Help me plan a project</button><button type="button" data-chat-example="Review a piece of code">Review a piece of code</button></div>
+    </section>
     <section id="chat-history" aria-label="Conversation messages" aria-live="polite"></section>
-    <form id="chat-form"><label for="chat-input">Message (up to 8192 UTF-8 bytes)</label>
-    <textarea id="chat-input" rows="4" maxlength="8192" required></textarea>
+    <form id="chat-form" class="chat-composer"><label class="visually-hidden" for="chat-input">Message (up to 8192 UTF-8 bytes)</label>
+    <textarea id="chat-input" rows="1" maxlength="8192" required placeholder="Message ERSELMETZ AI&hellip;" aria-label="Message ERSELMETZ AI"></textarea>
+    <button id="chat-send" type="submit" aria-label="Send message">Send</button></form>
+    <details id="chat-settings" class="chat-settings-popover"><summary aria-label="Chat options">&#43;</summary><div class="chat-settings-content">{safety_controls}
     <details class="chat-advanced" id="chat-route-panel"><summary>Optional model suggestion (checked only when requested)</summary>
       <p>Prompt difficulty is uncertain. Suggestions use a local heuristic and observed installed/configured models; they do not prove quality or hardware fit. The configured model remains the default.</p>
       <button id="chat-route-check" type="button">Check suggestions for this prompt</button>
@@ -883,7 +891,6 @@ def coordinator_chat_page():
     <label><input id="chat-capture-local-prompt" type="checkbox" disabled> Include the exact assembled prompt for this local-model reply only (contains chat history and any selected notes).</label>
     </details>
     <p id="chat-input-provenance" role="status" aria-live="polite" hidden></p>
-    <button id="chat-send" type="submit">Send</button>
     <button id="chat-capture-screen" type="button" disabled>Capture display once</button>
     <p id="chat-capture-status" role="status" aria-live="polite">Screen capture is off. Choose a display/window only when you request a one-frame capture.</p>
     <button id="chat-capture-camera" type="button" disabled>Capture camera once</button>
@@ -900,7 +907,7 @@ def coordinator_chat_page():
       <p id="chat-image-status" role="status" aria-live="polite">No temporary images attached.</p>
     </section>
     <button id="chat-stop-request" type="button" disabled hidden>Stop waiting (remote outcome may be unknown)</button>
-    <button id="chat-stop-display" type="button" disabled hidden>Stop display (generation continues)</button></form>
+    <button id="chat-stop-display" type="button" disabled hidden>Stop display (generation continues)</button>
     <details class="chat-advanced"><summary>Optional voice input and reply audio</summary>
     <section class="panel" id="voice-panel" aria-labelledby="voice-heading">
     <h2 id="voice-heading">Optional voice input and reply audio</h2>
@@ -981,7 +988,7 @@ def coordinator_chat_page():
     use Local model setup to refresh installed models and explicitly select one. Do not paste API keys here; configure Gemini in its separate online setup page.</p></details>
     <p id="cloud-consent-panel" hidden><label><input id="cloud-consent" type="checkbox">
     I consent to send this message, recent conversation history, configured chat context, selected reviewed-tool results, and the exact displayed knowledge preview to Google Gemini for this reply only.</label></p>
-    </main></body></html>""".replace("{safety_controls}", _emergency_controls()))
+    </div></details></div></section></main></body></html>""".replace("{safety_controls}", _emergency_controls()))
 
 
 @router.get("/ui/inventory", response_class=HTMLResponse, include_in_schema=False)

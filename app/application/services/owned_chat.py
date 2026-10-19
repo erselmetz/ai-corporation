@@ -169,7 +169,8 @@ class OwnedChatService:
         with self._access(owner, identifier):
             return self._chat.get_status(identifier)
 
-    def send(self, owner, identifier, text, retrieved_context=None, *, presentation_preferences=None, image_ids=(),
+    def send(self, owner, identifier, text, retrieved_context=None, *, presentation_preferences=None,
+             tool_context=None, image_ids=(),
              image_consent=False, ocr_evidence=(), prompt_observer=None, turn_route=None,
              route_consent=False):
         if turn_route is not None:
@@ -218,6 +219,7 @@ class OwnedChatService:
                         for image in images:
                             self._image_store.remove(owner, identifier, image.id)
                 return self._send(entry, identifier, text, retrieved_context, presentation_preferences,
+                                  tool_context=tool_context,
                                   prompt_observer=prompt_observer, turn_route=turn_route)
 
     def stream(self, owner, identifier, text, retrieved_context=None, presentation_preferences=None):
@@ -236,7 +238,7 @@ class OwnedChatService:
                         yield event
 
     def _send(self, entry, identifier, text, retrieved_context=None, presentation_preferences=None,
-              prompt_observer=None, turn_route=None):
+              tool_context=None, prompt_observer=None, turn_route=None):
         current, provider = self._coordinator(entry.coordinator.id)
         if (current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model):
             raise ChatConflict("Coordinator assignment changed; start a new conversation")
@@ -245,6 +247,7 @@ class OwnedChatService:
         if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
             raise ChatLimit("Conversation message limit reached; start a new conversation")
         record = self._chat.send(identifier, text, retrieved_context, presentation_preferences,
+                                 tool_context=tool_context,
                                  prompt_observer=prompt_observer, turn_route=turn_route,
                                  expected_assignment=(entry.coordinator.provider, entry.coordinator.model)
                                  if turn_route is not None else None)

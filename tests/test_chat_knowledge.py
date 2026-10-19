@@ -19,11 +19,11 @@ PASSWORD = "test-only-owner-passphrase"
 def env(monkeypatch):
     prompts = []
 
-    def generate(self, *args, **kwargs):
-        prompts.append(next(a for a in args if isinstance(a, str) and "corporation_id" in a))
+    def generate_chat(self, model, messages):
+        prompts.append(messages)
         return "Reply."
 
-    monkeypatch.setattr(OllamaProvider, "generate", generate)
+    monkeypatch.setattr(OllamaProvider, "generate_chat", generate_chat)
     runtime = create_corporation_runtime()
     app = create_local_app(password=PASSWORD, application_service=runtime.application_service)
     clock = {"now": datetime.now(timezone.utc)}
@@ -61,7 +61,7 @@ def test_no_automatic_retention_or_context(env):
     cid = start(client, headers)
     assert send(client, headers, cid).status_code == 200
     assert client.get(f"/api/chat/conversations/{cid}/retained").json()["items"] == []
-    assert "retrieved_context" not in json.loads(prompts[-1])
+    assert all("retrieved_context" not in message["content"] for message in prompts[-1])
     traces = client.get(f"/api/chat/conversations/{cid}").json()["context_traces"]
     assert len(traces) == 1
     trace = next(iter(traces.values()))
@@ -100,11 +100,12 @@ def test_context_is_explicit_traced_and_untrusted(env):
     trace = body["context_trace"]
     assert trace["sources"][0]["memory_id"] == memory["id"]
     assert trace["sources"][0]["revision"] == memory["revision"]
-    sent = json.loads(prompts[-1])
-    assert "finish each factual answer" in sent["system_instruction"]
-    assert "one backslash per separator" in sent["system_instruction"]
-    assert "untrusted" in str(sent["retrieved_context"])
-    assert memory["id"] in str(sent["retrieved_context"])
+    sent = prompts[-1]
+    assert "finish each factual answer" not in sent[0]["content"]
+    assert "ERSELMETZ AI" in sent[0]["content"]
+    reference = next(message["content"] for message in sent if "BEGIN UNTRUSTED RETRIEVED KNOWLEDGE" in message["content"])
+    assert "untrusted" in reference.casefold()
+    assert "Quarterly budget" in reference
     steps = trace["steps"]
     assert [step["step"] for step in steps] == ["plan", "retrieve", "calculator", "answer"]
     assert [step["status"] for step in steps] == ["completed", "completed", "completed", "completed"]
@@ -162,7 +163,8 @@ def test_scope_boundaries(env):
     retain(client, headers, cid, clock, first_message(client, cid))
     cross = send(client, headers, other, "x", context={"query": "alpha", "scope": "conversation", "scope_id": cid})
     assert cross.status_code == 403
-    assert not any("retrieved_context" in p for p in prompts[2:])
+    assert not any("BEGIN UNTRUSTED RETRIEVED KNOWLEDGE" in message["content"]
+                   for prompt in prompts[2:] for message in prompt)
     foreign = ConversationMemoryStore()
     now = clock["now"]
     foreign.retain(MemoryRecord("foreign", "someone-else", MemoryScope.CONVERSATION, other, MemoryType.NOTE,

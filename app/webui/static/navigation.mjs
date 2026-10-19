@@ -1,5 +1,5 @@
 const toggle = document.getElementById("shared-navigation-toggle");
-const navigation = document.getElementById("shared-navigation");
+const navigation = document.getElementById("chat-sidebar") || document.getElementById("shared-navigation");
 const compact = globalThis.matchMedia?.("(max-width: 64rem)");
 
 if (toggle && navigation && compact) {
@@ -13,7 +13,7 @@ if (toggle && navigation && compact) {
 
   toggle.addEventListener("click", () => setOpen(!document.body.classList.contains("navigation-open")));
   navigation.addEventListener("click", event => {
-    if (event.target instanceof Element && event.target.closest("a")) setOpen(false);
+    if (event.target instanceof Element && event.target.closest("a, [data-close-navigation]")) setOpen(false);
   });
   document.addEventListener("keydown", event => {
     if (event.key === "Escape") setOpen(false);

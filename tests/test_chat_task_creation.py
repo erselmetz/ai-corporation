@@ -16,7 +16,7 @@ def setup():
     orchestrator.agents = AgentRegistry()
     orchestrator.agents.register(Agent("agent", "Agent", "Worker", "ollama", "model"))
     orchestrator.projects = MagicMock()
-    orchestrator.run_agent.return_value = "Reply"
+    orchestrator.run_agent_chat.return_value = "Reply"
     orchestrator.create_task.return_value = Task("task", "Title", "Request", "project", "agent")
     chat = CorporationChatService("corp", orchestrator)
     chat.start("one", "agent")

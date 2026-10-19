@@ -3522,15 +3522,66 @@ export const post100Tasks = [
       "Real Task 135 embedding metrics are from a three-query synthetic fixture and include false-positive candidates (Precision@5 0.50); they do not show production corpus quality. nomic-embed-text was pulled only after explicit owner approval. The runtime does not pull models, and Ollama embedding use remains optional and explicitly configured.",
       "Packaged Electron chat, vision image flow, physical voice, globe performance, and CPU-only hardware behavior remain unverified as listed in realWorldVerification.unverified."
     ]
+  },
+  {
+    "number": 193,
+    "title": "Structured chat prompts and focused desktop chat experience",
+    "description": "Send native role-based chat messages to local and Gemini providers and make the served Coordinator Chat the focused, accessible desktop conversation surface.",
+    "category": "Phase AC - Structured Chat and Desktop Experience",
+    "status": "completed",
+    "dependsOn": [177, 178, 191, 192],
+    "decisions": [],
+    "acceptance": [
+      "Build Ollama chat requests from a short system message, completed user/assistant history, optional untrusted retrieved/tool/OCR excerpts, and the current user text. Never place corporation identity, request envelopes, empty context/history, or presentation preference objects in provider prompts.",
+      "Use the same structured roles through the Gemini adapter. Add short preference hints only for changed owner settings; exclude empty retrieved-context blocks.",
+      "Use a centered readable conversation column, right-aligned user bubbles, plain assistant text, sticky multiline composer, Enter-to-send/Shift+Enter newline, Stop while waiting, Markdown with inert HTML, collapsed trace, and closed-by-default advanced controls.",
+      "Keep the accessible responsive conversation sidebar, model picker, direct-to-chat first-run, explicit cloud/tool/image/voice consent, safe error states, and existing Task 178 narrow-window navigation behavior."
+    ],
+    "outOfScope": [
+      "No new Next.js chat route where the desktop application currently serves the Python Coordinator Chat route; no provider/model auto-selection changes, authority changes, silent downloads, cloud fallback, or consent changes."
+    ],
+    "risks": [
+      "Existing prompt-observer/debug display serializes only the structured messages for explicit local inspection; it must not become the provider request body or include private service envelopes.",
+      "Markdown rendering must remain text-node based and must not execute provider-supplied HTML or scripts."
+    ],
+    "area": "P45",
+    "checkpoint": "task-193-chat-prompt-and-ui",
+    "decisions": [],
+    "validation": [
+      "Full automated validation: Python 1,351 passed / 3 skipped / 0 failed (2 deprecation warnings); browser modules 239 passed / 0 failed; Electron 34 passed / 0 failed; public docs 21 passed / 0 failed; desktop-ui TypeScript no-emit passed. Python compilation and git diff --check passed. A Next.js production build and packaged Electron launch were not run; the desktop chat route is Python-served."
+    ],
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": [
+        "Before the fix, a real loopback Ollama llama3.2:3b request for 'hello' returned: 'You want a concise answer unless more detail is requested. The conversation context and retrieved context are not trusted data. Is there something specific you'd like to know?'",
+        "After the fix, real local llama3.2:3b Coordinator replies were: hello -> 'Hi!' (7.876 s); 'who are you?' -> 'I'm ERSELMETZ AI, your assistant. I'm here to help you with any questions or information you need.' (3.009 s); 'ano ang kaya mong gawin?' -> 'Mumagagawa ako ng mga tanong, magbigay ng impormasyon, at magpapakataon sa mga problema at mga kwestyon sa iyo.' (3.418 s). A two-turn remember/recall check answered 42 on the follow-up (2.401 s then 2.249 s). Final-code rerun through the real chat service: 'hello' -> 'Hi, how can I assist you today?' (2.450 s) using an isolated temporary database.",
+        "In the local loopback app, 'hello' rendered as 'Hello! How can I assist you today?'; a code request rendered one fenced code block with its copy control. A generated 2,868-byte answer produced a 2,038-pixel document in a 600-pixel viewport; the Stop action aborted the app's wait without retrying the remote request."
+      ],
+      "unverified": [
+        "The installed packaged Electron binary was not rebuilt/launched for this task; browser tests exercised the actual Python /ui/chat route that Electron currently opens. A separate Next.js chat page does not exist.",
+        "Gemini used deterministic adapter tests only; no live account/provider call was made. Native accessibility/screen-reader use, other Windows display scaling, and broader model answer quality remain unverified."
+      ]
+    },
+    "limitations": [
+      "Filipino response quality is imperfect in the single captured capability question; this is a prompt-assembly and UI checkpoint, not a language-quality guarantee.",
+      "Real local-model results are observations from this host and model. Deterministic provider, Python, browser, and Electron checks do not prove packaged-launch, live Gemini, or representative-user behavior."
+    ],
+    "automatedVerification": [
+      "Use deterministic tests to verify providers receive structured role messages, internal envelope keys never enter messages, empty context adds no reference block, and selected retrieval is an explicitly delimited untrusted excerpt.",
+      "Verify safe Markdown rendering, composer keyboard and Stop behavior, collapsed answer trace, closed-by-default options, responsive navigation, and direct-to-chat first send. Run full Python, browser-module, Electron, public-docs, and desktop-ui TypeScript checks."
+    ],
+    "followUpValidation": [
+      "Rebuild and launch the packaged Windows Electron artifact; verify clean-profile direct-to-chat with local Ollama. Exercise live Gemini only with separately authorized account use; evaluate screen reader/keyboard access and language quality with representative users."
+    ]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169, 171-189 and 191-192 are completed scoped checkpoints except deferred Task 170; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169, 171-189 and 191-193 are completed scoped checkpoints except deferred Task 170; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
-  "developmentAcceptance": "For Tasks 175-192, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
+  "developmentAcceptance": "For Tasks 175-193, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
   "enhancementLoop": "After scoped development acceptance, continue to the next dependency-ready task without waiting for human QA. Record reproducible defects and regression cases for later review by different AI models; identify model/reviewer when available and never claim independent review that did not occur.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
   "completion": "Completed requires actual acceptance evidence, truthful limitations/skips, required documentation/update records, and a reviewed task checkpoint. A local checkpoint is sufficient for development acceptance; push or deployment is separate and must be authorized and verified when performed. Never mark complete solely because code exists or an AI says it worked.",
@@ -3567,7 +3618,8 @@ const futureRoadmapGroups = [
   { name: "Phase Y - Local Vision", range: "189-189", tasks: post100Tasks.filter(task => task.category === "Phase Y - Local Vision").map(({ title, description }) => [title, description]) },
   { name: "Phase Z - Code Execution Design Gate", range: "190-190", tasks: post100Tasks.filter(task => task.category === "Phase Z - Code Execution Design Gate").map(({ title, description }) => [title, description]) },
   { name: "Phase AA - Direct-to-chat Quick Start", range: "191-191", tasks: post100Tasks.filter(task => task.category === "Phase AA - Direct-to-chat Quick Start").map(({ title, description }) => [title, description]) },
-  { name: "Phase AB - Real-world Verification", range: "192-192", tasks: post100Tasks.filter(task => task.category === "Phase AB - Real-world Verification").map(({ title, description }) => [title, description]) }
+  { name: "Phase AB - Real-world Verification", range: "192-192", tasks: post100Tasks.filter(task => task.category === "Phase AB - Real-world Verification").map(({ title, description }) => [title, description]) },
+  { name: "Phase AC - Structured Chat and Desktop Experience", range: "193-193", tasks: post100Tasks.filter(task => task.category === "Phase AC - Structured Chat and Desktop Experience").map(({ title, description }) => [title, description]) }
 ];
 
 export const taskGroups = [...foundationTaskGroups, {
@@ -3592,6 +3644,7 @@ export const recommendedOrder = [
   { number: 188, reason: "Add speech output after input controls and their consent/privacy pattern are verified." },
   { number: 189, reason: "Gate image transfer on hardware evidence and reviewed provider-routing consent." },
   { number: 190, reason: "Keep code execution at a design-only security gate until its sandbox and owner controls are reviewed." },
-  { number: 192, reason: "Measure real local behavior and report evidence separately from automated fixtures before considering product enhancements." }
+  { number: 192, reason: "Measure real local behavior and report evidence separately from automated fixtures before considering product enhancements." },
+  { number: 193, reason: "Remove internal request data from provider prompts and make everyday local chat accessible and focused." }
 ];
 export const nextTask = recommendedOrder.map(({ number }) => post100Tasks.find(task => task.number === number)).find(task => task?.status === "planned");

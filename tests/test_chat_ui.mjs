@@ -3,12 +3,17 @@ import test from "node:test";
 import { mountChat, voiceTranscriptSourceLabel } from "../app/webui/static/chat.mjs";
 
 class Element {
-  constructor(tag = "") { this.tag = tag; this.children = []; this.value = ""; this.text = ""; this.listeners = {}; this.disabled = false; this.hidden = false; }
+  constructor(tag = "") { this.tag = tag; this.tagName = tag.toUpperCase(); this.children = []; this.value = ""; this.text = ""; this.listeners = {}; this.disabled = false; this.hidden = false; this.style = {}; this.attributes = {}; }
   get textContent() { return this.text + this.children.map(item => item.textContent).join(""); }
   set textContent(value) { this.text = value; this.children = []; }
   set innerHTML(_) { throw new Error("HTML injection is forbidden"); }
   append(...items) { this.children.push(...items); if (this.tag === "select" && this.children.length === 1) this.value = items[0].value; }
   replaceChildren() { this.children = []; this.text = ""; if (this.tag === "select") this.value = ""; }
+  setAttribute(name, value) { this.attributes[name] = value; }
+  getAttribute(name) { return this.attributes[name] ?? null; }
+  dispatchEvent() {}
+  requestSubmit() { this.listeners.submit?.({ preventDefault() {} }); }
+  focus() { this.focused = true; }
   addEventListener(event, handler) {
     const existing = this.listeners[event];
     this.listeners[event] = existing
@@ -67,6 +72,7 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
     "repository-study-owner", "repository-study-name", "repository-study-submit",
     "repository-study-state", "repository-study-result",
     "chat-stop-request", "voice-mode", "voice-language", "voice-start", "voice-stop",
+    "chat-empty-state", "chat-conversation-list", "chat-nav-toggle", "chat-settings",
     "response-preferences-label",
     "voice-transcribe", "voice-install-local", "voice-cloud-consent", "voice-budget-form",
     "voice-budget-cents", "voice-budget-save", "voice-budget-state", "voice-state",
@@ -105,7 +111,8 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
     if (path.endsWith("/close")) return response(snapshot([], "closed"));
     return response(snapshot());
   };
-  const documentRef = { getElementById: id => elements[id], documentElement: {}, createElement: tag => new Element(tag) };
+  const documentRef = { getElementById: id => elements[id], documentElement: {}, body: { classList: { toggle: () => true, contains: () => false, remove() {} } }, createElement: tag => new Element(tag), createTextNode: value => ({ textContent: String(value) }), querySelectorAll: () => [] };
+  for (const [id, item] of Object.entries(elements)) item.id = id;
   const controller = mountChat({ documentRef, fetchImpl, confirmImpl: message => {
     planConfirmations.push(message);
     return confirmImpl(message);
@@ -141,6 +148,42 @@ test("speech source labels distinguish local, local-model, and consented online 
   assert.match(voiceTranscriptSourceLabel("local-model"), /Selected local speech model/);
   assert.match(voiceTranscriptSourceLabel("gemini"), /online, explicitly consented/);
   assert.match(voiceTranscriptSourceLabel("unexpected"), /Unverified/);
+});
+
+test("composer sends on Enter, keeps Shift+Enter for a newline, and stays keyboard operable", () => {
+  const ui = setup();
+  let submissions = 0;
+  ui.elements["chat-form"].requestSubmit = () => { submissions += 1; };
+  let prevented = 0;
+  ui.elements["chat-input"].listeners.keydown({ key: "Enter", shiftKey: false, isComposing: false, preventDefault: () => { prevented += 1; } });
+  assert.equal(submissions, 1);
+  assert.equal(prevented, 1);
+  ui.elements["chat-input"].listeners.keydown({ key: "Enter", shiftKey: true, isComposing: false, preventDefault: () => { prevented += 1; } });
+  assert.equal(submissions, 1);
+  assert.equal(prevented, 1);
+});
+
+test("Send becomes Stop while a turn is pending and aborts local waiting without replay", async () => {
+  const ui = setup((path, options) => {
+    if (path.endsWith("/messages")) return new Promise((_resolve, reject) => {
+      options.signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true });
+    });
+    return null;
+  });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-input"].value = "hello";
+  const pending = ui.controller.send();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(ui.elements["chat-send"].textContent, "Stop");
+  assert.equal(ui.elements["chat-send"].disabled, false);
+  let prevented = false;
+  ui.elements["chat-send"].listeners.click({ preventDefault: () => { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.equal(await pending, true);
+  assert.equal(ui.calls.filter(call => call.path.endsWith("/messages")).length, 1);
+  assert.match(ui.elements["chat-state"].textContent, /Stopped waiting.*No resend/);
+  assert.equal(ui.elements["chat-send"].textContent, "Send");
 });
 
 test("start and send use same-origin, session CSRF and actual coordinator identity; text stays inert", async () => {
@@ -509,7 +552,8 @@ test("pending send prevents duplicate turns and selection changes; provider fail
   assert.match(ui.elements["chat-state"].textContent, /Pending/);
   assert.equal(ui.elements["chat-input"].disabled, true);
   assert.equal(ui.elements["chat-conversation"].disabled, true);
-  assert.equal(await ui.controller.send(), false);
+  assert.equal(ui.elements["chat-send"].textContent, "Stop");
+  assert.equal(ui.elements["chat-send"].disabled, false);
   assert.equal(await ui.controller.refresh(), false);
   finish(response({ detail: "raw failure" }, 502));
   assert.equal(await pending, false);

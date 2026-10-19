@@ -252,14 +252,29 @@ class ChatKnowledgeService:
                  "truncation": truncation, "context_bytes": used,
                  "context_byte_limit": AUTO_CONTEXT_BYTES, "chunk_limit": AUTO_CONTEXT_CHUNKS,
                  "semantic_index": "used" if mode == "hybrid" else "not used / unavailable"}
-        return {"prompt_context": prompt, "trace": trace, "preview": [dict(item) for item in selected],
+        prompt_context = self._format_prompt_context(prompt["items"])
+        return {"prompt_context": prompt_context, "trace": trace, "preview": [dict(item) for item in selected],
                 "digest": digest}
 
     @staticmethod
     def prompt_context(result):
-        return {"notice": CONTEXT_NOTICE, "items": [
-            {"source": hit.source.memory_id, "scope": hit.source.scope.value,
-             "content": hit.content} for hit in result.hits]}
+        items = [
+            {"citation": f"[{index}]", "source": hit.source.original_reference or hit.source.memory_id,
+             "content": hit.content}
+            for index, hit in enumerate(result.hits, start=1)
+        ]
+        return ChatKnowledgeService._format_prompt_context(items)
+
+    @staticmethod
+    def _format_prompt_context(items):
+        """Render only retrieved excerpts as text; never serialize service envelopes to the model."""
+        if not items:
+            return None
+        excerpts = [
+            f"{item['citation']} Source: {item['source']}\n{item['content']}"
+            for item in items
+        ]
+        return "\n\n".join(excerpts)
 
     def record_trace(self, owner, conversation_id, reply_id, result, request, now):
         self._application.owned_chat().authorize_owner(owner, conversation_id)

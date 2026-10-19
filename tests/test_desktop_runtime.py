@@ -109,7 +109,7 @@ def test_navigation_is_present_after_transition_from_exported_home_to_python_cha
 
         chat = client.get("/ui/chat?conversation=previously-created")
         assert chat.status_code == 200
-        assert 'id="shared-navigation"' in chat.text
+        assert 'id="chat-sidebar"' in chat.text
         assert 'id="shared-navigation-toggle"' in chat.text
         assert 'src="/ui/static/navigation.mjs"' in chat.text
         assert 'href="/ui/chat" aria-current="page"' in chat.text

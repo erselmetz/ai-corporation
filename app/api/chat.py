@@ -756,8 +756,6 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                 raise HTTPException(422, "Image consent and OCR require selected images.")
             prompt_context = auto_context["prompt_context"] if auto_context else (
                 knowledge.prompt_context(retrieved) if retrieved else None)
-            if tool_context:
-                prompt_context = f"{prompt_context}\n\n{tool_context}" if prompt_context else tool_context
             captured_prompt = []
             cloud_provider = route_provider_id if cloud_requires_consent else None
             answer_started_at = time.perf_counter()
@@ -765,6 +763,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                 result = service.owned_chat().send(
                     principal.identity, identifier, body.text, prompt_context,
                     presentation_preferences=presentation,
+                    tool_context=tool_context,
                     prompt_observer=captured_prompt.append if body.capture_local_prompt else None,
                     turn_route=turn_route, route_consent=body.route_consent)
             except Exception:

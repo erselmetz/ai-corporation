@@ -2,6 +2,7 @@ import { mountVoiceControls } from "./voice.mjs";
 import { mountScreenCapture } from "./screen-capture.mjs";
 import { mountCameraCapture } from "./camera-capture.mjs";
 import { mountChatImages } from "./chat-images.mjs";
+import { renderSafeMarkdown } from "./chat-markdown.mjs";
 
 export function voiceTranscriptSourceLabel(source) {
   return ({
@@ -93,10 +94,14 @@ export function mountChat({
   const voiceSources = [];
   let emergencyStopped = false;
   let requestController = null;
+  let imageRefreshPromise = Promise.resolve();
+  let imageRefreshPending = false;
+  let sendInProgress = false;
   let presentationPreferences = { response_mode: "balanced", locale: "en-US", detail_level: "standard" };
   const knowledgeSettings = new Map();
   let knowledgePreview = null;
   const base = "/api/chat/conversations";
+  let conversationItems = [];
   const imageManager = mountChatImages({ documentRef, windowRef, fetchImpl, getConversation: () => selected });
   function clearVoiceProvenance() {
     voiceSources.length = 0;
@@ -106,6 +111,7 @@ export function mountChat({
   function clear() {
     voiceController?.clear();
     history.replaceChildren();
+    updateEmptyState(false);
     element("chat-identity").textContent = "";
     selected = null;
     canSend = false;
@@ -134,6 +140,25 @@ export function mountChat({
     clearTaskProposal();
     taskControls();
     repositoryStudyControls();
+  }
+  function updateEmptyState(visible) {
+    const empty = element("chat-empty-state");
+    if (empty) empty.hidden = !visible;
+  }
+  function renderConversationList(items = conversationItems) {
+    const list = element("chat-conversation-list");
+    if (!list) return;
+    conversationItems = items;
+    list.replaceChildren();
+    for (const item of items) {
+      const button = documentRef.createElement("button");
+      button.type = "button";
+      button.className = "chat-conversation-item";
+      button.textContent = `${item.coordinator.name} · ${item.id.slice(0, 8)}`;
+      button.setAttribute("aria-current", item.id === selected ? "true" : "false");
+      button.addEventListener("click", () => { conversations.value = item.id; void load(); });
+      list.append(button);
+    }
   }
   function clearTaskProposal() {
     currentProposal = null;
@@ -183,6 +208,8 @@ export function mountChat({
     if (!record || !agent || typeof record.id !== "string" || !Array.isArray(record.messages)
         || !["open", "closed"].includes(record.status)) throw new Error("Invalid conversation response.");
     selected = record.id;
+    if (!conversationItems.some(item => item.id === record.id)) conversationItems = [{ id: record.id, coordinator: agent }, ...conversationItems];
+    renderConversationList();
     if (!knowledgeSettings.has(record.id)) knowledgeSettings.set(record.id, {
       enabled: false, owner: false, conversation: false, extra: false,
       extraScope: "project", extraId: "",
@@ -202,11 +229,13 @@ export function mountChat({
     requiresCloudConsent = isGeminiProvider(agent.provider);
     configuredCloudRoute = requiresCloudConsent;
     cloudPanel.hidden = !requiresCloudConsent;
+    if (requiresCloudConsent) element("chat-settings")?.setAttribute?.("open", "");
     cloudConsent.checked = false;
     resetRouteAlternatives("Check this turn's prompt before selecting an optional route.", false);
     conversations.value = record.id;
     element("chat-identity").textContent = `Coordinator: ${agent.name} (${agent.role}) | ${agent.provider} / ${agent.model} | ${record.status}`;
     history.replaceChildren();
+    updateEmptyState(record.messages.length === 0);
     const traces = { ...(result.context_traces || {}) };
     if (result.context_trace && record.messages.length) {
       const latestReply = [...record.messages].reverse().find(message => message.role === "assistant");
@@ -218,11 +247,12 @@ export function mountChat({
       if (typeof message.content !== "string" || !["user", "assistant", "system"].includes(message.role)
           || !["pending", "completed", "failed"].includes(message.status)) throw new Error("Invalid message response.");
       const item = documentRef.createElement("article");
-      item.className = "chat-message";
+      item.className = `chat-message chat-message-${message.role}`;
       const label = documentRef.createElement("strong");
       label.textContent = `${message.role} - ${message.status}`;
-      const content = documentRef.createElement("p");
-      content.textContent = message.content;
+      const content = documentRef.createElement("div");
+      content.className = "chat-message-content";
+      content.append(renderSafeMarkdown(message.content, { documentRef }));
       item.append(label, content);
       const trace = typeof message.id === "string" ? traces[message.id] : null;
       if (trace && (message.role === "assistant" || message.status === "failed")) appendAnswerTrace(item, trace);
@@ -267,7 +297,14 @@ export function mountChat({
     repositoryStudyControls();
     voiceController?.updateControls();
     updateKnowledgeControls();
-    void imageManager?.refresh();
+    if (imageManager) {
+      imageRefreshPending = true;
+      input.disabled = true;
+      imageRefreshPromise = Promise.resolve(imageManager.refresh()).catch(() => {}).finally(() => {
+        imageRefreshPending = false;
+        if (selected === record.id && !requestController) input.disabled = !canSend;
+      });
+    }
   }
   function currentKnowledgeScopes() {
     const scopes = [];
@@ -409,10 +446,10 @@ export function mountChat({
       knowledgePreviewResult.append(cloud);
     }
   }
-  async function action(operation) {
+  async function action(operation, { preserveSend = false } = {}) {
     if (busy) return false;
     busy = true;
-    buttons.forEach(button => { button.disabled = true; });
+    buttons.forEach(button => { button.disabled = preserveSend ? button.id !== "chat-send" : true; });
     agents.disabled = true; conversations.disabled = true;
     taskControls();
     try { await operation(); return true; }
@@ -420,12 +457,14 @@ export function mountChat({
     finally {
       busy = false;
       buttons.forEach(button => { button.disabled = false; });
+      if (sendInProgress) finishSendButton();
       captureLocalPrompt.disabled = !localModelAvailable;
       agents.disabled = false; conversations.disabled = false;
       taskControls();
       repositoryStudyControls();
       updateKnowledgeControls();
       voiceController?.updateControls();
+      if (!imageRefreshPending && !requestController) input.disabled = !canSend;
     }
   }
   async function refresh() {
@@ -490,6 +529,7 @@ export function mountChat({
       const directDesktopLaunch = new URLSearchParams(windowRef?.location?.search || "").get("desktop") === "1";
       if (directDesktopLaunch && agentList.items.some((agent) => agent.id === "local_worker")) agents.value = "local_worker";
       for (const item of list.items) option(conversations, item.id, `${item.coordinator.name} - ${item.id.slice(0, 8)}`);
+      renderConversationList(list.items);
       const requestedConversation = new URLSearchParams(windowRef?.location?.search || "").get("conversation");
       if (typeof requestedConversation === "string" && /^[a-f0-9]{32}$/.test(requestedConversation)
           && list.items.some((item) => item.id === requestedConversation)) {
@@ -507,6 +547,7 @@ export function mountChat({
         state.textContent = "Coordinator Chat is ready. Type a message and press Send.";
       } else {
         state.textContent = agentList.items.length ? "Choose an AI team member and start a conversation." : "No registered AI team member is available.";
+        updateEmptyState(true);
       }
     });
   }
@@ -532,7 +573,16 @@ export function mountChat({
   }
   async function send(event) {
     event?.preventDefault();
+    if (requestController) {
+      requestController.abort();
+      state.textContent = "Stopping this app's wait. The local model may continue; its final outcome will be checked before any resend.";
+      return false;
+    }
+    sendInProgress = true;
+    const submitButton = element("chat-send");
+    submitButton.textContent = streamingSupported ? "Stop" : "Stop waiting";
     return action(async () => {
+      await imageRefreshPromise;
       if (emergencyStopped) throw new Error("Emergency stop is active. Resume protected actions before sending a message.");
       const text = input.value;
       if (!selected || !canSend) throw new Error("Start or select an open conversation first.");
@@ -544,7 +594,8 @@ export function mountChat({
       const selectedRoute = routeAlternatives.get(routeSelect.value) || null;
       requiresCloudConsent = selectedRoute ? selectedRoute.kind === "cloud" : configuredCloudRoute;
       cloudPanel.hidden = !requiresCloudConsent;
-      if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Check the separate per-turn Gemini cloud consent before continuing.");
+    if (requiresCloudConsent) element("chat-settings")?.setAttribute?.("open", "");
+    if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Check the separate per-turn Gemini cloud consent before continuing.");
       const imageIds = imageManager?.selectedIds() || [];
       const reviewedTools = [];
       if (calculatorEnabled.checked === true) {
@@ -597,9 +648,17 @@ export function mountChat({
       }
       const controller = new AbortController();
       requestController = controller;
+      submitButton.disabled = false;
+      submitButton.textContent = "Stop";
       stopRequestButton.hidden = false;
       stopRequestButton.disabled = false;
       input.disabled = true;
+      const typing = documentRef.createElement("div");
+      typing.id = "chat-typing-indicator";
+      typing.className = "chat-typing-indicator";
+      typing.setAttribute("role", "status");
+      typing.textContent = "ERSELMETZ AI is thinking…";
+      history.append(typing);
       try {
         const body = { text };
         if (requiresCloudConsent) body.cloud_consent = true;
@@ -676,12 +735,19 @@ export function mountChat({
         throw error;
       } finally {
         requestController = null;
+        const typing = element("chat-typing-indicator");
+        typing?.remove?.();
         stopRequestButton.hidden = true;
         stopRequestButton.disabled = true;
         input.disabled = !canSend;
         captureLocalPrompt.disabled = busy || !localModelAvailable;
       }
-    });
+    }, { preserveSend: true });
+  }
+  function finishSendButton() {
+    sendInProgress = false;
+    const button = element("chat-send");
+    button.textContent = "Send";
   }
   async function receiveStream(identifier, body, signal) {
     let displayStopped = false;
@@ -949,14 +1015,36 @@ export function mountChat({
     requiresCloudConsent = configuredCloudRoute;
     cloudPanel.hidden = !requiresCloudConsent;
     cloudConsent.checked = false;
+    input.style.height = "auto";
+    input.style.height = `${Math.min(input.scrollHeight || 160, 240)}px`;
   });
+  input.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      element("chat-form").requestSubmit?.();
+    }
+  });
+  for (const example of documentRef.querySelectorAll?.("[data-chat-example]") || []) {
+    example.addEventListener("click", () => {
+      input.value = example.getAttribute("data-chat-example") || "";
+      input.focus?.();
+      input.dispatchEvent?.(new Event("input", { bubbles: true }));
+    });
+  }
   routeSelect.addEventListener("change", () => {
     const selectedRoute = routeAlternatives.get(routeSelect.value) || null;
     requiresCloudConsent = selectedRoute ? selectedRoute.kind === "cloud" : configuredCloudRoute;
     cloudPanel.hidden = !requiresCloudConsent;
+    element("chat-settings").open = requiresCloudConsent;
     cloudConsent.checked = false;
   });
   element("chat-form").addEventListener("submit", send);
+  element("chat-send").addEventListener("click", event => {
+    if (!requestController) return;
+    event.preventDefault();
+    requestController.abort();
+    state.textContent = "Stopping this app's wait. The local model may continue; its final outcome will be checked before any resend.";
+  });
   repositoryStudyForm.addEventListener("submit", studyRepository);
   element("chat-close").addEventListener("click", close);
   element("chat-refresh").addEventListener("click", refresh);
@@ -1017,8 +1105,10 @@ export function mountChat({
       input.focus?.();
     },
   });
+  const initialLoad = refresh();
+  void initialLoad.then(() => { if (canSend) input.focus?.(); });
   return {
-    initialLoad: refresh(),
+    initialLoad,
     refresh,
     start,
     load,

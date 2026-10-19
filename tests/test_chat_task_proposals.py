@@ -66,7 +66,7 @@ def test_reviewed_owner_proposal_creates_one_pending_task_without_provider_execu
     provider_calls = []
     monkeypatch.setattr(
         OllamaProvider,
-        "generate",
+        "generate_chat",
         lambda *args, **kwargs: provider_calls.append((args, kwargs)) or "Coordinator proposal.",
     )
     runtime = create_corporation_runtime()

@@ -83,7 +83,7 @@ def test_every_ui_page_browser_layout_and_script_health(tmp_path):
                 page.wait_for_function("document.querySelector('#setup-state').textContent.includes('SIGN')")
                 assert page.locator(".dashboard-grid .dashboard-card:visible").count() == 0
                 page.goto(origin + "/ui/chat")
-                page.get_by_role("navigation", name="Chat navigation").get_by_role(
+                page.get_by_label("Chat navigation").get_by_role(
                     "link", name="Owner sign-in", exact=True).click()
                 page.wait_for_url(origin + "/ui/login?next=/ui/chat")
                 page.locator("#password").fill("test-only-audit-password")

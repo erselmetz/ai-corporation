@@ -168,9 +168,20 @@ class _ConnectionProvider(AIProvider):
     def supports_streaming(self) -> bool:
         return getattr(self._provider, "supports_streaming", False) is True
 
+    @property
+    def supports_image_input(self) -> bool:
+        return getattr(self._provider, "supports_image_input", False) is True
+
+    def supports_model_image_input(self, model: str) -> bool | None:
+        return self._provider.supports_model_image_input(model)
+
     def generate(self, model: str, prompt: str) -> str:
         with self._gate.reserve(self._provider_id, model):
             return self._provider.generate(model, prompt)
+
+    def generate_chat(self, model: str, messages) -> str:
+        with self._gate.reserve(self._provider_id, model):
+            return self._provider.generate_chat(model, messages)
 
     def generate_stream(self, model: str, prompt: str):
         if not self.supports_streaming:
@@ -179,6 +190,18 @@ class _ConnectionProvider(AIProvider):
             )
         with self._gate.reserve(self._provider_id, model):
             yield from self._provider.generate_stream(model, prompt)
+
+    def generate_chat_stream(self, model: str, messages):
+        if not self.supports_streaming:
+            raise ProviderStreamingUnsupported("Response streaming is unsupported by this provider")
+        with self._gate.reserve(self._provider_id, model):
+            yield from self._provider.generate_chat_stream(model, messages)
+
+    def generate_chat_with_images(self, model: str, messages, images, *, ocr_evidence=()):
+        with self._gate.reserve(self._provider_id, model):
+            return self._provider.generate_chat_with_images(
+                model, messages, images, ocr_evidence=ocr_evidence,
+            )
 
     def check_availability(self):
         return self._provider.check_availability()

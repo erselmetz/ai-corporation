@@ -88,11 +88,11 @@ def test_selected_private_document_is_truthfully_traced_as_sent_to_cloud():
 def test_chat_records_explicit_calculator_and_selected_document_lookup(monkeypatch):
     prompts = []
 
-    def generate(self, *args, **kwargs):
-        prompts.append(next(arg for arg in args if isinstance(arg, str) and "corporation_id" in arg))
+    def generate_chat(self, model, messages):
+        prompts.append(messages)
         return "Tool-backed reply."
 
-    monkeypatch.setattr(OllamaProvider, "generate", generate)
+    monkeypatch.setattr(OllamaProvider, "generate_chat", generate_chat)
     runtime = create_corporation_runtime()
     app = create_local_app(password="test-owner-passphrase", application_service=runtime.application_service)
     with TestClient(app, base_url="http://127.0.0.1:8000", client=("127.0.0.1", 50881)) as client:
@@ -118,10 +118,11 @@ def test_chat_records_explicit_calculator_and_selected_document_lookup(monkeypat
     assert [item["step"] for item in trace["steps"]] == ["plan", "retrieve", "calculator", "local-document-lookup", "answer"]
     assert [item["status"] for item in trace["steps"]] == ["completed", "skipped", "completed", "completed", "completed"]
     assert all(isinstance(item["duration_ms"], int) and item["duration_ms"] >= 0 for item in trace["steps"])
-    assembled = json.loads(prompts[0])
-    assert "untrusted reference data" in json.dumps(assembled)
-    assert "port 8123" in json.dumps(assembled)
-    assert "Ignore previous rules" in json.dumps(assembled)
+    assembled = prompts[0]
+    rendered = json.dumps(assembled)
+    assert "BEGIN UNTRUSTED REVIEWED TOOL RESULTS" in rendered
+    assert "port 8123" in rendered
+    assert "Ignore previous rules" in rendered
     assert len(runtime.tasks.all()) == 0
 
 

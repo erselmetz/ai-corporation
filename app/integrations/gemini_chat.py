@@ -20,6 +20,7 @@ from app.integrations.gemini_catalog import (
     GeminiModelCapability,
 )
 from app.providers.base import AIProvider
+from app.chat_prompt import validate_chat_messages
 
 _ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models"
 _MAX_INPUT_BYTES = 32_768
@@ -344,6 +345,81 @@ class GeminiProvider(AIProvider):
             raise RuntimeError("Gemini response failed; check provider status and limits. No automatic retry occurred.") from None
         finally:
             self._manager.end_call()
+
+    @staticmethod
+    def _chat_payload(messages, images=()):
+        normalized = validate_chat_messages(messages)
+        system_instruction = normalized[0]["content"]
+        contents = []
+        for message in normalized[1:]:
+            role = "model" if message["role"] == "assistant" else "user"
+            parts = [{"text": message["content"]}]
+            if images and message is normalized[-1]:
+                parts.extend({"inline_data": {"mime_type": image[0], "data": image[1]}}
+                             for image in images)
+            contents.append({"role": role, "parts": parts})
+        return {"systemInstruction": {"parts": [{"text": system_instruction}]},
+                "contents": contents,
+                "generationConfig": {"maxOutputTokens": _MAX_OUTPUT_TOKENS}}
+
+    def _generate_chat_payload(self, model: str, payload: dict) -> str:
+        if ((self._model_id is not None and model != self._model_id)
+                or not isinstance(model, str) or not _MODEL_ID.fullmatch(model)):
+            raise ValueError("Gemini request configuration is invalid")
+        if len(json.dumps(payload, ensure_ascii=True, separators=(",", ":")).encode("utf-8")) > _MAX_INPUT_BYTES:
+            raise ValueError("Gemini input exceeds the byte limit")
+        api_key = self._manager.begin_call(self._key_identity, model)
+        started_at = time.monotonic()
+        endpoint = f"{_ENDPOINT}/{model}:generateContent"
+        try:
+            with httpx.Client(timeout=_TIMEOUT_SECONDS, follow_redirects=False,
+                               trust_env=False) as client:
+                with client.stream("POST", endpoint, headers={
+                    "Accept": "application/json", "Content-Type": "application/json",
+                    "x-goog-api-key": api_key,
+                }, json=payload) as response:
+                    response.raise_for_status()
+                    body = bytearray()
+                    for chunk in response.iter_bytes():
+                        if time.monotonic() - started_at > _MAX_ELAPSED_SECONDS:
+                            raise ValueError("Gemini response exceeded the elapsed-time limit")
+                        if len(body) + len(chunk) > _MAX_RESPONSE_BYTES:
+                            raise ValueError("Gemini response exceeds the byte limit")
+                        body.extend(chunk)
+            data = json.loads(body)
+            if not isinstance(data, dict):
+                raise ValueError("Gemini response root must be an object")
+            candidates = data.get("candidates")
+            parts = candidates[0]["content"]["parts"] if isinstance(candidates, list) and candidates else None
+            reply = "".join(part["text"] for part in parts
+                            if isinstance(part, dict) and isinstance(part.get("text"), str)) if isinstance(parts, list) else ""
+            if not reply.strip() or len(reply.encode("utf-8")) > 8192:
+                raise ValueError("Gemini returned no bounded text reply")
+            return reply
+        except (httpx.HTTPError, ValueError, TypeError, KeyError, IndexError, UnicodeError):
+            raise RuntimeError("Gemini response failed; check provider status and limits. No automatic retry occurred.") from None
+        finally:
+            self._manager.end_call()
+
+    def generate_chat(self, model: str, messages) -> str:
+        return self._generate_chat_payload(model, self._chat_payload(messages))
+
+    def generate_chat_with_images(self, model: str, messages, images, *, ocr_evidence=()) -> str:
+        from app.application.services.chat_images import ChatImageStore
+        if not isinstance(images, tuple) or not 1 <= len(images) <= ChatImageStore.MAX_PER_CONVERSATION:
+            raise ValueError("Select one to four images")
+        total = 0
+        content = []
+        for image in images:
+            raw = getattr(image, "_data", None)
+            media_type = getattr(image, "media_type", None)
+            if not isinstance(raw, bytes) or media_type not in {"image/png", "image/jpeg"}:
+                raise ValueError("Image attachment is invalid")
+            total += len(raw)
+            if len(raw) > ChatImageStore.MAX_IMAGE_BYTES or total > 8 * 1024 * 1024:
+                raise ValueError("Selected images exceed the byte limit")
+            content.append((media_type, base64.b64encode(raw).decode("ascii")))
+        return self._generate_chat_payload(model, self._chat_payload(messages, content))
 
     def generate_with_images(self, model: str, prompt: str, images, *, ocr_evidence=()) -> str:
         """Send owner-selected image bytes only after API-layer per-turn and cloud consent."""
