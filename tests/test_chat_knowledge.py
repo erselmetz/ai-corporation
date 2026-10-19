@@ -61,7 +61,7 @@ def test_no_automatic_retention_or_context(env):
     cid = start(client, headers)
     assert send(client, headers, cid).status_code == 200
     assert client.get(f"/api/chat/conversations/{cid}/retained").json()["items"] == []
-    assert "retrieved_context" not in prompts[-1]
+    assert "retrieved_context" not in json.loads(prompts[-1])
     traces = client.get(f"/api/chat/conversations/{cid}").json()["context_traces"]
     assert len(traces) == 1
     trace = next(iter(traces.values()))
@@ -101,6 +101,8 @@ def test_context_is_explicit_traced_and_untrusted(env):
     assert trace["sources"][0]["memory_id"] == memory["id"]
     assert trace["sources"][0]["revision"] == memory["revision"]
     sent = json.loads(prompts[-1])
+    assert "finish each factual answer" in sent["system_instruction"]
+    assert "one backslash per separator" in sent["system_instruction"]
     assert "untrusted" in str(sent["retrieved_context"])
     assert memory["id"] in str(sent["retrieved_context"])
     steps = trace["steps"]

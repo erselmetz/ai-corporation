@@ -46,6 +46,13 @@ def test_owner_presentation_preferences_are_prompted_without_routing_or_authorit
     prompt = json.loads(orchestrator.run_agent.call_args.args[1])
     assert prompt["presentation_preferences"] == preferences
     assert prompt["request"] == "Kumusta?"
+    assert "Prefer a concise answer" in prompt["system_instruction"]
+    assert "finish each factual answer" in prompt["system_instruction"]
+    assert "one backslash per separator" in prompt["system_instruction"]
+    assert "JSON text C:\\\\Temp represents path C:\\Temp" in prompt["system_instruction"]
+    assert "Do not infer private system settings from general conventions" in prompt["system_instruction"]
+    assert orchestrator.run_agent.call_args.args[1].startswith('{"system_instruction":')
+    assert '","corporation_id":' in orchestrator.run_agent.call_args.args[1]
     assert "provider" not in prompt["presentation_preferences"]
     assert "permission" not in prompt["presentation_preferences"]
 

@@ -7,6 +7,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
+from app.chat_prompt import split_ollama_chat_prompt
 from .availability import AvailabilityResult, AvailabilityState
 from .base import (
     AIProvider,
@@ -190,6 +191,10 @@ class OllamaProvider(AIProvider):
             raise ValueError("Invalid model identifier")
         if not isinstance(prompt, str) or len(prompt.encode("utf-8")) > 32768:
             raise ValueError("Prompt exceeds byte limit")
+        provider_prompt, system_instruction = split_ollama_chat_prompt(prompt)
+        request_body = {"model": model, "prompt": provider_prompt, "stream": True}
+        if system_instruction is not None:
+            request_body["system"] = system_instruction
         received_bytes = 0
         output_bytes = 0
         completed = False
@@ -200,7 +205,7 @@ class OllamaProvider(AIProvider):
                 with client.stream(
                     "POST",
                     f"{self.base_url}/api/generate",
-                    json={"model": model, "prompt": prompt, "stream": True},
+                    json=request_body,
                 ) as response:
                     response.raise_for_status()
                     for line in response.iter_lines():
@@ -267,16 +272,16 @@ class OllamaProvider(AIProvider):
         return bytes(payload)
 
     def generate(self, model: str, prompt: str) -> str:
+        provider_prompt, system_instruction = split_ollama_chat_prompt(prompt)
+        request_body = {"model": model, "prompt": provider_prompt, "stream": False}
+        if system_instruction is not None:
+            request_body["system"] = system_instruction
         with httpx.Client(
             timeout=120.0, trust_env=False, follow_redirects=False
         ) as client:
             response = client.post(
                 f"{self.base_url}/api/generate",
-                json={
-                    "model": model,
-                    "prompt": prompt,
-                    "stream": False,
-                },
+                json=request_body,
             )
             response.raise_for_status()
             data = response.json()
@@ -293,6 +298,7 @@ class OllamaProvider(AIProvider):
             raise ValueError("Invalid model identifier")
         if not isinstance(prompt, str) or len(prompt.encode("utf-8")) > 32768:
             raise ValueError("Prompt exceeds byte limit")
+        provider_prompt, system_instruction = split_ollama_chat_prompt(prompt)
         if not isinstance(images, tuple) or not 1 <= len(images) <= ChatImageStore.MAX_PER_CONVERSATION:
             raise ValueError("Select one to four images")
         total = 0
@@ -310,10 +316,12 @@ class OllamaProvider(AIProvider):
             raise RuntimeError("Ollama did not report vision support for the selected model; no image was sent")
         try:
             with httpx.Client(timeout=120.0, trust_env=False, follow_redirects=False) as client:
-                with client.stream(
-                    "POST", f"{self.base_url}/api/generate",
-                    json={"model": model, "prompt": prompt, "stream": False, "images": encoded},
-                ) as response:
+                request_body = {"model": model, "prompt": provider_prompt,
+                                "stream": False, "images": encoded}
+                if system_instruction is not None:
+                    request_body["system"] = system_instruction
+                with client.stream("POST", f"{self.base_url}/api/generate",
+                                   json=request_body) as response:
                     response.raise_for_status()
                     payload = bytearray()
                     deadline = time.monotonic() + 120.0

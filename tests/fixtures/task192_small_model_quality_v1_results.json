@@ -1,0 +1,209 @@
+{
+  "evaluation": "single-host live local model; no cloud calls",
+  "model": "llama3.2:3b",
+  "provider": "Ollama at 127.0.0.1:11434",
+  "prompt": "Coordinator system instruction sent through Ollama generate system field; compact JSON request; retrieval-off versus one selected cited fixture note",
+  "started_at_utc": "2026-10-19T03:59:43.103061+00:00",
+  "results": [
+    {
+      "id": "q01-atlas-port",
+      "retrieval": false,
+      "expected_found": false,
+      "equivalent_date": false,
+      "correct": false,
+      "citation_present": null,
+      "latency_ms": 787.7,
+      "answer": "The port used by the Atlas status page is not specified in the provided context."
+    },
+    {
+      "id": "q01-atlas-port",
+      "retrieval": true,
+      "expected_found": true,
+      "equivalent_date": false,
+      "correct": true,
+      "citation_present": true,
+      "latency_ms": 1050.4,
+      "answer": "The Atlas status page uses port 8123. [1]"
+    },
+    {
+      "id": "q02-cedar-maintenance",
+      "retrieval": false,
+      "expected_found": false,
+      "equivalent_date": false,
+      "correct": false,
+      "citation_present": null,
+      "latency_ms": 612.8,
+      "answer": "The provided context does not contain information about the scheduled maintenance of Cedar."
+    },
+    {
+      "id": "q02-cedar-maintenance",
+      "retrieval": true,
+      "expected_found": true,
+      "equivalent_date": false,
+      "correct": true,
+      "citation_present": true,
+      "latency_ms": 1101.7,
+      "answer": "Cedar maintenance is scheduled on Tuesday at 14:30 [1]."
+    },
+    {
+      "id": "q03-cedar-path",
+      "retrieval": false,
+      "expected_found": false,
+      "equivalent_date": false,
+      "correct": false,
+      "citation_present": null,
+      "latency_ms": 587.3,
+      "answer": "The Cedar project folder path is not provided in the retrieved context."
+    },
+    {
+      "id": "q03-cedar-path",
+      "retrieval": true,
+      "expected_found": true,
+      "equivalent_date": false,
+      "correct": true,
+      "citation_present": true,
+      "latency_ms": 1070.4,
+      "answer": "The Cedar project folder path is D:\\Work\\Cedar.[1]"
+    },
+    {
+      "id": "q04-cedar-lead",
+      "retrieval": false,
+      "expected_found": false,
+      "equivalent_date": false,
+      "correct": false,
+      "citation_present": null,
+      "latency_ms": 1383.7,
+      "answer": "I couldn't find any information on a company named \"Cedar\" or its QA lead. The provided context and history are empty, and no corporation ID is provided for \"corp_local\"."
+    },
+    {
+      "id": "q04-cedar-lead",
+      "retrieval": true,
+      "expected_found": true,
+      "equivalent_date": false,
+      "correct": true,
+      "citation_present": true,
+      "latency_ms": 1016.0,
+      "answer": "Nia Flores is the QA lead for Cedar.[1]"
+    },
+    {
+      "id": "q05-rollback",
+      "retrieval": false,
+      "expected_found": false,
+      "equivalent_date": false,
+      "correct": false,
+      "citation_present": null,
+      "latency_ms": 1205.2,
+      "answer": "I couldn't find any information on rolling back a specific release version 42. The conversation context and request don't provide enough information to determine the exact command."
+    },
+    {
+      "id": "q05-rollback",
+      "retrieval": true,
+      "expected_found": true,
+      "equivalent_date": false,
+      "correct": true,
+      "citation_present": true,
+      "latency_ms": 1271.8,
+      "answer": "The exact command to roll back release 42 is \"revert deploy 42.\" [1]"
+    },
+    {
+      "id": "q06-branch",
+      "retrieval": false,
+      "expected_found": false,
+      "equivalent_date": false,
+      "correct": false,
+      "citation_present": null,
+      "latency_ms": 2210.1,
+      "answer": "Unfortunately, the provided context and request do not contain information about the staging branch for the Northstar release. The staging branch for a Northstar release would typically be determined by a specific use case, project requirements, or a established convention within the organization. Without this information, it is not possible to provide a specific answer."
+    },
+    {
+      "id": "q06-branch",
+      "retrieval": true,
+      "expected_found": true,
+      "equivalent_date": false,
+      "correct": true,
+      "citation_present": true,
+      "latency_ms": 1248.7,
+      "answer": "The staging branch the Northstar release should use is release/copper-7. [1]"
+    },
+    {
+      "id": "q07-cache-ttl",
+      "retrieval": false,
+      "expected_found": false,
+      "equivalent_date": false,
+      "correct": false,
+      "citation_present": null,
+      "latency_ms": 713.4,
+      "answer": "Unfortunately, the provided context does not contain information about the cache TTL configuration for Beacon."
+    },
+    {
+      "id": "q07-cache-ttl",
+      "retrieval": true,
+      "expected_found": true,
+      "equivalent_date": false,
+      "correct": true,
+      "citation_present": true,
+      "latency_ms": 1413.3,
+      "answer": "The cache TTL for Beacon is 311 seconds, as stated in the \"quality-note-07\" source [1]."
+    },
+    {
+      "id": "q08-operations-room",
+      "retrieval": false,
+      "expected_found": false,
+      "equivalent_date": false,
+      "correct": false,
+      "citation_present": null,
+      "latency_ms": 614.1,
+      "answer": "The conversation context is missing relevant information about the corporation or chat room."
+    },
+    {
+      "id": "q08-operations-room",
+      "retrieval": true,
+      "expected_found": true,
+      "equivalent_date": false,
+      "correct": true,
+      "citation_present": true,
+      "latency_ms": 1334.3,
+      "answer": "According to the retrieved context, Phoenix operations are handled in the #ops-northstar chat room [1]."
+    },
+    {
+      "id": "q09-invoice-tag",
+      "retrieval": false,
+      "expected_found": false,
+      "equivalent_date": false,
+      "correct": false,
+      "citation_present": null,
+      "latency_ms": 523.9,
+      "answer": "The answer could not be determined from the provided context."
+    },
+    {
+      "id": "q09-invoice-tag",
+      "retrieval": true,
+      "expected_found": true,
+      "equivalent_date": false,
+      "correct": true,
+      "citation_present": true,
+      "latency_ms": 1180.2,
+      "answer": "The tag identifying invoice 2047 is INV-2047-L. [1]"
+    },
+    {
+      "id": "q10-freeze-date",
+      "retrieval": false,
+      "expected_found": false,
+      "equivalent_date": false,
+      "correct": false,
+      "citation_present": null,
+      "latency_ms": 649.6,
+      "answer": "I don't have information on the Quasar feature. No source found."
+    },
+    {
+      "id": "q10-freeze-date",
+      "retrieval": true,
+      "expected_found": true,
+      "equivalent_date": false,
+      "correct": true,
+      "citation_present": true,
+      "latency_ms": 1181.0,
+      "answer": "The Quasar feature freeze begins on 2026-11-12 [1]."
+    }
+  ]
+}

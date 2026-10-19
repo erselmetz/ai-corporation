@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from app.api.app import create_app
 from app.api.security import AuthenticatedPrincipal
 from app.application.services.owned_chat import ChatConflict
+from app.chat_prompt import CHAT_SYSTEM_INSTRUCTION, build_chat_prompt
 from app.local import create_local_app
 from app.providers import AIProvider, OllamaProvider
 from app.providers.inventory import LocalModelInventory
@@ -256,6 +257,31 @@ def test_ollama_runtime_malformed_or_unreachable_is_explicit_unknown(monkeypatch
     monkeypatch.setattr("app.providers.ollama.httpx.Client", factory)
     observed = OllamaProvider().local_model_runtime()
     assert observed.state == "unknown" and not observed.models
+
+
+def test_ollama_chat_prompt_uses_the_separate_system_field(monkeypatch):
+    requests = []
+    real_client = httpx.Client
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200, json={"response": "ok"})
+
+    def factory(**kwargs):
+        return real_client(transport=httpx.MockTransport(handler), **kwargs)
+
+    monkeypatch.setattr("app.providers.ollama.httpx.Client", factory)
+    prompt = build_chat_prompt({"request": "Hello"})
+    provider = OllamaProvider("http://127.0.0.1:11434")
+    assert provider.generate("llama3.2:3b", prompt) == "ok"
+    payload = json.loads(requests[0].read())
+    assert payload["system"] == CHAT_SYSTEM_INSTRUCTION
+    assert json.loads(payload["prompt"]) == {"request": "Hello"}
+    assert "system_instruction" not in payload["prompt"]
+
+    assert provider.generate("llama3.2:3b", "plain prompt") == "ok"
+    plain = json.loads(requests[1].read())
+    assert plain == {"model": "llama3.2:3b", "prompt": "plain prompt", "stream": False}
 
 
 def test_ollama_stream_yields_only_real_bounded_chunks_until_final_marker(monkeypatch):

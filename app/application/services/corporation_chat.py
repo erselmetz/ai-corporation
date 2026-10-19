@@ -8,8 +8,8 @@ from app.conversations import ChatMessageSummary, EmployeeChatService, MessageRo
 from app.orchestrator import Orchestrator
 from app.orchestrator.task import TaskStatus
 from app.providers.base import ProviderCapacityError
+from app.chat_prompt import build_chat_prompt as _chat_prompt
 from .chat_history import ChatHistoryError
-
 
 @dataclass(frozen=True)
 class CorporationConversationSummary:
@@ -166,7 +166,7 @@ class CorporationChatService:
             payload["retrieved_context"] = retrieved_context
         if presentation_preferences is not None:
             payload["presentation_preferences"] = presentation_preferences
-        prompt = json.dumps(payload, ensure_ascii=True)
+        prompt = _chat_prompt(payload)
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
             raise ValueError("Prompt exceeds byte limit")
         if prompt_observer is not None:
@@ -247,7 +247,7 @@ class CorporationChatService:
         }
         if presentation_preferences is not None:
             payload["presentation_preferences"] = presentation_preferences
-        prompt = json.dumps(payload, ensure_ascii=True)
+        prompt = _chat_prompt(payload)
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
             raise ValueError("Prompt exceeds byte limit")
         user_id, reply_id = uuid4().hex, uuid4().hex
@@ -303,7 +303,7 @@ class CorporationChatService:
             payload["retrieved_context"] = retrieved_context
         if presentation_preferences is not None:
             payload["presentation_preferences"] = presentation_preferences
-        prompt = json.dumps(payload, ensure_ascii=True)
+        prompt = _chat_prompt(payload)
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
             raise ValueError("Prompt exceeds byte limit")
         user_id, reply_id = uuid4().hex, uuid4().hex

@@ -26,8 +26,8 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-192-192");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 192 }, (_, index) => 192 - index));
-  assert.match(elements["roadmap-summary"].textContent, /192 roadmap tasks.*188 completed.*2 deferred and incomplete.*1 planned.*1 design only/);
-  assert.match(elements["next-task"].textContent, /Next: Task 192/);
+  assert.match(elements["roadmap-summary"].textContent, /192 roadmap tasks.*189 completed.*2 deferred and incomplete.*0 planned.*1 design only/);
+  assert.match(elements["next-task"].textContent, /No remaining planned task/);
   const newest = items[0];
   assert.equal(newest.children[4].textContent, "AI-verified (deterministic/fake evidence recorded)");
   assert.equal(newest.children[5].textContent, "Real hardware/live provider: partially verified");
@@ -44,7 +44,8 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.equal(tasks.find(task => task.number === 191).status, "completed");
   assert.equal(tasks.find(task => task.number === 191).realWorldVerification.status, "partial");
   assert.match(tasks.find(task => task.number === 191).limitations.join(" "), /Manual clean-Windows-profile acceptance remains pending/);
-  assert.equal(tasks.find(task => task.number === 192).status, "planned");
+  assert.equal(tasks.find(task => task.number === 192).status, "completed");
+  assert.equal(tasks.find(task => task.number === 192).checkpoint, "task-192-small-model-answer-quality");
   assert.equal(tasks.find(task => task.number === 166).status, "completed");
   assert.equal(tasks.find(task => task.number === 166).checkpoint, "task-166-opt-in-proactive-suggestions");
   assert.match(tasks.find(task => task.number === 166).validation.join(" "), /194 passed/);
@@ -157,7 +158,7 @@ test("publishes completed milestones and remaining phases with their current sta
   assert.deepEqual(planned.map(task => [task.number, task.status]), [
     [174, "completed"], [175, "completed"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
     [180, "completed"], [181, "completed"], [182, "completed"], [183, "completed"], [184, "completed"], [185, "completed"],
-    [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"], [191, "completed"], [192, "planned"],
+    [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"], [191, "completed"], [192, "completed"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, "task-177-auto-rag-trace");
   assert.equal(tasks.find(task => task.number === 178).checkpoint, "task-178-nav-fix");

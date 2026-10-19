@@ -1,0 +1,77 @@
+{
+  "version": "1.0.0",
+  "model": "llama3.2:3b",
+  "description": "Real local single-run answer-quality set. No live calls occur in automated tests; each case has an owner-selected note, exact expected value, and question.",
+  "cases": [
+    {
+      "id": "q01-atlas-port",
+      "question": "What port does the Atlas status page use?",
+      "source": "quality-note-01",
+      "note": "Atlas status page uses port 8123.",
+      "expected": "8123"
+    },
+    {
+      "id": "q02-cedar-maintenance",
+      "question": "When is Cedar maintenance scheduled?",
+      "source": "quality-note-02",
+      "note": "Cedar maintenance is scheduled Tuesday at 14:30.",
+      "expected": "Tuesday at 14:30"
+    },
+    {
+      "id": "q03-cedar-path",
+      "question": "What is the Cedar project folder path?",
+      "source": "quality-note-03",
+      "note": "The Cedar project folder is D:\\Work\\Cedar.",
+      "expected": "D:\\Work\\Cedar"
+    },
+    {
+      "id": "q04-cedar-lead",
+      "question": "Who is the QA lead for Cedar?",
+      "source": "quality-note-04",
+      "note": "Nia Flores is the QA lead for Cedar.",
+      "expected": "Nia Flores"
+    },
+    {
+      "id": "q05-rollback",
+      "question": "What exact command rolls back release 42?",
+      "source": "quality-note-05",
+      "note": "The rollback command for release 42 is revert deploy 42.",
+      "expected": "revert deploy 42"
+    },
+    {
+      "id": "q06-branch",
+      "question": "What staging branch should the Northstar release use?",
+      "source": "quality-note-06",
+      "note": "Use the release/copper-7 branch for Northstar staging.",
+      "expected": "release/copper-7"
+    },
+    {
+      "id": "q07-cache-ttl",
+      "question": "What cache TTL is configured for Beacon?",
+      "source": "quality-note-07",
+      "note": "Beacon cache TTL is 311 seconds.",
+      "expected": "311 seconds"
+    },
+    {
+      "id": "q08-operations-room",
+      "question": "Which chat room handles Phoenix operations?",
+      "source": "quality-note-08",
+      "note": "Phoenix operations are handled in #ops-northstar.",
+      "expected": "#ops-northstar"
+    },
+    {
+      "id": "q09-invoice-tag",
+      "question": "What tag identifies invoice 2047?",
+      "source": "quality-note-09",
+      "note": "The tag for invoice 2047 is INV-2047-L.",
+      "expected": "INV-2047-L"
+    },
+    {
+      "id": "q10-freeze-date",
+      "question": "When does the Quasar feature freeze begin?",
+      "source": "quality-note-10",
+      "note": "The Quasar feature freeze begins on 2026-11-12.",
+      "expected": "2026-11-12"
+    }
+  ]
+}
