@@ -218,6 +218,19 @@ class ChatTaskProposalService:
             self._proposals[identifier] = record
         return _public(identifier, record)
 
+    def delete_for_conversation(self, owner_id: str, conversation_id: str) -> None:
+        """Remove unused owner proposals when their source chat is deleted."""
+        _text(owner_id, "owner_id", 256)
+        _text(conversation_id, "conversation_id", 256)
+        with self._lock:
+            for identifier, proposal in tuple(self._proposals.items()):
+                if proposal.owner_id == owner_id and proposal.conversation_id == conversation_id:
+                    self._proposals.pop(identifier, None)
+                    if self._persistence is not None:
+                        self._persistence.expire_proposal(identifier)
+            if self._persistence is not None:
+                self._persistence.delete_prepared_proposals_for_conversation(owner_id, conversation_id)
+
     def list_history(self, owner_id: str) -> tuple[dict, ...]:
         _text(owner_id, "owner_id", 256)
         if self._persistence is None:

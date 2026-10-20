@@ -3,7 +3,7 @@ import test from "node:test";
 import { mountChat, voiceTranscriptSourceLabel } from "../app/webui/static/chat.mjs";
 
 class Element {
-  constructor(tag = "") { this.tag = tag; this.tagName = tag.toUpperCase(); this.children = []; this.value = ""; this.text = ""; this.listeners = {}; this.disabled = false; this.hidden = false; this.style = {}; this.attributes = {}; }
+  constructor(tag = "") { this.tag = tag; this.tagName = tag.toUpperCase(); this.children = []; this.value = ""; this.text = ""; this.listeners = {}; this.disabled = false; this.hidden = false; this.open = false; this.style = {}; this.attributes = {}; }
   get textContent() { return this.text + this.children.map(item => item.textContent).join(""); }
   set textContent(value) { this.text = value; this.children = []; }
   set innerHTML(_) { throw new Error("HTML injection is forbidden"); }
@@ -12,6 +12,7 @@ class Element {
   setAttribute(name, value) { this.attributes[name] = value; }
   getAttribute(name) { return this.attributes[name] ?? null; }
   dispatchEvent() {}
+  click() { this.listeners.click?.({ preventDefault() {}, target: this, currentTarget: this }); }
   requestSubmit() { this.listeners.submit?.({ preventDefault() {} }); }
   focus() { this.focused = true; }
   addEventListener(event, handler) {
@@ -63,7 +64,7 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
     "chat-task-context-query", "chat-task-context-scope", "chat-task-context-id",
     "chat-task-outcome", "chat-task-verification", "chat-task-evidence",
     "chat-stop-display", "repository-study-form", "repository-study-objective",
-    "chat-knowledge-enabled", "chat-knowledge-scopes", "chat-knowledge-owner",
+    "chat-knowledge-enabled", "chat-knowledge-panel", "chat-knowledge-scopes", "chat-knowledge-owner",
     "chat-knowledge-conversation", "chat-knowledge-extra-enabled", "chat-knowledge-extra-scope",
     "chat-knowledge-extra-id", "chat-knowledge-preview", "chat-knowledge-state",
     "chat-knowledge-preview-result", "chat-capture-local-prompt",
@@ -72,7 +73,11 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
     "repository-study-owner", "repository-study-name", "repository-study-submit",
     "repository-study-state", "repository-study-result",
     "chat-stop-request", "voice-mode", "voice-language", "voice-start", "voice-stop",
-    "chat-empty-state", "chat-conversation-list", "chat-nav-toggle", "chat-settings",
+    "chat-empty-state", "chat-conversation-list", "chat-earlier-list", "chat-earlier-label",
+    "chat-search", "chat-nav-toggle", "chat-menu-button", "chat-sidebar", "chat-emergency-stop",
+    "chat-add-image-action", "chat-camera-action", "chat-screen-action", "chat-knowledge-menu-toggle",
+    "chat-image-file", "chat-capture-camera", "chat-capture-screen",
+    "chat-mic", "chat-theme-toggle", "chat-settings", "chat-header-model",
     "response-preferences-label",
     "voice-transcribe", "voice-install-local", "voice-cloud-consent", "voice-budget-form",
     "voice-budget-cents", "voice-budget-save", "voice-budget-state", "voice-state",
@@ -84,6 +89,7 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
       "chat-route-select"].includes(id) ? "select" : "",
   )]));
   elements["chat-history"].dataset = {};
+  elements["chat-emergency-stop"].hidden = true;
   for (const id of ["chat-knowledge-enabled", "chat-knowledge-owner", "chat-knowledge-conversation", "chat-knowledge-extra-enabled"]) elements[id].checked = false;
   const calls = [];
   const planConfirmations = [];
@@ -97,7 +103,7 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
     if (path === "/api/agents") return response({ items: [agent] });
     if (path === "/api/local/session") return response({
       csrf: "test-csrf",
-      permissions: ["chat-task:create", "github:read", "documentation:read"],
+      permissions: ["chat-task:create", "github:read", "documentation:read", "chat-history:manage"],
     });
     if (path === "/api/local/preferences") return response({ preferences: {
       response_mode: "balanced", locale: "en-US", detail_level: "standard",
@@ -111,13 +117,15 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
     if (path.endsWith("/close")) return response(snapshot([], "closed"));
     return response(snapshot());
   };
-  const documentRef = { getElementById: id => elements[id], documentElement: {}, body: { classList: { toggle: () => true, contains: () => false, remove() {} } }, createElement: tag => new Element(tag), createTextNode: value => ({ textContent: String(value) }), querySelectorAll: () => [] };
+  const bodyClasses = new Set();
+  const documentListeners = new Map();
+  const documentRef = { getElementById: id => elements[id], documentElement: {}, body: { classList: { toggle: (name, value = !bodyClasses.has(name)) => { if (value) bodyClasses.add(name); else bodyClasses.delete(name); return value; }, contains: name => bodyClasses.has(name), remove: name => bodyClasses.delete(name) } }, createElement: tag => new Element(tag), createTextNode: value => ({ textContent: String(value) }), querySelectorAll: () => [], addEventListener: (name, callback) => documentListeners.set(name, [...(documentListeners.get(name) || []), callback]) };
   for (const [id, item] of Object.entries(elements)) item.id = id;
   const controller = mountChat({ documentRef, fetchImpl, confirmImpl: message => {
     planConfirmations.push(message);
     return confirmImpl(message);
   }, windowRef });
-  return { controller, elements, calls, planConfirmations };
+  return { controller, elements, calls, planConfirmations, bodyClasses, documentListeners, documentRef };
 }
 
 test("local transcript is added after an unsent typed draft and never submits the chat", async () => {
@@ -161,6 +169,162 @@ test("composer sends on Enter, keeps Shift+Enter for a newline, and stays keyboa
   ui.elements["chat-input"].listeners.keydown({ key: "Enter", shiftKey: true, isComposing: false, preventDefault: () => { prevented += 1; } });
   assert.equal(submissions, 1);
   assert.equal(prevented, 1);
+});
+
+test("plus actions stay explicit and start only the chosen capture or knowledge control", async () => {
+  const ui = setup();
+  await ui.controller.initialLoad;
+  assert.equal(ui.elements["chat-settings"].open, false);
+  let imageClicks = 0; let cameraClicks = 0; let screenClicks = 0;
+  ui.elements["chat-image-file"].addEventListener("click", () => imageClicks++);
+  ui.elements["chat-capture-camera"].addEventListener("click", () => cameraClicks++);
+  ui.elements["chat-capture-screen"].addEventListener("click", () => screenClicks++);
+  ui.elements["chat-add-image-action"].click();
+  ui.elements["chat-camera-action"].click();
+  ui.elements["chat-screen-action"].click();
+  assert.deepEqual([imageClicks, cameraClicks, screenClicks], [1, 1, 1]);
+  ui.elements["chat-knowledge-menu-toggle"].listeners.change({ target: { checked: true } });
+  assert.equal(ui.elements["chat-knowledge-enabled"].checked, true);
+  assert.equal(ui.elements["chat-knowledge-panel"].open, true);
+});
+
+test("narrow sidebar uses the menu toggle and Escape closes it", async () => {
+  const callbacks = new Map();
+  const windowRef = {
+    location: { search: "" },
+    matchMedia: () => ({ matches: true, addEventListener() {} }),
+    addEventListener: (name, callback) => callbacks.set(name, [...(callbacks.get(name) || []), callback]),
+  };
+  const ui = setup(null, windowRef); await ui.controller.initialLoad;
+  ui.elements["chat-menu-button"].click();
+  assert.equal(ui.bodyClasses.has("navigation-open"), true);
+  assert.equal(ui.elements["chat-menu-button"].attributes["aria-expanded"], "true");
+  ui.documentListeners.get("keydown")[0]({ key: "Escape" });
+  assert.equal(ui.bodyClasses.has("navigation-open"), false);
+});
+
+test("dark theme is the default and the explicit toggle persists light and dark", async () => {
+  const storage = new Map();
+  const windowRef = {
+    location: { search: "" },
+    localStorage: { getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value) },
+    matchMedia: () => ({ matches: false, addEventListener() {} }),
+    addEventListener() {},
+  };
+  const ui = setup(null, windowRef);
+  await ui.controller.initialLoad;
+  assert.equal(ui.documentRef.body.dataset.theme, "dark");
+  ui.elements["chat-theme-toggle"].click();
+  assert.equal(ui.documentRef.body.dataset.theme, "light");
+  assert.equal(storage.get("ersel-chat-theme-v1"), "light");
+  ui.elements["chat-theme-toggle"].click();
+  assert.equal(ui.documentRef.body.dataset.theme, "dark");
+});
+
+test("conversation sidebar groups by date, supports search, rename, and pin", async () => {
+  const storage = new Map();
+  const callbacks = new Map();
+  const windowRef = {
+    location: { search: "" },
+    localStorage: { getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value) },
+    prompt: () => "Renamed chat",
+    matchMedia: () => ({ matches: false, addEventListener() {} }),
+    addEventListener: (name, callback) => callbacks.set(name, [...(callbacks.get(name) || []), callback]),
+    dispatchEvent() {}, CustomEvent: class {},
+  };
+  const oldDate = new Date(Date.now() - 2 * 86400000).toISOString();
+  const ui = setup(path => path === "/api/chat/conversations" ? response({ items: [
+    { id: "today-id", coordinator: agent, created_at: new Date().toISOString() },
+    { id: "earlier-id", coordinator: agent, created_at: oldDate },
+  ] }) : null, windowRef);
+  await ui.controller.initialLoad;
+  assert.equal(ui.elements["chat-conversation-list"].children.length, 1);
+  assert.equal(ui.elements["chat-earlier-list"].children.length, 1);
+  assert.equal(ui.elements["chat-earlier-label"].hidden, false);
+  const actions = ui.elements["chat-conversation-list"].children[0].children[1];
+  actions.children[1].click();
+  assert.match(ui.elements["chat-conversation-list"].textContent, /Renamed chat/);
+  const refreshedActions = ui.elements["chat-conversation-list"].children[0].children[1];
+  refreshedActions.children[2].click();
+  assert.match(ui.elements["chat-conversation-list"].textContent, /Pinned/);
+  ui.elements["chat-search"].value = "not found";
+  ui.elements["chat-search"].listeners.input();
+  assert.equal(ui.elements["chat-conversation-list"].children.length, 0);
+});
+
+test("answer trace is collapsed by default and remains available after a reply", async () => {
+  const trace = { route: { agent: "Local Worker", provider: "ollama", model: "llama3.2:3b" }, steps: [] };
+  const ui = setup(path => path.endsWith("/messages")
+    ? response({ ...snapshot([message("assistant", "completed", "Answer")]), context_traces: { assistant: trace } })
+    : null);
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-input"].value = "Question";
+  await ui.controller.send({ preventDefault() {} });
+  const answer = ui.elements["chat-history"].children.find(item => item.className === "chat-message chat-message-assistant");
+  const details = answer.children.find(item => item.className === "chat-answer-trace");
+  assert.ok(details);
+  assert.equal(details.open, false);
+  assert.equal(details.children[0].textContent, "How I answered");
+  assert.equal(ui.elements["chat-empty-state"].hidden, true);
+});
+
+test("delete is visible only to an authorized owner and sends an explicit confirmed delete", async () => {
+  const ui = setup((path, options) => {
+    if (path === "/api/chat/conversations") return response({ items: [{
+      id: "conversation-to-delete", coordinator: agent, created_at: new Date().toISOString(),
+    }] });
+    if (path === "/api/chat/conversations/conversation-to-delete" && options?.method === "DELETE") return response({ deleted: "conversation-to-delete" });
+    return null;
+  });
+  await ui.controller.initialLoad;
+  const row = ui.elements["chat-conversation-list"].children[0];
+  const actions = row.children[1];
+  const remove = actions.children.find(child => child.textContent === "Delete");
+  assert.ok(remove);
+  await remove.listeners.click();
+  assert.ok(ui.calls.some(call => call.path === "/api/chat/conversations/conversation-to-delete"
+    && call.options?.method === "DELETE" && call.options.headers["X-Local-CSRF"] === "test-csrf"));
+  assert.equal(ui.elements["chat-conversation-list"].children.length, 0);
+});
+
+test("emergency stop is hidden until protected activity is reported", async () => {
+  const callbacks = new Map();
+  const windowRef = {
+    location: { search: "" }, matchMedia: () => ({ matches: false, addEventListener() {} }),
+    addEventListener: (name, callback) => callbacks.set(name, [...(callbacks.get(name) || []), callback]),
+    dispatchEvent() {}, CustomEvent: class {},
+  };
+  const ui = setup(null, windowRef);
+  await ui.controller.initialLoad;
+  const button = ui.elements["chat-emergency-stop"];
+  assert.equal(button.hidden, true);
+  for (const callback of callbacks.get("ersel:voice-activity") || []) callback({ detail: { microphone: "active", local_playback: "off" } });
+  assert.equal(button.hidden, false);
+  for (const callback of callbacks.get("ersel:voice-activity") || []) callback({ detail: { microphone: "inactive", local_playback: "off" } });
+  assert.equal(button.hidden, true);
+});
+
+test("emergency stop appears for each protected activity source and hides when it ends", async () => {
+  const callbacks = new Map();
+  const windowRef = {
+    location: { search: "" }, matchMedia: () => ({ matches: false, addEventListener() {} }),
+    addEventListener: (name, callback) => callbacks.set(name, [...(callbacks.get(name) || []), callback]),
+    dispatchEvent() {}, CustomEvent: class {},
+  };
+  const ui = setup(null, windowRef); await ui.controller.initialLoad;
+  const button = ui.elements["chat-emergency-stop"];
+  const events = [
+    ["ersel:voice-activity", { microphone: "active", local_playback: "off" }, { microphone: "inactive", local_playback: "off" }],
+    ["ersel:voice-activity", { microphone: "inactive", local_playback: "active" }, { microphone: "inactive", local_playback: "off" }],
+    ["ersel:camera-activity", { state: "active" }, { state: "inactive" }],
+    ["ersel:screen-capture-activity", { state: "active" }, { state: "inactive" }],
+    ["ersel:automation-activity", { state: "active" }, { state: "inactive" }],
+  ];
+  for (const [name, active, inactive] of events) {
+    callbacks.get(name)[0]({ detail: active }); assert.equal(button.hidden, false, name);
+    callbacks.get(name)[0]({ detail: inactive }); assert.equal(button.hidden, true, name);
+  }
 });
 
 test("Send becomes Stop while a turn is pending and aborts local waiting without replay", async () => {
@@ -216,7 +380,9 @@ test("Electron direct launch opens a coordinator conversation and sends local ch
   }, { location: { search: "?desktop=1", pathname: "/ui/chat" } }, () => false);
   assert.equal(await ui.controller.initialLoad, true);
   assert.equal(ui.calls.some(call => call.path === "/api/chat/conversations" && call.options?.method === "POST"), true);
-  assert.match(ui.elements["chat-state"].textContent, /Coordinator Chat is ready/);
+  assert.equal(ui.elements["chat-state"].textContent, "");
+  assert.equal(ui.elements["chat-agent"].children[0].textContent, "configured-model");
+  assert.equal(ui.elements["chat-header-model"].textContent, "configured-model");
   ui.elements["chat-input"].value = "hello";
   assert.equal(await ui.controller.send({ preventDefault() {} }), true);
   assert.equal(ui.planConfirmations.length, 0);
@@ -324,7 +490,7 @@ test("streaming chat renders provider chunks and verifies the completed response
   assert.equal(post.options.headers["X-Local-CSRF"], "test-csrf");
   assert.deepEqual(JSON.parse(post.options.body), { text: "Hello" });
   assert.match(ui.elements["chat-history"].textContent, /assistant - completedfirst reply/);
-  assert.match(ui.elements["chat-state"].textContent, /Stream completed/);
+  assert.equal(ui.elements["chat-state"].textContent, "");
   assert.equal(ui.elements["chat-stop-display"].hidden, true);
 });
 

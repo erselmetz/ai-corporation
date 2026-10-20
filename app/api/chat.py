@@ -1068,6 +1068,15 @@ def close_conversation(identifier: str, principal=Depends(require_permission("ch
         return service.owned_chat().close(principal.identity, identifier)
 
 
+@router.delete("/{identifier}")
+def delete_conversation(identifier: str, principal=Depends(require_permission("chat-history:manage")),
+                        service=Depends(get_application_service)):
+    with chat_errors():
+        result = service.owned_chat().delete(principal.identity, identifier)
+        service.chat_task_proposals().delete_for_conversation(principal.identity, identifier)
+        return result
+
+
 @router.post("/{identifier}/task-proposals")
 def create_task_proposal(
     identifier: str,

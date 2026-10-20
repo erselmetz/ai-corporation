@@ -92,6 +92,21 @@ class CorporationChatService:
             self.history.close(conversation_id)
         return self.get(conversation_id)
 
+    def delete(self, owner_id: str, conversation_id: str):
+        """Delete this owner's live conversation and any explicitly retained copy."""
+        record = self.get(conversation_id)
+        if any(message.status is MessageStatus.PENDING for message in record.messages):
+            raise ValueError("Cannot delete a conversation with a pending message")
+        if self._durable(conversation_id):
+            self.history.delete(owner_id, conversation_id)
+        self._chat.delete_conversation(conversation_id)
+        related_reviews = [identifier for identifier, review in self._reviews.items()
+                           if review.conversation_id == conversation_id]
+        for identifier in related_reviews:
+            self._reviews.pop(identifier, None)
+            self._used_reviews.discard(identifier)
+        return {"deleted": record.id}
+
     def retain_message(self, conversation_id: str, message_id: str, *, memory_id: str,
                        owner_id: str, expires_at, now, retention_opt_in: bool = False):
         """Explicit trusted-local retention; never called automatically by send."""

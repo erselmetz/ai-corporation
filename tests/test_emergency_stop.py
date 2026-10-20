@@ -79,12 +79,14 @@ def test_emergency_stop_is_process_local_and_idempotent():
     assert service.resume()["stopped"] is False
 
 
-def test_dashboard_and_chat_expose_unified_capability_controls_and_capture_state():
+def test_capability_controls_are_in_settings_and_chat_stays_minimal():
     app = create_local_app(password=PASSWORD, application_service=MagicMock())
     with TestClient(app, base_url=ORIGIN, client=("127.0.0.1", 50146)) as client:
         dashboard = client.get("/ui").text
         chat = client.get("/ui/chat").text
-    for page in (dashboard, chat):
+        settings = client.get("/ui/settings/capabilities").text
+    assert 'id="emergency-stop"' not in dashboard
+    for page in (settings,):
         assert 'id="emergency-stop"' in page
         assert 'id="emergency-resume"' in page
         assert 'id="emergency-activity"' in page
@@ -111,4 +113,24 @@ def test_dashboard_and_chat_expose_unified_capability_controls_and_capture_state
         assert "Session permissions end at sign-out or session expiry" in page
         assert "/ui/static/emergency-stop.mjs" in page
     assert "App-managed capability packs are unavailable" in dashboard
-    assert "Install browser speech language pack" in chat
+    assert 'id="emergency-stop"' not in chat
+    assert 'id="capability-indicators"' not in chat
+    assert 'id="chat-emergency-stop"' in chat
+    assert 'id="chat-add-image-action"' in chat
+    assert 'id="chat-camera-action"' in chat
+    assert 'id="chat-screen-action"' in chat
+    assert 'id="chat-knowledge-menu-toggle"' in chat
+    assert 'id="chat-header-model"' in chat
+    composer = chat[chat.index('<form id="chat-form"'):]
+    composer = composer[:composer.index('</form>')]
+    assert composer.index('id="chat-agent"') < composer.index('id="chat-mic"') < composer.index('id="chat-send"')
+    assert "Capability controls" not in chat
+    assert 'href="/ui/settings/capabilities"' in chat
+    assert 'class="navigation shared-navigation"' not in chat
+    assert 'aria-label="Advanced pages"' in chat
+    assert chat.index('id="chat-refresh"') > chat.index('<summary>Advanced</summary>')
+    assert chat.index('id="chat-close"') > chat.index('<summary>Advanced</summary>')
+    assert 'id="voice-budget-form"' in chat
+    assert 'id="emergency-permissions"' not in chat
+    assert 'id="emergency-stop"' not in chat
+    assert 'id="emergency-stop"' in settings

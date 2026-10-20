@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from threading import Lock, RLock
 from typing import TYPE_CHECKING, Callable
 from uuid import uuid4
@@ -47,6 +48,7 @@ class _OwnedConversation:
     coordinator: AgentSummary
     provider: object = field(repr=False, compare=False)
     lock: Lock
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class OwnedChatService:
@@ -131,7 +133,8 @@ class OwnedChatService:
 
     def list(self, owner: str):
         with self._catalog_lock:
-            return tuple({"id": identifier, "coordinator": entry.coordinator}
+            return tuple({"id": identifier, "coordinator": entry.coordinator,
+                          "created_at": entry.created_at.isoformat()}
                          for identifier, entry in self._entries.items() if entry.owner == owner)
 
     @contextmanager
@@ -261,6 +264,21 @@ class OwnedChatService:
             result = self._chat.close(identifier)
             self._image_store.clear_conversation(owner, identifier)
             return {"conversation": result, "coordinator": entry.coordinator}
+
+    def delete(self, owner, identifier):
+        with self._catalog_lock:
+            entry = self._entries.get(identifier)
+            if entry is None or entry.owner != owner:
+                raise ChatNotFound("Conversation not found")
+            if not entry.lock.acquire(blocking=False):
+                raise ChatConflict("Conversation is busy; wait for the current request")
+            try:
+                result = self._chat.delete(owner, identifier)
+                self._image_store.clear_conversation(owner, identifier)
+                del self._entries[identifier]
+                return result
+            finally:
+                entry.lock.release()
 
     def attach_image(self, owner, identifier, data: bytes, media_type: str, **provenance):
         with self._access(owner, identifier):

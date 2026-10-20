@@ -126,9 +126,9 @@ def test_chat_page_keeps_advanced_actions_collapsed_by_default():
         dashboard = client.get("/ui")
 
     assert page.status_code == 200
-    assert "What can I help with?" in page.text
+    assert "How can I help?" in page.text
     assert 'id="chat-settings"' in page.text
-    assert 'href="/ui/static/chat-ui.css"' in page.text
+    assert 'href="/ui/static/chat-ui.css?v=195"' in page.text
     assert "Start Chat" in dashboard.text
     assert '<details class="chat-advanced">' in page.text
     assert "Optional voice input and reply audio" in page.text

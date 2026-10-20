@@ -63,7 +63,8 @@ def test_every_ui_page_browser_layout_and_script_health(tmp_path):
         async def startup(self, sockets=None):
             await super().startup(sockets=sockets)
             started.set()
-    server = Server(uvicorn.Config(app, log_level="error", proxy_headers=False))
+    server = Server(uvicorn.Config(app, log_level="error", proxy_headers=False,
+                                   timeout_graceful_shutdown=2))
     thread = Thread(target=server.run, kwargs={"sockets": [listener]}, daemon=True)
     thread.start()
     try:
@@ -83,6 +84,7 @@ def test_every_ui_page_browser_layout_and_script_health(tmp_path):
                 page.wait_for_function("document.querySelector('#setup-state').textContent.includes('SIGN')")
                 assert page.locator(".dashboard-grid .dashboard-card:visible").count() == 0
                 page.goto(origin + "/ui/chat")
+                page.locator(".chat-advanced-nav > summary").click()
                 page.get_by_label("Chat navigation").get_by_role(
                     "link", name="Owner sign-in", exact=True).click()
                 page.wait_for_url(origin + "/ui/login?next=/ui/chat")

@@ -42,7 +42,7 @@
         return;
       }
       if (result.model_installed === true) {
-        state.textContent = `Local model ${result.model_id} is installed. CPU-only inference may be slow; this app has not measured this machine's response speed or hardware fit.`;
+        state.textContent = `CPU inference may be slow; actual hardware use and response speed have not been measured.`;
         mode = "none"; action.hidden = true; return;
       }
       mode = "download";

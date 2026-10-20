@@ -67,7 +67,7 @@ def test_local_owner_signin_chat_safe_reply_close_and_logout(tmp_path):
                 expect(page.locator("#chat-identity")).to_contain_text("Local Worker")
                 expect(page.locator("#chat-input")).to_be_enabled()
                 assert page.locator("#chat-settings").get_attribute("open") is None
-                toggle = page.locator("#shared-navigation-toggle")
+                toggle = page.locator("#chat-menu-button")
                 page.locator("#chat-input").fill("Hello from the browser")
                 page.locator("#chat-input").press("Enter")
                 expect(page.locator("#chat-history")).to_contain_text("Fake browser reply")
@@ -85,6 +85,7 @@ def test_local_owner_signin_chat_safe_reply_close_and_logout(tmp_path):
                 toggle.click()
                 expect(toggle).to_have_attribute("aria-expanded", "true")
                 expect(page.locator("#chat-sidebar")).to_be_visible()
+                page.locator(".chat-advanced-nav > summary").click()
                 page.get_by_role("button", name="Close conversation", exact=True).click()
                 expect(page.locator("#chat-input")).to_be_disabled()
                 page.get_by_role("link", name="Owner sign-in", exact=True).click()

@@ -3,6 +3,7 @@ import { mountScreenCapture } from "./screen-capture.mjs";
 import { mountCameraCapture } from "./camera-capture.mjs";
 import { mountChatImages } from "./chat-images.mjs";
 import { renderSafeMarkdown } from "./chat-markdown.mjs";
+import "./quick-start.mjs?v=195";
 
 export function voiceTranscriptSourceLabel(source) {
   return ({
@@ -24,9 +25,16 @@ export function mountChat({
   windowRef = globalThis.window,
 } = {}) {
   const element = (id) => documentRef.getElementById(id);
+  documentRef.body.dataset ||= {};
+  const themeKey = "ersel-chat-theme-v1";
+  try { documentRef.body.dataset.theme = windowRef?.localStorage?.getItem(themeKey) === "light" ? "light" : "dark"; }
+  catch { documentRef.body.dataset.theme = "dark"; }
   const state = element("chat-state");
   const history = element("chat-history");
   const agents = element("chat-agent");
+  const headerModel = element("chat-header-model");
+  let coordinatorAgentModels = new Map();
+  const updateHeaderModel = () => { headerModel.textContent = coordinatorAgentModels.get(agents.value) || ""; };
   const conversations = element("chat-conversation");
   const input = element("chat-input");
   const voiceProvenance = element("chat-input-provenance");
@@ -88,6 +96,7 @@ export function mountChat({
   let canCreateTask = false;
   let canStudyRepositories = false;
   let canReadDocumentation = false;
+  let canDeleteHistory = false;
   let documentsLoaded = false;
   let currentProposal = null;
   let voiceController = null;
@@ -102,6 +111,14 @@ export function mountChat({
   let knowledgePreview = null;
   const base = "/api/chat/conversations";
   let conversationItems = [];
+  const metadataKey = "ersel-chat-list-v1";
+  function readConversationMetadata() {
+    try { return JSON.parse(windowRef?.localStorage?.getItem(metadataKey) || "{}"); }
+    catch { return {}; }
+  }
+  function writeConversationMetadata(value) {
+    try { windowRef?.localStorage?.setItem(metadataKey, JSON.stringify(value)); } catch { /* Chat remains usable without list preferences. */ }
+  }
   const imageManager = mountChatImages({ documentRef, windowRef, fetchImpl, getConversation: () => selected });
   function clearVoiceProvenance() {
     voiceSources.length = 0;
@@ -147,18 +164,66 @@ export function mountChat({
   }
   function renderConversationList(items = conversationItems) {
     const list = element("chat-conversation-list");
+    const earlier = element("chat-earlier-list");
     if (!list) return;
     conversationItems = items;
-    list.replaceChildren();
-    for (const item of items) {
-      const button = documentRef.createElement("button");
-      button.type = "button";
-      button.className = "chat-conversation-item";
-      button.textContent = `${item.coordinator.name} · ${item.id.slice(0, 8)}`;
+    list.replaceChildren(); earlier?.replaceChildren();
+    const metadata = readConversationMetadata();
+    const query = (element("chat-search")?.value || "").trim().toLocaleLowerCase();
+    const sorted = [...items].sort((a, b) => Number(Boolean(metadata[b.id]?.pinned)) - Number(Boolean(metadata[a.id]?.pinned))
+      || (Date.parse(b.created_at || 0) || 0) - (Date.parse(a.created_at || 0) || 0));
+    for (const item of sorted) {
+      const title = metadata[item.id]?.title || `${item.coordinator.name} - ${item.id.slice(0, 8)}`;
+      if (query && !title.toLocaleLowerCase().includes(query)) continue;
+      const created = Date.parse(item.created_at || "");
+      const isToday = !Number.isFinite(created) || new Date(created).toDateString() === new Date().toDateString();
+      const target = isToday || !earlier ? list : earlier;
+      const row = documentRef.createElement("div"); row.className = "chat-conversation-row";
+      const button = documentRef.createElement("button"); button.type = "button";
+      button.className = "chat-conversation-item"; button.textContent = `${metadata[item.id]?.pinned ? "Pinned | " : ""}${title}`;
       button.setAttribute("aria-current", item.id === selected ? "true" : "false");
       button.addEventListener("click", () => { conversations.value = item.id; void load(); });
-      list.append(button);
+      const actions = documentRef.createElement("details"); actions.className = "chat-conversation-actions";
+      const summary = documentRef.createElement("summary"); summary.textContent = "..."; summary.setAttribute("aria-label", `Actions for ${title}`);
+      const rename = documentRef.createElement("button"); rename.type = "button"; rename.textContent = "Rename";
+      rename.addEventListener("click", () => {
+        const next = windowRef?.prompt?.("Conversation name", title);
+        if (typeof next !== "string" || !next.trim()) return;
+        const nextMetadata = readConversationMetadata();
+        nextMetadata[item.id] = { ...nextMetadata[item.id], title: next.trim().slice(0, 80) };
+        writeConversationMetadata(nextMetadata); renderConversationList();
+      });
+      const pin = documentRef.createElement("button"); pin.type = "button"; pin.textContent = metadata[item.id]?.pinned ? "Unpin" : "Pin";
+      pin.addEventListener("click", () => {
+        const nextMetadata = readConversationMetadata();
+        nextMetadata[item.id] = { ...nextMetadata[item.id], pinned: !nextMetadata[item.id]?.pinned };
+        writeConversationMetadata(nextMetadata); renderConversationList();
+      });
+      actions.append(summary, rename, pin);
+      if (canDeleteHistory) {
+        const remove = documentRef.createElement("button"); remove.type = "button"; remove.textContent = "Delete";
+        remove.addEventListener("click", async () => {
+          if (!confirmImpl("Permanently delete this conversation and any retained copy?")) return;
+          try {
+            const sessionResponse = await fetchImpl("/api/local/session", { credentials: "same-origin", cache: "no-store" });
+            if (!sessionResponse.ok) throw new Error("Sign in to delete this conversation.");
+            const session = await sessionResponse.json();
+            const response = await fetchImpl(`/api/chat/conversations/${encodeURIComponent(item.id)}`, {
+              method: "DELETE", credentials: "same-origin", headers: { "X-Local-CSRF": session.csrf },
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : "Conversation could not be deleted.");
+            conversationItems = conversationItems.filter(entry => entry.id !== item.id);
+            const nextMetadata = readConversationMetadata(); delete nextMetadata[item.id]; writeConversationMetadata(nextMetadata);
+            if (selected === item.id) { clear(); state.textContent = "Conversation deleted."; }
+            renderConversationList();
+          } catch (error) { state.textContent = error.message; }
+        });
+        actions.append(remove);
+      }
+      row.append(button, actions); target.append(row);
     }
+    if (element("chat-earlier-label")) element("chat-earlier-label").hidden = !earlier?.children?.length;
   }
   function clearTaskProposal() {
     currentProposal = null;
@@ -208,7 +273,8 @@ export function mountChat({
     if (!record || !agent || typeof record.id !== "string" || !Array.isArray(record.messages)
         || !["open", "closed"].includes(record.status)) throw new Error("Invalid conversation response.");
     selected = record.id;
-    if (!conversationItems.some(item => item.id === record.id)) conversationItems = [{ id: record.id, coordinator: agent }, ...conversationItems];
+    headerModel.textContent = typeof agent.model === "string" ? agent.model : "";
+    if (!conversationItems.some(item => item.id === record.id)) conversationItems = [{ id: record.id, coordinator: agent, created_at: new Date().toISOString() }, ...conversationItems];
     renderConversationList();
     if (!knowledgeSettings.has(record.id)) knowledgeSettings.set(record.id, {
       enabled: false, owner: false, conversation: false, extra: false,
@@ -229,7 +295,6 @@ export function mountChat({
     requiresCloudConsent = isGeminiProvider(agent.provider);
     configuredCloudRoute = requiresCloudConsent;
     cloudPanel.hidden = !requiresCloudConsent;
-    if (requiresCloudConsent) element("chat-settings")?.setAttribute?.("open", "");
     cloudConsent.checked = false;
     resetRouteAlternatives("Check this turn's prompt before selecting an optional route.", false);
     conversations.value = record.id;
@@ -287,9 +352,7 @@ export function mountChat({
       ? "Conversation closed. Start a new conversation to send."
       : uncertain
         ? "A turn is pending or uncertain. It is not replayed; inspect this conversation and start a new one before sending again."
-        : streamingSupported
-          ? "Ready. This provider supports bounded response streaming."
-          : "Ready. This provider returns complete responses; streaming and Stop display are unavailable.";
+        : "";
     canSend = record.status === "open" && !uncertain;
     input.disabled = !canSend;
     clearTaskProposal();
@@ -496,6 +559,8 @@ export function mountChat({
           && session.permissions.includes("github:read");
         canReadDocumentation = Array.isArray(session.permissions)
           && session.permissions.includes("documentation:read");
+        canDeleteHistory = Array.isArray(session.permissions)
+          && session.permissions.includes("chat-history:manage");
       } catch {
         canCreateTask = false;
         canStudyRepositories = false;
@@ -517,17 +582,19 @@ export function mountChat({
       const agentList = await request("/api/agents");
       const list = await request(base);
       if (!Array.isArray(agentList.items) || !Array.isArray(list.items)) throw new Error("Invalid chat list response.");
+      coordinatorAgentModels = new Map(agentList.items.map(agent => [agent.id, agent.model]));
       agents.replaceChildren(); conversations.replaceChildren();
       taskAgent.replaceChildren();
       option(taskAgent, "", "Select the responsible Agent");
       option(conversations, "", "Select an existing conversation");
       for (const agent of agentList.items) {
-        const label = `${agent.name} | ${agent.provider} / ${agent.model}`;
+        const label = agent.model;
         option(agents, agent.id, label);
         option(taskAgent, agent.id, `${agent.name} | ${agent.role}`);
       }
       const directDesktopLaunch = new URLSearchParams(windowRef?.location?.search || "").get("desktop") === "1";
       if (directDesktopLaunch && agentList.items.some((agent) => agent.id === "local_worker")) agents.value = "local_worker";
+      updateHeaderModel();
       for (const item of list.items) option(conversations, item.id, `${item.coordinator.name} - ${item.id.slice(0, 8)}`);
       renderConversationList(list.items);
       const requestedConversation = new URLSearchParams(windowRef?.location?.search || "").get("conversation");
@@ -535,16 +602,16 @@ export function mountChat({
           && list.items.some((item) => item.id === requestedConversation)) {
         conversations.value = requestedConversation;
         render(await request(`${base}/${encodeURIComponent(requestedConversation)}`));
-        state.textContent = "Coordinator conversation ready.";
+        state.textContent = "";
       } else if (directDesktopLaunch && list.items.length > 0) {
         conversations.value = list.items[0].id;
         render(await request(`${base}/${encodeURIComponent(conversations.value)}`));
-        state.textContent = "Your latest Coordinator conversation is ready.";
+        state.textContent = "";
       } else if (directDesktopLaunch && list.items.length === 0 && agents.value) {
         const result = await request(base, { agent_id: agents.value });
         option(conversations, result.conversation.id, `${result.coordinator.name} - ${result.conversation.id.slice(0, 8)}`);
         render(result);
-        state.textContent = "Coordinator Chat is ready. Type a message and press Send.";
+        state.textContent = "";
       } else {
         state.textContent = agentList.items.length ? "Choose an AI team member and start a conversation." : "No registered AI team member is available.";
         updateEmptyState(true);
@@ -581,6 +648,7 @@ export function mountChat({
     sendInProgress = true;
     const submitButton = element("chat-send");
     submitButton.textContent = streamingSupported ? "Stop" : "Stop waiting";
+    submitButton.setAttribute("aria-label", "Stop generating");
     return action(async () => {
       await imageRefreshPromise;
       if (emergencyStopped) throw new Error("Emergency stop is active. Resume protected actions before sending a message.");
@@ -594,7 +662,7 @@ export function mountChat({
       const selectedRoute = routeAlternatives.get(routeSelect.value) || null;
       requiresCloudConsent = selectedRoute ? selectedRoute.kind === "cloud" : configuredCloudRoute;
       cloudPanel.hidden = !requiresCloudConsent;
-    if (requiresCloudConsent) element("chat-settings")?.setAttribute?.("open", "");
+      if (requiresCloudConsent) cloudPanel.hidden = false;
     if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Check the separate per-turn Gemini cloud consent before continuing.");
       const imageIds = imageManager?.selectedIds() || [];
       const reviewedTools = [];
@@ -687,7 +755,7 @@ export function mountChat({
             render(outcome.complete);
             state.textContent = outcome.displayStopped
               ? "Display was stopped, but generation continued and completed. This did not cancel the provider request; the verified final response is shown."
-              : "Stream completed and the final response was saved.";
+              : "";
           } else {
             try { render(await request(`${base}/${encodeURIComponent(identifier)}`)); }
             catch { clear(); }
@@ -748,6 +816,7 @@ export function mountChat({
     sendInProgress = false;
     const button = element("chat-send");
     button.textContent = "Send";
+    button.setAttribute("aria-label", "Send message");
   }
   async function receiveStream(identifier, body, signal) {
     let displayStopped = false;
@@ -1031,14 +1100,85 @@ export function mountChat({
       input.dispatchEvent?.(new Event("input", { bubbles: true }));
     });
   }
+  const resizeComposer = () => {
+    input.style.height = "auto";
+    input.style.height = `${Math.min(input.scrollHeight || 160, 240)}px`;
+  };
+  input.addEventListener("input", resizeComposer);
+  const search = element("chat-search");
+  search?.addEventListener("input", () => renderConversationList());
+  const compactSidebar = windowRef?.matchMedia?.("(max-width: 760px)");
+  const menuButton = element("chat-menu-button");
+  const collapseButton = element("chat-nav-toggle");
+  const setSidebarOpen = open => {
+    const compact = compactSidebar?.matches === true;
+    documentRef.body.classList.toggle("navigation-open", compact && open);
+    if (menuButton) menuButton.setAttribute("aria-expanded", String(compact && open));
+    if (collapseButton) collapseButton.setAttribute("aria-expanded", String(!documentRef.body.classList.contains("sidebar-collapsed")));
+  };
+  menuButton?.addEventListener("click", () => setSidebarOpen(!documentRef.body.classList.contains("navigation-open")));
+  collapseButton?.addEventListener("click", () => {
+    if (compactSidebar?.matches) setSidebarOpen(false);
+    else documentRef.body.classList.toggle("sidebar-collapsed");
+  });
+  compactSidebar?.addEventListener?.("change", () => setSidebarOpen(false));
+  documentRef.addEventListener?.("keydown", event => { if (event.key === "Escape") setSidebarOpen(false); });
+  element("chat-sidebar")?.addEventListener?.("click", event => {
+    if (event.target?.closest?.("a, [data-close-navigation]")) setSidebarOpen(false);
+  });
+  element("chat-add-image-action")?.addEventListener("click", () => element("chat-image-file")?.click?.());
+  element("chat-camera-action")?.addEventListener("click", () => element("chat-capture-camera")?.click?.());
+  element("chat-screen-action")?.addEventListener("click", () => element("chat-capture-screen")?.click?.());
+  element("chat-mic")?.addEventListener("click", () => element("voice-start")?.click?.());
+  element("chat-knowledge-menu-toggle")?.addEventListener("change", event => {
+    knowledgeEnabled.checked = event.target.checked;
+    if (knowledgeEnabled.checked) {
+      element("chat-knowledge-panel").open = true;
+      element("chat-settings").open = true;
+    }
+    knowledgeEnabled.dispatchEvent?.(new Event("change", { bubbles: true }));
+  });
+  element("chat-theme-toggle")?.addEventListener("click", event => {
+    const theme = documentRef.body.dataset.theme === "light" ? "dark" : "light";
+    documentRef.body.dataset.theme = theme;
+    try { windowRef?.localStorage?.setItem(themeKey, theme); } catch { /* Theme can be changed for this page only. */ }
+    event.currentTarget.textContent = theme === "light" ? "Switch to dark theme" : "Switch to light theme";
+  });
+  const quickStop = element("chat-emergency-stop");
+  const activity = { microphone: false, camera: false, screen: false, playback: false, automation: false };
+  const updateQuickStop = () => { if (quickStop) quickStop.hidden = !Object.values(activity).some(Boolean); };
+  windowRef?.addEventListener?.("ersel:voice-activity", event => {
+    activity.microphone = event.detail?.microphone === "active";
+    activity.playback = event.detail?.local_playback === "active";
+    updateQuickStop();
+  });
+  windowRef?.addEventListener?.("ersel:camera-activity", event => { activity.camera = event.detail?.state === "active"; updateQuickStop(); });
+  windowRef?.addEventListener?.("ersel:screen-capture-activity", event => { activity.screen = event.detail?.state === "active"; updateQuickStop(); });
+  windowRef?.addEventListener?.("ersel:automation-activity", event => { activity.automation = event.detail?.state === "active"; updateQuickStop(); });
+  quickStop?.addEventListener("click", async () => {
+    quickStop.disabled = true;
+    try {
+      const session = await fetchImpl("/api/local/session", { credentials: "same-origin", cache: "no-store" });
+      if (!session.ok) throw new Error("Sign in to stop protected activity.");
+      const credentials = await session.json();
+      const stopped = await fetchImpl("/api/local/emergency-stop/stop", {
+        method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", "X-Local-CSRF": credentials.csrf }, body: "{}",
+      });
+      if (!stopped.ok) throw new Error("Emergency stop could not be confirmed. Open Settings to review safety status.");
+      windowRef?.dispatchEvent?.(new windowRef.CustomEvent("ersel:emergency-stop"));
+      for (const key of Object.keys(activity)) activity[key] = false;
+      updateQuickStop();
+    } catch (error) { state.textContent = error.message; }
+    finally { quickStop.disabled = false; }
+  });
   routeSelect.addEventListener("change", () => {
     const selectedRoute = routeAlternatives.get(routeSelect.value) || null;
     requiresCloudConsent = selectedRoute ? selectedRoute.kind === "cloud" : configuredCloudRoute;
     cloudPanel.hidden = !requiresCloudConsent;
-    element("chat-settings").open = requiresCloudConsent;
     cloudConsent.checked = false;
   });
   element("chat-form").addEventListener("submit", send);
+  agents.addEventListener("change", updateHeaderModel);
   element("chat-send").addEventListener("click", event => {
     if (!requestController) return;
     event.preventDefault();

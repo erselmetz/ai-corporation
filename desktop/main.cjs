@@ -306,7 +306,7 @@ async function startBackend(payload) {
 
 function createApplicationWindow() {
   applicationWindow = new BrowserWindow({
-    width: 1440, height: 960, minWidth: 850, minHeight: 620, show: false,
+    width: 1440, height: 960, minWidth: 600, minHeight: 620, show: false,
     title: "ERSELMETZ AI — Command Center",
     autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true },

@@ -270,6 +270,8 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
         path = request.url.path
         if path != "/ui" and not path.startswith("/ui/"):
             return response
+        if path == "/ui/chat":
+            return response
         if not response.headers.get("content-type", "").lower().startswith("text/html"):
             return response
         body = getattr(response, "body", None)

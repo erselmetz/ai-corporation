@@ -132,6 +132,14 @@ class OperatorStateStore:
                 (self._corporation_id, proposal_id),
             )
 
+    def delete_prepared_proposals_for_conversation(self, owner_id: str, conversation_id: str) -> None:
+        with self._connection() as connection, connection:
+            connection.execute(
+                "DELETE FROM operator_task_proposals WHERE corporation_id=? AND owner_id=? "
+                "AND conversation_id=? AND state IN ('prepared','expired','restart-invalidated')",
+                (self._corporation_id, owner_id, conversation_id),
+            )
+
     def created_fingerprints(self) -> frozenset[str]:
         with self._connection() as connection:
             rows = connection.execute(

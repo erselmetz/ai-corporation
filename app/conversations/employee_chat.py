@@ -131,6 +131,14 @@ class EmployeeChatService:
         self._sessions.pop(conversation_id, None)
         self._context.pop(conversation_id, None)
 
+    def delete_conversation(self, conversation_id: str) -> None:
+        """Remove a conversation only when it has no pending turns."""
+        session = self._get_session(conversation_id)
+        if any(message.status is MessageStatus.PENDING for message in session.conversation.messages):
+            raise ValueError("Cannot delete a conversation with a pending message")
+        del self._sessions[conversation_id]
+        self._context.pop(conversation_id, None)
+
     def get_conversation(self, conversation_id: str) -> ChatConversationSummary:
         return self._summary(self._get_session(conversation_id))
 

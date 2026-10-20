@@ -76,7 +76,7 @@ class Authentication:
         identity = request.headers.get("x-test-owner")
         if identity is None:
             return None
-        permissions = frozenset({"chat:read", "chat:start", "chat:send", "chat:close"})
+        permissions = frozenset({"chat:read", "chat:start", "chat:send", "chat:close", "chat-history:manage"})
         if identity == "reader":
             permissions = frozenset({"chat:read"})
         return AuthenticatedPrincipal(identity, permissions)
@@ -122,6 +122,20 @@ def test_owned_chat_roundtrip_and_no_execution_or_capacity_side_effect(setup):
     assert runtime.application_service.list_agents() == agents
     assert runtime.application_service.list_tasks() == tasks
     assert len(provider.calls) == 1
+
+
+def test_delete_requires_history_management_and_removes_owner_conversation(setup):
+    runtime, _provider = setup
+    with client_for(runtime) as client:
+        created = start(client)
+        identifier = created.json()["conversation"]["id"]
+        denied = client.delete(f"/api/chat/conversations/{identifier}", headers={"x-test-owner": "reader"})
+        assert denied.status_code == 403
+        removed = client.delete(f"/api/chat/conversations/{identifier}", headers={"x-test-owner": "alice"})
+        assert removed.status_code == 200
+        assert removed.json() == {"deleted": identifier}
+        assert client.get(f"/api/chat/conversations/{identifier}", headers={"x-test-owner": "alice"}).status_code == 404
+        assert client.get("/api/chat/conversations", headers={"x-test-owner": "alice"}).json()["items"] == []
 
 
 def test_route_suggestions_are_uncertain_local_hints_and_alternates_are_per_turn_only():
