@@ -225,6 +225,28 @@ def _workflow_steps(retrieval, tools, coordinator, *, retrieval_ms=0,
     return steps
 
 
+def _empty_brain_abstention(service, knowledge, principal, identifier, body,
+                           current, auto_context, started_at, retrieval_ms, now):
+    """Persist a safe local abstention without calling or reserving a Provider."""
+    if (auto_context is None or auto_context["trace"].get("returned_chunks")
+            or body.reviewed_tools):
+        return None
+    reply = "I couldn't find relevant information about that in your Brain."
+    result = service.owned_chat().complete_without_provider(
+        principal.identity, identifier, body.text, reply)
+    retrieval = {"enabled": True, **auto_context["trace"]}
+    steps = _workflow_steps(retrieval, [], current["coordinator"], retrieval_ms=retrieval_ms,
+                            answer_ms=0)
+    steps[-1]["source"] = "local Brain abstention; no Provider request"
+    trace = knowledge.record_turn_trace(
+        principal.identity, identifier, result["conversation"].messages[-1].id,
+        coordinator=current["coordinator"], cloud_provider=None, cloud_consent=False,
+        elapsed_ms=(time.perf_counter() - started_at) * 1000,
+        retrieval=retrieval, steps=steps, now=now, provider_called=False,
+        answer_source="brain-empty-abstention")
+    return {"conversation": result["conversation"], "context_trace": trace}
+
+
 def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
                             cloud_provider, cloud_consent, elapsed_ms, auto_context,
                             retrieved, trace_request, now, tools=None, retrieval_ms=0,
@@ -643,8 +665,6 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
         route_provider_id = turn_route[0] if turn_route else current["coordinator"].provider
         cloud_requires_consent = service.provider_requires_explicit_cloud_consent(
             route_provider_id)
-        if cloud_requires_consent and body.cloud_consent is not True:
-            raise HTTPException(403, "Explicit consent is required before sending this turn, recent chat context, and any selected tool results to Gemini.")
         tool_trace, tool_context = [], None
         if body.reviewed_tools:
             if any(item.kind == "local-document-lookup" for item in body.reviewed_tools):
@@ -680,6 +700,13 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                                                body.text, body.knowledge_scopes, now)
             if auto_context["digest"] != body.knowledge_preview_digest:
                 raise HTTPException(409, "Selected knowledge changed after preview. Preview it again before sending.")
+        empty_brain = _empty_brain_abstention(
+            service, knowledge, principal, identifier, body, current, auto_context,
+            started_at, max(0, int((time.perf_counter() - retrieval_started_at) * 1000)), now)
+        if empty_brain is not None:
+            return empty_brain
+        if cloud_requires_consent and body.cloud_consent is not True:
+            raise HTTPException(403, "Explicit consent is required before sending this turn, recent chat context, and any selected tool results to Gemini.")
         retrieved = trace_request = None
         if body.context is not None:
             retrieved, trace_request = knowledge.retrieve(principal.identity, identifier, ContextRequest(
@@ -763,6 +790,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                 result = service.owned_chat().send(
                     principal.identity, identifier, body.text, prompt_context,
                     presentation_preferences=presentation,
+                    brain_enabled=body.knowledge_enabled,
                     tool_context=tool_context,
                     prompt_observer=captured_prompt.append if body.capture_local_prompt else None,
                     turn_route=turn_route, route_consent=body.route_consent)
@@ -828,11 +856,6 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
             raise HTTPException(409, "The selected provider does not support response streaming.")
         cloud_requires_consent = service.provider_requires_explicit_cloud_consent(
             current["coordinator"].provider)
-        if cloud_requires_consent and body.cloud_consent is not True:
-            raise HTTPException(
-                403,
-                "Explicit consent is required before sending this turn and recent chat context to Gemini.",
-            )
         knowledge = service.chat_knowledge()
         retrieval_started_at = time.perf_counter()
         auto_context = None
@@ -855,6 +878,19 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                 now,
             )
         retrieval_ms = max(0, int((time.perf_counter() - retrieval_started_at) * 1000))
+        empty_brain = _empty_brain_abstention(
+            service, knowledge, principal, identifier, body, current, auto_context,
+            started_at, retrieval_ms, now)
+        if empty_brain is not None:
+            event = {"type": "complete", **empty_brain}
+            payload = json.dumps(jsonable_encoder(event), ensure_ascii=True, separators=(",", ":")) + "\n"
+            return StreamingResponse(iter((payload,)), media_type="application/x-ndjson",
+                                     headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+        if cloud_requires_consent and body.cloud_consent is not True:
+            raise HTTPException(
+                403,
+                "Explicit consent is required before sending this turn and recent chat context to Gemini.",
+            )
 
     def events():
         try:
@@ -865,6 +901,7 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                 body.text,
                 auto_context["prompt_context"] if auto_context else knowledge.prompt_context(retrieved) if retrieved else None,
                 presentation,
+                brain_enabled=body.knowledge_enabled,
             ):
                 if event["type"] == "complete":
                     completed = event["conversation"]

@@ -879,6 +879,23 @@ class CorporationApplicationService:
             vector_path = os.environ.get("ERSELMETZ_KNOWLEDGE_VECTOR_DIR", "").strip()
             manager = self.memory_management()
             if not vector_path:
+                from app.knowledge.faiss_pack import application_data_root, activate_faiss_pack
+                pack_root = application_data_root() / "capability-packs" / "faiss-cpu"
+                if (pack_root / "site-packages").is_dir() and not pack_root.is_symlink():
+                    try:
+                        activate_faiss_pack(pack_root / "site-packages")
+                        from app.knowledge.providers import OllamaEmbeddingProvider
+                        from app.knowledge.vector_store import FaissVectorStore
+                        self._semantic_memory_index = SemanticMemoryService(
+                            manager,
+                            OllamaEmbeddingProvider(ollama_model or "nomic-embed-text"),
+                            FaissVectorStore(str(application_data_root() / "brain" / "vectors")),
+                        )
+                    except Exception:
+                        self._semantic_memory_index = SemanticMemoryService(
+                            manager, unavailable_reason="The installed local FAISS capability could not be initialized.")
+                    return self._semantic_memory_index
+            if not vector_path:
                 self._semantic_memory_index = SemanticMemoryService(manager)
                 return self._semantic_memory_index
             if ollama_model:
@@ -927,6 +944,11 @@ class CorporationApplicationService:
                 raise RuntimeError("Semantic memory is already configured for this application run")
             self._semantic_memory_index = service
         return service
+
+    def reset_semantic_memory(self):
+        """Refresh lazy optional knowledge adapters after an owner-confirmed pack install."""
+        with self._semantic_memory_lock:
+            self._semantic_memory_index = None
 
     def generate_local_knowledge_proposal(self, agent_id: str, prompt: str) -> str:
         """Generate one proposal only through the configured loopback Ollama Agent."""

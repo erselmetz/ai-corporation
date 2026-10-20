@@ -948,6 +948,27 @@ Owner-scoped chat can now use retained knowledge only on explicit request. A com
 
 Task 117 chat context remains explicitly requested and lexically retrieved; semantic indexing/search is a separate optional path introduced in Task 130. Traces remain process-local; retained content and derived local embeddings are not encrypted. Neither path automatically retains transcripts or injects context into chat.
 
+## Owner Brain and chat retrieval (Task 196)
+
+The protected Brain page extends the existing owner-scoped SQLite memory boundary
+to explicitly selected text, Markdown, code, CSV, PDF, and DOCX files and pasted
+text. Intake is bounded; source records and chunks retain provenance/expiry, and
+forgetting a source removes its derived vectors. The default retrieval path is
+lexical. Optional semantic retrieval uses the existing local Ollama embedding
+adapter when an installed model is explicitly selected; model pulls remain
+owner-confirmed. A separate optional FAISS CPU pack is offered from exact official
+PyPI wheel URLs and SHA-256 pins and installs into an app-local isolated directory
+only after confirmation. That pack was not installed during Task 196 acceptance,
+so its native loading and packaged integration remain unverified.
+
+When the owner enables Brain use, chat previews exact selected excerpts, applies
+existing permission/expiry checks, treats retrieved content as untrusted, and
+records actual sources in the answer trace. Empty or irrelevant results produce
+an explicit abstention without calling a model. The chat renders citations from
+the trace because the real llama3.2:3b evaluation omitted inline markers. Gemini
+context remains subject to exact preview and existing per-turn cloud consent.
+Task 196 does not include OCR, 3D visualization, voice, or automation.
+
 ## Optional semantic memory and RAG (Task 130)
 
 The optional `app.knowledge` layer augments Tasks 61â€“67 and Task 117 without

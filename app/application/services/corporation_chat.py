@@ -165,7 +165,7 @@ class CorporationChatService:
     def send(self, conversation_id: str, text: str, retrieved_context=None, presentation_preferences=None,
              tool_context=None,
              prompt_observer=None, turn_route: tuple[str, str] | None = None,
-             expected_assignment: tuple[str, str] | None = None):
+             expected_assignment: tuple[str, str] | None = None, brain_enabled: bool = False):
         record = self.get(conversation_id)
         if record.status is not ConversationStatus.OPEN:
             raise ValueError("Cannot send to a closed conversation")
@@ -173,12 +173,16 @@ class CorporationChatService:
             raise ValueError("Message text is required")
         if len(text.encode("utf-8")) > 8192:
             raise ValueError("Message exceeds byte limit")
+        if brain_enabled and retrieved_context is None:
+            return self.complete_without_provider(
+                conversation_id, text, "I couldn't find relevant information about that in your Brain.")
         history = [{"role": m.role.value, "content": m.content}
                    for m in record.messages[-16:] if m.status is MessageStatus.COMPLETED]
         messages = build_chat_messages(
             text, history, retrieved_context=retrieved_context,
             tool_context=tool_context,
             presentation_preferences=presentation_preferences,
+            brain_enabled=brain_enabled,
         )
         prompt = json.dumps(messages, ensure_ascii=True, separators=(",", ":"))
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
@@ -215,6 +219,28 @@ class CorporationChatService:
             self._chat.transition_message(conversation_id, user_id, MessageStatus.FAILED)
             self._remember_status(conversation_id, user_id, MessageStatus.FAILED, strict=False)
             raise RuntimeError("Corporation chat response failed") from None
+        self._chat.transition_message(conversation_id, user_id, MessageStatus.COMPLETED)
+        self._chat.add_message(conversation_id, reply_id, MessageRole.ASSISTANT, reply)
+        self._chat.transition_message(conversation_id, reply_id, MessageStatus.COMPLETED)
+        self._remember(conversation_id, reply_id, MessageRole.ASSISTANT, reply, MessageStatus.COMPLETED)
+        self._remember_status(conversation_id, user_id, MessageStatus.COMPLETED, strict=True)
+        return self.get(conversation_id)
+
+    def complete_without_provider(self, conversation_id: str, text: str, reply: str):
+        """Record a deterministic local response when Brain retrieval found no excerpt."""
+        record = self.get(conversation_id)
+        if record.status is not ConversationStatus.OPEN:
+            raise ValueError("Cannot send to a closed conversation")
+        if (not isinstance(text, str) or not text.strip() or len(text.encode("utf-8")) > 8192
+                or not isinstance(reply, str) or not reply.strip() or len(reply.encode("utf-8")) > 8192):
+            raise ValueError("Local chat response is outside the supported bounds")
+        user_id, reply_id = uuid4().hex, uuid4().hex
+        self._chat.add_message(conversation_id, user_id, MessageRole.USER, text)
+        try:
+            self._remember(conversation_id, user_id, MessageRole.USER, text, MessageStatus.PENDING)
+        except ChatHistoryError:
+            self._chat.transition_message(conversation_id, user_id, MessageStatus.FAILED)
+            raise
         self._chat.transition_message(conversation_id, user_id, MessageStatus.COMPLETED)
         self._chat.add_message(conversation_id, reply_id, MessageRole.ASSISTANT, reply)
         self._chat.transition_message(conversation_id, reply_id, MessageStatus.COMPLETED)
@@ -285,7 +311,8 @@ class CorporationChatService:
         self._remember_status(conversation_id, user_id, MessageStatus.COMPLETED, strict=True)
         return self.get(conversation_id)
 
-    def send_stream(self, conversation_id: str, text: str, retrieved_context=None, presentation_preferences=None):
+    def send_stream(self, conversation_id: str, text: str, retrieved_context=None, presentation_preferences=None,
+                    *, brain_enabled: bool = False):
         record = self.get(conversation_id)
         if record.status is not ConversationStatus.OPEN:
             raise ValueError("Cannot send to a closed conversation")
@@ -293,6 +320,11 @@ class CorporationChatService:
             raise ValueError("Message text is required")
         if len(text.encode("utf-8")) > 8192:
             raise ValueError("Message exceeds byte limit")
+        if brain_enabled and retrieved_context is None:
+            completed = self.complete_without_provider(
+                conversation_id, text, "I couldn't find relevant information about that in your Brain.")
+            yield {"type": "complete", "conversation": completed}
+            return
         history = [
             {"role": message.role.value, "content": message.content}
             for message in record.messages[-16:]
@@ -301,6 +333,7 @@ class CorporationChatService:
         messages = build_chat_messages(
             text, history, retrieved_context=retrieved_context,
             presentation_preferences=presentation_preferences,
+            brain_enabled=brain_enabled,
         )
         prompt = json.dumps(messages, ensure_ascii=True, separators=(",", ":"))
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:

@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 import shutil
 import time
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -153,16 +154,25 @@ class OllamaFirstRunService:
     MAX_PULL_LINE_BYTES = 64 * 1024
     _DIGEST = re.compile(r"^sha256:[a-f0-9]{64}$")
 
-    def __init__(self, *, provider=None, client_factory=httpx.Client):
+    def __init__(self, *, provider=None, client_factory=httpx.Client,
+                 model_id: str | None = None, registry_manifest: str | None = None):
         self._provider = provider or OllamaProvider(self.BASE_URL)
         self._client_factory = client_factory
+        self.model_id = model_id or self.MODEL_ID
+        self.registry_manifest = registry_manifest or self.REGISTRY_MANIFEST
+        manifest = urlsplit(self.registry_manifest) if isinstance(self.registry_manifest, str) else None
+        if (not isinstance(self.model_id, str) or not _MODEL_ID.fullmatch(self.model_id)
+                or manifest is None or manifest.scheme != "https" or manifest.hostname != "registry.ollama.ai"
+                or manifest.username or manifest.password or manifest.query or manifest.fragment
+                or not re.fullmatch(r"/v2/library/[A-Za-z0-9._-]+/manifests/[A-Za-z0-9._-]+", manifest.path)):
+            raise ValueError("A fixed approved Ollama model and registry manifest are required")
 
     def status(self) -> dict:
-        return self.status_for_model(self.MODEL_ID)
+        return self.status_for_model(self.model_id)
 
     def status_for_model(self, model_id: str | None) -> dict:
         inventory = self._provider.local_model_inventory()
-        selected_model = model_id if isinstance(model_id, str) and _MODEL_ID.fullmatch(model_id) else self.MODEL_ID
+        selected_model = model_id if isinstance(model_id, str) and _MODEL_ID.fullmatch(model_id) else self.model_id
         return {
             "state": inventory.state,
             "service_running": inventory.state == "available",
@@ -211,7 +221,7 @@ class OllamaFirstRunService:
         try:
             with self._client_factory(timeout=10.0, follow_redirects=False,
                                       trust_env=False) as client:
-                with client.stream("GET", self.REGISTRY_MANIFEST, headers=headers) as response:
+                with client.stream("GET", self.registry_manifest, headers=headers) as response:
                     response.raise_for_status()
                     digest = response.headers.get("docker-content-digest", "")
                     payload = bytearray()
@@ -240,13 +250,13 @@ class OllamaFirstRunService:
             if total <= 0:
                 raise ValueError("model size missing")
             return {
-                "model_id": self.MODEL_ID,
+                "model_id": self.model_id,
                 "manifest_digest": digest,
                 "manifest_bytes": total,
                 "size_evidence": "official Ollama registry manifest; full layer total, before cache reuse",
                 "available_space_bytes": self._available_default_space(),
                 "destination": "Ollama's default per-user model directory; a custom OLLAMA_MODELS location cannot be inspected here",
-                "registry_url": self.REGISTRY_MANIFEST,
+                "registry_url": self.registry_manifest,
             }
         except (httpx.HTTPError, OSError, ValueError, TypeError, KeyError):
             raise ValueError("The official Ollama model-size estimate is unavailable. No model download was started.") from None
@@ -267,7 +277,7 @@ class OllamaFirstRunService:
                                       follow_redirects=False, trust_env=False) as client:
                 with client.stream(
                     "POST", f"{self.BASE_URL}/api/pull",
-                    json={"model": self.MODEL_ID, "stream": True},
+                    json={"model": self.model_id, "stream": True},
                 ) as response:
                     response.raise_for_status()
                     line = bytearray()

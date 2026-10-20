@@ -804,29 +804,43 @@ def memory_page() -> HTMLResponse:
 def owner_knowledge_page() -> HTMLResponse:
     return HTMLResponse("""<!doctype html><html lang="en"><head>
       <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>My knowledge - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+      <title>Brain - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
       <script type="module" src="/ui/static/knowledge.mjs"></script></head><body>
-      <main class="content"><nav aria-label="Knowledge navigation"><a href="/ui">Home</a> | <a href="/ui/chat">Coordinator chat</a> | <a href="/ui/login?next=/ui/knowledge">Owner sign-in</a></nav>
-      <p class="eyebrow">PRIVATE TO THIS OWNER</p><h1>My knowledge</h1>
-      <p>Save notes for later chat. Notes stay on this device, expire within 30 days, and are used only when you select a scope and turn on “Use my knowledge”.</p>
-      <section class="management-card" aria-labelledby="knowledge-add-title"><h2 id="knowledge-add-title">Add a note</h2>
+      <main class="content brain-page"><nav aria-label="Brain navigation"><a href="/ui/chat">Chat</a> | <a href="/ui/login?next=/ui/knowledge">Owner sign-in</a> | <a href="/ui/memory">Advanced memory</a></nav>
+      <p class="eyebrow">PRIVATE TO THIS OWNER</p><h1>Brain</h1>
+      <p>Save notes or add local files for grounded chat. Items stay on this device, expire within 30 days, and are never shared without per-turn review and consent.</p>
+      <section class="management-card" aria-labelledby="knowledge-add-title"><h2 id="knowledge-add-title">Add knowledge</h2>
       <form id="knowledge-note-form"><label for="knowledge-source">Note title</label><input id="knowledge-source" maxlength="128" value="Owner note">
-      <label for="knowledge-content">Text or notes (up to 8192 UTF-8 bytes)</label><textarea id="knowledge-content" rows="7" maxlength="8192"></textarea>
+      <label for="knowledge-content">Paste text (up to 8192 UTF-8 bytes)</label><textarea id="knowledge-content" rows="7" maxlength="8192"></textarea>
       <label for="knowledge-expiry">Keep for (days)</label><select id="knowledge-expiry"><option value="1">1 day</option><option value="7">7 days</option><option value="30" selected>30 days</option></select>
       <label><input id="knowledge-consent" type="checkbox"> I consent to store this note locally until its expiry.</label>
       <button id="knowledge-save" type="submit">Save note</button></form>
-      <hr><form id="knowledge-upload-form"><label for="knowledge-file">Or choose a .md, .txt, or text-based .pdf file (up to 1 MiB; PDF up to 20 pages)</label>
-      <input id="knowledge-file" type="file" accept=".md,.txt,.pdf,text/plain,text/markdown,application/pdf">
-      <button id="knowledge-upload" type="submit">Add selected file</button></form>
+      <hr><form id="knowledge-upload-form"><label for="knowledge-file">Add files or a folder (UTF-8 text/code, CSV, Markdown, PDF, or DOCX; up to 1 MiB per file)</label>
+      <label for="knowledge-file">Choose files</label><input id="knowledge-file" type="file" multiple accept=".txt,.md,.pdf,.docx,.csv,.py,.js,.mjs,.cjs,.ts,.tsx,.jsx,.json,.html,.css,.yaml,.yml,.toml,.sql,.sh,.ps1,.java,.c,.cpp,.go,.rs,.php,.cs,.kt,.swift,.vue,.svelte,.mdx,.rst,.log">
+      <label for="knowledge-folder">Choose a folder</label><input id="knowledge-folder" type="file" multiple webkitdirectory directory accept=".txt,.md,.pdf,.docx,.csv,.py,.js,.mjs,.cjs,.ts,.tsx,.jsx,.json,.html,.css,.yaml,.yml,.toml,.sql,.sh,.ps1,.java,.c,.cpp,.go,.rs,.php,.cs,.kt,.swift,.vue,.svelte,.mdx,.rst,.log">
+      <div id="brain-drop-zone" class="brain-drop-zone" role="button" tabindex="0" aria-label="Choose files or drop supported files here">Drop files here or use the picker above</div>
+      <p id="brain-selection-status" role="status" aria-live="polite">No files selected.</p>
+      <button id="knowledge-upload" type="submit">Add selected files</button></form>
+      <ol id="brain-ingestion-list" aria-label="File processing status" aria-live="polite"></ol>
       <p id="knowledge-state" role="status" aria-live="polite"></p></section>
       <section class="management-card" aria-labelledby="knowledge-library-title"><h2 id="knowledge-library-title">Saved notes</h2>
       <p id="knowledge-index-status" role="status" aria-live="polite">Checking local semantic index...</p>
+      <section aria-labelledby="brain-semantic-title"><h3 id="brain-semantic-title">Optional local semantic pack</h3>
+      <p id="brain-faiss-state" role="status" aria-live="polite">Checking optional FAISS pack status…</p>
+      <button id="brain-faiss-install" type="button" disabled>Review FAISS pack</button>
+      <button id="brain-faiss-test" type="button" disabled>Test FAISS pack</button>
+      <p id="brain-faiss-detail" role="status" aria-live="polite">The pack is separate from the base app. Install requires an explicit confirmation; it does not download an embedding model.</p></section>
+      <section aria-labelledby="brain-embedding-title"><h3 id="brain-embedding-title">Local embedding model</h3>
+      <p id="brain-embedding-state" role="status" aria-live="polite">Checking local Ollama model status…</p>
+      <button id="brain-embedding-download" type="button" disabled>Review nomic-embed-text download</button>
+      <button id="brain-embedding-test" type="button" disabled>Test local embeddings</button>
+      <p id="brain-embedding-detail" role="status" aria-live="polite">The default is nomic-embed-text:latest. This app will never pull it without your confirmation.</p></section>
       <button id="knowledge-refresh" type="button">Refresh</button><ul id="knowledge-list"></ul>
       <p id="knowledge-detail" role="status" aria-live="polite">Select a note to inspect its index or remove it.</p>
       <button id="knowledge-index" type="button" disabled>Build or refresh local index</button>
       <button id="knowledge-inspect" type="button" disabled>Check index status</button>
       <button id="knowledge-delete" type="button" disabled>Forget selected note</button>
-      <p>Indexing is explicit, local-only, and synchronous. If the optional semantic index is unavailable, chat continues with lexical retrieval. Deleting a note also invalidates its derived index.</p></section>
+      <p>Indexing is local. When an embedding pack is unavailable, chat uses lexical retrieval. Deleting a note also invalidates its derived index. Use the Chat knowledge control to review exact citations before sending context to a provider.</p></section>
       </main></body></html>""")
 
 
@@ -863,7 +877,7 @@ def coordinator_chat_page():
       <p class="chat-sidebar-label" id="chat-earlier-label" hidden>Earlier</p><div id="chat-earlier-list" class="chat-conversation-list" aria-label="Earlier conversations"></div>
       <label class="visually-hidden" for="chat-conversation">Choose conversation</label><select id="chat-conversation" class="visually-hidden"></select>
       <details class="chat-advanced-nav"><summary>Advanced</summary><button id="chat-refresh" type="button" class="chat-sidebar-refresh">Refresh chats</button><button id="chat-close" type="button" class="chat-sidebar-close">Close conversation</button><nav aria-label="Advanced pages">
-        <a href="/ui/employees">Employees</a><a href="/ui/positions">Positions</a><a href="/ui/structure">Organization map</a><a href="/ui/providers">Providers &amp; models</a><a href="/ui/visualization">3D visualization</a><a href="/ui/memory">Memory</a><a href="/ui/tasks">Tasks</a><a href="/ui/workflows">Workflows</a><a href="/ui/workflow-map">Workflow map</a><a href="/ui/activity">Activity</a><a href="/ui/inventory">Software inventory</a><a href="/ui/readiness">Performance readiness</a><a href="/ui/backup">Backup &amp; restore</a><a href="/ui/documentation">Documentation</a><a href="/ui/updates">Updates</a><a href="/ui/preferences">Preferences</a><a href="/ui/settings/capabilities">Capabilities &amp; privacy</a><a href="/ui/employee-chat">Employee chat</a><a href="/ui/login?next=/ui/chat">Owner sign-in</a>
+        <a href="/ui/knowledge">Brain</a><a href="/ui/employees">Employees</a><a href="/ui/positions">Positions</a><a href="/ui/structure">Organization map</a><a href="/ui/providers">Providers &amp; models</a><a href="/ui/visualization">3D visualization</a><a href="/ui/memory">Advanced memory</a><a href="/ui/tasks">Tasks</a><a href="/ui/workflows">Workflows</a><a href="/ui/workflow-map">Workflow map</a><a href="/ui/activity">Activity</a><a href="/ui/inventory">Software inventory</a><a href="/ui/readiness">Performance readiness</a><a href="/ui/backup">Backup &amp; restore</a><a href="/ui/documentation">Documentation</a><a href="/ui/updates">Updates</a><a href="/ui/preferences">Preferences</a><a href="/ui/settings/capabilities">Capabilities &amp; privacy</a><a href="/ui/employee-chat">Employee chat</a><a href="/ui/login?next=/ui/chat">Owner sign-in</a>
       </nav></details><a class="chat-settings-link" href="/ui/settings/capabilities">Settings</a>
     </aside><section class="chat-workspace">
     <header class="chat-header">

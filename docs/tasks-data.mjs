@@ -3670,15 +3670,120 @@ export const post100Tasks = [
       "Run full Python, browser-module, Electron, and public-docs suites, plus Python compilation and git diff --check; use no paid/cloud calls or automatic downloads."
     ],
     "followUpValidation": ["Build and launch a clean packaged Windows release after checkpointing; test Gemini consent and the actual capture devices separately, and gather representative-owner/accessibility feedback without treating this local automated pass as that evidence."]
+  },
+  {
+    "number": 196,
+    "title": "Brain memory and grounded retrieval",
+    "description": "Provide one owner-controlled Brain for retained notes and supported files, with bounded extraction, durable source records, optional local semantic indexing, lexical fallback, and cited knowledge previews in chat.",
+    "category": "Phase AF - Brain and Retrieval",
+    "status": "completed",
+    "dependsOn": [177, 192],
+    "decisions": ["Optional FAISS capability uses exact official PyPI wheel pins and SHA-256 validation, installed only after explicit owner confirmation into an isolated app-local package directory. Ollama embedding models are listed, previewed, and pulled only after separate owner confirmation."],
+    "acceptance": [
+      "The Brain page accepts owner-selected UTF-8 text, Markdown, code, CSV, PDF, and DOCX files, folders, drag-and-drop, and pasted text. Each item reports queued, extracting, chunking, embedding, ready, or failed truthfully; unsupported or oversized content gets a clear bounded error.",
+      "Retained owner notes require explicit retention consent and expiry. Text extraction and overlapping chunking are bounded; deleting/forgetting an item removes its derived chunks and vectors. Authoritative metadata/content stays in SQLite, with an optional persistent FAISS CPU index and lexical fallback when the pack/model is unavailable.",
+      "The optional FAISS and NumPy wheels come only from exact official PyPI artifacts with SHA-256 pins and wheel-only isolated installation. The Ollama embedding adapter uses only an already installed explicitly selected model; any model pull has a separate size/digest confirmation and visible progress. Neither path downloads during startup or chat.",
+      "When selected Brain items are used, chat previews the exact owner-authorized excerpts, retrieves at most five bounded chunks, marks retrieved text untrusted, and records citations in the real answer trace. Empty or irrelevant selection produces an honest no-answer notice. Gemini sends selected excerpts only after the existing exact-preview and per-turn cloud consent checks.",
+      "Deterministic tests cover file bounds/extraction, auth, owner scope, expiry, deletion, persistence/rebuild, digest-confirmed wheel install, explicit model-pull consent, lexical fallback, preview revalidation, citations, and cloud-consent behavior. Real local acceptance adds five files and one pasted note, runs ten questions, and reports citation/factual outcomes, real embedding Recall@5/MRR, and ingestion timing separately from fakes."
+    ],
+    "outOfScope": ["No OCR/image intake, 3D Brain renderer, voice/camera/screen pack, task planning, code execution, automated source ingestion, silent installation/model pull, or arbitrary package source. ChromaDB and sentence-transformers remain optional integrations, not automatic base dependencies."],
+    "risks": ["Semantic ranking and small-model answer quality vary by corpus, model, and host. A bounded offline evaluation is not a general quality guarantee.", "FAISS native wheels and DLL loading may differ in packaged/frozen Windows builds; exact hashes and fakes do not prove packaged binary compatibility.", "SQLite/vector deletion is logical application deletion, not secure erasure from disk or backups."],
+    "area": "P48",
+    "checkpoint": "task-196-brain-memory-grounded-retrieval",
+    "validation": [
+      "Automated validation: full Python suite 1,370 passed / 5 skipped / 0 failed (2 dependency deprecation warnings); browser modules 253 passed / 0 failed; Electron 38 passed / 0 failed; public docs 21 passed / 0 failed. Focused Python Brain/chat/retrieval tests 77 passed / 1 warning; focused Brain/chat UI modules 44 passed. Desktop UI production build and TypeScript checks passed; Python compileall and git diff --check passed.",
+      "Real local acceptance on Windows with Ollama llama3.2:3b and nomic-embed-text: six source items (five uploaded files plus one pasted note), ten questions, 10/10 expected facts correct after semantic adjudication, 10/10 expected sources in traces, and real embedding ranking Recall@5 1.00 / MRR 1.00 on this small six-note fixture. Model-emitted inline citation markers appeared in 0/10; the UI renders trace-grounded citations beneath answers.",
+      "Real chat latency averaged 3,181 ms across ten questions. Ingestion/storage averaged 21 ms/item (128 ms total); this measurement did not include semantic embeddings because the FAISS pack was not installed. Empty Brain returned an explicit no-answer in 29 ms without provider execution. A JSON snake_case lookup returned the expected 02:00 UTC backup window in 2,927 ms.",
+      "Task 196 includes an explicit official-PyPI pinned SHA-256 wheel preview/confirmation flow and persisted FAISS store integration; no wheel was installed in this acceptance. All automated package tests use deterministic fake artifacts and do not download wheels."
+    ],
+    "realWorldVerification": {"status": "partial", "evidence": ["Windows source-mode local Ollama chat and Brain retrieval exercised with llama3.2:3b; installed nomic-embed-text queried for real Recall@5/MRR on six synthetic notes."], "unverified": ["FAISS wheel installation and native-library loading, packaged Electron integration, semantic-index persistence/rebuild with the installed pack, other Windows/Python versions, and broader corpus/model quality."]},
+    "limitations": ["This small synthetic corpus and one local GPU-equipped Windows host do not establish general retrieval or response quality. The 10/10 fact score was manually adjudicated for one semantically equivalent date formatting; model inline citation markers were 0/10, so citations are rendered from the actual trace instead.", "FAISS was not installed because its PyPI wheels require a separate explicit owner action; the real embedding ranking metric measures the installed Ollama embedding model, while live chat used lexical retrieval."],
+    "automatedVerification": ["Use deterministic fake embeddings/providers for normal tests. Assert all remote/model/package actions require explicit owner confirmation and loopback-only routes where applicable."],
+    "followUpValidation": ["After owner-confirmed FAISS pack installation, verify actual wheel hashes, app-local isolation, native DLL load, persistent semantic index/rebuild and deletion in source and packaged Electron. Exercise supported file types with a broader corpus and a representative owner; report model quality separately."]
+  },
+  {
+    "number": 197,
+    "title": "Futuristic 3D Brain visualization",
+    "description": "Add an optional Three.js Brain visualization based only on actual authorized document/chunk relationships, with a complete accessible list fallback.",
+    "category": "Phase AG - Brain Visualization",
+    "status": "planned",
+    "dependsOn": [196, 172, 162],
+    "decisions": [],
+    "acceptance": [
+      "Render real Brain documents/chunks as nodes positioned by actual embeddings/projection or recorded document clusters; edges represent measured similarity or a same-source relation only. No random or fabricated telemetry/data.",
+      "Ingestion state and actual retrieval/citation events drive node highlighting. Selecting a node shows only owner-authorized source text; sensitive content is not exposed as graph labels or traces.",
+      "Use bounded/instanced geometry, cap animation rate, pause work when the page is hidden, respect reduced-motion, and fall back automatically to an equivalent keyboard-accessible 2D list when WebGL or frame-time checks are poor.",
+      "Automate real-data mapping, owner-scope, event highlighting, accessible fallback, reduced-motion, and pause/cap behavior. Measure frame time on available hardware during local model generation and label the hardware/configuration."
+    ],
+    "outOfScope": ["No inferred corporate hierarchy, generated graph nodes, cross-owner memory visibility, continuous model polling, or replacement of existing corporation maps."],
+    "risks": ["Projection and similarity can mislead if presented as facts; labels must state their actual basis and preserve unknown states.", "WebGL/GPU timing varies widely; one host's result is not a general performance guarantee."],
+    "area": "P49",
+    "checkpoint": null,
+    "validation": [],
+    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["Live GPU frame timing under inference and packaged Electron rendering."]},
+    "limitations": [],
+    "automatedVerification": ["Use deterministic embeddings and graph records, never random decorative nodes; test list parity, keyboard access, visibility pause, frame cap and fallback."],
+    "followUpValidation": ["Measure on RX 570 and at least one lower-capability host when available; confirm accessible list flow with a representative user."]
+  },
+  {
+    "number": 198,
+    "title": "Eyes, ears and voice capability packs",
+    "description": "Offer owner-installed local image/OCR, microphone/transcription, and speech-output capabilities as separate optional packs with real self-tests and visible use indicators.",
+    "category": "Phase AH - Multimodal Packs",
+    "status": "planned",
+    "dependsOn": [155, 145, 146, 148, 149, 196],
+    "decisions": [],
+    "acceptance": [
+      "For every pack, show Not installed / Installed / Working from observed facts, exact pinned source/version/size/digest and compatibility before an owner-confirmed wheel-only isolated install. Base installer remains small; no unverified or silent downloads.",
+      "Eyes: bounded image processing and one-shot screen capture/OCR using maintained local libraries; Tesseract installation/language data are guided separately, EasyOCR remains an optional heavy pack. Self-test captures a selected local screen/window only after permission, recognizes text, and reports the result. Provider transfer requires explicit per-turn consent.",
+      "Ears: push-to-talk capture with a visible microphone indicator and local faster-whisper CPU-int8 self-test over an explicitly selected/download-confirmed model. Sounddevice is preferred; PyAudio is added only if required. No online speech recognizer or cloud fallback is implicit.",
+      "Voice: local offline pyttsx3 self-test with an immediate Stop control; Kokoro may be separate. Include Coqui only if current maintenance and compatible Windows wheels are verified; any edge-tts option must clearly disclose online text transfer and require explicit consent.",
+      "Vision chat lists only installed Ollama models that report vision capability. If none exists, offer choices with sizes and wait for owner confirmation before a pull. Image preview states exactly which provider receives the image and requires existing one-turn consent.",
+      "Use deterministic adapter fakes for suites, and exercise real OCR, a five-second microphone recording/transcription, offline TTS/Stop, and one image turn on available Windows hardware where devices/models permit. Record unavailable physical devices as UNVERIFIED."
+    ],
+    "outOfScope": ["No cloud speech recognizer by default, remote audio/image storage, microphone always-on mode, automatic model/library installation, hidden capture, or claim that a package is working without its self-test."],
+    "risks": ["Audio, OCR and vision wheel/model compatibility, licenses, language quality, device drivers and hardware use vary by Windows/Python version.", "Optional model downloads can consume substantial bandwidth/storage and may expose private content if transfer consent is misunderstood."],
+    "area": "P50",
+    "checkpoint": null,
+    "validation": [],
+    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["Physical microphone, camera/screen capture, local OCR engine, voice output device and vision-capable model until individually exercised."]},
+    "limitations": [],
+    "automatedVerification": ["Fake device/provider tests cover permissions, consent, indicators, stop, offline-only behavior, model compatibility and clear failure states; pin and verify packages before installation."],
+    "followUpValidation": ["Test installed wheels/model packs on clean Windows profiles and confirm with real hardware and actual capture/playback devices."]
+  },
+  {
+    "number": 199,
+    "title": "Owner-gated computer automation",
+    "description": "Extend the existing allowlisted Playwright and Windows UI Automation boundaries with visible previews, per-action owner approval, bounded execution, and a reliable emergency stop.",
+    "category": "Phase AI - Owner-Gated Automation",
+    "status": "planned",
+    "dependsOn": [142, 143, 144, 156, 157, 158],
+    "decisions": [],
+    "acceptance": [
+      "Reuse existing Playwright/UI Automation providers, capability authorization, exact-action approvals, trace/audit services, and emergency-stop controls. Optional package installation is owner-confirmed, version-pinned, hash-checked and isolated.",
+      "Playwright runs only in a visible browser against owner-allowlisted HTTPS origins. Preview each exact navigation/click/type/submit action and require fresh owner approval; display each step and record a bounded trace. Default allowlist is empty.",
+      "PyAutoGUI, if retained, is disabled by default and requires an allowlisted app, dry-run preview and separate exact-action confirmation for every operation, rate limits, persistent active banner, global hotkey plus UI emergency stop, and stop checks before each action.",
+      "Never interpret a timed-out/unconfirmed action as success or retry it automatically. Preserve origin/process/window scoping, fail-closed authorization, audit, owner consent and existing one-use high-risk approval.",
+      "Test deterministic no-side-effect previews, denied/non-allowlisted targets, exact approval binding, expiry/replay, stop-before-action, action limits and unknown outcomes. Any real browser/native action test must use a disposable allowlisted target and explicit per-action confirmation."
+    ],
+    "outOfScope": ["Do not embed Open Interpreter or implement arbitrary code/shell execution. Task 190 remains design-only unless its threat model receives a separate owner review and authorization."],
+    "risks": ["Browser/native UI actions may cause irreversible external changes; owner confirmation cannot guarantee the remote system's resulting state.", "A hotkey or process-level stop cannot cancel every native in-flight driver call; uncertain outcomes must remain unknown and never be replayed."],
+    "area": "P51",
+    "checkpoint": null,
+    "validation": [],
+    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["Real allowlisted browser actions and native Windows automation outside disposable test targets."]},
+    "limitations": [],
+    "automatedVerification": ["Use fakes to exercise approvals, allowlists, traces, process stop, expiry, rate limits and unknown outcomes; no unapproved desktop or browser mutation."],
+    "followUpValidation": ["Review the precise app/site allowlist and action policy before enabling any live automation. Keep Task 190's separate design gate closed."]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, and 195 are completed scoped checkpoints; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, and 195 are completed scoped checkpoints; Tasks 196-199 are the Brain, visualization, multimodal-pack, and gated-automation phase; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
-  "developmentAcceptance": "For Tasks 175-195, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
+  "developmentAcceptance": "For Tasks 175-199, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
   "enhancementLoop": "After scoped development acceptance, continue to the next dependency-ready task without waiting for human QA. Record reproducible defects and regression cases for later review by different AI models; identify model/reviewer when available and never claim independent review that did not occur.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
   "completion": "Completed requires actual acceptance evidence, truthful limitations/skips, required documentation/update records, and a reviewed task checkpoint. A local checkpoint is sufficient for development acceptance; push or deployment is separate and must be authorized and verified when performed. Never mark complete solely because code exists or an AI says it worked.",
@@ -3718,7 +3823,11 @@ const futureRoadmapGroups = [
   { name: "Phase AB - Real-world Verification", range: "192-192", tasks: post100Tasks.filter(task => task.category === "Phase AB - Real-world Verification").map(({ title, description }) => [title, description]) },
   { name: "Phase AC - Structured Chat and Desktop Experience", range: "193-193", tasks: post100Tasks.filter(task => task.category === "Phase AC - Structured Chat and Desktop Experience").map(({ title, description }) => [title, description]) },
   { name: "Phase AD - Chat Prompt Correctness", range: "194-194", tasks: post100Tasks.filter(task => task.category === "Phase AD - Chat Prompt Correctness").map(({ title, description }) => [title, description]) },
-  { name: "Phase AE - Minimal Chat Experience", range: "195-195", tasks: post100Tasks.filter(task => task.category === "Phase AE - Minimal Chat Experience").map(({ title, description }) => [title, description]) }
+  { name: "Phase AE - Minimal Chat Experience", range: "195-195", tasks: post100Tasks.filter(task => task.category === "Phase AE - Minimal Chat Experience").map(({ title, description }) => [title, description]) },
+  { name: "Phase AF - Brain and Retrieval", range: "196-196", tasks: post100Tasks.filter(task => task.category === "Phase AF - Brain and Retrieval").map(({ title, description }) => [title, description]) },
+  { name: "Phase AG - Brain Visualization", range: "197-197", tasks: post100Tasks.filter(task => task.category === "Phase AG - Brain Visualization").map(({ title, description }) => [title, description]) },
+  { name: "Phase AH - Multimodal Packs", range: "198-198", tasks: post100Tasks.filter(task => task.category === "Phase AH - Multimodal Packs").map(({ title, description }) => [title, description]) },
+  { name: "Phase AI - Owner-Gated Automation", range: "199-199", tasks: post100Tasks.filter(task => task.category === "Phase AI - Owner-Gated Automation").map(({ title, description }) => [title, description]) }
 ];
 
 export const taskGroups = [...foundationTaskGroups, {
@@ -3746,6 +3855,11 @@ export const recommendedOrder = [
   { number: 192, reason: "Measure real local behavior and report evidence separately from automated fixtures before considering product enhancements." },
   { number: 193, reason: "Deliver structured provider messages and an accessible chat surface; its prompt-routing closure is tracked by Task 194." },
   { number: 194, reason: "Prove every chat route excludes request envelopes and the opened desktop build matches the tested source." },
-  { number: 195, reason: "Simplify the actual Electron chat surface after its route, initialization failure, and direct-to-chat behavior are understood." }
+  { number: 195, reason: "Simplify the actual Electron chat surface after its route, initialization failure, and direct-to-chat behavior are understood." },
+  { number: 196, reason: "Establish durable, owner-controlled Brain ingestion and cited retrieval before visualizing or expanding multimodal capabilities." },
+  { number: 197, reason: "Visualize only real Brain data after the underlying documents, chunks and retrieval events exist." },
+  { number: 198, reason: "Add independently tested, opt-in local Eyes/Ears/Voice packs after the Brain and consent surfaces are established." },
+  { number: 199, reason: "Extend reviewed browser/desktop actions only after their exact approvals, audit traces and stop controls are in place." }
 ];
-export const nextTask = recommendedOrder.map(({ number }) => post100Tasks.find(task => task.number === number)).find(task => task?.status === "planned");
+export const nextTask = recommendedOrder.map(({ number }) => post100Tasks.find(task => task.number === number)).find(task => task?.status === "planned")
+  ?? post100Tasks.find(task => task.status === "planned");

@@ -532,6 +532,107 @@ def test_chroma_lifecycle_stats_measure_only_configured_store_and_bound_walk(tmp
     assert str(path) not in str(stats)
 
 
+def test_faiss_store_persists_sqlite_metadata_and_rebuilds_local_index(tmp_path):
+    class Flat:
+        def __init__(self, dimensions): self.dimensions = dimensions
+
+    class Index:
+        def __init__(self, base): self.base = base; self.values = {}
+        @property
+        def ntotal(self): return len(self.values)
+        def add_with_ids(self, vectors, ids):
+            for vector, identifier in zip(vectors, ids): self.values[int(identifier)] = tuple(vector)
+        def search(self, queries, limit):
+            ranked = sorted(((sum(a * b for a, b in zip(queries[0], vector)), identifier)
+                             for identifier, vector in self.values.items()), reverse=True)[:limit]
+            scores = [item[0] for item in ranked] + [-1.0] * (limit - len(ranked))
+            labels = [item[1] for item in ranked] + [-1] * (limit - len(ranked))
+            return [scores], [labels]
+
+    class Numpy:
+        @staticmethod
+        def asarray(values, dtype=None): return [list(item) if isinstance(item, (tuple, list)) else item for item in values]
+
+    class Faiss:
+        IndexFlatIP = Flat
+        IndexIDMap2 = Index
+        @staticmethod
+        def write_index(index, path):
+            with open(path, "wb") as stream: stream.write(str(index.ntotal).encode())
+
+    from app.knowledge.vector_store import FaissVectorStore
+    path = tmp_path / "brain-vectors"
+    first = FaissVectorStore(str(path), faiss_module=Faiss, numpy_module=Numpy)
+    first.upsert(
+        ["chunk-dog", "chunk-invoice"],
+        [[1.0, 0.0], [0.0, 2.0]],
+        [
+            {"scope": "owner", "scope_id": "owner-a", "source_key": "source-a"},
+            {"scope": "owner", "scope_id": "owner-b", "source_key": "source-b"},
+        ],
+    )
+    assert first.search([1.0, 0.0], {"$and": [{"scope_id": "owner-a"}]}, 5) == (
+        ("chunk-dog", 0.0, {"scope": "owner", "scope_id": "owner-a", "source_key": "source-a"}),
+    )
+    assert first.inspect_source("source-a", 10)[0]["scope_id"] == "owner-a"
+    assert (path / "brain-vectors.sqlite3").exists()
+    assert list(path.glob("brain-vectors-*.faiss"))
+    reopened = FaissVectorStore(str(path), faiss_module=Faiss, numpy_module=Numpy)
+    assert reopened.stats()["vector_count"] == 2
+    assert len(reopened.search([0.0, 1.0], {"$and": [{"scope_id": "owner-b"}]}, 1)) == 1
+    reopened.delete_source("source-a")
+    assert reopened.stats()["vector_count"] == 1
+
+
+def test_optional_faiss_pack_requires_digest_bound_confirmation_and_installs_wheel_only(tmp_path):
+    import hashlib
+    from io import BytesIO
+    from zipfile import ZIP_DEFLATED, ZipFile
+    from app.knowledge.faiss_pack import OptionalFaissPack, WheelSpec
+
+    wheel = BytesIO()
+    with ZipFile(wheel, "w", ZIP_DEFLATED) as archive:
+        archive.writestr("faiss/__init__.py", "IndexFlatIP = object\n")
+    data = wheel.getvalue()
+    spec = WheelSpec("test-1.0-py3-none-any.whl", "https://files.pythonhosted.org/test.whl",
+                     len(data), hashlib.sha256(data).hexdigest())
+    activated = []
+    installer = OptionalFaissPack(tmp_path, wheels=(spec,), runtime_supported=lambda: True,
+                                  downloader=lambda _spec: data,
+                                  activator=lambda path: activated.append(path))
+    preview = installer.preview()
+    with pytest.raises(ValueError, match="explicitly confirm"):
+        installer.install(confirmed=False, manifest_digest=preview["manifest_digest"])
+    with pytest.raises(ValueError, match="explicitly confirm"):
+        installer.install(confirmed=True, manifest_digest="0" * 64)
+    result = installer.install(confirmed=True, manifest_digest=preview["manifest_digest"])
+    assert result["state"] == "installed"
+    assert (tmp_path / "capability-packs" / "faiss-cpu" / "site-packages" / "faiss" / "__init__.py").exists()
+    assert len(activated) == 1
+    assert installer.install(confirmed=True, manifest_digest=preview["manifest_digest"])["already_installed"] is True
+
+
+def test_optional_faiss_pack_rejects_tampered_wheels_and_zip_slip(tmp_path):
+    import hashlib
+    from io import BytesIO
+    from zipfile import ZIP_DEFLATED, ZipFile
+    from app.knowledge.faiss_pack import OptionalFaissPack, WheelSpec
+
+    wheel = BytesIO()
+    with ZipFile(wheel, "w", ZIP_DEFLATED) as archive:
+        archive.writestr("../escaped.py", "unsafe")
+    data = wheel.getvalue()
+    spec = WheelSpec("test-1.0-py3-none-any.whl", "https://files.pythonhosted.org/test.whl",
+                     len(data), hashlib.sha256(data).hexdigest())
+    installer = OptionalFaissPack(tmp_path, wheels=(spec,), runtime_supported=lambda: True,
+                                  downloader=lambda _spec: data)
+    preview = installer.preview()
+    with pytest.raises(RuntimeError, match="unsafe path"):
+        installer.install(confirmed=True, manifest_digest=preview["manifest_digest"])
+    assert not (tmp_path / "escaped.py").exists()
+    assert not (tmp_path / "capability-packs" / "faiss-cpu").exists()
+
+
 def test_optional_adapters_use_only_local_embeddings_and_external_vectors(tmp_path, monkeypatch):
     calls = {}
 

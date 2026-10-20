@@ -172,10 +172,18 @@ class OwnedChatService:
         with self._access(owner, identifier):
             return self._chat.get_status(identifier)
 
+    def complete_without_provider(self, owner, identifier, text, reply):
+        """Complete an owner-scoped safe response without reserving a model slot."""
+        with self._access(owner, identifier) as entry:
+            if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
+                raise ChatLimit("Conversation message limit reached; start a new conversation")
+            record = self._chat.complete_without_provider(identifier, text, reply)
+            return {"conversation": record, "coordinator": entry.coordinator}
+
     def send(self, owner, identifier, text, retrieved_context=None, *, presentation_preferences=None,
              tool_context=None, image_ids=(),
              image_consent=False, ocr_evidence=(), prompt_observer=None, turn_route=None,
-             route_consent=False):
+             route_consent=False, brain_enabled=False):
         if turn_route is not None:
             if (route_consent is not True or not isinstance(turn_route, tuple) or len(turn_route) != 2
                     or any(not isinstance(value, str) or not value.strip() or len(value) > 256
@@ -223,14 +231,17 @@ class OwnedChatService:
                             self._image_store.remove(owner, identifier, image.id)
                 return self._send(entry, identifier, text, retrieved_context, presentation_preferences,
                                   tool_context=tool_context,
-                                  prompt_observer=prompt_observer, turn_route=turn_route)
+                                  prompt_observer=prompt_observer, turn_route=turn_route,
+                                  brain_enabled=brain_enabled)
 
-    def stream(self, owner, identifier, text, retrieved_context=None, presentation_preferences=None):
+    def stream(self, owner, identifier, text, retrieved_context=None, presentation_preferences=None,
+               *, brain_enabled=False):
         with self._access(owner, identifier) as entry:
             if getattr(entry.provider, "supports_streaming", False) is not True:
                 raise ChatUnavailable("The selected provider does not support response streaming")
             with self.agent_request(entry.coordinator.id):
-                for event in self._chat.send_stream(identifier, text, retrieved_context, presentation_preferences):
+                for event in self._chat.send_stream(identifier, text, retrieved_context,
+                                                    presentation_preferences, brain_enabled=brain_enabled):
                     if event["type"] == "complete":
                         yield {
                             **event,
@@ -241,7 +252,7 @@ class OwnedChatService:
                         yield event
 
     def _send(self, entry, identifier, text, retrieved_context=None, presentation_preferences=None,
-              tool_context=None, prompt_observer=None, turn_route=None):
+              tool_context=None, prompt_observer=None, turn_route=None, brain_enabled=False):
         current, provider = self._coordinator(entry.coordinator.id)
         if (current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model):
             raise ChatConflict("Coordinator assignment changed; start a new conversation")
@@ -252,6 +263,7 @@ class OwnedChatService:
         record = self._chat.send(identifier, text, retrieved_context, presentation_preferences,
                                  tool_context=tool_context,
                                  prompt_observer=prompt_observer, turn_route=turn_route,
+                                 brain_enabled=brain_enabled,
                                  expected_assignment=(entry.coordinator.provider, entry.coordinator.model)
                                  if turn_route is not None else None)
         result = {"conversation": record, "coordinator": entry.coordinator}

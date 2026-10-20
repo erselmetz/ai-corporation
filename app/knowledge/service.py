@@ -78,7 +78,7 @@ class SemanticMemoryService:
     def status(self):
         if self.enabled:
             return {"state": "configured", "provider": "local", "model": self._safe_identity(),
-                    "detail": "A local model and vector store are configured. The model loads locally on the first explicit indexing or search request."}
+                    "detail": "A local embedding adapter and vector store are configured. Provider availability is tested only on explicit indexing or search; no model is downloaded."}
         return {"state": "unavailable" if self._unavailable_reason else "disabled",
                 "provider": None, "model": None,
                 "detail": self._unavailable_reason or

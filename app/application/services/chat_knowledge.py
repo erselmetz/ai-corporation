@@ -29,6 +29,13 @@ CONTEXT_NOTICE = (
 AUTO_CONTEXT_BYTES = 1800
 AUTO_CONTEXT_CHUNKS = 5
 AUTO_CONTEXT_SCOPES = 3
+AUTO_RETRIEVAL_STOPWORDS = frozenset({
+    "a", "an", "and", "are", "as", "at", "be", "by", "does", "for", "from",
+    "how", "i", "in", "is", "it", "my", "of", "on", "or", "the", "to", "was",
+    "what", "when", "where", "which", "who", "why", "with", "your",
+    "ang", "ano", "ba", "dahil", "ganun", "ito", "ko", "mga", "mo", "na",
+    "ng", "ni", "nino", "para", "sa", "sino", "yung",
+})
 SECRET_PATTERN = re.compile(r"(?i)(AIza[0-9A-Za-z_-]{20,}|(?:api[_-]?key|token|password|secret)[\s_-]*[:=]?[\s_-]+\S+|Bearer\s+\S+)")
 WITHDRAWAL_LIMITS = (
     "Withdrawal deletes the stored record so it is never retrieved again. It does not "
@@ -149,7 +156,9 @@ class ChatKnowledgeService:
                 raise ValueError("Knowledge scopes must be unique")
             normalized.append((scope, scope_id))
 
-        query_words = tuple(dict.fromkeys(re.findall(r"\w+", query.casefold())))
+        raw_query_words = tuple(dict.fromkeys(re.findall(r"[^\W_]+", query.casefold())))
+        meaningful = tuple(word for word in raw_query_words if word not in AUTO_RETRIEVAL_STOPWORDS)
+        query_words = meaningful or raw_query_words
         retrieval_query = " ".join(query_words[:32])
         if len(retrieval_query.encode("utf-8")) > 1024:
             retrieval_query = retrieval_query.encode("utf-8")[:1024].decode("utf-8", errors="ignore").rstrip()
@@ -179,13 +188,13 @@ class ChatKnowledgeService:
                     continue
                 pieces = chunk_text(detail["content"])
                 position = next((i for i, piece in enumerate(pieces) if hit.content.strip() and hit.content.strip() in piece), None)
-                terms = set(re.findall(r"\w+", retrieval_query.casefold()))
+                terms = set(re.findall(r"[^\W_]+", retrieval_query.casefold()))
                 if position is None:
                     ranked_pieces = sorted(enumerate(pieces), key=lambda row: (
-                        -len(terms.intersection(re.findall(r"\w+", row[1].casefold()))), row[0]))
+                        -len(terms.intersection(re.findall(r"[^\W_]+", row[1].casefold()))), row[0]))
                     position = ranked_pieces[0][0]
                 content = pieces[position]
-                if not terms.intersection(re.findall(r"\w+", content.casefold())) and hit.semantic_contribution <= 0:
+                if not terms.intersection(re.findall(r"[^\W_]+", content.casefold())) and hit.semantic_contribution <= 0:
                     continue
                 candidates.append({
                     "content": content,
@@ -204,7 +213,7 @@ class ChatKnowledgeService:
         used = 0
         normalized_texts = []
         for candidate in candidates:
-            words = set(re.findall(r"\w+", candidate["content"].casefold()))
+            words = set(re.findall(r"[^\W_]+", candidate["content"].casefold()))
             if any(words and existing and len(words & existing) / len(words | existing) >= 0.92
                    for existing in normalized_texts):
                 truncation["duplicates_removed"] += 1
@@ -302,8 +311,10 @@ class ChatKnowledgeService:
     def record_turn_trace(self, owner, conversation_id, reply_id, *, coordinator,
                           cloud_provider, cloud_consent, elapsed_ms, retrieval, outcome="completed",
                           failure=None, tools=None, steps=None, now=None, turn_route=None,
-                          vision=None):
+                          vision=None, provider_called=True, answer_source="provider"):
         self._application.owned_chat().authorize_owner(owner, conversation_id)
+        if type(provider_called) is not bool or answer_source not in {"provider", "brain-empty-abstention"}:
+            raise ValueError("Answer provenance is invalid")
         if retrieval and "enabled" not in retrieval:
             retrieval = {
                 "enabled": True, "mode": "lexical-only", "query": retrieval.get("query"),
@@ -335,6 +346,8 @@ class ChatKnowledgeService:
                       ) and bool(cloud_provider)},
             "timing": {"turn_elapsed_ms": max(0, int(elapsed_ms))},
             "outcome": outcome,
+            "provider_called": provider_called,
+            "answer_source": answer_source,
             "vision": vision or {"used": False},
             "failure": _safe_text(failure, 256) if failure else None,
             "tools": list(tools or []),

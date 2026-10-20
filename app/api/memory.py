@@ -1,8 +1,10 @@
 from datetime import datetime, timezone
 from typing import Annotated, Literal
+import json
 import sqlite3
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 
 from app.memory import MemoryScope, MemoryExpiredError
@@ -105,6 +107,19 @@ class KnowledgeProposalDecision(BaseModel):
     decision: Literal["accept", "reject", "more_information"]
 
 
+class FaissPackInstall(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirmed: StrictBool
+    manifest_digest: StrictStr = Field(min_length=64, max_length=64)
+
+
+class BrainEmbeddingPull(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirmed: StrictBool
+    manifest_digest: StrictStr = Field(min_length=71, max_length=71)
+    manifest_bytes: StrictInt = Field(gt=0, le=10 * 1024 * 1024 * 1024)
+
+
 def get_memory_now():
     return datetime.now(timezone.utc)
 
@@ -124,6 +139,156 @@ def semantic_service(request: Request):
     return factory()
 
 
+def faiss_pack(request: Request):
+    configured = getattr(request.app.state, "faiss_pack_installer", None)
+    if configured is not None:
+        return configured
+    from app.knowledge.faiss_pack import OptionalFaissPack, application_data_root
+    return OptionalFaissPack(application_data_root())
+
+
+@router.get("/brain/faiss/preview")
+def preview_brain_faiss_pack(_principal: AuthenticatedPrincipal = Depends(require_permission("capability-pack:manage")),
+                             installer=Depends(faiss_pack)):
+    return installer.preview()
+
+
+@router.post("/brain/faiss/install")
+def install_brain_faiss_pack(body: FaissPackInstall,
+                             request: Request,
+                             _principal: AuthenticatedPrincipal = Depends(require_permission("capability-pack:manage")),
+                             installer=Depends(faiss_pack)):
+    preview = installer.preview()
+    if body.confirmed is not True or body.manifest_digest != preview.get("manifest_digest"):
+        raise HTTPException(409, "Review the current pinned wheel size and digest, then explicitly confirm installation")
+    try:
+        result = installer.install(confirmed=body.confirmed, manifest_digest=body.manifest_digest)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from None
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from None
+    application = getattr(request.app.state, "application_service", None)
+    reset = getattr(application, "reset_semantic_memory", None)
+    if result.get("state") == "installed" and callable(reset):
+        reset()
+    return result
+
+
+@router.post("/brain/faiss/self-test")
+def test_brain_faiss_pack(_principal: AuthenticatedPrincipal = Depends(require_permission("capability-pack:manage")),
+                         installer=Depends(faiss_pack)):
+    from tempfile import TemporaryDirectory
+    from pathlib import Path
+    from app.knowledge.faiss_pack import activate_faiss_pack
+    if installer.preview().get("state") != "installed":
+        return {"state": "not-installed", "detail": "Install the optional FAISS pack after reviewing its pinned wheels."}
+    try:
+        activate_faiss_pack(installer.site_packages)
+        from app.knowledge.vector_store import FaissVectorStore
+        with TemporaryDirectory(prefix="ersel-brain-test-") as temporary:
+            store = FaissVectorStore(temporary)
+            store.upsert(["self-test-a", "self-test-b"], [[1.0, 0.0], [0.0, 1.0]], [
+                {"scope": "self-test", "scope_id": "temporary", "source_key": "a"},
+                {"scope": "self-test", "scope_id": "temporary", "source_key": "b"},
+            ])
+            result = store.search([1.0, 0.0], {"$and": [{"scope_id": "temporary"}]}, 1)
+            if len(result) != 1 or result[0][0] != "self-test-a":
+                raise RuntimeError("FAISS result mismatch")
+            store.delete_source("a")
+            if store.stats()["vector_count"] != 1:
+                raise RuntimeError("FAISS deletion mismatch")
+        return {"state": "working", "detail": "Local index, filtered search, persistence metadata, and delete passed."}
+    except Exception:
+        return {"state": "failed", "detail": "FAISS self-test failed; Brain continues using lexical retrieval."}
+
+
+def brain_embedding_service(request: Request):
+    configured = getattr(request.app.state, "brain_embedding_model_service", None)
+    if configured is not None:
+        return configured
+    from app.application.services.first_run_setup import OllamaFirstRunService
+    service = OllamaFirstRunService(
+        model_id="nomic-embed-text:latest",
+        registry_manifest="https://registry.ollama.ai/v2/library/nomic-embed-text/manifests/latest",
+    )
+    request.app.state.brain_embedding_model_service = service
+    return service
+
+
+@router.get("/brain/embedding/status")
+def brain_embedding_status(_principal: AuthenticatedPrincipal = Depends(require_permission("memory:read")),
+                           model_service=Depends(brain_embedding_service)):
+    try:
+        return model_service.status()
+    except Exception:
+        return {"state": "unknown", "service_running": None,
+                "model_id": "nomic-embed-text:latest", "model_installed": None,
+                "source": "Local Ollama status check", "reason": "Ollama status could not be checked."}
+
+
+@router.get("/brain/embedding/preview")
+def brain_embedding_preview(_principal: AuthenticatedPrincipal = Depends(require_permission("embedding-model:manage")),
+                            model_service=Depends(brain_embedding_service)):
+    try:
+        preview = model_service.preview_model()
+        status = model_service.status()
+        return {**preview, "service_running": status.get("service_running"),
+                "model_installed": status.get("model_installed")}
+    except ValueError as exc:
+        raise HTTPException(503, str(exc)) from None
+
+
+@router.post("/brain/embedding/pull")
+def brain_embedding_pull(body: BrainEmbeddingPull,
+                         request: Request,
+                         _principal: AuthenticatedPrincipal = Depends(require_permission("embedding-model:manage")),
+                         model_service=Depends(brain_embedding_service)):
+    if body.confirmed is not True:
+        raise HTTPException(409, "Explicit embedding-model download confirmation is required")
+    try:
+        preview = model_service.preview_model()
+    except ValueError as exc:
+        raise HTTPException(503, str(exc)) from None
+    if (preview.get("manifest_digest") != body.manifest_digest
+            or preview.get("manifest_bytes") != body.manifest_bytes):
+        raise HTTPException(409, "The Ollama model manifest changed; review its size again before downloading")
+
+    def stream():
+        completed = False
+        for line in model_service.pull(expected_digest=body.manifest_digest,
+                                       expected_bytes=body.manifest_bytes):
+            try:
+                event = json.loads(line)
+            except ValueError:
+                yield json.dumps({"event": "error", "message": "Ollama returned invalid download progress."}) + "\n"
+                return
+            if event.get("event") == "complete":
+                completed = True
+            yield json.dumps(event, separators=(",", ":")) + "\n"
+        if completed:
+            application = getattr(request.app.state, "application_service", None)
+            reset = getattr(application, "reset_semantic_memory", None)
+            if callable(reset):
+                reset()
+
+    return StreamingResponse(stream(), media_type="application/x-ndjson",
+                             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
+
+
+@router.post("/brain/embedding/self-test")
+def brain_embedding_self_test(_principal: AuthenticatedPrincipal = Depends(require_permission("embedding-model:manage"))):
+    try:
+        from app.knowledge.providers import OllamaEmbeddingProvider
+        vector = OllamaEmbeddingProvider("nomic-embed-text:latest").embed_one(
+            "ERSELMETZ AI Brain local embedding self-test")
+        if not vector or len(vector) > 16_384:
+            raise ValueError("invalid embedding")
+        return {"state": "working", "dimensions": len(vector),
+                "detail": "Ollama returned a bounded local embedding vector."}
+    except Exception:
+        return {"state": "failed", "detail": "Local embedding self-test failed; lexical retrieval remains available."}
+
+
 @router.get("/owner")
 def list_owner_knowledge(principal: AuthenticatedPrincipal = Depends(require_permission("memory:read")),
                          manager=Depends(service), index=Depends(semantic_service),
@@ -139,9 +304,15 @@ def create_owner_knowledge(body: OwnerKnowledgeCreate,
                            principal: AuthenticatedPrincipal = Depends(require_permission("memory:manage")),
                            manager=Depends(service), now=Depends(get_memory_now)):
     from app.knowledge.intake import source_name
-    return invoke(lambda: manager.create_owner_note(
+    from app.knowledge.chunking import chunk_text
+    try:
+        chunks = chunk_text(body.content)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(422, str(exc)) from None
+    record = invoke(lambda: manager.create_owner_note(
         principal.identity, body.content, source_name=source_name(body.source_name),
         expires_at=body.expires_at, retention_opt_in=body.retention_opt_in, now=now))
+    return {**record, "chunk_count": len(chunks)}
 
 
 @router.post("/owner/upload")
@@ -151,17 +322,20 @@ async def upload_owner_knowledge(request: Request, file: UploadFile = File(...),
                                  principal: AuthenticatedPrincipal = Depends(require_permission("memory:manage")),
                                  manager=Depends(service), now=Depends(get_memory_now)):
     from app.knowledge.intake import MAX_UPLOAD_BYTES, extract_upload
+    from app.knowledge.chunking import chunk_text
     declared = request.headers.get("content-length")
     if declared is not None and (not declared.isdigit() or int(declared) > MAX_UPLOAD_BYTES + 16_384):
         raise HTTPException(413, "Knowledge upload exceeds the 1 MiB file limit")
     data = await file.read(MAX_UPLOAD_BYTES + 1)
     try:
         content, name = extract_upload(file.filename, data)
+        chunks = chunk_text(content)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from None
-    return invoke(lambda: manager.create_owner_note(
+    record = invoke(lambda: manager.create_owner_note(
         principal.identity, content, source_name=name, expires_at=expires_at,
         retention_opt_in=retention_opt_in, now=now))
+    return {**record, "chunk_count": len(chunks)}
 
 
 def invoke(operation):

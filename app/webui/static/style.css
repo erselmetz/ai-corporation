@@ -1062,6 +1062,9 @@ textarea::placeholder { color: #8192a6; }
 .chat-message strong { color: var(--ui-cyan); font-size: 0.82rem; }
 .chat-message p { color: #e0e9f2; line-height: 1.65; }
 .chat-message p.response-detail-brief { max-height: 12rem; overflow: auto; font-size: 0.94rem; }
+.chat-visible-citations { display: flex; flex-wrap: wrap; gap: .35rem .6rem; margin: .45rem 0; color: var(--ui-muted); font-size: .76rem; line-height: 1.4; }
+.chat-visible-citations strong { color: var(--ui-cyan); }
+.chat-visible-citations span { overflow-wrap: anywhere; }
 .chat-content textarea { min-height: 7rem; resize: vertical; }
 .chat-advanced { margin-top: 0.85rem; border: 1px solid var(--ui-line); border-radius: 0.6rem; background: rgba(13, 21, 31, 0.72); }
 .chat-advanced > summary { padding: 0.85rem 1rem; color: var(--ui-cyan); cursor: pointer; font-weight: 650; }
@@ -1148,3 +1151,20 @@ body.has-shared-navigation .layout {
 /* Keep advanced JSON and diagnostic output within narrow screens. */
 .content pre { max-width: 100%; overflow-x: auto; }
 #assignment-policy-config { display: block; width: 100%; max-width: 100%; }
+.brain-drop-zone {
+  border: 1px dashed var(--border, #456078);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: .6rem 0;
+  color: var(--muted, #9cb2c4);
+  text-align: center;
+  cursor: pointer;
+}
+.brain-drop-zone:focus-visible,
+.brain-drop-zone.drag-over {
+  outline: 2px solid var(--accent, #62d8e4);
+  outline-offset: 2px;
+  background: color-mix(in srgb, var(--accent, #62d8e4) 10%, transparent);
+}
+#brain-ingestion-list li { margin: .35rem 0; }
+#brain-ingestion-list strong { margin-inline-end: .4rem; overflow-wrap: anywhere; }

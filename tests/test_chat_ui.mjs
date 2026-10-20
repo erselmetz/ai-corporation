@@ -188,6 +188,37 @@ test("plus actions stay explicit and start only the chosen capture or knowledge 
   assert.equal(ui.elements["chat-knowledge-panel"].open, true);
 });
 
+test("Brain defaults on when owner knowledge exists and previews selected chunks automatically before a turn", async () => {
+  let sentBody = null;
+  const ui = setup(async (path, options = {}) => {
+    if (path === "/api/memory/owner") return response({ items: [{ id: "brain-note" }] });
+    if (path === "/api/chat/conversations/" + encodeURIComponent("conversation") + "/knowledge-preview") {
+      return response({ digest: "d".repeat(64), items: [{ source: "note.md", scope: "owner", chunk_reference: "1/1", content: "Project uses Ollama locally." }], trace: { context_bytes: 32 } });
+    }
+    if (path === "/api/chat/conversations" && options.method === "POST") {
+      const body = JSON.parse(options.body);
+      return response(snapshot());
+    }
+    if (path.endsWith("/messages")) {
+      sentBody = JSON.parse(options.body);
+      return response(snapshot([message("user", "completed", sentBody.text), message("assistant", "completed", "Reply") ]));
+    }
+    return null;
+  });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  assert.equal(ui.elements["chat-knowledge-enabled"].checked, true);
+  assert.equal(ui.elements["chat-knowledge-owner"].checked, true);
+  ui.elements["chat-input"].value = "What is my local setup?";
+  const sendResult = await ui.controller.send({ preventDefault() {} });
+  const previewCall = ui.calls.find(call => call.path.endsWith("/knowledge-preview"));
+  assert.ok(previewCall, "exact chunks are previewed without a manual panel action; send=" + sendResult + "; state=" + ui.elements["chat-state"].textContent + "; calls=" + ui.calls.map(call => call.path).join(","));
+  assert.equal(JSON.parse(previewCall.options.body).query, "What is my local setup?");
+  assert.equal(sentBody.knowledge_enabled, true);
+  assert.equal(sentBody.knowledge_preview_digest, "d".repeat(64));
+  assert.match(ui.elements["chat-knowledge-preview-result"].textContent, /Project uses Ollama locally/);
+});
+
 test("narrow sidebar uses the menu toggle and Escape closes it", async () => {
   const callbacks = new Map();
   const windowRef = {
@@ -253,7 +284,9 @@ test("conversation sidebar groups by date, supports search, rename, and pin", as
 });
 
 test("answer trace is collapsed by default and remains available after a reply", async () => {
-  const trace = { route: { agent: "Local Worker", provider: "ollama", model: "llama3.2:3b" }, steps: [] };
+  const trace = { route: { agent: "Local Worker", provider: "ollama", model: "llama3.2:3b" }, steps: [],
+    retrieval: { enabled: true, returned_chunks: [{ source: "notes.json" }] },
+    sources: [{ source: "notes.json", chunk_reference: "memory-1#1" }] };
   const ui = setup(path => path.endsWith("/messages")
     ? response({ ...snapshot([message("assistant", "completed", "Answer")]), context_traces: { assistant: trace } })
     : null);
@@ -264,6 +297,9 @@ test("answer trace is collapsed by default and remains available after a reply",
   const answer = ui.elements["chat-history"].children.find(item => item.className === "chat-message chat-message-assistant");
   const details = answer.children.find(item => item.className === "chat-answer-trace");
   assert.ok(details);
+  const citations = answer.children.find(item => item.className === "chat-visible-citations");
+  assert.ok(citations);
+  assert.match(citations.textContent, /\[1\] notes\.json · memory-1#1/);
   assert.equal(details.open, false);
   assert.equal(details.children[0].textContent, "How I answered");
   assert.equal(ui.elements["chat-empty-state"].hidden, true);
@@ -521,11 +557,9 @@ test("knowledge requires an exact preview and displays returned citations in How
   ui.elements["chat-knowledge-enabled"].listeners.change();
   ui.elements["chat-knowledge-owner"].checked = true;
   ui.elements["chat-knowledge-owner"].listeners.change();
-  assert.equal(await ui.controller.send(), false);
-  assert.match(ui.elements["chat-state"].textContent, /Preview the exact selected knowledge/);
-  await ui.elements["chat-knowledge-preview"].listeners.click();
-  assert.match(ui.elements["chat-knowledge-preview-result"].textContent, /Port 8123/);
   assert.equal(await ui.controller.send(), true);
+  assert.ok(ui.calls.some(call => call.path.endsWith("/knowledge-preview")));
+  assert.match(ui.elements["chat-knowledge-preview-result"].textContent, /Port 8123/);
   const body = JSON.parse(ui.calls.find(call => call.path.endsWith("/messages")).options.body);
   assert.equal(body.knowledge_enabled, true);
   assert.equal(body.knowledge_preview_digest, "a".repeat(64));

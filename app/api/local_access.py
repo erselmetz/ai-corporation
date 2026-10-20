@@ -111,7 +111,7 @@ class LocalOwnerAuthentication:
             | MODEL_RUNTIME_PERMISSIONS | WORKFLOW_PERMISSIONS
             | SOFTWARE_MANAGEMENT_PERMISSIONS
             | frozenset({"capability-grant:manage", "capability-approval:manage", "updates:manage",
-                         "capability-emergency:manage", "browser:act", "desktop:act"})
+                         "capability-emergency:manage", "capability-pack:manage", "embedding-model:manage", "browser:act", "desktop:act"})
             | frozenset({"backup:export", "backup:restore"})
             | DOCUMENTATION_REVIEW_PERMISSIONS
             | OWNER_LOCK_PERMISSIONS

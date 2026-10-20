@@ -9,7 +9,9 @@ from app.memory.models import _identifier, _time
 
 
 def _words(text):
-    return frozenset(re.findall(r"\w+", text.casefold(), flags=re.UNICODE))
+    # Split snake_case identifiers into their natural-language components so
+    # queries such as "backup window" can match a CSV/JSON field name.
+    return frozenset(re.findall(r"[^\W_]+", text.casefold(), flags=re.UNICODE))
 
 
 @dataclass(frozen=True)

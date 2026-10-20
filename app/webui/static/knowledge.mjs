@@ -5,6 +5,9 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
   const state = el("knowledge-state"), indexState = el("knowledge-index-status");
   const list = el("knowledge-list"), detail = el("knowledge-detail");
   let ownerId = null, selected = null, semanticAvailable = false, busy = false;
+  const MAX_FILES_PER_BATCH = 25;
+  const ALLOWED_EXTENSIONS = new Set(".txt .md .pdf .docx .csv .py .js .mjs .cjs .ts .tsx .jsx .json .html .htm .css .scss .yaml .yml .toml .ini .xml .sql .sh .ps1 .bat .java .c .h .cpp .hpp .go .rs .rb .php .cs .kt .swift .vue .svelte .mdx .rst .log".split(" "));
+  const statusList = el("brain-ingestion-list");
   async function session() {
     const response = await fetchImpl("/api/local/session", { credentials: "same-origin", cache: "no-store" });
     if (!response.ok) throw new Error(response.status === 401 ? "Sign in to manage private notes." : "Owner session is unavailable.");
@@ -32,6 +35,70 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
     for (const id of ["knowledge-save", "knowledge-upload", "knowledge-refresh", "knowledge-index", "knowledge-inspect", "knowledge-delete"]) {
       const button = el(id);
       if (button) button.disabled = value || (["knowledge-index", "knowledge-inspect"].includes(id) && (!selected || !semanticAvailable)) || (id === "knowledge-delete" && !selected);
+    }
+  }
+  function stagedRow(file) {
+    const row = documentRef.createElement("li");
+    const title = documentRef.createElement("strong");
+    title.textContent = file.webkitRelativePath || file.name || "Selected file";
+    const stage = documentRef.createElement("span");
+    stage.textContent = "Queued";
+    row.append(title, documentRef.createTextNode(" — "), stage);
+    statusList?.append(row);
+    return next => { stage.textContent = next; };
+  }
+  function setSelectedFiles(files) {
+    const selected = [...(files || [])];
+    if (el("brain-selection-status")) el("brain-selection-status").textContent = selected.length
+      ? `${selected.length} file${selected.length === 1 ? "" : "s"} selected; ${selected.reduce((sum, file) => sum + (file.size || 0), 0)} bytes total.`
+      : "No files selected.";
+  }
+  const nextPaint = () => new Promise(resolve => globalThis.requestAnimationFrame
+    ? globalThis.requestAnimationFrame(() => resolve()) : setTimeout(resolve, 0));
+  async function uploadOne(file, setStage, expiry) {
+    const suffix = (file.name.match(/\.[^.]+$/)?.[0] || "").toLowerCase();
+    if (!ALLOWED_EXTENSIONS.has(suffix)) { setStage("failed — unsupported file type"); return false; }
+    if (!file.size || file.size > 1_048_576) { setStage("failed — empty or larger than 1 MiB"); return false; }
+    setStage("Extracting text…"); await nextPaint();
+    try {
+      const formData = new FormData(); formData.append("file", file, file.name);
+      const query = new URLSearchParams({ expires_at: expiry, retention_opt_in: "true" });
+      const result = await request(`/api/memory/owner/upload?${query}`, { method: "POST", formData });
+      selected = { id: result.id };
+      setStage("Chunking text…"); await nextPaint();
+      if (!semanticAvailable) {
+        setStage("Ready — searchable with local lexical retrieval; semantic pack unavailable");
+        return true;
+      }
+      setStage("Embedding locally…"); await nextPaint();
+      try {
+        const index = await request("/api/memory/semantic/index", { method: "POST", body: {
+          scope: "owner", scope_id: ownerId, memory_id: result.id,
+        } });
+        setStage(`Ready — ${index.chunk_count} chunks embedded on this device`);
+      } catch {
+        setStage("Ready — lexical retrieval available; local embedding failed");
+      }
+      return true;
+    } catch (error) {
+      setStage(`Failed — ${error.message}`);
+      return false;
+    }
+  }
+  async function processStoredNote(memoryId, setStage) {
+    setStage("Chunking text…"); await nextPaint();
+    if (!semanticAvailable) {
+      setStage("Ready — searchable with local lexical retrieval; semantic pack unavailable");
+      return;
+    }
+    setStage("Embedding locally…"); await nextPaint();
+    try {
+      const index = await request("/api/memory/semantic/index", { method: "POST", body: {
+        scope: "owner", scope_id: ownerId, memory_id: memoryId,
+      } });
+      setStage(`Ready — ${index.chunk_count} chunks embedded on this device`);
+    } catch {
+      setStage("Ready — lexical retrieval available; local embedding failed");
     }
   }
   function clearSelection() {
@@ -104,7 +171,10 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
       el("knowledge-content").value = "";
       el("knowledge-consent").checked = false;
       detail.textContent = `Saved ${result.source_reference}. It expires ${result.expires_at}.`;
-      state.textContent = "Private note saved locally.";
+      const setStage = stagedRow({ name: el("knowledge-source").value || "Pasted note" });
+      setStage("Extracting pasted text…"); await nextPaint();
+      await processStoredNote(result.id, setStage);
+      state.textContent = "Private note saved to your Brain.";
       selected = { id: result.id };
       await refreshAfterAction();
     } catch (error) { state.textContent = error.message; }
@@ -113,20 +183,23 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
   async function upload(event) {
     event?.preventDefault();
     if (busy) return;
-    const file = el("knowledge-file").files?.[0];
-    if (!file) { state.textContent = "Choose a .md, .txt, or .pdf file."; return; }
-    if (file.size > 1_048_576) { state.textContent = "File exceeds the 1 MiB limit."; return; }
+    const files = [...(el("knowledge-file").files || []), ...(el("knowledge-folder").files || [])];
+    if (!files.length) { state.textContent = "Choose one or more supported files or a folder."; return; }
+    if (files.length > MAX_FILES_PER_BATCH) { state.textContent = `Choose no more than ${MAX_FILES_PER_BATCH} files per batch.`; return; }
     if (!el("knowledge-consent").checked) { state.textContent = "Confirm local retention consent first."; return; }
     setBusy(true);
     try {
       const auth = await session(); ownerId = auth.identity;
-      const formData = new FormData(); formData.append("file", file, file.name);
       const expiry = new Date(now().getTime() + Number(el("knowledge-expiry").value) * 86400000).toISOString();
-      const query = new URLSearchParams({ expires_at: expiry, retention_opt_in: "true" });
-      const result = await request(`/api/memory/owner/upload?${query}`, { method: "POST", formData });
-      el("knowledge-file").value = ""; el("knowledge-consent").checked = false;
-      selected = { id: result.id };
-      state.textContent = `Added ${result.source_reference} as private local knowledge.`;
+      const rows = files.map(file => ({ file, setStage: stagedRow(file) }));
+      if (el("knowledge-file")) el("knowledge-file").value = "";
+      if (el("knowledge-folder")) el("knowledge-folder").value = "";
+      el("knowledge-consent").checked = false;
+      let complete = 0, failed = 0;
+      for (const item of rows) {
+        if (await uploadOne(item.file, item.setStage, expiry)) complete++; else failed++;
+      }
+      state.textContent = `${complete} file${complete === 1 ? "" : "s"} added to your Brain; ${failed} failed.`;
       await refreshAfterAction();
     } catch (error) { state.textContent = error.message; }
     finally { setBusy(false); }
@@ -183,13 +256,174 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
     } catch (error) { detail.textContent = error.message; }
     finally { setBusy(false); }
   }
+  async function refreshFaissStatus() {
+    const status = el("brain-faiss-state"), detail = el("brain-faiss-detail");
+    if (!status || !detail) return;
+    try {
+      const preview = await request("/api/memory/brain/faiss/preview");
+      status.textContent = preview.state === "installed" ? "FAISS pack: Installed" : "FAISS pack: Not installed";
+      detail.textContent = preview.supported
+        ? preview.source + ". " + preview.install_action + " No model is downloaded."
+        : "This pinned pack is unavailable for the current Python runtime or Windows architecture; lexical retrieval remains available.";
+      el("brain-faiss-install").disabled = !preview.supported || preview.state === "installed" || busy;
+      el("brain-faiss-test").disabled = preview.state !== "installed" || busy;
+    } catch (error) {
+      status.textContent = "FAISS pack: status unavailable";
+      detail.textContent = error.message;
+    }
+  }
+  async function installFaissPack() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const preview = await request("/api/memory/brain/faiss/preview");
+      el("brain-faiss-detail").textContent = "Pinned wheels: " + preview.files.join(", ") + "; " + preview.download_bytes + " bytes. SHA-256 manifest: " + preview.manifest_digest + ".";
+      if (!preview.supported || preview.state === "installed") {
+        await refreshFaissStatus();
+        return;
+      }
+      const mib = (preview.download_bytes / (1024 * 1024)).toFixed(1);
+      const question = "Install the optional FAISS Brain pack (" + mib + " MiB) from official PyPI wheels? Exact versions: " + preview.files.join(", ") + ". SHA-256 manifest: " + preview.manifest_digest + ". This downloads and installs code into the app-local isolated pack directory. No embedding model is downloaded.";
+      if (!confirmImpl(question)) {
+        el("brain-faiss-detail").textContent = "Installation cancelled. No files were downloaded.";
+        return;
+      }
+      await request("/api/memory/brain/faiss/install", { method: "POST", body: {
+        confirmed: true, manifest_digest: preview.manifest_digest,
+      } });
+      el("brain-faiss-detail").textContent = "FAISS pack installed and loaded. No embedding model was downloaded; semantic indexing works only if the local Ollama embedding model is already installed.";
+      await refreshFaissStatus();
+      await refresh();
+    } catch (error) {
+      el("brain-faiss-detail").textContent = error.message + " Lexical retrieval remains available.";
+    } finally { setBusy(false); }
+  }
+  async function testFaissPack() {
+    if (busy) return;
+    setBusy(true); el("brain-faiss-detail").textContent = "Running a temporary local index/search/delete self-test…";
+    try {
+      const result = await request("/api/memory/brain/faiss/self-test", { method: "POST", body: {} });
+      el("brain-faiss-state").textContent = "FAISS pack: " + (result.state === "working" ? "Working" : result.state === "not-installed" ? "Not installed" : "Failed");
+      el("brain-faiss-detail").textContent = result.detail;
+    } catch (error) { el("brain-faiss-detail").textContent = error.message; }
+    finally { setBusy(false); }
+  }
+  async function refreshEmbeddingStatus() {
+    const status = el("brain-embedding-state"), detail = el("brain-embedding-detail");
+    if (!status || !detail) return;
+    try {
+      const result = await request("/api/memory/brain/embedding/status");
+      if (result.model_installed === true) {
+        status.textContent = "nomic-embed-text:latest — Installed";
+        el("brain-embedding-download").disabled = true;
+        el("brain-embedding-test").disabled = false;
+        detail.textContent = "Installed locally. Use Test local embeddings to verify a real loopback Ollama embedding call.";
+      } else if (result.service_running === true) {
+        status.textContent = "nomic-embed-text:latest — Not installed";
+        el("brain-embedding-download").disabled = false;
+        el("brain-embedding-test").disabled = true;
+        detail.textContent = "The local Ollama service is running. Review the registry size and digest before choosing Download.";
+      } else {
+        status.textContent = "nomic-embed-text:latest — Unknown";
+        el("brain-embedding-download").disabled = true;
+        el("brain-embedding-test").disabled = true;
+        detail.textContent = result.reason || "Start Ollama, then retry. No download was started.";
+      }
+    } catch (error) {
+      status.textContent = "nomic-embed-text:latest — Status unavailable";
+      detail.textContent = error.message;
+      el("brain-embedding-download").disabled = true;
+      el("brain-embedding-test").disabled = true;
+    }
+  }
+  async function downloadEmbeddingModel() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const preview = await request("/api/memory/brain/embedding/preview");
+      const size = (preview.manifest_bytes / 1_000_000_000).toFixed(2);
+      el("brain-embedding-detail").textContent = "Official Ollama registry estimate: " + preview.manifest_bytes + " bytes (" + size + " GB); digest " + preview.manifest_digest + ".";
+      if (preview.model_installed === true) { await refreshEmbeddingStatus(); return; }
+      const question = "Download nomic-embed-text:latest (about " + size + " GB) from Ollama? Manifest digest: " + preview.manifest_digest + ". This only installs the local embedding model; it does not change the chat model assignment.";
+      if (!confirmImpl(question)) {
+        el("brain-embedding-detail").textContent = "Model download cancelled. No model data was requested.";
+        return;
+      }
+      const auth = await session();
+      const response = await fetchImpl("/api/memory/brain/embedding/pull", {
+        method: "POST", credentials: "same-origin", cache: "no-store",
+        headers: { "Content-Type": "application/json", "X-Local-CSRF": auth.csrf },
+        body: JSON.stringify({ confirmed: true, manifest_digest: preview.manifest_digest,
+          manifest_bytes: preview.manifest_bytes }),
+      });
+      if (!response.ok || !response.body) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(typeof payload.detail === "string" ? payload.detail : "Confirmed Ollama model download could not start.");
+      }
+      el("brain-embedding-download").disabled = true;
+      const reader = response.body.getReader(); const decoder = new TextDecoder(); let pending = ""; let completed = false;
+      while (true) {
+        const chunk = await reader.read();
+        pending += decoder.decode(chunk.value || new Uint8Array(), { stream: !chunk.done });
+        const lines = pending.split("\n"); pending = lines.pop() || "";
+        for (const line of lines) if (line) {
+          const event = JSON.parse(line);
+          if (event.event === "error") throw new Error(event.message || "Ollama model download failed.");
+          if (event.event === "complete") completed = true;
+          if (event.event === "progress") el("brain-embedding-detail").textContent = event.total > 0
+            ? "Downloading nomic-embed-text:latest — " + Math.floor(100 * event.completed / event.total) + "%"
+            : "Downloading nomic-embed-text:latest — " + String(event.status || "working");
+        }
+        if (chunk.done) break;
+      }
+      if (!completed) throw new Error("Ollama ended before confirming the embedding model. Retry after checking Ollama.");
+      el("brain-embedding-detail").textContent = "Ollama confirmed the local embedding model. No chat model assignment was changed.";
+      await refreshEmbeddingStatus();
+      await refresh();
+    } catch (error) {
+      el("brain-embedding-detail").textContent = error.message + " Lexical retrieval remains available.";
+      await refreshEmbeddingStatus();
+    } finally { setBusy(false); }
+  }
+  async function testEmbeddingModel() {
+    if (busy) return;
+    setBusy(true); el("brain-embedding-detail").textContent = "Sending a fixed self-test string to local Ollama only…";
+    try {
+      const result = await request("/api/memory/brain/embedding/self-test", { method: "POST", body: {} });
+      el("brain-embedding-state").textContent = "nomic-embed-text:latest — " + (result.state === "working" ? "Working" : "Failed");
+      el("brain-embedding-detail").textContent = result.detail;
+    } catch (error) { el("brain-embedding-detail").textContent = error.message; }
+    finally { setBusy(false); }
+  }
   el("knowledge-note-form").addEventListener("submit", event => void saveNote(event));
   el("knowledge-upload-form").addEventListener("submit", event => void upload(event));
+  el("knowledge-file").addEventListener("change", event => setSelectedFiles(event.target.files));
+  el("knowledge-folder").addEventListener("change", event => setSelectedFiles(event.target.files));
+  const dropZone = el("brain-drop-zone");
+  dropZone?.addEventListener("click", () => el("knowledge-file")?.click());
+  dropZone?.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") { event.preventDefault(); el("knowledge-file")?.click(); }
+  });
+  dropZone?.addEventListener("dragover", event => { event.preventDefault(); dropZone.classList.add("drag-over"); });
+  dropZone?.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+  dropZone?.addEventListener("drop", event => {
+    event.preventDefault(); dropZone.classList.remove("drag-over");
+    const files = [...(event.dataTransfer?.files || [])];
+    if (!files.length) return;
+    const transfer = new DataTransfer(); files.forEach(file => transfer.items.add(file));
+    el("knowledge-file").files = transfer.files; setSelectedFiles(transfer.files);
+  });
   el("knowledge-refresh").addEventListener("click", () => void refresh());
   el("knowledge-index").addEventListener("click", () => void indexSelected());
   el("knowledge-inspect").addEventListener("click", () => void inspectIndex());
   el("knowledge-delete").addEventListener("click", () => void removeSelected());
+  el("brain-faiss-install")?.addEventListener("click", () => void installFaissPack());
+  el("brain-faiss-test")?.addEventListener("click", () => void testFaissPack());
+  el("brain-embedding-download")?.addEventListener("click", () => void downloadEmbeddingModel());
+  el("brain-embedding-test")?.addEventListener("click", () => void testEmbeddingModel());
   void refresh();
+  void refreshFaissStatus();
+  void refreshEmbeddingStatus();
   return { refresh };
 }
 

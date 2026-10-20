@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 import json
 import math
 from urllib.parse import urlencode
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from fastapi.testclient import TestClient
 import pytest
@@ -131,7 +133,7 @@ def test_private_note_intake_requires_consent_expires_and_is_owner_scoped(env):
     assert expired_preview["items"] == []
 
 
-def test_upload_accepts_bounded_utf8_markdown_and_rejects_oversized_or_unsupported(env):
+def test_upload_accepts_bounded_utf8_notes_data_code_and_docx(env):
     client, headers, _, _, _, _ = env
     query = urlencode({"expires_at": (NOW + timedelta(days=2)).isoformat(), "retention_opt_in": "true"})
     accepted = client.post("/api/memory/owner/upload?" + query,
@@ -139,11 +141,120 @@ def test_upload_accepts_bounded_utf8_markdown_and_rejects_oversized_or_unsupport
                            files={"file": ("notes.md", b"Project Orion uses local inference.", "text/markdown")})
     assert accepted.status_code == 200, accepted.text
     assert accepted.json()["content"] == "Project Orion uses local inference."
-    rejected = client.post("/api/memory/owner/upload?" + query,
-                           headers=headers,
-                           files={"file": ("notes.csv", b"x", "text/csv")})
-    assert rejected.status_code == 422
+    for filename, content, media_type in (
+        ("notes.csv", b"city,port\nOrion,8123\n", "text/csv"),
+        ("script.py", b"print('Orion')", "text/x-python"),
+    ):
+        added = client.post("/api/memory/owner/upload?" + query, headers=headers,
+                            files={"file": (filename, content, media_type)})
+        assert added.status_code == 200, added.text
+        assert added.json()["content"] == content.decode()
+    document = BytesIO()
+    with ZipFile(document, "w", ZIP_DEFLATED) as archive:
+        archive.writestr("word/document.xml", (
+            '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+            '<w:body><w:p><w:r><w:t>Orion launch note</w:t></w:r></w:p></w:body></w:document>'
+        ))
+    added_docx = client.post("/api/memory/owner/upload?" + query, headers=headers,
+                             files={"file": ("brief.docx", document.getvalue(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document")})
+    assert added_docx.status_code == 200, added_docx.text
+    assert added_docx.json()["content"].strip() == "Orion launch note"
+    unsupported = client.post("/api/memory/owner/upload?" + query,
+                              headers=headers,
+                              files={"file": ("notes.bin", b"x", "application/octet-stream")})
+    assert unsupported.status_code == 422
     assert extract_upload("C:\\private\\notes.TXT", b"hello")[1] == "notes.TXT"
+
+
+def test_docx_extraction_rejects_malformed_or_declared_xml():
+    with pytest.raises(ValueError, match="DOCX text could not be extracted"):
+        extract_upload("broken.docx", b"not-a-zip")
+    payload = BytesIO()
+    with ZipFile(payload, "w", ZIP_DEFLATED) as archive:
+        archive.writestr("word/document.xml", (
+            '<!DOCTYPE x [<!ENTITY e "expanded">]><w:document '
+            'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+            '<w:body><w:p><w:r><w:t>&e;</w:t></w:r></w:p></w:body></w:document>'
+        ))
+    with pytest.raises(ValueError, match="declarations are not supported"):
+        extract_upload("declared.docx", payload.getvalue())
+
+
+def test_brain_faiss_pack_routes_are_authenticated_owner_confirmed_and_digest_bound(env):
+    client, headers, _, _, _, app = env
+
+    class Pack:
+        state = "not-installed"
+        calls = []
+        def preview(self):
+            return {"pack_id": "faiss-cpu", "state": self.state, "supported": True,
+                    "files": ["faiss.whl"], "download_bytes": 12,
+                    "manifest_digest": "a" * 64, "source": "Official PyPI",
+                    "install_action": "Owner confirmation required"}
+        @property
+        def site_packages(self): return "unused"
+        def install(self, *, confirmed, manifest_digest):
+            self.calls.append((confirmed, manifest_digest))
+            self.state = "installed"
+            return {"state": self.state, "already_installed": False, "pack_id": "faiss-cpu"}
+
+    pack = Pack()
+    app.state.faiss_pack_installer = pack
+    assert client.get("/api/memory/brain/faiss/preview", headers=headers).json()["state"] == "not-installed"
+    denied = client.post("/api/memory/brain/faiss/install", json={
+        "confirmed": True, "manifest_digest": "a" * 64,
+    }, headers={"Origin": ORIGIN})
+    assert denied.status_code == 403
+    incomplete = client.post("/api/memory/brain/faiss/install", json={
+        "confirmed": False, "manifest_digest": "b" * 64,
+    }, headers=headers)
+    assert incomplete.status_code == 409
+    installed = client.post("/api/memory/brain/faiss/install", json={
+        "confirmed": True, "manifest_digest": "a" * 64,
+    }, headers=headers)
+    assert installed.status_code == 200, installed.text
+    assert pack.calls == [(True, "a" * 64)]
+
+
+def test_brain_embedding_model_download_is_previewed_confirmed_and_does_not_change_agent_route(env):
+    client, headers, _, _, runtime, app = env
+
+    class ModelInstaller:
+        calls = []
+        def status(self):
+            return {"state": "available", "service_running": True,
+                    "model_id": "nomic-embed-text:latest", "model_installed": False,
+                    "source": "local Ollama", "reason": None}
+        def preview_model(self):
+            return {"model_id": "nomic-embed-text:latest", "manifest_digest": "sha256:" + "c" * 64,
+                    "manifest_bytes": 100, "registry_url": "https://registry.ollama.ai/fake"}
+        def pull(self, *, expected_digest, expected_bytes):
+            self.calls.append((expected_digest, expected_bytes))
+            yield json.dumps({"event": "complete", "message": "Ollama confirmed the model."}) + "\n"
+
+    model_installer = ModelInstaller()
+    app.state.brain_embedding_model_service = model_installer
+    before = runtime.application_service.get_agent("local_worker")
+    status = client.get("/api/memory/brain/embedding/status", headers=headers)
+    assert status.status_code == 200 and status.json()["model_installed"] is False
+    preview = client.get("/api/memory/brain/embedding/preview", headers=headers)
+    assert preview.status_code == 200 and preview.json()["manifest_bytes"] == 100
+    denied = client.post("/api/memory/brain/embedding/pull", json={
+        "confirmed": False, "manifest_digest": "sha256:" + "c" * 64, "manifest_bytes": 100,
+    }, headers=headers)
+    assert denied.status_code == 409
+    changed = client.post("/api/memory/brain/embedding/pull", json={
+        "confirmed": True, "manifest_digest": "sha256:" + "d" * 64, "manifest_bytes": 100,
+    }, headers=headers)
+    assert changed.status_code == 409
+    pulled = client.post("/api/memory/brain/embedding/pull", json={
+        "confirmed": True, "manifest_digest": "sha256:" + "c" * 64, "manifest_bytes": 100,
+    }, headers=headers)
+    assert pulled.status_code == 200
+    assert '"event":"complete"' in pulled.text
+    assert model_installer.calls == [("sha256:" + "c" * 64, 100)]
+    after = runtime.application_service.get_agent("local_worker")
+    assert (after.provider, after.model) == (before.provider, before.model)
 
 
 def test_disabled_toggle_never_retrieves_and_each_reply_has_real_trace(env):
@@ -247,6 +358,53 @@ def test_explicit_preview_and_auto_retrieval_are_untrusted_cited_and_bounded(env
     assert trace["steps"][1]["result_count"] == 1
     assert all(step["duration_ms"] >= 0 for step in trace["steps"])
     assert len(runtime.tasks.all()) == tasks_before
+
+
+def test_empty_brain_search_tells_provider_to_abstain_without_inserting_empty_retrieval_block(env):
+    client, headers, prompts, _, _, _ = env
+    cid = start(client, headers)
+    data = preview(client, headers, cid, "What is the retention period?").json()
+    assert data["items"] == []
+    calls = len(prompts)
+    response = client.post(f"/api/chat/conversations/{cid}/messages", headers=headers, json={
+        "text": "What is the retention period?", "knowledge_enabled": True,
+        "knowledge_scopes": [{"scope": "owner"}], "knowledge_preview_digest": data["digest"],
+    })
+    assert response.status_code == 200
+    assert len(prompts) == calls
+    payload = response.json()
+    assert payload["conversation"]["messages"][-1]["content"] == "I couldn't find relevant information about that in your Brain."
+    assert payload["context_trace"]["sources"] == []
+    assert payload["context_trace"]["provider_called"] is False
+    assert payload["context_trace"]["answer_source"] == "brain-empty-abstention"
+
+
+def test_empty_brain_stream_abstains_without_provider_call(env):
+    client, headers, prompts, _, _, _ = env
+    cid = start(client, headers)
+    data = preview(client, headers, cid, "What is the retention period?").json()
+    calls = len(prompts)
+    response = client.post(f"/api/chat/conversations/{cid}/messages/stream", headers=headers, json={
+        "text": "What is the retention period?", "knowledge_enabled": True,
+        "knowledge_scopes": [{"scope": "owner"}], "knowledge_preview_digest": data["digest"],
+    })
+    assert response.status_code == 200
+    event = json.loads(response.text.splitlines()[-1])
+    assert event["type"] == "complete"
+    assert event["conversation"]["messages"][-1]["content"] == "I couldn't find relevant information about that in your Brain."
+    assert event["context_trace"]["provider_called"] is False
+    assert len(prompts) == calls
+
+
+def test_brain_retrieval_matches_natural_language_to_snake_case_fields(env):
+    client, headers, _, _, _, _ = env
+    add_note(client, headers, name="settings.json",
+             content='{"backup_window":"02:00 UTC","retention_days":14}')
+    cid = start(client, headers)
+    data = preview(client, headers, cid, "What is the backup window?").json()
+    assert data["items"]
+    assert data["items"][0]["source"] == "settings.json"
+    assert "02:00 UTC" in data["items"][0]["content"]
 
 
 def test_changed_note_invalidates_preview_before_provider_call(env):

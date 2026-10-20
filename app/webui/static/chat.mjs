@@ -108,6 +108,7 @@ export function mountChat({
   let sendInProgress = false;
   let presentationPreferences = { response_mode: "balanced", locale: "en-US", detail_level: "standard" };
   const knowledgeSettings = new Map();
+  let ownerBrainNonEmpty = false;
   let knowledgePreview = null;
   const base = "/api/chat/conversations";
   let conversationItems = [];
@@ -277,7 +278,7 @@ export function mountChat({
     if (!conversationItems.some(item => item.id === record.id)) conversationItems = [{ id: record.id, coordinator: agent, created_at: new Date().toISOString() }, ...conversationItems];
     renderConversationList();
     if (!knowledgeSettings.has(record.id)) knowledgeSettings.set(record.id, {
-      enabled: false, owner: false, conversation: false, extra: false,
+      enabled: ownerBrainNonEmpty, owner: ownerBrainNonEmpty, conversation: false, extra: false,
       extraScope: "project", extraId: "",
     });
     const savedKnowledge = knowledgeSettings.get(record.id);
@@ -320,6 +321,7 @@ export function mountChat({
       content.append(renderSafeMarkdown(message.content, { documentRef }));
       item.append(label, content);
       const trace = typeof message.id === "string" ? traces[message.id] : null;
+      if (trace && message.role === "assistant") appendVisibleBrainCitations(item, trace);
       if (trace && (message.role === "assistant" || message.status === "failed")) appendAnswerTrace(item, trace);
       if (message.role === "assistant" && message === [...record.messages].reverse().find(row => row.role === "assistant")
           && typeof result.advanced_prompt === "string") {
@@ -392,6 +394,24 @@ export function mountChat({
       knowledgePreviewResult.hidden = true;
       knowledgeState.textContent = "Knowledge retrieval is off. No knowledge is added to this turn.";
     }
+  }
+  function appendVisibleBrainCitations(article, trace) {
+    const retrieval = trace?.retrieval || {};
+    if (retrieval.enabled !== true || !Array.isArray(trace.sources) || !trace.sources.length) return;
+    const citations = documentRef.createElement("p");
+    citations.className = "chat-visible-citations";
+    citations.setAttribute("aria-label", "Sources used");
+    const label = documentRef.createElement("strong");
+    label.textContent = "Sources";
+    citations.append(label);
+    for (const [index, source] of trace.sources.entries()) {
+      const item = documentRef.createElement("span");
+      const name = source.source || source.origin_reference || source.memory_id || "Saved source";
+      const reference = source.chunk_reference || source.memory_id || "reference unavailable";
+      item.textContent = ` [${index + 1}] ${name} · ${reference}`;
+      citations.append(item);
+    }
+    article.append(citations);
   }
   function appendAnswerTrace(article, trace) {
     const panel = documentRef.createElement("details");
@@ -509,6 +529,16 @@ export function mountChat({
       knowledgePreviewResult.append(cloud);
     }
   }
+  async function loadKnowledgePreview(conversationId, text, scopes) {
+    knowledgePreview = null;
+    knowledgeState.textContent = "Reviewing the selected Brain entries for this message; no model has been called.";
+    const result = await request(`${base}/${encodeURIComponent(conversationId)}/knowledge-preview`, { query: text, scopes });
+    if (typeof result.digest !== "string" || !Array.isArray(result.items) || !result.trace) throw new Error("Invalid knowledge preview response.");
+    knowledgePreview = { digest: result.digest, key: knowledgeSelectionKey(text) };
+    renderKnowledgePreview(result);
+    knowledgeState.textContent = "The exact excerpts are shown above and will be rechecked before Send.";
+    return result;
+  }
   async function action(operation, { preserveSend = false } = {}) {
     if (busy) return false;
     busy = true;
@@ -561,6 +591,10 @@ export function mountChat({
           && session.permissions.includes("documentation:read");
         canDeleteHistory = Array.isArray(session.permissions)
           && session.permissions.includes("chat-history:manage");
+        try {
+          const brain = await request("/api/memory/owner");
+          ownerBrainNonEmpty = Array.isArray(brain.items) && brain.items.length > 0;
+        } catch { ownerBrainNonEmpty = false; }
       } catch {
         canCreateTask = false;
         canStudyRepositories = false;
@@ -685,7 +719,7 @@ export function mountChat({
         if (imageIds.length) throw new Error("Knowledge-assisted turns cannot combine with temporary images.");
         if (!knowledgeScopes.length) throw new Error("Select at least one exact knowledge scope before previewing.");
         if (!knowledgePreview || knowledgePreview.key !== knowledgeSelectionKey(text)) {
-          throw new Error("Preview the exact selected knowledge for this message before Send.");
+          await loadKnowledgePreview(selected, text, knowledgeScopes);
         }
       }
       if (imageIds.length && !imageManager.consented()) throw new Error("Select the per-turn image consent checkbox before sending selected images to the configured provider.");
