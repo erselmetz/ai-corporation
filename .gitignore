@@ -1,6 +1,36 @@
 .venv/
 __pycache__/
 *.py[cod]
+*.pyo
+
+# Local environments, credentials, and machine-specific configuration
+.venv*/
+.env.*
+!.env.example
+!.env.*.example
+venv/
+ENV/
+
+# Editor and operating-system state
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+
+# Python, test, and tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+*.tsbuildinfo
 
 .env
 
@@ -10,13 +40,34 @@ __pycache__/
 
 logs/
 
+# Runtime/user data. Keep source fixtures and sample data explicitly named elsewhere.
+workspace/
+projects/
+backups/
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 
 desktop/node_modules/
 desktop-ui/node_modules/
+node_modules/
 desktop-ui/.next/
 desktop-ui/out/
 desktop/build/
 desktop/release/
+
+# Generated installers, packaged apps, and local review/build outputs
+/build/
+/dist/
+desktop/dist/
+desktop/release-*/
+desktop/task*-build/
+desktop/task*-review/
+desktop/task*-review-profile/
+/task*-review/
+/task*-review-profile/
