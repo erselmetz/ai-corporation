@@ -13,7 +13,7 @@ from app.integrations.speech import SpeechInputRequest
 def add_model(root: Path, name="tiny-en"):
     model = root / name
     model.mkdir(parents=True)
-    for filename in ("config.json", "model.bin", "tokenizer.json", "preprocessor_config.json"):
+    for filename in ("config.json", "model.bin", "tokenizer.json", "vocabulary.txt"):
         (model / filename).write_bytes(b"fixture")
     return model
 

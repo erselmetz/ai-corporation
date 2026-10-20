@@ -2,8 +2,9 @@
 
 import asyncio
 import threading
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 
 from app.integrations.gemini_chat import GeminiCallLimit, GeminiConnectionError
 from app.integrations.gemini_voice import (
@@ -13,6 +14,7 @@ from app.integrations.gemini_voice import (
     VoiceSpendBudget,
 )
 from app.integrations.local_speech import LocalSpeechUnavailable
+from app.integrations.local_speech_model import LocalSpeechModelCatalog
 from app.integrations.speech import MAX_SPEECH_WAV_BYTES, SpeechInputError, SpeechInputRequest
 from .security import require_permission
 
@@ -27,8 +29,15 @@ class LocalSpeechModelRequest(BaseModel):
     model_id: StrictStr = Field(min_length=1, max_length=64)
 
 
+class LocalSpeechModelInstall(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirmed: StrictBool
+    manifest_digest: StrictStr = Field(min_length=64, max_length=64)
+
+
 def create_local_voice_router(connection_manager, budget: VoiceSpendBudget | None = None,
-                              local_speech=None):
+                              local_speech=None, speech_model_catalog=None,
+                              media_packs=None, local_output=None):
     router = APIRouter(prefix="/api/local/voice")
     budget = budget or VoiceSpendBudget()
     transcriber = GeminiTranscriber(connection_manager, budget)
@@ -43,7 +52,25 @@ def create_local_voice_router(connection_manager, budget: VoiceSpendBudget | Non
             "local_speech": local_speech.status().__dict__ if local_speech is not None else {
                 "runtime": "unavailable", "selected_model": None,
                 "available_models": (), "state": "backend-unavailable"},
+            "local_output": local_output.snapshot() if local_output is not None else {"state": "unavailable", "active": False},
         }
+
+    @router.post("/test-output")
+    def test_local_output(request: Request,
+                          _principal=Depends(require_permission("capability-pack:manage"))):
+        if local_output is None or media_packs is None or media_packs.preview("voice")["state"] == "not-installed":
+            raise HTTPException(409, "Install the reviewed local Voice pack before testing pyttsx3 output")
+        if request.app.state.emergency_stop_service.stopped:
+            raise HTTPException(423, "Emergency stop is active; local speech output cannot start")
+        return local_output.start_test()
+
+    @router.get("/output-status")
+    def local_output_status(_principal=Depends(require_permission("capability-pack:manage"))):
+        return local_output.snapshot() if local_output is not None else {"state": "unavailable", "active": False}
+
+    @router.post("/stop-output")
+    def stop_local_output(_principal=Depends(require_permission("capability-emergency:manage"))):
+        return local_output.stop() if local_output is not None else {"state": "unavailable", "active": False}
 
     @router.post("/local-model")
     async def select_local_model(request: Request,
@@ -58,6 +85,35 @@ def create_local_voice_router(connection_manager, budget: VoiceSpendBudget | Non
             raise HTTPException(409, str(error)) from None
         except ValueError as error:
             raise HTTPException(422, str(error)) from None
+
+    @router.get("/local-model-preview")
+    def local_model_preview(_principal=Depends(require_permission("capability-pack:manage"))):
+        catalog = speech_model_catalog or LocalSpeechModelCatalog(
+            getattr(local_speech, "model_root", Path.home() / ".local" / "share" / "ERSELMETZ AI" / "speech-models"))
+        return catalog.preview()
+
+    @router.post("/local-model-install")
+    def install_local_model(body: LocalSpeechModelInstall,
+                            _principal=Depends(require_permission("capability-pack:manage"))):
+        catalog = speech_model_catalog or LocalSpeechModelCatalog(
+            getattr(local_speech, "model_root", Path.home() / ".local" / "share" / "ERSELMETZ AI" / "speech-models"))
+        preview = catalog.preview()
+        if body.confirmed is not True or body.manifest_digest != preview["manifest_digest"]:
+            raise HTTPException(409, "Review the pinned speech model revision, exact files, size, and digest, then explicitly confirm the download")
+        try:
+            result = catalog.install(confirmed=body.confirmed, manifest_digest=body.manifest_digest)
+            if result.get("state") == "installed" and local_speech is not None:
+                try:
+                    result["speech_status"] = local_speech.select_model("faster-whisper-tiny").__dict__
+                    result["model_selected"] = True
+                except LocalSpeechUnavailable as error:
+                    result["speech_status"] = {"state": "model-download-complete", "detail": str(error)}
+                    result["model_selected"] = False
+            return result
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+        except RuntimeError as error:
+            raise HTTPException(503, str(error)) from None
 
     @router.post("/cloud-budget")
     async def configure_budget(request: Request,
@@ -146,6 +202,8 @@ def create_local_voice_router(connection_manager, budget: VoiceSpendBudget | Non
                 await task
                 raise HTTPException(409, "Local transcription was cancelled after the browser disconnected")
             result = await task
+            if media_packs is not None:
+                media_packs.mark_working("ears")
             return {"transcript": result.text, "backend": "local", "language": result.language,
                     "audio_retained": False}
         except LocalSpeechUnavailable as error:

@@ -6,6 +6,10 @@ import { summarizeHardwareProfile } from "./hardware-summary";
 type State = "loading" | "ready" | "empty" | "sign-in" | "denied" | "failed" | "unknown";
 type Result = { state: State; message: string; source: string; values?: Record<string, string> };
 type Payload = Record<string, unknown>;
+type CapabilityPack = { pack_id: string; title: string; state: string; supported: boolean; files: string[];
+  download_bytes: number; manifest_digest: string; source: string; compatibility: string; detail: string };
+type SpeechModelPreview = { model_id: string; revision: string; state: string; download_bytes: number;
+  manifest_digest: string; files: { name: string; size: number; digest: string }[]; source: string; note: string };
 type CrashReport = { occurredAt: string; source: string; event: string; reason: string; appVersion: string; exitCode: number | null };
 type DesktopRecoveryBridge = {
   readCrashReports: () => Promise<{ ok: boolean; localOnly?: boolean; message?: string; reports?: CrashReport[] }>;
@@ -68,6 +72,170 @@ function SettingCard({ title, description, result, href, linkLabel }: {
   </article>;
 }
 
+function CapabilityPackControls({ permissions }: { permissions: string[] }) {
+  const [items, setItems] = useState<CapabilityPack[]>([]);
+  const [message, setMessage] = useState("Loading optional local capability packs.");
+  const [busy, setBusy] = useState<string | null>(null);
+  const canManage = permissions.includes("capability-pack:manage");
+
+  async function refresh() {
+    if (!canManage) { setMessage("This owner session does not have capability-pack:manage."); return; }
+    try {
+      const response = await fetch("/api/capability-packs", { credentials: "same-origin", cache: "no-store" });
+      const body = await response.json() as Payload;
+      if (!response.ok || !Array.isArray(body.items)) throw new Error(response.status === 401 ? "Sign in again to inspect local packs." : response.status === 403 ? "This session cannot manage optional packs." : "Local pack status is unavailable.");
+      setItems(body.items as CapabilityPack[]);
+      setMessage("Status reflects installed files and the last self-test run in this app process.");
+    } catch (error) { setItems([]); setMessage(error instanceof Error ? error.message : "Local pack status is unavailable."); }
+  }
+  useEffect(() => { void refresh(); }, [canManage]);
+
+  async function action(pack: CapabilityPack, operation: "install" | "self-test") {
+    if (busy) return;
+    if (operation === "install") {
+      const yes = window.confirm(`${pack.title}\n\nSource: ${pack.source}\nWheel files: ${pack.files.join(", ")}\nTotal download: ${pack.download_bytes.toLocaleString()} bytes\nSHA-256 manifest: ${pack.manifest_digest}\n\nInstall these exact wheels in the isolated local app directory?`);
+      if (!yes) { setMessage("Installation cancelled. No files were downloaded."); return; }
+    }
+    setBusy(pack.pack_id); setMessage(operation === "install" ? `Installing ${pack.title} after owner confirmation.` : `Running ${pack.title} self-test.`);
+    try {
+      const sessionResponse = await fetch("/api/local/session", { credentials: "same-origin", cache: "no-store" });
+      const sessionBody = await sessionResponse.json() as Payload;
+      if (!sessionResponse.ok || typeof sessionBody.csrf !== "string") throw new Error("Owner session could not be verified. Refresh and retry.");
+      const response = await fetch(`/api/capability-packs/${encodeURIComponent(pack.pack_id)}/${operation}`, {
+        method: "POST", credentials: "same-origin", cache: "no-store",
+        headers: { "Content-Type": "application/json", "X-Local-CSRF": sessionBody.csrf },
+        ...(operation === "install" ? { body: JSON.stringify({ confirmed: true, manifest_digest: pack.manifest_digest }) } : {}),
+      });
+      const body = await response.json() as Payload;
+      if (!response.ok) throw new Error(typeof body.detail === "string" ? body.detail : "Capability pack action failed.");
+      setMessage(typeof body.detail === "string" ? body.detail : operation === "install" ? "Pinned pack installed. Run its self-test before use." : `Self-test state: ${String(body.state)}.`);
+      await refresh();
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Capability pack action failed."); }
+    finally { setBusy(null); }
+  }
+
+  return <section className="settings-section" aria-labelledby="capability-packs-heading">
+    <div className="section-heading"><div><p className="eyebrow">OPTIONAL LOCAL SOFTWARE</p><h2 id="capability-packs-heading">Capability packs</h2></div>
+      <button className="readiness-refresh" type="button" onClick={() => void refresh()} disabled={busy !== null}>Refresh</button></div>
+    <p className="settings-intro">Base install remains small. Exact official PyPI wheels, compatibility, total size, and manifest hash are shown before each owner-confirmed isolated install. Tesseract and speech models are separate and are never downloaded here.</p>
+    <p className="settings-message" role="status" aria-live="polite">{message}</p>
+    <div className="settings-grid">{items.map(pack => <article className="settings-card" key={pack.pack_id}>
+      <div className="settings-card-heading"><h3>{pack.title}</h3><span className={`settings-state ${pack.state === "working" ? "ready" : pack.state === "installed" ? "empty" : "unknown"}`}>{pack.state === "working" ? "Working" : pack.state === "installed" ? "Installed" : "Not installed"}</span></div>
+      <p>{pack.compatibility}</p><p className="settings-message">{pack.detail}</p>
+      <details><summary>Review {pack.download_bytes.toLocaleString()} bytes and pinned files</summary><p>{pack.files.join(", ")}</p><small className="settings-source">{pack.source}. SHA-256 manifest: {pack.manifest_digest}</small></details>
+      <div className="capability-pack-actions"><button type="button" disabled={!pack.supported || pack.state !== "not-installed" || busy !== null} onClick={() => void action(pack, "install")}>Review &amp; install</button>
+        <button type="button" disabled={pack.state === "not-installed" || busy !== null} onClick={() => void action(pack, "self-test")}>Test it</button></div>
+      {pack.pack_id === "voice" && <LocalVoiceOutputTest permissions={permissions} installed={pack.state !== "not-installed"} />}
+    </article>)}</div>
+  </section>;
+}
+
+function LocalVoiceOutputTest({ permissions, installed }: { permissions: string[]; installed: boolean }) {
+  const [state, setState] = useState("Local offline speech test has not run.");
+  const [active, setActive] = useState(false);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!installed || !permissions.includes("capability-pack:manage")) return;
+    void fetch("/api/local/voice/output-status", { credentials: "same-origin", cache: "no-store" })
+      .then(async response => response.ok ? await response.json() as Payload : null)
+      .then(body => { if (body) { setActive(body.active === true); if (typeof body.detail === "string") setState(body.detail); } })
+      .catch(() => setState("Local speech activity is unknown until refreshed."));
+  }, [installed, permissions]);
+  async function post(path: string) {
+    const sessionResponse = await fetch("/api/local/session", { credentials: "same-origin", cache: "no-store" });
+    const sessionBody = await sessionResponse.json() as Payload;
+    if (!sessionResponse.ok || typeof sessionBody.csrf !== "string") throw new Error("Owner session could not be verified. Refresh and retry.");
+    const response = await fetch(path, { method: "POST", credentials: "same-origin", cache: "no-store",
+      headers: { "Content-Type": "application/json", "X-Local-CSRF": sessionBody.csrf }, body: "{}" });
+    const body = await response.json() as Payload;
+    if (!response.ok) throw new Error(typeof body.detail === "string" ? body.detail : "Local speech action failed.");
+    return body;
+  }
+  async function speak() {
+    if (busy || !installed || !permissions.includes("capability-pack:manage")) return;
+    setBusy(true); setState("Starting a fixed local speech test. No text is sent online.");
+    try {
+      const result = await post("/api/local/voice/test-output");
+      setActive(result.active === true);
+      setState(typeof result.detail === "string" ? result.detail : "Local speech test is starting.");
+      for (let index = 0; index < 60 && result.active === true; index += 1) {
+        await new Promise(resolve => window.setTimeout(resolve, 200));
+        const response = await fetch("/api/local/voice/output-status", { credentials: "same-origin", cache: "no-store" });
+        const body = await response.json() as Payload;
+        if (!response.ok) throw new Error("Local speech status is unavailable.");
+        setActive(body.active === true);
+        if (typeof body.detail === "string") setState(body.detail);
+        if (body.active !== true) break;
+      }
+    } catch (error) { setActive(false); setState(error instanceof Error ? error.message : "Local speech output failed."); }
+    finally { setBusy(false); }
+  }
+  async function stop() {
+    if (busy) return;
+    setBusy(true); setState("Sending the one-click emergency stop.");
+    try {
+      const result = await post("/api/local/emergency-stop/stop");
+      setActive(false); setState(result.stopped === true ? "Emergency stop is active; local playback was stopped." : "Stop requested.");
+    } catch (error) { setState(error instanceof Error ? error.message : "Emergency stop request failed."); }
+    finally { setBusy(false); }
+  }
+  return <div className="local-voice-test"><p className="settings-message" role="status" aria-live="polite">{active ? "Local speech is active." : state}</p>
+    <div className="capability-pack-actions"><button type="button" onClick={() => void speak()} disabled={!installed || busy || active}>Speak local test</button>
+      <button type="button" className="danger-action" onClick={() => void stop()} disabled={!active || busy}>Emergency stop</button></div>
+  </div>;
+}
+
+function SpeechModelControls({ permissions }: { permissions: string[] }) {
+  const [preview, setPreview] = useState<SpeechModelPreview | null>(null);
+  const [message, setMessage] = useState("Loading local speech model availability.");
+  const [busy, setBusy] = useState(false);
+  const canManage = permissions.includes("capability-pack:manage");
+  async function refresh() {
+    if (!canManage) { setPreview(null); setMessage("This owner session does not have capability-pack:manage."); return; }
+    try {
+      const response = await fetch("/api/local/voice/local-model-preview", { credentials: "same-origin", cache: "no-store" });
+      const body = await response.json() as Payload;
+      if (!response.ok) throw new Error(typeof body.detail === "string" ? body.detail : "Local speech model status is unavailable.");
+      setPreview(body as unknown as SpeechModelPreview);
+      setMessage(body.state === "installed" ? "The pinned local model files are installed. Runtime transcription still needs its self-test." : "No speech model files are installed. Nothing downloads until you confirm the exact preview.");
+    } catch (error) { setPreview(null); setMessage(error instanceof Error ? error.message : "Local speech model status is unavailable."); }
+  }
+  useEffect(() => { void refresh(); }, [canManage]);
+  async function install() {
+    if (!preview || busy || preview.state === "installed") return;
+    const files = preview.files.map(file => `${file.name}: ${file.size.toLocaleString()} bytes; ${file.digest}`).join("\n");
+    if (!window.confirm(`${preview.model_id}\nRevision: ${preview.revision}\n${preview.note}\n\nSource: ${preview.source}\nTotal: ${preview.download_bytes.toLocaleString()} bytes\nFiles and digests:\n${files}\n\nDownload and select this local model?`)) {
+      setMessage("Model download cancelled. No files were downloaded."); return;
+    }
+    setBusy(true); setMessage("Downloading the explicitly confirmed model files and checking each digest.");
+    try {
+      const sessionResponse = await fetch("/api/local/session", { credentials: "same-origin", cache: "no-store" });
+      const sessionBody = await sessionResponse.json() as Payload;
+      if (!sessionResponse.ok || typeof sessionBody.csrf !== "string") throw new Error("Owner session could not be verified. Refresh and retry.");
+      const response = await fetch("/api/local/voice/local-model-install", { method: "POST", credentials: "same-origin", cache: "no-store",
+        headers: { "Content-Type": "application/json", "X-Local-CSRF": sessionBody.csrf },
+        body: JSON.stringify({ confirmed: true, manifest_digest: preview.manifest_digest }) });
+      const body = await response.json() as Payload;
+      if (!response.ok) throw new Error(typeof body.detail === "string" ? body.detail : "Local speech model download failed.");
+      setMessage(body.model_selected === false
+        ? "Model files downloaded and verified, but the local speech runtime is unavailable, so it was not selected. Review the Ears pack and retry the model selection after its runtime is installed."
+        : "Model files installed and selected. Open Chat to test local push-to-talk transcription; microphone capture starts only there when you press the button.");
+      await refresh();
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Local speech model download failed."); }
+    finally { setBusy(false); }
+  }
+  return <section className="settings-section" aria-labelledby="speech-model-heading">
+    <div className="section-heading"><div><p className="eyebrow">LOCAL SPEECH</p><h2 id="speech-model-heading">Speech recognition model</h2></div>
+      <button className="readiness-refresh" type="button" onClick={() => void refresh()} disabled={busy}>Refresh</button></div>
+      <article className="settings-card"><div className="settings-card-heading"><h3>Faster-Whisper Tiny</h3><span className={`settings-state ${preview?.state === "installed" ? "ready" : "unknown"}`}>{!preview ? "Unknown" : preview.state === "installed" ? "Installed" : "Not installed"}</span></div>
+      <p>{preview?.note || "A compact multilingual CPU model. Speed and recognition quality depend on the machine and language."}</p>
+      <p className="settings-message" role="status" aria-live="polite">{message}</p>
+      {preview && <details><summary>Review pinned model files and digests</summary><p>{preview.source}; revision {preview.revision}; {preview.download_bytes.toLocaleString()} bytes total.</p><ul>{preview.files.map(file => <li key={file.name}>{file.name}: {file.size.toLocaleString()} bytes; {file.digest}</li>)}</ul><small className="settings-source">Manifest SHA-256: {preview.manifest_digest}</small></details>}
+      <div className="capability-pack-actions"><button type="button" onClick={() => void install()} disabled={!preview || preview.state === "installed" || busy}>Review &amp; download model</button><a className="settings-link" href="/ui/chat">Open Chat to test push-to-talk</a></div>
+    </article>
+  </section>;
+}
+
 export default function SettingsPage() {
   const [session, setSession] = useState<Result>({ state: "loading", message: "Checking owner access…", source: "/api/local/session" });
   const [preferences, setPreferences] = useState<Result>(initial);
@@ -79,6 +247,7 @@ export default function SettingsPage() {
   const [resources, setResources] = useState<Result>(initial);
   const [activity, setActivity] = useState<Result>(initial);
   const [hardware, setHardware] = useState<Result>(initial);
+  const [ownerPermissions, setOwnerPermissions] = useState<string[]>([]);
   const [checking, setChecking] = useState(false);
   const [crashReports, setCrashReports] = useState<CrashReport[]>([]);
   const [diagnosticsMessage, setDiagnosticsMessage] = useState("Loading local crash reports…");
@@ -104,6 +273,7 @@ export default function SettingsPage() {
       setSession({ state: "ready", message: "Signed-in owner session is active. Access remains limited to the permissions returned by the local session.", source: "/api/local/session",
         values: { "Owner identity": typeof response.body.identity === "string" ? response.body.identity : "Available", "Session permissions": String(response.body.permissions.length) } });
       const permissions = new Set(response.body.permissions as string[]);
+      setOwnerPermissions(response.body.permissions as string[]);
       try {
         const lock = await boundedGet("/api/local/desktop-lock");
         if (lock.status === 200 && record(lock.body) && typeof lock.body.enabled === "boolean") {
@@ -249,6 +419,8 @@ export default function SettingsPage() {
           <SettingCard title="Backup and recovery" description="Encrypted local backup and explicit restore controls." result={{ state: "unknown", message: "No backup is created or inspected from this overview.", source: "Owner-controlled backup page" }} href="/ui/backup" linkLabel="Open backup & restore" />
         </div>
       </section>
+      <CapabilityPackControls permissions={ownerPermissions} />
+      <SpeechModelControls permissions={ownerPermissions} />
       <section className="settings-section" aria-labelledby="desktop-lock-heading"><div className="section-heading"><div><p className="eyebrow">LOCAL ACCESS</p><h2 id="desktop-lock-heading">Optional password lock</h2></div></div>
         <article className="settings-card"><p>{lockMessage}</p>
           {lockEnabled !== null && <form onSubmit={updateLock}>

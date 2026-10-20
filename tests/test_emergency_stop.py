@@ -112,7 +112,7 @@ def test_capability_controls_are_in_settings_and_chat_stays_minimal():
         assert "provider transfer requires per-turn consent" in page
         assert "Session permissions end at sign-out or session expiry" in page
         assert "/ui/static/emergency-stop.mjs" in page
-    assert "App-managed capability packs are unavailable" in dashboard
+    assert "Optional local media packs are managed in Capabilities" in dashboard
     assert 'id="emergency-stop"' not in chat
     assert 'id="capability-indicators"' not in chat
     assert 'id="chat-emergency-stop"' in chat

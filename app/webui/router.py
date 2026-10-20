@@ -99,7 +99,7 @@ def corporation_dashboard() -> HTMLResponse:
                 <div class="setup-links">
                   <a href="/ui/login?next=/ui">Sign in</a><a href="/ui/providers">Review providers &amp; models</a><a href="/ui/employees">Review AI team</a>
                 </div>
-                <p class="setup-boundary">Provider registration and model assignments show configuration only. Provider availability is not checked here; no model is downloaded or reassigned. App-managed capability packs are unavailable. A browser-managed speech language pack, when offered, is separate.</p>
+                <p class="setup-boundary">Provider registration and model assignments show configuration only. Provider availability is not checked here; no model is downloaded or reassigned. Optional local media packs are managed in Capabilities &amp; privacy; installation requires reviewing and confirming their pinned wheels.</p>
               </section>
               <section class="dashboard-card"><p class="eyebrow">SETTINGS</p><h2>Capabilities &amp; privacy</h2><p class="muted">Review session permissions and protected activity controls.</p><a href="/ui/settings/capabilities">Open settings</a></section>
               <section class="dashboard-card suggestion-panel" aria-labelledby="suggestions-title">
@@ -869,7 +869,13 @@ def capability_settings_page():
     <section class="management-card"><h2>Use a capability in chat</h2>
       <p>Microphone, camera, screen capture, images, and selected knowledge are available from the Chat composer. Each capture is started by you and shows its state in the conversation.</p>
       <a class="primary-action" href="/ui/chat">Open Chat</a>
-    </section></main></body></html>""")
+    </section>
+    <section class="management-card" aria-labelledby="media-packs-title"><h2 id="media-packs-title">Optional local capability packs</h2>
+      <p>Optional libraries are separate from the base app. Each pack shows exact pinned PyPI wheels and total size before an owner-confirmed, hash-checked isolated install. No speech model or Tesseract engine is included or downloaded.</p>
+      <p id="media-capability-packs-status" role="status" aria-live="polite">Checking pack status.</p>
+      <div id="media-capability-packs" class="capability-pack-list"></div>
+      <p>Eyes uses the existing bounded local OCR adapter; Tesseract and language data require a separate guided install. Ears uses the existing push-to-talk and local Faster-Whisper adapter; the speech model is selected separately. Voice supports the existing offline browser voice and an optional local Windows runtime. Online speech is not offered here.</p>
+    </section></main><script type="module" src="/ui/static/capability-packs.mjs"></script></body></html>""")
 
 
 @router.get("/ui/chat", response_class=HTMLResponse)
@@ -979,7 +985,7 @@ def coordinator_chat_page():
     <label for="voice-local-model">Installed local speech model</label><select id="voice-local-model" disabled><option value="">Checking local model folder…</option></select>
     <p id="voice-local-model-state" role="status" aria-live="polite">Optional Faster-Whisper is not installed by default.</p>
     <button id="voice-start" type="button" disabled>Start voice</button>
-    <button id="voice-install-local" type="button" hidden>Install browser speech language pack</button><p class="muted">This optional language pack is managed by the browser for on-device speech. ERSELMETZ AI app-managed capability packs are unavailable.</p>
+    <button id="voice-install-local" type="button" hidden>Install browser speech language pack</button><p class="muted">This optional language pack is managed by the browser for on-device speech. Other local media packs require explicit owner confirmation in <a href="/ui/settings/capabilities">Capabilities &amp; privacy</a>.</p>
     <button id="voice-transcribe" type="button" hidden>Transcribe via Gemini (send recording)</button>
     <button id="voice-stop" type="button" hidden>Stop / discard voice request</button>
     <p id="voice-cloud-consent-panel"><label><input id="voice-cloud-consent" type="checkbox">

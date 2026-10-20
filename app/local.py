@@ -48,7 +48,7 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
                      voice_connection_manager=None, capability_authorization_service=None,
                      capability_grant_service=None, capability_audit_service=None,
                      emergency_stop_service=None, local_speech_provider=None,
-                     data_portability_service=None):
+                     data_portability_service=None, speech_model_catalog=None):
     if desktop_session_token is not None and desktop_mode is not True:
         raise ValueError("Passwordless session tokens are restricted to the desktop runtime")
     startup_started = time.perf_counter()
@@ -178,15 +178,30 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
         application.include_router(first_run_router)
     application.include_router(create_local_online_provider_router(connection_manager))
     from app.api.local_voice import create_local_voice_router
+    app_data = (Path(os.environ["LOCALAPPDATA"]) / "ERSELMETZ AI"
+                if os.environ.get("LOCALAPPDATA") else
+                Path.home() / ".local" / "share" / "ERSELMETZ AI")
     if local_speech_provider is None:
         from app.integrations.local_speech import FasterWhisperLocalProvider
-        app_data = (Path(os.environ["LOCALAPPDATA"]) / "ERSELMETZ AI"
-                    if os.environ.get("LOCALAPPDATA") else
-                    Path.home() / ".local" / "share" / "ERSELMETZ AI")
         local_speech_provider = FasterWhisperLocalProvider(app_data / "speech-models")
+    from app.integrations.local_speech_model import LocalSpeechModelCatalog
+    speech_model_catalog = speech_model_catalog or LocalSpeechModelCatalog(
+        getattr(local_speech_provider, "model_root", app_data / "speech-models"))
+    from app.api.capability_packs import router as capability_packs_router
+    from app.integrations.capability_packs import OptionalMediaPacks
+    from app.integrations.local_tts import LocalPyttsx3Output
+    media_packs = OptionalMediaPacks()
+    local_speech_output = LocalPyttsx3Output(on_success=lambda: media_packs.mark_working("voice"))
+    application.state.media_capability_packs = media_packs
+    application.state.local_speech_output = local_speech_output
     application.state.local_speech_provider = local_speech_provider
+    application.state.speech_model_catalog = speech_model_catalog
     application.include_router(create_local_voice_router(connection_manager,
-                                                         local_speech=local_speech_provider))
+                                                         local_speech=local_speech_provider,
+                                                         speech_model_catalog=speech_model_catalog,
+                                                         media_packs=media_packs,
+                                                         local_output=local_speech_output))
+    application.include_router(capability_packs_router)
     from app.api.provider_connections import router as provider_connections_router
     application.include_router(provider_connections_router)
     from app.api.inventory import router as inventory_router

@@ -86,7 +86,10 @@ export function mountEmergencyStop({
     const microphone = resolve(capture.microphone, serverCapture.microphone);
     const screen = resolve(capture.screen, serverCapture.screen);
     const camera = resolve(capture.camera, serverCapture.camera);
-    const playback = resolve(capture.local_playback, serverCapture.local_playback);
+    const serverPlayback = serverCapture.local_speech_output;
+    const playback = serverPlayback?.active === true ? "active"
+      : serverPlayback && capture.local_playback === "unknown" ? "inactive"
+        : resolve(capture.local_playback, serverCapture.local_playback);
     const remote = capture.remote_request === "none" ? "none reported" : capture.remote_request;
     text(activity, `Microphone: ${microphone || "unknown"}. Screen capture: ${screen || "unknown"}. Camera: ${camera || "unknown"}. Local playback: ${playback || "unknown"}. Remote cancellation: ${remote === "none reported" ? "unknown unless a provider confirms" : "unknown; request may still be running"}.`);
     capture = { ...capture, microphone, screen, camera, local_playback: playback };
@@ -229,6 +232,9 @@ export function mountEmergencyStop({
   playbackStop?.addEventListener("click", () => {
     const EventType = windowRef?.Event || globalThis.Event;
     if (typeof EventType === "function") windowRef?.dispatchEvent?.(new EventType("ersel:playback-stop"));
+    void post("/api/local/voice/stop-output").then(() => refresh()).catch(error => {
+      text(state, error.message || "Local speech stop was requested in this page.");
+    });
   });
   windowRef?.addEventListener?.("ersel:screen-capture-activity", event => {
     capture = { ...capture, screen: event.detail?.state || "unknown" };

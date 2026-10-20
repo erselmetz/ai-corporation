@@ -887,6 +887,10 @@ h3 { font-size: 0.9rem; }
 .dashboard-card,
 .employee-card,
 .management-card { padding: 1rem; }
+.capability-pack-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: .75rem; }
+.capability-pack-card { min-width: 0; }
+.capability-pack-card details { overflow-wrap: anywhere; }
+.capability-pack-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .75rem; }
 
 .dashboard-card:hover,
 .employee-card:hover,

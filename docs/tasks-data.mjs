@@ -3734,9 +3734,9 @@ export const post100Tasks = [
     "title": "Eyes, ears and voice capability packs",
     "description": "Offer owner-installed local image/OCR, microphone/transcription, and speech-output capabilities as separate optional packs with real self-tests and visible use indicators.",
     "category": "Phase AH - Multimodal Packs",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [155, 145, 146, 148, 149, 196],
-    "decisions": [],
+    "decisions": ["Owner approved official PyPI as the only wheel source, exact version and SHA-256 pins, owner confirmation, and isolated wheel-only installation; this does not authorize downloading or installing during development."],
     "acceptance": [
       "For every pack, show Not installed / Installed / Working from observed facts, exact pinned source/version/size/digest and compatibility before an owner-confirmed wheel-only isolated install. Base installer remains small; no unverified or silent downloads.",
       "Eyes: bounded image processing and one-shot screen capture/OCR using maintained local libraries; Tesseract installation/language data are guided separately, EasyOCR remains an optional heavy pack. Self-test captures a selected local screen/window only after permission, recognizes text, and reports the result. Provider transfer requires explicit per-turn consent.",
@@ -3748,12 +3748,25 @@ export const post100Tasks = [
     "outOfScope": ["No cloud speech recognizer by default, remote audio/image storage, microphone always-on mode, automatic model/library installation, hidden capture, or claim that a package is working without its self-test."],
     "risks": ["Audio, OCR and vision wheel/model compatibility, licenses, language quality, device drivers and hardware use vary by Windows/Python version.", "Optional model downloads can consume substantial bandwidth/storage and may expose private content if transfer consent is misunderstood."],
     "area": "P50",
-    "checkpoint": null,
-    "validation": [],
-    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["Physical microphone, camera/screen capture, local OCR engine, voice output device and vision-capable model until individually exercised."]},
-    "limitations": [],
-    "automatedVerification": ["Fake device/provider tests cover permissions, consent, indicators, stop, offline-only behavior, model compatibility and clear failure states; pin and verify packages before installation."],
-    "followUpValidation": ["Test installed wheels/model packs on clean Windows profiles and confirm with real hardware and actual capture/playback devices."]
+    "checkpoint": "task-198-multimodal-capability-packs",
+    "validation": [
+      "Full Python suite: 1,388 passed, 3 skipped, 0 failed (2 deprecation warnings).",
+      "Full browser-module suite: 263 passed; Electron suite: 38 passed; public docs suite: 21 passed.",
+      "Desktop UI production/type build, Python compileall, and git diff --check passed.",
+      "Focused capability pack, speech model, local TTS, voice API, and emergency-stop tests: 25 passed (1 Starlette TestClient deprecation warning); focused browser capability/stop tests: 5 passed."
+    ],
+    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["No optional pack or FasterWhisper model was downloaded or installed. Real OCR/Tesseract, microphone recording/transcription, physical TTS playback/Stop, screen/camera capture, vision-model chat, and packaged Windows loading were not exercised."]},
+    "limitations": [
+      "Optional wheels are currently offered only for official PyPI CPython 3.14 Windows x64 artifacts with exact version, size and SHA-256 preview, owner confirmation, and isolated wheel-only installation; this does not verify compatibility on other Python/Windows targets.",
+      "Tesseract and its language data require a separately guided installation. EasyOCR is not offered as a heavy pack. Coqui TTS is excluded because compatible maintained Windows wheels were not established. Existing Task 189 vision behavior is reused; this task did not verify a real vision-capable model or image turn.",
+      "The optional Ears runtime does not become Working until actual local transcription succeeds; the Eyes pack requires a real OCR self-test and Voice requires successful local speech output. Browser/device voice paths remain separate from these app-managed packs."
+    ],
+    "automatedVerification": [
+      "Deterministic fake-wheel tests cover manifest confirmation, official-source and digest validation, compatibility gates, isolated extraction, atomic installation, startup activation, and failure states without network access or package installation.",
+      "Fake OCR, local speech, TTS, API and UI tests cover actual self-test state transitions, permission checks, visible activity, Stop/emergency stop, bounded model pull confirmation, and safe error reporting.",
+      "Security review confirmed no import-time downloads, implicit package/model installation, cloud speech fallback, or bypass of existing capture/provider consent."
+    ],
+    "followUpValidation": ["On a clean supported Windows profile, explicitly install each desired pack, test OCR on a known local image, record/transcribe five seconds of microphone input, exercise offline TTS and Stop, check screen/camera consent indicators, and run a real image turn only with an installed vision model and existing consent. Validate packaged wheel/DLL loading and unsupported-target messaging."]
   },
   {
     "number": 199,
@@ -3784,7 +3797,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, and 195 are completed scoped checkpoints; Tasks 196-199 are the Brain, visualization, multimodal-pack, and gated-automation phase; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, and 195-198 are completed scoped checkpoints; Task 199 remains planned; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-199, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",

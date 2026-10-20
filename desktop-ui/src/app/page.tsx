@@ -11,7 +11,7 @@ type SetupSnapshot = {
   providers: CheckState;
   modelAssignment: CheckState;
   providerAvailability: "unknown";
-  optionalCapabilities: "unavailable";
+  optionalCapabilities: CheckState;
 };
 
 const initialSetup: SetupSnapshot = {
@@ -21,7 +21,7 @@ const initialSetup: SetupSnapshot = {
   providers: "checking",
   modelAssignment: "checking",
   providerAvailability: "unknown",
-  optionalCapabilities: "unavailable",
+  optionalCapabilities: "checking",
 };
 
 const copy: Record<CheckState | "unknown", string> = {
@@ -46,6 +46,7 @@ const workspaces = [
 type BoundedResponse = { ok: boolean; status: number; body: unknown };
 type ProviderList = { items: Array<{ id?: string }> };
 type AgentList = { items: Array<{ provider?: string; model?: string }> };
+type PackList = { items: Array<{ state?: string }> };
 
 async function boundedFetch(path: string): Promise<BoundedResponse> {
   const controller = new AbortController();
@@ -105,6 +106,7 @@ export default function Home() {
         next.chatPermission = next.owner;
         next.providers = next.owner === "required" ? "required" : "unknown";
         next.modelAssignment = next.owner === "required" ? "required" : "unknown";
+        next.optionalCapabilities = next.owner === "required" ? "required" : "unknown";
         return;
       }
       const sessionData = session.body;
@@ -114,9 +116,10 @@ export default function Home() {
           && (sessionData.permissions as unknown[]).includes("chat:send") ? "ready" : "denied"
         : "unknown";
 
-      const [providersResponse, agentsResponse] = await Promise.all([
+      const [providersResponse, agentsResponse, packsResponse] = await Promise.all([
         boundedFetch("/api/providers"),
         boundedFetch("/api/agents"),
+        boundedFetch("/api/capability-packs"),
       ]);
       if (providersResponse.status === 401 || agentsResponse.status === 401) {
         next.owner = "required";
@@ -124,9 +127,17 @@ export default function Home() {
       }
       next.providers = providersResponse.status === 403 ? "denied" : "unknown";
       next.modelAssignment = agentsResponse.status === 403 ? "denied" : "unknown";
+      next.optionalCapabilities = packsResponse.status === 403 ? "denied"
+        : packsResponse.status === 401 ? "required" : "unknown";
 
       const providers = providersResponse.body as ProviderList | null;
       const agents = agentsResponse.body as AgentList | null;
+      const packs = packsResponse.body as PackList | null;
+      if (packsResponse.ok) {
+        next.optionalCapabilities = Array.isArray(packs?.items)
+          && packs.items.every(pack => ["not-installed", "installed", "working"].includes(String(pack.state)))
+          ? "ready" : "unknown";
+      }
       if (providersResponse.ok) {
         next.providers = Array.isArray(providers?.items) && providers.items.length > 0 ? "ready"
           : Array.isArray(providers?.items) ? "missing" : "unknown";
@@ -148,6 +159,7 @@ export default function Home() {
       if (next.chatPermission === "checking") next.chatPermission = "unknown";
       if (next.providers === "checking") next.providers = "unknown";
       if (next.modelAssignment === "checking") next.modelAssignment = "unknown";
+      if (next.optionalCapabilities === "checking") next.optionalCapabilities = "unknown";
     } finally {
       setSetup(next);
       setChecking(false);
@@ -194,7 +206,7 @@ export default function Home() {
           {checkRow("Provider availability", "unknown", "No live provider health check is run from this screen.")}
           {checkRow("Installed app verification", "unknown", "The app does not expose installer signature or package-integrity verification.")}
           {checkRow("Installed models", "unknown", "Inventory is not automatic; use the separate local-model page to choose an Agent and explicitly refresh.")}
-          {checkRow("App-managed capability packs", "unavailable", "Task 134 remains deferred; this app does not install or load capability packs. Browser speech language packs are separate.")}
+          {checkRow("Optional local media packs", setup.optionalCapabilities, "Shows observed Eyes, Ears, and Voice pack states. Pinned wheel installs and speech-model pulls need separate owner confirmation.")}
         </ul>
         <div className="setup-actions"><a href="/ui/login">Sign in</a><a href="/ui/providers">Review providers &amp; models</a><a href="/ui/local-models">Check local model inventory</a><a href="/ui/employees">Review AI team</a></div>
       </section>

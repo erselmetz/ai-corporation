@@ -11,11 +11,12 @@ from app.integrations.speech import SpeechInputRequest, SpeechTranscript
 
 
 MODEL_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}\Z")
-REQUIRED_MODEL_FILES = ("config.json", "model.bin", "tokenizer.json", "preprocessor_config.json")
+REQUIRED_MODEL_FILES = ("config.json", "model.bin", "tokenizer.json", "vocabulary.txt")
 MAX_MODEL_CATALOG_ITEMS = 32
 MAX_MODEL_CATALOG_ENTRIES_SCANNED = 256
 MAX_SEGMENTS = 1_000
-RUNTIME_MODULES = ("faster_whisper", "ctranslate2", "av", "numpy", "tokenizers")
+RUNTIME_MODULES = ("faster_whisper", "huggingface_hub", "ctranslate2", "onnxruntime",
+                   "av", "numpy", "tokenizers", "tqdm", "sounddevice")
 
 
 class LocalSpeechUnavailable(RuntimeError):
@@ -52,6 +53,7 @@ class FasterWhisperLocalProvider:
         self._root = Path(model_root).expanduser().resolve()
         self._model_loader = model_loader or _default_model_loader
         self._audio_decoder = audio_decoder or _default_audio_decoder
+        self._runtime_override = runtime_available
         if runtime_available is None:
             try:
                 runtime_available = all(importlib.util.find_spec(name) is not None
@@ -63,6 +65,20 @@ class FasterWhisperLocalProvider:
         self._loaded_id: str | None = None
         self._model = None
         self._lock = threading.RLock()
+
+    @property
+    def model_root(self) -> Path:
+        return self._root
+
+    def refresh_runtime(self) -> LocalSpeechStatus:
+        """Recheck imports after an owner-confirmed optional pack installation."""
+        if self._runtime_override is None:
+            try:
+                self._runtime_available = all(importlib.util.find_spec(name) is not None
+                                               for name in RUNTIME_MODULES)
+            except (ImportError, ValueError):
+                self._runtime_available = False
+        return self.status()
 
     def available_models(self) -> tuple[str, ...]:
         if not self._root.is_dir():
