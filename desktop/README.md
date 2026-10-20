@@ -51,12 +51,13 @@ To repeat owner setup, remove only
 in place. Back up and remove remaining app data separately only when the owner
 intends a full reset.
 
-Task 127 adds a per-user Electron installer for Windows x64. It opens the
-existing FastAPI application on `http://127.0.0.1:8765`; the Next.js UI is a
-static export mounted at `/desktop/`. There is no production Next.js server,
-external font/CDN dependency, or public documentation-site connection. Existing
-Python APIs and chat/provider pages remain the source of runtime behavior.
-
+Task 127 adds a per-user Electron installer for Windows x64. It opens the existing
+FastAPI application on loopback port 8765 by default. A bounded `ERSELMETZ_PORT`
+override is available for isolated local development; all binds remain on 127.0.0.1.
+The Next.js UI is a static export mounted at `/desktop/`, while Python APIs and the
+Python-served Coordinator Chat at `/ui/chat` remain the runtime source of behavior.
+There is no production Next.js server, external font/CDN dependency, or public
+documentation-site connection.
 ## Build
 
 Build from a Windows checkout with Python 3.14 x64 and Node.js 22.12 or later:
@@ -86,29 +87,21 @@ this Electron controller.
 
 ## Owner access and stored data
 
-On first launch, create and confirm an owner password of 12–1024 characters.
-The existing credential store protects only its salted verifier with Windows
-DPAPI for the current Windows user. The password is passed to the Python sidecar
-over its private standard-input pipe; it is not put on a command line,
-environment variable, or persistent log. The desktop process uses that same
-verified owner password with the existing local-login contract to establish the
-normal HttpOnly owner session; it adds no identity or permission. Browser
-sessions are cleared on app exit.
+New installations start in Coordinator Chat without a password prompt and receive a
+cryptographically random per-launch session token over the private Electron-to-backend
+pipe. Loopback, Origin and CSRF checks remain active; unauthenticated API access still
+fails closed. If an owner password was previously configured, it remains required at
+launch. The owner may enable an optional DPAPI-protected password lock in Settings.
+Secrets are not put on a command line or persistent log; browser sessions are cleared
+on app exit.
 
-In the current source, a new desktop owner then sees the Task 176 Ollama/Gemini
-wizard. Ollama installer metadata is read from the official `ollama/ollama`
-GitHub release, the reviewed SHA-256 and size are checked before the installer
-is run, and a native confirmation precedes download and launch. The installer
-is started without elevation. The model size is previewed from the Ollama
-registry manifest before the separate explicit model-download confirmation.
-Gemini catalog discovery requires an explicit action; each chat turn retains
-its separate cloud-consent gate. Setup metadata and the existing model
-assignment/1-1-1 software slot limits are saved in SQLite. A Gemini key remains
-memory-only unless the owner opts into current-user DPAPI storage. Without that
-opt-in, the key must be re-entered after restart. Keys are not stored in SQLite
-or included in SQLite backups. The coordinator assignment and slots are
-restored on startup when saved configuration is available.
-
+At startup, the current source checks only the local Ollama service and installed
+models, then opens `/ui/chat`. It prefers the saved model, then `llama3.2:3b` when
+installed, or an available installed chat model. It never downloads a model
+automatically. If Ollama or a model is missing, Chat offers Retry or the existing
+explicitly confirmed installer/download flow. Gemini is optional in Settings; adding
+a key and each cloud turn retain their existing consent and key-storage rules. The
+legacy Task 176 wizard remains in the repository but is not the Electron launch flow.
 Task 176 automated validation passed: Python 1,270 passed / 6 skipped / 0 failed,
 175 browser modules, 16 public docs, and 21 Electron tests. Manual clean-profile
 Windows acceptance has NOT been performed: real Ollama installation/download/chat,

@@ -23,16 +23,18 @@ function render() {
 test("shows all tasks in descending order and reports the next planned task", () => {
   const elements = render();
   const groups = elements["roadmap-groups"].children;
-  assert.equal(groups[0].id, "tasks-193-193");
+  assert.equal(groups[0].id, "tasks-194-194");
   const items = groups.flatMap(group => group.children[1].children);
-  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 193 }, (_, index) => 193 - index));
-  assert.match(elements["roadmap-summary"].textContent, /193 roadmap tasks.*190 completed.*2 deferred and incomplete.*0 planned.*1 design only/);
+  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 194 }, (_, index) => 194 - index));
+  assert.match(elements["roadmap-summary"].textContent, /194 roadmap tasks.*189 completed.*4 deferred and incomplete.*0 planned.*1 design only/);
   assert.match(elements["next-task"].textContent, /No remaining planned task/);
   const newest = items[0];
+  assert.equal(newest.children[2].textContent, "Deferred — incomplete");
   assert.equal(newest.children[4].textContent, "AI-verified (deterministic/fake evidence recorded)");
-  assert.equal(newest.children[5].textContent, "Real hardware/live provider: partially verified");
-  assert.equal(newest.id, "task-193");
-  assert.match(newest.textContent, /task-193-chat-prompt-and-ui/);
+  assert.equal(newest.children[5].textContent, "Real hardware/live provider: unverified");
+  assert.equal(newest.id, "task-194");
+  assert.doesNotMatch(newest.textContent, /task-194-chat-prompt-real-fix/);
+  assert.match(newest.textContent, /exited with code 0/);
   const priorCheckpoint = items.find(item => item.id === "task-191");
   assert.match(priorCheckpoint.children[4].textContent, /AI-verified/);
 });
@@ -160,7 +162,7 @@ test("publishes completed milestones and remaining phases with their current sta
   assert.deepEqual(planned.map(task => [task.number, task.status]), [
     [174, "completed"], [175, "completed"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
     [180, "completed"], [181, "completed"], [182, "completed"], [183, "completed"], [184, "completed"], [185, "completed"],
-    [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"], [191, "completed"], [192, "completed"], [193, "completed"],
+    [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"], [191, "completed"], [192, "completed"], [193, "deferred"], [194, "deferred"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, "task-177-auto-rag-trace");
   assert.equal(tasks.find(task => task.number === 178).checkpoint, "task-178-nav-fix");
@@ -182,7 +184,7 @@ test("publishes completed milestones and remaining phases with their current sta
     assert.equal(task.manualVerification, undefined);
     assert.ok(task.followUpValidation.length);
   }
-  assert.deepEqual(recommendedOrder.map(({ number }) => number), [178, 176, 177, 175, 180, 184, 181, 182, 183, 185, 186, 187, 188, 189, 190, 192, 193]);
+  assert.deepEqual(recommendedOrder.map(({ number }) => number), [178, 176, 177, 175, 180, 184, 181, 182, 183, 185, 186, 187, 188, 189, 190, 192, 193, 194]);
   const corporationMap = tasks.find(task => task.number === 172);
   assert.match(corporationMap.description, /interactive, evidence-backed 3D map/);
   assert.match(corporationMap.acceptance.join(" "), /zoom\/orbit\/pan.*filters\/layers/i);

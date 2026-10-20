@@ -1,7 +1,7 @@
 """Structured, bounded messages for owner-directed chat turns."""
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 MAX_CHAT_MESSAGE_BYTES = 32_768
 MAX_CHAT_MESSAGES = 34
@@ -89,6 +89,8 @@ def build_chat_messages(
 
 
 def validate_chat_messages(messages: Sequence[dict]) -> list[dict[str, str]]:
+    if isinstance(messages, Mapping):
+        raise TypeError("Provider chat adapters require role messages, not a request-envelope mapping")
     if not isinstance(messages, Sequence) or isinstance(messages, (str, bytes)):
         raise ValueError("Chat messages are invalid")
     if not 2 <= len(messages) <= MAX_CHAT_MESSAGES:
@@ -108,6 +110,17 @@ def validate_chat_messages(messages: Sequence[dict]) -> list[dict[str, str]]:
     if normalized[-1]["role"] != "user" or total_bytes > MAX_CHAT_MESSAGE_BYTES:
         raise ValueError("Chat messages exceed the supported request boundary")
     return normalized
+
+
+def debug_chat_adapter_contract_self_check() -> None:
+    """Fail app startup if the message validator ever accepts an envelope mapping."""
+    if not __debug__:
+        return
+    try:
+        validate_chat_messages({"corporation_id": "self-check", "request": "hello"})
+    except TypeError:
+        return
+    raise RuntimeError("Chat adapter contract self-check failed: mappings must not be provider messages")
 
 
 def flatten_chat_messages(messages: Sequence[dict]) -> str:

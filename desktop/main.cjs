@@ -1,5 +1,5 @@
 const { app, BrowserWindow, desktopCapturer, dialog, ipcMain, session, shell } = require("electron");
-const { spawn } = require("node:child_process");
+const { spawn, execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
@@ -11,7 +11,14 @@ const { appendLocalCrashReport, readLocalCrashReports } = require("./local-diagn
 const { RESET_HELPER_ARGUMENT, resolveAppDataDirectory, waitForParentAndRemoveAppData } = require("./local-reset.cjs");
 
 const HOST = "127.0.0.1";
-const PORT = 8765;
+const PORT = (() => {
+  const configured = process.env.ERSELMETZ_PORT;
+  const value = configured === undefined ? 8765 : Number(configured);
+  if (!Number.isInteger(value) || value < 1024 || value > 65535) {
+    throw new Error("ERSELMETZ_PORT must be a valid unprivileged TCP port.");
+  }
+  return value;
+})();
 const ORIGIN = `http://${HOST}:${PORT}`;
 const APP_DATA = process.env.LOCALAPPDATA
   ? resolveAppDataDirectory(process.env.LOCALAPPDATA)
@@ -20,6 +27,7 @@ const CREDENTIAL = path.join(APP_DATA, "owner-credential.dpapi");
 let bootstrapWindow;
 let applicationWindow;
 let backend;
+let expectedBackendCommit = null;
 let quitAfterShutdown = false;
 let quitting = false;
 let microphoneGrantUntil = 0;
@@ -140,7 +148,27 @@ function handleChildErrors(child) {
 }
 
 function safeBackendEnvironment() {
-  const env = { ERSELMETZ_APP_VERSION: require("./package.json").version };
+  const version = require("./package.json").version;
+  let commit = "development";
+  try {
+    if (app.isPackaged) {
+      const stamp = JSON.parse(fs.readFileSync(path.join(process.resourcesPath, "backend", "build-stamp.json"), "utf8"));
+      if (stamp.version !== version || typeof stamp.commit !== "string" || !/^[0-9a-f]{7,64}$/i.test(stamp.commit)) {
+        throw new Error("Backend build stamp does not match this desktop package");
+      }
+      commit = stamp.commit.toLowerCase();
+    } else {
+      commit = execFileSync("git", ["rev-parse", "--short=12", "HEAD"], {
+        cwd: path.resolve(__dirname, ".."), encoding: "utf8", timeout: 1000,
+        windowsHide: true, stdio: ["ignore", "pipe", "ignore"],
+      }).trim();
+      if (!/^[0-9a-f]{7,64}$/i.test(commit)) commit = "development";
+    }
+  } catch {
+    if (app.isPackaged) throw new Error("The packaged backend build identity is missing or invalid.");
+  }
+  expectedBackendCommit = commit.toLowerCase();
+  const env = { ERSELMETZ_APP_VERSION: version, ERSELMETZ_BUILD_COMMIT: commit };
   for (const key of ["LOCALAPPDATA", "APPDATA", "USERPROFILE", "SYSTEMROOT", "WINDIR", "TEMP", "TMP"]) {
     if (process.env[key]) env[key] = process.env[key];
   }
@@ -153,7 +181,15 @@ function healthCheck() {
       let body = "";
       response.setEncoding("utf8");
       response.on("data", (chunk) => { if (body.length < 256) body += chunk; });
-      response.on("end", () => resolve(response.statusCode === 200 && body === '{"status":"ok"}'));
+      response.on("end", () => {
+        try {
+          const health = JSON.parse(body);
+          resolve(response.statusCode === 200 && health?.status === "ok"
+            && health.version === require("./package.json").version
+            && typeof health.commit === "string"
+            && health.commit.toLowerCase() === expectedBackendCommit);
+        } catch { resolve(false); }
+      });
     });
     request.on("timeout", () => request.destroy());
     request.on("error", () => resolve(false));

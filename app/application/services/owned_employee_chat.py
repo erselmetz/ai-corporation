@@ -1,7 +1,6 @@
 """Principal-owned, Employee-associated chat with immutable assignment snapshots."""
 from __future__ import annotations
 
-import json
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -19,6 +18,7 @@ from app.conversations import (
 from app.orchestrator import Orchestrator
 from app.providers import ProviderRegistry
 from app.providers.base import ProviderCapacityError
+from app.chat_prompt import build_chat_messages
 
 from .owned_chat import (
     ChatConflict,
@@ -373,10 +373,8 @@ class OwnedEmployeeChatService:
                     for item in conversation.messages[-16:]
                     if item.status is MessageStatus.COMPLETED
                 ]
-                prompt = json.dumps(
-                    {"history": history, "request": text}, ensure_ascii=True
-                )
-                if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
+                messages = build_chat_messages(text, history)
+                if sum(len(message["content"].encode("utf-8")) for message in messages) > self.MAX_PROMPT_BYTES:
                     raise ValueError("Prompt exceeds byte limit")
                 user_id, reply_id = uuid4().hex, uuid4().hex
                 self._chat.add_message(
@@ -384,7 +382,7 @@ class OwnedEmployeeChatService:
                 )
                 self._persist_current(entry, identifier)
                 try:
-                    reply = self._orchestrator.run_agent(entry.agent.id, prompt)
+                    reply = self._orchestrator.run_agent_chat(entry.agent.id, messages)
                     if not isinstance(reply, str) or not reply.strip():
                         raise ValueError("Provider returned no reply")
                     if len(reply.encode("utf-8")) > self.MAX_MESSAGE_BYTES:
@@ -457,10 +455,8 @@ class OwnedEmployeeChatService:
                     for item in conversation.messages[-16:]
                     if item.status is MessageStatus.COMPLETED
                 ]
-                prompt = json.dumps(
-                    {"history": history, "request": text}, ensure_ascii=True
-                )
-                if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
+                messages = build_chat_messages(text, history)
+                if sum(len(message["content"].encode("utf-8")) for message in messages) > self.MAX_PROMPT_BYTES:
                     raise ValueError("Prompt exceeds byte limit")
                 user_id, reply_id = uuid4().hex, uuid4().hex
                 self._chat.add_message(identifier, user_id, MessageRole.USER, text)
@@ -468,9 +464,9 @@ class OwnedEmployeeChatService:
                 output = []
                 output_bytes = 0
                 try:
-                    for chunk in self._orchestrator.stream_agent(
+                    for chunk in self._orchestrator.stream_agent_chat(
                         entry.agent.id,
-                        prompt,
+                        messages,
                         expected_assignment=(entry.agent.provider_id, entry.agent.model_id),
                     ):
                         if not isinstance(chunk, str):

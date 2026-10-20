@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 from datetime import datetime, timezone
+import json
 import logging
 import socket
 import threading
@@ -280,7 +281,12 @@ class LocalApplicationController:
 
 def _probe_health(origin: str) -> bool:
     with urlopen(f"{origin}/health", timeout=2.0) as response:
-        return response.status == 200 and response.read(256) == b'{"status":"ok"}'
+        if response.status != 200:
+            return False
+        try:
+            return json.loads(response.read(256)).get("status") == "ok"
+        except (UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+            return False
 
 
 class DesktopLauncherWindow:

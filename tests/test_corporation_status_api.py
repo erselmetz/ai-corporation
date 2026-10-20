@@ -140,7 +140,9 @@ def test_health_remains_public_and_separate_from_corporation_status():
         root = client.get("/")
 
     assert health.status_code == 200
-    assert health.json() == {"status": "ok"}
+    assert health.json()["status"] == "ok"
+    assert health.json()["version"] == application.version
+    assert isinstance(health.json()["commit"], str)
     assert root.status_code == 200
     assert root.json() == {
         "application": "ERSELMETZ AI API",

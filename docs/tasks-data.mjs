@@ -3528,7 +3528,7 @@ export const post100Tasks = [
     "title": "Structured chat prompts and focused desktop chat experience",
     "description": "Send native role-based chat messages to local and Gemini providers and make the served Coordinator Chat the focused, accessible desktop conversation surface.",
     "category": "Phase AC - Structured Chat and Desktop Experience",
-    "status": "completed",
+    "status": "deferred",
     "dependsOn": [177, 178, 191, 192],
     "decisions": [],
     "acceptance": [
@@ -3545,7 +3545,7 @@ export const post100Tasks = [
       "Markdown rendering must remain text-node based and must not execute provider-supplied HTML or scripts."
     ],
     "area": "P45",
-    "checkpoint": "task-193-chat-prompt-and-ui",
+    "checkpoint": null,
     "decisions": [],
     "validation": [
       "Full automated validation: Python 1,351 passed / 3 skipped / 0 failed (2 deprecation warnings); browser modules 239 passed / 0 failed; Electron 34 passed / 0 failed; public docs 21 passed / 0 failed; desktop-ui TypeScript no-emit passed. Python compilation and git diff --check passed. A Next.js production build and packaged Electron launch were not run; the desktop chat route is Python-served."
@@ -3564,24 +3564,75 @@ export const post100Tasks = [
     },
     "limitations": [
       "Filipino response quality is imperfect in the single captured capability question; this is a prompt-assembly and UI checkpoint, not a language-quality guarantee.",
-      "Real local-model results are observations from this host and model. Deterministic provider, Python, browser, and Electron checks do not prove packaged-launch, live Gemini, or representative-user behavior."
+      "The original checkpoint task-193-chat-prompt-and-ui was overstated: the installed app was an older package without a source stamp, and individual Employee chat still serialized a JSON request envelope into the legacy prompt path. Task 193 remains deferred until corrected by Task 194.",
+      "Real local-model results are observations from this host and model. Deterministic provider, Python, browser, and Electron checks do not prove live Gemini or representative-user behavior."
     ],
     "automatedVerification": [
       "Use deterministic tests to verify providers receive structured role messages, internal envelope keys never enter messages, empty context adds no reference block, and selected retrieval is an explicitly delimited untrusted excerpt.",
       "Verify safe Markdown rendering, composer keyboard and Stop behavior, collapsed answer trace, closed-by-default options, responsive navigation, and direct-to-chat first send. Run full Python, browser-module, Electron, public-docs, and desktop-ui TypeScript checks."
     ],
     "followUpValidation": [
-      "Rebuild and launch the packaged Windows Electron artifact; verify clean-profile direct-to-chat with local Ollama. Exercise live Gemini only with separately authorized account use; evaluate screen reader/keyboard access and language quality with representative users."
+      "Task 194 corrects the incomplete provider-routing and package-identity acceptance. Exercise live Gemini only with separately authorized account use; evaluate screen reader/keyboard access and language quality with representative users."
+    ]
+  },
+  {
+    "number": 194,
+    "title": "Correct chat prompt routing and prove the running desktop build",
+    "description": "Remove request-envelope serialization from every chat entry point and identify the exact packaged backend commit before Electron accepts it.",
+    "category": "Phase AD - Chat Prompt Correctness",
+    "status": "deferred",
+    "dependsOn": [193, 191],
+    "acceptance": [
+      "Coordinator, direct-to-chat, streaming, non-streaming, retrieval, image-capable structured chat, Gemini, and individual Employee chat send role-based messages only; provider adapters reject mappings before provider invocation.",
+      "A local fake Ollama HTTP server captures the exact request body through authenticated real API routes and verifies system/user/assistant roles, no internal request-envelope fields, empty context omission, streaming parity, prior history, and only selected retrieval excerpts.",
+      "The app health response reports version and source commit. Electron requires a matching packaged backend identity and opens Coordinator Chat with the existing loopback, per-launch session, Origin and CSRF controls intact.",
+      "A locally rebuilt packaged Electron application must stay running from an isolated profile and port, report its version/commit stamp, and reach real local llama3.2:3b for the four requested prompt turns. No network provider, cloud call, push, or deployment is used."
+    ],
+    "outOfScope": [
+      "No changes to authentication policy, provider/model selection, permissions, task authority, cloud consent, spending, automatic fallback, downloads, or deployment.",
+      "No claim that deterministic fake-provider responses establish real provider quality or that this host establishes broader Windows/hardware compatibility."
+    ],
+    "risks": [
+      "All new or legacy chat entry points must preserve conversation history, retrieval provenance, explicit cloud consent, and assigned provider/model identity while excluding service-only request fields.",
+      "Version/commit identity must fail closed for a packaged backend with a missing or mismatched build stamp."
+    ],
+    "area": "P46",
+    "checkpoint": null,
+    "decisions": [],
+    "validation": [
+      "Authenticated route-to-fake-Ollama captures cover Coordinator non-streaming with prior history, Coordinator streaming, selected retrieval, and individual Employee non-streaming and streaming; all actual outbound bodies are checked for the forbidden envelope keys.",
+      "Orchestrator rejects mapping envelopes before dispatch in regular, temporary-route, streaming, and image-chat paths; the app startup debug self-check also exercises this boundary.",
+      "Full validation: Python 1,359 passed / 5 skipped / 0 failed; browser modules 239 passed / 0 failed; Electron 38 passed / 0 failed; public docs 21 passed / 0 failed; desktop UI TypeScript no-emit and Python compileall passed. Route-to-fake-Ollama capture for 'hello' was POST /api/chat with model llama3.2:3b, a four-line system message, one user message 'hello', and stream false; exact body contains no request-envelope fields. Version/commit health contract and packaged Electron build-stamp handshake are covered by deterministic tests. Isolated backend and Windows installer builds succeeded. The isolated packaged app launch exited with code 0 before opening a window or binding its backend port; the runtime reason is unresolved, so packaged identity and live local-model behavior were not verified. Existing release/build outputs were preserved."
+    ],
+    "realWorldVerification": {
+      "status": "pending",
+      "evidence": [
+        "2026-10-20: A current-worktree unsigned Windows installer and unpacked package were produced in desktop/release-task194-review. The app process exited immediately with exit code 0; no app window, app-data directory, or backend listener on the isolated port appeared. No real local-model reply or running health stamp was captured. The embedded build-stamp.json identifies base HEAD 56b7d94, not the uncommitted Task 194 source tree, so it cannot prove which Task 194 source is running."
+      ],
+      "unverified": [
+        "Launch the isolated packaged app successfully, verify the visible/running version and commit stamp, then capture actual llama3.2:3b replies and latencies for the requested four turns."
+      ]
+    },
+    "limitations": [
+      "Live Gemini is not called. Fake-server route captures validate only the outbound contract and do not prove third-party service behavior.",
+      "The current packaged app exits before window/backend startup with exit code 0, so this checkpoint remains deferred despite the source-level route captures and successful build. The packaging script stamps Git HEAD and does not fingerprint dirty source changes; the built artifact's embedded 56b7d94 identity therefore does not identify the uncommitted Task 194 tree. No runtime failure cause is claimed. Other Windows profiles, GPU/CPU configurations, accessibility devices, and representative user behavior are not inferred."
+    ],
+    "automatedVerification": [
+      "Use an ephemeral loopback HTTP capture server and the authenticated real chat route, not a direct service-only mock. Verify exact request body paths and payload fields for every applicable chat mode.",
+      "Run full Python, browser-module, Electron and public-docs suites; Python compilation, desktop UI type check, build identity handshake, local isolated packaged launch, and git diff --check."
+    ],
+    "followUpValidation": [
+      "Diagnose why the isolated packaged Windows app exits before Electron startup, then verify its build stamp and the four real local llama3.2:3b turns. Exercise Gemini only with an authorized test account; assess representative-user experience, native accessibility and additional Windows hardware separately."
     ]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134 and 170 are deferred and incomplete; Tasks 135-169, 171-189 and 191-193 are completed scoped checkpoints except deferred Task 170; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, and 191-192 are completed scoped checkpoints; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
-  "developmentAcceptance": "For Tasks 175-193, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
+  "developmentAcceptance": "For Tasks 175-194, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
   "enhancementLoop": "After scoped development acceptance, continue to the next dependency-ready task without waiting for human QA. Record reproducible defects and regression cases for later review by different AI models; identify model/reviewer when available and never claim independent review that did not occur.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
   "completion": "Completed requires actual acceptance evidence, truthful limitations/skips, required documentation/update records, and a reviewed task checkpoint. A local checkpoint is sufficient for development acceptance; push or deployment is separate and must be authorized and verified when performed. Never mark complete solely because code exists or an AI says it worked.",
@@ -3619,7 +3670,8 @@ const futureRoadmapGroups = [
   { name: "Phase Z - Code Execution Design Gate", range: "190-190", tasks: post100Tasks.filter(task => task.category === "Phase Z - Code Execution Design Gate").map(({ title, description }) => [title, description]) },
   { name: "Phase AA - Direct-to-chat Quick Start", range: "191-191", tasks: post100Tasks.filter(task => task.category === "Phase AA - Direct-to-chat Quick Start").map(({ title, description }) => [title, description]) },
   { name: "Phase AB - Real-world Verification", range: "192-192", tasks: post100Tasks.filter(task => task.category === "Phase AB - Real-world Verification").map(({ title, description }) => [title, description]) },
-  { name: "Phase AC - Structured Chat and Desktop Experience", range: "193-193", tasks: post100Tasks.filter(task => task.category === "Phase AC - Structured Chat and Desktop Experience").map(({ title, description }) => [title, description]) }
+  { name: "Phase AC - Structured Chat and Desktop Experience", range: "193-193", tasks: post100Tasks.filter(task => task.category === "Phase AC - Structured Chat and Desktop Experience").map(({ title, description }) => [title, description]) },
+  { name: "Phase AD - Chat Prompt Correctness", range: "194-194", tasks: post100Tasks.filter(task => task.category === "Phase AD - Chat Prompt Correctness").map(({ title, description }) => [title, description]) }
 ];
 
 export const taskGroups = [...foundationTaskGroups, {
@@ -3645,6 +3697,7 @@ export const recommendedOrder = [
   { number: 189, reason: "Gate image transfer on hardware evidence and reviewed provider-routing consent." },
   { number: 190, reason: "Keep code execution at a design-only security gate until its sandbox and owner controls are reviewed." },
   { number: 192, reason: "Measure real local behavior and report evidence separately from automated fixtures before considering product enhancements." },
-  { number: 193, reason: "Remove internal request data from provider prompts and make everyday local chat accessible and focused." }
+  { number: 193, reason: "Deliver structured provider messages and an accessible chat surface; its prompt-routing closure is tracked by Task 194." },
+  { number: 194, reason: "Prove every chat route excludes request envelopes and the opened desktop build matches the tested source." }
 ];
 export const nextTask = recommendedOrder.map(({ number }) => post100Tasks.find(task => task.number === number)).find(task => task?.status === "planned");

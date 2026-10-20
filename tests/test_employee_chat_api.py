@@ -20,12 +20,21 @@ class Provider(AIProvider):
         self.calls.append((model, prompt))
         return self.reply
 
+    def generate_chat(self, model, messages):
+        self.calls.append((model, messages))
+        return self.reply
+
 
 class StreamingProvider(Provider):
     supports_streaming = True
 
     def generate_stream(self, model, prompt):
         self.calls.append((model, prompt))
+        yield "actual "
+        yield "reply"
+
+    def generate_chat_stream(self, model, messages):
+        self.calls.append((model, messages))
         yield "actual "
         yield "reply"
 
@@ -84,18 +93,20 @@ def test_employee_chat_is_owned_isolated_and_does_not_send_profile_or_task_conte
     response = client.post(path + "/messages", json={"text": "private question"},
                            headers=headers())
     assert response.status_code == 200
-    prompt = json.loads(provider.calls[0][1])
-    assert prompt == {"history": [], "request": "private question"}
-    assert "Private Name" not in provider.calls[0][1]
-    assert "private responsibility" not in provider.calls[0][1]
+    messages = provider.calls[0][1]
+    assert [message["role"] for message in messages] == ["system", "user"]
+    assert messages[-1]["content"] == "private question"
+    assert "Private Name" not in json.dumps(messages)
+    assert "private responsibility" not in json.dumps(messages)
     assert runtime.application_service.list_tasks() == []
 
     other_path = f"/api/employee-chat/conversations/{second_body['conversation']['id']}"
     second_response = client.post(other_path + "/messages",
                                   json={"text": "separate question"}, headers=headers())
     assert second_response.status_code == 200
-    second_prompt = json.loads(provider.calls[1][1])
-    assert second_prompt == {"history": [], "request": "separate question"}
+    second_messages = provider.calls[1][1]
+    assert [message["role"] for message in second_messages] == ["system", "user"]
+    assert second_messages[-1]["content"] == "separate question"
     assert client.get(path, headers=headers("bob")).status_code == 404
     assert client.get("/api/employee-chat/conversations", headers=headers("bob")).json() == {"items": []}
     assert client.get(path, headers=headers("reader")).status_code == 404
@@ -136,7 +147,7 @@ def test_employee_chat_streaming_uses_assigned_provider_and_saves_only_final_rep
     assert [item["status"] for item in events[-1]["snapshot"]["conversation"]["messages"]] == [
         "completed", "completed",
     ]
-    assert provider.calls and "Hello" in provider.calls[0][1]
+    assert provider.calls and provider.calls[0][1][-1]["content"] == "Hello"
     assert original.calls == []
 
 
@@ -184,7 +195,8 @@ def test_gemini_requires_per_turn_consent_and_rejects_key_paste_before_saving(se
                            headers=headers())
     assert accepted.status_code == 200
     assert len(gemini.calls) == 1
-    assert json.loads(gemini.calls[0][1]) == {"history": [], "request": "Hello"}
+    assert [message["role"] for message in gemini.calls[0][1]] == ["system", "user"]
+    assert gemini.calls[0][1][-1]["content"] == "Hello"
 
 
 def test_stale_employee_assignment_and_replaced_provider_do_not_retarget(setup):
@@ -247,7 +259,7 @@ def test_default_api_rejects_employee_chat_and_provider_failure_is_not_retried(s
     started = client.post("/api/employee-chat/conversations",
                           json={"employee_id": "local_employee"}, headers=headers())
     identifier = started.json()["conversation"]["id"]
-    provider.generate = MagicMock(side_effect=RuntimeError("sensitive provider failure"))
+    provider.generate_chat = MagicMock(side_effect=RuntimeError("sensitive provider failure"))
     path = f"/api/employee-chat/conversations/{identifier}"
     response = client.post(path + "/messages", json={"text": "fail once"},
                            headers=headers())
@@ -255,7 +267,7 @@ def test_default_api_rejects_employee_chat_and_provider_failure_is_not_retried(s
     assert "sensitive provider failure" not in response.text
     messages = client.get(path, headers=headers()).json()["conversation"]["messages"]
     assert len(messages) == 1 and messages[0]["status"] == "failed"
-    assert provider.generate.call_count == 1
+    assert provider.generate_chat.call_count == 1
     changed = runtime.application_service.replace_model(
         "local_worker", "ollama", "after-failure"
     )

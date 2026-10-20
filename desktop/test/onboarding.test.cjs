@@ -16,6 +16,15 @@ test("new Electron launches start the loopback service and open Coordinator Chat
   assert.match(main, /name: "ersel_local_session", value: startupToken[^\n]*httpOnly: true/);
   assert.match(main, /applicationWindow\.loadURL\(`\$\{ORIGIN\}\/ui\/chat\?desktop=1`\)/);
   assert.match(main, /if \(fs\.existsSync\(CREDENTIAL\)\) makeBootstrapWindow\(\)/);
+  assert.match(main, /applicationWindow\.loadURL\(`\$\{ORIGIN\}\/ui\/chat\?desktop=1`\)/);
+});
+
+test("Electron health handshake requires a matching version and source commit stamp", () => {
+  assert.match(main, /build-stamp\.json/);
+  assert.match(main, /ERSELMETZ_BUILD_COMMIT/);
+  assert.match(main, /const health = JSON\.parse\(body\)/);
+  assert.match(main, /health\.version === require\("\.\/package\.json"\)\.version/);
+  assert.match(main, /health\.commit\.toLowerCase\(\) === expectedBackendCommit/);
 });
 
 test("first-run checks are bounded and report unsupported evidence as unknown", () => {

@@ -1,4 +1,5 @@
 from importlib import import_module
+import re
 from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
@@ -11,6 +12,7 @@ from app.api import (
     require_authenticated_principal,
     require_permission,
 )
+from app.build_stamp import BUILD_STAMP
 from app.application import CorporationApplicationService
 from app.orchestrator import Orchestrator
 
@@ -62,7 +64,9 @@ def test_api_root_and_health_return_json_without_runtime_calls():
             "application": "ERSELMETZ AI API",
         }
         assert health.status_code == 200
-        assert health.json() == {"status": "ok"}
+        assert health.json()["status"] == "ok"
+        assert health.json()["version"] == application.version
+        assert re.fullmatch(r"[0-9a-f]{7,64}|development|unknown", health.json()["commit"])
         assert application.state.application_service is service
         service._orchestrator.create_task.assert_not_called()
         service._orchestrator.execute_task.assert_not_called()
@@ -128,7 +132,10 @@ def test_api_default_lifespan_uses_shared_runtime_factory(monkeypatch):
     monkeypatch.setattr(api_module, "create_corporation_runtime", factory)
 
     with TestClient(create_app()) as client:
-        assert client.get("/health").json() == {"status": "ok"}
+        health = client.get("/health").json()
+        assert health["status"] == "ok"
+        assert health["version"] == "0.1.0"
+        assert health["commit"] == BUILD_STAMP["commit"]
         assert client.app.state.application_service is service
 
     factory.assert_called_once_with()

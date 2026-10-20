@@ -37,6 +37,8 @@ from app.updates.trusted_release import TrustedReleaseError, TrustedReleaseServi
 from app.application.services.owned_chat import ChatConflict
 from app.integrations import SandboxImagePolicy
 from app.runtime import create_corporation_runtime
+from app.build_stamp import BUILD_STAMP
+from app.chat_prompt import debug_chat_adapter_contract_self_check
 from app.webui import web_ui_router
 from app.positions import (
     POSITION_TEMPLATES,
@@ -109,7 +111,7 @@ def root() -> dict[str, str]:
 
 @api_router.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok", **BUILD_STAMP}
 
 
 def get_application_service(request: Request) -> CorporationApplicationService:
@@ -1005,6 +1007,7 @@ def create_app(
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
+        debug_chat_adapter_contract_self_check()
         if application_service is None:
             runtime = create_corporation_runtime()
             application.state.application_service = runtime.application_service
@@ -1079,7 +1082,7 @@ def create_app(
 
     application = FastAPI(
         title="ERSELMETZ AI API",
-        version="1.0.0",
+        version=BUILD_STAMP["version"],
         lifespan=lifespan,
     )
     application.state.authentication_backend = (

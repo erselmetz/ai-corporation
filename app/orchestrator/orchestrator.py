@@ -4,6 +4,7 @@ from app.agents import AgentRegistry, EmployeeRegistry
 from app.database import TaskLogger
 from app.providers import ProviderRegistry
 from app.providers import ProviderVisionUnsupported
+from app.chat_prompt import validate_chat_messages
 
 from .task import Task, TaskFailureCategory, TaskStatus
 from .task_registry import TaskRegistry
@@ -77,6 +78,7 @@ class Orchestrator:
         self, agent_id: str, messages: list[dict], *,
         expected_assignment: tuple[str, str] | None = None,
     ) -> str:
+        messages = validate_chat_messages(messages)
         with self.agents.execution(agent_id):
             agent = self.agents.get(agent_id)
             if expected_assignment is not None and (agent.provider, agent.model) != expected_assignment:
@@ -89,6 +91,7 @@ class Orchestrator:
     ) -> str:
         if not provider_id or not model_id:
             raise ValueError("An explicit provider and model are required")
+        messages = validate_chat_messages(messages)
         with self.agents.execution(agent_id):
             agent = self.agents.get(agent_id)
             if (agent.provider, agent.model) != expected_assignment:
@@ -120,6 +123,7 @@ class Orchestrator:
         self, agent_id: str, messages: list[dict], *,
         expected_assignment: tuple[str, str] | None = None,
     ):
+        messages = validate_chat_messages(messages)
         with self.agents.execution(agent_id):
             agent = self.agents.get(agent_id)
             if expected_assignment is not None and (agent.provider, agent.model) != expected_assignment:
@@ -147,6 +151,7 @@ class Orchestrator:
 
     def run_agent_chat_with_images(self, agent_id: str, messages: list[dict], images, *,
                                    ocr_evidence=(), expected_assignment=None) -> str:
+        messages = validate_chat_messages(messages)
         with self.agents.execution(agent_id):
             agent = self.agents.get(agent_id)
             if expected_assignment is not None and (agent.provider, agent.model) != expected_assignment:
