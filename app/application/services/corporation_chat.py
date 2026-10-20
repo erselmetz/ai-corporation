@@ -183,6 +183,7 @@ class CorporationChatService:
             tool_context=tool_context,
             presentation_preferences=presentation_preferences,
             brain_enabled=brain_enabled,
+            role_instructions=self._orchestrator.agents.get(record.coordinator_agent_id).system_prompt or None,
         )
         prompt = json.dumps(messages, ensure_ascii=True, separators=(",", ":"))
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
@@ -277,6 +278,7 @@ class CorporationChatService:
         messages = build_chat_messages(
             text, history, ocr_context=ocr_context,
             presentation_preferences=presentation_preferences,
+            role_instructions=self._orchestrator.agents.get(record.coordinator_agent_id).system_prompt or None,
         )
         prompt = json.dumps(messages, ensure_ascii=True, separators=(",", ":"))
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
@@ -334,6 +336,7 @@ class CorporationChatService:
             text, history, retrieved_context=retrieved_context,
             presentation_preferences=presentation_preferences,
             brain_enabled=brain_enabled,
+            role_instructions=self._orchestrator.agents.get(record.coordinator_agent_id).system_prompt or None,
         )
         prompt = json.dumps(messages, ensure_ascii=True, separators=(",", ":"))
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:

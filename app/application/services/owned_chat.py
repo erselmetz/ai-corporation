@@ -116,7 +116,7 @@ class OwnedChatService:
         with self._catalog_lock:
             if len(self._entries) >= self.MAX_CONVERSATIONS:
                 raise ChatLimit("Conversation limit reached for this app run")
-            with self.agent_request(agent_id):
+            with self._agent_request(agent_id):
                 agent, provider = self._coordinator(agent_id)
                 identifier = uuid4().hex
                 record = self._chat.start(identifier, agent_id)
@@ -192,6 +192,12 @@ class OwnedChatService:
         elif route_consent is True:
             raise ValueError("Route consent requires an alternate provider and model")
         with self._access(owner, identifier) as entry:
+            if self._chat.get_status(identifier) is not ConversationStatus.OPEN:
+                raise ValueError("Cannot send to a closed conversation")
+            current, provider = self._coordinator(entry.coordinator.id)
+            if ((current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model)
+                    or provider is not entry.provider):
+                raise ChatConflict("Coordinator assignment changed; start a new conversation")
             with self.agent_request(entry.coordinator.id):
                 if image_ids:
                     if image_consent is not True:
@@ -237,6 +243,12 @@ class OwnedChatService:
     def stream(self, owner, identifier, text, retrieved_context=None, presentation_preferences=None,
                *, brain_enabled=False):
         with self._access(owner, identifier) as entry:
+            if self._chat.get_status(identifier) is not ConversationStatus.OPEN:
+                raise ValueError("Cannot send to a closed conversation")
+            current, provider = self._coordinator(entry.coordinator.id)
+            if ((current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model)
+                    or provider is not entry.provider):
+                raise ChatConflict("Coordinator assignment changed; start a new conversation")
             if getattr(entry.provider, "supports_streaming", False) is not True:
                 raise ChatUnavailable("The selected provider does not support response streaming")
             with self.agent_request(entry.coordinator.id):

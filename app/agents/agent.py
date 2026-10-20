@@ -11,6 +11,12 @@ class Agent:
     model: str
     capabilities: list[str] = field(default_factory=list)
     permissions: list[str] = field(default_factory=list)
+    system_prompt: str = ""
+    brain_scopes: list[str] = field(default_factory=list)
+    allowed_tools: list[str] = field(default_factory=list)
+    builtin_key: str | None = None
+    paused: bool = False
+    model_route_preference: str = "manual"
 
     def __post_init__(self) -> None:
         if not self.id:
@@ -28,6 +34,18 @@ class Agent:
             raise ValueError("All capabilities must be non-empty strings")
         if not all(isinstance(p, str) and p.strip() for p in self.permissions):
             raise ValueError("All permissions must be non-empty strings")
+        if (not isinstance(self.system_prompt, str) or len(self.system_prompt) > 2000
+                or not isinstance(self.brain_scopes, list)
+                or not isinstance(self.allowed_tools, list)
+                or any(not isinstance(item, str) or not item.strip() or len(item) > 128
+                       for item in (*self.brain_scopes, *self.allowed_tools))):
+            raise ValueError("Agent role profile is invalid")
+        if self.builtin_key is not None and (not isinstance(self.builtin_key, str) or not self.builtin_key.strip()):
+            raise ValueError("Built-in Agent key is invalid")
+        if type(self.paused) is not bool:
+            raise ValueError("Agent pause state must be boolean")
+        if self.model_route_preference not in {"manual", "default", "installed-coder"}:
+            raise ValueError("Agent model route preference is invalid")
 
     def describe(self) -> str:
         return (

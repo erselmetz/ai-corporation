@@ -101,13 +101,21 @@ def test_configuration_restore_merges_only_configuration_and_preserves_tasks(tmp
     with sqlite3.connect(database_connection.DATABASE_PATH) as connection:
         connection.execute("CREATE TABLE owner_preferences (owner_id TEXT PRIMARY KEY, preferences_json TEXT NOT NULL, version INTEGER NOT NULL)")
         connection.execute("INSERT INTO owner_preferences VALUES ('local-owner','{}',1)")
+        connection.execute(
+            "INSERT INTO operator_agent_profiles(corporation_id,agent_id,record_json) VALUES (?,?,?)",
+            ("corp_local", "researcher", '{"name":"Researcher","system_prompt":"Use approved sources."}'),
+        )
     backup = service.export(PASSPHRASE)
     with sqlite3.connect(database_connection.DATABASE_PATH) as connection:
         connection.execute("UPDATE owner_preferences SET preferences_json='changed'")
+        connection.execute("DELETE FROM operator_agent_profiles")
     service.restore(backup, PASSPHRASE, confirmed=True)
     with sqlite3.connect(database_connection.DATABASE_PATH) as connection:
         assert connection.execute("SELECT preferences_json FROM owner_preferences").fetchone()[0] == "{}"
         assert connection.execute("SELECT title FROM tasks").fetchone()[0] == "keep"
+        assert connection.execute(
+            "SELECT record_json FROM operator_agent_profiles WHERE agent_id='researcher'"
+        ).fetchone()[0] == '{"name":"Researcher","system_prompt":"Use approved sources."}'
 
 
 def test_local_api_requires_owner_permission_csrf_and_keeps_default_api_closed(tmp_path):

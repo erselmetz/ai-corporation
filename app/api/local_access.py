@@ -29,6 +29,7 @@ READ_PERMISSIONS = frozenset({
     "system:read",
     "backup:read",
 })
+AGENT_MANAGEMENT_PERMISSIONS = frozenset({"agent:manage"})
 SEMANTIC_MEMORY_PERMISSIONS = frozenset({"memory:index"})
 
 CHAT_PERMISSIONS = frozenset({"chat:read", "chat:start", "chat:send", "chat:close"})
@@ -103,6 +104,7 @@ class LocalOwnerAuthentication:
         self.principal = AuthenticatedPrincipal(
             "local-owner",
             READ_PERMISSIONS | CHAT_PERMISSIONS | SCREEN_CAPTURE_PERMISSIONS | SEMANTIC_MEMORY_PERMISSIONS
+            | AGENT_MANAGEMENT_PERMISSIONS
             | frozenset({"memory:manage"})
             | LOCAL_MODEL_PERMISSIONS | ONLINE_PROVIDER_PERMISSIONS
             | POSITION_MANAGEMENT_PERMISSIONS | EMPLOYEE_CHAT_PERMISSIONS

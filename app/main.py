@@ -2,7 +2,7 @@ from app.runtime import create_corporation_runtime
 
 
 def main(interactive: bool = True) -> None:
-    runtime = create_corporation_runtime()
+    runtime = create_corporation_runtime(with_builtin_agent_team=True)
 
     print("ERSELMETZ AI")
     print(

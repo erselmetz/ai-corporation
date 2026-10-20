@@ -64,7 +64,8 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
                              authentication_backend=backend,
                              capability_authorization_service=backend.capability_authorization_service,
                              capability_grant_service=backend.capability_grant_service,
-                             capability_audit_service=capability_audit_service)
+                             capability_audit_service=capability_audit_service,
+                             with_builtin_agent_team=application_service is None)
     if emergency_stop_service is None:
         from app.application.services.emergency_stop import EmergencyStopService
         emergency_stop_service = EmergencyStopService()
@@ -122,7 +123,11 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
                     else:
                         choices = ollama_setup.default_installed_chat_model()
                         model_id = choices[0] if choices else (config.model_id or OllamaFirstRunService.MODEL_ID)
-                    corporation.replace_model("local_worker", "ollama", model_id)
+                    replace_model = corporation.replace_model
+                    if callable(getattr(corporation, "apply_builtin_default_routes", None)):
+                        replace_model("local_worker", "ollama", model_id, manual=False)
+                    else:
+                        replace_model("local_worker", "ollama", model_id)
                     installed_and_selected = inventory.state == "available" and model_id in inventory.models
                     if installed_and_selected:
                         setup_store.complete_ollama(model_id)
@@ -150,26 +155,33 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
                     )
                     limits_provider = "gemini"
                     limits_model = config.model_id
+                    try:
+                        ollama_inventory = application.state.first_run_ollama_service._provider.local_model_inventory()
+                    except Exception:
+                        ollama_inventory = None
                     del credential
                 else:
                     application.state.first_run_reconnect_required = True
                     return
+                apply_default_routes = getattr(corporation, "apply_builtin_default_routes", None)
+                if callable(apply_default_routes):
+                    available_models = (inventory.models if config.provider_type in {None, "none", "ollama"}
+                                        and inventory.state == "available" else
+                                        ollama_inventory.models if config.provider_type == "gemini"
+                                        and ollama_inventory is not None
+                                        and ollama_inventory.state == "available" else ())
+                    apply_default_routes(limits_provider, limits_model, available_models)
                 from app.resources import ModelLimit, ProviderLimit, ResourceLimits
                 if config.provider_type == "gemini" or config.completed or installed_and_selected:
-                    limits = ResourceLimits(
-                        global_slots=config.global_slots,
-                        providers=(ProviderLimit(limits_provider, config.provider_slots),),
-                        models=(ModelLimit(limits_provider, limits_model, config.model_slots),),
-                    )
-                    operator_state = getattr(corporation, "operator_state_store", None)
-                    state_store = operator_state() if callable(operator_state) else None
-                    if state_store is not None:
-                        state_store.save_resource_limits({
-                            "global_slots": limits.global_slots,
-                            "providers": [{"provider_id": item.provider_id, "slots": item.slots} for item in limits.providers],
-                            "models": [{"provider_id": item.provider_id, "model_id": item.model_id, "slots": item.slots} for item in limits.models],
-                        })
+                    configure_agent_slots = getattr(corporation, "configure_agent_slots", None)
+                    if callable(configure_agent_slots):
+                        configure_agent_slots(global_slots=1)
                     else:
+                        limits = ResourceLimits(
+                            global_slots=config.global_slots,
+                            providers=(ProviderLimit(limits_provider, config.provider_slots),),
+                            models=(ModelLimit(limits_provider, limits_model, config.model_slots),),
+                        )
                         corporation.resource_manager(limits)
                     application.state.quick_setup_ready = True
                 application.state.first_run_reconnect_required = False
@@ -208,6 +220,9 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
     application.include_router(local_automation_router)
     from app.api.provider_connections import router as provider_connections_router
     application.include_router(provider_connections_router)
+    from app.api.agent_profiles import router as agent_profiles_router, status_router as agent_status_router
+    application.include_router(agent_profiles_router)
+    application.include_router(agent_status_router)
     from app.api.inventory import router as inventory_router
     application.include_router(inventory_router)
     from app.api.managed_software import router as managed_software_router

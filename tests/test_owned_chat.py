@@ -118,7 +118,10 @@ def test_owned_chat_roundtrip_and_no_execution_or_capacity_side_effect(setup):
         assert client.post(f"/api/chat/conversations/{identifier}/close", headers={"x-test-owner": "alice"}).json()["conversation"]["status"] == "closed"
         assert client.post(f"/api/chat/conversations/{identifier}/messages", json={"text": "Again"},
                            headers={"x-test-owner": "alice"}).status_code == 422
-    assert resource.snapshot() == before
+    after = resource.snapshot()
+    assert after.allocations == before.allocations == ()
+    assert after.global_capacity.allocated == before.global_capacity.allocated
+    assert after.allocation_id_history_capacity.allocated == before.allocation_id_history_capacity.allocated + 1
     assert runtime.application_service.list_agents() == agents
     assert runtime.application_service.list_tasks() == tasks
     assert len(provider.calls) == 1

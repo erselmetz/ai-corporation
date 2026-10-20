@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from app.agents import Agent, AgentRegistry, Employee, EmployeeRegistry
+from app.agents.builtins import provision_builtin_agent_team
 from app.application import CorporationApplicationService
 from app.corporation import Corporation, CorporationRegistry
 from app.database import initialize_database
@@ -25,7 +26,7 @@ class CorporationRuntime:
     application_service: CorporationApplicationService
 
 
-def create_corporation_runtime() -> CorporationRuntime:
+def create_corporation_runtime(*, with_builtin_agent_team: bool = False) -> CorporationRuntime:
     """Build the configured local Corporation runtime and application boundary."""
     initialize_database()
 
@@ -86,6 +87,8 @@ def create_corporation_runtime() -> CorporationRuntime:
             agent=local_worker,
         )
     )
+    if with_builtin_agent_team:
+        provision_builtin_agent_team(agent_registry, employee_registry)
 
     orchestrator = Orchestrator(
         agents=agent_registry,

@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from app.agents import Agent, Employee, EmployeeManagement, EmployeeRegistry, ModelManagement
 from app.agents.registry import AgentAssignmentBusy
+from app.agents.builtins import BUILTIN_AGENT_PROFILES
 from app.corporation import Corporation
 from app.node import Node
 from app.orchestrator import Orchestrator, Project, Task
@@ -85,6 +86,23 @@ class AgentSummary:
 
 
 @dataclass(frozen=True)
+class AgentProfileSummary:
+    id: str
+    name: str
+    role: str
+    provider: str
+    model: str
+    capabilities: tuple[str, ...]
+    system_prompt: str = ""
+    brain_scopes: tuple[str, ...] = ()
+    allowed_tools: tuple[str, ...] = ()
+    permissions: tuple[str, ...] = ()
+    builtin_key: str | None = None
+    paused: bool = False
+    model_route_preference: str = "manual"
+
+
+@dataclass(frozen=True)
 class EmployeeSummary:
     id: str
     name: str
@@ -158,6 +176,10 @@ class DryRunSummary:
     status: str
 
 
+class BuiltinAgentProtected(ValueError):
+    """Built-in organizational identities can be reset or paused, never removed."""
+
+
 class CorporationApplicationService:
     """Interface-neutral use cases coordinating existing Corporation services."""
 
@@ -217,12 +239,207 @@ class CorporationApplicationService:
         self._testing_workflow = TestingWorkflowService()
         self._resource_manager = None
         self._controlled_execution = None
+        self._resource_manager_lock = RLock()
         self._semantic_memory_index = None
         self._semantic_memory_lock = Lock()
         self._knowledge_proposals = None
         self._knowledge_proposals_lock = Lock()
         self._corporation = corporation
         self._node = node
+        self._restore_agent_profiles()
+
+    @staticmethod
+    def _profile_record(agent: Agent, employee_id: str | None) -> dict:
+        return {
+            "id": agent.id, "employee_id": employee_id, "name": agent.name,
+            "role": agent.role, "provider": agent.provider, "model": agent.model,
+            "capabilities": list(agent.capabilities), "permissions": list(agent.permissions),
+            "system_prompt": agent.system_prompt, "brain_scopes": list(agent.brain_scopes),
+            "allowed_tools": list(agent.allowed_tools), "builtin_key": agent.builtin_key,
+            "paused": agent.paused, "model_route_preference": agent.model_route_preference,
+        }
+
+    def _employee_for_agent(self, agent_id: str):
+        employees = getattr(self._orchestrator, "employees", None)
+        if isinstance(employees, EmployeeRegistry):
+            return next((item for item in employees.all() if item.agent and item.agent.id == agent_id), None)
+        return None
+
+    def _save_agent_profile(self, agent: Agent, employee_id: str | None = None) -> None:
+        if self._operator_state_store is None:
+            return
+        employee = self._employee_for_agent(agent.id)
+        persistent_employee_id = employee.id if employee else employee_id
+        self._operator_state_store.save_agent_profile(
+            agent.id, self._profile_record(agent, persistent_employee_id),
+        )
+
+    def _restore_agent_profiles(self) -> None:
+        if self._operator_state_store is None:
+            return
+        for record in self._operator_state_store.load_agent_profiles():
+            required = {"id", "employee_id", "name", "role", "provider", "model", "capabilities",
+                        "permissions", "system_prompt", "brain_scopes", "allowed_tools", "builtin_key",
+                        "paused", "model_route_preference"}
+            if not isinstance(record, dict) or set(record) != required:
+                raise RuntimeError("Stored Agent profile failed validation")
+            try:
+                candidate = Agent(
+                    id=record["id"], name=record["name"], role=record["role"],
+                    provider=record["provider"], model=record["model"],
+                    capabilities=record["capabilities"], permissions=record["permissions"],
+                    system_prompt=record["system_prompt"], brain_scopes=record["brain_scopes"],
+                    allowed_tools=record["allowed_tools"], builtin_key=record["builtin_key"],
+                    paused=record["paused"], model_route_preference=record["model_route_preference"],
+                )
+                current = self._orchestrator.agents.get(candidate.id) if self._orchestrator.agents.exists(candidate.id) else None
+                # Generic runtimes intentionally preserve the legacy one-Agent
+                # baseline. Keep persisted built-in profiles dormant until the
+                # configured local app provisions those identities.
+                if candidate.builtin_key is not None and current is None:
+                    continue
+                if current is not None and ((candidate.builtin_key is None) != (current.builtin_key is None)):
+                    continue
+                if current is not None:
+                    if current.builtin_key != candidate.builtin_key:
+                        raise ValueError("Built-in identity changed")
+                    current.__dict__.update(candidate.__dict__)
+                    candidate = current
+                else:
+                    if candidate.builtin_key is not None or not candidate.id.startswith("custom_"):
+                        raise ValueError("Unknown Agent identity")
+                    self._orchestrator.agents.register(candidate)
+                employees = getattr(self._orchestrator, "employees", None)
+                if not isinstance(employees, EmployeeRegistry):
+                    raise ValueError("Employee registry is unavailable")
+                employee_id = record["employee_id"]
+                if employee_id is None:
+                    continue
+                if not isinstance(employee_id, str) or not employee_id:
+                    raise ValueError("Employee identity is invalid")
+                if employees.exists(employee_id):
+                    employee = employees.get(employee_id)
+                    employee.name, employee.role = candidate.name, candidate.role
+                    employee.responsibilities, employee.agent = [candidate.system_prompt or candidate.role], candidate
+                else:
+                    if not employee_id.startswith("custom_employee_"):
+                        raise ValueError("Unknown Employee identity")
+                    employees.register(Employee(employee_id, candidate.name, candidate.role,
+                                                [candidate.system_prompt or candidate.role], candidate))
+            except (TypeError, ValueError, KeyError):
+                raise RuntimeError("Stored Agent profile failed validation") from None
+
+    def update_agent_profile(self, agent_id: str, *, name: str, role: str,
+                              system_prompt: str, brain_scopes: list[str],
+                              allowed_tools: list[str], permissions: list[str]) -> AgentProfileSummary:
+        allowed_tools_set = {tool for profile in BUILTIN_AGENT_PROFILES for tool in profile.tools}
+        allowed_permissions = {permission for profile in BUILTIN_AGENT_PROFILES for permission in profile.permissions}
+        if (not isinstance(name, str) or not name.strip() or len(name) > 128
+                or not isinstance(role, str) or not role.strip() or len(role) > 256
+                or not isinstance(system_prompt, str) or len(system_prompt.encode("utf-8")) > 2000
+                or not isinstance(brain_scopes, list) or any(scope != "owner" for scope in brain_scopes)
+                or len(brain_scopes) > 8
+                or not isinstance(allowed_tools, list) or len(allowed_tools) > 12
+                or any(tool not in allowed_tools_set for tool in allowed_tools)
+                or not isinstance(permissions, list) or len(permissions) > 12
+                or any(permission not in allowed_permissions for permission in permissions)):
+            raise ValueError("Agent role profile exceeds supported scope")
+        with self.agent_assignment_change(agent_id):
+            agent = self._orchestrator.agents.get(agent_id)
+            before = self._profile_record(agent, None)
+            employee = self._employee_for_agent(agent_id)
+            employee_before = ((employee.name, employee.role, list(employee.responsibilities))
+                               if employee else None)
+            try:
+                agent.name, agent.role = name.strip(), role.strip()
+                agent.system_prompt = system_prompt.strip()
+                agent.brain_scopes, agent.allowed_tools = list(brain_scopes), list(allowed_tools)
+                agent.permissions = list(permissions)
+                if employee:
+                    employee.name, employee.role = agent.name, agent.role
+                    employee.responsibilities = [agent.system_prompt or agent.role]
+                self._save_agent_profile(agent)
+            except Exception:
+                agent.__dict__.update({key: value for key, value in before.items() if key in agent.__dict__})
+                if employee and employee_before:
+                    employee.name, employee.role, employee.responsibilities = employee_before
+                raise
+            return self._agent_profile_summary(agent)
+
+    def set_agent_paused(self, agent_id: str, paused: bool) -> AgentProfileSummary:
+        if type(paused) is not bool:
+            raise ValueError("Pause state must be boolean")
+        with self.agent_assignment_change(agent_id):
+            agent = self._orchestrator.agents.get(agent_id)
+            previous = agent.paused
+            agent.paused = paused
+            try:
+                self._save_agent_profile(agent)
+            except Exception:
+                agent.paused = previous
+                raise
+            return self._agent_profile_summary(agent)
+
+    def reset_builtin_agent(self, agent_id: str) -> AgentProfileSummary:
+        from app.agents.builtins import _apply_default, profile_for
+        with self.agent_assignment_change(agent_id):
+            agent = self._orchestrator.agents.get(agent_id)
+            if agent.builtin_key is None:
+                raise ValueError("Only a built-in Agent can be reset")
+            profile = profile_for(agent.builtin_key)
+            before = self._profile_record(agent, None)
+            employee = self._employee_for_agent(agent_id)
+            employee_before = ((employee.name, employee.role, list(employee.responsibilities))
+                               if employee else None)
+            coordinator = self._orchestrator.agents.get("local_worker")
+            provider_id, model_id = coordinator.provider, coordinator.model
+            coder = None
+            try:
+                inventory = self._orchestrator.providers.get("ollama").local_model_inventory()
+                coder = next((model for model in inventory.models if "coder" in model.casefold()), None) \
+                    if inventory.state == "available" else None
+            except (ValueError, AttributeError):
+                pass
+            _apply_default(agent, profile, provider_id, model_id, coder if profile.prefer_coder else None)
+            employee = self._employee_for_agent(agent_id)
+            if employee:
+                employee.name, employee.role = agent.name, agent.role
+                employee.responsibilities = [agent.system_prompt]
+            try:
+                self._save_agent_profile(agent)
+            except Exception:
+                agent.__dict__.update({key: value for key, value in before.items() if key in agent.__dict__})
+                if employee and employee_before:
+                    employee.name, employee.role, employee.responsibilities = employee_before
+                raise
+            return self._agent_profile_summary(agent)
+
+    def duplicate_agent(self, agent_id: str, new_id: str, name: str) -> AgentProfileSummary:
+        if (not isinstance(new_id, str) or not new_id.startswith("custom_") or len(new_id) > 64
+                or not isinstance(name, str) or not name.strip() or len(name) > 128):
+            raise ValueError("Custom Agent identity or name is invalid")
+        source = self._orchestrator.agents.get(agent_id)
+        employee_id = f"custom_employee_{new_id.removeprefix('custom_')}"
+        if self._orchestrator.agents.exists(new_id):
+            raise ValueError("Agent already exists")
+        employee_registry = getattr(self._orchestrator, "employees", None)
+        if not isinstance(employee_registry, EmployeeRegistry) or employee_registry.exists(employee_id):
+            raise ValueError("Employee identity already exists")
+        copy = Agent(
+            id=new_id, name=name.strip(), role=source.role, provider=source.provider, model=source.model,
+            capabilities=list(source.capabilities), permissions=list(source.permissions),
+            system_prompt=source.system_prompt, brain_scopes=list(source.brain_scopes),
+            allowed_tools=list(source.allowed_tools), builtin_key=None, paused=False,
+            model_route_preference="manual",
+        )
+        if self._operator_state_store is not None:
+            self._operator_state_store.save_agent_profile(
+                copy.id, self._profile_record(copy, employee_id),
+            )
+        self._orchestrator.agents.register(copy)
+        employee_registry.register(Employee(employee_id, copy.name, copy.role,
+                                            [copy.system_prompt or copy.role], copy))
+        return self._agent_profile_summary(copy)
 
     def authorize_capability(self, *, identity: str, permissions: frozenset[str],
                              capability_id: str, scope_type: str, scope_id: str,
@@ -765,37 +982,87 @@ class CorporationApplicationService:
 
     def resource_manager(self, limits=None):
         from app.resources import ModelLimit, ProviderLimit, ResourceLimits, ResourceManager
-        if self._resource_manager is None:
-            if limits is None and self._operator_state_store is not None:
-                stored = self._operator_state_store.load_resource_limits()
-                if stored is not None:
-                    try:
-                        limits = ResourceLimits(
-                            stored["global_slots"],
-                            tuple(ProviderLimit(item["provider_id"], item["slots"])
-                                  for item in stored["providers"]),
-                            tuple(ModelLimit(item["provider_id"], item["model_id"], item["slots"])
-                                  for item in stored["models"]),
-                        )
-                    except (KeyError, TypeError, ValueError):
-                        raise RuntimeError("Stored resource limits failed validation") from None
-            if limits is None:
-                raise RuntimeError("Resource limits are not configured")
-            manager = ResourceManager(limits, self._orchestrator.providers)
-            if self._operator_state_store is not None:
-                self._operator_state_store.save_resource_limits({
-                    "global_slots": limits.global_slots,
-                    "providers": [{"provider_id": item.provider_id, "slots": item.slots}
-                                  for item in limits.providers],
-                    "models": [{"provider_id": item.provider_id, "model_id": item.model_id,
-                                "slots": item.slots} for item in limits.models],
-                })
-            self._resource_manager = manager
-            from .controlled_execution import ControlledExecution
-            self._controlled_execution = ControlledExecution(self._orchestrator, self._resource_manager)
-        elif limits is not None:
-            raise ValueError("Resource manager is already configured")
-        return self._resource_manager
+        with self._resource_manager_lock:
+            if self._resource_manager is None:
+                if limits is None and self._operator_state_store is not None:
+                    stored = self._operator_state_store.load_resource_limits()
+                    if stored is not None:
+                        try:
+                            limits = ResourceLimits(
+                                stored["global_slots"],
+                                tuple(ProviderLimit(item["provider_id"], item["slots"])
+                                      for item in stored["providers"]),
+                                tuple(ModelLimit(item["provider_id"], item["model_id"], item["slots"])
+                                      for item in stored["models"]),
+                            )
+                        except (KeyError, TypeError, ValueError):
+                            raise RuntimeError("Stored resource limits failed validation") from None
+                if limits is None:
+                    raise RuntimeError("Resource limits are not configured")
+                manager = ResourceManager(limits, self._orchestrator.providers)
+                if self._operator_state_store is not None:
+                    self._operator_state_store.save_resource_limits({
+                        "global_slots": limits.global_slots,
+                        "providers": [{"provider_id": item.provider_id, "slots": item.slots}
+                                      for item in limits.providers],
+                        "models": [{"provider_id": item.provider_id, "model_id": item.model_id,
+                                    "slots": item.slots} for item in limits.models],
+                    })
+                self._resource_manager = manager
+                from .controlled_execution import ControlledExecution
+                self._controlled_execution = ControlledExecution(self._orchestrator, self._resource_manager)
+            elif limits is not None:
+                raise ValueError("Resource manager is already configured")
+            return self._resource_manager
+
+    def configure_agent_slots(self, *, global_slots: int = 1):
+        """Configure shared slots for the routes assigned to existing Agents."""
+        from app.resources import ModelLimit, ProviderLimit, ResourceLimits
+        with self._resource_manager_lock:
+            if self._resource_manager is not None:
+                return self._resource_manager
+            providers = self._orchestrator.providers
+            assignments = {(agent.provider, agent.model) for agent in self._orchestrator.agents.all()
+                           if providers.exists(agent.provider) and agent.model}
+            if not assignments:
+                raise RuntimeError("No registered Agent model routes are available for resource slots")
+            provider_ids = sorted({provider_id for provider_id, _model in assignments})
+            limits = ResourceLimits(
+                global_slots=global_slots,
+                providers=tuple(ProviderLimit(provider_id, 1) for provider_id in provider_ids),
+                models=tuple(ModelLimit(provider_id, model_id, 1)
+                             for provider_id, model_id in sorted(assignments)),
+            )
+            return self.resource_manager(limits)
+
+    @contextmanager
+    def owned_chat_agent_execution(self, agent_id: str):
+        """Reserve the shared ResourceManager slot for an owner-directed Agent turn."""
+        from uuid import uuid4
+        from app.resources import ResourceCapacityError
+        from .owned_chat import ChatConflict
+        try:
+            agent = self._orchestrator.agents.get(agent_id)
+        except ValueError:
+            with self._orchestrator.agents.execution(agent_id):
+                yield
+            return
+        manager = self._resource_manager or self.configure_agent_slots(global_slots=1)
+        with self._orchestrator.agents.execution(agent_id):
+            allocation_id = f"chat_{uuid4().hex}"
+            if not self._orchestrator.providers.exists(agent.provider):
+                yield
+                return
+            try:
+                manager.ensure_route(provider_id=agent.provider, model_id=agent.model)
+                manager.allocate(allocation_id, provider_id=agent.provider, model_id=agent.model)
+            except ResourceCapacityError:
+                from .owned_chat import ChatLimit
+                raise ChatLimit("request-slot capacity is exhausted") from None
+            try:
+                yield
+            finally:
+                manager.release(allocation_id)
 
     def image_processing(self):
         """Return an optional image adapter without loading Pillow at startup."""
@@ -999,7 +1266,7 @@ class CorporationApplicationService:
                     chat,
                     self.get_agent,
                     self._orchestrator.providers.get,
-                    self._orchestrator.agents.execution,
+                    self.owned_chat_agent_execution,
                 )
             return self._owned_chat
 
@@ -1096,6 +1363,59 @@ class CorporationApplicationService:
     def get_agent(self, agent_id: str) -> AgentSummary:
         return self._agent_summary(self._orchestrator.agents.get(agent_id))
 
+    def get_agent_profile(self, agent_id: str) -> AgentProfileSummary:
+        return self._agent_profile_summary(self._orchestrator.agents.get(agent_id))
+
+    def agent_runtime_statuses(self) -> tuple[dict, ...]:
+        """Return an on-demand status snapshot from registry state and provider checks."""
+        providers = {}
+        inventories = {}
+        results = []
+        for agent in self._orchestrator.agents.all()[:100]:
+            reason = None
+            if agent.paused:
+                state = "paused"
+            elif self._orchestrator.agents.is_executing(agent.id):
+                state = "working"
+            elif not self._orchestrator.providers.exists(agent.provider):
+                state, reason = "unavailable", "Assigned provider is not registered."
+            else:
+                provider = self._orchestrator.providers.get(agent.provider)
+                availability = providers.get(agent.provider)
+                if availability is None:
+                    try:
+                        availability = provider.check_availability()
+                    except Exception:
+                        availability = None
+                    providers[agent.provider] = availability
+                if availability is None or getattr(getattr(availability, "state", None), "value", None) == "unknown":
+                    state, reason = "error", "Provider availability could not be confirmed."
+                elif availability.state.value == "unavailable":
+                    state, reason = "unavailable", "Assigned provider is unavailable."
+                else:
+                    inventory = inventories.get(agent.provider)
+                    if inventory is None and getattr(provider, "is_local", False) is True:
+                        try:
+                            inventory = provider.local_model_inventory()
+                        except Exception:
+                            inventory = None
+                        inventories[agent.provider] = inventory
+                    if getattr(provider, "is_local", False) is True:
+                        if inventory is None or inventory.state != "available":
+                            state, reason = "error", "Installed model inventory could not be confirmed."
+                        elif agent.model not in inventory.models:
+                            state, reason = "unavailable", "Assigned model is not installed."
+                        else:
+                            state = "error" if self._orchestrator.agents.last_failed(agent.id) else "idle"
+                    else:
+                        state = "error" if self._orchestrator.agents.last_failed(agent.id) else "idle"
+                    if state == "error" and reason is None:
+                        reason = "The last Agent run failed; review its activity before retrying."
+            results.append({"agent_id": agent.id, "status": state, "reason": reason,
+                            "provider_id": agent.provider, "model_id": agent.model,
+                            "last_active": self._orchestrator.agents.last_active(agent.id)})
+        return tuple(results)
+
     def list_employees(self) -> list[EmployeeSummary]:
         return [
             self._employee_summary(employee)
@@ -1119,6 +1439,9 @@ class CorporationApplicationService:
         return self._employee_summary(employee)
 
     def remove_employee(self, employee_id: str) -> None:
+        employee = self._employee_management().get_employee(employee_id)
+        if employee.agent is not None and employee.agent.builtin_key is not None:
+            raise BuiltinAgentProtected("Built-in Employees cannot be removed; reset the Agent profile instead")
         with self._positions.employee_reference_guard(employee_id):
             self._employee_management().remove_employee(employee_id)
 
@@ -1339,9 +1662,21 @@ class CorporationApplicationService:
         agent_id: str,
         provider_id: str,
         model: str,
+        *,
+        manual: bool = True,
     ) -> ModelAssignmentSummary:
         with self.agent_assignment_change(agent_id):
-            return self._replace_model_unchecked(agent_id, provider_id, model)
+            agent = self._orchestrator.agents.get(agent_id)
+            previous = (agent.provider, agent.model, agent.model_route_preference)
+            result = self._replace_model_unchecked(agent_id, provider_id, model)
+            if manual:
+                agent.model_route_preference = "manual"
+            try:
+                self._save_agent_profile(agent)
+            except Exception:
+                agent.provider, agent.model, agent.model_route_preference = previous
+                raise
+            return result
 
     def assign_model(
         self,
@@ -1350,15 +1685,16 @@ class CorporationApplicationService:
         model: str,
     ) -> AgentSummary:
         with self.agent_assignment_change(agent_id):
-            agent = self._model_management().assign_model(agent_id, provider_id, model)
-            return AgentSummary(
-                id=agent.id,
-                name=agent.name,
-                role=agent.role,
-                provider=agent.provider,
-                model=agent.model,
-                capabilities=tuple(agent.capabilities),
-            )
+            agent = self._orchestrator.agents.get(agent_id)
+            previous = (agent.provider, agent.model, agent.model_route_preference)
+            agent = self._model_management().assign_model(agent_id, provider_id, model, agent=agent)
+            agent.model_route_preference = "manual"
+            try:
+                self._save_agent_profile(agent)
+            except Exception:
+                agent.provider, agent.model, agent.model_route_preference = previous
+                raise
+            return self._agent_summary(agent)
 
     def list_tasks(self) -> list[TaskSummary]:
         return [
@@ -1513,6 +1849,36 @@ class CorporationApplicationService:
             model=agent.model,
             capabilities=tuple(agent.capabilities),
         )
+
+    @staticmethod
+    def _agent_profile_summary(agent: Agent) -> AgentProfileSummary:
+        return AgentProfileSummary(
+            id=agent.id, name=agent.name, role=agent.role, provider=agent.provider,
+            model=agent.model, capabilities=tuple(agent.capabilities),
+            system_prompt=agent.system_prompt, brain_scopes=tuple(agent.brain_scopes),
+            allowed_tools=tuple(agent.allowed_tools), permissions=tuple(agent.permissions),
+            builtin_key=agent.builtin_key, paused=agent.paused,
+            model_route_preference=agent.model_route_preference,
+        )
+
+    def apply_builtin_default_routes(self, provider_id: str, model_id: str,
+                                     installed_ollama_models=()) -> None:
+        """Apply first-run default routes while preserving owner-selected manual routes."""
+        coder_model = next((item for item in sorted(installed_ollama_models, key=str.casefold)
+                            if isinstance(item, str) and "coder" in item.casefold()), None)
+        for agent in self._orchestrator.agents.all():
+            if agent.builtin_key is None or agent.model_route_preference == "manual":
+                continue
+            route = ("ollama", coder_model) if agent.model_route_preference == "installed-coder" and coder_model else (provider_id, model_id)
+            if (agent.provider, agent.model) != route:
+                with self.agent_assignment_change(agent.id):
+                    previous = (agent.provider, agent.model)
+                    self._replace_model_unchecked(agent.id, route[0], route[1])
+                    try:
+                        self._save_agent_profile(agent)
+                    except Exception:
+                        agent.provider, agent.model = previous
+                        raise
 
     @staticmethod
     def _task_summary(task: Task) -> TaskSummary:

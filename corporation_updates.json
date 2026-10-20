@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-10-21",
+      "type": "development",
+      "title": "Task 200 built-in Agent team",
+      "summary": "Provisioned six role profiles in the existing Agent and Employee registries, added owner-managed profile persistence and built-in reset protection, enforced each profile's Brain/tool allowlist in chat, and accounted local Agent turns through one shared ResourceManager slot. Developer prefers an already-installed coder model; Operator starts paused. These profiles share models, not separate AI brains. Exact-host Researcher retrieval is represented in the profile but is not wired into chat; Task 202 owns delegation and handoff behavior. Automated validation passed: Python 1,398 passed / 5 skipped / 0 failed; browser modules 265; Electron 38; public docs 21. No live model choice evaluation is claimed; Task 202 will run the five real llama3.2:3b questions. No push, deployment, download, or paid call."
+    },
+    {
         "date": "2026-10-20",
         "type": "development",
         "title": "Task 199 owner-gated computer automation completed (live actions pending)",

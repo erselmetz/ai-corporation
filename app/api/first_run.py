@@ -39,6 +39,10 @@ def _state(request: Request):
 
 
 def _configure_slots(application, provider_id: str, model_id: str) -> None:
+    configure_agent_slots = getattr(application, "configure_agent_slots", None)
+    if callable(configure_agent_slots):
+        configure_agent_slots(global_slots=1)
+        return
     limits = ResourceLimits(
         global_slots=1,
         providers=(ProviderLimit(provider_id, 1),),
@@ -66,7 +70,15 @@ def _start_coordinator_chat(application, owner_id: str) -> dict:
 
 
 def _complete_ollama_setup(request: Request, principal, application, model_id: str, *, open_conversation: bool = True) -> dict:
-    application.replace_model("local_worker", "ollama", model_id)
+    application.replace_model("local_worker", "ollama", model_id, manual=False)
+    setup_service = getattr(request.app.state, "first_run_ollama_service", None)
+    provider = getattr(setup_service, "_provider", None)
+    inventory_method = getattr(provider, "local_model_inventory", None)
+    inventory = inventory_method() if callable(inventory_method) else None
+    apply_routes = getattr(application, "apply_builtin_default_routes", None)
+    if callable(apply_routes):
+        apply_routes("ollama", model_id,
+                     inventory.models if inventory is not None and inventory.state == "available" else ())
     request.app.state.first_run_setup_store.complete_ollama(model_id)
     secret_store = getattr(request.app.state, "first_run_secret_store", None)
     if secret_store is not None:
@@ -244,6 +256,18 @@ async def gemini_complete(
             expected_provider_id=application.get_agent("local_worker").provider,
             expected_model_id=application.get_agent("local_worker").model,
         )
+        apply_routes = getattr(application, "apply_builtin_default_routes", None)
+        if callable(apply_routes):
+            setup_service = getattr(request.app.state, "first_run_ollama_service", None)
+            provider = getattr(setup_service, "_provider", None)
+            inventory_method = getattr(provider, "local_model_inventory", None)
+            try:
+                ollama_inventory = inventory_method() if callable(inventory_method) else None
+            except Exception:
+                ollama_inventory = None
+            apply_routes("gemini", GEMINI_DEFAULT_MODEL,
+                         ollama_inventory.models if ollama_inventory is not None
+                         and ollama_inventory.state == "available" else ())
         secret_store = getattr(request.app.state, "first_run_secret_store", None)
         try:
             if remember_key:

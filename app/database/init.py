@@ -1,6 +1,6 @@
 from .connection import get_connection
 
-CURRENT_CONFIGURATION_VERSION = 3
+CURRENT_CONFIGURATION_VERSION = 4
 
 
 def initialize_database() -> None:
@@ -243,6 +243,15 @@ def initialize_database() -> None:
                 corporation_id TEXT PRIMARY KEY,
                 limits_json TEXT NOT NULL CHECK(json_valid(limits_json)),
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS operator_agent_profiles (
+                corporation_id TEXT NOT NULL,
+                agent_id TEXT NOT NULL,
+                record_json TEXT NOT NULL CHECK(json_valid(record_json)),
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (corporation_id, agent_id)
             )
         """)
         connection.execute("""

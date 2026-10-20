@@ -10,7 +10,7 @@ class ModelManagement:
         self.agent_registry = agent_registry
         self.provider_registry = provider_registry
 
-    def assign_model(self, agent_id: str, provider_id: str, model: str) -> Agent:
+    def assign_model(self, agent_id: str, provider_id: str, model: str, *, agent: Agent | None = None) -> Agent:
         """
         Assigns a provider and model to an Agent.
         Validates existence of Agent and Provider before applying changes.
@@ -19,7 +19,12 @@ class ModelManagement:
             raise ValueError("Model identifier cannot be empty")
 
         # Atomic validation
-        agent = self.agent_registry.get(agent_id)
+        if agent is None:
+            agent = self.agent_registry.get(agent_id)
+        elif isinstance(agent, Agent) and (
+            agent.id != agent_id or self.agent_registry.get(agent_id) is not agent
+        ):
+            raise ValueError("Agent assignment snapshot is stale")
         if not self.provider_registry.exists(provider_id):
             raise ValueError(f"Provider not found: {provider_id}")
 

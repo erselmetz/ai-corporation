@@ -654,6 +654,19 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
         started_at = time.perf_counter()
         presentation = _presentation_preferences(request, principal.identity)
         current = service.owned_chat().get(principal.identity, identifier)
+        agent_profile = service.get_agent_profile(current["coordinator"].id)
+        requested_tool_ids = {
+            "calculator": "reviewed.calculator",
+            "local-document-lookup": "reviewed.local-document-lookup",
+        }
+        if ((agent_profile.builtin_key is not None or agent_profile.allowed_tools)
+                and any(requested_tool_ids.get(item.kind) not in agent_profile.allowed_tools
+                        for item in body.reviewed_tools)):
+            raise HTTPException(403, "This Agent profile does not allow the selected tool.")
+        if (body.knowledge_enabled and (agent_profile.builtin_key is not None or agent_profile.brain_scopes)
+                and any(scope.scope.value not in agent_profile.brain_scopes
+                        for scope in body.knowledge_scopes)):
+            raise HTTPException(403, "This Agent profile does not allow the selected Brain scope.")
         turn_route = _validate_turn_route(request, service, current, body)
         if turn_route and body.image_ids:
             raise HTTPException(422, "Temporary images use the configured provider route; alternate model routing is text-only.")
@@ -852,6 +865,11 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
         presentation = _presentation_preferences(request, principal.identity)
         owned = service.owned_chat()
         current = owned.get(principal.identity, identifier)
+        agent_profile = service.get_agent_profile(current["coordinator"].id)
+        if (body.knowledge_enabled and (agent_profile.builtin_key is not None or agent_profile.brain_scopes)
+                and any(scope.scope.value not in agent_profile.brain_scopes
+                        for scope in body.knowledge_scopes)):
+            raise HTTPException(403, "This Agent profile does not allow the selected Brain scope.")
         if not current.get("streaming_supported"):
             raise HTTPException(409, "The selected provider does not support response streaming.")
         cloud_requires_consent = service.provider_requires_explicit_cloud_consent(

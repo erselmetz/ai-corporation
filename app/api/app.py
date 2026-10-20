@@ -35,6 +35,7 @@ from app.documentation import MarkdownDocumentationSource
 from app.updates import CuratedUpdatesManifest
 from app.updates.trusted_release import TrustedReleaseError, TrustedReleaseService
 from app.application.services.owned_chat import ChatConflict
+from app.application.services.corporation import BuiltinAgentProtected
 from app.integrations import SandboxImagePolicy
 from app.runtime import create_corporation_runtime
 from app.build_stamp import BUILD_STAMP
@@ -367,6 +368,8 @@ def remove_employee(
             status_code=status.HTTP_409_CONFLICT,
             detail="Employee is referenced by an organizational position",
         ) from None
+    except BuiltinAgentProtected as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from None
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -1004,12 +1007,14 @@ def create_app(
     capability_authorization_service=None,
     capability_grant_service=None,
     capability_audit_service=None,
+    with_builtin_agent_team: bool = False,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
         debug_chat_adapter_contract_self_check()
         if application_service is None:
-            runtime = create_corporation_runtime()
+            runtime = (create_corporation_runtime(with_builtin_agent_team=True)
+                       if with_builtin_agent_team else create_corporation_runtime())
             application.state.application_service = runtime.application_service
         else:
             application.state.application_service = application_service

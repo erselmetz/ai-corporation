@@ -3806,15 +3806,106 @@ export const post100Tasks = [
       "Security review confirmed that Task 190 remains design-only, the base runtime exposes no arbitrary shell/keyboard/coordinate automation, and default external-origin/process policies remain empty."
     ],
     "followUpValidation": ["On a disposable owner-controlled HTTPS site and a benign Windows test window, install the UI Automation pack only after reviewing its exact PyPI manifest, then verify visible browser behavior, one-action confirmation, native button invocation, emergency stop, and unknown-outcome handling. Keep Task 190's separate design gate closed."]
+  },
+  {
+    "number": 200,
+    "title": "Built-in Agent team",
+    "description": "Provision six editable, role-scoped profiles in the existing Agent and Employee model, with safe default routes, tool/Brain allowlists, honest status, and shared one-at-a-time model capacity.",
+    "category": "Phase AJ - Built-in Agent Team",
+    "status": "completed",
+    "dependsOn": [68, 71, 72, 130, 136, 191, 199],
+    "decisions": [],
+    "acceptance": [
+      "First-run/runtime construction idempotently provisions Coordinator, Researcher, Developer, Librarian, Observer, and Operator through existing Agent and Employee registries. Existing owner-edited profile state is preserved; the Coordinator remains the default chat identity.",
+      "Each profile has a bounded role prompt, default/manual or installed-coder route preference, owner Brain scope, reviewed tool allowlist, and bounded permissions. Developer prefers an already-installed coder model only; no model is downloaded. Operator starts paused and available action adapters still require their existing confirmations.",
+      "Owners with agent:manage can edit profiles within supported Brain/tool/permission scope, pause/resume, duplicate to a custom Agent, reset a built-in profile, and cannot delete a built-in Employee. Persistent profile edits survive application reconstruction.",
+      "Agent state reports only observed idle, working, paused, error, or unavailable (including a missing assigned local model/provider). Later approval-waiting state is added only when Task 202 connects real pending approvals.",
+      "Coordinator and Employee chat receive the selected Agent's role prompt. Chat tool and Brain requests are checked against that Agent's allowlists. All chat turns use one shared configured ResourceManager slot; an assigned model route can be accounted without resetting allocation-ID history.",
+      "Tests cover clean provisioning, repeat provisioning, coder preference without download, owner profile controls/persistence, fail-closed permission/CSRF checks, built-in protection, role prompt/tool scope, real status sources, and one-at-a-time slot reservation/release."
+    ],
+    "outOfScope": ["Do not add new Agent/Employee/Position domain models, UI pages, delegation, approval inbox behavior, background work, autonomous loops, live web search, provider fallback, hardware capability claims, or new dependencies. Exact-host web retrieval remains distinct from search."],
+    "risks": ["All roles use the assigned provider/model and are profiles, not separate AI brains. A single shared slot serializes model turns locally; status and runtime metrics are process-local.", "Availability probes and installed model inventory can fail or be unsupported; report error/unavailable rather than fabricate readiness. Owner changes to profile permission metadata do not bypass existing service authorization or per-action approval."],
+    "area": "P52",
+    "checkpoint": "task-200-builtin-agent-team",
+    "validation": [
+      "Full Python suite: 1,398 passed, 5 skipped, 0 failed (2 dependency deprecation warnings).",
+      "Full browser-module suite: 265 passed, 0 failed; Electron suite: 38 passed, 0 failed; public docs suite: 21 passed, 0 failed.",
+      "Focused Agent team, profile API, resource slot, local model, migration, backup/restore, and browser regressions passed. git diff --check and Python compileall passed."
+    ],
+    "realWorldVerification": {"status": "unverified", "evidence": [], "unverified": ["No live local llama3.2:3b mixed-question delegation run is claimed for this phase; Task 202 will perform the requested Coordinator choice/latency/failure evaluation when its real delegation behavior exists."]},
+    "limitations": ["Built-in profiles are role instructions and scoped metadata over shared providers/models, not isolated minds. The Researcher may retrieve only exact HTTPS URLs from the existing owner allowlist; it does not provide general web search. The six role positions are not auto-created because the existing Position templates are a separate owner-managed structure and do not include all six roles."],
+    "automatedVerification": [
+      "Deterministic tests cover idempotent provisioning, existing profile preservation, coder preference using only installed-model evidence, role prompt/tool/Brain boundaries, owner-only profile access and CSRF, edits/pause/duplicate/reset persistence, built-in protection, runtime status evidence, and one shared ResourceManager slot.",
+      "Default and private encrypted backup paths preserve the Agent profile table under the existing owner-controlled Backup & Restore behavior; profile data is not exposed by the ordinary Agent read API.",
+      "All required deterministic suites passed: Python 1,398/5 skipped, browser modules 265, Electron 38, public docs 21."
+    ],
+    "followUpValidation": ["Task 202 must evaluate five real Coordinator questions with local llama3.2:3b and report selected Agent, choice suitability, latency, and failures. Packaged Windows profile provisioning and real provider/status behavior remain separate follow-up evidence."]
+  },
+  {
+    "number": 201,
+    "title": "Agents page and profile management UI",
+    "description": "Add a clean Agents workspace showing real role profiles, routes, states, activity, organization view, and owner-scoped editing.",
+    "category": "Phase AK - Agents Workspace",
+    "status": "planned",
+    "dependsOn": [200],
+    "decisions": [],
+    "acceptance": ["Show All, Active, Paused, Error, and Built-in filters; List and existing organization Tree views; agent avatar/name/role/model/status/last activity and Chat action; and a New Agent form using existing records.", "Agent details expose role prompt, model, Brain scopes, tools, permissions and recent activity with advanced fields collapsed. Built-ins can be edited/reset/paused/duplicated through authorized APIs; status is sourced from runtime checks.", "Explain in plain language that profiles share model brains and local model work is serialized one at a time. Accessible responsive navigation and empty/loading/error states are covered by browser tests."],
+    "outOfScope": ["No new Agent domain model, autonomous work, provider/model downloads, or permissions beyond existing owner APIs."],
+    "risks": ["Provider checks may be slow or unavailable; the page must expose unknown/error states and avoid presenting a stale result as current."],
+    "area": "P53",
+    "checkpoint": null,
+    "validation": [],
+    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["Packaged Electron rendering and owner usability remain unverified until tested."]},
+    "limitations": [],
+    "automatedVerification": ["Test filter behavior, profile forms, permission-denied paths, activity/status rendering, responsive navigation, and single-slot wording with deterministic API fixtures."],
+    "followUpValidation": ["Inspect the Agents page in the packaged Windows application and confirm real provider/model/status details match the current host."]
+  },
+  {
+    "number": 202,
+    "title": "Agent chat, bounded delegation, and approvals inbox",
+    "description": "Let owners chat with a selected role profile and let the Coordinator propose at most one visible, bounded Agent handoff with a trace and an owner approvals inbox.",
+    "category": "Phase AL - Agent Delegation and Approvals",
+    "status": "planned",
+    "dependsOn": [177, 182, 183, 191, 200, 201],
+    "decisions": [],
+    "acceptance": ["Default chat remains Coordinator; exact @Name selection or an Agent Chat action selects that existing Agent identity and conversation safely.", "Coordinator delegation is limited to one named Agent handoff, one active local model slot, a small fixed maximum number of steps, and no loops, retries, replay, or background work. The owner starts every run and every handoff plus actual evidence appears in the existing answer trace.", "A sidebar inbox surfaces actual pending, expiring exact-action approvals from existing approval services with preview, approve, deny, and expiry behavior. Side-effect actions, cloud calls, file changes and automation retain their existing explicit approval/consent and spend gates.", "Queue state is visible when the shared model slot is occupied. Five mixed real local llama3.2:3b Coordinator prompts report chosen Agent, suitability, latency and failures separately from deterministic tests."],
+    "outOfScope": ["No autonomous/background Agent activity, multi-agent parallel execution, unlimited loops, silent cloud routing, new approval authority, or hidden execution."],
+    "risks": ["Model-generated Agent selections and handoff summaries are untrusted proposals; coordinator limits and owner approval remain enforced by trusted code. Local model quality may produce unsuitable choices."],
+    "area": "P54",
+    "checkpoint": null,
+    "validation": [],
+    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["Real local llama3.2:3b mixed-question behavior is required and must be recorded; live Gemini or paid-provider calls are not required."]},
+    "limitations": [],
+    "automatedVerification": ["Use deterministic provider/approval fakes to assert exact handoff limits, trace provenance, slot serialization, queue states, owner permissions, CSRF, expiry, denial, and no execution without fresh approval."],
+    "followUpValidation": ["Run the five requested mixed questions against the actual local llama3.2:3b and report verbatim outcomes, choices, latencies and failures."]
+  },
+  {
+    "number": 203,
+    "title": "Sage Core live-state visualization",
+    "description": "Visualize the real Agent team as original amber concentric sigils with a 2D accessible fallback, using runtime state and real handoff/source links only.",
+    "category": "Phase AM - Sage Core Visualization",
+    "status": "planned",
+    "dependsOn": [197, 200, 201, 202],
+    "decisions": [],
+    "acceptance": ["Create an original canvas/WebGL ring-and-glyph display on its own page and optional Agents-page compact view. Coordinator is centered; actual Agents occupy stable orbit positions, and selecting a sigil opens that Agent's real details.", "Brightness, pulse and rays are derived only from actual idle/working/waiting-approval/error/unavailable states; source and handoff links appear only while backed by real trace events. No random activity or copied anime artwork, glyph sheets, names, or assets.", "Provide a complete keyboard-accessible 2D list fallback, reduced-motion mode, hidden-page pause, capped frame rate and automatic fallback when WebGL is unavailable or measured frame time exceeds the threshold.", "Measure frame time on this RX 570 while a local model generates and report renderer/build identity, workload and results. Automated tests assert no fabricated nodes/edges, stable mappings, fallbacks and reduced-motion behavior."],
+    "outOfScope": ["No copied third-party art, fake telemetry, idle animations that imply work, model-performance inference, or changes to Agent state/execution."],
+    "risks": ["GPU/WebGL performance varies by driver and app packaging; a visual effect must never imply execution or approval that did not occur."],
+    "area": "P55",
+    "checkpoint": null,
+    "validation": [],
+    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["RX 570 frame-time measurement under generation and packaged Electron WebGL behavior require actual host observation."]},
+    "limitations": [],
+    "automatedVerification": ["Use deterministic state/trace fixtures to verify semantic visual encoding, no random nodes or links, fallback/list accessibility, frame cap, hidden pause, reduced motion and selection."],
+    "followUpValidation": ["Measure the actual packaged UI on the RX 570 during a local generation and verify readable reduced-motion/list behavior."]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, and 195-199 are completed scoped checkpoints; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, and 195-200 are completed scoped checkpoints; Tasks 201-203 are planned; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
-  "developmentAcceptance": "For Tasks 175-199, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
+  "developmentAcceptance": "For Tasks 175-203, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
   "enhancementLoop": "After scoped development acceptance, continue to the next dependency-ready task without waiting for human QA. Record reproducible defects and regression cases for later review by different AI models; identify model/reviewer when available and never claim independent review that did not occur.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
   "completion": "Completed requires actual acceptance evidence, truthful limitations/skips, required documentation/update records, and a reviewed task checkpoint. A local checkpoint is sufficient for development acceptance; push or deployment is separate and must be authorized and verified when performed. Never mark complete solely because code exists or an AI says it worked.",
@@ -3858,7 +3949,11 @@ const futureRoadmapGroups = [
   { name: "Phase AF - Brain and Retrieval", range: "196-196", tasks: post100Tasks.filter(task => task.category === "Phase AF - Brain and Retrieval").map(({ title, description }) => [title, description]) },
   { name: "Phase AG - Brain Visualization", range: "197-197", tasks: post100Tasks.filter(task => task.category === "Phase AG - Brain Visualization").map(({ title, description }) => [title, description]) },
   { name: "Phase AH - Multimodal Packs", range: "198-198", tasks: post100Tasks.filter(task => task.category === "Phase AH - Multimodal Packs").map(({ title, description }) => [title, description]) },
-  { name: "Phase AI - Owner-Gated Automation", range: "199-199", tasks: post100Tasks.filter(task => task.category === "Phase AI - Owner-Gated Automation").map(({ title, description }) => [title, description]) }
+  { name: "Phase AI - Owner-Gated Automation", range: "199-199", tasks: post100Tasks.filter(task => task.category === "Phase AI - Owner-Gated Automation").map(({ title, description }) => [title, description]) },
+  { name: "Phase AJ - Built-in Agent Team", range: "200-200", tasks: post100Tasks.filter(task => task.category === "Phase AJ - Built-in Agent Team").map(({ title, description }) => [title, description]) },
+  { name: "Phase AK - Agents Workspace", range: "201-201", tasks: post100Tasks.filter(task => task.category === "Phase AK - Agents Workspace").map(({ title, description }) => [title, description]) },
+  { name: "Phase AL - Agent Delegation and Approvals", range: "202-202", tasks: post100Tasks.filter(task => task.category === "Phase AL - Agent Delegation and Approvals").map(({ title, description }) => [title, description]) },
+  { name: "Phase AM - Sage Core Visualization", range: "203-203", tasks: post100Tasks.filter(task => task.category === "Phase AM - Sage Core Visualization").map(({ title, description }) => [title, description]) }
 ];
 
 export const taskGroups = [...foundationTaskGroups, {
@@ -3890,7 +3985,11 @@ export const recommendedOrder = [
   { number: 196, reason: "Establish durable, owner-controlled Brain ingestion and cited retrieval before visualizing or expanding multimodal capabilities." },
   { number: 197, reason: "Visualize only real Brain data after the underlying documents, chunks and retrieval events exist." },
   { number: 198, reason: "Add independently tested, opt-in local Eyes/Ears/Voice packs after the Brain and consent surfaces are established." },
-  { number: 199, reason: "Extend reviewed browser/desktop actions only after their exact approvals, audit traces and stop controls are in place." }
+  { number: 199, reason: "Extend reviewed browser/desktop actions only after their exact approvals, audit traces and stop controls are in place." },
+  { number: 200, reason: "Create the role profiles and shared local capacity boundary before adding Agent UI or delegation." },
+  { number: 201, reason: "Expose existing Agent identities and owner controls before connecting them through chat." },
+  { number: 202, reason: "Add bounded, traced handoffs and approvals before any live team visualization implies work." },
+  { number: 203, reason: "Render only the real profiles, approvals, states and traces delivered by the earlier phases." }
 ];
 export const nextTask = recommendedOrder.map(({ number }) => post100Tasks.find(task => task.number === number)).find(task => task?.status === "planned")
   ?? post100Tasks.find(task => task.status === "planned");

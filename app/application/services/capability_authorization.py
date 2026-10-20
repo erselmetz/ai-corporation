@@ -35,7 +35,7 @@ class CapabilityAuthorizationDenied(PermissionError):
 # Compatibility catalog: existing permission strings keep their identity and
 # grant meaning. Adding a new route permission requires an explicit catalog entry.
 _LEGACY_PERMISSION_NAMES = (
-    "activity:read", "agent:read", "assignment-policy:manage", "assignment-policy:read",
+    "activity:read", "agent:read", "agent:manage", "assignment-policy:manage", "assignment-policy:read",
     "backup:export", "backup:read", "backup:restore",
     "browser:act", "desktop:act",
     "chat-history:manage", "chat-knowledge:retain", "chat-knowledge:withdraw",

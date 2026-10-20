@@ -93,7 +93,14 @@ def test_inventory_and_selection_preserve_history_and_other_authority():
                           json={"provider_id": "ollama", "model_id": "other"}).status_code == 403
         assert client.post("/api/tasks", headers=headers, json={"title": "x", "description": "y"}).status_code == 403
     assert service.list_tasks() == tasks
-    assert resource.snapshot() == capacity
+    final = resource.snapshot()
+    assert final.global_capacity == capacity.global_capacity
+    assert final.providers == capacity.providers
+    assert final.allocations == ()
+    assert final.allocation_id_history_capacity.allocated == capacity.allocation_id_history_capacity.allocated + 1
+    assert final.allocation_id_history_capacity.limit == capacity.allocation_id_history_capacity.limit
+    second_route = next((entry for entry in final.models if entry[:2] == ("ollama", "second:local")), None)
+    assert second_route is not None and second_route[2].limit == 1 and second_route[2].allocated == 0
 
 
 def test_stale_missing_unsupported_and_permission_denial_do_not_mutate():

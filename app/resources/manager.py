@@ -103,6 +103,22 @@ class ResourceManager:
         self._used_ids = set()
         self._lock = RLock()
 
+    def ensure_route(self, *, provider_id: str, model_id: str, slot_limit: int = 1) -> None:
+        """Add accounting limits for a newly assigned route without resetting history."""
+        identifier(provider_id)
+        identifier(model_id)
+        slots(slot_limit)
+        with self._lock:
+            self._registry.get(provider_id)
+            providers = self._limits.providers
+            models = self._limits.models
+            if not any(item.provider_id == provider_id for item in providers):
+                providers = (*providers, ProviderLimit(provider_id, slot_limit))
+            route = (provider_id, model_id)
+            if not any((item.provider_id, item.model_id) == route for item in models):
+                models = (*models, ModelLimit(provider_id, model_id, slot_limit))
+            self._limits = ResourceLimits(self._limits.global_slots, providers, models)
+
     def allocate(self, allocation_id: str, *, provider_id: str, model_id: str):
         for value in (allocation_id, provider_id, model_id):
             identifier(value)

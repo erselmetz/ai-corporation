@@ -71,6 +71,34 @@ class OperatorStateStore:
                 (self._corporation_id, encoded),
             )
 
+    def load_agent_profiles(self) -> tuple[dict, ...]:
+        with self._connection() as connection:
+            rows = connection.execute(
+                "SELECT record_json FROM operator_agent_profiles WHERE corporation_id=? ORDER BY agent_id",
+                (self._corporation_id,),
+            ).fetchall()
+        if len(rows) > 100:
+            raise RuntimeError("Stored Agent profile limit is exceeded")
+        return tuple(json.loads(row[0]) for row in rows)
+
+    def save_agent_profile(self, agent_id: str, record: dict) -> None:
+        if not isinstance(agent_id, str) or not agent_id.strip() or len(agent_id) > 128:
+            raise ValueError("Agent identity is invalid")
+        encoded = _encode(record)
+        with self._connection() as connection, connection:
+            count = connection.execute(
+                "SELECT COUNT(*) FROM operator_agent_profiles WHERE corporation_id=? AND agent_id<>?",
+                (self._corporation_id, agent_id),
+            ).fetchone()[0]
+            if count >= 100:
+                raise ValueError("Stored Agent profile limit reached")
+            connection.execute(
+                "INSERT INTO operator_agent_profiles(corporation_id,agent_id,record_json) VALUES(?,?,?) "
+                "ON CONFLICT(corporation_id,agent_id) DO UPDATE SET record_json=excluded.record_json, "
+                "updated_at=CURRENT_TIMESTAMP",
+                (self._corporation_id, agent_id, encoded),
+            )
+
     def save_proposal(self, *, owner_id: str, proposal_id: str, conversation_id: str,
                       digest: str, fingerprint: str, summary: dict,
                       created_at: datetime, expires_at: datetime) -> None:

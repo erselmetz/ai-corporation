@@ -373,7 +373,10 @@ class OwnedEmployeeChatService:
                     for item in conversation.messages[-16:]
                     if item.status is MessageStatus.COMPLETED
                 ]
-                messages = build_chat_messages(text, history)
+                messages = build_chat_messages(
+                    text, history,
+                    role_instructions=self._agents.get(entry.agent.id).system_prompt or None,
+                )
                 if sum(len(message["content"].encode("utf-8")) for message in messages) > self.MAX_PROMPT_BYTES:
                     raise ValueError("Prompt exceeds byte limit")
                 user_id, reply_id = uuid4().hex, uuid4().hex
@@ -455,7 +458,10 @@ class OwnedEmployeeChatService:
                     for item in conversation.messages[-16:]
                     if item.status is MessageStatus.COMPLETED
                 ]
-                messages = build_chat_messages(text, history)
+                messages = build_chat_messages(
+                    text, history,
+                    role_instructions=self._agents.get(entry.agent.id).system_prompt or None,
+                )
                 if sum(len(message["content"].encode("utf-8")) for message in messages) > self.MAX_PROMPT_BYTES:
                     raise ValueError("Prompt exceeds byte limit")
                 user_id, reply_id = uuid4().hex, uuid4().hex
