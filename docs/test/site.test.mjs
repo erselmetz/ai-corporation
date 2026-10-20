@@ -91,6 +91,7 @@ describe("documentation site", () => {
     }
     const manifest = JSON.parse(await readFile(path.join(docsRoot, "..", "corporation_updates.json"), "utf8"));
     assert.ok(Array.isArray(manifest.items));
+    assert.ok(manifest.items.some(item => item.title.startsWith("Task 199 owner-gated computer automation")));
     assert.ok(manifest.items.some(item => item.title.startsWith("Task 196 Brain memory and grounded retrieval")));
     assert.ok(manifest.items.some(item => item.title.startsWith("Task 197 3D Brain visualization")));
     assert.ok(manifest.items.some(item => item.title.startsWith("Task 198 Eyes, ears and voice capability packs")));
@@ -130,10 +131,11 @@ describe("documentation site", () => {
     const elements = Object.fromEntries(["latest-task-number", "latest-task-title", "latest-task-link", "next-task-number", "next-task-title", "next-task-description", "next-task-link", "all-task-count"].map(id => [id, new StatusElement("p")]));
     const document = { querySelector: selector => elements[selector.slice(1)] };
     renderLatestStatusCards(document, tasks, nextTask);
-    assert.equal(elements["latest-task-number"].textContent, "Task 198");
-    assert.equal(elements["latest-task-link"].href, "tasks.html#task-198");
-    assert.equal(elements["next-task-number"].textContent, "Task 199");
-    assert.equal(elements["next-task-title"].textContent, "Owner-gated computer automation");
+    assert.equal(elements["latest-task-number"].textContent, "Task 199");
+    assert.equal(elements["latest-task-link"].href, "tasks.html#task-199");
+    assert.equal(elements["next-task-number"].textContent, "No planned gate");
+    assert.equal(elements["next-task-title"].textContent, "No planned task");
+    assert.equal(elements["next-task-link"].textContent, "Browse task history");
     assert.equal(elements["all-task-count"].textContent, "Tasks 1-199");
   });
 
@@ -168,9 +170,9 @@ describe("documentation site", () => {
   });
 
   it("records verified, deferred, and planned work without treating deferral as completion", () => {
-    assert.equal(tasks.filter(task => task.status === "completed").length, 193);
+    assert.equal(tasks.filter(task => task.status === "completed").length, 194);
     assert.equal(tasks.filter(task => task.status === "deferred").length, 4);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 1);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 0);
     assert.equal(tasks.filter(task => task.status === "design_only").length, 1);
     assert.equal(tasks.find(task => task.number === 134).status, "deferred");
     assert.equal(tasks.find(task => task.number === 170).status, "deferred");
@@ -189,7 +191,9 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 198).checkpoint, "task-198-multimodal-capability-packs");
     assert.equal(tasks.find(task => task.number === 198).realWorldVerification.status, "pending");
     assert.match(tasks.find(task => task.number === 198).limitations.join(" "), /EasyOCR is not offered/);
-    assert.equal(tasks.find(task => task.number === 199).status, "planned");
+    assert.equal(tasks.find(task => task.number === 199).status, "completed");
+    assert.equal(tasks.find(task => task.number === 199).checkpoint, "task-199-owner-gated-computer-automation");
+    assert.equal(tasks.find(task => task.number === 199).realWorldVerification.status, "pending");
     assert.equal(tasks.find(task => task.number === 171).status, "completed");
     assert.equal(tasks.find(task => task.number === 172).status, "completed");
     assert.equal(tasks.find(task => task.number === 173).status, "completed");
@@ -299,7 +303,7 @@ describe("documentation site", () => {
     assert.match(visualizationReview.decisions.join(" "), /WCAG 2.2 AA/);
     assert.match(visualizationReview.limitations.join(" "), /not achieved measurements/);
     assert.equal(tasks.find(task => task.number === 158).checkpoint, "task-158-automation-review-traces");
-    assert.equal(nextTask.number, 199);
+    assert.equal(nextTask, undefined);
     assert.ok(tasks.slice(0, 133).every(task => task.status === "completed"));
     assert.equal(tasks.find(task => task.number === 190).status, "design_only");
     assert.equal(tasks.find(task => task.number === 191).status, "completed");
@@ -312,7 +316,7 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 194).checkpoint, null);
     assert.equal(tasks.find(task => task.number === 190).checkpoint, "task-190-code-execution-threat-model");
     assert.match(tasks.find(task => task.number === 190).validation.join(" "), /self-review/);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 1);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 0);
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -472,7 +476,7 @@ describe("documentation site", () => {
     assert.match(roadmap, /Next acceptance gate/);
     assert.match(roadmap, /Safety boundaries/);
     assert.doesNotMatch(roadmap, /Task 130.*semantic/i);
-    assert.equal(nextTask.number, 199);
+    assert.equal(nextTask, undefined);
     assert.equal(tasks.find(task => task.number === 178)?.status, "completed");
   });
 
@@ -505,7 +509,7 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 162).checkpoint, "task-162-three-dimensional-map-review");
     assert.equal(tasks.find(task => task.number === 162).status, "completed");
     assert.equal(tasks.find(task => task.number === 158).checkpoint, "task-158-automation-review-traces");
-    assert.equal(nextTask.number, 199);
+    assert.equal(nextTask, undefined);
     const task122 = post100Tasks.find(task => task.number === 122);
     assert.equal(task122.status, "completed");
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");
@@ -519,7 +523,7 @@ describe("documentation site", () => {
       "task-125-managed-vscode-user-lifecycle", "task-126-local-application-lifecycle",
       "task-127-windows-electron-installer", "task-128-optional-voice-interaction",
       "task-129-command-center-release-acceptance", "task-130-semantic-memory-rag-foundation",
-      "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance", "task-135-semantic-retrieval-evaluation", "task-136-hybrid-lexical-semantic-retrieval", "task-137-semantic-index-lifecycle-observability", "task-138-owner-reviewed-knowledge-proposals", "task-139-versioned-documentation-review", "task-140-central-capability-permissions", "task-141-capability-grants-session-policy", "task-142-action-risk-approval-policy", "task-143-capability-audit-retention", "task-144-emergency-stop-capture-indicators", "task-145-bounded-speech-input-contracts", "task-146-optional-local-speech-recognition", "task-147-reviewed-speech-input-in-conversations", "task-148-offline-text-to-speech-provider", "task-149-bounded-local-voice-queue-controls", "task-150-bounded-image-input-vision-context", "task-151-explicit-screen-capture-provider", "task-152-bounded-optional-image-processing", "task-153-bounded-ocr-provider-contract", "task-154-explicit-optional-tesseract-backend", "task-155-one-use-camera-vision-chat", "task-156-scoped-browser-automation", "task-157-scoped-desktop-automation", "task-158-automation-review-traces", "task-159-shared-visual-design-system", "task-160-operational-command-center-dashboard", "task-161-knowledge-resource-visualization", "task-162-three-dimensional-map-review", "task-163-original-assistant-identity", "task-164-owner-response-preferences", "task-165-coordinator-presence-orchestration", "task-166-opt-in-proactive-suggestions", "task-167-trusted-updates-config-migration", "task-168-encrypted-data-portability", "task-169-crash-recovery-performance-readiness", "task-171-unified-settings-operator-controls", "task-172-interactive-3d-corporation-execution-map", "task-173-memory-knowledge-relationship-explorer", "task-174-unified-multimodal-capability-controls", "task-175-ai-usability-accessibility-regression-evaluation", "task-176-zero-config-first-run-ai-acceptance", "task-177-auto-rag-trace", "task-178-nav-fix", "task-179-roadmap-sync", "task-180-hardware-profile-ai-acceptance", "task-181-consent-based-model-routing", "task-182-reviewed-chat-tools", "task-183-visible-chat-workflow-scaffolding", "task-184-operator-state-ai-acceptance", "task-185-local-recovery-and-update-controls", "task-186-globe-visual-map", "task-187-opt-in-local-voice-input", "task-188-opt-in-local-voice-output", "task-189-opt-in-local-vision-input", "task-191-direct-to-chat", "task-192-small-model-answer-quality", "task-195-simple-chat-ui", "task-196-brain-memory-grounded-retrieval", "task-197-brain-visualization", "task-198-multimodal-capability-packs"]);
+      "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance", "task-135-semantic-retrieval-evaluation", "task-136-hybrid-lexical-semantic-retrieval", "task-137-semantic-index-lifecycle-observability", "task-138-owner-reviewed-knowledge-proposals", "task-139-versioned-documentation-review", "task-140-central-capability-permissions", "task-141-capability-grants-session-policy", "task-142-action-risk-approval-policy", "task-143-capability-audit-retention", "task-144-emergency-stop-capture-indicators", "task-145-bounded-speech-input-contracts", "task-146-optional-local-speech-recognition", "task-147-reviewed-speech-input-in-conversations", "task-148-offline-text-to-speech-provider", "task-149-bounded-local-voice-queue-controls", "task-150-bounded-image-input-vision-context", "task-151-explicit-screen-capture-provider", "task-152-bounded-optional-image-processing", "task-153-bounded-ocr-provider-contract", "task-154-explicit-optional-tesseract-backend", "task-155-one-use-camera-vision-chat", "task-156-scoped-browser-automation", "task-157-scoped-desktop-automation", "task-158-automation-review-traces", "task-159-shared-visual-design-system", "task-160-operational-command-center-dashboard", "task-161-knowledge-resource-visualization", "task-162-three-dimensional-map-review", "task-163-original-assistant-identity", "task-164-owner-response-preferences", "task-165-coordinator-presence-orchestration", "task-166-opt-in-proactive-suggestions", "task-167-trusted-updates-config-migration", "task-168-encrypted-data-portability", "task-169-crash-recovery-performance-readiness", "task-171-unified-settings-operator-controls", "task-172-interactive-3d-corporation-execution-map", "task-173-memory-knowledge-relationship-explorer", "task-174-unified-multimodal-capability-controls", "task-175-ai-usability-accessibility-regression-evaluation", "task-176-zero-config-first-run-ai-acceptance", "task-177-auto-rag-trace", "task-178-nav-fix", "task-179-roadmap-sync", "task-180-hardware-profile-ai-acceptance", "task-181-consent-based-model-routing", "task-182-reviewed-chat-tools", "task-183-visible-chat-workflow-scaffolding", "task-184-operator-state-ai-acceptance", "task-185-local-recovery-and-update-controls", "task-186-globe-visual-map", "task-187-opt-in-local-voice-input", "task-188-opt-in-local-voice-output", "task-189-opt-in-local-vision-input", "task-191-direct-to-chat", "task-192-small-model-answer-quality", "task-195-simple-chat-ui", "task-196-brain-memory-grounded-retrieval", "task-197-brain-visualization", "task-198-multimodal-capability-packs", "task-199-owner-gated-computer-automation"]);
     const task143 = post100Tasks.find(task => task.number === 143);
     assert.equal(task143.status, "completed");
     assert.equal(task143.checkpoint, "task-143-capability-audit-retention");

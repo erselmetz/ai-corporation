@@ -58,6 +58,12 @@ VOICE_WHEELS = (
     _wheel("comtypes-1.4.17-py3-none-any.whl", "https://files.pythonhosted.org/packages/89/9c/d0bc1fb69ad22a04bdc01dd9b5613a2ebc4d02ba1ec24b02127dc93791ba/comtypes-1.4.17-py3-none-any.whl", 298_743, "4e0a221dde2c589b82977bed802efd71cd5eb67a380347b732e02735e597f586"),
 )
 
+AUTOMATION_WHEELS = (
+    _wheel("pywinauto-0.6.9-py2.py3-none-any.whl", "https://files.pythonhosted.org/packages/44/46/f2283648e0c237af451dc50ebc42121abfd198d12391fd9ad4df1c6b97d2/pywinauto-0.6.9-py2.py3-none-any.whl", 363_041, "5924b3072864a1d730c5546bbeb17cf4063ba518b618dbc5e43c18276c7c9356"),
+    _wheel("six-1.17.0-py2.py3-none-any.whl", "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", 11_050, "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"),
+    _wheel("comtypes-1.4.17-py3-none-any.whl", "https://files.pythonhosted.org/packages/89/9c/d0bc1fb69ad22a04bdc01dd9b5613a2ebc4d02ba1ec24b02127dc93791ba/comtypes-1.4.17-py3-none-any.whl", 298_743, "4e0a221dde2c589b82977bed802efd71cd5eb67a380347b732e02735e597f586"),
+)
+
 
 @dataclass(frozen=True)
 class PackDefinition:
@@ -75,6 +81,8 @@ PACKS = {
                             ("faster_whisper", "ctranslate2", "av", "tokenizers", "sounddevice", "numpy")),
     "voice": PackDefinition("voice", "Voice: offline Windows speech output", VOICE_WHEELS,
                              ("pyttsx3", "comtypes", "win32com.client")),
+    "desktop-automation": PackDefinition("desktop-automation", "Windows UI Automation support", AUTOMATION_WHEELS,
+                                           ("pywinauto", "comtypes", "six", "win32gui")),
 }
 
 MAX_PACK_DOWNLOAD_BYTES = 120 * 1024 * 1024
@@ -256,6 +264,12 @@ class OptionalMediaPacks:
             except Exception:
                 return {"state": "installed", "detail": "Local speech runtime loaded, but no default microphone input could be checked. Start a five-second push-to-talk test from Chat."}
             return {"state": "installed", "detail": "Local speech runtime and microphone device are present. Record a five-second push-to-talk test from Chat to verify transcription; no audio was captured by this check."}
+        if pack_id == "desktop-automation":
+            if os.name != "nt":
+                return {"state": "installed", "detail": "Pinned UI Automation libraries are present; native Windows UI Automation cannot run on this operating system."}
+            from pywinauto import Desktop
+            windows = Desktop(backend="uia").windows(visible_only=True, enabled_only=True)
+            return {"state": "working", "detail": f"Windows UI Automation initialized and enumerated {len(windows[:50])} visible window(s). No control was invoked."}
         return {"state": "installed", "detail": "Offline speech libraries loaded. Use Chat's local voice test to verify playback and Stop on this device."}
 
 

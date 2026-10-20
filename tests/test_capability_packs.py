@@ -16,7 +16,7 @@ def test_pack_preview_is_exact_read_only_and_does_not_download(tmp_path):
     calls = []
     packs = OptionalMediaPacks(tmp_path, downloader=lambda spec: calls.append(spec))
     previews = packs.preview()["items"]
-    assert [item["pack_id"] for item in previews] == ["eyes", "ears", "voice"]
+    assert [item["pack_id"] for item in previews] == ["eyes", "ears", "voice", "desktop-automation"]
     assert all(item["state"] == "not-installed" and item["source"].startswith("Official PyPI") for item in previews)
     assert all(item["manifest_digest"] and item["files"] and item["download_bytes"] > 0 for item in previews)
     assert not calls

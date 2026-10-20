@@ -149,6 +149,11 @@ class ScopedBrowserAutomation:
     def trace_service(self) -> AutomationTraceService:
         return self._trace_service
 
+    def activity_snapshot(self) -> dict:
+        with self._lock:
+            return {"active": bool(self._in_flight), "state": "action_running" if self._in_flight else "idle",
+                    "persistence": "process_only"}
+
     def preview(
         self,
         request: BrowserActionRequest,
@@ -382,7 +387,7 @@ class ScopedBrowserAutomation:
         try:
             with self._browser_launcher() as playwright:
                 browser = playwright.chromium.launch(
-                    headless=True, chromium_sandbox=True,
+                    headless=False, chromium_sandbox=True,
                     timeout=self._policy.timeout_milliseconds,
                     args=["--no-proxy-server"],
                 )

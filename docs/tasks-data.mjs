@@ -3773,7 +3773,7 @@ export const post100Tasks = [
     "title": "Owner-gated computer automation",
     "description": "Extend the existing allowlisted Playwright and Windows UI Automation boundaries with visible previews, per-action owner approval, bounded execution, and a reliable emergency stop.",
     "category": "Phase AI - Owner-Gated Automation",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [142, 143, 144, 156, 157, 158],
     "decisions": [],
     "acceptance": [
@@ -3786,18 +3786,32 @@ export const post100Tasks = [
     "outOfScope": ["Do not embed Open Interpreter or implement arbitrary code/shell execution. Task 190 remains design-only unless its threat model receives a separate owner review and authorization."],
     "risks": ["Browser/native UI actions may cause irreversible external changes; owner confirmation cannot guarantee the remote system's resulting state.", "A hotkey or process-level stop cannot cancel every native in-flight driver call; uncertain outcomes must remain unknown and never be replayed."],
     "area": "P51",
-    "checkpoint": null,
-    "validation": [],
-    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["Real allowlisted browser actions and native Windows automation outside disposable test targets."]},
-    "limitations": [],
-    "automatedVerification": ["Use fakes to exercise approvals, allowlists, traces, process stop, expiry, rate limits and unknown outcomes; no unapproved desktop or browser mutation."],
-    "followUpValidation": ["Review the precise app/site allowlist and action policy before enabling any live automation. Keep Task 190's separate design gate closed."]
+    "checkpoint": "task-199-owner-gated-computer-automation",
+    "validation": [
+      "Full Python suite: 1,391 passed, 5 skipped, 0 failed (2 dependency deprecation warnings).",
+      "Full browser-module suite: 265 passed, 0 failed; Electron suite: 38 passed, 0 failed; public docs suite: 21 passed, 0 failed.",
+      "Desktop UI production/type build, Python compileall, and git diff --check passed.",
+      "Focused local automation, owner API, browser, desktop, and capability-pack tests: 32 passed (1 Starlette TestClient deprecation warning); approval-flow UI tests: 2 passed."
+    ],
+    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["No live website action or native Windows UI Automation action was performed. The pywinauto pack was not installed; visible Chromium isolation, a disposable allowlisted site, real UIA target discovery/invocation, and emergency stop during a live action remain unverified."]},
+    "limitations": [
+      "Allowlists, action counters, and automation adapters are process-local. The browser uses a fresh visible temporary context; same-origin GET/HEAD inspection can still have site-side effects, so the exact URL is shown and the owner must confirm before inspection. No credentials, downloads, cross-origin requests, WebSockets, arbitrary scripts, keys, coordinates, shell commands, or PyAutoGUI are exposed.",
+      "Native UI Automation is limited to invoking one exact enabled direct-child button. Emergency stop blocks new actions and is rechecked before dispatch, but an in-flight driver call cannot always be canceled; its outcome remains unknown and is never retried automatically.",
+      "The isolated pywinauto pack was added to the reviewed optional-pack catalog but was not downloaded or installed. Real Chromium isolation and native Windows UI Automation were not exercised."
+    ],
+    "automatedVerification": [
+      "Deterministic fake browser/desktop tests cover empty-by-default allowlists, HTTPS/origin and process scoping, read-only discovery, exact target digests, one-use approval, expiry/replay, stop-before-dispatch, rate limits, timeout/unknown outcomes, trace records, and no automatic retry.",
+      "Local API/UI tests cover owner-session authorization, same-origin CSRF, process-local policy changes, visible route reachability, emergency stop, and cancellation before approve/execute. Browser action UI displays the exact request and approval digest before each one-use confirmation.",
+      "Optional UI Automation support uses exact official PyPI wheels with pinned versions, sizes and SHA-256, CPython 3.14/Windows x64 compatibility gating, owner confirmation, isolated wheel-only installation, and a read-only native self-test. No package was downloaded or installed during validation.",
+      "Security review confirmed that Task 190 remains design-only, the base runtime exposes no arbitrary shell/keyboard/coordinate automation, and default external-origin/process policies remain empty."
+    ],
+    "followUpValidation": ["On a disposable owner-controlled HTTPS site and a benign Windows test window, install the UI Automation pack only after reviewing its exact PyPI manifest, then verify visible browser behavior, one-action confirmation, native button invocation, emergency stop, and unknown-outcome handling. Keep Task 190's separate design gate closed."]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, and 195-198 are completed scoped checkpoints; Task 199 remains planned; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, and 195-199 are completed scoped checkpoints; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-199, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",

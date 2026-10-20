@@ -5,6 +5,7 @@ import logging
 import os
 from pathlib import Path
 import secrets
+import threading
 from datetime import datetime, timezone
 import time
 
@@ -68,6 +69,7 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
         from app.application.services.emergency_stop import EmergencyStopService
         emergency_stop_service = EmergencyStopService()
     application.state.emergency_stop_service = emergency_stop_service
+    application.state.local_automation_registry_lock = threading.Lock()
     from app.application.services.owner_preferences import OwnerPreferencesService
     application.state.owner_preferences_service = OwnerPreferencesService()
     from app.api.local_preferences import router as local_preferences_router
@@ -202,6 +204,8 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
                                                          media_packs=media_packs,
                                                          local_output=local_speech_output))
     application.include_router(capability_packs_router)
+    from app.api.local_automation import router as local_automation_router
+    application.include_router(local_automation_router)
     from app.api.provider_connections import router as provider_connections_router
     application.include_router(provider_connections_router)
     from app.api.inventory import router as inventory_router

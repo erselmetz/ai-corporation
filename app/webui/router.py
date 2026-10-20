@@ -20,7 +20,8 @@ def _navigation(active_path: str, *, desktop_settings_available: bool = True) ->
                 ("Organization map", "/ui/structure"), ("Providers &amp; models", "/ui/providers"),
                 ("3D visualization", "/ui/visualization"), ("Memory", "/ui/memory"))),
         ("OPERATIONS", (("Tasks", "/ui/tasks"), ("Workflows", "/ui/workflows"),
-                        ("Workflow map", "/ui/workflow-map"), ("Activity", "/ui/activity"))),
+                        ("Workflow map", "/ui/workflow-map"), ("Activity", "/ui/activity"),
+                        ("Computer automation", "/ui/automation"))),
         ("SYSTEM", tuple(system_links)),
     )
     parts = ['<nav class="navigation" aria-label="Main navigation"><h2>Navigate</h2><ul>']
@@ -47,7 +48,7 @@ def _emergency_controls() -> str:
         <li><strong>Screen capture</strong><span id="capability-screen-support">Checking support</span><span id="capability-screen-activity">Unknown</span><span>One local frame; provider transfer requires per-turn consent.</span></li>
         <li><strong>Speech playback</strong><span id="capability-playback-support">Checking support</span><span id="capability-playback-activity">Unknown</span><span id="capability-playback-state">Playback state unknown until chat reports it.</span><button id="capability-playback-stop" type="button" hidden>Stop local playback and clear queue</button><span>Local device voices only; no online fallback.</span></li>
         <li><strong>Vision</strong><span id="capability-vision-support">Checking support</span><span>Inactive until an image is selected</span><span>Images stay temporary; provider transfer requires explicit per-turn consent.</span></li>
-        <li><strong>Computer automation</strong><span id="capability-automation-support">Unavailable</span><span id="capability-automation-activity">Inactive</span><span>No in-app automation execution control is exposed.</span></li>
+        <li><strong>Computer automation</strong><span id="capability-automation-support">Owner-gated; optional pack</span><span id="capability-automation-activity">Inactive</span><span>Exact allowlists, previews, one-action approvals, and emergency stop are on the <a href="/ui/automation">Computer automation</a> page.</span></li>
       </ul>
       <nav class="capability-shortcuts" aria-label="Open supported capability controls"><a href="/ui/chat#voice-panel">Voice controls</a><a href="/ui/chat#chat-capture-camera">Camera capture</a><a href="/ui/chat#chat-capture-screen">Screen capture</a><a href="/ui/chat#chat-images-heading">Vision and images</a></nav>
       <p id="emergency-activity" role="status" aria-live="polite">Microphone, playback, and capture activity are unknown until reported by this page.</p></div>
@@ -854,6 +855,37 @@ def owner_knowledge_page() -> HTMLResponse:
       </main></body></html>""")
 
 
+@router.get("/ui/automation", response_class=HTMLResponse)
+def computer_automation_page():
+    return HTMLResponse("""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Computer automation - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/local-automation.mjs"></script></head><body>
+    <main class="content"><nav aria-label="Automation navigation"><a href="/ui/chat">Chat</a> | <a href="/ui/settings/capabilities">Capabilities &amp; privacy</a></nav>
+    <p class="eyebrow">OWNER-GATED LOCAL ACTIONS</p><h1>Computer automation</h1>
+    <p>Allowlists start empty and last only for this app process. Browser actions use a visible, temporary browser on an exact HTTPS origin. Desktop actions can invoke one exact visible button in an allowlisted Windows app. No shell, keypress, coordinates, or automatic retries.</p>
+    <section class="management-card"><h2>Safety status</h2><p id="automation-state" role="status" aria-live="polite">Checking local owner session and automation state.</p>
+    <p id="automation-activity">No protected action is reported active.</p><button id="automation-stop" type="button" class="danger-action">Emergency stop protected actions</button></section>
+    <section class="management-card"><h2>Visible browser</h2><p>Only exact HTTPS origins you add are available. This setting is volatile and does not grant general site access.</p>
+    <label for="automation-origin">HTTPS origin (for example https://example.org)</label><input id="automation-origin" type="url" maxlength="512" autocomplete="url">
+    <button id="automation-origin-add" type="button">Allow this origin for this run</button><ul id="automation-origins"></ul>
+    <h3>Preview one action</h3><label for="browser-url">Page URL on the allowed origin</label><input id="browser-url" type="url" maxlength="2048">
+    <label for="browser-action">Action</label><select id="browser-action"><option value="click">Click a named button/link</option><option value="fill_text">Fill a named text field</option></select>
+    <label for="browser-role">Target role</label><select id="browser-role"><option>button</option><option>link</option><option>textbox</option></select>
+    <label for="browser-name">Exact accessible name</label><input id="browser-name" maxlength="512">
+    <label for="browser-value">Text to fill (only for a text field)</label><input id="browser-value" maxlength="2048">
+    <button id="browser-preview" type="button">Inspect and preview</button><pre id="browser-preview-result" aria-live="polite"></pre>
+    <button id="browser-run" type="button" hidden>Review exact action, approve, and run once</button></section>
+    <section class="management-card"><h2>Windows UI Automation</h2><p>Requires the separately confirmed “Windows UI Automation support” pack. It only lists allowlisted apps and can invoke one exact direct-child button after preview and a fresh approval.</p>
+    <label for="desktop-process">Executable name (for example notepad.exe)</label><input id="desktop-process" maxlength="132" autocomplete="off">
+    <button id="desktop-process-add" type="button">Allow this app for this run</button><button id="desktop-discover" type="button">Find visible windows</button>
+    <ul id="desktop-processes"></ul><label for="desktop-window">Visible window</label><select id="desktop-window"><option value="">Select an allowlisted window</option></select>
+    <button id="desktop-buttons" type="button">Inspect available buttons</button><label for="desktop-button">Exact button</label><select id="desktop-button"><option value="">Select an inspected button</option></select>
+    <button id="desktop-run" type="button" disabled>Preview, approve and invoke once</button></section>
+    <section class="management-card"><h2>Recent automation trace</h2><button id="automation-refresh" type="button">Refresh status and trace</button><ul id="automation-traces"></ul></section>
+    </main></body></html>""")
+
+
 @router.get("/ui/settings/capabilities", response_class=HTMLResponse)
 def capability_settings_page():
     return HTMLResponse(f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -871,7 +903,7 @@ def capability_settings_page():
       <a class="primary-action" href="/ui/chat">Open Chat</a>
     </section>
     <section class="management-card" aria-labelledby="media-packs-title"><h2 id="media-packs-title">Optional local capability packs</h2>
-      <p>Optional libraries are separate from the base app. Each pack shows exact pinned PyPI wheels and total size before an owner-confirmed, hash-checked isolated install. No speech model or Tesseract engine is included or downloaded.</p>
+      <p>Optional libraries are separate from the base app. Each pack shows exact pinned PyPI wheels and total size before an owner-confirmed, hash-checked isolated install. No speech model or Tesseract engine is included or downloaded. Windows UI Automation uses pywinauto with the existing scoped, exact-button approval service; PyAutoGUI is not used.</p>
       <p id="media-capability-packs-status" role="status" aria-live="polite">Checking pack status.</p>
       <div id="media-capability-packs" class="capability-pack-list"></div>
       <p>Eyes uses the existing bounded local OCR adapter; Tesseract and language data require a separate guided install. Ears uses the existing push-to-talk and local Faster-Whisper adapter; the speech model is selected separately. Voice supports the existing offline browser voice and an optional local Windows runtime. Online speech is not offered here.</p>

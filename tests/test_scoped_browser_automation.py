@@ -291,7 +291,7 @@ def test_preview_is_read_only_ephemeral_and_blocks_other_origins():
         "accept_downloads": False, "java_script_enabled": True,
         "permissions": [], "service_workers": "block",
     }
-    assert playwright.chromium.options["headless"] is True
+    assert playwright.chromium.options["headless"] is False
     assert playwright.chromium.options["chromium_sandbox"] is True
     assert all(route.continued for route in playwright.page.routes[:1])
     assert all(route.aborted for route in playwright.page.routes[1:])

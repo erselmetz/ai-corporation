@@ -85,6 +85,14 @@ class DesktopActionRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class DesktopWindowRequest:
+    process_id: int
+    window_handle: int
+    process_name: str
+    window_title: str
+
+
+@dataclass(frozen=True, slots=True)
 class DesktopActionPreview:
     action: str
     process_name: str
@@ -99,6 +107,8 @@ class DesktopActionPreview:
 class DesktopAutomationBackend(Protocol):
     def inspect(self, request: DesktopActionRequest, *, timeout_milliseconds: int) -> dict: ...
     def invoke(self, request: DesktopActionRequest, *, timeout_milliseconds: int) -> None: ...
+    def list_windows(self, process_name: str, *, limit: int) -> list[dict]: ...
+    def list_buttons(self, request: DesktopWindowRequest, *, timeout_milliseconds: int) -> list[dict]: ...
 
 
 class WindowsUIAutomationBackend:
@@ -125,6 +135,79 @@ class WindowsUIAutomationBackend:
         if not button.is_enabled() or not button.is_visible():
             raise DesktopTargetUnavailable("The approved desktop button is no longer available")
         button.invoke()
+
+    def list_windows(self, process_name: str, *, limit: int = 50) -> list[dict]:
+        """Read-only list of visible top-level windows for one allowlisted process."""
+        if os.name != "nt":
+            raise DesktopActionUnavailable("Windows UI Automation is available only on Windows")
+        import ctypes
+        from ctypes import wintypes
+        user32 = ctypes.WinDLL("user32", use_last_error=True)
+        enum_windows = user32.EnumWindows
+        enum_windows.argtypes = (wintypes.WNDENUMPROC, wintypes.LPARAM)
+        enum_windows.restype = wintypes.BOOL
+        is_visible = user32.IsWindowVisible
+        is_visible.argtypes = (wintypes.HWND,)
+        is_visible.restype = wintypes.BOOL
+        get_title = user32.GetWindowTextW
+        get_title.argtypes = (wintypes.HWND, wintypes.LPWSTR, ctypes.c_int)
+        get_title.restype = ctypes.c_int
+        get_process = user32.GetWindowThreadProcessId
+        get_process.argtypes = (wintypes.HWND, ctypes.POINTER(wintypes.DWORD))
+        get_process.restype = wintypes.DWORD
+        found: list[dict] = []
+
+        def visit(handle, _parameter):
+            if len(found) >= limit or not is_visible(handle):
+                return True
+            process_id = wintypes.DWORD()
+            get_process(handle, ctypes.byref(process_id))
+            try:
+                if _process_basename(process_id.value) != process_name:
+                    return True
+                buffer = ctypes.create_unicode_buffer(512)
+                length = get_title(handle, buffer, len(buffer))
+                title = buffer.value[:min(length, 256)].strip()
+                if title:
+                    found.append({"process_id": process_id.value, "window_handle": int(handle),
+                                  "process_name": process_name, "window_title": title})
+            except DesktopActionUnavailable:
+                return True
+            return True
+
+        callback = wintypes.WNDENUMPROC(visit)
+        enum_windows(callback, 0)
+        return found
+
+    def list_buttons(self, request: DesktopWindowRequest, *, timeout_milliseconds: int) -> list[dict]:
+        if os.name != "nt":
+            raise DesktopActionUnavailable("Windows UI Automation is available only on Windows")
+        try:
+            from pywinauto import Application
+            app = Application(backend="uia", allow_magic_lookup=False).connect(
+                process=request.process_id, timeout=timeout_milliseconds / 1000,
+            )
+            window = app.window(handle=request.window_handle)
+            window.wait("exists visible enabled", timeout=timeout_milliseconds / 1000)
+            if (window.element_info.process_id != request.process_id
+                    or window.element_info.handle != request.window_handle
+                    or window.window_text() != request.window_title
+                    or _process_basename(request.process_id) != request.process_name):
+                raise DesktopTargetUnavailable("The selected desktop window identity changed")
+            buttons = []
+            for child in window.children():
+                info = child.element_info
+                if (info.control_type == "Button" and child.is_visible() and child.is_enabled()
+                        and info.automation_id and info.name and len(buttons) < 100):
+                    buttons.append({"automation_id": str(info.automation_id)[:256],
+                                    "control_name": str(info.name)[:160]})
+            return buttons
+        except (DesktopTargetUnavailable, DesktopActionUnavailable):
+            raise
+        except ImportError:
+            raise DesktopActionUnavailable("Optional Windows UI Automation support is not installed") from None
+        except Exception:
+            raise DesktopActionUnavailable("Windows UI Automation could not inspect the selected window") from None
 
     @staticmethod
     def _resolve(request: DesktopActionRequest, timeout_milliseconds: int):
@@ -241,6 +324,46 @@ class ScopedDesktopAutomation:
             target_digest=target_digest,
             payload_digest=_request_digest(request),
         )
+
+    def list_windows(self, process_name: str, *, actor_id: str,
+                     permissions: frozenset[str],
+                     session_grants: frozenset[tuple[str, str, str]],
+                     session_id: str) -> list[dict]:
+        _validate_session_id(session_id)
+        if (not isinstance(process_name, str) or process_name != process_name.lower()
+                or not _PROCESS_NAME.fullmatch(process_name)
+                or process_name not in self._policy.allowed_process_names):
+            raise DesktopPolicyDenied("The desktop process is not explicitly allowlisted")
+        self._authorize(actor_id, permissions, session_grants)
+        self._require_running()
+        list_windows = getattr(self._backend, "list_windows", None)
+        if not callable(list_windows):
+            raise DesktopActionUnavailable("Window discovery is unavailable in this UI Automation provider")
+        return list_windows(process_name, limit=50)
+
+    def list_buttons(self, request: DesktopWindowRequest, *, actor_id: str,
+                     permissions: frozenset[str],
+                     session_grants: frozenset[tuple[str, str, str]],
+                     session_id: str) -> list[dict]:
+        _validate_session_id(session_id)
+        self._validate_window_request(request)
+        self._authorize(actor_id, permissions, session_grants)
+        self._require_running()
+        list_buttons = getattr(self._backend, "list_buttons", None)
+        if not callable(list_buttons):
+            raise DesktopActionUnavailable("Button discovery is unavailable in this UI Automation provider")
+        return list_buttons(request, timeout_milliseconds=self._policy.timeout_milliseconds)
+
+    def _validate_window_request(self, request: DesktopWindowRequest) -> None:
+        if not isinstance(request, DesktopWindowRequest):
+            raise ValueError("A selected desktop window is required")
+        if (type(request.process_id) is not int or request.process_id <= 0
+                or type(request.window_handle) is not int or request.window_handle <= 0
+                or request.process_name not in self._policy.allowed_process_names
+                or not _PROCESS_NAME.fullmatch(request.process_name)
+                or not isinstance(request.window_title, str)
+                or not request.window_title.strip() or len(request.window_title) > 256):
+            raise ValueError("The selected desktop window identity is invalid")
 
     def request_approval(
         self, request: DesktopActionRequest, *, actor_id: str,

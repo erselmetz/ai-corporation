@@ -106,7 +106,8 @@ def test_capability_controls_are_in_settings_and_chat_stays_minimal():
         assert 'id="capability-screen-activity"' in page
         assert 'id="capability-playback-activity"' in page
         assert 'id="capability-automation-support"' in page
-        assert "No in-app automation execution control is exposed" in page
+        assert 'href="/ui/automation">Computer automation</a>' in page
+        assert "one-action approvals" in page
         assert 'id="emergency-permissions"' in page
         assert 'id="emergency-grants"' in page
         assert "provider transfer requires per-turn consent" in page

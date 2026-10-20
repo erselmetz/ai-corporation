@@ -105,6 +105,11 @@ export function renderLatestStatusCards(documentObject, taskRecords = tasks, upc
     nextNumber.textContent = "No planned gate";
     nextTitle.textContent = "No planned task";
     nextDescription.textContent = "No task is currently marked planned in the authoritative roadmap.";
+    const nextLink = documentObject.querySelector("#next-task-link");
+    if (nextLink) {
+      nextLink.href = "tasks.html";
+      nextLink.textContent = "Browse task history";
+    }
   }
   const taskCount = documentObject.querySelector("#all-task-count");
   if (taskCount) taskCount.textContent = `Tasks 1-${taskRecords.length}`;

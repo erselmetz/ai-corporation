@@ -14,6 +14,7 @@ from app.integrations.scoped_desktop_automation import (
     DesktopAutomationPolicy,
     DesktopPolicyDenied,
     DesktopTargetUnavailable,
+    DesktopWindowRequest,
     ScopedDesktopAutomation,
     ScopedDesktopError,
 )
@@ -53,6 +54,18 @@ class FakeBackend:
         self.invoke_started = threading.Event()
         self.inspect_started = threading.Event()
         self.release = threading.Event()
+
+    def list_windows(self, process_name, *, limit):
+        assert limit <= 50
+        return [{"process_id": 4242, "window_handle": 161616,
+                 "process_name": process_name, "window_title": "Document - Notepad"}]
+
+    def list_buttons(self, window, *, timeout_milliseconds):
+        assert timeout_milliseconds <= 10_000
+        if (window.process_id, window.window_handle, window.process_name, window.window_title) != (
+                4242, 161616, PROCESS, "Document - Notepad"):
+            raise DesktopTargetUnavailable("The selected desktop window identity changed")
+        return [{"automation_id": "saveButton", "control_name": "Save"}]
 
     def inspect(self, _request, *, timeout_milliseconds):
         assert timeout_milliseconds >= 250
@@ -143,6 +156,26 @@ def test_preview_is_read_only_and_binds_the_exact_visible_control():
     backend.state["visible"] = False
     with pytest.raises(DesktopTargetUnavailable):
         preview(service)
+
+
+def test_read_only_discovery_is_allowlisted_authorized_and_exact_window_scoped():
+    service, _approvals, backend, _stop = make_service()
+    windows = service.list_windows(PROCESS, actor_id=OWNER, permissions=PERMISSIONS,
+                                   session_grants=frozenset(), session_id=SESSION)
+    assert windows[0]["window_title"] == "Document - Notepad"
+    selected = DesktopWindowRequest(**windows[0])
+    buttons = service.list_buttons(selected, actor_id=OWNER, permissions=PERMISSIONS,
+                                   session_grants=frozenset(), session_id=SESSION)
+    assert buttons == [{"automation_id": "saveButton", "control_name": "Save"}]
+    assert backend.invocations == 0
+
+    with pytest.raises(DesktopPolicyDenied):
+        service.list_windows("calc.exe", actor_id=OWNER, permissions=PERMISSIONS,
+                             session_grants=frozenset(), session_id=SESSION)
+    with pytest.raises(DesktopTargetUnavailable, match="identity"):
+        service.list_buttons(DesktopWindowRequest(4242, 999, PROCESS, "Other"), actor_id=OWNER,
+                             permissions=PERMISSIONS, session_grants=frozenset(), session_id=SESSION)
+    assert backend.invocations == 0
 
 
 def test_invoke_requires_exact_owner_approval_and_reports_unknown_outcome():

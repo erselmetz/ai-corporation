@@ -3,6 +3,12 @@
     {
         "date": "2026-10-20",
         "type": "development",
+        "title": "Task 199 owner-gated computer automation completed (live actions pending)",
+        "summary": "Added an owner-facing Computer automation page backed by the existing scoped Playwright and Windows UI Automation services. Browser actions use a visible ephemeral context, exact HTTPS origin allowlists, an explicit warning before page inspection, exact-action one-use approval, and bounded traces; desktop discovery is read-only and invocation is limited to one exact direct-child button. Allowlists default empty and last only for this app process. Added an optional pywinauto pack pinned to official PyPI wheel hashes and gated behind owner-confirmed isolated installation; it was not downloaded or installed. PyAutoGUI and arbitrary shell/keyboard/coordinate actions remain unavailable; Task 190 remains design-only. Validation: Python 1,391 passed / 5 skipped / 0 failed; browser modules 265; Electron 38; public docs 21; desktop UI production/type build passed. Deterministic fakes only for action execution. A real allowlisted website action, visible Chromium isolation, native Windows UIA discovery/invocation, and emergency stop during live automation remain unverified. No push, deployment, package download or paid call."
+    },
+    {
+        "date": "2026-10-20",
+        "type": "development",
         "title": "Task 198 Eyes, ears and voice capability packs completed (real device checks pending)",
         "summary": "Added narrowly scoped optional local Eyes, Ears and Voice packs. The owner sees exact official PyPI CPython 3.14 Windows x64 wheel versions, sizes and SHA-256 hashes, confirms installation, and packages install wheel-only into an isolated app-data runtime; no packages were installed in this validation. Existing OCR, FasterWhisper and local speech boundaries are reused, with explicit self-test states and emergency Stop. Python 1,386 passed / 5 skipped / 0 failed (2 deprecation warnings); browser modules 263; Electron 38; public docs 21; desktop UI production/type build passed. Fake-wheel/device tests only. Real OCR/Tesseract, microphone transcription, physical TTS/Stop, camera/screen, vision model/image turn, and packaged Windows activation remain unverified. EasyOCR and Coqui are not offered. No push, deployment, model pull, package download or paid call."
     },
