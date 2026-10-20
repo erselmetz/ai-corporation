@@ -1,7 +1,10 @@
+import { mountBrainView } from "./brain-view.mjs";
+
 export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchImpl = globalThis.fetch,
                                      confirmImpl = message => globalThis.confirm(message),
-                                     now = () => new Date() } = {}) {
+                                     now = () => new Date(), windowRef = globalThis.window, brainView: brainViewOverride = null } = {}) {
   const el = id => documentRef.getElementById(id);
+  const brainView = brainViewOverride || mountBrainView({ documentRef, fetchImpl, sessionStorage: windowRef?.sessionStorage });
   const state = el("knowledge-state"), indexState = el("knowledge-index-status");
   const list = el("knowledge-list"), detail = el("knowledge-detail");
   let ownerId = null, selected = null, semanticAvailable = false, busy = false;
@@ -45,7 +48,24 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
     stage.textContent = "Queued";
     row.append(title, documentRef.createTextNode(" — "), stage);
     statusList?.append(row);
-    return next => { stage.textContent = next; };
+    const nodeId = `ingest:${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`}`;
+    const label = file.webkitRelativePath || file.name || "Selected file";
+    return next => {
+      stage.textContent = next;
+      const state = next.startsWith("Ready") ? "ready" : next.startsWith("Failed") ? "failed"
+        : next.toLowerCase().includes("embedding") ? "embedding" : next.toLowerCase().includes("chunk") ? null
+          : next.toLowerCase().includes("extract") ? "extracting" : "queued";
+      // Chunking runs inside the upload/index request; the backend exposes no
+      // chunking progress event, so do not report it as a live graph stage.
+      if (state === null) return;
+      const CustomEventType = windowRef?.CustomEvent || globalThis.CustomEvent;
+      try {
+        if (CustomEventType && typeof documentRef.dispatchEvent === "function") {
+          documentRef.dispatchEvent(new CustomEventType("brain:ingestion", { detail: { id: nodeId, label, state } }));
+        }
+      } catch { /* File ingestion stays available when the host lacks DOM event support. */ }
+      brainView.setIngestion();
+    };
   }
   function setSelectedFiles(files) {
     const selected = [...(files || [])];
@@ -53,8 +73,7 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
       ? `${selected.length} file${selected.length === 1 ? "" : "s"} selected; ${selected.reduce((sum, file) => sum + (file.size || 0), 0)} bytes total.`
       : "No files selected.";
   }
-  const nextPaint = () => new Promise(resolve => globalThis.requestAnimationFrame
-    ? globalThis.requestAnimationFrame(() => resolve()) : setTimeout(resolve, 0));
+  const nextPaint = () => new Promise(resolve => setTimeout(resolve, 0));
   async function uploadOne(file, setStage, expiry) {
     const suffix = (file.name.match(/\.[^.]+$/)?.[0] || "").toLowerCase();
     if (!ALLOWED_EXTENSIONS.has(suffix)) { setStage("failed — unsupported file type"); return false; }
@@ -100,6 +119,9 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
     } catch {
       setStage("Ready — lexical retrieval available; local embedding failed");
     }
+  }
+  function notifyGraphRefresh() {
+    Promise.resolve().then(() => brainView.refresh()).catch(() => {});
   }
   function clearSelection() {
     selected = null;
@@ -173,6 +195,7 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
       detail.textContent = `Saved ${result.source_reference}. It expires ${result.expires_at}.`;
       const setStage = stagedRow({ name: el("knowledge-source").value || "Pasted note" });
       setStage("Extracting pasted text…"); await nextPaint();
+      notifyGraphRefresh();
       await processStoredNote(result.id, setStage);
       state.textContent = "Private note saved to your Brain.";
       selected = { id: result.id };
@@ -217,6 +240,7 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
       el("knowledge-inspect").disabled = !selected || !semanticAvailable;
       el("knowledge-delete").disabled = !selected;
     }
+    await brainView.refresh();
   }
   async function indexSelected() {
     if (busy || !selected || !semanticAvailable) return;
@@ -424,7 +448,7 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
   void refresh();
   void refreshFaissStatus();
   void refreshEmbeddingStatus();
-  return { refresh };
+  return { refresh, refreshBrain: () => brainView.refresh() };
 }
 
 if (globalThis.document?.getElementById("knowledge-note-form")) mountOwnerKnowledge();

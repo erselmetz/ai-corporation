@@ -25,14 +25,17 @@ function setup(handler, confirmImpl = () => true) {
   const elements = Object.fromEntries(ids.map(id => [id, new Element()]));
   elements["knowledge-expiry"].value = "7";
   const calls = [];
+  const brainEvents = [];
   const fetchImpl = async (path, options = {}) => {
     calls.push({ path, options });
     const custom = await handler(path, options, calls);
     return custom || response({});
   };
-  const documentRef = { getElementById: id => elements[id], createElement: tag => new Element(tag), createTextNode: text => { const node = new Element("#text"); node.textContent = text; return node; } };
-  mountOwnerKnowledge({ documentRef, fetchImpl, confirmImpl, now: () => new Date("2026-10-16T00:00:00Z") });
-  return { elements, calls };
+  class TestCustomEvent { constructor(type, init) { this.type = type; this.detail = init.detail; } }
+  const documentRef = { getElementById: id => elements[id], createElement: tag => new Element(tag), createTextNode: text => { const node = new Element("#text"); node.textContent = text; return node; }, dispatchEvent: event => brainEvents.push(event) };
+  mountOwnerKnowledge({ documentRef, fetchImpl, confirmImpl, now: () => new Date("2026-10-16T00:00:00Z"), windowRef: { sessionStorage: null, CustomEvent: TestCustomEvent },
+    brainView: { refresh: async () => {}, setIngestion() {} } });
+  return { elements, calls, brainEvents };
 }
 
 test("owner notes require explicit retention consent and send CSRF-bound local data", async () => {
@@ -93,6 +96,9 @@ test("Brain accepts a bounded multi-file batch and reports each file through chu
   ui.elements["knowledge-upload-form"].listeners.submit({ preventDefault() {} });
   await new Promise(resolve => setTimeout(resolve, 100));
   assert.equal(uploads, 2);
+  const states = ui.brainEvents.filter(event => event.type === "brain:ingestion").map(event => event.detail.state);
+  assert.deepEqual(states, ["extracting", "ready", "extracting", "ready"]);
+  assert.equal(states.includes("chunking"), false);
   assert.equal(ui.elements["brain-ingestion-list"].children.length, 2);
   assert.match(ui.elements["brain-ingestion-list"].textContent, /Ready — searchable with local lexical retrieval/);
   assert.equal(ui.calls.filter(call => call.path.startsWith("/api/memory/owner/upload?")).length, 2);

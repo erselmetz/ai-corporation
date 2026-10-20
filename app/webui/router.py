@@ -804,7 +804,7 @@ def memory_page() -> HTMLResponse:
 def owner_knowledge_page() -> HTMLResponse:
     return HTMLResponse("""<!doctype html><html lang="en"><head>
       <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Brain - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+      <title>Brain - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css"><link rel="stylesheet" href="/ui/static/brain-graph.css">
       <script type="module" src="/ui/static/knowledge.mjs"></script></head><body>
       <main class="content brain-page"><nav aria-label="Brain navigation"><a href="/ui/chat">Chat</a> | <a href="/ui/login?next=/ui/knowledge">Owner sign-in</a> | <a href="/ui/memory">Advanced memory</a></nav>
       <p class="eyebrow">PRIVATE TO THIS OWNER</p><h1>Brain</h1>
@@ -825,6 +825,16 @@ def owner_knowledge_page() -> HTMLResponse:
       <p id="knowledge-state" role="status" aria-live="polite"></p></section>
       <section class="management-card" aria-labelledby="knowledge-library-title"><h2 id="knowledge-library-title">Saved notes</h2>
       <p id="knowledge-index-status" role="status" aria-live="polite">Checking local semantic index...</p>
+      <section class="management-card brain-map-card" aria-labelledby="brain-map-title">
+      <h2 id="brain-map-title">Brain map</h2>
+      <p>Nodes show your saved sources and their real text chunks. Source groups use file type or note type; lines connect chunks to their source only. Similarity is not measured here.</p>
+      <div class="brain-map-controls"><button id="brain-map-view-toggle" type="button" aria-pressed="false">Show 3D map</button>
+      <label><input id="brain-map-reduced-motion" type="checkbox"> Reduced motion</label><button id="brain-map-refresh" type="button">Refresh map</button></div>
+      <p id="brain-map-status" role="status" aria-live="polite">Loading owner-only Brain map...</p>
+      <div id="brain-map-canvas-wrap" hidden><canvas id="brain-map-canvas" aria-label="Brain source and chunk map. Use the source list below to select nodes by keyboard."></canvas></div>
+      <p id="brain-map-frame-stats" aria-live="polite"></p><ol id="brain-map-ingestion" aria-label="Current Brain ingestion stages" aria-live="polite"></ol><ol id="brain-map-list" aria-label="All Brain sources and chunks"></ol>
+      <section id="brain-map-detail" aria-live="polite"><h3 id="brain-map-detail-title">Select a source or chunk</h3><pre id="brain-map-detail-text"></pre></section>
+      </section>
       <section aria-labelledby="brain-semantic-title"><h3 id="brain-semantic-title">Optional local semantic pack</h3>
       <p id="brain-faiss-state" role="status" aria-live="polite">Checking optional FAISS pack status…</p>
       <button id="brain-faiss-install" type="button" disabled>Review FAISS pack</button>

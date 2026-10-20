@@ -3,6 +3,7 @@ import { mountScreenCapture } from "./screen-capture.mjs";
 import { mountCameraCapture } from "./camera-capture.mjs";
 import { mountChatImages } from "./chat-images.mjs";
 import { renderSafeMarkdown } from "./chat-markdown.mjs";
+import { recordLastBrainRetrieval } from "./brain-graph.mjs";
 import "./quick-start.mjs?v=195";
 
 export function voiceTranscriptSourceLabel(source) {
@@ -306,6 +307,12 @@ export function mountChat({
     if (result.context_trace && record.messages.length) {
       const latestReply = [...record.messages].reverse().find(message => message.role === "assistant");
       if (latestReply?.id) traces[latestReply.id] = result.context_trace;
+    }
+    const latestAssistant = [...record.messages].reverse().find(message => message.role === "assistant");
+    if (latestAssistant?.id) {
+      const latestTrace = traces[latestAssistant.id];
+      if (latestTrace?.retrieval?.enabled === true) recordLastBrainRetrieval(windowRef?.sessionStorage, latestTrace);
+      else { try { windowRef?.sessionStorage?.removeItem("ersel-brain-retrieval-v1"); } catch { /* Highlight is best effort only. */ } }
     }
     taskSource.replaceChildren();
     option(taskSource, "", "Select a completed chat proposal");

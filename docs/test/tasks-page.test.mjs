@@ -26,17 +26,16 @@ test("shows all tasks in descending order and reports the next planned task", ()
   assert.equal(groups[0].id, "tasks-199-199");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), Array.from({ length: 199 }, (_, index) => 199 - index));
-  assert.match(elements["roadmap-summary"].textContent, /199 roadmap tasks.*191 completed.*4 deferred and incomplete.*3 planned.*1 design only/);
-  assert.match(elements["next-task"].textContent, /Task 197.*Futuristic 3D Brain visualization/);
+  assert.match(elements["roadmap-summary"].textContent, /199 roadmap tasks.*192 completed.*4 deferred and incomplete.*2 planned.*1 design only/);
+  assert.match(elements["next-task"].textContent, /Task 198.*Eyes, ears and voice capability packs/);
   const newest = items[0];
   assert.equal(newest.children[2].textContent, "Planned");
   assert.equal(newest.children[4].textContent, "AI verification: not recorded");
   assert.equal(newest.children[5].textContent, "Real hardware/live provider: unverified");
   assert.equal(newest.id, "task-199");
-  const latestCompleted = items.find(item => item.id === "task-196");
+  const latestCompleted = items.find(item => item.id === "task-197");
   assert.equal(latestCompleted.children[2].textContent, "Completed");
-  assert.match(latestCompleted.textContent, /task-196-brain-memory-grounded-retrieval/);
-  assert.match(latestCompleted.textContent, /10\/10 expected facts/);
+  assert.match(latestCompleted.textContent, /task-197-brain-visualization/);
   const priorCheckpoint = items.find(item => item.id === "task-191");
   assert.match(priorCheckpoint.children[4].textContent, /AI-verified/);
 });
@@ -165,7 +164,7 @@ test("publishes completed milestones and remaining phases with their current sta
     [174, "completed"], [175, "completed"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
     [180, "completed"], [181, "completed"], [182, "completed"], [183, "completed"], [184, "completed"], [185, "completed"],
     [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"], [191, "completed"], [192, "completed"], [193, "deferred"], [194, "deferred"], [195, "completed"],
-    [196, "completed"], [197, "planned"], [198, "planned"], [199, "planned"],
+    [196, "completed"], [197, "completed"], [198, "planned"], [199, "planned"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, "task-177-auto-rag-trace");
   assert.equal(tasks.find(task => task.number === 178).checkpoint, "task-178-nav-fix");
@@ -177,6 +176,7 @@ test("publishes completed milestones and remaining phases with their current sta
   assert.equal(tasks.find(task => task.number === 187).checkpoint, "task-187-opt-in-local-voice-input");
   assert.equal(tasks.find(task => task.number === 188).checkpoint, "task-188-opt-in-local-voice-output");
   assert.equal(tasks.find(task => task.number === 189).checkpoint, "task-189-opt-in-local-vision-input");
+  assert.equal(tasks.find(task => task.number === 197).checkpoint, "task-197-brain-visualization");
   assert.match(tasks.find(task => task.number === 178).validation.join(" "), /native window level/);
   assert.match(tasks.find(task => task.number === 178).limitations.join(" "), /not been published or distributed/);
   for (const task of tasks.filter(task => task.number >= 180)) {

@@ -88,6 +88,10 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
       "chat-task-context-scope", "chat-knowledge-extra-scope", "chat-tool-document-id",
       "chat-route-select"].includes(id) ? "select" : "",
   )]));
+  windowRef ||= {};
+  const sessionValues = new Map();
+  windowRef.sessionStorage ||= { setItem: (key, value) => sessionValues.set(key, value),
+    getItem: key => sessionValues.get(key), removeItem: key => sessionValues.delete(key) };
   elements["chat-history"].dataset = {};
   elements["chat-emergency-stop"].hidden = true;
   for (const id of ["chat-knowledge-enabled", "chat-knowledge-owner", "chat-knowledge-conversation", "chat-knowledge-extra-enabled"]) elements[id].checked = false;
@@ -125,7 +129,7 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
     planConfirmations.push(message);
     return confirmImpl(message);
   }, windowRef });
-  return { controller, elements, calls, planConfirmations, bodyClasses, documentListeners, documentRef };
+  return { controller, elements, calls, planConfirmations, bodyClasses, documentListeners, documentRef, windowRef };
 }
 
 test("local transcript is added after an unsent typed draft and never submits the chat", async () => {
@@ -302,6 +306,7 @@ test("answer trace is collapsed by default and remains available after a reply",
   assert.match(citations.textContent, /\[1\] notes\.json · memory-1#1/);
   assert.equal(details.open, false);
   assert.equal(details.children[0].textContent, "How I answered");
+  assert.match(JSON.parse(ui.windowRef.sessionStorage.getItem("ersel-brain-retrieval-v1")).retrieved[0], /memory-1#1/);
   assert.equal(ui.elements["chat-empty-state"].hidden, true);
 });
 

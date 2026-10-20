@@ -299,6 +299,30 @@ def list_owner_knowledge(principal: AuthenticatedPrincipal = Depends(require_per
             "items": items, "semantic": index.status()}
 
 
+@router.get("/brain/graph")
+def owner_brain_graph(principal: AuthenticatedPrincipal = Depends(require_permission("memory:read")),
+                      manager=Depends(service), now=Depends(get_memory_now)):
+    from app.knowledge.brain_graph import build_owner_brain_graph
+    return invoke(lambda: build_owner_brain_graph(manager, principal.identity, now))
+
+
+@router.get("/brain/node")
+def owner_brain_node(node_id: Annotated[str, Query(min_length=1, max_length=300)],
+                     principal: AuthenticatedPrincipal = Depends(require_permission("memory:read")),
+                     manager=Depends(service), now=Depends(get_memory_now)):
+    from app.knowledge.brain_graph import inspect_owner_brain_node
+    try:
+        return inspect_owner_brain_node(manager, principal.identity, node_id, now)
+    except MemoryExpiredError:
+        raise HTTPException(410, "Brain source has expired") from None
+    except PermissionError:
+        raise HTTPException(403, "Brain source is not available to this owner") from None
+    except KeyError:
+        raise HTTPException(404, "Brain node is unavailable") from None
+    except ValueError:
+        raise HTTPException(422, "Brain node request is invalid") from None
+
+
 @router.post("/owner")
 def create_owner_knowledge(body: OwnerKnowledgeCreate,
                            principal: AuthenticatedPrincipal = Depends(require_permission("memory:manage")),

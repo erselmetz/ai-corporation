@@ -3706,7 +3706,7 @@ export const post100Tasks = [
     "title": "Futuristic 3D Brain visualization",
     "description": "Add an optional Three.js Brain visualization based only on actual authorized document/chunk relationships, with a complete accessible list fallback.",
     "category": "Phase AG - Brain Visualization",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [196, 172, 162],
     "decisions": [],
     "acceptance": [
@@ -3718,12 +3718,16 @@ export const post100Tasks = [
     "outOfScope": ["No inferred corporate hierarchy, generated graph nodes, cross-owner memory visibility, continuous model polling, or replacement of existing corporation maps."],
     "risks": ["Projection and similarity can mislead if presented as facts; labels must state their actual basis and preserve unknown states.", "WebGL/GPU timing varies widely; one host's result is not a general performance guarantee."],
     "area": "P49",
-    "checkpoint": null,
-    "validation": [],
-    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["Live GPU frame timing under inference and packaged Electron rendering."]},
-    "limitations": [],
+    "checkpoint": "task-197-brain-visualization",
+    "validation": [
+      "Full validation: Python 1,372 passed / 5 skipped / 0 failed (2 dependency deprecation warnings); browser modules 259 passed / 0 failed; Electron 38 passed / 0 failed; public docs 21 passed / 0 failed; desktop UI production build and TypeScript passed; Python compilation and git diff --check passed. Focused graph/API tests 2 passed; focused Brain/chat/knowledge browser tests 50 passed.",
+      "Owner-only graph API returns metadata without source content; selected source/chunk text is fetched through the existing owner memory authorization boundary. Layout is deterministic by file-type/note grouping derived from authorized source metadata; edges are source-to-chunk only. No semantic similarity score is available from the existing API and none is shown.",
+      "The 3D view uses vendored Three.js instanced geometry, caps continuous animation at 24 FPS and at 320 rendered nodes/480 edges, pauses while the document is hidden, honors reduced-motion preference and switches to the full keyboard-accessible list when WebGL is unavailable or frame-time thresholds are exceeded."
+    ],
+    "realWorldVerification": {"status": "partial", "evidence": ["On this Windows machine, a local llama3.2:3b generation completed in 11.9 seconds while the Brain implementation was under review. Host CPU/GPU process metrics were not sufficient to attribute inference to the RX 570 or measure Brain canvas FPS."], "unverified": ["RX 570 frame-time/FPS measurement while Ollama generates, packaged Electron WebGL rendering, representative-owner usability and GPU-driver-specific fallback behavior."]},
+    "limitations": ["The existing Task 196 memory interface does not expose stored embedding coordinates or pairwise similarity values. The implemented 3D layout uses deterministic source groups and source-to-chunk links only; it does not claim semantic relationships."],
     "automatedVerification": ["Use deterministic embeddings and graph records, never random decorative nodes; test list parity, keyboard access, visibility pause, frame cap and fallback."],
-    "followUpValidation": ["Measure on RX 570 and at least one lower-capability host when available; confirm accessible list flow with a representative user."]
+    "followUpValidation": ["Measure actual Brain canvas frame time on the RX 570 while local Ollama generation is active, and verify renderer FPS/CPU/GPU via supported Windows telemetry. Test packaged Electron WebGL. Confirm the accessible list flow with a representative user."]
   },
   {
     "number": 198,
