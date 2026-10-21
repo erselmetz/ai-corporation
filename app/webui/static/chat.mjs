@@ -34,6 +34,7 @@ export function mountChat({
   const history = element("chat-history");
   const agents = element("chat-agent");
   const headerModel = element("chat-header-model");
+  const autonomyLevel = element("chat-autonomy-level");
   let coordinatorAgentModels = new Map();
   const updateHeaderModel = () => { headerModel.textContent = coordinatorAgentModels.get(agents.value) || ""; };
   const conversations = element("chat-conversation");
@@ -269,6 +270,24 @@ export function mountChat({
     }
     return payload;
   }
+  autonomyLevel?.addEventListener("change", async () => {
+    const previous = presentationPreferences.autonomy_level || "auto_safe";
+    try {
+      const session = await request("/api/local/session");
+      const response = await fetchImpl("/api/local/preferences", {
+        method: "PUT", credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-Local-CSRF": session.csrf },
+        body: JSON.stringify({ autonomy_level: autonomyLevel.value }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(typeof payload.detail === "string" ? payload.detail : "Autonomy setting could not be saved.");
+      presentationPreferences = payload.preferences;
+      state.textContent = `Autonomy saved: ${autonomyLevel.options?.[autonomyLevel.selectedIndex]?.textContent || autonomyLevel.value}. Permissions and cloud consent are unchanged.`;
+    } catch (error) {
+      autonomyLevel.value = previous;
+      state.textContent = error.message || "Autonomy setting could not be saved.";
+    }
+  });
   function option(select, value, label) {
     const item = documentRef.createElement("option");
     item.value = value;
@@ -664,6 +683,7 @@ export function mountChat({
         const payload = response.ok ? await response.json() : null;
         const prefs = payload?.preferences;
         if (prefs) presentationPreferences = prefs;
+        if (prefs?.autonomy_level && autonomyLevel) autonomyLevel.value = prefs.autonomy_level;
         const preferenceLabel = element("response-preferences-label");
         if (preferenceLabel) preferenceLabel.textContent = prefs
           ? `Display preference: ${prefs.response_mode}; locale ${prefs.locale}; ${prefs.detail_level} detail. It does not alter provider prompts or assignments.`

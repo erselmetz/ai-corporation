@@ -50,6 +50,8 @@ body.chat-page::before { content: ""; position: fixed; inset: 18% 12% 12% 22%; z
 .chat-header { display: flex; align-items: center; gap: 12px; min-height: 54px; padding: 6px 20px; }
 .chat-header-brand { color: var(--chat-muted); text-decoration: none; font-size: 12px; letter-spacing: .035em; }
 .chat-header-model { margin-left: auto; overflow: hidden; max-width: min(42vw, 260px); color: var(--chat-muted); text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.chat-autonomy-chip { display: inline-flex; align-items: center; gap: 6px; color: var(--chat-muted); font-size: 12px; }
+.chat-autonomy-chip select { max-width: 190px; }
 .chat-model-label { flex: none; margin: 0; }
 .chat-model-label select { max-width: min(22vw, 150px); border: 1px solid transparent; border-radius: 16px; background: transparent; color: var(--chat-muted); padding: 6px 4px; font: inherit; font-size: 11px; }
 .chat-model-label option { background: #121721; color: var(--chat-text); }

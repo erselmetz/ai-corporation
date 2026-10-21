@@ -75,6 +75,26 @@ def _presentation_preferences(request: Request, owner_id: str):
     return store.response_contract(owner_id) if store is not None else None
 
 
+def _autonomy_level(request: Request, owner_id: str) -> str:
+    """Missing or corrupt local policy blocks agent actions but preserves plain chat."""
+    store = getattr(request.app.state, "owner_preferences_service", None)
+    if store is None:
+        # Standalone authenticated API deployments predate the local preference
+        # store; preserve their existing explicit-permission flow at the safe default.
+        return "auto_safe"
+    try:
+        return store.get(owner_id).autonomy_level
+    except Exception:
+        return "chat_only"
+
+
+def _require_action_policy(request: Request, owner_id: str, body) -> None:
+    has_action = bool(body.context or body.knowledge_enabled or body.reviewed_tools
+                      or body.delegate_once or body.image_ids or body.include_local_ocr)
+    if has_action and _autonomy_level(request, owner_id) == "chat_only":
+        raise HTTPException(403, "Chat-only mode blocks Brain, tools, delegation, and media actions. Change the owner setting to continue.")
+
+
 def _agent_runtime_trace(service):
     factory = getattr(service, "agent_runtime", None)
     try:
@@ -700,6 +720,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
         raise HTTPException(422, "Reviewed tools cannot be combined with image turns.")
     with chat_errors():
         started_at = time.perf_counter()
+        _require_action_policy(request, principal.identity, body)
         presentation = _presentation_preferences(request, principal.identity)
         current = service.owned_chat().get(principal.identity, identifier)
         agent_profile = service.get_agent_profile(current["coordinator"].id)
@@ -924,6 +945,7 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
         raise HTTPException(422, "Exact prompt capture uses the one-turn response view; send without streaming.")
     with chat_errors():
         started_at = time.perf_counter()
+        _require_action_policy(request, principal.identity, body)
         presentation = _presentation_preferences(request, principal.identity)
         owned = service.owned_chat()
         current = owned.get(principal.identity, identifier)

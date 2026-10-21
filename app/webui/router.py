@@ -1014,6 +1014,7 @@ def coordinator_chat_page():
       <button id="chat-menu-button" type="button" aria-label="Open navigation" aria-expanded="false">&#9776;</button>
       <a class="chat-header-brand" href="/ui/chat">ERSELMETZ AI</a>
       <span id="chat-header-model" class="chat-header-model" aria-live="polite"></span>
+      <label class="chat-autonomy-chip" for="chat-autonomy-level">Autonomy <select id="chat-autonomy-level" aria-label="Chat autonomy level"><option value="chat_only">Chat only</option><option value="auto_safe">Auto for safe actions</option><option value="ask_every_action">Ask before every action</option></select></label>
       <button id="chat-emergency-stop" class="chat-emergency-stop" type="button" aria-label="Emergency stop protected activity" title="Stop protected activity" hidden>&#9632;</button>
       </header>
     <div class="chat-body">
@@ -1218,11 +1219,12 @@ def owner_preferences_page():
     <script type="module" src="/ui/static/preferences.mjs"></script></head><body>
     <main class="content"><nav aria-label="Preferences navigation"><a href="/ui">Home</a> | <a href="/ui/chat">Chat</a> | <a href="/ui/login?next=/ui/preferences">Owner sign-in</a></nav>
     <p class="eyebrow">OWNER SETTINGS</p><h1>Response preferences</h1>
-    <p>These choices guide presentation only. They do not change provider or model assignments, routing, approval, permissions, execution, microphone access, or cloud consent.</p>
+    <p>Autonomy controls decide whether reviewed safe actions may run. They never grant permissions, enable Operator, approve cloud transfer, or bypass spending limits.</p>
     <form id="preferences-form">
       <label for="preference-mode">Response style</label><select id="preference-mode"><option value="balanced">Balanced</option><option value="concise">Concise</option><option value="friendly">Friendly</option><option value="formal">Formal</option><option value="technical">Technical</option></select>
       <label for="preference-locale">Response locale</label><select id="preference-locale"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="fil-PH">Filipino</option></select>
       <label for="preference-detail">Response detail</label><select id="preference-detail"><option value="brief">Brief</option><option value="standard">Standard</option><option value="detailed">Detailed</option></select>
+      <label for="preference-autonomy">Chat autonomy</label><select id="preference-autonomy"><option value="chat_only">Chat only</option><option value="auto_safe">Auto for safe actions (default)</option><option value="ask_every_action">Ask before every action</option></select>
       <label for="preference-voice-mode">Optional reply speech preference</label><select id="preference-voice-mode"><option value="off">Off</option><option value="local">Local device voice when manually requested</option></select>
       <label for="preference-voice-language">Local voice language</label><select id="preference-voice-language"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="fil-PH">Filipino</option></select>
       <label for="preference-voice-id">Local voice identifier (optional)</label><input id="preference-voice-id" maxlength="160" autocomplete="off">

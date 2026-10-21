@@ -36,7 +36,7 @@ def test_preferences_are_owner_scoped_persistent_versioned_resettable_and_export
 
 def test_preferences_reject_unknown_values_fields_and_unbounded_voice_ids():
     service = OwnerPreferencesService()
-    for changes in ({"response_mode": "admin"}, {"capability": "desktop:act"}, {"voice_id": "x" * 161}):
+    for changes in ({"response_mode": "admin"}, {"capability": "desktop:act"}, {"voice_id": "x" * 161}, {"autonomy_level": "unrestricted"}):
         with pytest.raises(OwnerPreferencesError):
             service.update("owner", changes)
 
@@ -53,6 +53,9 @@ def test_local_preferences_require_owner_session_csrf_and_default_api_is_closed(
         saved = client.put("/api/local/preferences", json={"response_mode": "friendly", "locale": "fil-PH"}, headers=headers)
         assert saved.status_code == 200
         assert saved.json()["preferences"]["response_mode"] == "friendly"
+        autonomy = client.put("/api/local/preferences", json={"autonomy_level": "ask_every_action"}, headers=headers)
+        assert autonomy.status_code == 200
+        assert autonomy.json()["preferences"]["autonomy_level"] == "ask_every_action"
         assert client.get("/api/local/preferences/export").json()["preferences"]["locale"] == "fil-PH"
         reset = client.post("/api/local/preferences/reset", json={}, headers=headers)
         assert reset.json()["preferences"]["locale"] == "en-US"
@@ -63,6 +66,7 @@ def test_local_preferences_require_owner_session_csrf_and_default_api_is_closed(
 
 def test_preference_schema_migration_is_additive_and_defaults_are_not_saved():
     from app.database.connection import get_connection
+    OwnerPreferencesService().get("migration-setup")
     connection = get_connection()
     try:
         before = {row["name"] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
@@ -73,6 +77,81 @@ def test_preference_schema_migration_is_additive_and_defaults_are_not_saved():
         assert connection.execute("SELECT 1 FROM owner_preferences WHERE owner_id='migration-owner'").fetchone() is None
     finally:
         connection.close()
+
+
+def test_v1_preference_rows_migrate_with_safe_autonomy_default():
+    import json
+    from app.database.connection import get_connection
+    OwnerPreferencesService().get("migration-setup")
+    connection = get_connection()
+    try:
+        connection.execute("DELETE FROM owner_preferences")
+        connection.execute("UPDATE owner_preferences_schema SET version=1")
+        connection.execute("INSERT INTO owner_preferences(owner_id, preferences_json, version) VALUES (?, ?, ?)",
+                           ("legacy", json.dumps({"response_mode": "concise", "version": 1}), 1))
+        connection.commit()
+    finally:
+        connection.close()
+    preferences = OwnerPreferencesService().get("legacy")
+    assert preferences.response_mode == "concise"
+    assert preferences.autonomy_level == "auto_safe"
+    connection = get_connection()
+    try:
+        row = connection.execute("SELECT preferences_json, version FROM owner_preferences WHERE owner_id='legacy'").fetchone()
+        assert row["version"] == 2
+        assert json.loads(row["preferences_json"])["autonomy_level"] == "auto_safe"
+    finally:
+        connection.close()
+
+
+def test_agent_runtime_enforces_autonomy_for_tool_calls():
+    from app.agent_runtime import AgentRuntime, AgentRuntimeApprovalRequired, AgentRuntimeError
+    from app.tools.registry import ToolRegistry
+    from app.tools.base import Tool
+
+    class ReadTool(Tool):
+        def __init__(self):
+            super().__init__("read", "Read", "read-only test", risk_class="read",
+                             input_schema={"type": "object", "properties": {}, "additionalProperties": False})
+        def execute(self): return "ok"
+
+    registry = ToolRegistry()
+    registry.register(ReadTool())
+    runtime = AgentRuntime()
+    def planner(observations):
+        if observations:
+            return {"type": "answer", "text": "ok"}
+        return {"type": "tool", "tool_id": "read", "arguments": {}}
+    with pytest.raises(AgentRuntimeError, match="Chat-only"):
+        runtime.run_agentic("coordinator", planner, registry, autonomy_level="chat_only")
+    with pytest.raises(AgentRuntimeApprovalRequired) as error:
+        runtime.run_agentic("coordinator", planner, registry, autonomy_level="ask_every_action")
+    assert error.value.risk_class == "read"
+    assert error.value.preview
+    assert runtime.run_agentic("coordinator", planner, registry, autonomy_level="auto_safe") == "ok"
+
+
+def test_corrupt_autonomy_policy_fails_closed_for_agent_actions():
+    from types import SimpleNamespace
+    from app.api.chat import _autonomy_level, _require_action_policy, SendRequest
+    from app.database.connection import get_connection
+    service = OwnerPreferencesService()
+    service.update("corrupt-owner", {"response_mode": "concise"})
+    connection = get_connection()
+    try:
+        connection.execute("UPDATE owner_preferences SET preferences_json=? WHERE owner_id=?", ("{bad", "corrupt-owner"))
+        connection.commit()
+    finally:
+        connection.close()
+    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(owner_preferences_service=service)))
+    assert _autonomy_level(request, "corrupt-owner") == "chat_only"
+    with pytest.raises(Exception, match="Chat-only mode"):
+        _require_action_policy(request, "corrupt-owner", SendRequest(
+            text="search", knowledge_enabled=True,
+            knowledge_scopes=[{"scope": "owner", "scope_id": ""}],
+            knowledge_preview_digest="0" * 64))
+    no_store = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace()))
+    assert _autonomy_level(no_store, "owner") == "auto_safe"
 
 
 def test_local_chat_uses_saved_bounded_presentation_without_changing_agent_or_consent():

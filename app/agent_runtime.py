@@ -109,6 +109,7 @@ class AgentRuntime:
             self._stop_check = stop_check
 
     def invoke_tool(self, registry, tool_id: str, arguments: dict, *, allow_read: bool = False,
+                    autonomy_level: str | None = None,
                     progress: Callable[[str], None] | None = None):
         """Validate a registered tool and auto-run only explicitly read-only tools.
 
@@ -123,7 +124,14 @@ class AgentRuntime:
             tool = registry.get(tool_id)
         except Exception:
             raise AgentRuntimeError("Tool is not registered or its request failed validation") from None
-        if risk != "read" or allow_read is not True:
+        if autonomy_level is not None and autonomy_level not in {
+                "chat_only", "auto_safe", "ask_every_action"}:
+            raise AgentRuntimeError("Autonomy preference is invalid; tool execution is blocked")
+        read_allowed = (allow_read is True if autonomy_level is None
+                        else autonomy_level == "auto_safe")
+        if autonomy_level == "chat_only":
+            raise AgentRuntimeError("Chat-only mode blocks tool execution")
+        if risk != "read" or not read_allowed:
             trace = _CURRENT_TRACE.get()
             if trace is not None and len(trace.get("steps", ())) < self.limits.max_steps:
                 _append_step(trace, tool_id[:64], "approval_required", risk,
@@ -156,6 +164,7 @@ class AgentRuntime:
 
     def run_agentic(self, agent_id: str, planner: Callable[[tuple[dict, ...]], dict],
                     registry, *, allow_read_tools: bool = False,
+                    autonomy_level: str | None = None,
                     progress: Callable[[str], None] | None = None):
         """Execute a synchronous plan/tool/observe loop within the shared limits.
 
@@ -224,7 +233,9 @@ class AgentRuntime:
                     0, self._stopped))
                 try:
                     result = self.invoke_tool(registry, tool_id, decision["arguments"],
-                                              allow_read=allow_read_tools, progress=progress)
+                                              allow_read=allow_read_tools,
+                                              autonomy_level=autonomy_level,
+                                              progress=progress)
                 finally:
                     _CURRENT_INVOCATION.reset(context_token)
                 operation_count += 1

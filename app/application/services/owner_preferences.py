@@ -1,4 +1,4 @@
-"""Bounded local-owner presentation preferences, separate from capability policy."""
+"""Bounded local-owner presentation and autonomy preferences, separate from capability policy."""
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
@@ -8,10 +8,10 @@ from threading import RLock
 
 from app.database.connection import get_connection
 
-PREFERENCE_VERSION = 1
+PREFERENCE_VERSION = 2
 RETENTION_NOTICE = (
     "Preferences are stored without encryption in the local application database until you reset them "
-    "or remove that database. They contain presentation choices only; no chat content or credentials are stored."
+    "or remove that database. They contain presentation and autonomy choices only; no chat content or credentials are stored."
 )
 MODES = frozenset({"balanced", "concise", "friendly", "formal", "technical"})
 DETAIL_LEVELS = frozenset({"brief", "standard", "detailed"})
@@ -21,7 +21,9 @@ VOICE_LANGUAGES = frozenset({"en-US", "en-GB", "fil-PH"})
 DEFAULTS = {
     "response_mode": "balanced", "locale": "en-US", "detail_level": "standard",
     "voice_mode": "off", "voice_language": "en-US", "voice_id": "",
+    "autonomy_level": "auto_safe",
 }
+AUTONOMY_LEVELS = frozenset({"chat_only", "auto_safe", "ask_every_action"})
 _VOICE_ID = re.compile(r"^[^\x00-\x1f\x7f/\\]{1,160}$")
 _LOCK = RLock()
 
@@ -38,13 +40,14 @@ class OwnerPreferences:
     voice_mode: str = DEFAULTS["voice_mode"]
     voice_language: str = DEFAULTS["voice_language"]
     voice_id: str = DEFAULTS["voice_id"]
+    autonomy_level: str = DEFAULTS["autonomy_level"]
     version: int = PREFERENCE_VERSION
 
 
 def _validate(values):
     if not isinstance(values, dict) or set(values) - set(DEFAULTS) - {"version"}:
         raise OwnerPreferencesError("Unsupported preference fields")
-    if "version" in values and values["version"] != PREFERENCE_VERSION:
+    if "version" in values and values["version"] not in {1, PREFERENCE_VERSION}:
         raise OwnerPreferencesError("Stored preferences use an unsupported version")
     result = dict(DEFAULTS)
     result.update(values)
@@ -53,6 +56,8 @@ def _validate(values):
     for name, allowed in choices.items():
         if result[name] not in allowed:
             raise OwnerPreferencesError(f"Unsupported {name.replace('_', ' ')}")
+    if result["autonomy_level"] not in AUTONOMY_LEVELS:
+        raise OwnerPreferencesError("Unsupported autonomy level")
     if not isinstance(result["voice_id"], str) or (result["voice_id"] and not _VOICE_ID.fullmatch(result["voice_id"])):
         raise OwnerPreferencesError("Voice identifier is invalid")
     return OwnerPreferences(**result)
@@ -68,10 +73,28 @@ def _migrate(connection):
         owner_id TEXT PRIMARY KEY, preferences_json TEXT NOT NULL, version INTEGER NOT NULL)""")
     if row is None:
         connection.execute("INSERT INTO owner_preferences_schema (version) VALUES (?)", (PREFERENCE_VERSION,))
+    elif row[0] < PREFERENCE_VERSION:
+        # Add the safe default to valid v1 records. Leave malformed records intact so
+        # reads fail closed and an owner can explicitly reset them.
+        rows = connection.execute("SELECT owner_id, preferences_json FROM owner_preferences").fetchall()
+        for stored in rows:
+            try:
+                values = json.loads(stored["preferences_json"])
+                if not isinstance(values, dict) or values.get("version", 1) != 1:
+                    continue
+                values["autonomy_level"] = "auto_safe"
+                values["version"] = PREFERENCE_VERSION
+                _validate(values)
+                connection.execute("UPDATE owner_preferences SET preferences_json=?, version=? WHERE owner_id=?",
+                                   (json.dumps(values, sort_keys=True, separators=(",", ":")),
+                                    PREFERENCE_VERSION, stored["owner_id"]))
+            except (TypeError, ValueError, json.JSONDecodeError):
+                continue
+        connection.execute("UPDATE owner_preferences_schema SET version=?", (PREFERENCE_VERSION,))
 
 
 class OwnerPreferencesService:
-    """Stores only bounded display choices under the authenticated owner identity."""
+    """Stores bounded presentation and autonomy choices under the authenticated owner identity."""
 
     def get(self, owner_id: str) -> OwnerPreferences:
         with _LOCK:

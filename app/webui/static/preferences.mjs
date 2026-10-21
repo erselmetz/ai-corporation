@@ -1,5 +1,6 @@
 const fields = {
   response_mode: "preference-mode", locale: "preference-locale", detail_level: "preference-detail",
+  autonomy_level: "preference-autonomy",
   voice_mode: "preference-voice-mode", voice_language: "preference-voice-language", voice_id: "preference-voice-id",
 };
 const form = document.querySelector("#preferences-form");
@@ -18,7 +19,7 @@ async function load() {
     if (!response.ok) throw new Error(response.status === 401 ? "Sign in through Owner sign-in to manage preferences." : "Preferences could not be loaded.");
     const payload = await response.json(); show(payload.preferences);
     document.querySelector("#preferences-retention").textContent = payload.retention;
-    state.textContent = "Preferences loaded. Changes apply to presentation only.";
+    state.textContent = "Preferences loaded. Autonomy never changes permissions or consent.";
   } catch (error) { state.textContent = error.message; }
 }
 form.addEventListener("submit", async event => {

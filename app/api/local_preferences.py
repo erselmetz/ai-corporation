@@ -1,5 +1,6 @@
 """Owner-scoped presentation preferences for the explicitly configured local app."""
 from fastapi import APIRouter, Depends, HTTPException, Request
+from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.security import AuthenticatedPrincipal, require_permission
@@ -20,6 +21,7 @@ class PreferenceUpdate(BaseModel):
     voice_mode: str | None = Field(default=None, max_length=10)
     voice_language: str | None = Field(default=None, max_length=10)
     voice_id: str | None = Field(default=None, max_length=160)
+    autonomy_level: Literal["chat_only", "auto_safe", "ask_every_action"] | None = None
 
 
 def _service(request: Request) -> OwnerPreferencesService:

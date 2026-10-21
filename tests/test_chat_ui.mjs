@@ -79,7 +79,7 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
     "chat-search", "chat-nav-toggle", "chat-menu-button", "chat-sidebar", "chat-emergency-stop",
     "chat-add-image-action", "chat-camera-action", "chat-screen-action", "chat-knowledge-menu-toggle",
     "chat-image-file", "chat-capture-camera", "chat-capture-screen",
-    "chat-mic", "chat-theme-toggle", "chat-settings", "chat-header-model",
+    "chat-mic", "chat-theme-toggle", "chat-settings", "chat-header-model", "chat-autonomy-level",
     "response-preferences-label",
     "voice-transcribe", "voice-install-local", "voice-cloud-consent", "voice-budget-form",
     "voice-budget-cents", "voice-budget-save", "voice-budget-state", "voice-state",
@@ -113,7 +113,7 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
     });
     if (path === "/api/local/preferences") return response({ preferences: {
       response_mode: "balanced", locale: "en-US", detail_level: "standard",
-      voice_mode: "off", voice_language: "en-US", voice_id: "",
+      voice_mode: "off", voice_language: "en-US", voice_id: "", autonomy_level: "auto_safe",
     }, retention: "Local presentation choices only." });
     if (path === "/api/local/voice") return response({
       cloud_budget: { configured: false, ceiling_cents: null, reserved_cents: 0,
@@ -496,6 +496,18 @@ test("Electron direct launch opens a coordinator conversation and sends local ch
   assert.equal(await ui.controller.send({ preventDefault() {} }), true);
   assert.equal(ui.planConfirmations.length, 0);
   assert.match(ui.elements["chat-history"].textContent, /hi from local fake/);
+});
+
+test("chat autonomy chip loads and persists the owner-scoped setting with CSRF", async () => {
+  const ui = setup();
+  await ui.controller.initialLoad;
+  assert.equal(ui.elements["chat-autonomy-level"].value, "auto_safe");
+  ui.elements["chat-autonomy-level"].value = "ask_every_action";
+  await ui.elements["chat-autonomy-level"].listeners.change();
+  const update = ui.calls.find(call => call.path === "/api/local/preferences" && call.options?.method === "PUT");
+  assert.ok(update);
+  assert.deepEqual(JSON.parse(update.options.body), { autonomy_level: "ask_every_action" });
+  assert.equal(update.options.headers["X-Local-CSRF"], "test-csrf");
 });
 
 test("canceling the reviewed chat plan starts no retrieval, tools, or provider request", async () => {
