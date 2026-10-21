@@ -1010,7 +1010,9 @@ export function mountChat({
     function consumeLine(line) {
       if (!line.trim()) return;
       const event = JSON.parse(line);
-      if (event.type === "chunk" && typeof event.text === "string") {
+      if (event.type === "status" && typeof event.message === "string") {
+        state.textContent = event.message.slice(0, 80);
+      } else if (event.type === "chunk" && typeof event.text === "string") {
         partial += event.text;
         receivedBytes += new TextEncoder().encode(event.text).length;
         if (receivedBytes > 8192) throw new Error("Provider stream exceeded the response limit.");

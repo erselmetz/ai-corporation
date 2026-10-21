@@ -441,6 +441,7 @@ def test_streaming_endpoint_returns_real_chunks_and_persists_only_final_reply():
         assert response.status_code == 200
         events = [json.loads(line) for line in response.text.splitlines()]
         assert [(event["type"], event.get("text")) for event in events] == [
+            ("status", None),
             ("chunk", "partial "),
             ("chunk", "reply"),
             ("complete", None),
@@ -488,7 +489,7 @@ def test_stream_failure_keeps_turn_pending_and_does_not_expose_provider_error():
         )
         events = [json.loads(line) for line in response.text.splitlines()]
         assert response.status_code == 200
-        assert events[0] == {"type": "chunk", "text": "partial "}
+        assert events[0] == {"type": "status", "message": "Answering..."}
         assert events[-1]["type"] == "error"
         assert "secret-provider-credential" not in response.text
         messages = client.get(path, headers={"x-test-owner": "alice"}).json()["conversation"]["messages"]

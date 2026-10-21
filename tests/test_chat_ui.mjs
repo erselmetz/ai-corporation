@@ -582,6 +582,7 @@ test("streaming chat renders provider chunks and verifies the completed response
     }
     if (path.endsWith("/messages/stream")) {
       return streamResponse([
+        { type: "status", message: "Answering..." },
         { type: "chunk", text: "first " },
         { type: "chunk", text: "reply" },
         completedStreamEvent,

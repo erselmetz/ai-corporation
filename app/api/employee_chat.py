@@ -16,6 +16,7 @@ from app.application.services.owned_chat import (
     ChatUnavailable,
 )
 from app.providers.base import ProviderCapacityError, ProviderCapacityUnknown
+from app.agent_runtime import AgentRuntimeBudgetExceeded, AgentRuntimeError, AgentRuntimeStopped
 from .chat import bounded_body, contains_gemini_key, get_application_service
 from .models import (
     EmployeeChatAgentResponse,
@@ -73,6 +74,12 @@ def _parse(model, payload: bytes):
 def _chat_errors():
     try:
         yield
+    except AgentRuntimeStopped:
+        raise HTTPException(409, "Agent Runtime was stopped by the owner. Start a new turn when ready.") from None
+    except AgentRuntimeBudgetExceeded:
+        raise HTTPException(504, "Agent Runtime reached its bounded time or step budget. No retry was started.") from None
+    except AgentRuntimeError:
+        raise HTTPException(502, "Agent Runtime could not complete this turn. No automatic retry occurred.") from None
     except ChatConsentRequired as error:
         raise HTTPException(403, str(error)) from None
     except ChatNotFound:

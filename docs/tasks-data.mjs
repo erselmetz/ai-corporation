@@ -3902,15 +3902,106 @@ export const post100Tasks = [
     "limitations": ["The local map is read-only and renders at most 100 current Agent profiles, traces from the 20 most recent in-memory owner conversations, 60 handoffs, and 100 current Brain-source links. Trace links show recorded events, not a live transfer stream; no conversation text or Brain content is returned by the map API.", "Task 202 approval records do not identify a requesting Agent, and the current runtime status service does not produce an Agent-specific waiting-for-approval state. The visualization supports that state if a future authorized source reports it, but does not infer it from a generic pending approval.", "This implementation uses original Canvas 2D sigils rather than WebGL. Automatic fallback measures JavaScript draw duration; it does not establish GPU completion timing. RX 570 and packaged Electron measurements remain follow-up."],
     "automatedVerification": ["The protected snapshot requires both agent:read and chat:read, returns only bounded Agent metadata and current trace identifiers, strips conversation content, ignores stale Brain sources, and emits only validated handoff/source links.", "Browser tests verify actual-record-only nodes and links, ID-stable orbit placement, Coordinator center from the built-in profile key, state rendering, keyboard-selectable details, accessible list relationships, reduced-motion default, absent-canvas fallback, hidden-page pause, 24 FPS cap and draw-budget fallback."],
     "followUpValidation": ["Run the packaged Electron app on the RX 570 while a local model generates; record the exact build identity and observed frame timing. Confirm the accessible list and reduced-motion behavior in the packaged app. Live local inference remains unavailable in this acceptance environment."]
+  },
+  {
+    "number": 207,
+    "title": "Bounded Agent Runtime",
+    "description": "Route every chat provider call through one synchronous Agent Runtime with bounded direct responses, a capped planner/tool interface, trace metadata, timeouts, token limits, and the existing emergency stop.",
+    "category": "Phase AN - Agent Runtime",
+    "status": "completed",
+    "dependsOn": [177, 182, 200, 201, 202],
+    "decisions": [],
+    "acceptance": ["Coordinator, Employee, image, alternate-route, streaming and non-streaming chat calls share one runtime boundary; ordinary turns use one direct answer step.", "The synchronous planner contract is capped at five steps, bounded by total/per-step time and output-token budgets, validates exact answer/tool decision fields, marks tool output untrusted, and does not retry malformed tool calls.", "Registered tools declare a schema and risk class, provide a preview and dry-run, and may opt into undo. Unknown risk fails closed as control. Only explicitly authorized read tools can auto-run; every other risk is rejected with an approval-required preview.", "Runtime operations check the existing global emergency stop, emit a compact streaming status, and attach metadata-only runtime steps to the existing owner-scoped chat trace. No prompt, tool result, secret, or raw exception is stored in runtime metadata."],
+    "outOfScope": ["No background/restarting loop, automatic tool selection, autonomy setting, model-quality policy, remote web search, task dispatch, or silent side effects; those remain later phase scope."],
+    "risks": ["A synchronous local stop check cannot forcibly interrupt arbitrary blocking third-party code; provider adapters must honor runtime deadlines and check the stop between chunks."],
+    "area": "P56",
+    "checkpoint": "task-207-bounded-agent-runtime",
+    "validation": ["Full validation passed: Python 1,414 passed / 5 skipped / 0 failed; browser modules 279 passed / 0 failed; Electron 38 passed / 0 failed; public docs 21 passed / 0 failed. Focused Agent Runtime/chat/tool tests passed (79 passed); Python compileall and git diff --check passed."],
+    "realWorldVerification": {"status": "partial", "evidence": ["A real local TestClient chat route using the installed Ollama llama3.2:3b returned 'Hi!' to 'hello'; the attached metadata-only runtime trace recorded classify, plan and answer in 875 ms."], "unverified": ["Packaged Electron behavior and runtime interruption during a real provider generation were not exercised."]},
+    "limitations": ["Agent Runtime direct chat is integrated with provider timeout/token bounds and emergency-stop checks. Its bounded planner interface is tested with deterministic fakes; automatic routing and production tool orchestration are later Tasks 208-210. The real local check used the Python-served API in an isolated temporary data directory, not a packaged Electron build."],
+    "automatedVerification": ["Focused deterministic tests cover all chat routes through the runtime, structured provider messages, limits, stop checks, streaming cleanup, metadata-only traces, tool schemas, previews, read-only admission, approval denial, untrusted observations, and malformed structured output."],
+    "followUpValidation": ["Run the local-model evaluation after the automatic tool-routing and quality-gating phases are implemented. Confirm stop and bounded generation in the packaged Windows application when a local model is available."]
+  },
+  {
+    "number": 208,
+    "title": "Deterministic direct-versus-agentic routing",
+    "description": "Route ordinary chat directly and select bounded agentic handling only when a supported capability clearly matches; classification failures fall back to direct chat.",
+    "category": "Phase AO - Auto-routing",
+    "status": "planned",
+    "dependsOn": [207, 182, 196],
+    "decisions": [],
+    "acceptance": ["Deterministic greetings and short chat use one direct provider response; Brain, web, screen, file, or code cues select only an existing supported tool path and are recorded in the real trace.", "Unsupported cues, classifier errors, invalid structured output, or exhausted one-repair allowance fall back to direct response without repeating tools or hiding failures.", "Any model-based classifier fallback uses a constrained schema, exact field validation, and at most one repair retry; tests show malformed tool calls cannot execute."],
+    "outOfScope": ["No automatic cloud/provider/model switching, unsupported web/screen/code capabilities, background activity, or silent side effects."],
+    "risks": ["Keyword heuristics may misclassify ambiguous language; fail-safe behavior is a direct answer and visible trace rather than a guessed tool call."],
+    "area": "P57",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [],
+    "automatedVerification": ["Deterministic tests must cover direct greetings, tool cues, unsupported tools, classifier failure, schema rejection and one-repair ceiling."],
+    "followUpValidation": ["Compare direct-versus-agentic decisions on the Task 211 real-model evaluation set; do not treat fake classifiers as quality evidence."]
+  },
+  {
+    "number": 209,
+    "title": "Owner autonomy levels and action approvals",
+    "description": "Add one persisted autonomy preference for chat-only, safe read actions, or approval before every action, while reusing current consent, approval and emergency-stop controls.",
+    "category": "Phase AP - Autonomy controls",
+    "status": "planned",
+    "dependsOn": [207, 208, 142, 144, 182],
+    "decisions": [],
+    "acceptance": ["Settings and a compact chat control offer Chat only, Auto for safe actions (default), and Ask before every action; the selected value is persisted per owner and fail-closed on corrupt/missing data.", "Only declared read tools can execute automatically at the default level. Write, external, and control actions create an exact-preview inline approval card with owner approve/deny and expiry, before execution.", "Cloud calls retain per-turn consent and spend limits; Operator/automation remain disabled until separately enabled in Settings; the existing one-click emergency stop remains visible and effective."],
+    "outOfScope": ["No change to fail-closed authentication, capability grants, existing permission requirements, cloud consent, spending limits, or approval execution contracts."],
+    "risks": ["A persisted preference must never grant broader authority than current permissions or silently approve stale/changed action previews."],
+    "area": "P58",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [],
+    "automatedVerification": ["Test owner isolation, migration/corruption fallback, each autonomy level, exact-preview digest, denial, expiry, CSRF, emergency stop and zero side effects without approval."],
+    "followUpValidation": ["Review the three levels and approval clarity in the local UI; manual usability feedback remains follow-up and is not substituted by tests."]
+  },
+  {
+    "number": 210,
+    "title": "Small-model tool-calling quality",
+    "description": "Prefer verified native tool calling when supported and otherwise use bounded structured output, then compare installed local models before suggesting any owner-confirmed model change.",
+    "category": "Phase AQ - Tool-calling quality",
+    "status": "planned",
+    "dependsOn": [207, 208, 209, 182],
+    "decisions": [],
+    "acceptance": ["Provider capability evidence determines whether native tool calling is supported; unknown capability uses validated structured output, never model-name assumptions.", "Every proposed call is validated against the registered tool schema and risk before preview, approval or execution; malformed output gets at most one repair and never loops.", "Compare llama3.2:3b with any larger installed local model on the same deterministic tool cases. The UI may suggest a larger installed model with evidence, but switching requires owner confirmation; no download occurs."],
+    "outOfScope": ["No silent model switching/downloads, cloud calls, paid services, fabricated capability evidence, or quality claims without measured results."],
+    "risks": ["Native tool support and structured output vary by model/runtime; incorrect capability declarations can produce invalid or unsafe calls, which must fail closed."],
+    "area": "P59",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [],
+    "automatedVerification": ["Use deterministic fake providers to test supported/unsupported/unknown capability paths, strict schemas, single repair, no invalid execution, bounded traces and explicit model-change confirmation."],
+    "followUpValidation": ["Record model IDs, provider-reported capability, measured tool accuracy and latency for real local evaluations separately from fakes."]
+  },
+  {
+    "number": 211,
+    "title": "Real local Agent Runtime evaluation harness",
+    "description": "Evaluate realistic plain-chat, Brain, read-tool, and approval-required requests against installed local models and keep agent mode experimental for models with poor measured results.",
+    "category": "Phase AR - Runtime evaluation",
+    "status": "planned",
+    "dependsOn": [207, 208, 209, 210],
+    "decisions": [],
+    "acceptance": ["Provide 30 reproducible tasks: 10 plain chat, 10 Brain/retrieval, 5 web/read, and 5 approval-required. Run only installed local models with no cloud/paid calls or downloads.", "Report each model’s success rate, wrong-tool rate, average steps, latency and failures with model/runtime identity and retained evidence sufficient to reproduce the score.", "Models with poor measured results are labeled experimental and agent mode is not enabled by default for them; unknown/incomplete evaluations do not count as passing."],
+    "outOfScope": ["No model downloads, paid/cloud evaluation, silent capability changes, or automatic promotion based on synthetic/fake-provider scores."],
+    "risks": ["A small evaluation set may not predict general user quality; scores must remain bounded to the exact test set and hardware/runtime used."],
+    "area": "P60",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [],
+    "automatedVerification": ["Test the harness with deterministic providers for task accounting, scoring math, wrong-tool detection, latency aggregation, failure reporting and gating of unmeasured models."],
+    "followUpValidation": ["Run all 30 tasks with the real installed llama3.2:3b and any larger installed local model; publish actual replies, model identity and hardware/runtime limitations."]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, and 195-203 are completed scoped checkpoints; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, 195-203 and 207 are completed scoped checkpoints; Tasks 208-211 are planned; Task 190 is design-only. Tasks 204-206 have no published contract and are not inferred. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
-  "developmentAcceptance": "For Tasks 175-203, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
+  "developmentAcceptance": "For Tasks 175-211, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
   "enhancementLoop": "After scoped development acceptance, continue to the next dependency-ready task without waiting for human QA. Record reproducible defects and regression cases for later review by different AI models; identify model/reviewer when available and never claim independent review that did not occur.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
   "completion": "Completed requires actual acceptance evidence, truthful limitations/skips, required documentation/update records, and a reviewed task checkpoint. A local checkpoint is sufficient for development acceptance; push or deployment is separate and must be authorized and verified when performed. Never mark complete solely because code exists or an AI says it worked.",
@@ -3958,7 +4049,12 @@ const futureRoadmapGroups = [
   { name: "Phase AJ - Built-in Agent Team", range: "200-200", tasks: post100Tasks.filter(task => task.category === "Phase AJ - Built-in Agent Team").map(({ title, description }) => [title, description]) },
   { name: "Phase AK - Agents Workspace", range: "201-201", tasks: post100Tasks.filter(task => task.category === "Phase AK - Agents Workspace").map(({ title, description }) => [title, description]) },
   { name: "Phase AL - Agent Delegation and Approvals", range: "202-202", tasks: post100Tasks.filter(task => task.category === "Phase AL - Agent Delegation and Approvals").map(({ title, description }) => [title, description]) },
-  { name: "Phase AM - Sage Core Visualization", range: "203-203", tasks: post100Tasks.filter(task => task.category === "Phase AM - Sage Core Visualization").map(({ title, description }) => [title, description]) }
+  { name: "Phase AM - Sage Core Visualization", range: "203-203", tasks: post100Tasks.filter(task => task.category === "Phase AM - Sage Core Visualization").map(({ title, description }) => [title, description]) },
+  { name: "Phase AN - Agent Runtime", range: "207-207", tasks: post100Tasks.filter(task => task.category === "Phase AN - Agent Runtime").map(({ title, description }) => [title, description]) },
+  { name: "Phase AO - Auto-routing", range: "208-208", tasks: post100Tasks.filter(task => task.category === "Phase AO - Auto-routing").map(({ title, description }) => [title, description]) },
+  { name: "Phase AP - Autonomy controls", range: "209-209", tasks: post100Tasks.filter(task => task.category === "Phase AP - Autonomy controls").map(({ title, description }) => [title, description]) },
+  { name: "Phase AQ - Tool-calling quality", range: "210-210", tasks: post100Tasks.filter(task => task.category === "Phase AQ - Tool-calling quality").map(({ title, description }) => [title, description]) },
+  { name: "Phase AR - Runtime evaluation", range: "211-211", tasks: post100Tasks.filter(task => task.category === "Phase AR - Runtime evaluation").map(({ title, description }) => [title, description]) }
 ];
 
 export const taskGroups = [...foundationTaskGroups, {
@@ -3994,7 +4090,12 @@ export const recommendedOrder = [
   { number: 200, reason: "Create the role profiles and shared local capacity boundary before adding Agent UI or delegation." },
   { number: 201, reason: "Expose existing Agent identities and owner controls before connecting them through chat." },
   { number: 202, reason: "Add bounded, traced handoffs and approvals before any live team visualization implies work." },
-  { number: 203, reason: "Render only the real profiles, approvals, states and traces delivered by the earlier phases." }
+  { number: 203, reason: "Render only the real profiles, approvals, states and traces delivered by the earlier phases." },
+  { number: 207, reason: "Establish one bounded, traced execution boundary before automatic routing or autonomy controls." },
+  { number: 208, reason: "Route only supported requests to tools and keep all uncertain classification on direct chat." },
+  { number: 209, reason: "Make safe-read defaults explicit while reusing owner approvals, cloud consent and the emergency stop." },
+  { number: 210, reason: "Measure provider-supported tool calling and constrain small-model output before enabling broader use." },
+  { number: 211, reason: "Use real local task results to gate agent mode instead of assuming model quality." }
 ];
 export const nextTask = recommendedOrder.map(({ number }) => post100Tasks.find(task => task.number === number)).find(task => task?.status === "planned")
   ?? post100Tasks.find(task => task.status === "planned");

@@ -3,6 +3,12 @@
     {
       "date": "2026-10-21",
       "type": "development",
+      "title": "Task 207 bounded Agent Runtime",
+      "summary": "All Coordinator and Employee chat routes now pass through one synchronous bounded Agent Runtime. Added metadata-only runtime trace steps, provider time/token budgets, emergency-stop checks, constrained tool risk/schema/preview/dry-run metadata, and a short live streaming status. Validation: Python 1,414 passed / 5 skipped / 0 failed; browser modules 279; Electron 38; public docs 21. A real local llama3.2:3b Python chat API turn returned “Hi!” in 875 ms. Packaged Electron behavior and stopping an active real generation remain unverified. No push or deployment."
+    },
+    {
+      "date": "2026-10-21",
+      "type": "development",
       "title": "Task 203 Sage Core live-state visualization",
       "summary": "Added a read-only Sage Core page using current Agent runtime states and bounded recent owner-scoped chat traces. Original Canvas 2D sigils place the built-in Coordinator at center, use deterministic Agent positions, and draw only validated handoff links or still-current Brain-source links. A keyboard-accessible list, reduced-motion default, hidden-page pause, 24 FPS cap, and slow-draw fallback are included. The API requires agent:read and chat:read and never returns chat text or Brain excerpts. Full validation passed: Python 1,403 passed / 8 skipped / 0 failed; browser modules 281; Electron 38; public docs 21. Ollama was unavailable; RX 570 generation-time rendering and packaged Electron behavior remain unverified. Existing approvals have no requesting-Agent attribution, so the map does not infer an Agent waiting for approval. No push or deployment."
     },

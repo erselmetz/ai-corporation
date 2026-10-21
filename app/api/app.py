@@ -1010,6 +1010,7 @@ def create_app(
     capability_grant_service=None,
     capability_audit_service=None,
     with_builtin_agent_team: bool = False,
+    emergency_stop_service=None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
@@ -1020,6 +1021,15 @@ def create_app(
             application.state.application_service = runtime.application_service
         else:
             application.state.application_service = application_service
+        runtime_factory = getattr(application.state.application_service, "agent_runtime", None)
+        if callable(runtime_factory):
+            try:
+                runtime = runtime_factory()
+            except RuntimeError:
+                runtime = None
+            setter = getattr(runtime, "set_stop_check", None)
+            if callable(setter):
+                setter(lambda: application.state.emergency_stop_service.stopped)
         restore_local_setup = getattr(application.state, "restore_local_first_run", None)
         if callable(restore_local_setup):
             restore_local_setup(application.state.application_service)
@@ -1097,6 +1107,10 @@ def create_app(
         if authentication_backend is None
         else authentication_backend
     )
+    if emergency_stop_service is None:
+        from app.application.services.emergency_stop import EmergencyStopService
+        emergency_stop_service = EmergencyStopService()
+    application.state.emergency_stop_service = emergency_stop_service
     if capability_audit_service is None:
         from app.application.services.capability_audit import CapabilityAuditService
         application.state.capability_audit_service = CapabilityAuditService()

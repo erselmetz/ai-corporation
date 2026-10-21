@@ -48,6 +48,7 @@ from app.integrations import (
     SourceAnalysisError,
 )
 from app.providers.base import ProviderCapacityError, ProviderCapacityUnknown
+from app.agent_runtime import AgentRuntimeBudgetExceeded, AgentRuntimeError, AgentRuntimeStopped
 from .security import require_permission
 
 router = APIRouter(prefix="/api/chat/conversations")
@@ -71,6 +72,18 @@ def contains_gemini_key(text: str) -> bool:
 def _presentation_preferences(request: Request, owner_id: str):
     store = getattr(request.app.state, "owner_preferences_service", None)
     return store.response_contract(owner_id) if store is not None else None
+
+
+def _agent_runtime_trace(service):
+    factory = getattr(service, "agent_runtime", None)
+    try:
+        runtime = factory() if callable(factory) else None
+        take_trace = getattr(runtime, "take_trace", None)
+        if callable(take_trace):
+            return take_trace()
+        return runtime.last_trace() if runtime is not None else None
+    except (AttributeError, RuntimeError, TypeError):
+        return None
 
 
 def get_application_service(request: Request):
@@ -280,7 +293,7 @@ def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
             handoff=handoff,
             outcome="failed" if message.status.value == "failed" else "unknown",
             failure="Provider or chat runtime did not produce a verified reply; raw diagnostics are omitted.",
-            now=now, vision=vision)
+            now=now, vision=vision, runtime=_agent_runtime_trace(service))
     except Exception:
         # A diagnostic trace must never replace or disclose the original chat failure.
         return
@@ -474,6 +487,12 @@ def get_repository_study_service(request: Request) -> RepositoryStudyService:
 def chat_errors():
     try:
         yield
+    except AgentRuntimeStopped as error:
+        raise HTTPException(409, "Agent Runtime was stopped by the owner. Start a new turn when ready.") from None
+    except AgentRuntimeBudgetExceeded:
+        raise HTTPException(504, "Agent Runtime reached its bounded time or step budget. No retry was started.") from None
+    except AgentRuntimeError:
+        raise HTTPException(502, "Agent Runtime could not complete this turn. No automatic retry occurred.") from None
     except ChatTaskProposalNotFound:
         raise HTTPException(404, "Task proposal not found") from None
     except ChatTaskProposalExpired as error:
@@ -800,7 +819,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                         "image_count": len(result["image_transfer"]["image_ids"]),
                         "retention": result["image_transfer"]["retention"],
                     },
-                    now=now)}
+                    now=now, runtime=_agent_runtime_trace(service))}
         else:
             if body.image_consent or body.include_local_ocr:
                 raise HTTPException(422, "Image consent and OCR require selected images.")
@@ -851,7 +870,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                                           answer_ms=(time.perf_counter() - answer_started_at) * 1000,
                                           turn_route=turn_route),
                     turn_route=turn_route, handoff=result.get("handoff"),
-                    now=now)
+                    now=now, runtime=_agent_runtime_trace(service))
                 result = {**result, "context_trace": trace}
             if captured_prompt:
                 result["advanced_prompt"] = captured_prompt[0]
@@ -932,6 +951,8 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
     def events():
         try:
             answer_started_at = time.perf_counter()
+            yield json.dumps({"type": "status", "message": "Answering..."},
+                              ensure_ascii=True, separators=(",", ":")) + "\n"
             for event in owned.stream(
                 principal.identity,
                 identifier,
@@ -956,7 +977,7 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                         steps=_workflow_steps(retrieval_trace, [], coordinator,
                                               retrieval_ms=retrieval_ms,
                                               answer_ms=(time.perf_counter() - answer_started_at) * 1000),
-                        now=now)
+                        now=now, runtime=_agent_runtime_trace(service))
                     event = {
                         **event,
                         "context_trace": turn_trace,

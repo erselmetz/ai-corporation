@@ -112,7 +112,7 @@ export function renderLatestStatusCards(documentObject, taskRecords = tasks, upc
     }
   }
   const taskCount = documentObject.querySelector("#all-task-count");
-  if (taskCount) taskCount.textContent = `Tasks 1-${taskRecords.length}`;
+  if (taskCount) taskCount.textContent = `Tasks 1-${Math.max(...taskRecords.map(task => task.number))}`;
 }
 
 if (typeof document !== "undefined") {

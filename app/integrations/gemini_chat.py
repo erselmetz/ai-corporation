@@ -21,6 +21,8 @@ from app.integrations.gemini_catalog import (
 )
 from app.providers.base import AIProvider
 from app.chat_prompt import validate_chat_messages
+from app.agent_runtime import (check_runtime_step, current_invocation,
+                               runtime_output_token_budget, runtime_timeout_seconds)
 
 _ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models"
 _MAX_INPUT_BYTES = 32_768
@@ -368,11 +370,19 @@ class GeminiProvider(AIProvider):
             raise ValueError("Gemini request configuration is invalid")
         if len(json.dumps(payload, ensure_ascii=True, separators=(",", ":")).encode("utf-8")) > _MAX_INPUT_BYTES:
             raise ValueError("Gemini input exceeds the byte limit")
+        invocation = current_invocation()
+        timeout = min(_TIMEOUT_SECONDS, runtime_timeout_seconds(_TIMEOUT_SECONDS))
+        elapsed_limit = min(_MAX_ELAPSED_SECONDS, timeout)
+        if invocation is not None:
+            payload = {**payload, "generationConfig": {
+                **payload.get("generationConfig", {}),
+                "maxOutputTokens": min(_MAX_OUTPUT_TOKENS, runtime_output_token_budget()),
+            }}
         api_key = self._manager.begin_call(self._key_identity, model)
         started_at = time.monotonic()
         endpoint = f"{_ENDPOINT}/{model}:generateContent"
         try:
-            with httpx.Client(timeout=_TIMEOUT_SECONDS, follow_redirects=False,
+            with httpx.Client(timeout=timeout, follow_redirects=False,
                                trust_env=False) as client:
                 with client.stream("POST", endpoint, headers={
                     "Accept": "application/json", "Content-Type": "application/json",
@@ -381,7 +391,8 @@ class GeminiProvider(AIProvider):
                     response.raise_for_status()
                     body = bytearray()
                     for chunk in response.iter_bytes():
-                        if time.monotonic() - started_at > _MAX_ELAPSED_SECONDS:
+                        check_runtime_step()
+                        if time.monotonic() - started_at > elapsed_limit:
                             raise ValueError("Gemini response exceeded the elapsed-time limit")
                         if len(body) + len(chunk) > _MAX_RESPONSE_BYTES:
                             raise ValueError("Gemini response exceeds the byte limit")

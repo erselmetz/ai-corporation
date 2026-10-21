@@ -141,7 +141,7 @@ def test_authenticated_streaming_route_sends_native_chat_stream_body(chat_captur
         json={"text": "hello"}, headers=headers,
     )
     assert response.status_code == 200
-    assert [json.loads(line)["type"] for line in response.text.splitlines()] == ["chunk", "chunk", "complete"]
+    assert [json.loads(line)["type"] for line in response.text.splitlines()] == ["status", "chunk", "chunk", "complete"]
     path, raw = capture.requests[-1]
     body = _assert_no_request_envelope(path, raw, stream=True)
     assert [message["role"] for message in body["messages"]] == ["system", "user"]

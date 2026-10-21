@@ -1316,6 +1316,13 @@ class CorporationApplicationService:
                 )
             return self._owned_chat
 
+    def agent_runtime(self):
+        """Return the one shared runtime owned by this Corporation Orchestrator."""
+        runtime = getattr(self._orchestrator, "agent_runtime", None)
+        if runtime is None:
+            raise RuntimeError("Agent Runtime is unavailable")
+        return runtime
+
     def chat_history(self):
         with self._owned_chat_lock:
             if getattr(self, "_chat_history", None) is None:

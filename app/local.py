@@ -60,16 +60,16 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
            if capability_authorization_service is not None else {}),
         **({"capability_grant_service": capability_grant_service}
            if capability_grant_service is not None else {}))
+    if emergency_stop_service is None:
+        from app.application.services.emergency_stop import EmergencyStopService
+        emergency_stop_service = EmergencyStopService()
     application = create_app(application_service=application_service,
                              authentication_backend=backend,
                              capability_authorization_service=backend.capability_authorization_service,
                              capability_grant_service=backend.capability_grant_service,
                              capability_audit_service=capability_audit_service,
+                             emergency_stop_service=emergency_stop_service,
                              with_builtin_agent_team=application_service is None)
-    if emergency_stop_service is None:
-        from app.application.services.emergency_stop import EmergencyStopService
-        emergency_stop_service = EmergencyStopService()
-    application.state.emergency_stop_service = emergency_stop_service
     application.state.local_automation_registry_lock = threading.Lock()
     from app.application.services.owner_preferences import OwnerPreferencesService
     application.state.owner_preferences_service = OwnerPreferencesService()

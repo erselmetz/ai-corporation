@@ -67,6 +67,9 @@ def test_no_automatic_retention_or_context(env):
     trace = next(iter(traces.values()))
     assert trace["retrieval"] == {"enabled": False, "reason": "Use my knowledge was off."}
     assert trace["actions"] == {"tools_run": False, "tasks_created": False}
+    assert trace["runtime"]["outcome"] == "completed"
+    assert [item["step"] for item in trace["runtime"]["steps"]] == ["classify", "plan", "answer"]
+    assert "Hello there" not in json.dumps(trace["runtime"])
 
 
 def test_retention_requires_consent_and_bounded_expiry(env):

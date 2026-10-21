@@ -8,6 +8,8 @@ from urllib.parse import urlsplit
 import httpx
 
 from app.chat_prompt import validate_chat_messages
+from app.agent_runtime import (check_runtime_step, current_invocation,
+                               runtime_output_token_budget, runtime_timeout_seconds)
 from .availability import AvailabilityResult, AvailabilityState
 from .base import (
     AIProvider,
@@ -286,13 +288,21 @@ class OllamaProvider(AIProvider):
         if not isinstance(model, str) or not model.strip() or len(model.encode("utf-8")) > 256:
             raise ValueError("Invalid model identifier")
         normalized = validate_chat_messages(messages)
-        with httpx.Client(timeout=120.0, trust_env=False, follow_redirects=False) as client:
-            response = client.post(
-                f"{self.base_url}/api/chat",
-                json={"model": model, "messages": normalized, "stream": False},
-            )
-            response.raise_for_status()
-            data = response.json()
+        request_body = {"model": model, "messages": normalized, "stream": False}
+        if current_invocation() is not None:
+            request_body["options"] = {"num_predict": runtime_output_token_budget()}
+        response_body = bytearray()
+        with httpx.Client(timeout=runtime_timeout_seconds(), trust_env=False,
+                          follow_redirects=False) as client:
+            with client.stream("POST", f"{self.base_url}/api/chat", json=request_body) as response:
+                response.raise_for_status()
+                for chunk in response.iter_bytes():
+                    check_runtime_step()
+                    if len(response_body) + len(chunk) > 262144:
+                        raise ValueError("Ollama chat response exceeds the byte limit")
+                    response_body.extend(chunk)
+        check_runtime_step()
+        data = json.loads(response_body)
         message = data.get("message") if isinstance(data, dict) else None
         output = message.get("content") if isinstance(message, dict) else None
         if not isinstance(output, str) or not output.strip() or len(output.encode("utf-8")) > 8192:
@@ -311,13 +321,15 @@ class OllamaProvider(AIProvider):
         output_bytes = 0
         completed = False
         try:
-            with httpx.Client(timeout=_STREAM_TIMEOUT, trust_env=False,
+            request_body = {"model": model, "messages": normalized, "stream": True}
+            if current_invocation() is not None:
+                request_body["options"] = {"num_predict": runtime_output_token_budget()}
+            with httpx.Client(timeout=min(_STREAM_TIMEOUT, runtime_timeout_seconds(_STREAM_TIMEOUT)), trust_env=False,
                               follow_redirects=False) as client:
-                with client.stream("POST", f"{self.base_url}/api/chat", json={
-                    "model": model, "messages": normalized, "stream": True,
-                }) as response:
+                with client.stream("POST", f"{self.base_url}/api/chat", json=request_body) as response:
                     response.raise_for_status()
                     for line in response.iter_lines():
+                        check_runtime_step()
                         received_bytes += len(line.encode("utf-8")) + 1
                         if received_bytes > _MAX_STREAM_RESPONSE_BYTES:
                             raise ValueError("Provider stream exceeds byte limit")

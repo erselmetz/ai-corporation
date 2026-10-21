@@ -5,6 +5,7 @@ from app.database import TaskLogger
 from app.providers import ProviderRegistry
 from app.providers import ProviderVisionUnsupported
 from app.chat_prompt import validate_chat_messages
+from app.agent_runtime import AgentRuntime
 
 from .task import Task, TaskFailureCategory, TaskStatus
 from .task_registry import TaskRegistry
@@ -30,6 +31,7 @@ class Orchestrator:
         self.projects = projects
         self.employees = employees
         self.router = TaskRouter(agents, employees)
+        self.agent_runtime = AgentRuntime()
 
     def execution_queue(self, corporation_id):
         from .execution_queue import ExecutionQueue
@@ -79,6 +81,13 @@ class Orchestrator:
         expected_assignment: tuple[str, str] | None = None,
     ) -> str:
         messages = validate_chat_messages(messages)
+        return self.agent_runtime.run_direct(
+            agent_id, lambda: self._run_agent_chat_direct(
+                agent_id, messages, expected_assignment=expected_assignment))
+
+    def _run_agent_chat_direct(self, agent_id: str, messages: list[dict], *,
+                               expected_assignment: tuple[str, str] | None = None) -> str:
+        messages = validate_chat_messages(messages)
         with self.agents.execution(agent_id):
             agent = self.agents.get(agent_id)
             if expected_assignment is not None and (agent.provider, agent.model) != expected_assignment:
@@ -89,6 +98,15 @@ class Orchestrator:
         self, agent_id: str, messages: list[dict], *, provider_id: str, model_id: str,
         expected_assignment: tuple[str, str],
     ) -> str:
+        messages = validate_chat_messages(messages)
+        return self.agent_runtime.run_direct(
+            agent_id, lambda: self._run_agent_chat_for_turn_direct(
+                agent_id, messages, provider_id=provider_id, model_id=model_id,
+                expected_assignment=expected_assignment))
+
+    def _run_agent_chat_for_turn_direct(self, agent_id: str, messages: list[dict], *,
+                                        provider_id: str, model_id: str,
+                                        expected_assignment: tuple[str, str]) -> str:
         if not provider_id or not model_id:
             raise ValueError("An explicit provider and model are required")
         messages = validate_chat_messages(messages)
@@ -124,6 +142,13 @@ class Orchestrator:
         expected_assignment: tuple[str, str] | None = None,
     ):
         messages = validate_chat_messages(messages)
+        return self.agent_runtime.stream_direct(
+            agent_id, lambda: self._stream_agent_chat_direct(
+                agent_id, messages, expected_assignment=expected_assignment))
+
+    def _stream_agent_chat_direct(self, agent_id: str, messages: list[dict], *,
+                                  expected_assignment: tuple[str, str] | None = None):
+        messages = validate_chat_messages(messages)
         with self.agents.execution(agent_id):
             agent = self.agents.get(agent_id)
             if expected_assignment is not None and (agent.provider, agent.model) != expected_assignment:
@@ -135,6 +160,13 @@ class Orchestrator:
 
     def run_agent_with_images(self, agent_id: str, prompt: str, images, *,
                               ocr_evidence=(), expected_assignment=None) -> str:
+        return self.agent_runtime.run_direct(
+            agent_id, lambda: self._run_agent_with_images_direct(
+                agent_id, prompt, images, ocr_evidence=ocr_evidence,
+                expected_assignment=expected_assignment))
+
+    def _run_agent_with_images_direct(self, agent_id: str, prompt: str, images, *,
+                                      ocr_evidence=(), expected_assignment=None) -> str:
         """Send owner-selected image bytes only through an image-capable provider."""
         with self.agents.execution(agent_id):
             agent = self.agents.get(agent_id)
@@ -151,6 +183,14 @@ class Orchestrator:
 
     def run_agent_chat_with_images(self, agent_id: str, messages: list[dict], images, *,
                                    ocr_evidence=(), expected_assignment=None) -> str:
+        messages = validate_chat_messages(messages)
+        return self.agent_runtime.run_direct(
+            agent_id, lambda: self._run_agent_chat_with_images_direct(
+                agent_id, messages, images, ocr_evidence=ocr_evidence,
+                expected_assignment=expected_assignment))
+
+    def _run_agent_chat_with_images_direct(self, agent_id: str, messages: list[dict], images, *,
+                                           ocr_evidence=(), expected_assignment=None) -> str:
         messages = validate_chat_messages(messages)
         with self.agents.execution(agent_id):
             agent = self.agents.get(agent_id)

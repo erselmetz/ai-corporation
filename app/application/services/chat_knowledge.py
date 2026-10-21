@@ -311,7 +311,8 @@ class ChatKnowledgeService:
     def record_turn_trace(self, owner, conversation_id, reply_id, *, coordinator,
                           cloud_provider, cloud_consent, elapsed_ms, retrieval, outcome="completed",
                           failure=None, tools=None, steps=None, now=None, turn_route=None,
-                          vision=None, provider_called=True, answer_source="provider", handoff=None):
+                          vision=None, provider_called=True, answer_source="provider", handoff=None,
+                          runtime=None):
         self._application.owned_chat().authorize_owner(owner, conversation_id)
         if type(provider_called) is not bool or answer_source not in {"provider", "brain-empty-abstention"}:
             raise ValueError("Answer provenance is invalid")
@@ -357,6 +358,7 @@ class ChatKnowledgeService:
             "failure": _safe_text(failure, 256) if failure else None,
             "tools": list(tools or []),
             "steps": list(steps or []),
+            "runtime": _runtime_trace(runtime),
             "actions": {"tools_run": bool(tools), "tasks_created": False},
             "advanced_prompt_retained": False,
         }
@@ -424,3 +426,33 @@ class ChatKnowledgeService:
                 sources.append({**source, "freshness": freshness})
             out[reply_id] = {**trace, "sources": sources, "checked_at": now.isoformat()}
         return out
+
+
+def _runtime_trace(value):
+    """Keep only bounded runtime events; never retain prompts or provider output."""
+    if not isinstance(value, dict):
+        return None
+    allowed_status = {"running", "completed", "failed", "stopped", "unknown"}
+    steps = []
+    for item in value.get("steps", ())[:5] if isinstance(value.get("steps"), list) else ():
+        if not isinstance(item, dict):
+            continue
+        steps.append({"step": _safe_text(item.get("step"), 32),
+                      "status": _safe_text(item.get("status"), 16),
+                      "source": _safe_text(item.get("source"), 64),
+                      "duration_ms": max(0, min(300_000, int(item.get("duration_ms", 0))))
+                          if type(item.get("duration_ms", 0)) is int else 0,
+                      **({"output_bytes": max(0, min(8192, item["output_bytes"]))}
+                         if type(item.get("output_bytes")) is int else {})})
+    outcome = value.get("outcome") if value.get("outcome") in allowed_status else "unknown"
+    return {"run_id": _safe_text(value.get("run_id"), 64),
+            "agent_id": _safe_text(value.get("agent_id"), 128),
+            "outcome": outcome,
+            "max_steps": max(1, min(5, int(value.get("max_steps", 5))))
+                if type(value.get("max_steps", 5)) is int else 5,
+            "token_budget": max(1, min(8192, int(value.get("token_budget", 2048))))
+                if type(value.get("token_budget", 2048)) is int else 2048,
+            "elapsed_ms": max(0, min(300_000, int(value.get("elapsed_ms", 0))))
+                if type(value.get("elapsed_ms", 0)) is int else 0,
+            "failure": _safe_text(value.get("failure"), 128) if value.get("failure") else None,
+            "steps": steps}

@@ -113,7 +113,7 @@ const plannedCount = tasks.filter((task) => task.status === "planned").length;
 const designOnlyCount = tasks.filter((task) => task.status === "design_only").length;
 summary.textContent = `${tasks.length} roadmap tasks · ${completeCount} completed scoped checkpoints · ${deferredCount} deferred and incomplete · ${plannedCount} planned · ${designOnlyCount} design only`;
 const introTitle = document.querySelector("#task-page-title");
-if (introTitle) introTitle.textContent = `Tasks 1-${tasks.length}`;
+if (introTitle) introTitle.textContent = `Tasks 1-${Math.max(...tasks.map(task => task.number))}`;
 const introStatus = document.querySelector("#task-page-status");
 if (introStatus) introStatus.textContent = summary.textContent;
 const nextTaskReason = recommendedOrder.find(item => item.number === nextTask?.number)?.reason;
