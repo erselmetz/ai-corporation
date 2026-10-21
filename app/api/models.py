@@ -245,6 +245,7 @@ class AgentResponse(BaseModel):
     provider: str
     model: str
     capabilities: list[str]
+    builtin: bool = False
 
 
 class AgentListResponse(BaseModel):

@@ -3846,18 +3846,20 @@ export const post100Tasks = [
     "title": "Agents page and profile management UI",
     "description": "Add a clean Agents workspace showing real role profiles, routes, states, activity, organization view, and owner-scoped editing.",
     "category": "Phase AK - Agents Workspace",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [200],
     "decisions": [],
     "acceptance": ["Show All, Active, Paused, Error, and Built-in filters; List and existing organization Tree views; agent avatar/name/role/model/status/last activity and Chat action; and a New Agent form using existing records.", "Agent details expose role prompt, model, Brain scopes, tools, permissions and recent activity with advanced fields collapsed. Built-ins can be edited/reset/paused/duplicated through authorized APIs; status is sourced from runtime checks.", "Explain in plain language that profiles share model brains and local model work is serialized one at a time. Accessible responsive navigation and empty/loading/error states are covered by browser tests."],
     "outOfScope": ["No new Agent domain model, autonomous work, provider/model downloads, or permissions beyond existing owner APIs."],
     "risks": ["Provider checks may be slow or unavailable; the page must expose unknown/error states and avoid presenting a stale result as current."],
     "area": "P53",
-    "checkpoint": null,
-    "validation": [],
-    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["Packaged Electron rendering and owner usability remain unverified until tested."]},
-    "limitations": [],
-    "automatedVerification": ["Test filter behavior, profile forms, permission-denied paths, activity/status rendering, responsive navigation, and single-slot wording with deterministic API fixtures."],
+    "checkpoint": "task-201-agents-page",
+    "validation": [
+      "Full validation: Python 1,396 passed / 8 skipped / 0 failed; browser modules 270 passed; Electron 38 passed; public docs 21 passed. Python compileall and git diff --check passed."
+    ],
+    "realWorldVerification": {"status": "unverified", "evidence": [], "unverified": ["Packaged Electron rendering, live provider/model status, and representative owner usability were not exercised; route and browser interaction checks used the local TestClient and deterministic fixtures."]},
+    "limitations": ["Last-activity timestamps are process-local and disappear on restart. The organization tree shows actual recorded Positions and only their existing Employee/Agent links; it does not create a new Agent hierarchy. New Agents are created by duplicating an existing profile and Employee identity; no deletion control is added."],
+    "automatedVerification": ["Full validation passed: Python 1,396/8 skipped, browser modules 270, Electron 38, public docs 21. Focused legacy chat regressions: 28 passed after aligning Ollama fakes with the native generate_chat adapter. Focused browser tests cover runtime-state filters, existing organization-map data, read-only permission denial, collapsed profile editing, CSRF-backed pause/reset, custom profile duplication, selected Employee chat routing, and single-slot wording. API tests verify built-in classification is exposed without role prompts, permissions, or other profile data."],
     "followUpValidation": ["Inspect the Agents page in the packaged Windows application and confirm real provider/model/status details match the current host."]
   },
   {
@@ -3902,7 +3904,7 @@ export const post100Tasks = [
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, and 195-200 are completed scoped checkpoints; Tasks 201-203 are planned; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, and 195-201 are completed scoped checkpoints; Tasks 202-203 are planned; Task 190 is design-only. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-203, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",

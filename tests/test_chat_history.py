@@ -21,11 +21,11 @@ PASSWORD = "test-only-owner-passphrase"
 def replies(monkeypatch):
     calls = []
 
-    def generate(self, *args, **kwargs):
+    def generate_chat(self, *args, **kwargs):
         calls.append(1)
         return "Durable reply."
 
-    monkeypatch.setattr(OllamaProvider, "generate", generate)
+    monkeypatch.setattr(OllamaProvider, "generate_chat", generate_chat)
     return calls
 
 

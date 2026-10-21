@@ -24,7 +24,7 @@ class Element {
   addEventListener(event, fn) { this.listeners[event] = fn; }
 }
 
-function setup({ supportsStreaming = false } = {}) {
+function setup({ supportsStreaming = false, search = "" } = {}) {
   const ids = [
     "individual-employee", "individual-conversation", "individual-chat-state",
     "individual-chat-identity", "individual-chat-history", "individual-chat-form",
@@ -124,9 +124,17 @@ function setup({ supportsStreaming = false } = {}) {
     documentRef: { getElementById: (id) => elements[id], createElement: (tag) => new Element(tag) },
     fetchImpl,
     confirmImpl: () => true,
+    locationRef: { search },
   });
   return { elements, calls, controller };
 }
+
+test("Agent Chat link preselects its linked Employee without starting a conversation", async () => {
+  const ui = setup({ search: "?employee_id=employee-1" });
+  await ui.controller.initialLoad;
+  assert.equal(ui.elements["individual-employee"].value, "employee-1");
+  assert.equal(ui.calls.some(call => call.path === "/api/employee-chat/conversations" && call.options.method === "POST"), false);
+});
 
 test("Employee chat uses CSRF, inert rendering and explicit per-turn Gemini consent", async () => {
   const ui = setup();

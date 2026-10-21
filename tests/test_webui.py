@@ -480,3 +480,22 @@ def test_employee_chat_page_and_assignment_preview_modules_are_served():
     assert chat_module.status_code == preview_module.status_code == 200
     assert chat_module.headers["content-type"].startswith("text/javascript")
     assert preview_module.headers["content-type"].startswith("text/javascript")
+
+
+def test_agents_workspace_route_and_module_are_served_with_shared_navigation():
+    service = CorporationApplicationService(MagicMock(spec=Orchestrator))
+    with TestClient(create_app(service)) as client:
+        page = client.get("/ui/agents")
+        module = client.get("/ui/static/agents.mjs")
+    assert page.status_code == 200
+    assert 'src="/ui/static/agents.mjs"' in page.text
+    assert 'href="/ui/agents" aria-current="page"' in page.text
+    assert 'data-filter="builtin"' in page.text
+    assert 'role="tablist" aria-label="Filter Agents"' in page.text
+    assert 'role="tab" aria-controls="agent-list-view"' in page.text
+    assert 'data-view="tree"' in page.text
+    assert 'id="agent-organization-tree"' in page.text
+    assert "/api/structure-map" in module.text
+    assert "role profiles that share the same AI models" in page.text
+    assert module.status_code == 200
+    assert module.headers["content-type"].startswith("text/javascript")

@@ -564,6 +564,7 @@ def list_agents(
                 provider=summary.provider,
                 model=summary.model,
                 capabilities=list(summary.capabilities),
+                builtin=summary.builtin,
             )
             for summary in application_service.list_agents()
         ]
@@ -595,6 +596,7 @@ def get_agent(
         provider=summary.provider,
         model=summary.model,
         capabilities=list(summary.capabilities),
+        builtin=summary.builtin,
     )
 
 

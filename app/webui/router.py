@@ -16,7 +16,7 @@ def _navigation(active_path: str, *, desktop_settings_available: bool = True) ->
         system_links = system_links[1:]
     groups = (
         ("PRIMARY", (("Home", "/ui"), ("Chat", "/ui/chat"), ("Projects", "/ui/projects"))),
-        ("AI", (("Employees", "/ui/employees"), ("Positions", "/ui/positions"),
+        ("AI", (("Agents", "/ui/agents"), ("Employees", "/ui/employees"), ("Positions", "/ui/positions"),
                 ("Organization map", "/ui/structure"), ("Providers &amp; models", "/ui/providers"),
                 ("3D visualization", "/ui/visualization"), ("Memory", "/ui/memory"))),
         ("OPERATIONS", (("Tasks", "/ui/tasks"), ("Workflows", "/ui/workflows"),
@@ -443,6 +443,52 @@ def employee_management_page() -> HTMLResponse:
         </html>
         """
     )
+
+
+@router.get("/ui/agents", response_class=HTMLResponse, include_in_schema=False)
+def agents_page() -> HTMLResponse:
+    return HTMLResponse(f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Review and manage ERSELMETZ AI role profiles.">
+    <title>Agents - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/agents.mjs"></script></head><body>
+    <header class="site-header"><a class="brand" href="/ui">ERSELMETZ AI</a>
+    <span class="product-label">Your local AI workspace</span></header><div class="layout">
+    {_navigation("/ui/agents")}<main class="content agents-page">
+      <div class="dashboard-heading"><div><p class="eyebrow">Organization</p><h1>Agents</h1></div>
+        <button id="agent-refresh" type="button">Refresh</button></div>
+      <p class="auth-boundary">Agents are role profiles that share the same AI models. Local model work runs one Agent at a time.</p>
+      <div class="agent-toolbar"><div id="agent-filters" role="tablist" aria-label="Filter Agents">
+        <button id="agent-tab-all" type="button" role="tab" aria-controls="agent-list-view" data-filter="all" aria-selected="true" tabindex="0">All</button>
+        <button id="agent-tab-active" type="button" role="tab" aria-controls="agent-list-view" data-filter="active" aria-selected="false" tabindex="-1">Active</button>
+        <button id="agent-tab-paused" type="button" role="tab" aria-controls="agent-list-view" data-filter="paused" aria-selected="false" tabindex="-1">Paused</button>
+        <button id="agent-tab-error" type="button" role="tab" aria-controls="agent-list-view" data-filter="error" aria-selected="false" tabindex="-1">Error</button>
+        <button id="agent-tab-builtin" type="button" role="tab" aria-controls="agent-list-view" data-filter="builtin" aria-selected="false" tabindex="-1">Built-in</button>
+      </div><div role="group" aria-label="Agent display">
+        <button type="button" data-view="list" aria-pressed="true">List</button>
+        <button type="button" data-view="tree" aria-pressed="false">Organization tree</button>
+      </div></div>
+      <p id="agent-page-state" role="status" aria-live="polite">Loading Agents...</p>
+      <div class="agents-workspace"><section id="agent-list-view" role="tabpanel" aria-labelledby="agent-tab-all" tabindex="0" aria-label="Agent list">
+        <ul id="agent-list" class="agent-cards"></ul></section>
+        <section id="agent-tree-view" hidden aria-label="Existing organization tree">
+          <p>The organization tree shows the owner’s recorded Positions and reporting links.</p>
+          <p id="agent-tree-state" role="status" aria-live="polite">Open this view to load current organization data.</p>
+          <ul id="agent-organization-tree" class="organization-tree" aria-label="Recorded organization positions"></ul>
+        </section>
+        <aside id="agent-detail-card" class="agent-detail-card" aria-label="Agent details">
+          <h2 id="agent-detail-title">Agent details</h2><p id="agent-detail-state">Select an Agent to review its profile.</p>
+          <div id="agent-detail-content" hidden></div>
+        </aside></div>
+      <details class="agent-create"><summary>New Agent</summary>
+        <p>Create a custom Agent by copying an existing role profile. Review its permissions before use.</p>
+        <form id="agent-create-form"><label for="agent-create-source">Copy profile</label>
+          <select id="agent-create-source" required></select><label for="agent-create-name">Agent name</label>
+          <input id="agent-create-name" maxlength="128" required>
+          <button id="agent-create-submit" type="submit">Create from profile</button>
+          <p id="agent-create-state" role="status" aria-live="polite"></p></form>
+      </details>
+    </main></div></body></html>""")
 
 
 @router.get("/ui/positions", response_class=HTMLResponse, include_in_schema=False)

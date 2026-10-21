@@ -28,7 +28,15 @@ def test_builtin_profile_edit_pause_duplicate_reset_and_restart_persist():
     agents = client.get("/api/agents", headers=headers).json()["items"]
     assert len(agents) == 6
     researcher = next(item for item in agents if item["id"] == "researcher")
+    assert researcher["builtin"] is True
     assert "permissions" not in researcher and "system_prompt" not in researcher
+    custom_response = client.post("/api/agents/researcher/duplicate", headers=headers,
+                                  json={"new_id": "custom_researcher_1", "name": "My Researcher"})
+    custom_summary = next(item for item in client.get("/api/agents", headers=headers).json()["items"]
+                          if item["id"] == "custom_researcher_1")
+    assert custom_response.status_code == 200
+    assert custom_summary["builtin"] is False
+    assert "permissions" not in custom_summary and "system_prompt" not in custom_summary
     researcher = client.get("/api/agents/researcher/profile", headers=headers).json()
     assert "web.research" in researcher["allowed_tools"]
     assert researcher["brain_scopes"] == ["owner"]
@@ -40,8 +48,7 @@ def test_builtin_profile_edit_pause_duplicate_reset_and_restart_persist():
     assert edited.status_code == 200
     assert edited.json()["name"] == "Research lead"
     assert client.put("/api/agents/developer/pause", headers=headers, json={"paused": True}).json()["paused"]
-    duplicated = client.post("/api/agents/researcher/duplicate", headers=headers,
-                             json={"new_id": "custom_researcher_1", "name": "My Researcher"})
+    duplicated = custom_response
     assert duplicated.status_code == 200
     assert duplicated.json()["builtin_key"] is None
     assert duplicated.json()["paused"] is False

@@ -96,7 +96,7 @@ def test_cli_displays_review_and_requires_confirmation_token(setup, capsys):
 def test_runtime_conversion_persists_pending_task_without_provider_execution(monkeypatch):
     from app.providers import OllamaProvider
     from app.runtime.factory import create_corporation_runtime
-    monkeypatch.setattr(OllamaProvider, "generate", lambda *_: "Reply")
+    monkeypatch.setattr(OllamaProvider, "generate_chat", lambda *_: "Reply")
     runtime = create_corporation_runtime()
     project = runtime.application_service.create_project("Chat project", "")
     chat = runtime.application_service.corporation_chat()
@@ -104,7 +104,7 @@ def test_runtime_conversion_persists_pending_task_without_provider_execution(mon
     source = chat.send("one", "Do explicit work").messages[0].id
     review = chat.review_task("one", source, "Reviewed work", project.id, "local_worker")
     forbidden = MagicMock(side_effect=AssertionError("Execution is forbidden"))
-    monkeypatch.setattr(OllamaProvider, "generate", forbidden)
+    monkeypatch.setattr(OllamaProvider, "generate_chat", forbidden)
     result = chat.confirm_task(review.id, confirmed=True)
     task = runtime.application_service.get_task(result.task_id)
     assert task.status == "pending"

@@ -1172,3 +1172,49 @@ body.has-shared-navigation .layout {
 }
 #brain-ingestion-list li { margin: .35rem 0; }
 #brain-ingestion-list strong { margin-inline-end: .4rem; overflow-wrap: anywhere; }
+
+.agents-page { min-width: 0; }
+.agent-toolbar, .agent-toolbar > div, .agent-card-actions, .agent-profile-actions {
+  display: flex; flex-wrap: wrap; gap: .5rem; align-items: center;
+}
+.agent-toolbar { justify-content: space-between; margin-block: 1rem; }
+.agent-toolbar button[aria-pressed="true"], .agent-toolbar button[aria-selected="true"] { border-color: var(--accent, #62d8e4); color: var(--text, #eef5fa); }
+.agents-workspace { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(18rem, .8fr); gap: 1rem; align-items: start; }
+.agent-cards { display: grid; gap: .65rem; padding: 0; margin: 0; list-style: none; }
+.agent-card, .agent-detail-card, .agent-create {
+  border: 1px solid var(--ui-line, #344b5d); border-radius: var(--ui-radius-card, 12px);
+  background: var(--ui-panel, #111c27); padding: 1rem; min-width: 0;
+}
+.agent-card { display: grid; grid-template-columns: 2.8rem minmax(0, 1fr) auto; gap: .8rem; align-items: center; }
+.agent-avatar { width: 2.6rem; height: 2.6rem; display: grid; place-items: center; border-radius: 50%;
+  background: color-mix(in srgb, var(--accent, #62d8e4) 18%, transparent); color: var(--accent, #62d8e4); font-weight: 700; }
+.agent-card h2, .agent-card p, .agent-detail-card h2, .agent-detail-card h3 { margin-block: .15rem .4rem; }
+.agent-card-summary { min-width: 0; overflow-wrap: anywhere; }
+.agent-card .agent-model, .agent-card .agent-last-active { color: var(--ui-muted, #9cb2c4); font-size: .9rem; }
+.agent-builtin-badge { display: inline-block; border: 1px solid var(--ui-line, #344b5d); border-radius: 999px; padding: .1rem .5rem; color: var(--ui-muted, #9cb2c4); font-size: .78rem; }
+.agent-status { text-transform: capitalize; }
+.agent-status.status-error, .agent-status.status-unavailable { color: var(--ui-danger, #ff928c); }
+.agent-status.status-working { color: var(--ui-accent, #62d8e4); }
+.agent-status.status-paused { color: var(--ui-muted, #9cb2c4); }
+.agent-detail-card { position: sticky; top: 1rem; }
+.agent-advanced { margin-top: 1rem; }
+.agent-profile-form { display: grid; gap: .45rem; margin-top: .75rem; }
+.agent-profile-form input, .agent-profile-form textarea, #agent-create-form input, #agent-create-form select {
+  width: 100%; max-width: 100%;
+}
+.agent-profile-actions { margin-top: .8rem; }
+.agent-create { margin-top: 1rem; }
+#agent-create-form { display: grid; gap: .5rem; max-width: 34rem; }
+.organization-tree { padding-inline-start: 1.4rem; }
+.organization-tree li { margin-block: .5rem; }
+.organization-tree small { display: block; color: var(--ui-muted, #9cb2c4); overflow-wrap: anywhere; }
+.agent-card-actions a { display: inline-flex; align-items: center; min-height: 2.4rem; padding-inline: .7rem; }
+@media (max-width: 64rem) {
+  .agents-workspace { grid-template-columns: minmax(0, 1fr); }
+  .agent-detail-card { position: static; }
+}
+@media (max-width: 42rem) {
+  .agent-card { grid-template-columns: 2.5rem minmax(0, 1fr); }
+  .agent-card-actions { grid-column: 2; }
+  .agent-toolbar { align-items: flex-start; }
+}

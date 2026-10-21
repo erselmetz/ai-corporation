@@ -152,6 +152,7 @@ def test_agent_read_endpoints_use_service_and_exclude_permissions(api_context):
         "provider": "local-provider",
         "model": "local-model",
         "capabilities": ["summarization", "classification"],
+        "builtin": False,
     }
     assert collection.status_code == 200
     assert collection.json() == {"items": [expected_agent]}
@@ -160,6 +161,7 @@ def test_agent_read_endpoints_use_service_and_exclude_permissions(api_context):
     assert service.list_agents.call_count == 1
     assert service.get_agent.call_args.args == ("agent-1",)
     assert "permissions" not in detail.json()
+    assert "system_prompt" not in detail.json()
     assert "registry" not in detail.json()
 
 

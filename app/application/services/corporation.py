@@ -83,6 +83,7 @@ class AgentSummary:
     provider: str
     model: str
     capabilities: tuple[str, ...]
+    builtin: bool = False
 
 
 @dataclass(frozen=True)
@@ -1848,6 +1849,7 @@ class CorporationApplicationService:
             provider=agent.provider,
             model=agent.model,
             capabilities=tuple(agent.capabilities),
+            builtin=agent.builtin_key is not None,
         )
 
     @staticmethod

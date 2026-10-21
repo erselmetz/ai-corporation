@@ -181,7 +181,7 @@ def test_reviewed_owner_proposal_creates_one_pending_task_without_provider_execu
 
 
 def test_closed_conversation_makes_a_prepared_proposal_stale_without_creation(monkeypatch):
-    monkeypatch.setattr(OllamaProvider, "generate", lambda *args, **kwargs: "Proposal.")
+    monkeypatch.setattr(OllamaProvider, "generate_chat", lambda *args, **kwargs: "Proposal.")
     runtime = create_corporation_runtime()
     project = runtime.application_service.create_project("Project", "")
     app = create_local_app(password=PASSWORD, application_service=runtime.application_service)
@@ -237,7 +237,7 @@ def test_proposal_routes_require_the_narrow_confirmation_permission():
 
 
 def test_proposals_cannot_cross_owner_scope_or_project_context_scope(monkeypatch):
-    monkeypatch.setattr(OllamaProvider, "generate", lambda *args, **kwargs: "Proposal.")
+    monkeypatch.setattr(OllamaProvider, "generate_chat", lambda *args, **kwargs: "Proposal.")
     runtime = create_corporation_runtime()
     project = runtime.application_service.create_project("Project", "")
     app = create_local_app(password=PASSWORD, application_service=runtime.application_service)

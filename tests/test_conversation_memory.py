@@ -98,7 +98,7 @@ def test_corrupt_storage_fails_loudly_without_cleanup(record):
 def test_chat_retention_is_explicit_and_survives_closure(monkeypatch):
     from app.providers import OllamaProvider
     from app.runtime.factory import create_corporation_runtime
-    monkeypatch.setattr(OllamaProvider, "generate", lambda *_: "Reply")
+    monkeypatch.setattr(OllamaProvider, "generate_chat", lambda *_: "Reply")
     runtime = create_corporation_runtime()
     chat = runtime.application_service.corporation_chat()
     chat.start("chat", "local_worker")

@@ -69,6 +69,7 @@ export function mountEmployeeChat({
   documentRef = globalThis.document,
   fetchImpl = globalThis.fetch,
   confirmImpl = globalThis.confirm,
+  locationRef = globalThis.location,
 } = {}) {
   const byId = (id) => documentRef.getElementById(id);
   const employeeSelect = byId("individual-employee");
@@ -218,6 +219,10 @@ export function mountEmployeeChat({
         option.value = employee.id;
         option.textContent = `${employee.name} · ${employee.role} · Agent ${employee.agent_id}`;
         employeeSelect.append(option);
+      }
+      const requestedEmployee = new URLSearchParams(locationRef?.search ?? "").get("employee_id");
+      if (requestedEmployee && employees.some((item) => item.id === requestedEmployee && item.agent_id)) {
+        employeeSelect.value = requestedEmployee;
       }
       conversations = conversationResult.items;
       renderConversations();
