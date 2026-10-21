@@ -160,8 +160,9 @@ def test_delegation_is_one_local_handoff_with_trace_and_released_resource_slots(
         assert payload["conversation"]["messages"][-1]["content"] == "Researcher answer from deterministic fixture."
         trace = payload["context_trace"]
         assert trace["handoff"]["agent"]["id"] == "researcher"
+        assert trace["auto_route"]["capability"] == "delegation"
         assert [step["step"] for step in trace["steps"]] == [
-            "plan", "retrieve", "tools", "coordinator_select_agent", "answer"]
+        "auto_route", "plan", "retrieve", "tools", "coordinator_select_agent", "answer"]
         assert trace["steps"][-1]["status"] == "completed"
         assert trace["route"]["responder_agent_id"] == "researcher"
         assert [item[0] for item in model_calls] == ["local_worker", "researcher"]
@@ -543,7 +544,9 @@ def test_failed_reply_safe_history_no_retry_and_closure(setup):
         assert len(messages) == 1 and messages[0]["status"] == "failed"
         trace = stored["context_traces"][messages[0]["id"]]
         assert trace["outcome"] == "failed"
-        assert [step["status"] for step in trace["steps"]] == ["completed", "skipped", "skipped", "failed"]
+        assert [step["status"] for step in trace["steps"]] == [
+            "completed", "completed", "skipped", "skipped", "failed",
+        ]
         assert trace["steps"][-1]["duration_ms"] >= 0
         assert "secret-provider" not in json.dumps(trace)
         assert "raw diagnostics are omitted" in trace["failure"]

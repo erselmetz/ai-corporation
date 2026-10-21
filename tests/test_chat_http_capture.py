@@ -131,6 +131,24 @@ def test_authenticated_coordinator_route_sends_chat_messages_and_prior_history(c
     assert [message["role"] for message in second_body["messages"]] == ["system", "user", "assistant", "user"]
     assert second_body["messages"][-1]["content"] == "follow up"
     assert second_body["messages"][-2]["content"] == "Captured reply."
+    trace = second.json()["context_trace"]
+    assert trace["auto_route"] == {"mode": "direct", "capability": "none",
+                                   "reason": "ordinary_chat", "fallback": False}
+
+
+def test_unsupported_web_request_falls_back_to_direct_and_is_recorded(chat_capture):
+    client, headers, capture = chat_capture
+    identifier = _start_coordinator(client, headers)
+    response = client.post(
+        f"/api/chat/conversations/{identifier}/messages",
+        json={"text": "Search the web for a local weather report"}, headers=headers,
+    )
+    assert response.status_code == 200
+    assert capture.requests[-1][0] == "/api/chat"
+    assert response.json()["context_trace"]["auto_route"] == {
+        "mode": "direct_fallback", "capability": "none",
+        "reason": "web_tool_unavailable", "fallback": True,
+    }
 
 
 def test_authenticated_streaming_route_sends_native_chat_stream_body(chat_capture):

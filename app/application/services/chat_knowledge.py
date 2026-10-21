@@ -312,7 +312,7 @@ class ChatKnowledgeService:
                           cloud_provider, cloud_consent, elapsed_ms, retrieval, outcome="completed",
                           failure=None, tools=None, steps=None, now=None, turn_route=None,
                           vision=None, provider_called=True, answer_source="provider", handoff=None,
-                          runtime=None):
+                          runtime=None, auto_route=None):
         self._application.owned_chat().authorize_owner(owner, conversation_id)
         if type(provider_called) is not bool or answer_source not in {"provider", "brain-empty-abstention"}:
             raise ValueError("Answer provenance is invalid")
@@ -359,6 +359,7 @@ class ChatKnowledgeService:
             "tools": list(tools or []),
             "steps": list(steps or []),
             "runtime": _runtime_trace(runtime),
+            "auto_route": _auto_route_trace(auto_route),
             "actions": {"tools_run": bool(tools), "tasks_created": False},
             "advanced_prompt_retained": False,
         }
@@ -456,3 +457,21 @@ def _runtime_trace(value):
                 if type(value.get("elapsed_ms", 0)) is int else 0,
             "failure": _safe_text(value.get("failure"), 128) if value.get("failure") else None,
             "steps": steps}
+
+
+def _auto_route_trace(value):
+    if not isinstance(value, dict):
+        return None
+    modes = {"direct", "agentic", "direct_fallback"}
+    capabilities = {"none", "brain", "reviewed_read_tool", "delegation"}
+    reasons = {"greeting", "ordinary_chat", "owner_selected_supported_tool",
+               "owner_selected_brain", "unsupported_selected_tool", "web_tool_unavailable",
+               "screen_tool_unavailable", "code_tool_unavailable", "brain_selection_required",
+               "classifier_failed", "owner_confirmed_delegation"}
+    mode = value.get("mode")
+    capability = value.get("capability")
+    reason = value.get("reason")
+    fallback = value.get("fallback")
+    if mode not in modes or capability not in capabilities or reason not in reasons or type(fallback) is not bool:
+        return None
+    return {"mode": mode, "capability": capability, "reason": reason, "fallback": fallback}

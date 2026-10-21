@@ -648,6 +648,7 @@ test("reviewed tool calls are explicit, one-turn, and routed through non-streami
     if (path.endsWith("/messages")) return response({
       ...snapshot([message("user", "completed", "Calculate it"), message("assistant", "completed", "The result is 36.")]),
       context_trace: {
+        auto_route: { mode: "agentic", capability: "reviewed_read_tool", reason: "owner_selected_supported_tool", fallback: false },
         steps: [{ step: "plan", status: "completed", source: "bounded configured chat workflow", duration_ms: 0 },
           { step: "retrieve", status: "skipped", reason: "No selected retrieval", duration_ms: 0 },
           { step: "calculator", status: "completed", source: "local calculator", duration_ms: 0 },
@@ -668,6 +669,7 @@ test("reviewed tool calls are explicit, one-turn, and routed through non-streami
   assert.deepEqual(JSON.parse(post.options.body).reviewed_tools, [{ kind: "calculator", expression: "(12 + 6) * 2" }]);
   assert.match(ui.planConfirmations[0], /calculator/);
   assert.match(ui.elements["chat-history"].textContent, /Reviewed tool calls.*calculator.*completed/);
+  assert.match(ui.elements["chat-history"].textContent, /Auto-routing: agentic.*reviewed_read_tool/);
   assert.match(ui.elements["chat-history"].textContent, /Workflow steps.*plan.*retrieve.*calculator.*answer/);
 });
 

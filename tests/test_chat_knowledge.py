@@ -67,6 +67,8 @@ def test_no_automatic_retention_or_context(env):
     trace = next(iter(traces.values()))
     assert trace["retrieval"] == {"enabled": False, "reason": "Use my knowledge was off."}
     assert trace["actions"] == {"tools_run": False, "tasks_created": False}
+    assert trace["auto_route"] == {"mode": "direct", "capability": "none",
+                                   "reason": "greeting", "fallback": False}
     assert trace["runtime"]["outcome"] == "completed"
     assert [item["step"] for item in trace["runtime"]["steps"]] == ["classify", "plan", "answer"]
     assert "Hello there" not in json.dumps(trace["runtime"])
@@ -110,11 +112,13 @@ def test_context_is_explicit_traced_and_untrusted(env):
     assert "untrusted" in reference.casefold()
     assert "Quarterly budget" in reference
     steps = trace["steps"]
-    assert [step["step"] for step in steps] == ["plan", "retrieve", "calculator", "answer"]
-    assert [step["status"] for step in steps] == ["completed", "completed", "completed", "completed"]
+    assert [step["step"] for step in steps] == ["auto_route", "plan", "retrieve", "calculator", "answer"]
+    assert [step["status"] for step in steps] == [
+        "completed", "completed", "completed", "completed", "completed",
+    ]
     assert steps[1]["source"] and steps[1]["duration_ms"] >= 0
-    assert steps[2]["source"] == "local calculator" and steps[2]["duration_ms"] >= 0
-    assert steps[3]["duration_ms"] >= 0
+    assert steps[3]["source"] == "local calculator" and steps[3]["duration_ms"] >= 0
+    assert steps[2]["duration_ms"] >= 0
     assert trace["outcome"] == "completed"
     assert len(runtime.tasks.all()) == tasks_before
     reply_id = body["conversation"]["messages"][-1]["id"]

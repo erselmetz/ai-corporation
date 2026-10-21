@@ -3,6 +3,12 @@
     {
       "date": "2026-10-21",
       "type": "development",
+      "title": "Task 208 deterministic chat routing",
+      "summary": "Added direct-versus-agentic routing based on bounded deterministic rules and already owner-selected capabilities. Greetings and ordinary chat remain direct; existing Brain and reviewed read-tool paths plus explicit one-step delegation are traced, while unsupported web, screen, code, unknown-tool, and classifier-error cases fall back to direct chat. No model-based classifier or new permissions were added. Full validation passed: Python 1,421 passed / 3 skipped / 0 failed; browser modules 281; Electron 38; public docs 21; desktop UI production/type build. Real-model quality evaluation is reserved for Task 211. Local only; no push or deployment."
+    },
+    {
+      "date": "2026-10-21",
+      "type": "development",
       "title": "Task 207 bounded Agent Runtime",
       "summary": "All Coordinator and Employee chat routes now pass through one synchronous bounded Agent Runtime. Added metadata-only runtime trace steps, provider time/token budgets, emergency-stop checks, constrained tool risk/schema/preview/dry-run metadata, and a short live streaming status. Validation: Python 1,414 passed / 5 skipped / 0 failed; browser modules 279; Electron 38; public docs 21. A real local llama3.2:3b Python chat API turn returned “Hi!” in 875 ms. Packaged Electron behavior and stopping an active real generation remain unverified. No push or deployment."
     },

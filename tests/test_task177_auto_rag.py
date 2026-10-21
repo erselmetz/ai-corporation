@@ -349,13 +349,16 @@ def test_explicit_preview_and_auto_retrieval_are_untrusted_cited_and_bounded(env
     assert "Source: field-notes.md" in context
     assert "8123" in context
     trace = response.json()["context_trace"]
+    assert trace["auto_route"] == {"mode": "agentic", "capability": "brain",
+                                   "reason": "owner_selected_brain", "fallback": False}
     assert trace["retrieval"]["mode"] == "lexical-only"
     assert trace["sources"][0]["source"] == "field-notes.md"
     assert trace["sources"][0]["score"] > 0
     assert [(step["step"], step["status"]) for step in trace["steps"]] == [
-        ("plan", "completed"), ("retrieve", "completed"), ("tools", "skipped"), ("answer", "completed")]
-    assert trace["steps"][1]["source"] == "field-notes.md"
-    assert trace["steps"][1]["result_count"] == 1
+        ("auto_route", "completed"), ("plan", "completed"), ("retrieve", "completed"),
+        ("tools", "skipped"), ("answer", "completed")]
+    assert trace["steps"][2]["source"] == "field-notes.md"
+    assert trace["steps"][2]["result_count"] == 1
     assert all(step["duration_ms"] >= 0 for step in trace["steps"])
     assert len(runtime.tasks.all()) == tasks_before
 

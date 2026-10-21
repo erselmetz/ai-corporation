@@ -504,6 +504,12 @@ export function mountChat({
       ? `Route: ${route.agent} (${route.agent_id}) · ${route.provider || "provider unknown"} / ${route.model || "model unknown"}. ${route.source || "Route reason not recorded."}`
       : "Route details were not recorded for this reply.";
     panel.append(routeText);
+    const automaticRoute = trace.auto_route;
+    if (automaticRoute && typeof automaticRoute.mode === "string") {
+      const decision = documentRef.createElement("p");
+      decision.textContent = `Auto-routing: ${automaticRoute.mode.replaceAll("_", " ")} · ${automaticRoute.capability || "no capability"} · ${automaticRoute.reason || "reason unavailable"}.`;
+      panel.append(decision);
+    }
     if (trace.handoff && typeof trace.handoff === "object") {
       const handoff = documentRef.createElement("p");
       const responder = trace.handoff.agent || {};

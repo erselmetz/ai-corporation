@@ -26,15 +26,16 @@ test("shows all task contracts in descending order and identifies the next plann
   assert.equal(groups[0].id, "tasks-211-211");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), [211, 210, 209, 208, 207, ...Array.from({ length: 203 }, (_, index) => 203 - index)]);
-  assert.match(elements["roadmap-summary"].textContent, /208 roadmap tasks.*199 completed scoped checkpoints.*4 deferred and incomplete.*4 planned.*1 design only/);
-  assert.match(elements["next-task"].textContent, /Task 208/);
+  assert.match(elements["roadmap-summary"].textContent, /208 roadmap tasks.*200 completed scoped checkpoints.*4 deferred and incomplete.*3 planned.*1 design only/);
+  assert.match(elements["next-task"].textContent, /Task 209/);
   const newest = items[0];
-  const latestCompleted = items.find(item => item.id === "task-207");
+  assert.equal(newest.id, "task-211");
+  const latestCompleted = items.find(item => item.id === "task-208");
   assert.equal(latestCompleted.children[2].textContent, "Completed");
-  assert.match(latestCompleted.children[4].textContent, /AI-verified/);
-  assert.equal(latestCompleted.children[5].textContent, "Real hardware/live provider: partially verified");
-  assert.equal(latestCompleted.id, "task-207");
-  assert.match(latestCompleted.textContent, /task-207-bounded-agent-runtime/);
+  assert.match(latestCompleted.children[4].textContent, /AI-verified \(deterministic\/fake evidence recorded\)/);
+  assert.equal(latestCompleted.children[5].textContent, "Real hardware/live provider: unverified");
+  assert.equal(latestCompleted.id, "task-208");
+  assert.match(latestCompleted.textContent, /task-208-deterministic-chat-routing/);
   const priorCompleted = items.find(item => item.id === "task-202");
   assert.equal(priorCompleted.children[2].textContent, "Completed");
   assert.match(priorCompleted.textContent, /task-202-agent-delegation-approvals/);
@@ -166,7 +167,7 @@ test("publishes completed milestones and remaining phases with their current sta
     [174, "completed"], [175, "completed"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
     [180, "completed"], [181, "completed"], [182, "completed"], [183, "completed"], [184, "completed"], [185, "completed"],
     [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"], [191, "completed"], [192, "completed"], [193, "deferred"], [194, "deferred"], [195, "completed"],
-    [196, "completed"], [197, "completed"], [198, "completed"], [199, "completed"], [200, "completed"], [201, "completed"], [202, "completed"], [203, "completed"], [207, "completed"], [208, "planned"], [209, "planned"], [210, "planned"], [211, "planned"],
+    [196, "completed"], [197, "completed"], [198, "completed"], [199, "completed"], [200, "completed"], [201, "completed"], [202, "completed"], [203, "completed"], [207, "completed"], [208, "completed"], [209, "planned"], [210, "planned"], [211, "planned"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, "task-177-auto-rag-trace");
   assert.equal(tasks.find(task => task.number === 178).checkpoint, "task-178-nav-fix");

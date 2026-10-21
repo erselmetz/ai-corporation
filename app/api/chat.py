@@ -49,6 +49,7 @@ from app.integrations import (
 )
 from app.providers.base import ProviderCapacityError, ProviderCapacityUnknown
 from app.agent_runtime import AgentRuntimeBudgetExceeded, AgentRuntimeError, AgentRuntimeStopped
+from app.auto_routing import classify_chat_route_safely
 from .security import require_permission
 
 router = APIRouter(prefix="/api/chat/conversations")
@@ -188,6 +189,15 @@ def _selected_scopes(scopes):
     return tuple(SelectedKnowledgeScope(item.scope, item.scope_id) for item in scopes)
 
 
+def _auto_route(body):
+    return classify_chat_route_safely(
+        body.text,
+        brain_selected=(body.knowledge_enabled and bool(body.knowledge_scopes)) or body.context is not None,
+        reviewed_tools=tuple(item.kind for item in body.reviewed_tools),
+        delegation_selected=body.delegate_once,
+    ).as_trace()
+
+
 def _knowledge_preview(service, owner, identifier, query, scopes, now):
     try:
         result = service.chat_knowledge().retrieve_selected(
@@ -202,9 +212,16 @@ def _knowledge_preview(service, owner, identifier, query, scopes, now):
 
 
 def _workflow_steps(retrieval, tools, coordinator, *, retrieval_ms=0,
-                    answer_ms=None, answer_status="completed", turn_route=None):
-    steps = [{"step": "plan", "status": "completed", "source": "bounded configured chat workflow",
-              "duration_ms": 0}]
+                    answer_ms=None, answer_status="completed", turn_route=None,
+                    auto_route=None):
+    steps = []
+    if auto_route:
+        steps.append({"step": "auto_route", "status": "fallback" if auto_route["fallback"] else "completed",
+                      "source": "deterministic capability router",
+                      "destination": auto_route["mode"], "capability": auto_route["capability"],
+                      "reason": auto_route["reason"], "duration_ms": 0})
+    steps.append({"step": "plan", "status": "completed", "source": "bounded configured chat workflow",
+                  "duration_ms": 0})
     if retrieval:
         sources = retrieval.get("returned_chunks", retrieval.get("sources", []))
         labels = []
@@ -249,22 +266,24 @@ def _empty_brain_abstention(service, knowledge, principal, identifier, body,
     result = service.owned_chat().complete_without_provider(
         principal.identity, identifier, body.text, reply)
     retrieval = {"enabled": True, **auto_context["trace"]}
+    auto_route = _auto_route(body)
     steps = _workflow_steps(retrieval, [], current["coordinator"], retrieval_ms=retrieval_ms,
-                            answer_ms=0)
+                            answer_ms=0, auto_route=auto_route)
     steps[-1]["source"] = "local Brain abstention; no Provider request"
     trace = knowledge.record_turn_trace(
         principal.identity, identifier, result["conversation"].messages[-1].id,
         coordinator=current["coordinator"], cloud_provider=None, cloud_consent=False,
         elapsed_ms=(time.perf_counter() - started_at) * 1000,
         retrieval=retrieval, steps=steps, now=now, provider_called=False,
-        answer_source="brain-empty-abstention")
+        answer_source="brain-empty-abstention", auto_route=auto_route)
     return {"conversation": result["conversation"], "context_trace": trace}
 
 
 def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
                             cloud_provider, cloud_consent, elapsed_ms, auto_context,
                             retrieved, trace_request, now, tools=None, retrieval_ms=0,
-                            answer_ms=None, turn_route=None, vision=None, handoff=None):
+                            answer_ms=None, turn_route=None, vision=None, handoff=None,
+                            auto_route=None):
     """Record only a failed/pending user turn; never serialize the raw exception."""
     try:
         record = service.owned_chat().get(owner, identifier)["conversation"]
@@ -288,8 +307,9 @@ def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
                                   retrieval_ms=retrieval_ms,
                                   answer_ms=answer_ms,
                                   answer_status="failed" if message.status.value == "failed" else "unknown",
-                                  turn_route=turn_route),
+                                  turn_route=turn_route, auto_route=auto_route),
             turn_route=turn_route,
+            auto_route=auto_route,
             handoff=handoff,
             outcome="failed" if message.status.value == "failed" else "unknown",
             failure="Provider or chat runtime did not produce a verified reply; raw diagnostics are omitted.",
@@ -659,6 +679,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                  principal=Depends(require_permission("chat:send")),
                  service=Depends(get_application_service), now=Depends(get_chat_now)):
     body = parse(SendRequest, payload)
+    auto_route = _auto_route(body)
     if contains_gemini_key(body.text) or (body.context and contains_gemini_key(body.context.query)):
         raise HTTPException(422, SECRET_PASTE_GUIDANCE)
     if body.knowledge_enabled and (body.context is not None or body.image_ids):
@@ -796,7 +817,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                     vision={"used": True, "provider": image_provider, "model": image_model,
                             "destination": "local" if service.provider_is_local(image_provider) else "online",
                             "outcome": "failed", "image_count": len(body.image_ids),
-                            "retention": image_retention})
+                            "retention": image_retention}, auto_route=auto_route)
                 raise
             messages = result["conversation"].messages
             reply = next((message for message in reversed(messages)
@@ -809,7 +830,8 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                     elapsed_ms=(time.perf_counter() - started_at) * 1000,
                     retrieval=None,
                     steps=_workflow_steps(None, [], current["coordinator"], retrieval_ms=retrieval_ms,
-                                          answer_ms=(time.perf_counter() - answer_started_at) * 1000),
+                                          answer_ms=(time.perf_counter() - answer_started_at) * 1000,
+                                          auto_route=auto_route),
                     vision={
                         "used": True,
                         "provider": result["image_transfer"]["provider_id"],
@@ -819,7 +841,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                         "image_count": len(result["image_transfer"]["image_ids"]),
                         "retention": result["image_transfer"]["retention"],
                     },
-                    now=now, runtime=_agent_runtime_trace(service))}
+                    now=now, runtime=_agent_runtime_trace(service), auto_route=auto_route)}
         else:
             if body.image_consent or body.include_local_ocr:
                 raise HTTPException(422, "Image consent and OCR require selected images.")
@@ -850,7 +872,8 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                     cloud_provider, body.cloud_consent, (time.perf_counter() - started_at) * 1000,
                     auto_context, retrieved, trace_request, now, tool_trace, retrieval_ms,
                     (time.perf_counter() - answer_started_at) * 1000, turn_route=turn_route,
-                    handoff=({**handoff_observed, "status": "failed"} if handoff_observed else None))
+                    handoff=({**handoff_observed, "status": "failed"} if handoff_observed else None),
+                    auto_route=auto_route)
                 raise
             messages = result["conversation"].messages
             reply = next((message for message in reversed(messages)
@@ -868,9 +891,9 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                     steps=_workflow_steps(retrieval_trace, tool_trace, coordinator,
                                           retrieval_ms=retrieval_ms,
                                           answer_ms=(time.perf_counter() - answer_started_at) * 1000,
-                                          turn_route=turn_route),
+                                          turn_route=turn_route, auto_route=auto_route),
                     turn_route=turn_route, handoff=result.get("handoff"),
-                    now=now, runtime=_agent_runtime_trace(service))
+                    now=now, runtime=_agent_runtime_trace(service), auto_route=auto_route)
                 result = {**result, "context_trace": trace}
             if captured_prompt:
                 result["advanced_prompt"] = captured_prompt[0]
@@ -882,6 +905,7 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                    principal=Depends(require_permission("chat:send")),
                    service=Depends(get_application_service), now=Depends(get_chat_now)):
     body = parse(SendRequest, payload)
+    auto_route = _auto_route(body)
     if body.route_provider_id is not None or body.route_model_id is not None or body.route_consent:
         raise HTTPException(422, "Per-turn alternate model routing uses the reviewed non-streaming endpoint.")
     if body.reviewed_tools:
@@ -976,8 +1000,9 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                         retrieval=retrieval_trace,
                         steps=_workflow_steps(retrieval_trace, [], coordinator,
                                               retrieval_ms=retrieval_ms,
-                                              answer_ms=(time.perf_counter() - answer_started_at) * 1000),
-                        now=now, runtime=_agent_runtime_trace(service))
+                                              answer_ms=(time.perf_counter() - answer_started_at) * 1000,
+                                              auto_route=auto_route),
+                        now=now, runtime=_agent_runtime_trace(service), auto_route=auto_route)
                     event = {
                         **event,
                         "context_trace": turn_trace,
@@ -991,7 +1016,8 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                 current["coordinator"].provider if cloud_requires_consent else None,
                 body.cloud_consent, (time.perf_counter() - started_at) * 1000,
                 auto_context, retrieved, trace_request, now, retrieval_ms=retrieval_ms,
-                answer_ms=(time.perf_counter() - answer_started_at) * 1000)
+                answer_ms=(time.perf_counter() - answer_started_at) * 1000,
+                auto_route=auto_route)
             yield json.dumps({
                 "type": "error",
                 "message": "Configured provider request-slot capacity is exhausted; no provider request was admitted.",
@@ -1002,7 +1028,8 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                 current["coordinator"].provider if cloud_requires_consent else None,
                 body.cloud_consent, (time.perf_counter() - started_at) * 1000,
                 auto_context, retrieved, trace_request, now, retrieval_ms=retrieval_ms,
-                answer_ms=(time.perf_counter() - answer_started_at) * 1000)
+                answer_ms=(time.perf_counter() - answer_started_at) * 1000,
+                auto_route=auto_route)
             yield json.dumps({
                 "type": "error",
                 "message": (
