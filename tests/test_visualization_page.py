@@ -43,3 +43,20 @@ def test_vendored_three_is_served_same_origin_as_javascript_with_license():
             assert "javascript" in response.headers["content-type"] or name.endswith(".js")
         assert "MIT" in client.get("/ui/static/vendor/three/LICENSE").text
         assert client.get("/ui/static/visualization.mjs").headers["content-type"].startswith("text/javascript")
+
+
+def test_sage_core_page_is_a_read_only_agent_map_with_accessible_fallback():
+    with _client() as client:
+        response = client.get("/ui/sage-core")
+        assert response.status_code == 200
+        html = response.text
+        for fragment in ('<h1>Sage Core</h1>', 'id="sage-core-canvas" tabindex="0"',
+                         'id="sage-core-accessible-list"', 'id="sage-core-reduced-motion"',
+                         'id="sage-core-detail-content"', 'src="/ui/static/sage-core.mjs"',
+                         'href="/ui/sage-core"', 'It cannot start or approve work.'):
+            assert fragment in html
+        assert "onclick" not in html.lower()
+        assert "script-src 'self'" in response.headers["content-security-policy"]
+        script = client.get("/ui/static/sage-core.mjs")
+        assert script.status_code == 200
+        assert script.headers["content-type"].startswith("text/javascript")

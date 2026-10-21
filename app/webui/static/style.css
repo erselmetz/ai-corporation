@@ -1218,3 +1218,16 @@ body.has-shared-navigation .layout {
   .agent-card-actions { grid-column: 2; }
   .agent-toolbar { align-items: flex-start; }
 }
+.sage-core-page { max-width: 1500px; }
+.sage-core-controls { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin: 1rem 0; }
+.sage-core-controls label { display: inline-flex; align-items: center; gap: .45rem; }
+.sage-core-workspace { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(240px, .8fr); gap: 1rem; align-items: stretch; }
+.sage-core-display, .sage-core-detail { min-width: 0; border: 1px solid var(--line, #34404b); border-radius: 14px; background: var(--surface, #10161d); padding: 1rem; }
+.sage-core-display { min-height: 520px; }
+#sage-core-canvas { display: block; width: 100%; height: 520px; border-radius: 10px; outline-offset: 4px; }
+.sage-core-list { display: grid; gap: .6rem; margin: 0; padding: 0; list-style: none; }
+.sage-core-list li { border-bottom: 1px solid var(--line, #34404b); padding: .55rem 0; }
+.sage-core-list button { width: 100%; text-align: left; }
+.sage-core-detail { min-height: 220px; }
+.sage-core-detail a { display: inline-block; margin-top: .5rem; }
+@media (max-width: 800px) { .sage-core-workspace { grid-template-columns: 1fr; } #sage-core-canvas { height: 420px; } .sage-core-display { min-height: 420px; } }

@@ -18,6 +18,7 @@ def _navigation(active_path: str, *, desktop_settings_available: bool = True) ->
         ("PRIMARY", (("Home", "/ui"), ("Chat", "/ui/chat"), ("Projects", "/ui/projects"))),
         ("AI", (("Agents", "/ui/agents"), ("Employees", "/ui/employees"), ("Positions", "/ui/positions"),
                 ("Organization map", "/ui/structure"), ("Providers &amp; models", "/ui/providers"),
+                ("Sage Core", "/ui/sage-core"),
                 ("3D visualization", "/ui/visualization"), ("Memory", "/ui/memory"))),
         ("OPERATIONS", (("Tasks", "/ui/tasks"), ("Workflows", "/ui/workflows"),
                         ("Workflow map", "/ui/workflow-map"), ("Activity", "/ui/activity"),
@@ -488,6 +489,35 @@ def agents_page() -> HTMLResponse:
           <button id="agent-create-submit" type="submit">Create from profile</button>
           <p id="agent-create-state" role="status" aria-live="polite"></p></form>
       </details>
+    </main></div></body></html>""")
+
+
+@router.get("/ui/sage-core", response_class=HTMLResponse, include_in_schema=False)
+def sage_core_page() -> HTMLResponse:
+    return HTMLResponse(f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A live view of recorded ERSELMETZ AI Agent states and trace links.">
+    <title>Sage Core - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
+    <script type="module" src="/ui/static/sage-core.mjs"></script></head><body>
+    <header class="site-header"><a class="brand" href="/ui">ERSELMETZ AI</a>
+    <span class="product-label">Your local AI workspace</span></header><div class="layout">
+    {_navigation("/ui/sage-core")}<main class="content sage-core-page">
+      <div class="dashboard-heading"><div><p class="eyebrow">Agent team</p><h1>Sage Core</h1></div>
+        <button id="sage-core-refresh" type="button">Refresh</button></div>
+      <p class="auth-boundary">Role profiles share the same models; local model work runs one Agent at a time. This view reads current Agent status and recent recorded traces. It cannot start or approve work.</p>
+      <p id="sage-core-state" role="status" aria-live="polite">Loading current Agent states...</p>
+      <div class="sage-core-controls" role="group" aria-label="Sage Core view">
+        <button id="sage-core-map-mode" type="button" aria-pressed="true">Sigil map</button>
+        <button id="sage-core-list-mode" type="button" aria-pressed="false">Accessible list</button>
+        <label><input id="sage-core-reduced-motion" type="checkbox"> Reduce motion</label></div>
+      <div class="sage-core-workspace"><section class="sage-core-display" aria-label="Agent visualization">
+        <canvas id="sage-core-canvas" tabindex="0" aria-label="Sage Core Agent map. Use arrow keys to select Agents or switch to the accessible list."></canvas>
+        <ul id="sage-core-accessible-list" class="sage-core-list" aria-label="Current Agents and trace links" hidden></ul>
+      </section><aside class="sage-core-detail" aria-live="polite">
+        <h2 id="sage-core-detail-title">Agent details</h2>
+        <div id="sage-core-detail-content">Select an Agent to see its current profile and status.</div>
+      </aside></div>
+      <p class="muted" id="sage-core-limits">Approval records do not identify a requesting Agent, so no Agent is shown as waiting for approval without that provenance. Animation appears only for a recorded working or waiting state.</p>
     </main></div></body></html>""")
 
 

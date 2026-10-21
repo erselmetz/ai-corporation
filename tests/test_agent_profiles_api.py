@@ -86,3 +86,49 @@ def test_profile_writes_require_owner_csrf_and_cannot_expand_scopes_or_permissio
             "permissions": ["task:dispatch"],
         })
         assert denied.status_code == 409
+
+
+def test_sage_core_requires_agent_and_chat_read_and_returns_only_real_trace_links():
+    runtime = create_corporation_runtime(with_builtin_agent_team=True)
+    unauthenticated = create_local_app(password=PASSWORD, application_service=runtime.application_service)
+    with TestClient(unauthenticated, base_url=ORIGIN, client=("127.0.0.1", 52102)) as no_session:
+        assert no_session.get("/api/local/agents/sage-core").status_code == 401
+    limited = create_local_app(password=PASSWORD, application_service=runtime.application_service)
+    from app.api.security import AuthenticatedPrincipal
+    class AgentOnlyBackend:
+        def authenticate(self, _request):
+            return AuthenticatedPrincipal("local-owner", frozenset({"agent:read"}), session_id="test-session")
+    limited.state.authentication_backend = AgentOnlyBackend()
+    with TestClient(limited, base_url=ORIGIN, client=("127.0.0.1", 52103)) as agent_only:
+        assert agent_only.get("/api/local/agents/sage-core").status_code == 403
+    client, headers = client_for_runtime(runtime)
+
+    owner = client.get("/api/local/session").json()["identity"]
+    conversation = runtime.application_service.owned_chat().start(owner, "local_worker")
+
+    class RecordedTrace:
+        def traces(self, actor, conversation_id, _now):
+            assert actor == owner
+            assert conversation_id == conversation["conversation"].id
+            return {"reply-1": {
+                "retrieved_at": "2026-10-21T00:00:00+00:00",
+                "route": {"agent_id": "local_worker", "responder_agent_id": "researcher"},
+                "handoff": {"status": "completed", "coordinator": {"id": "local_worker"},
+                            "agent": {"id": "researcher"}},
+                "sources": [{"memory_id": "brain-id", "source": "owner-note.md", "freshness": "current"}],
+                "content": "private conversation text must not be returned",
+            }}
+
+    runtime.application_service.chat_knowledge = lambda: RecordedTrace()
+    response = client.get("/api/local/agents/sage-core", headers=headers)
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert {item["id"] for item in result["nodes"]} >= {"local_worker", "researcher"}
+    assert result["handoffs"] == [{"id": f"{conversation['conversation'].id}:reply-1",
+                                   "from": "local_worker", "to": "researcher",
+                                   "state": "completed", "recorded_at": "2026-10-21T00:00:00+00:00"}]
+    assert result["source_links"] == [{"id": f"{conversation['conversation'].id}:reply-1:brain-id",
+                                       "agent_id": "researcher", "source_id": "brain-id",
+                                       "label": "owner-note.md", "recorded_at": "2026-10-21T00:00:00+00:00"}]
+    assert "content" not in response.text
+    client.close()
