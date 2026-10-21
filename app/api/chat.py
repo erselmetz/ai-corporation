@@ -137,6 +137,7 @@ class SendRequest(BaseModel):
     route_provider_id: str | None = Field(default=None, min_length=1, max_length=256)
     route_model_id: str | None = Field(default=None, min_length=1, max_length=256)
     route_consent: StrictBool = False
+    delegate_once: StrictBool = False
 
 
 class RouteSuggestionRequest(BaseModel):
@@ -250,7 +251,7 @@ def _empty_brain_abstention(service, knowledge, principal, identifier, body,
 def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
                             cloud_provider, cloud_consent, elapsed_ms, auto_context,
                             retrieved, trace_request, now, tools=None, retrieval_ms=0,
-                            answer_ms=None, turn_route=None, vision=None):
+                            answer_ms=None, turn_route=None, vision=None, handoff=None):
     """Record only a failed/pending user turn; never serialize the raw exception."""
     try:
         record = service.owned_chat().get(owner, identifier)["conversation"]
@@ -276,6 +277,7 @@ def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
                                   answer_status="failed" if message.status.value == "failed" else "unknown",
                                   turn_route=turn_route),
             turn_route=turn_route,
+            handoff=handoff,
             outcome="failed" if message.status.value == "failed" else "unknown",
             failure="Provider or chat runtime did not produce a verified reply; raw diagnostics are omitted.",
             now=now, vision=vision)
@@ -644,6 +646,12 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
         raise HTTPException(422, "Knowledge-assisted turns cannot combine with separate context or images.")
     if body.knowledge_enabled and (not body.knowledge_scopes or not body.knowledge_preview_digest):
         raise HTTPException(422, "Preview the selected knowledge scopes before sending.")
+    if body.delegate_once and (body.image_ids or body.context or body.knowledge_enabled
+                               or body.reviewed_tools or body.route_provider_id
+                               or body.route_model_id or body.route_consent
+                               or body.capture_local_prompt or body.image_consent
+                               or body.include_local_ocr):
+        raise HTTPException(422, "One-step delegation supports a plain-text local turn only. Deselect retrieval, tools, images, prompt capture, and alternate routes first.")
     if not body.knowledge_enabled and (body.knowledge_scopes or body.knowledge_preview_digest):
         raise HTTPException(422, "Knowledge scope and preview are required only when Use my knowledge is on.")
     if body.capture_local_prompt and (body.image_ids or body.context):
@@ -655,6 +663,8 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
         presentation = _presentation_preferences(request, principal.identity)
         current = service.owned_chat().get(principal.identity, identifier)
         agent_profile = service.get_agent_profile(current["coordinator"].id)
+        if body.delegate_once and not service.is_loopback_ollama_provider(current["coordinator"].provider):
+            raise HTTPException(422, "One-step delegation is available only with a loopback Ollama Coordinator.")
         requested_tool_ids = {
             "calculator": "reviewed.calculator",
             "local-document-lookup": "reviewed.local-document-lookup",
@@ -799,20 +809,29 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
             captured_prompt = []
             cloud_provider = route_provider_id if cloud_requires_consent else None
             answer_started_at = time.perf_counter()
+            handoff_observed = {}
             try:
-                result = service.owned_chat().send(
-                    principal.identity, identifier, body.text, prompt_context,
-                    presentation_preferences=presentation,
-                    brain_enabled=body.knowledge_enabled,
-                    tool_context=tool_context,
-                    prompt_observer=captured_prompt.append if body.capture_local_prompt else None,
-                    turn_route=turn_route, route_consent=body.route_consent)
+                if body.delegate_once:
+                    result = service.owned_chat().send_delegated(
+                        principal.identity, identifier, body.text,
+                        service.choose_chat_delegate,
+                        handoff_observer=lambda value: handoff_observed.update(value),
+                    )
+                else:
+                    result = service.owned_chat().send(
+                        principal.identity, identifier, body.text, prompt_context,
+                        presentation_preferences=presentation,
+                        brain_enabled=body.knowledge_enabled,
+                        tool_context=tool_context,
+                        prompt_observer=captured_prompt.append if body.capture_local_prompt else None,
+                        turn_route=turn_route, route_consent=body.route_consent)
             except Exception:
                 _record_unverified_turn(
                     service, knowledge, principal.identity, identifier, current["coordinator"],
                     cloud_provider, body.cloud_consent, (time.perf_counter() - started_at) * 1000,
                     auto_context, retrieved, trace_request, now, tool_trace, retrieval_ms,
-                    (time.perf_counter() - answer_started_at) * 1000, turn_route=turn_route)
+                    (time.perf_counter() - answer_started_at) * 1000, turn_route=turn_route,
+                    handoff=({**handoff_observed, "status": "failed"} if handoff_observed else None))
                 raise
             messages = result["conversation"].messages
             reply = next((message for message in reversed(messages)
@@ -831,7 +850,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                                           retrieval_ms=retrieval_ms,
                                           answer_ms=(time.perf_counter() - answer_started_at) * 1000,
                                           turn_route=turn_route),
-                    turn_route=turn_route,
+                    turn_route=turn_route, handoff=result.get("handoff"),
                     now=now)
                 result = {**result, "context_trace": trace}
             if captured_prompt:

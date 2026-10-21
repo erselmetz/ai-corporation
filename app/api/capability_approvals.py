@@ -78,3 +78,26 @@ def approve(approval_id: ApprovalId, body: ApprovalDecision, request: Request,
     except PermissionError:
         raise HTTPException(403, "Capability authorization is no longer valid") from None
     return approvals.snapshot(record)
+
+
+@router.post("/{approval_id}/deny")
+def deny(approval_id: ApprovalId, body: ApprovalDecision, request: Request,
+         principal: AuthenticatedPrincipal = Depends(
+             require_permission(APPROVAL_MANAGEMENT_PERMISSION)),
+         approvals: CapabilityApprovalService = Depends(service)):
+    require_local_session(principal)
+    csrf = getattr(request.app.state.authentication_backend, "require_csrf", None)
+    if not callable(csrf):
+        raise HTTPException(403, "Owner request verification unavailable")
+    csrf(request)
+    try:
+        record = approvals.deny(approval_id, approver_id=principal.identity,
+                                permissions=principal.permissions,
+                                confirmed_digest=body.confirmed_digest)
+    except CapabilityApprovalNotFound:
+        raise HTTPException(404, "Approval request unavailable") from None
+    except CapabilityApprovalError as error:
+        raise HTTPException(409, str(error)) from None
+    except PermissionError:
+        raise HTTPException(403, "Capability authorization is no longer valid") from None
+    return approvals.snapshot(record)

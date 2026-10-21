@@ -311,7 +311,7 @@ class ChatKnowledgeService:
     def record_turn_trace(self, owner, conversation_id, reply_id, *, coordinator,
                           cloud_provider, cloud_consent, elapsed_ms, retrieval, outcome="completed",
                           failure=None, tools=None, steps=None, now=None, turn_route=None,
-                          vision=None, provider_called=True, answer_source="provider"):
+                          vision=None, provider_called=True, answer_source="provider", handoff=None):
         self._application.owned_chat().authorize_owner(owner, conversation_id)
         if type(provider_called) is not bool or answer_source not in {"provider", "brain-empty-abstention"}:
             raise ValueError("Answer provenance is invalid")
@@ -331,10 +331,15 @@ class ChatKnowledgeService:
             "sources": [],
             "route": {"agent_id": _safe_text(coordinator.id, 128),
                       "agent": _safe_text(coordinator.name, 128),
-                      "provider": _safe_text(turn_route[0] if turn_route else coordinator.provider, 128),
-                      "model": _safe_text(turn_route[1] if turn_route else coordinator.model, 128),
+                      "provider": _safe_text(handoff.get("agent", {}).get("provider") if handoff else
+                                              (turn_route[0] if turn_route else coordinator.provider), 128),
+                      "model": _safe_text(handoff.get("agent", {}).get("model") if handoff else
+                                           (turn_route[1] if turn_route else coordinator.model), 128),
                       "source": ("Owner-approved alternate for this turn only; Agent assignment unchanged."
-                                 if turn_route else "Coordinator selected by owner when this conversation started.")},
+                                 if turn_route else "Coordinator selected by owner when this conversation started."),
+                      "responder_agent_id": _safe_text(handoff.get("agent", {}).get("id"), 128) if handoff else None,
+                      "responder_agent": _safe_text(handoff.get("agent", {}).get("name"), 128) if handoff else None},
+            "handoff": None,
             "retrieval": retrieval or {"enabled": False, "reason": "Use my knowledge was off."},
             "cloud": {"provider_used": _safe_text(cloud_provider, 128) if cloud_provider else None,
                       "consent_given": bool(cloud_consent),
@@ -355,6 +360,37 @@ class ChatKnowledgeService:
             "actions": {"tools_run": bool(tools), "tasks_created": False},
             "advanced_prompt_retained": False,
         }
+        if isinstance(handoff, dict):
+            agent = handoff.get("agent") if isinstance(handoff.get("agent"), dict) else {}
+            safe_handoff = {
+                "status": _safe_text(handoff.get("status"), 32),
+                "selection_source": "Coordinator model proposal; validated against current local Agent profiles.",
+                "max_handoffs": 1, "step_count": 2,
+                "coordinator": {"id": _safe_text(coordinator.id, 128),
+                                "name": _safe_text(coordinator.name, 128)},
+                "agent": {key: _safe_text(agent.get(key), 128)
+                          for key in ("id", "name", "role", "provider", "model")},
+                "selection_ms": max(0, int(handoff.get("selection_ms", 0)))
+                    if type(handoff.get("selection_ms", 0)) is int else None,
+                "answer_ms": max(0, int(handoff.get("answer_ms", 0)))
+                    if type(handoff.get("answer_ms", 0)) is int else None,
+            }
+            trace["handoff"] = safe_handoff
+            trace["steps"] = list(trace["steps"])
+            trace["steps"].insert(max(0, len(trace["steps"]) - 1), {
+                "step": "coordinator_select_agent", "status": "completed",
+                "source": "One local Coordinator model selection; candidate ID was validated by trusted code.",
+                "duration_ms": safe_handoff["selection_ms"],
+            })
+            if safe_handoff["status"] == "completed":
+                trace["steps"][-1]["source"] = (
+                    f"One response from {safe_handoff['agent']['name']} "
+                    f"({safe_handoff['agent']['id']}); no further handoff.")
+                trace["steps"][-1]["duration_ms"] = safe_handoff["answer_ms"]
+            else:
+                trace["steps"][-1]["status"] = "failed"
+                trace["steps"][-1]["source"] = "The selected Agent response did not complete; no further handoff was attempted."
+                trace["steps"][-1]["duration_ms"] = safe_handoff["answer_ms"]
         if retrieval:
             trace["sources"] = retrieval.get("returned_chunks", retrieval.get("sources", []))
         with self._lock:

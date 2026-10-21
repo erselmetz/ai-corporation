@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from threading import Lock, RLock
+from time import perf_counter
 from typing import TYPE_CHECKING, Callable
 from uuid import uuid4
 
@@ -64,11 +65,13 @@ class OwnedChatService:
     def __init__(self, chat: CorporationChatService,
                  get_agent: Callable[[str], AgentSummary],
                  get_provider: Callable[[str], object],
-                 agent_execution: Callable[[str], object]):
+                 agent_execution: Callable[[str], object],
+                 get_agent_profile: Callable[[str], object] | None = None):
         self._chat = chat
         self._get_agent = get_agent
         self._get_provider = get_provider
         self._agent_execution = agent_execution
+        self._get_agent_profile = get_agent_profile or get_agent
         self._entries: dict[str, _OwnedConversation] = {}
         self._catalog_lock = RLock()
         self._active_agents: dict[str, int] = {}
@@ -198,7 +201,8 @@ class OwnedChatService:
             if ((current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model)
                     or provider is not entry.provider):
                 raise ChatConflict("Coordinator assignment changed; start a new conversation")
-            with self.agent_request(entry.coordinator.id):
+            with self.agent_request(entry.coordinator.id,
+                                    wait_for_slot=getattr(provider, "is_local", False) is True):
                 if image_ids:
                     if image_consent is not True:
                         raise ChatConsentRequired("Explicit consent is required to send selected images to the configured provider")
@@ -240,6 +244,62 @@ class OwnedChatService:
                                   prompt_observer=prompt_observer, turn_route=turn_route,
                                   brain_enabled=brain_enabled)
 
+    def send_delegated(self, owner, identifier, text, choose_agent: Callable,
+                       *, handoff_observer: Callable[[dict], None] | None = None):
+        """Run one local Coordinator selection step and one local Agent answer step."""
+        if not callable(choose_agent):
+            raise TypeError("A trusted Coordinator selector is required")
+        with self._access(owner, identifier) as entry:
+            if self._chat.get_status(identifier) is not ConversationStatus.OPEN:
+                raise ValueError("Cannot send to a closed conversation")
+            if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
+                raise ChatLimit("Conversation message limit reached; start a new conversation")
+            selection_started = perf_counter()
+            with self.agent_request(entry.coordinator.id,
+                                    wait_for_slot=getattr(entry.provider, "is_local", False) is True):
+                selected = choose_agent(entry.coordinator.id, text)
+            selection_ms = max(0, int((perf_counter() - selection_started) * 1000))
+            try:
+                target = self._get_agent_profile(selected.id)
+            except (AttributeError, ValueError):
+                raise ChatUnavailable("The selected Agent is no longer available") from None
+            if (target.id == entry.coordinator.id or target.paused
+                    or (target.provider, target.model) != (selected.provider, selected.model)):
+                raise ChatConflict("The selected Agent changed or is paused; no handoff was started")
+            try:
+                provider = self._get_provider(target.provider)
+            except ValueError:
+                raise ChatUnavailable("The selected Agent provider is unavailable") from None
+            if getattr(provider, "is_local", False) is not True:
+                raise ChatConsentRequired("Delegation is limited to a verified local model; no cloud request was made")
+            handoff = {
+                "status": "selected", "selection_source": "Coordinator model proposal",
+                "max_handoffs": 1, "step_count": 2,
+                "coordinator": {"id": entry.coordinator.id, "name": entry.coordinator.name},
+                "agent": {"id": target.id, "name": target.name, "role": target.role,
+                          "provider": target.provider, "model": target.model},
+                "selection_ms": selection_ms,
+            }
+            if handoff_observer is not None:
+                handoff_observer(dict(handoff))
+            answer_started = perf_counter()
+            with self.agent_request(target.id, wait_for_slot=True):
+                current = self._get_agent_profile(target.id)
+                if (current.provider, current.model, current.system_prompt, current.paused) != (
+                        target.provider, target.model, target.system_prompt, target.paused):
+                    raise ChatConflict("The selected Agent changed before handoff; no answer was requested")
+                record = self._chat.send(
+                    identifier, text, responding_agent_id=target.id,
+                    role_instructions=target.system_prompt or None,
+                    expected_assignment=(target.provider, target.model),
+                )
+            handoff["answer_ms"] = max(0, int((perf_counter() - answer_started) * 1000))
+            handoff["status"] = "completed"
+            if handoff_observer is not None:
+                handoff_observer(dict(handoff))
+            return {"conversation": record, "coordinator": entry.coordinator,
+                    "handoff": handoff}
+
     def stream(self, owner, identifier, text, retrieved_context=None, presentation_preferences=None,
                *, brain_enabled=False):
         with self._access(owner, identifier) as entry:
@@ -251,7 +311,8 @@ class OwnedChatService:
                 raise ChatConflict("Coordinator assignment changed; start a new conversation")
             if getattr(entry.provider, "supports_streaming", False) is not True:
                 raise ChatUnavailable("The selected provider does not support response streaming")
-            with self.agent_request(entry.coordinator.id):
+            with self.agent_request(entry.coordinator.id,
+                                    wait_for_slot=getattr(entry.provider, "is_local", False) is True):
                 for event in self._chat.send_stream(identifier, text, retrieved_context,
                                                     presentation_preferences, brain_enabled=brain_enabled):
                     if event["type"] == "complete":
@@ -337,11 +398,11 @@ class OwnedChatService:
             return self._image_store.remove(owner, identifier, image_id)
 
     @contextmanager
-    def agent_request(self, agent_id: str):
+    def agent_request(self, agent_id: str, *, wait_for_slot: bool = False):
         """Share admission guards across owned chat scopes and Agent executions."""
         with self._agent_request(agent_id):
             try:
-                with self._agent_execution(agent_id):
+                with self._agent_execution(agent_id, wait_for_slot=wait_for_slot):
                     yield
             except AgentAssignmentBusy:
                 raise ChatConflict(

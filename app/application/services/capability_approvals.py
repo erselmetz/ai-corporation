@@ -45,6 +45,8 @@ class CapabilityActionApproval:
     status: str = "pending"
     approved_by: str | None = None
     approved_at: str | None = None
+    denied_by: str | None = None
+    denied_at: str | None = None
     consumed_at: str | None = None
 
 
@@ -136,6 +138,7 @@ class CapabilityApprovalService:
                 "requested_at": approval.requested_at, "expires_at": approval.expires_at,
                 "approval_digest": approval.approval_digest, "status": status,
                 "approved_by": approval.approved_by, "approved_at": approval.approved_at,
+                "denied_by": approval.denied_by, "denied_at": approval.denied_at,
                 "consumed_at": approval.consumed_at}
 
     def get(self, approval_id: str) -> CapabilityActionApproval:
@@ -172,6 +175,25 @@ class CapabilityApprovalService:
                          record.approval_id)
             self._records[approval_id] = approved
             return approved
+
+    def deny(self, approval_id: str, *, approver_id: str,
+             permissions: frozenset[str], confirmed_digest: str) -> CapabilityActionApproval:
+        """Record an owner's denial; it cannot execute or alter the protected action."""
+        self._policy.require(identity=approver_id, permissions=permissions,
+                             capability_id=APPROVAL_MANAGEMENT_PERMISSION,
+                             scope_type="principal", scope_id=approver_id)
+        with self._lock:
+            record = self._get_locked(approval_id)
+            if record.status != "pending" or datetime.fromisoformat(record.expires_at) <= self._now():
+                raise CapabilityApprovalError("Approval request is no longer pending")
+            if approver_id != record.actor_id or confirmed_digest != record.approval_digest:
+                raise CapabilityApprovalError("Owner confirmation does not match this exact action")
+            denied = replace(record, status="denied", denied_by=approver_id,
+                             denied_at=self._now().isoformat())
+            self._record(approver_id, record.capability_id, "approval_denied", "denied",
+                         record.approval_id)
+            self._records[approval_id] = denied
+            return denied
 
     def execute(self, approval_id: str, *, actor_id: str, permissions: frozenset[str],
                 session_grants: frozenset[tuple[str, str, str]] = frozenset(),

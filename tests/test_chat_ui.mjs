@@ -56,6 +56,8 @@ const completedStreamEvent = {
 function setup(handler = null, windowRef = globalThis.window, confirmImpl = () => true) {
   const ids = [
     "chat-state", "chat-history", "chat-agent", "chat-conversation", "chat-input", "chat-input-provenance",
+    "chat-delegate-once", "chat-approval-inbox", "chat-approval-count", "chat-approval-state",
+    "chat-approval-items", "chat-approval-refresh",
     "chat-start", "chat-send", "chat-close", "chat-refresh", "chat-identity",
     "chat-route-check", "chat-route-select", "chat-route-state",
     "chat-form", "cloud-consent-panel", "cloud-consent", "chat-task-source",
@@ -107,7 +109,7 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
     if (path === "/api/agents") return response({ items: [agent] });
     if (path === "/api/local/session") return response({
       csrf: "test-csrf",
-      permissions: ["chat-task:create", "github:read", "documentation:read", "chat-history:manage"],
+      permissions: ["chat-task:create", "github:read", "documentation:read", "chat-history:manage", "capability-approval:manage"],
     });
     if (path === "/api/local/preferences") return response({ preferences: {
       response_mode: "balanced", locale: "en-US", detail_level: "standard",
@@ -118,6 +120,7 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
         remaining_cents: null, reservation_per_request_cents: 1, reset: "app_restart" },
     });
     if (path === "/api/chat/conversations" && !options.method) return response({ items: [] });
+    if (path === "/api/capabilities/approvals") return response({ items: [] });
     if (path.endsWith("/close")) return response(snapshot([], "closed"));
     return response(snapshot());
   };
@@ -310,6 +313,70 @@ test("answer trace is collapsed by default and remains available after a reply",
   assert.equal(ui.elements["chat-empty-state"].hidden, true);
 });
 
+test("approval inbox is permission-gated, previews exact scope, and deny uses CSRF without execution", async () => {
+  const digest = "a".repeat(64);
+  let current = [{ approval_id: "approval-1", approval_digest: digest,
+    payload_digest: "b".repeat(64), target_digest: "c".repeat(64),
+    action_summary: "Remove the selected test package", target_ref: "package:test",
+    scope_type: "principal", scope_id: "owner",
+    capability_id: "software:manage", action_id: "software.remove", risk: "high",
+    irreversible: true, expires_at: "2035-01-01T00:00:00+00:00", status: "pending" }];
+  const ui = setup(async (path, options = {}) => {
+    if (path.endsWith("/approval-1/deny") && options.method === "POST") {
+      assert.equal(options.headers["X-Local-CSRF"], "test-csrf");
+      assert.deepEqual(JSON.parse(options.body), { confirmed_digest: digest });
+      current = [];
+      return response({ status: "denied", denied_by: "owner" });
+    }
+    if (path === "/api/capabilities/approvals") return response({ items: current });
+    return null;
+  });
+  await ui.controller.initialLoad;
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(ui.elements["chat-approval-inbox"].hidden, false);
+  assert.equal(ui.elements["chat-approval-count"].textContent, "1");
+  const card = ui.elements["chat-approval-items"].children[0];
+  assert.match(card.textContent, /Remove the selected test package/);
+  assert.match(card.textContent, /package:test/);
+  assert.match(card.textContent, /principal:owner/);
+  assert.match(card.textContent, new RegExp(digest));
+  const deny = card.children.at(-1).children.find(button => button.textContent === "Deny");
+  await deny.listeners.click();
+  assert.match(ui.planConfirmations.at(-1), /No protected action will run/);
+  assert.equal(ui.calls.some(call => call.path.endsWith("/deny") && call.options.method === "POST"), true);
+  assert.equal(ui.elements["chat-approval-count"].textContent, "0");
+  assert.match(ui.elements["chat-approval-state"].textContent, /No current approval requests/);
+
+  const denied = setup(async path => path === "/api/local/session"
+    ? response({ csrf: "test-csrf", permissions: ["chat:read"] }) : null);
+  await denied.controller.initialLoad;
+  assert.equal(denied.elements["chat-approval-inbox"].hidden, true);
+  assert.equal(denied.calls.some(call => call.path === "/api/capabilities/approvals"), false);
+});
+
+test("Coordinator delegation is explicit, plain-text only, and shows the bounded plan before sending", async () => {
+  let sent = null;
+  const ui = setup(async (path, options = {}) => {
+    if (path === "/api/chat/conversations" && options.method === "POST") return response(snapshot());
+    if (path.endsWith("/messages")) {
+      sent = JSON.parse(options.body);
+      return response({ ...snapshot([message("user", "completed", sent.text), message("assistant", "completed", "Delegated answer")]),
+        handoff: { status: "completed", agent: { id: "researcher", name: "Researcher" } } });
+    }
+    return null;
+  });
+  await ui.controller.initialLoad;
+  await ui.controller.start();
+  ui.elements["chat-delegate-once"].checked = true;
+  ui.elements["chat-input"].value = "Summarize the repository guidance";
+  assert.equal(await ui.controller.send({ preventDefault() {} }), true);
+  assert.deepEqual(sent, { text: "Summarize the repository guidance", delegate_once: true });
+  assert.match(ui.planConfirmations.at(-1), /exactly one eligible Agent/);
+  assert.match(ui.planConfirmations.at(-1), /shared single model slot/);
+  assert.equal(ui.elements["chat-delegate-once"].checked, false);
+  assert.match(ui.elements["chat-state"].textContent, /Coordinator selected Researcher/);
+});
+
 test("delete is visible only to an authorized owner and sends an explicit confirmed delete", async () => {
   const ui = setup((path, options) => {
     if (path === "/api/chat/conversations") return response({ items: [{
@@ -381,6 +448,7 @@ test("Send becomes Stop while a turn is pending and aborts local waiting without
   const pending = ui.controller.send();
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(ui.elements["chat-send"].textContent, "Stop");
+  assert.match(ui.elements["chat-state"].textContent, /Pending: waiting for the configured model/);
   assert.equal(ui.elements["chat-send"].disabled, false);
   let prevented = false;
   ui.elements["chat-send"].listeners.click({ preventDefault: () => { prevented = true; } });
@@ -422,7 +490,7 @@ test("Electron direct launch opens a coordinator conversation and sends local ch
   assert.equal(await ui.controller.initialLoad, true);
   assert.equal(ui.calls.some(call => call.path === "/api/chat/conversations" && call.options?.method === "POST"), true);
   assert.equal(ui.elements["chat-state"].textContent, "");
-  assert.equal(ui.elements["chat-agent"].children[0].textContent, "configured-model");
+  assert.equal(ui.elements["chat-agent"].children[0].textContent, "Actual Worker / configured-model");
   assert.equal(ui.elements["chat-header-model"].textContent, "configured-model");
   ui.elements["chat-input"].value = "hello";
   assert.equal(await ui.controller.send({ preventDefault() {} }), true);

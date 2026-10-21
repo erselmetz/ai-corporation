@@ -969,6 +969,12 @@ def coordinator_chat_page():
       <button id="chat-start" type="button" class="chat-new-button" data-close-navigation>&#43; New chat</button>
       <p class="chat-sidebar-label">Today</p><div id="chat-conversation-list" class="chat-conversation-list" aria-label="Recent conversations"></div>
       <p class="chat-sidebar-label" id="chat-earlier-label" hidden>Earlier</p><div id="chat-earlier-list" class="chat-conversation-list" aria-label="Earlier conversations"></div>
+      <details id="chat-approval-inbox" class="chat-approval-inbox" hidden>
+        <summary>Waiting on you <span id="chat-approval-count" aria-label="Pending approvals">0</span></summary>
+        <p id="chat-approval-state" role="status" aria-live="polite">Approval requests have not been loaded.</p>
+        <div id="chat-approval-items"></div>
+        <button id="chat-approval-refresh" type="button">Refresh approvals</button>
+      </details>
       <label class="visually-hidden" for="chat-conversation">Choose conversation</label><select id="chat-conversation" class="visually-hidden"></select>
       <details class="chat-advanced-nav"><summary>Advanced</summary><button id="chat-refresh" type="button" class="chat-sidebar-refresh">Refresh chats</button><button id="chat-close" type="button" class="chat-sidebar-close">Close conversation</button><nav aria-label="Advanced pages">
         <a href="/ui/knowledge">Brain</a><a href="/ui/employees">Employees</a><a href="/ui/positions">Positions</a><a href="/ui/structure">Organization map</a><a href="/ui/providers">Providers &amp; models</a><a href="/ui/visualization">3D visualization</a><a href="/ui/memory">Advanced memory</a><a href="/ui/tasks">Tasks</a><a href="/ui/workflows">Workflows</a><a href="/ui/workflow-map">Workflow map</a><a href="/ui/activity">Activity</a><a href="/ui/inventory">Software inventory</a><a href="/ui/readiness">Performance readiness</a><a href="/ui/backup">Backup &amp; restore</a><a href="/ui/documentation">Documentation</a><a href="/ui/updates">Updates</a><a href="/ui/preferences">Preferences</a><a href="/ui/settings/capabilities">Capabilities &amp; privacy</a><a href="/ui/employee-chat">Employee chat</a><a href="/ui/login?next=/ui/chat">Owner sign-in</a>
@@ -994,6 +1000,7 @@ def coordinator_chat_page():
       <button id="chat-camera-action" type="button">Camera <span>Capture one frame only when you choose.</span></button>
       <button id="chat-screen-action" type="button">Screen capture <span>Choose one display or window for this reply.</span></button>
       <label class="chat-knowledge-toggle"><input id="chat-knowledge-menu-toggle" type="checkbox"> Use my knowledge <span>Choose exact scopes and preview before sending.</span></label>
+      <label class="chat-delegate-toggle"><input id="chat-delegate-once" type="checkbox"> Let the Coordinator assign one Agent for this reply <span>Sends this text to two local models in sequence. No tools, Brain data, cloud route, or repeat handoff.</span></label>
       <details class="chat-advanced"><summary>More chat options</summary>
       <p class="chat-advanced-links"><a href="/ui/settings/capabilities">Capabilities &amp; privacy</a> · <a href="/ui/providers">Providers &amp; models</a> · <a href="/ui/preferences">Response preferences</a></p>
       <button id="chat-theme-toggle" type="button">Switch to light theme</button>

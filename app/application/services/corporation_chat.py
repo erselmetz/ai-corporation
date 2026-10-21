@@ -165,7 +165,8 @@ class CorporationChatService:
     def send(self, conversation_id: str, text: str, retrieved_context=None, presentation_preferences=None,
              tool_context=None,
              prompt_observer=None, turn_route: tuple[str, str] | None = None,
-             expected_assignment: tuple[str, str] | None = None, brain_enabled: bool = False):
+             expected_assignment: tuple[str, str] | None = None, brain_enabled: bool = False,
+             responding_agent_id: str | None = None, role_instructions: str | None = None):
         record = self.get(conversation_id)
         if record.status is not ConversationStatus.OPEN:
             raise ValueError("Cannot send to a closed conversation")
@@ -183,7 +184,8 @@ class CorporationChatService:
             tool_context=tool_context,
             presentation_preferences=presentation_preferences,
             brain_enabled=brain_enabled,
-            role_instructions=self._orchestrator.agents.get(record.coordinator_agent_id).system_prompt or None,
+            role_instructions=(role_instructions if role_instructions is not None else
+                               self._orchestrator.agents.get(responding_agent_id or record.coordinator_agent_id).system_prompt or None),
         )
         prompt = json.dumps(messages, ensure_ascii=True, separators=(",", ":"))
         if len(prompt.encode("utf-8")) > self.MAX_PROMPT_BYTES:
@@ -199,7 +201,10 @@ class CorporationChatService:
             raise
         try:
             if turn_route is None:
-                reply = self._orchestrator.run_agent_chat(record.coordinator_agent_id, messages)
+                reply = self._orchestrator.run_agent_chat(
+                    responding_agent_id or record.coordinator_agent_id, messages,
+                    expected_assignment=expected_assignment,
+                )
             else:
                 if expected_assignment is None:
                     raise ValueError("The configured Agent assignment snapshot is required")

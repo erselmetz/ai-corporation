@@ -38,6 +38,8 @@ export function mountChat({
   const updateHeaderModel = () => { headerModel.textContent = coordinatorAgentModels.get(agents.value) || ""; };
   const conversations = element("chat-conversation");
   const input = element("chat-input");
+  const delegateOnce = element("chat-delegate-once");
+  const approvalInbox = element("chat-approval-inbox");
   const voiceProvenance = element("chat-input-provenance");
   voiceProvenance.hidden = true;
   const cloudPanel = element("cloud-consent-panel");
@@ -98,6 +100,7 @@ export function mountChat({
   let canStudyRepositories = false;
   let canReadDocumentation = false;
   let canDeleteHistory = false;
+  let canManageApprovals = false;
   let documentsLoaded = false;
   let currentProposal = null;
   let voiceController = null;
@@ -259,6 +262,9 @@ export function mountChat({
       if (response.status === 401) throw new Error("Sign in through Local sign-in to continue.");
       if (response.status === 403) throw new Error("This session does not have permission for that chat action.");
       if (response.status === 502) throw new Error("Reply failed. Check that the configured service and model are available. No automatic retry occurred.");
+      if (response.status === 429 && String(payload.detail || "").includes("request-slot capacity")) {
+        throw new Error("The shared model slot stayed busy and timed out before admission. No model request was sent; retry after the current Agent finishes.");
+      }
       throw new Error(typeof payload.detail === "string" ? payload.detail : "Chat request failed.");
     }
     return payload;
@@ -268,6 +274,74 @@ export function mountChat({
     item.value = value;
     item.textContent = label;
     select.append(item);
+  }
+  function renderApprovals(items) {
+    const list = element("chat-approval-items");
+    const pending = items.filter(item => item && item.status === "pending"
+      && typeof item.approval_id === "string" && typeof item.approval_digest === "string"
+      && typeof item.action_summary === "string" && typeof item.target_ref === "string"
+      && typeof item.expires_at === "string");
+    list.replaceChildren();
+    element("chat-approval-count").textContent = String(pending.length);
+    if (!pending.length) {
+      element("chat-approval-state").textContent = "No current approval requests. Expired requests cannot be approved.";
+      return;
+    }
+    element("chat-approval-state").textContent = `${pending.length} exact action${pending.length === 1 ? "" : "s"} awaiting your decision.`;
+    for (const approval of pending.slice(0, 20)) {
+      const card = documentRef.createElement("article"); card.className = "chat-approval-item";
+      const heading = documentRef.createElement("strong"); heading.textContent = approval.action_summary;
+      const target = documentRef.createElement("p"); target.textContent = `Target: ${approval.target_ref}`;
+      const capability = documentRef.createElement("p"); capability.textContent = `${approval.capability_id} / ${approval.action_id} - ${approval.risk}${approval.irreversible ? " / irreversible" : ""}`;
+      const scope = documentRef.createElement("p"); scope.textContent = `Scope: ${approval.scope_type}:${approval.scope_id}`;
+      const expiry = documentRef.createElement("p"); expiry.textContent = `Expires ${new Date(approval.expires_at).toLocaleString()}`;
+      const fingerprints = documentRef.createElement("details");
+      const fingerprintSummary = documentRef.createElement("summary"); fingerprintSummary.textContent = "Exact-action fingerprints";
+      const fingerprintText = documentRef.createElement("p");
+      fingerprintText.textContent = `Approval: ${approval.approval_digest}; payload: ${approval.payload_digest}; target: ${approval.target_digest}`;
+      fingerprints.append(fingerprintSummary, fingerprintText);
+      const actions = documentRef.createElement("div"); actions.className = "chat-approval-actions";
+      const approve = documentRef.createElement("button"); approve.type = "button"; approve.textContent = "Approve exact action";
+      approve.addEventListener("click", async () => {
+        const preview = `${approval.action_summary}\nTarget: ${approval.target_ref}\nCapability/action: ${approval.capability_id} / ${approval.action_id}\nScope: ${approval.scope_type}:${approval.scope_id}\nRisk: ${approval.risk}${approval.irreversible ? " (irreversible)" : ""}\nExpires: ${approval.expires_at}\nApproval digest: ${approval.approval_digest}\n\nApprove this exact request? Approval alone does not execute it.`;
+        if (!confirmImpl(preview)) return;
+        approve.disabled = true;
+        try {
+          await request(`/api/capabilities/approvals/${encodeURIComponent(approval.approval_id)}/approve`, { confirmed_digest: approval.approval_digest });
+          element("chat-approval-state").textContent = "Approval recorded. The protected action still needs its separate exact execution request.";
+          await refreshApprovals();
+        } catch (error) { element("chat-approval-state").textContent = error.message || "Approval could not be recorded. Refresh and inspect the current request."; }
+        finally { approve.disabled = false; }
+      });
+      const deny = documentRef.createElement("button"); deny.type = "button"; deny.textContent = "Deny";
+      deny.addEventListener("click", async () => {
+        if (!confirmImpl(`Deny this exact request?\n${approval.action_summary}\nTarget: ${approval.target_ref}\nScope: ${approval.scope_type}:${approval.scope_id}\nNo protected action will run.`)) return;
+        deny.disabled = true;
+        try {
+          await request(`/api/capabilities/approvals/${encodeURIComponent(approval.approval_id)}/deny`, { confirmed_digest: approval.approval_digest });
+          element("chat-approval-state").textContent = "Request denied. No protected action was run.";
+          await refreshApprovals();
+        } catch (error) { element("chat-approval-state").textContent = error.message || "Request could not be denied. Refresh and inspect it."; }
+        finally { deny.disabled = false; }
+      });
+      actions.append(approve, deny);
+      card.append(heading, target, capability, scope, expiry, fingerprints, actions); list.append(card);
+    }
+  }
+  async function refreshApprovals() {
+    if (!canManageApprovals || !approvalInbox) return false;
+    element("chat-approval-state").textContent = "Checking current exact-action requests...";
+    try {
+      const result = await request("/api/capabilities/approvals");
+      if (!Array.isArray(result.items)) throw new Error("Approval list response was invalid.");
+      renderApprovals(result.items);
+      return true;
+    } catch (error) {
+      element("chat-approval-items").replaceChildren();
+      element("chat-approval-count").textContent = "?";
+      element("chat-approval-state").textContent = error.message || "Approval requests could not be loaded. Refresh and retry.";
+      return false;
+    }
   }
   function render(result) {
     const record = result.conversation;
@@ -430,6 +504,14 @@ export function mountChat({
       ? `Route: ${route.agent} (${route.agent_id}) · ${route.provider || "provider unknown"} / ${route.model || "model unknown"}. ${route.source || "Route reason not recorded."}`
       : "Route details were not recorded for this reply.";
     panel.append(routeText);
+    if (trace.handoff && typeof trace.handoff === "object") {
+      const handoff = documentRef.createElement("p");
+      const responder = trace.handoff.agent || {};
+      handoff.textContent = trace.handoff.status === "completed"
+        ? `One local handoff: Coordinator selected ${responder.name || "an Agent"} (${responder.id || "unknown ID"}); one answer step, ${trace.handoff.selection_ms ?? "unknown"} ms to select and ${trace.handoff.answer_ms ?? "unknown"} ms to answer.`
+        : `One local handoff was attempted for ${responder.name || "an Agent"} (${responder.id || "unknown ID"}); no completed answer was verified.`;
+      panel.append(handoff);
+    }
     if (Array.isArray(trace.steps)) {
       const heading = documentRef.createElement("strong");
       heading.textContent = "Workflow steps";
@@ -598,6 +680,9 @@ export function mountChat({
           && session.permissions.includes("documentation:read");
         canDeleteHistory = Array.isArray(session.permissions)
           && session.permissions.includes("chat-history:manage");
+        canManageApprovals = Array.isArray(session.permissions)
+          && session.permissions.includes("capability-approval:manage");
+        approvalInbox.hidden = !canManageApprovals;
         try {
           const brain = await request("/api/memory/owner");
           ownerBrainNonEmpty = Array.isArray(brain.items) && brain.items.length > 0;
@@ -606,6 +691,8 @@ export function mountChat({
         canCreateTask = false;
         canStudyRepositories = false;
         canReadDocumentation = false;
+        canManageApprovals = false;
+        approvalInbox.hidden = true;
       }
       taskState.textContent = canCreateTask
         ? "Prepare and inspect a proposal before explicit confirmation."
@@ -629,12 +716,14 @@ export function mountChat({
       option(taskAgent, "", "Select the responsible Agent");
       option(conversations, "", "Select an existing conversation");
       for (const agent of agentList.items) {
-        const label = agent.model;
+        const label = `${agent.name} / ${agent.model}`;
         option(agents, agent.id, label);
         option(taskAgent, agent.id, `${agent.name} | ${agent.role}`);
       }
       const directDesktopLaunch = new URLSearchParams(windowRef?.location?.search || "").get("desktop") === "1";
-      if (directDesktopLaunch && agentList.items.some((agent) => agent.id === "local_worker")) agents.value = "local_worker";
+      const defaultCoordinator = agentList.items.find(agent => agent.id === "local_worker")
+        || agentList.items.find(agent => agent.builtin === true && agent.name === "Coordinator");
+      if (defaultCoordinator) agents.value = defaultCoordinator.id;
       updateHeaderModel();
       for (const item of list.items) option(conversations, item.id, `${item.coordinator.name} - ${item.id.slice(0, 8)}`);
       renderConversationList(list.items);
@@ -700,6 +789,7 @@ export function mountChat({
         input.value = "";
         throw new Error("This message looks like it contains a Gemini API key. It was not saved or sent. Use the Gemini online setup page to connect a key.");
       }
+      const delegateForTurn = delegateOnce?.checked === true;
       const selectedRoute = routeAlternatives.get(routeSelect.value) || null;
       requiresCloudConsent = selectedRoute ? selectedRoute.kind === "cloud" : configuredCloudRoute;
       cloudPanel.hidden = !requiresCloudConsent;
@@ -731,8 +821,16 @@ export function mountChat({
       }
       if (imageIds.length && !imageManager.consented()) throw new Error("Select the per-turn image consent checkbox before sending selected images to the configured provider.");
       if (!imageIds.length && imageManager?.wantsLocalOcr()) throw new Error("Select an image before requesting local OCR.");
+      if (delegateForTurn && (requiresCloudConsent || selectedRoute || imageIds.length || reviewedTools.length
+          || useKnowledge || captureLocalPrompt.checked === true)) {
+        throw new Error("One-step delegation is local plain text only. Turn off cloud routes, images, retrieval, tools, and exact prompt capture first.");
+      }
       const identifier = selected;
-      const plannedSteps = [
+      const plannedSteps = delegateForTurn ? [
+        "1. Ask the configured local Coordinator to select exactly one eligible Agent; trusted code validates the choice.",
+        "2. Send this plain-text request once to that Agent through the shared single model slot.",
+        "3. Show the selected Agent and both measured steps in How I answered. No retry, tool, Brain data, cloud route, or second handoff.",
+      ] : [
         "1. Plan: follow this bounded, single-coordinator chat flow.",
         useKnowledge
           ? `2. Retrieve only the selected scopes: ${knowledgeScopes.map(scope => `${scope.scope}:${scope.scope_id || "current owner"}`).join(", ")}; the server will recheck the preview.`
@@ -750,7 +848,7 @@ export function mountChat({
         : "\nRoute: configured model remains the default.";
       const directLocalChat = new URLSearchParams(windowRef?.location?.search || "").get("desktop") === "1"
         && !requiresCloudConsent && !selectedRoute && !imageIds.length && !reviewedTools.length
-        && !useKnowledge && captureLocalPrompt.checked !== true;
+        && !useKnowledge && captureLocalPrompt.checked !== true && !delegateForTurn;
       if (!directLocalChat && !confirmImpl(`Review this chat plan before work begins:\n${plannedSteps.join("\n")}\n\nCoordinator: ${routeLabel}${chosenRouteLabel}\n\nContinue? Cancel prevents retrieval, tool calls, and provider work.`)) {
         state.textContent = "Cancelled before retrieval, tool calls, or provider work. Nothing was sent.";
         return;
@@ -770,6 +868,7 @@ export function mountChat({
       history.append(typing);
       try {
         const body = { text };
+        if (delegateForTurn) body.delegate_once = true;
         if (requiresCloudConsent) body.cloud_consent = true;
         if (selectedRoute) Object.assign(body, {
           route_provider_id: selectedRoute.provider_id,
@@ -788,7 +887,7 @@ export function mountChat({
           body.image_consent = true;
           body.include_local_ocr = imageManager.wantsLocalOcr();
         }
-        if (streamingSupported && !selectedRoute && !imageIds.length && !capturePrompt && !reviewedTools.length) {
+        if (streamingSupported && !delegateForTurn && !selectedRoute && !imageIds.length && !capturePrompt && !reviewedTools.length) {
           const outcome = await receiveStream(identifier, body, controller.signal);
           if (outcome.complete) {
             input.value = "";
@@ -819,8 +918,12 @@ export function mountChat({
           state.textContent = "Pending: waiting for the configured model. Closing this page does not cancel its request.";
           const result = await request(`${base}/${encodeURIComponent(identifier)}/messages`, body, controller.signal);
           input.value = "";
+          if (delegateForTurn) delegateOnce.checked = false;
           clearVoiceProvenance();
           render(result);
+          if (result.handoff?.status === "completed") {
+            state.textContent = `The Coordinator selected ${result.handoff.agent.name} for one local handoff. Open How I answered to inspect the selection and response timing.`;
+          }
           imageManager?.clearConsent();
           await imageManager?.refresh();
           if (result.image_transfer) {
@@ -1229,6 +1332,7 @@ export function mountChat({
   repositoryStudyForm.addEventListener("submit", studyRepository);
   element("chat-close").addEventListener("click", close);
   element("chat-refresh").addEventListener("click", refresh);
+  element("chat-approval-refresh")?.addEventListener("click", refreshApprovals);
   windowRef?.addEventListener?.("ersel:emergency-stop", () => {
     emergencyStopped = true;
     if (requestController) requestController.abort();
@@ -1287,7 +1391,10 @@ export function mountChat({
     },
   });
   const initialLoad = refresh();
-  void initialLoad.then(() => { if (canSend) input.focus?.(); });
+  void initialLoad.then(() => {
+    if (canManageApprovals) void refreshApprovals();
+    if (canSend) input.focus?.();
+  });
   return {
     initialLoad,
     refresh,

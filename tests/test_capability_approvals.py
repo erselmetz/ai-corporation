@@ -100,6 +100,27 @@ def test_high_impact_approval_binds_exact_action_and_is_single_use():
     assert calls == ["ran"]
 
 
+def test_owner_denial_is_exact_audited_and_never_executes():
+    service = _service(lambda: datetime(2035, 1, 1, tzinfo=timezone.utc))
+    approval, permissions = _request(service)
+    denied = service.deny(approval.approval_id, approver_id="owner", permissions=permissions,
+                          confirmed_digest=approval.approval_digest)
+    assert denied.status == "denied"
+    assert denied.denied_by == "owner" and denied.denied_at
+    calls = []
+    with pytest.raises(CapabilityApprovalError, match="not current and approved"):
+        service.execute(
+            approval.approval_id, actor_id="owner", permissions=permissions,
+            capability_id="action:high", action_id="software.remove",
+            action_summary="Remove the selected editor package and its installed version",
+            target_ref="package:editor", scope_type="principal", scope_id="owner",
+            payload_digest=_digest("remove exact editor version"),
+            current_policy_version=POLICY_VERSION,
+            read_current_target_digest=lambda: _digest("installed-version:1.2.3"),
+            operation=lambda: calls.append("must not run"))
+    assert calls == []
+
+
 def test_expiry_target_change_policy_change_and_revoked_authority_fail_closed():
     now = [datetime(2035, 1, 1, tzinfo=timezone.utc)]
     service = _service(lambda: now[0])
@@ -202,3 +223,18 @@ def test_local_owner_can_review_and_confirm_exact_digest_with_csrf():
         assert approved.status_code == 200
         assert approved.json()["status"] == "approved"
         assert approved.json()["approved_by"] == "local-owner"
+        pending = approvals.request(
+            actor_id="local-owner", permissions=permissions,
+            capability_id="action:high", action_id="software.remove",
+            action_summary="Remove the selected editor package and installed version",
+            target_ref="package:editor", scope_type="principal", scope_id="local-owner",
+            payload_digest=_digest("remove exact editor version"),
+            target_digest=_digest("installed-version:1.2.3"), irreversible=True)
+        assert client.post(f"/api/capabilities/approvals/{pending.approval_id}/deny",
+                           json={"confirmed_digest": pending.approval_digest},
+                           headers={"Origin": headers["Origin"]}).status_code == 403
+        denied = client.post(f"/api/capabilities/approvals/{pending.approval_id}/deny",
+                             json={"confirmed_digest": pending.approval_digest}, headers=headers)
+        assert denied.status_code == 200
+        assert denied.json()["status"] == "denied"
+        assert denied.json()["denied_by"] == "local-owner"

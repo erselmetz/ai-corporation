@@ -127,6 +127,148 @@ def test_owned_chat_roundtrip_and_no_execution_or_capacity_side_effect(setup):
     assert len(provider.calls) == 1
 
 
+def test_delegation_is_one_local_handoff_with_trace_and_released_resource_slots(monkeypatch):
+    runtime = create_corporation_runtime(with_builtin_agent_team=True)
+    provider = runtime.providers.get("ollama")
+    provider.local_model_inventory = lambda: LocalModelInventory(
+        "available", ("llama3.2:3b",), True,
+        source="deterministic-test-fixture", reason=None)
+    model_calls = []
+
+    def fake_run(agent_id, messages, **kwargs):
+        model_calls.append((agent_id, messages))
+        if agent_id == "local_worker":
+            return '{"agent_id":"researcher"}'
+        return "Researcher answer from deterministic fixture."
+
+    monkeypatch.setattr(runtime.orchestrator, "run_agent_chat", fake_run)
+    resources = runtime.application_service.configure_agent_slots(global_slots=1)
+    before = resources.snapshot()
+    with client_for(runtime) as client:
+        identifier = start(client).json()["conversation"]["id"]
+        response = client.post(
+            f"/api/chat/conversations/{identifier}/messages",
+            json={"text": "Find the project guidance", "delegate_once": True},
+            headers={"x-test-owner": "alice"},
+        )
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        assert payload["handoff"]["status"] == "completed"
+        assert payload["handoff"]["agent"]["id"] == "researcher"
+        assert payload["handoff"]["max_handoffs"] == 1
+        assert payload["handoff"]["step_count"] == 2
+        assert payload["conversation"]["messages"][-1]["content"] == "Researcher answer from deterministic fixture."
+        trace = payload["context_trace"]
+        assert trace["handoff"]["agent"]["id"] == "researcher"
+        assert [step["step"] for step in trace["steps"]] == [
+            "plan", "retrieve", "tools", "coordinator_select_agent", "answer"]
+        assert trace["steps"][-1]["status"] == "completed"
+        assert trace["route"]["responder_agent_id"] == "researcher"
+        assert [item[0] for item in model_calls] == ["local_worker", "researcher"]
+        assert len(model_calls) == 2
+        assert all(isinstance(messages, list) and all(
+            isinstance(message, dict) and message.get("role") in {"system", "user", "assistant"}
+            for message in messages) for _, messages in model_calls)
+        stored = client.get(f"/api/chat/conversations/{identifier}", headers={"x-test-owner": "alice"}).json()
+        assert stored["context_traces"][payload["conversation"]["messages"][-1]["id"]]["handoff"]["status"] == "completed"
+    after = resources.snapshot()
+    assert after.allocations == ()
+    assert after.global_capacity.allocated == before.global_capacity.allocated == 0
+    assert after.allocation_id_history_capacity.allocated == 2
+
+
+def test_delegation_rejects_non_agent_choice_without_second_model_call(monkeypatch):
+    runtime = create_corporation_runtime(with_builtin_agent_team=True)
+    provider = runtime.providers.get("ollama")
+    provider.local_model_inventory = lambda: LocalModelInventory(
+        "available", ("llama3.2:3b",), True,
+        source="deterministic-test-fixture", reason=None)
+    calls = []
+    monkeypatch.setattr(runtime.orchestrator, "run_agent_chat",
+                        lambda agent_id, messages, **kwargs: calls.append(agent_id) or '{"agent_id":"not-listed"}')
+    with client_for(runtime) as client:
+        identifier = start(client).json()["conversation"]["id"]
+        response = client.post(
+            f"/api/chat/conversations/{identifier}/messages",
+            json={"text": "Do work", "delegate_once": True},
+            headers={"x-test-owner": "alice"},
+        )
+        assert response.status_code == 422
+        assert "Chat input or conversation state is invalid" in response.text
+        assert calls == ["local_worker"]
+        stored = client.get(f"/api/chat/conversations/{identifier}", headers={"x-test-owner": "alice"}).json()
+        assert stored["conversation"]["messages"] == []
+    resources = runtime.application_service.resource_manager()
+    snapshot = resources.snapshot()
+    assert snapshot.allocations == ()
+    assert snapshot.global_capacity.allocated == 0
+    assert snapshot.allocation_id_history_capacity.allocated == 1
+
+
+def test_owned_chat_waits_visibly_for_shared_slot_and_admits_no_second_allocation(setup):
+    runtime, provider = setup
+    provider.is_local = True
+    resources = runtime.application_service.resource_manager(ResourceLimits(
+        1, (ProviderLimit("ollama", 1),), (ModelLimit("ollama", "llama3.2:3b", 1),)))
+    resources.allocate("existing-task-slot", provider_id="ollama", model_id="llama3.2:3b")
+    chat = runtime.application_service.owned_chat()
+    identifier = chat.start("alice", "local_worker")["conversation"].id
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        pending = executor.submit(chat.send, "alice", identifier, "Wait for the current model user")
+        try:
+            import time
+            time.sleep(0.15)
+            assert not provider.entered.is_set()
+            snapshot = resources.snapshot()
+            assert [item.id for item in snapshot.allocations] == ["existing-task-slot"]
+        finally:
+            resources.release("existing-task-slot")
+        result = pending.result(timeout=5)
+    assert result["conversation"].messages[-1].content == "<script>alert('untrusted')</script> deterministic reply"
+    assert provider.entered.is_set()
+    assert resources.snapshot().allocations == ()
+    assert resources.snapshot().allocation_id_history_capacity.allocated == 2
+
+
+def test_failed_delegated_answer_records_incomplete_handoff_and_releases_both_slots(monkeypatch):
+    runtime = create_corporation_runtime(with_builtin_agent_team=True)
+    provider = runtime.providers.get("ollama")
+    provider.local_model_inventory = lambda: LocalModelInventory(
+        "available", ("llama3.2:3b",), True,
+        source="deterministic-test-fixture", reason=None)
+    calls = []
+
+    def fake_run(agent_id, messages, **kwargs):
+        calls.append(agent_id)
+        if agent_id == "local_worker":
+            return '{"agent_id":"researcher"}'
+        raise RuntimeError("secret-provider-credential")
+
+    monkeypatch.setattr(runtime.orchestrator, "run_agent_chat", fake_run)
+    resources = runtime.application_service.configure_agent_slots(global_slots=1)
+    with client_for(runtime) as client:
+        identifier = start(client).json()["conversation"]["id"]
+        response = client.post(
+            f"/api/chat/conversations/{identifier}/messages",
+            json={"text": "Use the Researcher", "delegate_once": True},
+            headers={"x-test-owner": "alice"},
+        )
+        assert response.status_code == 502
+        assert "secret-provider-credential" not in response.text
+        assert calls == ["local_worker", "researcher"]
+        conversation = client.get(f"/api/chat/conversations/{identifier}", headers={"x-test-owner": "alice"}).json()
+        failed = conversation["conversation"]["messages"][-1]
+        assert failed["status"] == "failed"
+        trace = conversation["context_traces"][failed["id"]]
+        assert trace["handoff"]["status"] == "failed"
+        assert trace["steps"][-1]["status"] == "failed"
+        assert "secret-provider-credential" not in json.dumps(trace)
+    snapshot = resources.snapshot()
+    assert snapshot.allocations == ()
+    assert snapshot.global_capacity.allocated == 0
+    assert snapshot.allocation_id_history_capacity.allocated == 2
+
+
 def test_delete_requires_history_management_and_removes_owner_conversation(setup):
     runtime, _provider = setup
     with client_for(runtime) as client:

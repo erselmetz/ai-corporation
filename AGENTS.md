@@ -85,7 +85,7 @@ exact-action approvals remain required even when development QA is automated.
 
 ## Implement, verify, and continue
 
-For Tasks 175–190, follow the revised AI-run development acceptance contract:
+For Tasks 175-203, follow the revised AI-run development acceptance contract:
 
 1. Map each acceptance criterion to an existing result or a reproducible check.
 2. Implement missing scoped behavior. Diagnose failures and fix their causes.

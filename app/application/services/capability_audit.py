@@ -19,7 +19,7 @@ _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 _CAPABILITY = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 _DECISIONS = frozenset({"allow", "deny", "unknown"})
 _ACTIONS = frozenset({"authorization", "enabled", "disabled", "granted", "revoked",
-                      "approval_requested", "approval_confirmed", "execution_started",
+                      "approval_requested", "approval_confirmed", "approval_denied", "execution_started",
                       "executed", "stale", "expired"})
 _RESULTS = frozenset({"allowed", "denied", "pending", "success", "failure",
                       "stale", "expired", "not_run", "unknown"})
