@@ -30,13 +30,13 @@ test("Windows distribution is per-user, preserves owner data, and has no auto-up
 });
 
 test("Electron renderer windows are isolated and navigation stays on owned content", () => {
-  const main = read("main.cjs");
+  const main = read("main.cjs") + read("workspaces.cjs");
   assert.match(main, /nodeIntegration:\s*false/);
   assert.match(main, /contextIsolation:\s*true/);
   assert.match(main, /sandbox:\s*true/);
   assert.match(main, /webSecurity:\s*true/);
   assert.match(main, /setWindowOpenHandler\(\(\) => \(\{ action: "deny" \}\)\)/);
-  assert.match(main, /new URL\(target\)\.origin !== ORIGIN/);
+  assert.match(main, /url\.origin !== origin/);
   assert.match(main, /shell:\s*false/);
 });
 
@@ -96,7 +96,7 @@ test("microphone requests need an explicit native confirmation and one-use audio
   assert.match(main, /buttons: \["Allow once", "Deny"\]/);
   assert.match(main, /permission === "media"/);
   assert.match(main, /details\.mediaTypes\.length === 1 && details\.mediaTypes\[0\] === "audio"/);
-  assert.match(main, /microphoneGrantUntil = 0/);
+  assert.match(main, /microphoneGrants\.delete\(webContents\.id\)/);
   assert.match(main, /callback\(false\)/);
 });
 

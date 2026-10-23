@@ -45,6 +45,15 @@ export function mountChat({
   let coordinatorAgentModels = new Map();
   const updateHeaderModel = () => { headerModel.textContent = coordinatorAgentModels.get(agents.value) || ""; };
   const conversations = element("chat-conversation");
+  let restoredWorkspace = null;
+  function saveWorkspace() {
+    const bridge = windowRef?.desktopBridge;
+    if (!bridge?.saveWorkspaceState) return;
+    void Promise.resolve(bridge.saveWorkspaceState({
+      conversation: selected || "", agent: agents.value || "",
+      model: coordinatorAgentModels.get(agents.value) || "", project: restoredWorkspace?.project || "",
+    })).catch(() => {}); // Restoration is optional; it never grants execution authority.
+  }
   const input = element("chat-input");
   const delegateOnce = element("chat-delegate-once");
   const approvalInbox = element("chat-approval-inbox");
@@ -375,6 +384,7 @@ export function mountChat({
     if (!record || !agent || typeof record.id !== "string" || !Array.isArray(record.messages)
         || !["open", "closed"].includes(record.status)) throw new Error("Invalid conversation response.");
     selected = record.id;
+    if (typeof agent.id === "string" && coordinatorAgentModels.has(agent.id)) agents.value = agent.id;
     headerModel.textContent = typeof agent.model === "string" ? agent.model : "";
     if (!conversationItems.some(item => item.id === record.id)) conversationItems = [{ id: record.id, coordinator: agent, created_at: new Date().toISOString() }, ...conversationItems];
     renderConversationList();
@@ -400,6 +410,7 @@ export function mountChat({
     cloudConsent.checked = false;
     resetRouteAlternatives("Check this turn's prompt before selecting an optional route.", false);
     conversations.value = record.id;
+    saveWorkspace();
     element("chat-identity").textContent = `Coordinator: ${agent.name} (${agent.role}) | ${agent.provider} / ${agent.model} | ${record.status}`;
     history.replaceChildren();
     updateEmptyState(record.messages.length === 0);
@@ -754,27 +765,32 @@ export function mountChat({
         option(taskAgent, agent.id, `${agent.name} | ${agent.role}`);
       }
       const directDesktopLaunch = new URLSearchParams(windowRef?.location?.search || "").get("desktop") === "1";
+      try { restoredWorkspace = await windowRef?.desktopBridge?.getWorkspaceState?.() || null; }
+      catch { restoredWorkspace = null; }
       const defaultCoordinator = agentList.items.find(agent => agent.id === "local_worker")
         || agentList.items.find(agent => agent.builtin === true && agent.name === "Coordinator");
       if (defaultCoordinator) agents.value = defaultCoordinator.id;
+      if (restoredWorkspace?.agent && coordinatorAgentModels.has(restoredWorkspace.agent)) agents.value = restoredWorkspace.agent;
       updateHeaderModel();
       for (const item of list.items) option(conversations, item.id, `${item.coordinator.name} - ${item.id.slice(0, 8)}`);
       renderConversationList(list.items);
-      const requestedConversation = new URLSearchParams(windowRef?.location?.search || "").get("conversation");
+      const requestedConversation = new URLSearchParams(windowRef?.location?.search || "").get("conversation") || restoredWorkspace?.conversation;
       if (typeof requestedConversation === "string" && /^[a-f0-9]{32}$/.test(requestedConversation)
           && list.items.some((item) => item.id === requestedConversation)) {
         conversations.value = requestedConversation;
         render(await request(`${base}/${encodeURIComponent(requestedConversation)}`));
         state.textContent = "";
-      } else if (directDesktopLaunch && list.items.length > 0) {
+      } else if (directDesktopLaunch && !restoredWorkspace && list.items.length > 0) {
         conversations.value = list.items[0].id;
         render(await request(`${base}/${encodeURIComponent(conversations.value)}`));
         state.textContent = "";
-      } else if (directDesktopLaunch && list.items.length === 0 && agents.value) {
+      } else if (directDesktopLaunch && (restoredWorkspace || list.items.length === 0) && agents.value) {
         const result = await request(base, { agent_id: agents.value });
         option(conversations, result.conversation.id, `${result.coordinator.name} - ${result.conversation.id.slice(0, 8)}`);
         render(result);
-        state.textContent = "";
+        state.textContent = restoredWorkspace?.conversation
+          ? "The previous chat is not in retained history. A new empty chat is open."
+          : "";
       } else {
         state.textContent = agentList.items.length ? "Choose an AI team member and start a conversation." : "No registered AI team member is available.";
         updateEmptyState(true);
@@ -1356,7 +1372,7 @@ export function mountChat({
     cloudConsent.checked = false;
   });
   element("chat-form").addEventListener("submit", send);
-  agents.addEventListener("change", updateHeaderModel);
+  agents.addEventListener("change", () => { updateHeaderModel(); saveWorkspace(); });
   element("chat-send").addEventListener("click", event => {
     if (!requestController) return;
     event.preventDefault();

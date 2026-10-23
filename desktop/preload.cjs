@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("desktopBridge", Object.freeze({
+  getWorkspaceState: () => ipcRenderer.invoke("desktop:workspace-state"),
+  saveWorkspaceState: (value) => ipcRenderer.invoke("desktop:workspace-save", value),
   getSetupState: () => ipcRenderer.invoke("desktop:get-setup-state"),
   isOllamaInstalled: () => ipcRenderer.invoke("desktop:ollama-installed"),
   start: (password, confirmation) => ipcRenderer.invoke("desktop:start", { password, confirmation }),

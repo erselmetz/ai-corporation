@@ -1210,6 +1210,12 @@ Lost/corrupt credential recovery requires explicitly deleting only
 `%LOCALAPPDATA%\ERSELMETZ AI\owner-credential.dpapi` before repeating owner
 setup; application data is preserved.
 
+## Shared-backend windows (Task 214)
+
+`desktop/workspaces.cjs` owns the Electron window registry. The existing single-instance main process starts one Python sidecar; second launch and Ctrl+N create chat windows, while Settings reuses a separate nonmodal window. Workspace IPC accepts only registered live windows on the app origin and the actual main frame. Native microphone/camera grants are one-use and keyed to the requesting WebContents. The backend owner session and existing API/CSRF boundaries remain shared and unchanged.
+
+The bounded `desktop/workspaces.json` file stores window geometry and conversation/Agent/model/project identifiers only. Restore clamps coordinates to the current primary work area, never replays a turn or action, and never enables retention. An unretained or missing conversation opens empty with an explanation. Independent model/project selection and server-side workspace/approval isolation remain Task 215; visible resource queue and exclusive capture ownership remain Task 216. Source-mode Windows checks establish window lifecycle behavior, not packaged installer or concurrent model-workload acceptance.
+
 ## Windows Electron distribution (Task 127)
 
 The per-user Windows x64 installer packages Electron 44.7.0, a Next.js

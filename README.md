@@ -23,7 +23,7 @@ These features are scoped foundations. Provider registration, a model name, or c
 
 ## Known limits and roadmap status
 
-Task 213 delivers shared light/dark tokens and theme persistence, narrow forms, and visual/accessibility regression checks across 35 local screens. The owner approved final visuals; packaged theme persistence, actual Windows scaling and assistive technology remain unverified follow-up. Tasks 214-217 multi-window behavior is separate planned scope. See [the review evidence](review/task-213-ui-review.md).
+Task 213 delivers shared light/dark tokens and theme persistence, narrow forms, and visual/accessibility regression checks across 35 local screens. The owner approved final visuals; packaged theme persistence, actual Windows scaling and assistive technology remain unverified follow-up. Task 214 adds shared-backend chat windows, a separate Settings window and safe identifier/geometry restoration; an isolated Windows source-mode check passed, while packaged and real-workload coverage remains unverified. Tasks 215-217 remain planned. See [the review evidence](review/task-213-ui-review.md).
 
 Task 208 adds deterministic chat routing over capabilities already selected by the owner. Ordinary chat stays direct; Brain and reviewed read tools require their existing scope/preview, and delegation remains a separate explicit one-step choice. Unsupported web, screen, and code requests remain direct answers and are recorded as fallbacks. Real-model routing quality is not claimed; it is measured in Task 211.
 

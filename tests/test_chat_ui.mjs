@@ -523,6 +523,47 @@ test("chat autonomy chip loads and persists the owner-scoped setting with CSRF",
   assert.equal(update.options.headers["X-Local-CSRF"], "test-csrf");
 });
 
+test("desktop restoration loads only the saved conversation and never replays a turn", async () => {
+  const id = "a".repeat(32); const saved = [];
+  const ui = setup((path, options) => {
+    if (path === "/api/chat/conversations" && !options.method) return response({ items: [{ id, coordinator: agent }] });
+    if (path === `/api/chat/conversations/${id}`) return response({ ...snapshot(), conversation: { id, status: "open", messages: [] } });
+    return null;
+  }, { location: { search: "?desktop=1" }, desktopBridge: {
+    getWorkspaceState: async () => ({ id: "window-one", conversation: id, agent: "worker", model: "configured-model", project: "" }),
+    saveWorkspaceState: async state => saved.push(state),
+  } });
+  assert.equal(await ui.controller.initialLoad, true);
+  assert.equal(ui.elements["chat-conversation"].value, id);
+  assert.equal(ui.calls.some(call => call.options?.method === "POST"), false);
+  assert.equal(saved.at(-1).conversation, id);
+});
+
+test("a fresh desktop window does not adopt another window's latest conversation", async () => {
+  const existing = "b".repeat(32);
+  const ui = setup((path, options) => {
+    if (path === "/api/chat/conversations" && !options.method) return response({ items: [{ id: existing, coordinator: agent }] });
+    return null;
+  }, { location: { search: "?desktop=1" }, desktopBridge: {
+    getWorkspaceState: async () => ({ id: "new-window", conversation: "" }), saveWorkspaceState: async () => true,
+  } });
+  assert.equal(await ui.controller.initialLoad, true);
+  assert.equal(ui.calls.some(call => call.path === `/api/chat/conversations/${existing}`), false);
+  assert.equal(ui.calls.filter(call => call.path === "/api/chat/conversations" && call.options?.method === "POST").length, 1);
+  assert.equal(ui.calls.some(call => call.path.endsWith("/messages")), false);
+});
+
+test("an unretained desktop chat opens empty with an explanation and no replay", async () => {
+  const ui = setup(null, { location: { search: "?desktop=1" }, desktopBridge: {
+    getWorkspaceState: async () => ({ id: "restored-window", conversation: "c".repeat(32) }),
+    saveWorkspaceState: async () => true,
+  } });
+  assert.equal(await ui.controller.initialLoad, true);
+  assert.match(ui.elements["chat-state"].textContent, /previous chat is not in retained history/);
+  assert.equal(ui.calls.some(call => call.path.endsWith("/messages")), false);
+  assert.equal(ui.calls.some(call => call.path.includes("retention") && call.options?.method), false);
+});
+
 test("canceling the reviewed chat plan starts no retrieval, tools, or provider request", async () => {
   const ui = setup(null, globalThis.window, () => false);
   await ui.controller.initialLoad;

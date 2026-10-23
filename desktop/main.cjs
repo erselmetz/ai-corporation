@@ -1,10 +1,11 @@
-const { app, BrowserWindow, desktopCapturer, dialog, ipcMain, session, shell } = require("electron");
+const { app, BrowserWindow, desktopCapturer, dialog, ipcMain, session, shell, screen } = require("electron");
 const { spawn, execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
 const crypto = require("node:crypto");
 const { fileURLToPath } = require("node:url");
+const { createWorkspaceWindows } = require("./workspaces.cjs");
 const { createDisplayMediaRequestHandler } = require("./screen-capture.cjs");
 const { OllamaInstaller } = require("./ollama-installer.cjs");
 const { appendLocalCrashReport, readLocalCrashReports } = require("./local-diagnostics.cjs");
@@ -25,13 +26,22 @@ const APP_DATA = process.env.LOCALAPPDATA
   : path.join(app.getPath("userData"), "ERSELMETZ AI");
 const CREDENTIAL = path.join(APP_DATA, "owner-credential.dpapi");
 let bootstrapWindow;
-let applicationWindow;
+const workspaceWindows = createWorkspaceWindows({ BrowserWindow, origin: ORIGIN,
+  preload: path.join(__dirname, "preload.cjs"), file: path.join(APP_DATA, "desktop", "workspaces.json"),
+  workArea: () => screen.getPrimaryDisplay().workArea,
+  onClose: senderId => { microphoneGrants.delete(senderId); cameraGrants.delete(senderId); },
+  onCrash: details => {
+    const reasons = new Set(["clean-exit", "abnormal-exit", "killed", "crashed", "oom", "launch-failed", "integrity-failure"]);
+    appendCrashRecord("renderer", "renderer-gone", reasons.has(details?.reason) ? details.reason : "unknown",
+      Number.isInteger(details?.exitCode) ? Math.max(-1, Math.min(255, details.exitCode)) : null);
+  },
+});
 let backend;
 let expectedBackendCommit = null;
 let quitAfterShutdown = false;
 let quitting = false;
-let microphoneGrantUntil = 0;
-let cameraGrantUntil = 0;
+const microphoneGrants = new Map();
+const cameraGrants = new Map();
 
 function resetHelperMode() {
   const marker = process.argv.indexOf(RESET_HELPER_ARGUMENT);
@@ -99,11 +109,8 @@ function isTrustedBootstrap(event) {
 }
 
 function isTrustedApplication(event) {
-  if (!applicationWindow || event.sender !== applicationWindow.webContents) return false;
-  try {
-    const actual = new URL(event.sender.getURL());
-    return actual.origin === ORIGIN && actual.pathname.startsWith("/desktop/");
-  } catch { return false; }
+  return Boolean(event.senderFrame === event.sender.mainFrame
+    && workspaceWindows.trusted(event.sender, "/desktop/"));
 }
 
 function makeBootstrapWindow() {
@@ -119,7 +126,7 @@ function makeBootstrapWindow() {
   });
   bootstrapWindow.loadFile(path.join(__dirname, "bootstrap.html"));
   bootstrapWindow.once("ready-to-show", () => bootstrapWindow && bootstrapWindow.show());
-  bootstrapWindow.on("closed", () => { bootstrapWindow = undefined; if (!backend && !applicationWindow) app.quit(); });
+  bootstrapWindow.on("closed", () => { bootstrapWindow = undefined; if (!backend && !workspaceWindows.first()) app.quit(); });
 }
 
 function spawnBackend() {
@@ -292,7 +299,7 @@ async function startBackend(payload) {
     // Install only the fresh per-launch token as the HttpOnly renderer session.
     await session.defaultSession.cookies.set({ url: ORIGIN, name: "ersel_local_session", value: startupToken, path: "/", httpOnly: true, sameSite: "strict" });
     ownerPassword = "";
-    createApplicationWindow();
+    workspaceWindows.restore();
     if (bootstrapWindow && !bootstrapWindow.isDestroyed()) bootstrapWindow.close();
     return { started: true };
   } catch {
@@ -302,28 +309,6 @@ async function startBackend(payload) {
     if (backend === child) backend = null;
     return { started: false, message: "Local startup failed. Check the installation and retry." };
   }
-}
-
-function createApplicationWindow() {
-  applicationWindow = new BrowserWindow({
-    width: 1440, height: 960, minWidth: 600, minHeight: 620, show: false,
-    title: "ERSELMETZ AI — Command Center",
-    autoHideMenuBar: true,
-    webPreferences: { preload: path.join(__dirname, "preload.cjs"), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true },
-  });
-  applicationWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
-  applicationWindow.webContents.on("render-process-gone", (_event, details) => {
-    const allowedReasons = new Set(["clean-exit", "abnormal-exit", "killed", "crashed", "oom", "launch-failed", "integrity-failure"]);
-    appendCrashRecord("renderer", "renderer-gone", allowedReasons.has(details?.reason) ? details.reason : "unknown",
-      Number.isInteger(details?.exitCode) ? Math.max(-1, Math.min(255, details.exitCode)) : null);
-  });
-  applicationWindow.webContents.on("will-navigate", (event, target) => {
-    try { if (new URL(target).origin !== ORIGIN) event.preventDefault(); }
-    catch { event.preventDefault(); }
-  });
-  applicationWindow.loadURL(`${ORIGIN}/ui/chat?desktop=1`);
-  applicationWindow.once("ready-to-show", () => applicationWindow && applicationWindow.show());
-  applicationWindow.on("closed", () => { applicationWindow = undefined; app.quit(); });
 }
 
 function stopBackend() {
@@ -340,8 +325,7 @@ function stopBackend() {
 
 if (hasSingleInstanceLock) app.whenReady().then(() => {
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
-    const trusted = applicationWindow && webContents === applicationWindow.webContents
-      && webContents.getURL().startsWith(`${ORIGIN}/`);
+    const trusted = Boolean(workspaceWindows.trusted(webContents));
     const audioOnly = permission === "media" && Array.isArray(details?.mediaTypes)
       && details.mediaTypes.length === 1 && details.mediaTypes[0] === "audio";
     const videoOnly = permission === "media" && Array.isArray(details?.mediaTypes)
@@ -352,14 +336,14 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
       callback(true);
       return;
     }
-    if (trusted && audioOnly && Date.now() < microphoneGrantUntil) {
-      microphoneGrantUntil = 0;
+    if (trusted && audioOnly && Date.now() < (microphoneGrants.get(webContents.id) || 0)) {
+      microphoneGrants.delete(webContents.id);
       callback(true);
       return;
     }
     if (trusted && videoOnly && webContents.getURL().startsWith(`${ORIGIN}/ui/chat`)
-        && Date.now() < cameraGrantUntil) {
-      cameraGrantUntil = 0;
+        && Date.now() < (cameraGrants.get(webContents.id) || 0)) {
+      cameraGrants.delete(webContents.id);
       callback(true);
       return;
     }
@@ -368,17 +352,18 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
   session.defaultSession.setDisplayMediaRequestHandler(
     createDisplayMediaRequestHandler({
       isTrusted: (request) => Boolean(
-        applicationWindow
-        && request?.frame === applicationWindow.webContents.mainFrame
-        && request.securityOrigin === ORIGIN
-        && applicationWindow.webContents.getURL().startsWith(`${ORIGIN}/ui/chat`)
+        request.securityOrigin === ORIGIN
+        && workspaceWindows.all().some(record => record.kind === "chat"
+          && request?.frame === record.window.webContents.mainFrame
+          && workspaceWindows.trusted(record.window.webContents, "/ui/chat"))
       ),
       getSources: () => desktopCapturer.getSources({
         types: ["screen", "window"],
         thumbnailSize: { width: 80, height: 45 },
         fetchWindowIcons: false,
       }),
-      chooseSource: async (sources) => {
+      chooseSource: async (sources, request) => {
+        const applicationWindow = workspaceWindows.all().find(record => request?.frame === record.window.webContents.mainFrame)?.window;
         if (sources.length > 24 || !applicationWindow || applicationWindow.isDestroyed()) return null;
         const buttons = [...sources.map((source) => source.name.slice(0, 120)), "Cancel"];
         const cancelId = buttons.length - 1;
@@ -396,6 +381,13 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
       },
     })
   );
+  ipcMain.handle("desktop:workspace-state", (event) => {
+    if (!event.senderFrame === event.sender.mainFrame) return null;
+    const record = workspaceWindows.trusted(event.sender, "/ui/chat");
+    return record ? { id: record.id, ...record.selection } : null;
+  });
+  ipcMain.handle("desktop:workspace-save", (event, value) =>
+    Boolean(event.senderFrame === event.sender.mainFrame && workspaceWindows.update(event.sender, value)));
   ipcMain.handle("desktop:get-setup-state", (event) => isTrustedBootstrap(event) && !fs.existsSync(CREDENTIAL));
   ipcMain.handle("desktop:ollama-installed", (event) => isTrustedApplication(event) && ollamaInstallationPresent());
   ipcMain.handle("desktop:start", (event, payload) => isTrustedBootstrap(event) ? startBackend(payload) : { started: false, message: "Request denied." });
@@ -419,7 +411,7 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
     if (!isTrustedApplication(event)) return { ok: false, message: "Request denied." };
     if (!process.env.LOCALAPPDATA) return { ok: false, message: "Full app-data reset is supported only for the Windows per-user installation." };
     if (!await ownerHasPermission("backup:restore")) return { ok: false, message: "Sign in with backup:restore permission to reset application data." };
-    const confirmation = await dialog.showMessageBox(applicationWindow, {
+    const confirmation = await dialog.showMessageBox(BrowserWindow.fromWebContents(event.sender), {
       type: "warning", buttons: ["Cancel", "Reset app data"], defaultId: 0, cancelId: 0,
       title: "Reset all ERSELMETZ AI data?",
       message: "This removes the local owner account and all ERSELMETZ AI application data.",
@@ -456,7 +448,7 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
   });
   const ollamaInstaller = new OllamaInstaller({
     onProgress: (progress) => {
-      if (applicationWindow && !applicationWindow.isDestroyed()) applicationWindow.webContents.send("desktop:ollama-installer-progress", progress);
+      for (const record of workspaceWindows.all()) record.window.webContents.send("desktop:ollama-installer-progress", progress);
     },
   });
   ipcMain.handle("desktop:ollama-installer-preview", async (event) => {
@@ -475,7 +467,7 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
         return { ok: false, message: "The Ollama release changed. Refresh and review the new installer details." };
       }
     } catch { return { ok: false, message: "Current official Ollama release integrity metadata is unavailable." }; }
-    const result = await dialog.showMessageBox(applicationWindow, {
+    const result = await dialog.showMessageBox(BrowserWindow.fromWebContents(event.sender), {
       type: "warning", buttons: ["Download and run verified installer", "Cancel"], defaultId: 1, cancelId: 1,
       title: "Install Ollama for this user",
       message: `Download and run Ollama ${verifiedPreview.version}?`,
@@ -488,32 +480,32 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
   });
   ipcMain.handle("desktop:request-camera", async (event) => {
     const frame = event.senderFrame;
-    if (!applicationWindow || event.sender !== applicationWindow.webContents
+    if (!workspaceWindows.trusted(event.sender)
         || !event.sender.getURL().startsWith(`${ORIGIN}/ui/chat`)
-        || !frame || !frame.isMainFrame || !frame.url.startsWith(`${ORIGIN}/ui/chat`)) return false;
-    const result = await dialog.showMessageBox(applicationWindow, {
+        || !frame || frame !== event.sender.mainFrame || !frame.url.startsWith(`${ORIGIN}/ui/chat`)) return false;
+    const result = await dialog.showMessageBox(BrowserWindow.fromWebContents(event.sender), {
       type: "question", buttons: ["Allow once", "Deny"], defaultId: 1, cancelId: 1,
       title: "Camera access",
       message: "Allow one camera frame for this chat?",
       detail: "The camera turns on only for this capture and stops immediately afterward. The frame stays temporary and is not sent to a model unless you separately select it and consent for a chat turn.",
     });
     if (result.response !== 0) return false;
-    cameraGrantUntil = Date.now() + 15_000;
+    cameraGrants.set(event.sender.id, Date.now() + 15_000);
     return true;
   });
   ipcMain.handle("desktop:request-microphone", async (event) => {
     const frame = event.senderFrame;
-    if (!applicationWindow || event.sender !== applicationWindow.webContents
+    if (!workspaceWindows.trusted(event.sender)
         || !event.sender.getURL().startsWith(`${ORIGIN}/`)
-        || !frame || !frame.isMainFrame || !frame.url.startsWith(`${ORIGIN}/`)) return false;
-    const result = await dialog.showMessageBox(applicationWindow, {
+        || !frame || frame !== event.sender.mainFrame || !frame.url.startsWith(`${ORIGIN}/`)) return false;
+    const result = await dialog.showMessageBox(BrowserWindow.fromWebContents(event.sender), {
       type: "question", buttons: ["Allow once", "Deny"], defaultId: 1, cancelId: 1,
       title: "Microphone access",
       message: "Allow microphone access for this voice interaction?",
       detail: "Audio is used only for the interaction you start. Local mode keeps recognition on this device; Gemini mode sends the recording only after separate per-use consent.",
     });
     if (result.response !== 0) return false;
-    microphoneGrantUntil = Date.now() + 15_000;
+    microphoneGrants.set(event.sender.id, Date.now() + 15_000);
     return true;
   });
   if (fs.existsSync(CREDENTIAL)) makeBootstrapWindow();
@@ -523,8 +515,8 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
 });
 
 if (!isResetHelper) app.on("second-instance", () => {
-  const window = applicationWindow || bootstrapWindow;
-  if (window) { if (window.isMinimized()) window.restore(); window.focus(); }
+  if (backend && workspaceWindows.first()) workspaceWindows.create("chat");
+  else if (bootstrapWindow) { if (bootstrapWindow.isMinimized()) bootstrapWindow.restore(); bootstrapWindow.focus(); }
 });
 
 if (!isResetHelper) app.on("before-quit", (event) => {
@@ -536,12 +528,13 @@ if (!isResetHelper) app.on("before-quit", (event) => {
     if (!stopped) {
       quitAfterShutdown = false;
       const options = { type: "warning", buttons: ["Keep app open"], title: "Service is still stopping", message: "The local service has not stopped yet. Keep the app open and try closing it again after it finishes." };
-      const ownerWindow = applicationWindow || bootstrapWindow;
+      const ownerWindow = workspaceWindows.first() || bootstrapWindow;
       if (ownerWindow) await dialog.showMessageBox(ownerWindow, options);
       else await dialog.showMessageBox(options);
       return;
     }
     await session.defaultSession.clearStorageData({ storages: ["cookies"] });
+    workspaceWindows.prepareQuit();
     quitting = true;
     app.quit();
   });

@@ -14,10 +14,11 @@ test("new Electron launches start the loopback service and open Coordinator Chat
   assert.match(main, /crypto\.randomBytes\(32\)\.toString\("base64url"\)/);
   assert.match(main, /session_token: startupToken/);
   assert.match(main, /name: "ersel_local_session", value: startupToken[^\n]*httpOnly: true/);
-  assert.match(main, /applicationWindow\.loadURL\(`\$\{ORIGIN\}\/ui\/chat\?desktop=1`\)/);
+  assert.match(main, /workspaceWindows\.restore\(\)/);
   assert.match(main, /if \(fs\.existsSync\(CREDENTIAL\)\) makeBootstrapWindow\(\)/);
-  assert.match(main, /applicationWindow\.loadURL\(`\$\{ORIGIN\}\/ui\/chat\?desktop=1`\)/);
-  assert.match(main, /width: 1440, height: 960, minWidth: 600, minHeight: 620/);
+  const windows = fs.readFileSync(path.join(root, "desktop/workspaces.cjs"), "utf8");
+  assert.match(windows, /\/ui\/chat\?desktop=1/);
+  assert.match(windows, /minWidth: 600, minHeight: 620/);
 });
 
 test("Electron health handshake requires a matching version and source commit stamp", () => {
