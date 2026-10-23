@@ -237,6 +237,20 @@ function SpeechModelControls({ permissions }: { permissions: string[] }) {
 }
 
 export default function SettingsPage() {
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  useEffect(() => {
+    try { setTheme(window.localStorage.getItem("ersel-chat-theme-v1") === "light" ? "light" : "dark"); }
+    catch { setTheme("dark"); }
+  }, []);
+
+  function changeTheme() {
+    const next = theme === "light" ? "dark" : "light";
+    setTheme(next);
+    document.documentElement.dataset.theme = next;
+    document.body.dataset.theme = next;
+    try { window.localStorage.setItem("ersel-chat-theme-v1", next); }
+    catch { /* Theme remains active for this page. */ }
+  }
   const [session, setSession] = useState<Result>({ state: "loading", message: "Checking owner access…", source: "/api/local/session" });
   const [preferences, setPreferences] = useState<Result>(initial);
   const [providers, setProviders] = useState<Result>(initial);
@@ -402,6 +416,9 @@ export default function SettingsPage() {
       <header className="topbar"><span>OWNER SETTINGS</span><a className="login-link" href="/ui/login">Owner sign in <span aria-hidden="true">↗</span></a></header>
       <div className="settings-heading"><div><p className="eyebrow"><span className="eyebrow-line" /> ONE PLACE · CLEAR PERMISSIONS</p><h1>Settings</h1><p>Everyday preferences stay simple. Advanced controls remain grouped by the systems they manage.</p></div><button className="readiness-refresh" type="button" onClick={() => void refresh()} disabled={checking}>{checking ? "Refreshing…" : "Refresh values"}</button></div>
       <section className="settings-section" aria-labelledby="everyday-heading"><div className="section-heading"><div><p className="eyebrow">OWNER PREFERENCES</p><h2 id="everyday-heading">Everyday use</h2></div></div>
+        <article className="settings-card"><h3>Appearance</h3><p>Choose the same theme across Chat, Settings, and the other local pages.</p>
+          <button className="readiness-refresh" type="button" onClick={changeTheme} aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}>Use {theme === "light" ? "dark" : "light"} theme</button>
+        </article>
         <SettingCard title="Response preferences" description="Your saved response style, language, detail, and optional local voice preference." result={preferences} href="/ui/preferences" linkLabel="Edit preferences" />
       </section>
       <section className="settings-section" aria-labelledby="advanced-heading"><div className="section-heading"><div><p className="eyebrow">OPERATOR CONTROLS</p><h2 id="advanced-heading">Advanced settings</h2></div></div>

@@ -337,7 +337,8 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
         )
         menu = ('<button id="shared-navigation-toggle" class="navigation-toggle" '
                 'type="button" aria-controls="shared-navigation" aria-expanded="false">Menu</button>')
-        module = '<script type="module" src="/ui/static/navigation.mjs"></script>'
+        module = ('<script type="module" src="/ui/static/theme.mjs"></script>'
+                  '<script type="module" src="/ui/static/navigation.mjs"></script>')
         markup = menu + navigation + module
 
         def add_body_class(match):

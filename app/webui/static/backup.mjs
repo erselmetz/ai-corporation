@@ -1,3 +1,5 @@
+import { formatDetails } from "./ui-details.mjs";
+
 const state = document.querySelector("#backup-state");
 const previewOutput = document.querySelector("#backup-preview-result");
 const inspectOutput = document.querySelector("#backup-inspect-result");
@@ -19,7 +21,7 @@ async function jsonResponse(response, fallback) {
 }
 
 function readable(payload) {
-  return JSON.stringify(payload, null, 2);
+  return formatDetails(payload);
 }
 
 function download(blob, filename) {

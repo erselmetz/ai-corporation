@@ -45,9 +45,11 @@ function setup({ profileAllowed = true } = {}) {
     { agent_id: "paused_one", status: "paused", reason: null, provider_id: "ollama", model_id: "m", last_active: null },
     { agent_id: "custom_error", status: "unavailable", reason: "Assigned model is not installed.", provider_id: "gemini", model_id: "g", last_active: null },
   ];
+  let failReads = false;
   const fetchImpl = async (path, options = {}) => {
     calls.push({ path, options });
     const respond = (payload, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => payload });
+    if (failReads && path === "/api/agents") return respond({}, 503);
     if (path === "/api/agents") return respond({ items });
     if (path === "/api/local/agents/status") return respond({ items: statuses });
     if (path === "/api/employees") return respond({ items: items.map((item, i) => ({ id: `employee-${i}`, agent_id: item.id })) });
@@ -70,10 +72,22 @@ function setup({ profileAllowed = true } = {}) {
   };
   const cryptoRef = { randomUUID: () => "00000000-1111-2222-3333-444444444444" };
   const ui = mountAgentsPage({ documentRef, fetchImpl, cryptoRef });
-  return { elements, filters, views, calls, ui, items };
+  return { elements, filters, views, calls, ui, items, failReads: () => { failReads = true; } };
 }
 
 const settle = async () => new Promise(resolve => setImmediate(resolve));
+
+test("failed refresh keeps a readable error panel and removes stale Agent actions", async () => {
+  const ui = setup();
+  await settle();
+  ui.failReads();
+  assert.equal(await ui.ui.refresh(), false);
+  assert.match(ui.elements["agent-list"].textContent, /could not be completed/);
+  assert.doesNotMatch(ui.elements["agent-list"].textContent, /Coordinator/);
+  assert.equal(ui.elements["agent-create-source"].children.length, 0);
+  ui.filters[0].listeners.click();
+  assert.match(ui.elements["agent-list"].textContent, /could not be completed/);
+});
 
 test("Agents page filters by real runtime state and switches to existing organization tree", async () => {
   const ui = setup();

@@ -1,3 +1,5 @@
+import { formatDetails } from "./ui-details.mjs";
+
 const state = document.querySelector("#readiness-state");
 const report = document.querySelector("#readiness-report");
 
@@ -10,7 +12,7 @@ document.querySelector("#readiness-refresh").addEventListener("click", async () 
     });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body.detail || "Local readiness evidence could not be read.");
-    report.textContent = JSON.stringify(body, null, 2);
+    report.textContent = formatDetails(body);
     state.textContent = "Snapshot refreshed. UNKNOWN values mean no supported evidence was available.";
   } catch (error) {
     state.textContent = error.message;

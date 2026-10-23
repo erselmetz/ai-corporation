@@ -3,6 +3,7 @@ import { mountScreenCapture } from "./screen-capture.mjs";
 import { mountCameraCapture } from "./camera-capture.mjs";
 import { mountChatImages } from "./chat-images.mjs";
 import { renderSafeMarkdown } from "./chat-markdown.mjs";
+import { formatDetails } from "./ui-details.mjs";
 import { recordLastBrainRetrieval } from "./brain-graph.mjs";
 import "./quick-start.mjs?v=195";
 
@@ -28,8 +29,14 @@ export function mountChat({
   const element = (id) => documentRef.getElementById(id);
   documentRef.body.dataset ||= {};
   const themeKey = "ersel-chat-theme-v1";
-  try { documentRef.body.dataset.theme = windowRef?.localStorage?.getItem(themeKey) === "light" ? "light" : "dark"; }
-  catch { documentRef.body.dataset.theme = "dark"; }
+  const applyTheme = theme => {
+    documentRef.body.dataset.theme = theme;
+    if (documentRef.documentElement?.dataset) documentRef.documentElement.dataset.theme = theme;
+    const button = element("chat-theme-toggle");
+    if (button) button.textContent = theme === "light" ? "Switch to dark theme" : "Switch to light theme";
+  };
+  try { applyTheme(windowRef?.localStorage?.getItem(themeKey) === "light" ? "light" : "dark"); }
+  catch { applyTheme("dark"); }
   const state = element("chat-state");
   const history = element("chat-history");
   const agents = element("chat-agent");
@@ -1179,7 +1186,7 @@ export function mountChat({
         throw new Error("Invalid Task proposal response.");
       }
       currentProposal = proposal;
-      taskReview.textContent = JSON.stringify(proposal, null, 2);
+      taskReview.textContent = formatDetails(proposal);
       taskState.textContent = "Review the objective, Agent, authorized context, outcome, evidence, and canonical Task fields above. No Task has been created.";
       taskControls();
     });
@@ -1201,7 +1208,7 @@ export function mountChat({
         `${base}/${encodeURIComponent(selected)}/repository-studies`,
         { objective, owner, repository },
       );
-      repositoryStudyResult.textContent = JSON.stringify(report, null, 2);
+      repositoryStudyResult.textContent = formatDetails(report);
       repositoryStudyState.textContent = report.decision === "proposal_for_human_review"
         ? "Evidence-backed proposal prepared for human review; nothing was installed or executed."
         : "More information is needed before this evidence can support a review proposal.";
@@ -1221,7 +1228,7 @@ export function mountChat({
         { proposal_digest: currentProposal.proposal_digest, confirmed: true },
       );
       currentProposal = null;
-      taskReview.textContent = JSON.stringify(result, null, 2);
+      taskReview.textContent = formatDetails(result);
       taskState.textContent = "Confirmed Task created as pending. No execution occurred.";
     });
   }
@@ -1310,11 +1317,10 @@ export function mountChat({
     }
     knowledgeEnabled.dispatchEvent?.(new Event("change", { bubbles: true }));
   });
-  element("chat-theme-toggle")?.addEventListener("click", event => {
+  element("chat-theme-toggle")?.addEventListener("click", () => {
     const theme = documentRef.body.dataset.theme === "light" ? "dark" : "light";
-    documentRef.body.dataset.theme = theme;
+    applyTheme(theme);
     try { windowRef?.localStorage?.setItem(themeKey, theme); } catch { /* Theme can be changed for this page only. */ }
-    event.currentTarget.textContent = theme === "light" ? "Switch to dark theme" : "Switch to light theme";
   });
   const quickStop = element("chat-emergency-stop");
   const activity = { microphone: false, camera: false, screen: false, playback: false, automation: false };

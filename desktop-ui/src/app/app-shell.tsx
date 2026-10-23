@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const groups = [
   ["PRIMARY", [["Home", "/desktop/"], ["Chat", "/ui/chat"], ["Projects", "/ui/projects"]]],
@@ -17,6 +17,23 @@ const groups = [
 
 export default function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const [navigationOpen, setNavigationOpen] = useState(false);
+
+  useEffect(() => {
+    let theme = "dark";
+    try { theme = window.localStorage.getItem("ersel-chat-theme-v1") === "light" ? "light" : "dark"; }
+    catch { /* Private browsing may block local storage. */ }
+    document.documentElement.dataset.theme = theme;
+    document.body.dataset.theme = theme;
+  }, []);
+
+  useEffect(() => {
+    if (!navigationOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setNavigationOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [navigationOpen]);
 
   return <div className={`shell${navigationOpen ? " navigation-open" : ""}`}>
     <button className="navigation-toggle" type="button" aria-controls="desktop-navigation"

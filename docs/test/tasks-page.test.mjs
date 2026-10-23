@@ -23,19 +23,19 @@ function render() {
 test("shows all task contracts in descending order and identifies the next planned task", () => {
   const elements = render();
   const groups = elements["roadmap-groups"].children;
-  assert.equal(groups[0].id, "tasks-211-211");
+  assert.equal(groups[0].id, "tasks-217-217");
   const items = groups.flatMap(group => group.children[1].children);
-  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), [211, 210, 209, 208, 207, ...Array.from({ length: 203 }, (_, index) => 203 - index)]);
-  assert.match(elements["roadmap-summary"].textContent, /208 roadmap tasks.*200 completed scoped checkpoints.*4 deferred and incomplete.*3 planned.*1 design only/);
+  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), [217, 216, 215, 214, 213, 211, 210, 209, 208, 207, ...Array.from({ length: 203 }, (_, index) => 203 - index)]);
+  assert.match(elements["roadmap-summary"].textContent, /213 roadmap tasks.*201 completed scoped checkpoints.*4 deferred and incomplete.*7 planned.*1 design only/);
   assert.match(elements["next-task"].textContent, /Task 209/);
   const newest = items[0];
-  assert.equal(newest.id, "task-211");
-  const latestCompleted = items.find(item => item.id === "task-208");
+  assert.equal(newest.id, "task-217");
+  const latestCompleted = items.find(item => item.id === "task-213");
   assert.equal(latestCompleted.children[2].textContent, "Completed");
   assert.match(latestCompleted.children[4].textContent, /AI-verified \(deterministic\/fake evidence recorded\)/);
   assert.equal(latestCompleted.children[5].textContent, "Real hardware/live provider: unverified");
-  assert.equal(latestCompleted.id, "task-208");
-  assert.match(latestCompleted.textContent, /task-208-deterministic-chat-routing/);
+  assert.equal(latestCompleted.id, "task-213");
+  assert.match(latestCompleted.textContent, /task-213-ui-foundation-polish/);
   const priorCompleted = items.find(item => item.id === "task-202");
   assert.equal(priorCompleted.children[2].textContent, "Completed");
   assert.match(priorCompleted.textContent, /task-202-agent-delegation-approvals/);
@@ -167,7 +167,7 @@ test("publishes completed milestones and remaining phases with their current sta
     [174, "completed"], [175, "completed"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
     [180, "completed"], [181, "completed"], [182, "completed"], [183, "completed"], [184, "completed"], [185, "completed"],
     [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"], [191, "completed"], [192, "completed"], [193, "deferred"], [194, "deferred"], [195, "completed"],
-    [196, "completed"], [197, "completed"], [198, "completed"], [199, "completed"], [200, "completed"], [201, "completed"], [202, "completed"], [203, "completed"], [207, "completed"], [208, "completed"], [209, "planned"], [210, "planned"], [211, "planned"],
+    [196, "completed"], [197, "completed"], [198, "completed"], [199, "completed"], [200, "completed"], [201, "completed"], [202, "completed"], [203, "completed"], [207, "completed"], [208, "completed"], [209, "planned"], [210, "planned"], [211, "planned"], [213, "completed"], [214, "planned"], [215, "planned"], [216, "planned"], [217, "planned"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, "task-177-auto-rag-trace");
   assert.equal(tasks.find(task => task.number === 178).checkpoint, "task-178-nav-fix");
@@ -192,7 +192,7 @@ test("publishes completed milestones and remaining phases with their current sta
     assert.equal(task.manualVerification, undefined);
     assert.ok(task.followUpValidation.length);
   }
-  assert.deepEqual(recommendedOrder.map(({ number }) => number), [178, 176, 177, 175, 180, 184, 181, 182, 183, 185, 186, 187, 188, 189, 190, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 207, 208, 209, 210, 211]);
+  assert.deepEqual(recommendedOrder.map(({ number }) => number), [178, 176, 177, 175, 180, 184, 181, 182, 183, 185, 186, 187, 188, 189, 190, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 207, 208, 209, 210, 211, 213, 214, 215, 216, 217]);
   const corporationMap = tasks.find(task => task.number === 172);
   assert.match(corporationMap.description, /interactive, evidence-backed 3D map/);
   assert.match(corporationMap.acceptance.join(" "), /zoom\/orbit\/pan.*filters\/layers/i);

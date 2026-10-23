@@ -428,9 +428,10 @@ def test_updates_page_uses_only_the_protected_curated_updates_api():
     assert page.status_code == 200
     assert page.headers["content-type"].startswith("text/html")
     assert "Updates / Changelog" in page.text
-    assert "manually maintained" in page.text
-    assert "separate from" in page.text
-    assert "updates:read" in page.text
+    assert "Curated development and release notes" in page.text
+    assert "Owner sign-in and update" in page.text
+    assert '<details class="management-card" aria-labelledby="trusted-release-title">' in page.text
+    assert "Signed app updates" in page.text
     assert 'src="/ui/static/updates.mjs"' in page.text
     assert script.status_code == 200
     assert script.headers["content-type"].startswith("text/javascript")

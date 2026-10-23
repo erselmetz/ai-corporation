@@ -1,3 +1,5 @@
+import { formatDetails } from "./ui-details.mjs";
+
 export function mountAssignmentPolicy({
   documentRef = document,
   fetchImpl = fetch,
@@ -40,6 +42,7 @@ export function mountAssignmentPolicy({
       await action();
     } catch (error) {
       state.textContent = error.message;
+      results.textContent = "No current recommendation preview is available. Refresh to retry.";
     } finally {
       busy = false;
       controls();
@@ -47,7 +50,13 @@ export function mountAssignmentPolicy({
   }
 
   function show(value) {
-    results.textContent = JSON.stringify(value, null, 2);
+    const summary = value.enabled === true ? "Recommendations are enabled." : "Recommendations are off.";
+    results.textContent = summary + "\n\n" + formatDetails({
+      budget_limit: value.budget_limit ?? null,
+      budget_unit: value.budget_unit ?? null,
+      assignments: Array.isArray(value.assignments) ? value.assignments : [],
+      limitations: Array.isArray(value.limitations) ? value.limitations : [],
+    }) + "\n\nYour existing model assignments have not changed.";
   }
 
   save.addEventListener("click", () => run(async () => {

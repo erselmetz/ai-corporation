@@ -1,3 +1,5 @@
+import { formatDetails } from "./ui-details.mjs";
+
 export function createAutomationApprovalFlow({ request, confirmImpl = message => globalThis.confirm(message),
                                               onStatus = () => {} }) {
   return async function approveAndExecute(kind, actionBody) {
@@ -108,9 +110,9 @@ export function mountLocalAutomation({ documentRef = globalThis.document, fetchI
     }
     status("Opening the exact page in a visible temporary browser for read-only inspection. No click or text entry will be sent.");
     const result = await request("/api/local/automation/browser/preview", { method: "POST", body: browserBody });
-    byId("browser-preview-result").textContent = JSON.stringify({ action: result.action, target: result.target_label,
+    byId("browser-preview-result").textContent = formatDetails({ action: result.action, target: result.target_label,
       url: browserBody.url, target_digest: result.target_digest, payload_digest: result.payload_digest,
-      confirmation_required: result.confirmation_required }, null, 2);
+      confirmation_required: result.confirmation_required });
     byId("browser-run").hidden = false;
     status("Read-only preview complete. No browser action has been dispatched.");
   }));

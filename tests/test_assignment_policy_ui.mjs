@@ -33,7 +33,10 @@ function setup({ permissions = ["assignment-policy:manage"], confirmImpl = () =>
     }
     if (path === "/api/local/assignment-policy") return response(structuredClone(policy));
     if (path.endsWith("/preview")) {
-      return response({ enabled: policy.enabled, assignments: [], safe: "<script>inert</script>" });
+      return response({ enabled: policy.enabled, assignments: [{ agent_id: "<script>inert</script>",
+        current_assignment: { provider_id: "local", model_id: "small-model" }, recommendation: null,
+        candidates: [{ model_id: "candidate", eligible: false, reasons: ["inventory_stale"], unknowns: ["hardware fit"] }] }],
+        internal_field: "must not be displayed" });
     }
     throw new Error(`Unexpected request: ${path}`);
   };
@@ -63,6 +66,9 @@ test("owner enables, previews, and disables recommendations with same-origin CSR
   assert.equal(put.options.headers["X-Local-CSRF"], "csrf-token");
   assert.equal(JSON.parse(put.options.body).enabled, true);
   assert.match(ui.elements["assignment-policy-results"].textContent, /<script>inert<\/script>/);
+  assert.match(ui.elements["assignment-policy-results"].textContent, /Model id: small-model/);
+  assert.match(ui.elements["assignment-policy-results"].textContent, /inventory_stale/);
+  assert.doesNotMatch(ui.elements["assignment-policy-results"].textContent, /internal_field|must not be displayed|"assignments"/);
   assert.equal(ui.elements["assignment-policy-results"].innerHTML, undefined);
   await ui.elements["assignment-policy-disable"].listeners.click();
   const deletion = ui.calls.find((call) => call.options.method === "DELETE");

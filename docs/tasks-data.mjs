@@ -3994,12 +3994,81 @@ export const post100Tasks = [
     "limitations": [],
     "automatedVerification": ["Test the harness with deterministic providers for task accounting, scoring math, wrong-tool detection, latency aggregation, failure reporting and gating of unmeasured models."],
     "followUpValidation": ["Run all 30 tasks with the real installed llama3.2:3b and any larger installed local model; publish actual replies, model identity and hardware/runtime limitations."]
+  },
+  {
+    "number": 213,
+    "title": "Shared UI foundation and polish",
+    "description": "Make the existing Next.js and Python-served screens consistent, accessible, resilient, and reviewable through reproducible visual checks.",
+    "category": "Phase AS - UI Foundation",
+    "status": "completed",
+    "dependsOn": [178, 191, 195, 201],
+    "decisions": ["The owner approved the light/dark visual direction for continued development. Final before/after visuals were approved by the owner on 2026-10-23."],
+    "acceptance": ["Use one shared set of color, spacing, type, radius and motion tokens and shared button, input, card, dialog, popover, banner and list primitives across both UI stacks.", "Audit each screen's empty, loading, error and offline states; remove stale technical copy, raw diagnostics, clipped text, dead links and overflow without changing runtime authority.", "Retain screenshot baselines for key screens in light/dark at 480/768/1280/1920 CSS pixels and simulated 100/125/150 percent device scales; report actual Windows scaling separately.", "Run axe with zero critical issues and check keyboard navigation, focus, contrast, reduced motion, labels and long Taglish/name/word resilience. Provide a before/after fix list for owner review."],
+    "outOfScope": ["No multi-window behavior, workspace isolation, model-queue implementation, provider calls, downloads, or change to authentication and consent."],
+    "risks": ["Dark-only page overrides can break light-theme contrast; viewport/device-scale simulation does not prove native Windows scaling or assistive-technology behavior."],
+    "area": "P61", "checkpoint": "task-213-ui-foundation-polish", "validation": ["Python 1422 passed / 5 skipped / 0 failed; browser modules 289 passed; Electron 38 passed; public docs 21 passed. Next 16.4.2 production/type build, dependency audit (zero vulnerabilities), compilation and diff integrity passed. Latest 35-screen normal/error/offline/loading matrices passed 490 screenshots with keyboard focus, overflow, serious/critical axe, local-link and layout-shift checks. Twelve screenshot baselines retained; earlier key-screen matrix covered 480/768/1280/1920 widths and simulated 100/125/150 percent scales. Owner approved final visuals on 2026-10-23."],
+    "realWorldVerification": {"status": "ai-verified-only", "evidence": ["Owner reviewed and approved the final screenshot direction; deterministic Chromium checks exercise isolated local pages."], "unverified": ["Packaged Electron theme persistence, actual Windows scaling, assistive technology and representative-user behavior are unverified."]},
+    "limitations": ["The latest normal/error/offline/loading matrices passed 490 screenshots across 35 screens; earlier key-screen checks covered four widths and three simulated scales. Full Python: 1422 passed, 5 skipped; browser modules: 289 passed; Electron: 38 passed; public docs: 21 passed. Actual Windows scaling, packaged theme persistence and assistive technology remain unverified. Exhaustive dynamic-dialog keyboard flows, packaged theme persistence and native assistive technology are not established by automated Tab traversal. Tasks 214-217 remain separate planned scope."],
+    "automatedVerification": ["Use an isolated local profile and fake provider, screenshot comparisons, axe, keyboard/focus checks, long-text stress cases and injected API failures. Run the full Python, browser-module, Electron and public-docs suites before the checkpoint."],
+    "followUpValidation": ["Record packaged Electron, actual Windows scaling, assistive-technology and representative-user coverage honestly; no simulated check proves those integrations."]
+  },
+  {
+    "number": 214,
+    "title": "Shared-backend Electron windows",
+    "description": "Open independent chat windows in one Electron process and one loopback Python backend, with a separate nonblocking Settings window and safe workspace restoration.",
+    "category": "Phase AT - Window Architecture", "status": "planned",
+    "dependsOn": [213, 191, 178], "decisions": [],
+    "acceptance": ["Keep the single-instance lock; second launch and Ctrl+N create a new chat window using the existing backend. App launch stays direct-to-chat.", "Settings has one reusable window that can be focused without blocking chat windows.", "Restore window bounds, selected model/agent/project and conversation after close/reopen or restart, validating stored values and never replaying actions.", "Replace single-window trust assumptions with explicit trusted-window records while preserving owner authentication, loopback restrictions, Origin/CSRF checks and per-use native permission decisions."],
+    "outOfScope": ["No second backend, hidden action replay, cross-owner sessions, silent provider/model loading, or public network binding."],
+    "risks": ["Native IPC and media grants must not accept stale or untrusted windows; restored coordinates must remain reachable on changed monitors."],
+    "area": "P62", "checkpoint": null, "validation": [], "limitations": [],
+    "automatedVerification": ["Test single-instance/second-launch behavior, Ctrl+N, singleton Settings, shared backend lifecycle, trusted-window IPC, safe bounds restoration and absence of replay. Run all four suites."],
+    "followUpValidation": ["Record actual packaged Windows close/reopen/restart and monitor/scaling behavior separately from fakes."]
+  },
+  {
+    "number": 215,
+    "title": "Isolated per-window workspaces",
+    "description": "Give each window its own conversation, model, agent and project while sharing owner auth, providers, Brain index and settings safely.",
+    "category": "Phase AU - Workspace Sessions", "status": "planned",
+    "dependsOn": [214, 184, 200, 202], "decisions": [],
+    "acceptance": ["Expose compact model/agent/project selectors and a matching window title; support different models, agents or projects per window without silently changing global Agent assignments.", "Isolate conversation, approvals, selected route and trace by workspace; show requesting window/agent/project on approval previews and enforce the same provenance server-side.", "Use the existing project Brain scope and instructions with durable workspace/conversation association. Shared settings and providers remain owner-scoped.", "Enable and verify SQLite WAL and serialized writers where required; concurrent writes and restart recovery must not mix or corrupt workspaces."],
+    "outOfScope": ["No new Agent/Employee model, new authority, cross-project retrieval, action replay, background autonomous work or silent provider transfer."],
+    "risks": ["Client-only workspace labels cannot establish authorization; selection changes must preserve immutable existing conversation scopes and approval digests."],
+    "area": "P63", "checkpoint": null, "validation": [], "limitations": [],
+    "automatedVerification": ["Test two-window model/agent/project combinations, conversation and trace isolation, approval provenance, cross-project denials, concurrent writes, migrations and restart restoration. Run all four suites."],
+    "followUpValidation": ["Exercise packaged Windows sessions and real model conversations separately; report unavailable clean-profile coverage."]
+  },
+  {
+    "number": 216,
+    "title": "Visible shared resources and capture ownership",
+    "description": "Coordinate model capacity and protected local devices across workspaces with visible bounded waiting and reliable stop controls.",
+    "category": "Phase AV - Concurrency and Resources", "status": "planned",
+    "dependsOn": [215, 68, 70, 144, 200], "decisions": [],
+    "acceptance": ["Route all chat model calls through the existing ResourceManager and show queue position, waiting-for-model state and cancellation without replay.", "Report actual Ollama loaded-model/parallel-capability observations or unknown; warn about likely reload cost and suggest one model without changing Ollama settings or loading/downloading models.", "Provide a configurable soft window cap with a warning, defaulting to three.", "Grant microphone, camera and screen capture to one workspace at a time with real ownership indicators and a clear denial in other windows. Provide global and per-window emergency stop, preserving per-turn cloud consent and global spend limits."],
+    "outOfScope": ["No distributed coordination, automatic model download/load, changed Ollama configuration, silent cloud fallback or weakened native/owner consent."],
+    "risks": ["A cancelled wait must release no unowned capacity; runtime failure and window close must release acquired slots/devices while reporting uncertain remote outcomes truthfully."],
+    "area": "P64", "checkpoint": null, "validation": [], "limitations": [],
+    "automatedVerification": ["Test queue ordering/position/cancel, capacity cleanup on failure/stop/close, unknown capability states, soft cap, capture exclusivity, global/per-window stop and spending/consent boundaries. Run all four suites."],
+    "followUpValidation": ["Measure installed Ollama behavior and real device handoff/stop on Windows; fake concurrency does not establish RAM/VRAM feasibility."]
+  },
+  {
+    "number": 217,
+    "title": "Real multi-window workspace QA",
+    "description": "Evaluate three-window isolation, resource waiting and rendering using the actual local app and installed Ollama models.",
+    "category": "Phase AW - Multi-window QA", "status": "planned",
+    "dependsOn": [213, 214, 215, 216], "decisions": [],
+    "acceptance": ["Run parallel prompts in three windows for different installed local models, the same model with different agents, and the same model/agent with different projects.", "Record actual replies, isolation, queue/cancel behavior, project citations, crashes, latency and available RAM/VRAM observations with their provenance. Mark unavailable combinations unverified without downloading models.", "Repeat the visual matrix for workspace headers and the separate Settings window; report actual Windows scaling separately from device-scale simulation."],
+    "outOfScope": ["No paid/cloud calls, model downloads, fabricated GPU telemetry, public release, push or deployment."],
+    "risks": ["Results are limited to installed models and this machine; a passing deterministic test is not proof of live-provider performance or physical-device behavior."],
+    "area": "P65", "checkpoint": null, "validation": [], "limitations": [],
+    "automatedVerification": ["Run reproducible isolated multi-window scenarios and all Python, browser-module, Electron and public-docs suites; preserve logs and screenshots without owner content or credentials."],
+    "followUpValidation": ["List untested hardware, clean-account, microphone/camera/screen and representative-user combinations explicitly."]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, 195-203 and 207 are completed scoped checkpoints; Tasks 208-211 are planned; Task 190 is design-only. Tasks 204-206 have no published contract and are not inferred. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, 195-203 and 207-208 are completed scoped checkpoints; Task 213 is a completed scoped UI checkpoint with owner-approved visuals; Tasks 209-211 and 214-217 are planned; Task 190 is design-only. Tasks 204-206 and 212 have no published contract and are not inferred. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
   "developmentAcceptance": "For Tasks 175-211, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
@@ -4055,7 +4124,13 @@ const futureRoadmapGroups = [
   { name: "Phase AO - Auto-routing", range: "208-208", tasks: post100Tasks.filter(task => task.category === "Phase AO - Auto-routing").map(({ title, description }) => [title, description]) },
   { name: "Phase AP - Autonomy controls", range: "209-209", tasks: post100Tasks.filter(task => task.category === "Phase AP - Autonomy controls").map(({ title, description }) => [title, description]) },
   { name: "Phase AQ - Tool-calling quality", range: "210-210", tasks: post100Tasks.filter(task => task.category === "Phase AQ - Tool-calling quality").map(({ title, description }) => [title, description]) },
-  { name: "Phase AR - Runtime evaluation", range: "211-211", tasks: post100Tasks.filter(task => task.category === "Phase AR - Runtime evaluation").map(({ title, description }) => [title, description]) }
+  { name: "Phase AR - Runtime evaluation", range: "211-211", tasks: post100Tasks.filter(task => task.category === "Phase AR - Runtime evaluation").map(({ title, description }) => [title, description]) },
+  ...[
+    [213, "Phase AS - UI Foundation"], [214, "Phase AT - Window Architecture"],
+    [215, "Phase AU - Workspace Sessions"], [216, "Phase AV - Concurrency and Resources"],
+    [217, "Phase AW - Multi-window QA"],
+  ].map(([number, name]) => ({ name, range: `${number}-${number}`,
+    tasks: post100Tasks.filter(task => task.category === name).map(({ title, description }) => [title, description]) }))
 ];
 
 export const taskGroups = [...foundationTaskGroups, {
@@ -4096,7 +4171,12 @@ export const recommendedOrder = [
   { number: 208, reason: "Route only supported requests to tools and keep all uncertain classification on direct chat." },
   { number: 209, reason: "Make safe-read defaults explicit while reusing owner approvals, cloud consent and the emergency stop." },
   { number: 210, reason: "Measure provider-supported tool calling and constrain small-model output before enabling broader use." },
-  { number: 211, reason: "Use real local task results to gate agent mode instead of assuming model quality." }
+  { number: 211, reason: "Use real local task results to gate agent mode instead of assuming model quality." },
+  { number: 213, reason: "Establish consistent accessible screens and visual evidence before adding window complexity." },
+  { number: 214, reason: "Secure one-process/one-backend window lifecycle before introducing workspace identity." },
+  { number: 215, reason: "Isolate conversations, selections, approvals and project knowledge before concurrent operation." },
+  { number: 216, reason: "Coordinate shared model/device capacity and stop controls before real parallel-window evaluation." },
+  { number: 217, reason: "Measure actual multi-window behavior after isolation and resource coordination are implemented." }
 ];
 export const nextTask = recommendedOrder.map(({ number }) => post100Tasks.find(task => task.number === number)).find(task => task?.status === "planned")
   ?? post100Tasks.find(task => task.status === "planned");

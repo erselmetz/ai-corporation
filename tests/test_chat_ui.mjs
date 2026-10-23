@@ -259,6 +259,19 @@ test("dark theme is the default and the explicit toggle persists light and dark"
   assert.equal(ui.documentRef.body.dataset.theme, "dark");
 });
 
+test("stored light theme updates the Chat toggle label on first render", async () => {
+  const windowRef = {
+    location: { search: "" },
+    localStorage: { getItem: () => "light", setItem() {} },
+    matchMedia: () => ({ matches: false, addEventListener() {} }),
+    addEventListener() {},
+  };
+  const ui = setup(null, windowRef);
+  await ui.controller.initialLoad;
+  assert.equal(ui.documentRef.body.dataset.theme, "light");
+  assert.equal(ui.elements["chat-theme-toggle"].textContent, "Switch to dark theme");
+});
+
 test("conversation sidebar groups by date, supports search, rename, and pin", async () => {
   const storage = new Map();
   const callbacks = new Map();

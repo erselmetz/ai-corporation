@@ -341,20 +341,11 @@ def updates_page() -> HTMLResponse:
                 <button id="updates-refresh" type="button">Refresh</button>
               </div>
               <p class="auth-boundary">
-                This read-only page shows manually maintained, verified
-                development updates and release records. It is separate from
-                the public project updates page in <code>docs/</code>. Entries
-                are not inferred from roadmap tasks or Git history. In default API mode, browser
-                sign-in is not configured; an authenticated session with
-                <code>updates:read</code> permission is required.
+                Curated development and release notes. Owner sign-in and update
+                access are required. App update checks run only when you request them.
               </p>
-              <section class="management-card" aria-labelledby="updates-list-title">
-                <h2 id="updates-list-title">Curated updates</h2>
-                <p id="updates-list-state" class="section-state" role="status" aria-live="polite">Loading updates...</p>
-                <ol id="updates-list" class="updates-list" aria-label="Corporation updates"></ol>
-              </section>
-              <section class="management-card" aria-labelledby="trusted-release-title">
-                <h2 id="trusted-release-title">Signed application release</h2>
+              <details class="management-card" aria-labelledby="trusted-release-title">
+                <summary id="trusted-release-title">Signed app updates</summary>
                 <p>No background checks run. Select this button to make one owner-requested check against the fixed ERSELMETZ AI GitHub release origin. The app verifies a pinned Ed25519 signature before showing notes or migration details. Preparing an update downloads only a verified Windows x64 installer and creates a local SQLite recovery backup; installation remains a separate manual owner action.</p>
                 <button id="release-check" type="button">Check for release now</button>
                 <p id="release-state" class="section-state" role="status" aria-live="polite">No release check has been performed.</p>
@@ -365,6 +356,11 @@ def updates_page() -> HTMLResponse:
                   <button id="release-prepare" type="button" disabled>Prepare verified installer and backup</button>
                   <p id="release-prepare-state" role="status" aria-live="polite"></p>
                 </div>
+              </details>
+              <section class="management-card" aria-labelledby="updates-list-title">
+                <h2 id="updates-list-title">Curated updates</h2>
+                <p id="updates-list-state" class="section-state" role="status" aria-live="polite">Loading updates...</p>
+                <ol id="updates-list" class="updates-list" aria-label="Corporation updates"></ol>
               </section>
             </main>
           </div>
@@ -403,9 +399,8 @@ def employee_management_page() -> HTMLResponse:
                 <a class="back-link" href="/ui">Back to dashboard</a>
               </div>
               <p class="auth-boundary">
-                Employee data and actions use protected APIs. In default API mode, browser sign-in is
-                not configured; an authenticated session with employee read or
-                manage permission is required.
+                Sign in as the owner to view employees. Adding or changing an
+                employee also requires the matching permission.
               </p>
               <div class="employee-layout">
                 <section class="employee-card" aria-labelledby="employee-list-title">
@@ -423,7 +418,7 @@ def employee_management_page() -> HTMLResponse:
                 </section>
                 <section class="employee-card create-card" aria-labelledby="employee-create-title">
                   <h2 id="employee-create-title">Create employee</h2>
-                  <p class="muted">The current API requires an Employee ID, name, and role. Responsibilities are optional; Agent association is not supported here.</p>
+                  <p class="muted">Enter an employee ID, name, and role. Responsibilities are optional. Agent links are managed elsewhere.</p>
                   <form id="employee-create-form">
                     <label for="employee-id">Employee ID</label>
                     <input id="employee-id" name="id" autocomplete="off" required>
@@ -546,9 +541,8 @@ def position_management_page() -> HTMLResponse:
                 <div><p class="eyebrow">Organization</p><h1>Organizational positions</h1></div>
                 <a class="back-link" href="/ui/employees">Employee management</a>
               </div>
-              <p>Positions are separate from Employee identity and technical Agent/model assignment.
-              Position titles do not grant permissions. Records and revision history are in memory for
-              this app run only.</p>
+              <p>Positions describe jobs and reporting lines. Employees and Agent/model
+              assignments are managed separately. Titles never grant permissions.</p>
               <p id="position-state" role="status" aria-live="polite"></p>
               <section aria-labelledby="position-list-heading">
                 <h2 id="position-list-heading">Positions</h2>
@@ -561,7 +555,7 @@ def position_management_page() -> HTMLResponse:
                 <dl id="position-detail"></dl>
                 <h3>Revision history</h3>
                 <ol id="position-history" aria-label="Historical position revisions"></ol>
-                <form id="position-form">
+                <form id="position-form" class="ui-form">
                   <label for="position-title">Template</label>
                   <select id="position-title" required></select>
                   <label for="position-responsibilities">Responsibilities (one per line)</label>
@@ -578,8 +572,8 @@ def position_management_page() -> HTMLResponse:
               </section>
               <p>Deactivation preserves a position and its revision history. Removal is blocked while
               reporting positions, an Employee assignment, or revision history still references it.
-              Resolve those references explicitly before removal. Data is lost when this app process
-              restarts; no durable organizational store is configured.</p>
+              Resolve those references explicitly before removal. Use Backup &amp; restore
+              to keep an encrypted copy of your app data.</p>
             </main>
           </div>
         </body>
@@ -617,9 +611,8 @@ def provider_model_management_page() -> HTMLResponse:
                 <a class="back-link" href="/ui">Back to dashboard</a>
               </div>
               <p class="auth-boundary">
-                Provider and model data/actions use protected APIs. In default API mode, browser
-                sign-in is not configured; authenticated sessions require
-                provider/model read or manage permissions.
+                Sign in as the owner to view providers and models. Changes
+                require the matching permission.
               </p>
               <div class="management-grid">
                 <section class="management-card" aria-labelledby="provider-section-title">
@@ -636,7 +629,7 @@ def provider_model_management_page() -> HTMLResponse:
                   </section>
                   <section class="management-form" aria-labelledby="provider-create-title">
                     <h3 id="provider-create-title">Create provider</h3>
-                    <p class="muted">Only the current API's Provider ID and name are accepted. Credentials and provider configuration are not supported here.</p>
+                    <p class="muted">Add a provider ID and name here. Set up its connection and credentials in Provider connections.</p>
                     <form id="provider-create-form">
                       <label for="provider-id">Provider ID</label>
                       <input id="provider-id" name="id" autocomplete="off" required>
@@ -706,9 +699,8 @@ def task_management_page() -> HTMLResponse:
                 <a class="back-link" href="/ui">Back to dashboard</a>
               </div>
               <p class="auth-boundary">
-                Task records and actions use protected APIs. Browser sign-in
-                is not configured; an authenticated session with task read or
-                create permission is required.
+                Sign in as the owner to view tasks. Creating or running a task
+                also requires the matching permission.
               </p>
               <div class="task-layout">
                 <section class="management-card" aria-labelledby="task-list-title">
@@ -729,8 +721,8 @@ def task_management_page() -> HTMLResponse:
                     <div id="task-preview" hidden></div>
                   </section>
                   <section class="management-detail" aria-labelledby="task-dispatch-title">
-                    <h3 id="task-dispatch-title">Controlled worker dispatch</h3>
-                    <p class="muted">Each dispatch requires a separate owner confirmation and configured Task 68 slot budgets. This path uses loopback Ollama only, does not execute Tools, and never retries. Completed execution is not proof that expected outcomes were verified.</p>
+                    <h3 id="task-dispatch-title">Run a task locally</h3>
+                    <p class="muted">Each run needs your confirmation and available local capacity. It uses Ollama on this computer, does not use tools, and never retries. A finished run does not confirm that its result is correct.</p>
                     <p id="task-dispatch-state" class="section-state" role="status" aria-live="polite">Checking dispatch permission...</p>
                     <button id="task-dispatch-refresh" type="button">Refresh dispatch queue</button>
                     <ul id="task-dispatch-queue" class="record-list" aria-label="Dispatch queue and execution states"></ul>
@@ -801,9 +793,8 @@ def project_management_page() -> HTMLResponse:
                 <a class="back-link" href="/ui">Back to dashboard</a>
               </div>
               <p class="auth-boundary">
-                Project records and creation use protected APIs. In default API mode, browser
-                sign-in is not configured; an authenticated session with
-                project read or create permission is required.
+                Sign in as the owner to view projects. Creating a project also
+                requires the matching permission.
               </p>
               <div class="project-layout">
                 <section class="management-card" aria-labelledby="project-list-title">
@@ -821,7 +812,7 @@ def project_management_page() -> HTMLResponse:
                 </section>
                 <section class="management-card" aria-labelledby="project-create-title">
                   <h2 id="project-create-title">Create project</h2>
-                  <p class="muted">The API generates the Project ID and status. Creation does not add Tasks or other entities.</p>
+                  <p class="muted">The app creates the project ID and status. New projects start without tasks.</p>
                   <form id="project-create-form" class="project-form">
                     <label for="project-name">Name</label>
                     <input id="project-name" name="name" required>
@@ -997,8 +988,8 @@ def coordinator_chat_page():
       <div class="chat-sidebar-top"><a class="chat-brand" href="/ui/chat">ERSELMETZ AI</a><button id="chat-nav-toggle" type="button" aria-label="Collapse sidebar" aria-expanded="true">&#9776;</button></div>
       <label class="chat-search-label"><span class="visually-hidden">Search conversations</span><input id="chat-search" type="search" placeholder="Search chats" autocomplete="off"></label>
       <button id="chat-start" type="button" class="chat-new-button" data-close-navigation>&#43; New chat</button>
-      <p class="chat-sidebar-label">Today</p><div id="chat-conversation-list" class="chat-conversation-list" aria-label="Recent conversations"></div>
-      <p class="chat-sidebar-label" id="chat-earlier-label" hidden>Earlier</p><div id="chat-earlier-list" class="chat-conversation-list" aria-label="Earlier conversations"></div>
+      <p class="chat-sidebar-label">Today</p><div id="chat-conversation-list" class="chat-conversation-list" role="group" aria-label="Recent conversations"></div>
+      <p class="chat-sidebar-label" id="chat-earlier-label" hidden>Earlier</p><div id="chat-earlier-list" class="chat-conversation-list" role="group" aria-label="Earlier conversations"></div>
       <details id="chat-approval-inbox" class="chat-approval-inbox" hidden>
         <summary>Waiting on you <span id="chat-approval-count" aria-label="Pending approvals">0</span></summary>
         <p id="chat-approval-state" role="status" aria-live="polite">Approval requests have not been loaded.</p>
@@ -1347,8 +1338,9 @@ def assignment_policy_page():
     <title>Assignment policy - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
     <script type="module" src="/ui/static/assignment-policy.mjs"></script></head><body>
     <main class="content"><nav><a href="/ui">Dashboard</a> | <a href="/ui/local-models">Manual Agent model setup</a> | <a href="/ui/online-provider">Gemini setup</a> | <a href="/ui/login?next=/ui/assignment-policy">Local sign-in / sign-out</a></nav>
-    <h1>Capability-based assignment recommendations</h1>
+    <h1>Model recommendations</h1>
     <p>Available only through explicit local-owner access. Recommendations are disabled until you save an owner-approved policy. They never change an Agent assignment, connect a provider, send data, or grant online consent.</p>
+    <details><summary>Advanced policy configuration</summary>
     <p>Supply a fresh inventory snapshot (at most 24 hours old), traceable capability evidence (tested evidence must be at most 30 days old), registered provider IDs, and an explicit budget in one owner-defined unit. A declaration is shown as unknown and never qualifies a model.</p>
     <details><summary>Policy JSON shape</summary><pre>{
   "enabled": true,
@@ -1376,11 +1368,11 @@ def assignment_policy_page():
     <label for="assignment-policy-config">Owner-approved policy JSON</label>
     <textarea id="assignment-policy-config" rows="22" spellcheck="false" autocomplete="off"></textarea>
     <p><button id="assignment-policy-save" type="button">Save and enable recommendations</button>
-    <button id="assignment-policy-disable" type="button">Disable recommendations</button>
-    <button id="assignment-policy-preview" type="button">Refresh preview</button></p>
-    <p id="assignment-policy-state" role="status" aria-live="polite"></p>
-    <pre id="assignment-policy-results" aria-live="polite"></pre>
+    <button id="assignment-policy-disable" type="button">Disable recommendations</button></p></details>
+    <p><button id="assignment-policy-preview" type="button">Refresh preview</button></p>
     <p>Manual assignments always remain authoritative. Use Manual Agent model setup to override a recommendation with its impact preview and confirmation. Disabling clears the saved policy data and is the complete undo because this policy never applies assignments; any separately confirmed manual change can be reversed only through the existing manual setup flow.</p>
+    <p id="assignment-policy-state" role="status" aria-live="polite"></p>
+    <pre id="assignment-policy-results" tabindex="0" role="region" aria-label="Recommendation preview" aria-live="polite">No preview loaded yet.</pre>
     </main></body></html>""")
 
 
@@ -1487,7 +1479,7 @@ def visualization_page():
     are drawn. Provider registration is not availability; capability declarations do not grant authority;
     request slots do not establish hardware fit; memory content is not shown. The map cannot start or
     approve work.</p>
-    <p id="viz-status" role="status">Loading...</p>
+    <p id="viz-status" role="status" tabindex="0" aria-label="Map loading and source status">Loading...</p>
     <div role="group" aria-label="View controls">
     <button id="viz-mode-3d" type="button" aria-pressed="true">3D globe</button>
     <button id="viz-mode-list" type="button" aria-pressed="false">List view</button>
@@ -1542,7 +1534,7 @@ def provider_connections_page():
     requires its own consent and uses the existing five-request/output-token caps. Those caps are
     not a dollar ceiling. Set account billing limits outside this app. Hardware feasibility remains
     UNKNOWN; request slots limit software concurrency only.</p>
-    <label for="connection-type">Provider type</label>
+    <div class="ui-form"><label for="connection-type">Provider type</label>
     <select id="connection-type"><option value="ollama">Local Ollama</option><option value="gemini">Google Gemini</option></select>
     <label for="connection-id">Connection ID</label><input id="connection-id" maxlength="48" autocomplete="off">
     <label for="connection-name">Display name</label><input id="connection-name" maxlength="256" autocomplete="off">
@@ -1552,15 +1544,15 @@ def provider_connections_page():
     <input id="connection-key" type="password" maxlength="4096" autocomplete="off"></div>
     <label for="connection-slots">In-flight request slots</label>
     <input id="connection-slots" type="number" min="1" max="16" value="1">
-    <button id="connection-add" type="button">Add and verify connection</button>
+    <button id="connection-add" type="button">Add and verify connection</button></div>
     <p id="connection-state" role="status" aria-live="polite"></p>
     <h2>Configured connections</h2><ul id="connection-list"></ul>
-    <label for="assignment-provider">Connection</label><select id="assignment-provider"></select>
+    <div class="ui-form"><label for="assignment-provider">Connection</label><select id="assignment-provider"></select>
     <button id="connection-refresh" type="button">Refresh catalog and status</button>
     <button id="connection-remove" type="button">Remove connection</button>
     <label for="assignment-agent">Agent</label><select id="assignment-agent"></select>
     <label for="assignment-model">Supported model</label><select id="assignment-model"></select>
-    <button id="assignment-save" type="button">Preview and assign</button>
+    <button id="assignment-save" type="button">Preview and assign</button></div>
     <h2>Local model runtime</h2>
     <p>Ollama reports loaded models and memory only after they are loaded. The check latency below
     is not inference latency. Hardware capacity and whether an unloaded model fits remain UNKNOWN.

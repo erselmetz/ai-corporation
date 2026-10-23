@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-10-23",
+      "type": "development",
+      "title": "Task 213 shared UI polish; Tasks 214-217 planned",
+      "summary": "Added shared light/dark surface tokens and a saved theme preference across the existing Next.js and Python local UI, improved narrow forms and keyboard navigation, and introduced isolated deterministic screenshot baselines, axe checks and long-text tests. The latest normal/error/offline/loading checks passed 490 screenshots across 35 screens, with no serious/critical axe issues, horizontal overflow or disruptive layout shifts; earlier key-screen coverage included four widths and three simulated scales. The owner approved final screenshots. Scoped automated validation passed: Python 1422 passed / 5 skipped, browser modules 289, Electron 38, public docs 21; packaged and assistive-technology follow-up remains explicitly unverified. Local checkpoint: task-213-ui-foundation-polish. Packaged Electron, actual Windows scaling and assistive-technology coverage are unverified. Tasks 214-217 are published as planned contracts, with no multi-window implementation yet. Local only; no push, deployment, paid call or download."
+    },
+    {
       "date": "2026-10-21",
       "type": "development",
       "title": "Task 208 deterministic chat routing",

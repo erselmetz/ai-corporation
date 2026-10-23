@@ -40,6 +40,7 @@ export function mountAgentsPage({ documentRef = globalThis.document, fetchImpl =
   let view = "list";
   let loading = false;
   let treeLoaded = false;
+  let listError = null;
 
   const text = (tag, value, className = "") => {
     const node = documentRef.createElement(tag);
@@ -80,6 +81,11 @@ export function mountAgentsPage({ documentRef = globalThis.document, fetchImpl =
 
   function renderList() {
     list.replaceChildren();
+    if (listError) {
+      pageState.textContent = listError;
+      list.append(text("li", listError, "error-state"));
+      return;
+    }
     const shown = agents.filter(matches);
     pageState.textContent = `${shown.length} of ${agents.length} Agent${agents.length === 1 ? "" : "s"}.`;
     if (!shown.length) list.append(text("li", "No Agents match this filter.", "empty-state"));
@@ -282,8 +288,10 @@ export function mountAgentsPage({ documentRef = globalThis.document, fetchImpl =
   async function refresh({ preserveSelection = true } = {}) {
     if (loading) return false;
     loading = true;
+    listError = null;
     el("agent-refresh").disabled = true;
     pageState.textContent = "Loading current Agent and status information...";
+    list.replaceChildren(text("li", "Loading Agents...", "empty-state"));
     try {
       const [agentResult, statusResult, employeeResult] = await Promise.all([
         request("/api/agents"), request("/api/local/agents/status"), request("/api/employees"),
@@ -301,8 +309,15 @@ export function mountAgentsPage({ documentRef = globalThis.document, fetchImpl =
       }
       return true;
     } catch (error) {
-      pageState.textContent = error.status ? requestError(error.status) : "Agents could not be loaded. Check access and retry.";
-      list.replaceChildren();
+      listError = error.status ? requestError(error.status) : "Agents could not be loaded. Check access and retry.";
+      agents = [];
+      employees = [];
+      statuses.clear();
+      selectedId = null;
+      detail.replaceChildren();
+      detailState.textContent = "Details are unavailable until the Agent list is refreshed.";
+      sourceSelect.replaceChildren();
+      renderList();
       return false;
     } finally { loading = false; el("agent-refresh").disabled = false; }
   }
