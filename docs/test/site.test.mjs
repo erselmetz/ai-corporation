@@ -119,8 +119,8 @@ describe("documentation site", () => {
     const records = new StatusElement("div");
     renderLatestRoadmapRecords(records, tasks, 2);
     assert.equal(records.children.length, 2);
-    assert.match(records.children[0].children[0].textContent, /^Task 217:/);
-    assert.match(records.children[1].children[0].textContent, /^Task 216:/);
+    assert.match(records.children[0].children[0].textContent, /^Task 227:/);
+    assert.match(records.children[1].children[0].textContent, /^Task 226:/);
     const [home, roadmap, taskPage] = await Promise.all(["index.html", "roadmap.html", "tasks.html"].map(async name => (await fetch(`${baseUrl}/${name}`)).text()));
     assert.doesNotMatch(home, /Task 179|Task 176/);
     assert.doesNotMatch(roadmap, /Task 179|Task 176|Tasks 1-190/);
@@ -133,11 +133,11 @@ describe("documentation site", () => {
     const elements = Object.fromEntries(["latest-task-number", "latest-task-title", "latest-task-link", "next-task-number", "next-task-title", "next-task-description", "next-task-link", "all-task-count"].map(id => [id, new StatusElement("p")]));
     const document = { querySelector: selector => elements[selector.slice(1)] };
     renderLatestStatusCards(document, tasks, nextTask);
-    assert.equal(elements["latest-task-number"].textContent, "Task 214");
-    assert.equal(elements["latest-task-link"].href, "tasks.html#task-214");
+    assert.equal(elements["latest-task-number"].textContent, "Task 215");
+    assert.equal(elements["latest-task-link"].href, "tasks.html#task-215");
     assert.equal(elements["next-task-number"].textContent, "Task 209");
     assert.equal(elements["next-task-title"].textContent, "Owner autonomy levels and action approvals");
-    assert.equal(elements["all-task-count"].textContent, "Tasks 1-217");
+    assert.equal(elements["all-task-count"].textContent, "Tasks 1-227");
   });
 
   it("resolves local public links including generated task and category anchors", async () => {
@@ -164,17 +164,17 @@ describe("documentation site", () => {
   });
 
   it("preserves the first 100 tasks and exposes only explicitly recorded contracts", () => {
-    assert.equal(tasks.length, 213);
+    assert.equal(tasks.length, 220);
     assert.equal(foundationTasks.length, 100);
-    assert.deepEqual(tasks.map((task) => task.number), [...Array.from({ length: 203 }, (_, i) => i + 1), 207, 208, 209, 210, 211, 213, 214, 215, 216, 217]);
-    assert.equal(taskGroups.flatMap(group => group.tasks).length, 213);
+    assert.deepEqual(tasks.map((task) => task.number), [...Array.from({ length: 203 }, (_, i) => i + 1), 207, 208, 209, 210, 211, 213, 214, 215, 216, 217, 218, 219, 223, 224, 225, 226, 227]);
+    assert.equal(taskGroups.flatMap(group => group.tasks).length, 220);
     assert.deepEqual([204, 205, 206, 212].filter(number => tasks.some(task => task.number === number)), []);
   });
 
   it("records verified, deferred, and planned work without treating deferral as completion", () => {
-    assert.equal(tasks.filter(task => task.status === "completed").length, 202);
+    assert.equal(tasks.filter(task => task.status === "completed").length, 203);
     assert.equal(tasks.filter(task => task.status === "deferred").length, 4);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 6);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 12);
     assert.equal(tasks.filter(task => task.status === "design_only").length, 1);
     assert.equal(tasks.find(task => task.number === 134).status, "deferred");
     assert.equal(tasks.find(task => task.number === 170).status, "deferred");
@@ -337,7 +337,7 @@ describe("documentation site", () => {
     assert.equal(tasks.find(task => task.number === 194).checkpoint, null);
     assert.equal(tasks.find(task => task.number === 190).checkpoint, "task-190-code-execution-threat-model");
     assert.match(tasks.find(task => task.number === 190).validation.join(" "), /self-review/);
-    assert.equal(tasks.filter(task => task.status === "planned").length, 6);
+    assert.equal(tasks.filter(task => task.status === "planned").length, 12);
     assert.equal(tasks[51].number, 52);
     assert.equal(tasks[51].title, "Activity / Logs UI");
     assert.equal(tasks[51].status, "completed");
@@ -423,7 +423,7 @@ describe("documentation site", () => {
     renderStatusSummary(summary, tasks);
     const order = new StatusElement("ol");
     renderRecommendedOrder(order, tasks, recommendedOrder);
-    assert.match(summary.textContent, /213 tasks/);
+    assert.match(summary.textContent, /220 tasks/);
     assert.equal(order.children.length, recommendedOrder.length);
     for (const page of ["index.html", "roadmap.html", "updates.html"]) {
       const html = await (await fetch(`${baseUrl}/${page}`)).text();
@@ -538,7 +538,7 @@ describe("documentation site", () => {
     assert.equal(task122.checkpoint, "task-122-isolated-adaptation-validation");
     assert.match(task122.validation.join(" "), /1043 passed, 3 skipped/);
     assert.match(task122.limitations.join(" "), /Default sandbox image policy is empty/);
-    assert.deepEqual(post100Tasks.filter(task => task.status === "completed").map(task => task.checkpoint), ["f4e5b54", "1552893", "d1ca364", "task-104-local-model-setup", "task-105-gemini-online-chat", "task-106-secure-chat-onboarding", "task-107-editable-corporation-positions", "task-108-manual-ai-connection-assignment-individual-chat", "task-109-capability-based-assignment-policy", "task-110-chat-proposals-pending-task-review", "task-111-controlled-worker-dispatch", "task-112-multiple-provider-connections", "task-113-workflow-review-reporting", "task-114-corporation-structure-map", "task-115-workflow-map-progress-evidence", "task-116-accessible-3d-visualization", "task-117-owned-chat-knowledge",
+    assert.deepEqual(post100Tasks.filter(task => task.status === "completed" && task.number !== 215).map(task => task.checkpoint), ["f4e5b54", "1552893", "d1ca364", "task-104-local-model-setup", "task-105-gemini-online-chat", "task-106-secure-chat-onboarding", "task-107-editable-corporation-positions", "task-108-manual-ai-connection-assignment-individual-chat", "task-109-capability-based-assignment-policy", "task-110-chat-proposals-pending-task-review", "task-111-controlled-worker-dispatch", "task-112-multiple-provider-connections", "task-113-workflow-review-reporting", "task-114-corporation-structure-map", "task-115-workflow-map-progress-evidence", "task-116-accessible-3d-visualization", "task-117-owned-chat-knowledge",
       "task-118-durable-chat-history", "task-119-local-model-resource-controls",
       "task-120-supported-streaming-truthful-stop",
       "task-121-chat-driven-github-study", "task-122-isolated-adaptation-validation",
@@ -547,6 +547,8 @@ describe("documentation site", () => {
       "task-127-windows-electron-installer", "task-128-optional-voice-interaction",
       "task-129-command-center-release-acceptance", "task-130-semantic-memory-rag-foundation",
       "task-131-supported-packaging-distribution-strategy", "task-132-guided-first-run-setup", "task-133-provider-model-setup-guidance", "task-135-semantic-retrieval-evaluation", "task-136-hybrid-lexical-semantic-retrieval", "task-137-semantic-index-lifecycle-observability", "task-138-owner-reviewed-knowledge-proposals", "task-139-versioned-documentation-review", "task-140-central-capability-permissions", "task-141-capability-grants-session-policy", "task-142-action-risk-approval-policy", "task-143-capability-audit-retention", "task-144-emergency-stop-capture-indicators", "task-145-bounded-speech-input-contracts", "task-146-optional-local-speech-recognition", "task-147-reviewed-speech-input-in-conversations", "task-148-offline-text-to-speech-provider", "task-149-bounded-local-voice-queue-controls", "task-150-bounded-image-input-vision-context", "task-151-explicit-screen-capture-provider", "task-152-bounded-optional-image-processing", "task-153-bounded-ocr-provider-contract", "task-154-explicit-optional-tesseract-backend", "task-155-one-use-camera-vision-chat", "task-156-scoped-browser-automation", "task-157-scoped-desktop-automation", "task-158-automation-review-traces", "task-159-shared-visual-design-system", "task-160-operational-command-center-dashboard", "task-161-knowledge-resource-visualization", "task-162-three-dimensional-map-review", "task-163-original-assistant-identity", "task-164-owner-response-preferences", "task-165-coordinator-presence-orchestration", "task-166-opt-in-proactive-suggestions", "task-167-trusted-updates-config-migration", "task-168-encrypted-data-portability", "task-169-crash-recovery-performance-readiness", "task-171-unified-settings-operator-controls", "task-172-interactive-3d-corporation-execution-map", "task-173-memory-knowledge-relationship-explorer", "task-174-unified-multimodal-capability-controls", "task-175-ai-usability-accessibility-regression-evaluation", "task-176-zero-config-first-run-ai-acceptance", "task-177-auto-rag-trace", "task-178-nav-fix", "task-179-roadmap-sync", "task-180-hardware-profile-ai-acceptance", "task-181-consent-based-model-routing", "task-182-reviewed-chat-tools", "task-183-visible-chat-workflow-scaffolding", "task-184-operator-state-ai-acceptance", "task-185-local-recovery-and-update-controls", "task-186-globe-visual-map", "task-187-opt-in-local-voice-input", "task-188-opt-in-local-voice-output", "task-189-opt-in-local-vision-input", "task-191-direct-to-chat", "task-192-small-model-answer-quality", "task-195-simple-chat-ui", "task-196-brain-memory-grounded-retrieval", "task-197-brain-visualization", "task-198-multimodal-capability-packs", "task-199-owner-gated-computer-automation", "task-200-builtin-agent-team", "task-201-agents-page", "task-202-agent-delegation-approvals", "task-203-sage-core-live-state-visualization", "task-207-bounded-agent-runtime", "task-208-deterministic-chat-routing", "task-213-ui-foundation-polish", "task-214-shared-backend-windows"]);
+    const task215 = post100Tasks.find(task => task.number === 215);
+    assert.equal(task215.checkpoint, "task-215-isolated-window-workspaces");
     const task143 = post100Tasks.find(task => task.number === 143);
     assert.equal(task143.status, "completed");
     assert.equal(task143.checkpoint, "task-143-capability-audit-retention");
@@ -675,7 +677,7 @@ describe("documentation site", () => {
         assert.ok(task.validation.length > 0 && task.limitations.length > 0);
       } else {
         assert.equal(task.checkpoint, null);
-        if ([175, 176, 177, 178, 179, 180, 182, 183, 184, 192, 193, 194].includes(task.number)) {
+        if ([175, 176, 177, 178, 179, 180, 182, 183, 184, 192, 193, 194, 218, 219, 223].includes(task.number)) {
           assert.ok(task.validation.length > 0 && task.limitations.length > 0);
         } else {
           assert.deepEqual(task.validation, []);

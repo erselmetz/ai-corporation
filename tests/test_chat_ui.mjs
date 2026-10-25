@@ -106,6 +106,10 @@ function setup(handler = null, windowRef = globalThis.window, confirmImpl = () =
     calls.push({ path, options });
     const custom = handler && await handler(path, options);
     if (custom) return custom;
+    if (path === "/api/chat/workspaces" && options?.method === "POST") {
+      const selected = JSON.parse(options.body);
+      return response({ ...selected, owner: "test-owner" });
+    }
     if (path === "/api/agents") return response({ items: [agent] });
     if (path === "/api/local/session") return response({
       csrf: "test-csrf",
@@ -535,7 +539,7 @@ test("desktop restoration loads only the saved conversation and never replays a 
   } });
   assert.equal(await ui.controller.initialLoad, true);
   assert.equal(ui.elements["chat-conversation"].value, id);
-  assert.equal(ui.calls.some(call => call.options?.method === "POST"), false);
+  assert.equal(ui.calls.some(call => call.path === "/api/chat/conversations" && call.options?.method === "POST"), false);
   assert.equal(saved.at(-1).conversation, id);
 });
 

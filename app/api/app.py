@@ -1107,6 +1107,29 @@ def create_app(
         if authentication_backend is None
         else authentication_backend
     )
+    @application.middleware("http")
+    async def workspace_context(request: Request, call_next):
+        from starlette.responses import JSONResponse
+        from app.application.services.chat_workspaces import current_workspace
+        context = None
+        identifier = request.headers.get("X-Chat-Workspace")
+        if identifier is not None:
+            principal = application.state.authentication_backend.authenticate(request)
+            if principal is None:
+                return JSONResponse({"detail": "Authentication required"}, status_code=401)
+            try:
+                context = application.state.application_service.chat_workspaces().get(principal.identity, identifier)
+                prefix = "/api/chat/conversations/"
+                if request.url.path.startswith(prefix):
+                    conversation_id = request.url.path[len(prefix):].split("/", 1)[0]
+                    context = application.state.application_service.chat_workspaces().conversation_context(context, conversation_id)
+            except (PermissionError, ValueError, AttributeError):
+                return JSONResponse({"detail": "Workspace unavailable"}, status_code=404)
+        token = current_workspace.set(context)
+        try:
+            return await call_next(request)
+        finally:
+            current_workspace.reset(token)
     if emergency_stop_service is None:
         from app.application.services.emergency_stop import EmergencyStopService
         emergency_stop_service = EmergencyStopService()
@@ -1168,6 +1191,8 @@ def create_app(
     application.include_router(chat_history_router)
     from .chat import router as chat_router
     application.include_router(chat_router)
+    from .chat_workspaces import router as workspace_router
+    application.include_router(workspace_router)
     from .employee_chat import router as employee_chat_router
     application.include_router(employee_chat_router)
     from .task_dispatch import router as task_dispatch_router

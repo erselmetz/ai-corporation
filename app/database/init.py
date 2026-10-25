@@ -1,6 +1,6 @@
 from .connection import get_connection
 
-CURRENT_CONFIGURATION_VERSION = 4
+CURRENT_CONFIGURATION_VERSION = 5
 
 
 def initialize_database() -> None:
@@ -283,6 +283,26 @@ def initialize_database() -> None:
         """)
         connection.execute("CREATE INDEX IF NOT EXISTS operator_conversations_owner_expiry ON operator_conversations(corporation_id, owner_id, expires_at)")
 
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS chat_workspaces (
+                corporation_id TEXT NOT NULL, owner_id TEXT NOT NULL, workspace_id TEXT NOT NULL,
+                selection_json TEXT NOT NULL CHECK(json_valid(selection_json)),
+                PRIMARY KEY(corporation_id, workspace_id)
+            )
+        """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS chat_workspace_conversations (
+                corporation_id TEXT NOT NULL, owner_id TEXT NOT NULL, workspace_id TEXT NOT NULL,
+                conversation_id TEXT NOT NULL, selection_json TEXT NOT NULL CHECK(json_valid(selection_json)),
+                PRIMARY KEY(corporation_id, conversation_id)
+            )
+        """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS chat_project_briefs (
+                corporation_id TEXT NOT NULL, owner_id TEXT NOT NULL, project_id TEXT NOT NULL,
+                brief TEXT NOT NULL, PRIMARY KEY(corporation_id,owner_id,project_id)
+            )
+        """)
         # Publish the migrated version only after every additive DDL/DML step succeeds.
         connection.execute(f"PRAGMA user_version = {CURRENT_CONFIGURATION_VERSION}")
         connection.commit()

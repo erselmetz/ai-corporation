@@ -38,6 +38,12 @@ class OllamaProvider(AIProvider):
 
     def supports_model_image_input(self, model: str) -> bool | None:
         """Use Ollama's reported model capabilities; never infer from the model name."""
+        return self._supports_model_capability(model, "vision")
+
+    def supports_model_chat(self, model: str) -> bool | None:
+        return self._supports_model_capability(model, "completion")
+
+    def _supports_model_capability(self, model: str, capability: str) -> bool | None:
         if (not self._is_loopback_endpoint() or not isinstance(model, str)
                 or not model.strip() or len(model.encode("utf-8")) > 256):
             return None
@@ -49,7 +55,7 @@ class OllamaProvider(AIProvider):
                 return None
             if any(not isinstance(item, str) or len(item) > 64 for item in capabilities):
                 return None
-            return "vision" in capabilities
+            return capability in capabilities
         except httpx.HTTPError:
             return None
         except (ValueError, TypeError, KeyError, json.JSONDecodeError):

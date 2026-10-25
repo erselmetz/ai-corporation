@@ -62,6 +62,13 @@ documentation-site connection.
 
 Build from a Windows checkout with Python 3.14 x64 and Node.js 22.12 or later:
 
+For a clickable local build, double-click `build-erselmetz-ai.cmd` in the
+repository root. It checks the supported tool versions, asks before installing
+locked build dependencies, runs the existing build scripts, and shows the
+installer path when finished. It does not install, sign, or publish the app.
+
+The equivalent manual steps are:
+
 ```powershell
 npm --prefix desktop-ui ci
 npm --prefix desktop-ui run build

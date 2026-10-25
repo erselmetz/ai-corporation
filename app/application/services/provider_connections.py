@@ -175,6 +175,9 @@ class _ConnectionProvider(AIProvider):
     def supports_model_image_input(self, model: str) -> bool | None:
         return self._provider.supports_model_image_input(model)
 
+    def supports_model_chat(self, model: str) -> bool | None:
+        return self._provider.supports_model_chat(model)
+
     def generate(self, model: str, prompt: str) -> str:
         with self._gate.reserve(self._provider_id, model):
             return self._provider.generate(model, prompt)

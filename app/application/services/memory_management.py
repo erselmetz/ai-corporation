@@ -119,3 +119,29 @@ class MemoryManagementService:
         OwnerKnowledgeStore().retain(record, now=now)
         return self.inspect(record.id, actor_id=actor_id, scope=MemoryScope.OWNER,
                             scope_id=actor_id, now=now)
+
+    def import_v3code_brain(self, plan, actor_id, *, expires_at, retention_opt_in, now):
+        from app.knowledge.v3code_import import V3CodeBrainPlan
+        if not isinstance(plan, V3CodeBrainPlan):
+            raise TypeError("Expected a validated v3code Brain plan")
+        if retention_opt_in is not True:
+            raise ValueError("Explicit retention consent is required")
+        _time(now)
+        if not isinstance(expires_at, datetime) or expires_at.tzinfo is None or expires_at.utcoffset() is None:
+            raise ValueError("Expiry must be timezone-aware")
+        if not timedelta(minutes=1) <= expires_at - now <= timedelta(days=30):
+            raise ValueError("Expiry must be between 1 minute and 30 days from now")
+        records = tuple(MemoryRecord(note.id, actor_id, MemoryScope.OWNER, actor_id,
+                                     MemoryType.NOTE, note.content, note.source_reference,
+                                     now, expires_at, True) for note in plan.notes)
+        try:
+            created, skipped = OwnerKnowledgeStore().retain_import_batch(records, now=now)
+        except ValueError as exc:
+            if "identity conflicts" in str(exc) or "conflicts with existing" in str(exc):
+                from app.memory.management import MemoryConflictError
+                raise MemoryConflictError(str(exc)) from None
+            raise
+        return {"digest": plan.digest, "chunk_count": plan.chunk_count,
+                "source_count": plan.source_count, "note_count": len(plan.notes),
+                "created_count": created, "skipped_count": skipped,
+                "ignored_embeddings": True}

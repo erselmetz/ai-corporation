@@ -39,6 +39,7 @@ SUPPORTED_APP_TABLES = frozenset({
     "agent_memory", "capability_audit_events", "chat_history", "chat_history_messages",
     "chat_history_schema", "conversation_memory", "corporation_knowledge",
     "corporation_knowledge_provenance", "corporation_knowledge_readers",
+    "chat_project_briefs", "chat_workspace_conversations", "chat_workspaces",
     "documentation_draft_documents", "documentation_draft_versions", "execution_queue",
     "operator_conversations", "operator_positions", "operator_resource_limits",
     "operator_task_proposals", "operator_agent_profiles",

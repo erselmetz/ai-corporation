@@ -4,10 +4,16 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 
+// Only existing application pages may open as Advanced windows. No arbitrary URLs.
+const ADVANCED_ROUTES = new Set(["/ui/knowledge", "/ui/employees", "/ui/positions", "/ui/structure",
+  "/ui/providers", "/ui/visualization", "/ui/tasks", "/ui/workflows", "/ui/workflow-map",
+  "/ui/activity", "/ui/inventory", "/ui/readiness", "/ui/backup", "/ui/documentation",
+  "/ui/updates", "/ui/preferences", "/ui/settings/capabilities", "/ui/employee-chat", "/ui/login"]);
+
 // Restore identifiers and geometry only. No prompts, credentials, approvals or actions.
 function selection(value = {}) {
   if (!value || typeof value !== "object") value = {};
-  return Object.fromEntries(["conversation", "agent", "model", "project"].map(key =>
+  return Object.fromEntries(["conversation", "agent", "provider", "model", "project"].map(key =>
     [key, typeof value[key] === "string" && /^[\w.:/@ -]{1,160}$/.test(value[key]) ? value[key] : ""]));
 }
 
@@ -25,7 +31,8 @@ function readWorkspaces(file) {
     const data = JSON.parse(fs.readFileSync(file, "utf8"));
     if (data.version !== 1 || !Array.isArray(data.windows)) return [];
     return data.windows.slice(0, 10).filter(item => item?.kind === "chat" || item?.kind === "settings")
-      .map(item => ({ kind: item.kind, bounds: item.bounds, selection: selection(item.selection) }));
+      .map(item => ({ id: typeof item.id === "string" && /^[0-9a-f-]{36}$/.test(item.id) ? item.id : undefined,
+        kind: item.kind, bounds: item.bounds, selection: selection(item.selection) }));
   } catch { return []; }
 }
 
@@ -37,7 +44,7 @@ function createWorkspaceWindows({ BrowserWindow, origin, preload, file, workArea
   function persist() {
     if (restoring || closingAll) return;
     const windows = [...records.values()].filter(record => !record.window.isDestroyed()).map(record => ({
-      kind: record.kind, bounds: record.window.getNormalBounds(), selection: record.selection,
+      id: record.id, kind: record.kind, bounds: record.window.getNormalBounds(), selection: record.selection,
     }));
     if (!windows.length && lastClosed) windows.push(lastClosed);
     try {
@@ -59,6 +66,8 @@ function createWorkspaceWindows({ BrowserWindow, origin, preload, file, workArea
     } catch { return null; }
   }
   function create(kind = "chat", saved = {}) {
+    if (!["chat", "settings", "advanced"].includes(kind)
+      || (kind === "advanced" && !ADVANCED_ROUTES.has(saved.route)) || records.size >= 10) return null;
     if (kind === "settings") {
       const existing = [...records.values()].find(record => record.kind === "settings");
       if (existing) {
@@ -70,32 +79,42 @@ function createWorkspaceWindows({ BrowserWindow, origin, preload, file, workArea
     const window = new BrowserWindow({ ...reachableBounds(saved.bounds, workArea()),
       minWidth: 600, minHeight: 620, show: false, title: "ERSELMETZ AI", autoHideMenuBar: true,
       webPreferences: { preload, nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true } });
-    const record = { id: crypto.randomUUID(), kind, window, selection: selection(saved.selection) };
+    const duplicate = saved.id && [...records.values()].some(record => record.id === saved.id);
+    const record = { id: duplicate ? crypto.randomUUID() : saved.id || crypto.randomUUID(),
+      kind, window, selection: selection(duplicate ? { ...saved.selection, conversation: "" } : saved.selection) };
     const senderId = window.webContents.id;
     records.set(window.id, record);
-    window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+    window.webContents.setWindowOpenHandler(({ url: target } = {}) => {
+      try {
+        const url = new URL(target);
+        if (url.origin === origin && ADVANCED_ROUTES.has(url.pathname)) {
+          create("advanced", { route: url.pathname });
+        }
+      } catch { /* Malformed and external destinations remain denied. */ }
+      return { action: "deny" };
+    });
     window.webContents.on("render-process-gone", (_event, details) => onCrash(details));
     window.webContents.on("will-navigate", (event, target) => {
       try {
         const url = new URL(target);
         if (url.origin !== origin) { event.preventDefault(); return; }
-        if (kind === "chat" && url.pathname.replace(/\/$/, "") === "/desktop/settings") { event.preventDefault(); create("settings"); }
+        if (kind === "chat" && ["/desktop/settings", "/ui/settings/capabilities"].includes(url.pathname.replace(/\/$/, ""))) { event.preventDefault(); create("settings"); }
         if (kind === "settings" && url.pathname === "/ui/chat") { event.preventDefault(); create("chat"); }
       } catch { event.preventDefault(); }
     });
     window.webContents.on("before-input-event", (event, input) => {
-      if (input.type === "keyDown" && (input.control || input.meta) && !input.alt && input.key.toLowerCase() === "n") {
+      if (kind !== "chat" && input.type === "keyDown" && (input.control || input.meta) && !input.alt && input.key.toLowerCase() === "n") {
         event.preventDefault(); create("chat");
       }
     });
     window.once("ready-to-show", () => { if (!window.isDestroyed()) window.show(); });
     for (const event of ["move", "resize"]) window.on(event, persist);
     window.on("close", () => {
-      lastClosed = { kind: record.kind, bounds: window.getNormalBounds(), selection: record.selection };
+      lastClosed = { id: record.id, kind: record.kind, bounds: window.getNormalBounds(), selection: record.selection };
       persist();
     });
     window.on("closed", () => { records.delete(window.id); onClose(senderId); persist(); });
-    window.loadURL(`${origin}${kind === "settings" ? "/desktop/settings/" : "/ui/chat?desktop=1"}`);
+    window.loadURL(`${origin}${kind === "advanced" ? saved.route : kind === "settings" ? "/desktop/settings/" : "/ui/chat?desktop=1"}`);
     persist();
     return window;
   }
@@ -112,6 +131,7 @@ function createWorkspaceWindows({ BrowserWindow, origin, preload, file, workArea
     const record = trusted(sender, "/ui/chat");
     if (!record) return false;
     record.selection = selection(value);
+    record.window.setTitle(`ERSELMETZ AI · ${record.selection.model || "Default model"} · ${record.selection.agent || "Coordinator"} · ${record.selection.project || "Personal"}`);
     persist();
     return true;
   }

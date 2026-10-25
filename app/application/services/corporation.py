@@ -1040,7 +1040,7 @@ class CorporationApplicationService:
             return self.resource_manager(limits)
 
     @contextmanager
-    def owned_chat_agent_execution(self, agent_id: str, *, wait_for_slot: bool = False):
+    def owned_chat_agent_execution(self, agent_id: str, *, wait_for_slot: bool = False, route=None):
         """Reserve the shared ResourceManager slot for an owner-directed Agent turn."""
         from time import monotonic
         from uuid import uuid4
@@ -1052,13 +1052,19 @@ class CorporationApplicationService:
             with self._orchestrator.agents.execution(agent_id):
                 yield
             return
+        if route is not None and (not isinstance(route, tuple) or len(route) != 2
+                or any(not isinstance(value, str) or not value.strip() or len(value) > 256 for value in route)):
+            raise ChatConflict("Invalid selected model route")
+        provider_id, model_id = route or (agent.provider, agent.model)
+        if route is not None and not self._orchestrator.providers.exists(provider_id):
+            raise ChatConflict("Selected provider is unavailable")
         manager = self._resource_manager or self.configure_agent_slots(global_slots=1)
         with self._orchestrator.agents.execution(agent_id):
             allocation_id = f"chat_{uuid4().hex}"
-            if not self._orchestrator.providers.exists(agent.provider):
+            if not self._orchestrator.providers.exists(provider_id):
                 yield
                 return
-            manager.ensure_route(provider_id=agent.provider, model_id=agent.model)
+            manager.ensure_route(provider_id=provider_id, model_id=model_id)
             deadline = monotonic() + 30.0
             queued = False
             try:
@@ -1067,9 +1073,9 @@ class CorporationApplicationService:
                         snapshot = manager.snapshot()
                         history = snapshot.allocation_id_history_capacity
                         provider_capacity = next((item for key, item in snapshot.providers
-                                                  if key == agent.provider), None)
-                        model_capacity = next((item for provider_id, model_id, item in snapshot.models
-                                               if (provider_id, model_id) == (agent.provider, agent.model)), None)
+                                                  if key == provider_id), None)
+                        model_capacity = next((item for candidate_provider, candidate_model, item in snapshot.models
+                                               if (candidate_provider, candidate_model) == (provider_id, model_id)), None)
                         if history is None or history.remaining <= 0:
                             from .owned_chat import ChatLimit
                             raise ChatLimit("request-slot allocation history is exhausted")
@@ -1078,7 +1084,7 @@ class CorporationApplicationService:
                                      and model_capacity is not None and model_capacity.remaining > 0)
                         if available:
                             try:
-                                manager.allocate(allocation_id, provider_id=agent.provider, model_id=agent.model)
+                                manager.allocate(allocation_id, provider_id=provider_id, model_id=model_id)
                                 break
                             except ResourceCapacityError:
                                 # Another execution path may reserve capacity outside this condition.
@@ -1297,6 +1303,16 @@ class CorporationApplicationService:
         return ProjectKnowledgeService(self._orchestrator,
                                        semantic_invalidator=self.invalidate_semantic_memory)
 
+    def chat_workspaces(self):
+        with self._owned_chat_lock:
+            if getattr(self, "_chat_workspaces", None) is None:
+                from .chat_workspaces import ChatWorkspaceService
+                self._chat_workspaces = ChatWorkspaceService(self._corporation.id, self)
+            return self._chat_workspaces
+
+    def model_supports_chat(self, provider_id, model_id):
+        return self._orchestrator.providers.get(provider_id).supports_model_chat(model_id)
+
     def owned_chat(self):
         """Separate principal-owned HTTP chat facade, safely constructed once."""
         with self._owned_chat_lock:
@@ -1307,12 +1323,14 @@ class CorporationApplicationService:
                 from .owned_chat import OwnedChatService
                 chat = CorporationChatService(self._corporation.id, self._orchestrator)
                 chat.history = self.chat_history()
+                chat.project_context = self.chat_workspaces().prompt_brief
                 self._owned_chat = OwnedChatService(
                     chat,
                     self.get_agent,
                     self._orchestrator.providers.get,
                     self.owned_chat_agent_execution,
                     self.get_agent_profile,
+                    workspaces=self.chat_workspaces(),
                 )
             return self._owned_chat
 
@@ -1329,7 +1347,7 @@ class CorporationApplicationService:
                 if self._corporation is None:
                     raise ValueError("Corporation identity is required")
                 from .chat_history import ChatHistoryService
-                self._chat_history = ChatHistoryService(self._corporation.id)
+                self._chat_history = ChatHistoryService(self._corporation.id, workspaces=self.chat_workspaces())
             return self._chat_history
 
     def chat_knowledge(self):

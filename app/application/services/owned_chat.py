@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from threading import Lock, RLock
 from time import perf_counter
@@ -50,6 +50,7 @@ class _OwnedConversation:
     provider: object = field(repr=False, compare=False)
     lock: Lock
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    workspace_provider: object | None = field(default=None, repr=False, compare=False)
 
 
 class OwnedChatService:
@@ -66,12 +67,13 @@ class OwnedChatService:
                  get_agent: Callable[[str], AgentSummary],
                  get_provider: Callable[[str], object],
                  agent_execution: Callable[[str], object],
-                 get_agent_profile: Callable[[str], object] | None = None):
+                 get_agent_profile: Callable[[str], object] | None = None, *, workspaces=None):
         self._chat = chat
         self._get_agent = get_agent
         self._get_provider = get_provider
         self._agent_execution = agent_execution
         self._get_agent_profile = get_agent_profile or get_agent
+        self._workspaces = workspaces
         self._entries: dict[str, _OwnedConversation] = {}
         self._catalog_lock = RLock()
         self._active_agents: dict[str, int] = {}
@@ -116,6 +118,10 @@ class OwnedChatService:
     def start(self, owner: str, agent_id: str):
         if not isinstance(owner, str) or not owner.strip():
             raise ValueError("Owner identity is required")
+        from .chat_workspaces import current_workspace
+        workspace = current_workspace.get()
+        if workspace is not None and (workspace.owner != owner or workspace.agent_id != agent_id):
+            raise ChatConflict("Choose this workspace's selected Agent")
         with self._catalog_lock:
             if len(self._entries) >= self.MAX_CONVERSATIONS:
                 raise ChatLimit("Conversation limit reached for this app run")
@@ -124,27 +130,61 @@ class OwnedChatService:
                 identifier = uuid4().hex
                 record = self._chat.start(identifier, agent_id)
                 self._entries[identifier] = _OwnedConversation(
-                    owner, agent, provider, Lock()
+                    owner, agent, provider, Lock(),
+                    workspace_provider=self._get_provider(workspace.provider_id) if workspace else None,
                 )
-                return {
+                if self._workspaces is not None:
+                    self._workspaces.bind(owner, identifier)
+                result = {
                     "conversation": record,
                     "coordinator": agent,
                     "streaming_supported": getattr(provider, "supports_streaming", False) is True,
                     "image_input_supported": getattr(provider, "supports_image_input", False) is True,
                     "local_model": getattr(provider, "is_local", False) is True,
                 }
+                return self._workspace_response(owner, identifier, result)
+
+    def _workspace_route(self, owner, identifier, entry):
+        selection = self._workspaces.conversation_selection(owner, identifier) if self._workspaces else None
+        if selection is None:
+            return None
+        provider = self._get_provider(selection["provider_id"])
+        if entry.workspace_provider is not None and provider is not entry.workspace_provider:
+            raise ChatConflict("Workspace provider changed; start a new conversation")
+        route = (selection["provider_id"], selection["model_id"])
+        return route if route != (entry.coordinator.provider, entry.coordinator.model) else None
+
+    def _workspace_response(self, owner, identifier, result):
+        if self._workspaces is None:
+            return result
+        selection = self._workspaces.conversation_selection(owner, identifier)
+        if selection is None:
+            return result
+        agent = result["coordinator"]
+        provider = self._get_provider(selection["provider_id"])
+        override = (agent.provider, agent.model) != (selection["provider_id"], selection["model_id"])
+        return {**result, "coordinator": replace(agent, provider=selection["provider_id"], model=selection["model_id"]),
+                "workspace": {**selection,
+                              "project_brief": self._workspaces.prompt_brief(identifier) or "",
+                              "project_brief_digest": self._workspaces.brief_digest(self._workspaces.prompt_brief(identifier) or ""),
+                              "brain_non_empty": self._workspaces.has_project_knowledge(owner, selection["project_id"])
+                              if selection["project_id"] else None},
+                "streaming_supported": not override and result.get("streaming_supported", False),
+                "image_input_supported": not override and result.get("image_input_supported", False),
+                "local_model": getattr(provider, "is_local", False) is True}
 
     def list(self, owner: str):
         with self._catalog_lock:
             return tuple({"id": identifier, "coordinator": entry.coordinator,
                           "created_at": entry.created_at.isoformat()}
-                         for identifier, entry in self._entries.items() if entry.owner == owner)
+                         for identifier, entry in self._entries.items() if entry.owner == owner
+                         and (self._workspaces is None or self._workspaces.permits(owner, identifier)))
 
     @contextmanager
     def _access(self, owner, identifier):
         with self._catalog_lock:
             entry = self._entries.get(identifier)
-            if entry is None or entry.owner != owner:
+            if entry is None or entry.owner != owner or (self._workspaces is not None and not self._workspaces.permits(owner, identifier)):
                 raise ChatNotFound("Conversation not found")
         if not entry.lock.acquire(blocking=False):
             raise ChatConflict("Conversation is busy; wait for the current request")
@@ -155,19 +195,19 @@ class OwnedChatService:
 
     def get(self, owner, identifier):
         with self._access(owner, identifier) as entry:
-            return {
+            return self._workspace_response(owner, identifier, {
                 "conversation": self._chat.get(identifier),
                 "coordinator": entry.coordinator,
                 "streaming_supported": getattr(entry.provider, "supports_streaming", False) is True,
                 "image_input_supported": getattr(entry.provider, "supports_image_input", False) is True,
                 "local_model": getattr(entry.provider, "is_local", False) is True,
-            }
+            })
 
     def authorize_owner(self, owner, identifier):
         """Check a conversation's owner without competing with its active turn lock."""
         with self._catalog_lock:
             entry = self._entries.get(identifier)
-            if entry is None or entry.owner != owner:
+            if entry is None or entry.owner != owner or (self._workspaces is not None and not self._workspaces.permits(owner, identifier)):
                 raise ChatNotFound("Conversation not found")
             return True
 
@@ -181,7 +221,10 @@ class OwnedChatService:
             if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
                 raise ChatLimit("Conversation message limit reached; start a new conversation")
             record = self._chat.complete_without_provider(identifier, text, reply)
-            return {"conversation": record, "coordinator": entry.coordinator}
+            return self._workspace_response(
+                owner, identifier,
+                {"conversation": record, "coordinator": entry.coordinator},
+            )
 
     def send(self, owner, identifier, text, retrieved_context=None, *, presentation_preferences=None,
              tool_context=None, image_ids=(),
@@ -201,8 +244,12 @@ class OwnedChatService:
             if ((current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model)
                     or provider is not entry.provider):
                 raise ChatConflict("Coordinator assignment changed; start a new conversation")
-            with self.agent_request(entry.coordinator.id,
-                                    wait_for_slot=getattr(provider, "is_local", False) is True):
+            workspace_route = self._workspace_route(owner, identifier, entry)
+            if workspace_route and (image_ids or turn_route):
+                raise ChatConflict("Workspace model selection cannot combine with images or a second route override")
+            turn_route = turn_route or workspace_route
+            with self.agent_request(entry.coordinator.id, route=turn_route,
+                                    wait_for_slot=getattr(self._get_provider(turn_route[0]) if turn_route else provider, "is_local", False) is True):
                 if image_ids:
                     if image_consent is not True:
                         raise ChatConsentRequired("Explicit consent is required to send selected images to the configured provider")
@@ -219,7 +266,7 @@ class OwnedChatService:
                             identifier, text, images, ocr_evidence=tuple(ocr_evidence),
                             presentation_preferences=presentation_preferences,
                         )
-                        return {
+                        return self._workspace_response(owner, identifier, {
                             "conversation": record,
                             "coordinator": entry.coordinator,
                             "image_transfer": {
@@ -235,7 +282,7 @@ class OwnedChatService:
                                 } for item in ocr_evidence],
                                 "retention": "discarded_after_one_use",
                             },
-                        }
+                        })
                     finally:
                         for image in images:
                             self._image_store.remove(owner, identifier, image.id)
@@ -250,6 +297,8 @@ class OwnedChatService:
         if not callable(choose_agent):
             raise TypeError("A trusted Coordinator selector is required")
         with self._access(owner, identifier) as entry:
+            if self._workspace_route(owner, identifier, entry):
+                raise ChatUnavailable("One-step delegation uses the Agent's configured model; select Agent default first")
             if self._chat.get_status(identifier) is not ConversationStatus.OPEN:
                 raise ValueError("Cannot send to a closed conversation")
             if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
@@ -297,12 +346,16 @@ class OwnedChatService:
             handoff["status"] = "completed"
             if handoff_observer is not None:
                 handoff_observer(dict(handoff))
-            return {"conversation": record, "coordinator": entry.coordinator,
-                    "handoff": handoff}
+            return self._workspace_response(owner, identifier, {
+                "conversation": record, "coordinator": entry.coordinator,
+                "handoff": handoff,
+            })
 
     def stream(self, owner, identifier, text, retrieved_context=None, presentation_preferences=None,
                *, brain_enabled=False):
         with self._access(owner, identifier) as entry:
+            if self._workspace_route(owner, identifier, entry):
+                raise ChatUnavailable("This selected workspace model uses the non-streaming chat endpoint")
             if self._chat.get_status(identifier) is not ConversationStatus.OPEN:
                 raise ValueError("Cannot send to a closed conversation")
             current, provider = self._coordinator(entry.coordinator.id)
@@ -316,11 +369,11 @@ class OwnedChatService:
                 for event in self._chat.send_stream(identifier, text, retrieved_context,
                                                     presentation_preferences, brain_enabled=brain_enabled):
                     if event["type"] == "complete":
-                        yield {
+                        yield self._workspace_response(owner, identifier, {
                             **event,
                             "coordinator": entry.coordinator,
                             "streaming_supported": True,
-                        }
+                        })
                     else:
                         yield event
 
@@ -342,18 +395,21 @@ class OwnedChatService:
         result = {"conversation": record, "coordinator": entry.coordinator}
         if turn_route is not None:
             result["turn_route"] = {"provider_id": turn_route[0], "model_id": turn_route[1]}
-        return result
+        return self._workspace_response(entry.owner, identifier, result)
 
     def close(self, owner, identifier):
         with self._access(owner, identifier) as entry:
             result = self._chat.close(identifier)
             self._image_store.clear_conversation(owner, identifier)
-            return {"conversation": result, "coordinator": entry.coordinator}
+            return self._workspace_response(
+                owner, identifier,
+                {"conversation": result, "coordinator": entry.coordinator},
+            )
 
     def delete(self, owner, identifier):
         with self._catalog_lock:
             entry = self._entries.get(identifier)
-            if entry is None or entry.owner != owner:
+            if entry is None or entry.owner != owner or (self._workspaces is not None and not self._workspaces.permits(owner, identifier)):
                 raise ChatNotFound("Conversation not found")
             if not entry.lock.acquire(blocking=False):
                 raise ChatConflict("Conversation is busy; wait for the current request")
@@ -377,6 +433,11 @@ class OwnedChatService:
 
     def image_capability(self, owner, identifier):
         with self._access(owner, identifier) as entry:
+            route = self._workspace_route(owner, identifier, entry)
+            if route:
+                return {"provider_id": route[0], "model_id": route[1],
+                        "local": getattr(self._get_provider(route[0]), "is_local", False) is True,
+                        "state": "unsupported"}
             probe = getattr(entry.provider, "supports_model_image_input", None)
             supported = probe(entry.coordinator.model) if callable(probe) else (
                 True if getattr(entry.provider, "supports_image_input", False) is True else False
@@ -398,11 +459,14 @@ class OwnedChatService:
             return self._image_store.remove(owner, identifier, image_id)
 
     @contextmanager
-    def agent_request(self, agent_id: str, *, wait_for_slot: bool = False):
+    def agent_request(self, agent_id: str, *, wait_for_slot: bool = False, route=None):
         """Share admission guards across owned chat scopes and Agent executions."""
         with self._agent_request(agent_id):
             try:
-                with self._agent_execution(agent_id, wait_for_slot=wait_for_slot):
+                options = {"wait_for_slot": wait_for_slot}
+                if route is not None:
+                    options["route"] = route
+                with self._agent_execution(agent_id, **options):
                     yield
             except AgentAssignmentBusy:
                 raise ChatConflict(

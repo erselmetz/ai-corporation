@@ -162,7 +162,7 @@ def test_version_order_handles_equal_and_prerelease_versions():
 
 def test_legacy_database_moves_to_version_one_and_newer_database_fails_before_mutation(tmp_path: Path, monkeypatch):
     from app.database import connection as database_connection
-    from app.database.init import initialize_database
+    from app.database.init import CURRENT_CONFIGURATION_VERSION, initialize_database
 
     database = tmp_path / "legacy.sqlite3"
     monkeypatch.setattr(database_connection, "DATABASE_PATH", database)
@@ -171,7 +171,7 @@ def test_legacy_database_moves_to_version_one_and_newer_database_fails_before_mu
         connection.execute("INSERT INTO tasks VALUES ('legacy', 'Keep', 'Keep data', NULL, 'pending', NULL, NULL)")
     initialize_database()
     with sqlite3.connect(database) as connection:
-        assert connection.execute("PRAGMA user_version").fetchone() == (4,)
+        assert connection.execute("PRAGMA user_version").fetchone() == (CURRENT_CONFIGURATION_VERSION,)
         assert connection.execute("SELECT title FROM tasks WHERE id='legacy'").fetchone() == ("Keep",)
 
     with sqlite3.connect(database) as connection:

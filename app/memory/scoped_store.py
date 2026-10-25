@@ -38,6 +38,50 @@ class _ScopedMemoryStore:
              record.content, record.source_id, record.created_at.isoformat(),
              record.expires_at.isoformat(), 1))
 
+    def retain_import_batch(self, records, *, now: datetime) -> tuple[int, int]:
+        """Atomically retain deterministic owner-import records without overwriting."""
+        if self._scope is not MemoryScope.OWNER:
+            raise ValueError("Import batches are available only for private owner knowledge")
+        batch = tuple(records)
+        if not batch or len(batch) > 2000 or any(not isinstance(item, MemoryRecord) for item in batch):
+            raise ValueError("Import batch must contain 1 to 2000 memory records")
+        owner_id = batch[0].owner_id
+        _identifier(owner_id, "owner_id")
+        if len({item.id for item in batch}) != len(batch):
+            raise ValueError("Import batch contains duplicate identifiers")
+        for record in batch:
+            if (record.scope is not MemoryScope.OWNER or record.owner_id != owner_id
+                    or record.scope_id != owner_id):
+                raise ValueError("Import records must remain in one owner's private scope")
+            require_memory_access(record, owner_id=owner_id, scope=MemoryScope.OWNER,
+                                  scope_id=owner_id, now=now)
+
+        created = skipped = 0
+        connection = get_connection()
+        try:
+            with connection:
+                connection.execute("BEGIN IMMEDIATE")
+                for record in batch:
+                    row = connection.execute(
+                        "SELECT owner_id, scope_id, type, content, source_id "
+                        "FROM owner_knowledge WHERE id = ?", (record.id,)).fetchone()
+                    if row is not None:
+                        existing = (row["owner_id"], row["scope_id"], row["type"],
+                                    row["content"], row["source_id"])
+                        expected = (record.owner_id, record.scope_id, record.type.value,
+                                    record.content, record.source_id)
+                        if existing != expected:
+                            raise ValueError("Imported note identity conflicts with existing owner data")
+                        skipped += 1
+                    else:
+                        self._insert(connection, record)
+                        created += 1
+            return created, skipped
+        except sqlite3.IntegrityError:
+            raise ValueError("Import batch conflicts with existing memory data") from None
+        finally:
+            connection.close()
+
     def retain(self, record: MemoryRecord, *, now: datetime) -> None:
         if not isinstance(record, MemoryRecord):
             raise TypeError("Expected a MemoryRecord")

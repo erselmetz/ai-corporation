@@ -121,8 +121,12 @@ def test_settings_exposes_optional_pack_status_and_actions_with_existing_safety_
     assert "No speech model or Tesseract engine is included or downloaded" in page
 
 
-def test_optional_voice_output_test_is_owner_gated_and_emergency_stop_reaches_backend_output():
+def test_optional_voice_output_test_is_owner_gated_and_emergency_stop_reaches_backend_output(
+        tmp_path, monkeypatch):
     from unittest.mock import Mock
+    from app.integrations import capability_packs
+
+    monkeypatch.setattr(capability_packs, "application_data_root", lambda: tmp_path)
     origin = "http://127.0.0.1:8000"
     app = create_local_app(password="voice-output-gate-password", application_service=MagicMock())
     output = Mock()

@@ -64,6 +64,10 @@ class AIProvider(ABC):
         """Report explicit model capability; None means the capability is unknown."""
         return True if self.supports_image_input is True else False
 
+    def supports_model_chat(self, model: str) -> bool | None:
+        """Model-reported text completion support; unknown is not a readiness claim."""
+        return None
+
     def check_availability(self) -> AvailabilityResult:
         """Return UNKNOWN unless this provider implements a truthful health check."""
         return AvailabilityResult()

@@ -35,9 +35,11 @@ $env:CSC_IDENTITY_AUTO_DISCOVERY = "false"
 Remove-Item Env:CSC_LINK -ErrorAction SilentlyContinue
 Remove-Item Env:WIN_CSC_LINK -ErrorAction SilentlyContinue
 try {
+    Push-Location (Join-Path $PSScriptRoot "..")
     & (Join-Path $PSScriptRoot "..\node_modules\.bin\electron-builder.cmd") --config $configPath --win nsis --x64
     if ($LASTEXITCODE -ne 0) { throw "The unsigned local Windows installer could not be built." }
 } finally {
+    Pop-Location
     Remove-Item -LiteralPath $configPath -Force -ErrorAction SilentlyContinue
     if ($null -eq $previousAutoDiscovery) { Remove-Item Env:CSC_IDENTITY_AUTO_DISCOVERY -ErrorAction SilentlyContinue }
     else { $env:CSC_IDENTITY_AUTO_DISCOVERY = $previousAutoDiscovery }

@@ -75,6 +75,15 @@ class ChatKnowledgeService:
     def _conversation(self, owner, conversation_id):
         return self._application.owned_chat().get(owner, conversation_id)
 
+    def _workspace_scope(self, owner, conversation_id, scope, scope_id):
+        factory = getattr(self._application, "chat_workspaces", None)
+        if not callable(factory):
+            return
+        selection = factory().conversation_selection(owner, conversation_id)
+        if selection is not None and scope is MemoryScope.PROJECT and (
+                not selection["project_id"] or scope_id != selection["project_id"]):
+            raise PermissionError("Project knowledge is limited to this conversation's workspace project")
+
     def retain(self, owner, conversation_id, message_id, *, expires_at, retention_opt_in, now):
         if retention_opt_in is not True:
             raise ValueError("Explicit retention consent is required")
@@ -129,6 +138,7 @@ class ChatKnowledgeService:
     def retrieve(self, owner, conversation_id, request: ContextRequest, now):
         """Authorization is the stored owner/scope; a conversation scope never crosses conversations."""
         self._conversation(owner, conversation_id)
+        self._workspace_scope(owner, conversation_id, request.scope, request.scope_id)
         if request.scope is MemoryScope.CONVERSATION and request.scope_id != conversation_id:
             raise PermissionError("Conversation context is limited to this conversation")
         result = self._application.context_retrieval().retrieve(
@@ -146,6 +156,7 @@ class ChatKnowledgeService:
             if not isinstance(selected, SelectedKnowledgeScope):
                 raise TypeError("Knowledge scope selection is invalid")
             scope, scope_id = selected.scope, selected.scope_id
+            self._workspace_scope(owner, conversation_id, scope, scope_id)
             if scope is MemoryScope.OWNER:
                 scope_id = owner
             elif scope is MemoryScope.CONVERSATION:

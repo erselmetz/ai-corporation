@@ -122,9 +122,13 @@ def test_capability_controls_are_in_settings_and_chat_stays_minimal():
     assert 'id="chat-screen-action"' in chat
     assert 'id="chat-knowledge-menu-toggle"' in chat
     assert 'id="chat-header-model"' in chat
+    header = chat[chat.index('<div class="chat-workspace-selectors"'):]
+    header = header[:header.index('</div>')]
+    assert header.index('id="workspace-model"') < header.index('id="chat-agent"') < header.index('id="workspace-project"')
     composer = chat[chat.index('<form id="chat-form"'):]
     composer = composer[:composer.index('</form>')]
-    assert composer.index('id="chat-agent"') < composer.index('id="chat-mic"') < composer.index('id="chat-send"')
+    assert 'id="chat-agent"' not in composer
+    assert composer.index('id="chat-mic"') < composer.index('id="chat-send"')
     assert "Capability controls" not in chat
     assert 'href="/ui/settings/capabilities"' in chat
     assert 'class="navigation shared-navigation"' not in chat

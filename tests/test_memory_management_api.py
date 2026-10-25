@@ -43,12 +43,20 @@ def test_default_authentication_fails_closed(setup):
         assert client.get("/api/memory/record?" + QUERY).status_code == 401
         assert client.delete("/api/memory/record?" + QUERY).status_code == 401
         assert client.put("/api/memory/record?" + QUERY, json={}).status_code == 401
-        assert client.get("/ui/memory").status_code == 200
+        legacy = client.get("/ui/memory", follow_redirects=False)
+        assert legacy.status_code == 307
+        assert legacy.headers["location"] == "/ui/knowledge#advanced-memory"
         assert client.get("/ui/static/memory.mjs").status_code == 200
-        page = client.get("/ui/memory").text
-        assert 'id="memory-relationship-list"' in page
-        assert 'id="memory-map-root"' in page
-        assert "does not aggregate other conversations, Projects, or owners" in page
+        brain_page = client.get("/ui/knowledge").text
+        assert 'src="/ui/static/knowledge.mjs"' in brain_page
+        assert 'src="/ui/static/memory.mjs"' in brain_page
+        assert 'id="advanced-memory"' in brain_page
+        assert 'id="memory-relationship-list"' in brain_page
+        assert 'id="memory-map-root"' in brain_page
+        assert 'id="v3code-brain-preview"' in brain_page
+        assert 'id="v3code-brain-import"' in brain_page
+        assert "ignores old vectors" in brain_page
+        assert "does not aggregate other conversations, Projects, or owners" in brain_page
 
 
 def test_permission_and_owner_boundaries_reject_spoofing(setup):

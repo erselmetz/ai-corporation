@@ -4,6 +4,7 @@ import { mountCameraCapture } from "./camera-capture.mjs";
 import { mountChatImages } from "./chat-images.mjs";
 import { renderSafeMarkdown } from "./chat-markdown.mjs";
 import { formatDetails } from "./ui-details.mjs";
+import { createChatWorkspace } from "./chat-workspace.mjs";
 import { recordLastBrainRetrieval } from "./brain-graph.mjs";
 import "./quick-start.mjs?v=195";
 
@@ -45,13 +46,18 @@ export function mountChat({
   let coordinatorAgentModels = new Map();
   const updateHeaderModel = () => { headerModel.textContent = coordinatorAgentModels.get(agents.value) || ""; };
   const conversations = element("chat-conversation");
+  const workspaceController = createChatWorkspace({ documentRef, windowRef, fetchImpl,
+    onChange: async descriptor => { restoredWorkspace = descriptor; clear(); await start(); } });
+  fetchImpl = workspaceController.fetch;
   let restoredWorkspace = null;
+  let projectBriefDigest = null;
   function saveWorkspace() {
     const bridge = windowRef?.desktopBridge;
     if (!bridge?.saveWorkspaceState) return;
     void Promise.resolve(bridge.saveWorkspaceState({
       conversation: selected || "", agent: agents.value || "",
-      model: coordinatorAgentModels.get(agents.value) || "", project: restoredWorkspace?.project || "",
+      model: headerModel.textContent || "", provider: workspaceController.selection()?.provider || "",
+      project: workspaceController.selection()?.project || "",
     })).catch(() => {}); // Restoration is optional; it never grants execution authority.
   }
   const input = element("chat-input");
@@ -329,6 +335,10 @@ export function mountChat({
       const target = documentRef.createElement("p"); target.textContent = `Target: ${approval.target_ref}`;
       const capability = documentRef.createElement("p"); capability.textContent = `${approval.capability_id} / ${approval.action_id} - ${approval.risk}${approval.irreversible ? " / irreversible" : ""}`;
       const scope = documentRef.createElement("p"); scope.textContent = `Scope: ${approval.scope_type}:${approval.scope_id}`;
+      const provenance = approval.workspace_id
+        ? `Window: ${approval.workspace_id}; Agent: ${approval.workspace_agent_id}; Project: ${approval.workspace_project_id || "Personal"}; Model: ${approval.workspace_model_id}`
+        : "";
+      if (provenance) scope.textContent += ` · ${provenance}`;
       const expiry = documentRef.createElement("p"); expiry.textContent = `Expires ${new Date(approval.expires_at).toLocaleString()}`;
       const fingerprints = documentRef.createElement("details");
       const fingerprintSummary = documentRef.createElement("summary"); fingerprintSummary.textContent = "Exact-action fingerprints";
@@ -339,7 +349,7 @@ export function mountChat({
       const approve = documentRef.createElement("button"); approve.type = "button"; approve.textContent = "Approve exact action";
       approve.addEventListener("click", async () => {
         const preview = `${approval.action_summary}\nTarget: ${approval.target_ref}\nCapability/action: ${approval.capability_id} / ${approval.action_id}\nScope: ${approval.scope_type}:${approval.scope_id}\nRisk: ${approval.risk}${approval.irreversible ? " (irreversible)" : ""}\nExpires: ${approval.expires_at}\nApproval digest: ${approval.approval_digest}\n\nApprove this exact request? Approval alone does not execute it.`;
-        if (!confirmImpl(preview)) return;
+        if (!confirmImpl(provenance ? `${preview}\n${provenance}` : preview)) return;
         approve.disabled = true;
         try {
           await request(`/api/capabilities/approvals/${encodeURIComponent(approval.approval_id)}/approve`, { confirmed_digest: approval.approval_digest });
@@ -386,11 +396,24 @@ export function mountChat({
     selected = record.id;
     if (typeof agent.id === "string" && coordinatorAgentModels.has(agent.id)) agents.value = agent.id;
     headerModel.textContent = typeof agent.model === "string" ? agent.model : "";
+    workspaceController.remember({ conversation: record.id, agent: agent.id,
+      provider: agent.provider, model: agent.model, project: result.workspace?.project_id || "" });
+    projectBriefDigest = result.workspace?.project_brief_digest || null;
+    const briefEditor = element("workspace-brief");
+    if (briefEditor) briefEditor.value = result.workspace?.project_brief || "";
+    const briefPanel = element("workspace-brief-panel");
+    if (briefPanel) briefPanel.hidden = !result.workspace?.project_id;
+    const cloudBrief = element("workspace-cloud-brief");
+    if (cloudBrief) {
+      cloudBrief.textContent = result.workspace?.project_brief ? `Project brief sent with this turn:\n${result.workspace.project_brief}` : "";
+      cloudBrief.hidden = !result.workspace?.project_brief;
+    }
     if (!conversationItems.some(item => item.id === record.id)) conversationItems = [{ id: record.id, coordinator: agent, created_at: new Date().toISOString() }, ...conversationItems];
     renderConversationList();
     if (!knowledgeSettings.has(record.id)) knowledgeSettings.set(record.id, {
-      enabled: ownerBrainNonEmpty, owner: ownerBrainNonEmpty, conversation: false, extra: false,
-      extraScope: "project", extraId: "",
+      enabled: result.workspace?.project_id ? result.workspace.brain_non_empty === true : ownerBrainNonEmpty,
+      owner: ownerBrainNonEmpty && !result.workspace?.project_id, conversation: false,
+      extra: Boolean(result.workspace?.project_id), extraScope: "project", extraId: result.workspace?.project_id || "",
     });
     const savedKnowledge = knowledgeSettings.get(record.id);
     knowledgeEnabled.checked = savedKnowledge.enabled;
@@ -676,6 +699,7 @@ export function mountChat({
     busy = true;
     buttons.forEach(button => { button.disabled = preserveSend ? button.id !== "chat-send" : true; });
     agents.disabled = true; conversations.disabled = true;
+    workspaceController.setDisabled(true);
     taskControls();
     try { await operation(); return true; }
     catch (error) { state.textContent = error.message; return false; }
@@ -685,6 +709,7 @@ export function mountChat({
       if (sendInProgress) finishSendButton();
       captureLocalPrompt.disabled = !localModelAvailable;
       agents.disabled = false; conversations.disabled = false;
+      workspaceController.setDisabled(false);
       taskControls();
       repositoryStudyControls();
       updateKnowledgeControls();
@@ -752,21 +777,21 @@ export function mountChat({
         toolsState.textContent = "Calculator is available; local documentation lookup requires documentation:read permission.";
       }
       const agentList = await request("/api/agents");
-      const list = await request(base);
-      if (!Array.isArray(agentList.items) || !Array.isArray(list.items)) throw new Error("Invalid chat list response.");
+      if (!Array.isArray(agentList.items)) throw new Error("Invalid chat list response.");
       coordinatorAgentModels = new Map(agentList.items.map(agent => [agent.id, agent.model]));
       agents.replaceChildren(); conversations.replaceChildren();
       taskAgent.replaceChildren();
       option(taskAgent, "", "Select the responsible Agent");
       option(conversations, "", "Select an existing conversation");
       for (const agent of agentList.items) {
-        const label = `${agent.name} / ${agent.model}`;
+        const label = element("workspace-model") ? agent.name : `${agent.name} / ${agent.model}`;
         option(agents, agent.id, label);
         option(taskAgent, agent.id, `${agent.name} | ${agent.role}`);
       }
+      restoredWorkspace = await workspaceController.initialize(agentList.items);
+      const list = await request(base);
+      if (!Array.isArray(list.items)) throw new Error("Invalid chat list response.");
       const directDesktopLaunch = new URLSearchParams(windowRef?.location?.search || "").get("desktop") === "1";
-      try { restoredWorkspace = await windowRef?.desktopBridge?.getWorkspaceState?.() || null; }
-      catch { restoredWorkspace = null; }
       const defaultCoordinator = agentList.items.find(agent => agent.id === "local_worker")
         || agentList.items.find(agent => agent.builtin === true && agent.name === "Coordinator");
       if (defaultCoordinator) agents.value = defaultCoordinator.id;
@@ -802,6 +827,7 @@ export function mountChat({
       if (emergencyStopped) throw new Error("Emergency stop is active. Resume protected actions before starting a conversation.");
       if (!agents.value) throw new Error("Choose an AI team member first.");
       state.textContent = "Starting conversation…";
+      await workspaceController.commit();
       const result = await request(base, { agent_id: agents.value });
       option(conversations, result.conversation.id, `${result.coordinator.name} - ${result.conversation.id.slice(0, 8)}`);
       input.disabled = false;
@@ -917,6 +943,7 @@ export function mountChat({
       history.append(typing);
       try {
         const body = { text };
+        if (projectBriefDigest) body.project_brief_digest = projectBriefDigest;
         if (delegateForTurn) body.delegate_once = true;
         if (requiresCloudConsent) body.cloud_consent = true;
         if (selectedRoute) Object.assign(body, {
@@ -1372,7 +1399,23 @@ export function mountChat({
     cloudConsent.checked = false;
   });
   element("chat-form").addEventListener("submit", send);
-  agents.addEventListener("change", () => { updateHeaderModel(); saveWorkspace(); });
+  const changeWorkspace = async () => {
+    if (busy) return;
+    if (!workspaceController.selection()) { updateHeaderModel(); saveWorkspace(); return; }
+    const priorCanSend = canSend;
+    canSend = false; input.disabled = true;
+    try { await workspaceController.change(); }
+    catch (error) { state.textContent = error.message; workspaceController.remember({}); canSend = priorCanSend; }
+    finally { input.disabled = !canSend; }
+  };
+  agents.addEventListener("change", changeWorkspace);
+  element("workspace-model")?.addEventListener("change", changeWorkspace);
+  element("workspace-project")?.addEventListener("change", changeWorkspace);
+  element("workspace-brief-save")?.addEventListener("click", () => action(async () => {
+    await workspaceController.saveBrief(element("workspace-brief").value);
+    if (selected) render(await request(`${base}/${encodeURIComponent(selected)}`));
+    state.textContent = "Project brief saved locally. It applies to future turns in this project.";
+  }));
   element("chat-send").addEventListener("click", event => {
     if (!requestController) return;
     event.preventDefault();

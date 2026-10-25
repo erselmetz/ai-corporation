@@ -4031,12 +4031,15 @@ export const post100Tasks = [
     "number": 215,
     "title": "Isolated per-window workspaces",
     "description": "Give each window its own conversation, model, agent and project while sharing owner auth, providers, Brain index and settings safely.",
-    "category": "Phase AU - Workspace Sessions", "status": "planned",
+    "category": "Phase AU - Workspace Sessions", "status": "completed",
     "dependsOn": [214, 184, 200, 202], "decisions": [],
     "acceptance": ["Expose compact model/agent/project selectors and a matching window title; support different models, agents or projects per window without silently changing global Agent assignments.", "Isolate conversation, approvals, selected route and trace by workspace; show requesting window/agent/project on approval previews and enforce the same provenance server-side.", "Use the existing project Brain scope and instructions with durable workspace/conversation association. Shared settings and providers remain owner-scoped.", "Enable and verify SQLite WAL and serialized writers where required; concurrent writes and restart recovery must not mix or corrupt workspaces."],
     "outOfScope": ["No new Agent/Employee model, new authority, cross-project retrieval, action replay, background autonomous work or silent provider transfer."],
     "risks": ["Client-only workspace labels cannot establish authorization; selection changes must preserve immutable existing conversation scopes and approval digests."],
-    "area": "P63", "checkpoint": null, "validation": [], "limitations": [],
+    "area": "P63", "checkpoint": "task-215-isolated-window-workspaces",
+    "validation": ["Full Python suite: 1,446 passed / 3 skipped / 0 failed; browser modules 295 passed; Electron 43 passed; public docs 21 passed. Python compilation, JavaScript syntax, desktop UI production/type build and diff integrity passed. An isolated real Windows source-mode Electron 44.7.0 run passed two project workspaces with distinct conversations and server-side cross-window denial, Ctrl+N, singleton Settings, second launch in the same main/backend process, and four-window restart restoration."],
+    "realWorldVerification": {"status": "partial", "evidence": ["A source-mode Windows run used two real fixture Projects in an isolated profile and confirmed distinct window identifiers, selections and conversations plus cross-window HTTP 404 enforcement. Deterministic tests exercised model selection, immutable project association, scoped Brain retrieval, durable-history isolation, approval provenance, cloud project-brief preview, WAL writes and streaming context."], "unverified": ["Packaged Electron, retained production conversations, live Ollama model replies, simultaneous real model workloads, physical devices, multiple monitors and actual Windows scaling are unverified."]},
+    "limitations": ["Workspace routes use existing providers and installed local models only. A provider-reported non-chat model is rejected; unknown capability remains unknown rather than a readiness claim. An alternate workspace model currently uses bounded non-streaming text chat; image turns and one-step delegation require the selected Agent's configured route. Project briefs are explicit owner configuration, bounded and treated as untrusted user context; cloud turns require a preview digest and existing per-turn consent. Workspace metadata is capped at 100 records per corporation. Visible queue position, exclusive device ownership and per-window stop are Task 216."],
     "automatedVerification": ["Test two-window model/agent/project combinations, conversation and trace isolation, approval provenance, cross-project denials, concurrent writes, migrations and restart restoration. Run all four suites."],
     "followUpValidation": ["Exercise packaged Windows sessions and real model conversations separately; report unavailable clean-profile coverage."]
   },
@@ -4065,15 +4068,221 @@ export const post100Tasks = [
     "area": "P65", "checkpoint": null, "validation": [], "limitations": [],
     "automatedVerification": ["Run reproducible isolated multi-window scenarios and all Python, browser-module, Electron and public-docs suites; preserve logs and screenshots without owner content or credentials."],
     "followUpValidation": ["List untested hardware, clean-account, microphone/camera/screen and representative-user combinations explicitly."]
+  },
+  {
+    "number": 218,
+    "title": "Owner-scoped v3code Brain import",
+    "description": "Provide a preview-first migration for legacy v3code brain.json chunks into the existing private Brain without transferring legacy vectors or bypassing retention controls.",
+    "category": "Phase AX - Brain Migration", "status": "planned",
+    "dependsOn": [196], "decisions": [],
+    "acceptance": ["Validate a bounded UTF-8 JSON export, show only its digest and counts during preview, and require the exact preview digest at commit.", "Ignore legacy vectors and knowledge_pack.json; bundle source chunks into bounded notes, preserve sanitized source references, and enforce owner-only scope.", "Require explicit retention consent and an expiry within the existing 30-day policy; perform an atomic idempotent import and never call or download an embedding model automatically.", "Expose the import in the Brain page with a second preview/confirmation step and clear imported/skipped results."],
+    "outOfScope": ["Importing knowledge_pack.json, preserving or trusting legacy vectors, changing the retention policy, sharing content across scopes, automatic indexing, model downloads, and importing data without a separate owner confirmation."],
+    "risks": ["The importer handles personal knowledge; malformed or changed exports must fail closed, and a preview must not disclose note text."],
+    "area": "P66", "checkpoint": null,
+    "validation": ["Implementation is present locally. Focused Brain parser/API/management tests passed: 30 passed; Brain UI tests: 9 passed. Full suites passed: 1,446 Python / 3 skipped / 0 failed, 295 browser modules, 43 Electron, and 21 public docs. A read-only API preview of D:/source/AI/v3code/brain.json returned 852 chunks, 19 sources, 94 bounded notes and left the owner Brain empty. A reviewed local checkpoint is still pending."],
+    "realWorldVerification": {"status": "partial", "evidence": ["The actual 9.5 MiB legacy export passed the read-only API preview; its 768-dimensional vectors were ignored and no database writes occurred."], "unverified": ["The owner has not yet run the explicit retention-consented import; semantic re-indexing of imported notes remains an optional owner action."]},
+    "limitations": ["Only brain.json text chunks are migrated. Legacy vectors and knowledge_pack.json persona/rules/instant replies are not imported. The destination uses current owner-only notes with a user-selected expiry of up to 30 days; semantic indexing is not started automatically."],
+    "automatedVerification": ["Test bounded parse/UTF-8/source sanitization, preview no-write, permissions, digest mismatch, retention/expiry validation, atomic idempotent owner-scope writes, UI confirmation and same-origin CSRF. Run relevant Python and browser tests plus the public-docs roadmap suite."],
+    "followUpValidation": ["Review the displayed counts and selected expiry in the Brain page; the final import remains an explicit owner action. Record separately whether local semantic indexing is desired and available."]
+  },
+  {
+    "number": 219,
+    "title": "Unified Brain and Memory workspace",
+    "description": "Present everyday knowledge intake, retrieval, citations, and scoped memory inspection through one Brain destination while preserving the existing authorization and retention boundaries.",
+    "category": "Phase AY - Unified Brain Experience", "status": "planned",
+    "dependsOn": [196, 218], "decisions": [],
+    "acceptance": ["Expose one Brain destination for file, folder, paste-text, import, indexing, retrieval, and citation workflows.", "Place corporation, project, and conversation memory inspection, correction, semantic search, and relationship tools under a collapsed Advanced scopes section on the same page.", "Redirect the legacy /ui/memory route to the unified Brain page without duplicating UI or changing the existing APIs.", "Preserve owner permissions, scope isolation, provenance, expiry, consent, deletion, and untrusted-context handling."],
+    "outOfScope": ["Merging private and published memory scopes, removing expiry or consent controls, importing knowledge_pack.json instructions, trusting legacy vectors, automatic model downloads, and automatic indexing without owner action."],
+    "risks": ["A visual merge must not collapse domain scopes or make private material available to a broader chat, project, corporation, or cloud-provider context."],
+    "area": "P67", "checkpoint": null,
+    "validation": ["Implementation is present locally. Focused Brain/memory/import/API checks passed: 32 Python tests and 22 browser-module tests. Full suites passed: 1,446 Python / 3 skipped / 0 failed, 295 browser modules, 43 Electron, and 21 public docs. Four deterministic light/dark screenshots at 480px and 1280px showed no horizontal overflow. A reviewed local checkpoint is pending."],
+    "realWorldVerification": {"status": "partial", "evidence": ["The actual legacy brain.json was read only during Task 218 preview; the unified screen itself was rendered in deterministic browser screenshots."], "unverified": ["Packaged Electron navigation, owner-performed import, live Ollama retrieval over imported notes, representative-owner usability, assistive technology, and actual Windows scaling remain unverified."]},
+    "limitations": ["Brain and scoped Memory remain separate governed domain services behind one user-facing page. The legacy /ui/memory address is compatibility-only. Advanced controls remain available but collapsed by default."],
+    "automatedVerification": ["Test the compatibility redirect, unified script/controller mounting, navigation uniqueness, scoped authorization, import controls, correction/search/relationship tools, narrow layout, and all four project suites before completion."],
+    "followUpValidation": ["Run the packaged app and owner import separately; record live-provider and representative-user evidence without treating deterministic screenshots as real-world proof."]
+  },
+  {
+    "number": 223,
+    "title": "Prototype three-pane shell",
+    "description": "Owner-authorized prototype alignment. Local-only work; no push or deployment. Stop at a failed phase gate.",
+    "category": "Phase 223 - Prototype Alignment",
+    "status": "planned",
+    "dependsOn": [
+      197,
+      215
+    ],
+    "decisions": [],
+    "acceptance": [
+      "Open on resizable sidebar, Brain/observed-step pane, and persistent chat pane with amber-on-dark tokens.",
+      "Ctrl+B toggles the sidebar; hidden sidebar leaves equal Brain/chat widths; Ctrl+N and + create conversation tabs.",
+      "Keep existing features in separate allowlisted Advanced windows, with one Brain destination and Memory controls under Brain settings.",
+      "Preserve authentication, per-conversation scope, retention/expiry, cloud consent, approvals and stop controls."
+    ],
+    "outOfScope": [
+      "Porting Tkinter code, deleting existing features, silent downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+    ],
+    "risks": [
+      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+    ],
+    "area": "P67",
+    "checkpoint": null,
+    "validation": [
+      "Phase implementation is present locally; no completion checkpoint or phase tag.",
+      "Source-mode Electron checks passed: inline consented note save, tabs, keyboard split, equal hidden-sidebar panes and separate Advanced Brain settings.",
+      "Full Python gate failed: 1445 passed, 3 skipped, 1 failed (optional Pillow worker resize). Focused rerun skipped because PIL is unavailable; the failed gate remains unresolved.",
+      "Evidence: review/task-223-prototype-shell.md. Tasks 224-227 were not started."
+    ],
+    "limitations": [
+      "No completion claim. Real-provider, packaged and hardware evidence must be recorded separately."
+    ],
+    "automatedVerification": [
+      "Run affected regression and source-mode UI checks; retain failures as failures."
+    ],
+    "followUpValidation": [
+      "Record unavailable real-world checks as UNVERIFIED with their impact."
+    ]
+  },
+  {
+    "number": 224,
+    "title": "Real-data Brain visualization and intake",
+    "description": "Owner-authorized prototype alignment. Local-only work; no push or deployment. Stop at a failed phase gate.",
+    "category": "Phase 224 - Prototype Alignment",
+    "status": "planned",
+    "dependsOn": [
+      223
+    ],
+    "decisions": [],
+    "acceptance": [
+      "Render real chunks and source clusters, bounded node grouping, real retrieval/link highlights, an anchored source/snippet/date/Forget card, performance controls and a 2D fallback.",
+      "Support files, folders and text through app-wide drop/paste and explicit local retention controls; chunk at 800 characters with 100 overlap.",
+      "Skip junk directories and files over 5 MB; replace re-fed sources using stable absolute-path/content keys, skip unchanged hashes and save atomically.",
+      "Reuse cached normalized search matrices and installed FAISS where available; never invent graph activity or fetch models silently."
+    ],
+    "outOfScope": [
+      "Porting Tkinter code, deleting existing features, silent downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+    ],
+    "risks": [
+      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+    ],
+    "area": "P67",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [],
+    "automatedVerification": [
+      "Run affected regression and source-mode UI checks; retain failures as failures."
+    ],
+    "followUpValidation": [
+      "Record unavailable real-world checks as UNVERIFIED with their impact."
+    ]
+  },
+  {
+    "number": 225,
+    "title": "Shipped knowledge pack and exact tools",
+    "description": "Owner-authorized prototype alignment. Local-only work; no push or deployment. Stop at a failed phase gate.",
+    "category": "Phase 225 - Prototype Alignment",
+    "status": "planned",
+    "dependsOn": [
+      224
+    ],
+    "decisions": [],
+    "acceptance": [
+      "Separate user Brain, shipped knowledge_pack.json and rebuildable pack-hash embedding cache.",
+      "Answer exact-match greetings/thanks/identity without model calls; put persona/rules in system messages and retrieve two or three pack entries.",
+      "Provide bounded exact calculate, solve_equation and convert_units through existing sandbox/authority guards.",
+      "Use installed nomic-embed-text with search_document/search_query prefixes; measure before/after retrieval thresholds on real examples and publish actual numbers."
+    ],
+    "outOfScope": [
+      "Porting Tkinter code, deleting existing features, silent downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+    ],
+    "risks": [
+      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+    ],
+    "area": "P67",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [],
+    "automatedVerification": [
+      "Run affected regression and source-mode UI checks; retain failures as failures."
+    ],
+    "followUpValidation": [
+      "Record unavailable real-world checks as UNVERIFIED with their impact."
+    ]
+  },
+  {
+    "number": 226,
+    "title": "Bounded agent loop and hardened tools",
+    "description": "Owner-authorized prototype alignment. Local-only work; no push or deployment. Stop at a failed phase gate.",
+    "category": "Phase 226 - Prototype Alignment",
+    "status": "planned",
+    "dependsOn": [
+      225
+    ],
+    "decisions": [],
+    "acceptance": [
+      "Support bounded tool steps, duplicate-call prevention, result caps, streaming answers, optional native/tagged thinking, visible observed logs and Stop.",
+      "Keep raw user history; inject retrieved context only for the current model call; bound history and explicitly set num_ctx; send real chat messages without internal envelopes.",
+      "List installed Ollama models, verify tool capability and allow per-tab choice; no fixed llama3.2:3b, silent downloads, cloud sends or fallback.",
+      "Confirm exact http/https browser destinations; block local/private/file web retrieval with redirect/DNS protections and mark fetched context untrusted.",
+      "Restrict file tools to user-chosen roots, block secret files and require exact write diff approval; require capture/device/action consent, local faster-whisper, indicators and kill switches; log Brain/clipboard writes."
+    ],
+    "outOfScope": [
+      "Porting Tkinter code, deleting existing features, silent downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+    ],
+    "risks": [
+      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+    ],
+    "area": "P67",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [],
+    "automatedVerification": [
+      "Run affected regression and source-mode UI checks; retain failures as failures."
+    ],
+    "followUpValidation": [
+      "Record unavailable real-world checks as UNVERIFIED with their impact."
+    ]
+  },
+  {
+    "number": 227,
+    "title": "Prototype journey verification and polish",
+    "description": "Owner-authorized prototype alignment. Local-only work; no push or deployment. Stop at a failed phase gate.",
+    "category": "Phase 227 - Prototype Alignment",
+    "status": "planned",
+    "dependsOn": [
+      226
+    ],
+    "decisions": [],
+    "acceptance": [
+      "Feed five real files and one folder; ask ten questions and report factual/cited counts and retrieval quality before/after prefixes.",
+      "Exercise browser opening, math, tool failure, mid-run Stop, an injection file and a localhost URL using local Ollama and an installed model.",
+      "Run full Python, browser and Electron suites, UI build and dead-control sweep; record screenshots and measured PC/RX 570 performance without inferring GPU use.",
+      "Report Verified real, AI-verified only, Unverified or Broken per phase; use one reviewed local commit/tag per passing phase; never push or deploy."
+    ],
+    "outOfScope": [
+      "Porting Tkinter code, deleting existing features, silent downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+    ],
+    "risks": [
+      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+    ],
+    "area": "P67",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [],
+    "automatedVerification": [
+      "Run affected regression and source-mode UI checks; retain failures as failures."
+    ],
+    "followUpValidation": [
+      "Record unavailable real-world checks as UNVERIFIED with their impact."
+    ]
   }
 ];
 
 export const roadmapRules = {
   "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, 195-203 and 207-208 are completed scoped checkpoints; Tasks 213-214 are completed scoped checkpoints; Task 213 has owner-approved visuals and Task 214 has source-mode window evidence; Tasks 209-211 and 215-217 are planned; Task 190 is design-only. Tasks 204-206 and 212 have no published contract and are not inferred. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
+  "source": "Read docs/tasks-data.mjs and the relevant existing code before implementing a task; it is the single source for task scope and status across public pages. Completed, deferred, planned, and design-only states are distinct. Tasks 134, 170, 193 and 194 are deferred and incomplete; Tasks 135-169, 171-189, 191-192, 195-203 and 207-208 are completed scoped checkpoints; Tasks 213-215 are completed scoped checkpoints; Task 213 has owner-approved visuals and Tasks 214-215 have source-mode window evidence; Tasks 209-211, 216-219 are planned, with local implementation and focused evidence recorded for Tasks 218-219 pending full validation and checkpoints; Task 190 is design-only. Tasks 204-206 and 212 have no published contract and are not inferred. Task 176's separate-account and live-provider checks remain unverified follow-up; Task 178 native resize was checked in a local packaged Windows build; Task 191 supersedes the wizard-first launch flow but its clean-profile Windows/Gemini/DPAPI acceptance remains pending; Task 193's prompt completion claim was corrected by Task 194 after package identity and Employee-chat coverage exposed the defect; P00-P16 remains supplementary product context.",
   "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
   "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
-  "developmentAcceptance": "For Tasks 175-211, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
+  "developmentAcceptance": "For Tasks 175-211 and 213-219, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
   "enhancementLoop": "After scoped development acceptance, continue to the next dependency-ready task without waiting for human QA. Record reproducible defects and regression cases for later review by different AI models; identify model/reviewer when available and never claim independent review that did not occur.",
   "verification": "Run focused and directly affected regressions, then the full Python suite for runtime changes as appropriate. Run browser/docs tests for those changes; use deterministic fakes and separate optional live integration checks. Run compilation/type checks where available and diff/security/scope review.",
   "completion": "Completed requires actual acceptance evidence, truthful limitations/skips, required documentation/update records, and a reviewed task checkpoint. A local checkpoint is sufficient for development acceptance; push or deployment is separate and must be authorized and verified when performed. Never mark complete solely because code exists or an AI says it worked.",
@@ -4130,7 +4339,9 @@ const futureRoadmapGroups = [
   ...[
     [213, "Phase AS - UI Foundation"], [214, "Phase AT - Window Architecture"],
     [215, "Phase AU - Workspace Sessions"], [216, "Phase AV - Concurrency and Resources"],
-    [217, "Phase AW - Multi-window QA"],
+    [217, "Phase AW - Multi-window QA"], [218, "Phase AX - Brain Migration"],
+    [219, "Phase AY - Unified Brain Experience"],
+    ...[223,224,225,226,227].map(number => [number, `Phase ${number} - Prototype Alignment`]),
   ].map(([number, name]) => ({ name, range: `${number}-${number}`,
     tasks: post100Tasks.filter(task => task.category === name).map(({ title, description }) => [title, description]) }))
 ];

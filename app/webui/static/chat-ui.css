@@ -143,3 +143,14 @@ body.chat-page[data-theme="light"] { color-scheme: light; --chat-bg: #f5f6f8; --
 body.chat-page[data-theme="light"] .chat-compose-row { background: rgba(255,255,255,.97); border-color: #cbd2dd; }
 body.chat-page[data-theme="light"] .chat-message-user > .chat-message-content { background: #e4e9f2; }
 body.chat-page[data-theme="light"] .chat-settings-content { background: #fff; }
+.chat-header { flex-wrap: wrap; }
+.chat-header-model { display: none; }
+.chat-workspace-selectors { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.chat-workspace-selectors label { min-width: 0; }
+.chat-workspace-selectors select { max-width: 170px; min-width: 0; font-size: 12px; }
+@media (max-width: 768px) {
+  .chat-header { flex-wrap: wrap; }
+  .chat-workspace-selectors { order: 2; width: 100%; }
+  .chat-workspace-selectors label { flex: 1; }
+  .chat-workspace-selectors select { width: 100%; max-width: 100%; }
+}

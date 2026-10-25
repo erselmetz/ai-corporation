@@ -323,6 +323,53 @@ def owner_brain_node(node_id: Annotated[str, Query(min_length=1, max_length=300)
         raise HTTPException(422, "Brain node request is invalid") from None
 
 
+async def _read_v3code_brain_upload(request: Request, file: UploadFile) -> bytes:
+    from app.knowledge.v3code_import import MAX_IMPORT_BYTES
+    declared = request.headers.get("content-length")
+    if declared is not None and (not declared.isdigit() or int(declared) > MAX_IMPORT_BYTES + 65_536):
+        raise HTTPException(413, "Legacy Brain import exceeds the 12 MiB file limit")
+    if not (file.filename or "").lower().endswith(".json"):
+        raise HTTPException(422, "Choose a v3code Brain .json export")
+    data = await file.read(MAX_IMPORT_BYTES + 1)
+    if len(data) > MAX_IMPORT_BYTES:
+        raise HTTPException(413, "Legacy Brain import exceeds the 12 MiB file limit")
+    return data
+
+
+@router.post("/owner/v3code/preview")
+async def preview_v3code_brain(request: Request, file: UploadFile = File(...),
+                               principal: AuthenticatedPrincipal = Depends(require_permission("memory:manage"))):
+    from app.knowledge.v3code_import import build_v3code_brain_plan
+    data = await _read_v3code_brain_upload(request, file)
+    try:
+        plan = build_v3code_brain_plan(data, owner_id=principal.identity)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
+    return {"digest": plan.digest, "chunk_count": plan.chunk_count,
+            "source_count": plan.source_count, "note_count": len(plan.notes),
+            "ignored_embeddings": True}
+
+
+@router.post("/owner/v3code/import")
+async def import_v3code_brain(request: Request, expected_digest: str = Query(..., min_length=64, max_length=64),
+                              expires_at: datetime = Query(...), retention_opt_in: StrictBool = Query(...),
+                              file: UploadFile = File(...),
+                              principal: AuthenticatedPrincipal = Depends(require_permission("memory:manage")),
+                              manager=Depends(service), now=Depends(get_memory_now)):
+    import hmac
+    from app.knowledge.v3code_import import build_v3code_brain_plan
+    data = await _read_v3code_brain_upload(request, file)
+    try:
+        plan = build_v3code_brain_plan(data, owner_id=principal.identity)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
+    if not hmac.compare_digest(plan.digest, expected_digest.lower()):
+        raise HTTPException(409, "The selected Brain export changed after preview; preview it again")
+    return invoke(lambda: manager.import_v3code_brain(
+        plan, principal.identity, expires_at=expires_at,
+        retention_opt_in=retention_opt_in, now=now))
+
+
 @router.post("/owner")
 def create_owner_knowledge(body: OwnerKnowledgeCreate,
                            principal: AuthenticatedPrincipal = Depends(require_permission("memory:manage")),

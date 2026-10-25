@@ -88,6 +88,14 @@ def _autonomy_level(request: Request, owner_id: str) -> str:
         return "chat_only"
 
 
+def _require_project_brief_preview(body, cloud):
+    from app.application.services.chat_workspaces import current_workspace, ChatWorkspaceService
+    workspace = current_workspace.get()
+    if cloud and workspace is not None and workspace.project_brief:
+        if body.project_brief_digest != ChatWorkspaceService.brief_digest(workspace.project_brief):
+            raise HTTPException(409, "The project brief changed. Reload and review it before consenting to a cloud reply.")
+
+
 def _require_action_policy(request: Request, owner_id: str, body) -> None:
     has_action = bool(body.context or body.knowledge_enabled or body.reviewed_tools
                       or body.delegate_once or body.image_ids or body.include_local_ocr)
@@ -172,6 +180,7 @@ class SendRequest(BaseModel):
     route_model_id: str | None = Field(default=None, min_length=1, max_length=256)
     route_consent: StrictBool = False
     delegate_once: StrictBool = False
+    project_brief_digest: str | None = Field(default=None, min_length=64, max_length=64)
 
 
 class RouteSuggestionRequest(BaseModel):
@@ -749,6 +758,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
         route_provider_id = turn_route[0] if turn_route else current["coordinator"].provider
         cloud_requires_consent = service.provider_requires_explicit_cloud_consent(
             route_provider_id)
+        _require_project_brief_preview(body, cloud_requires_consent)
         tool_trace, tool_context = [], None
         if body.reviewed_tools:
             if any(item.kind == "local-document-lookup" for item in body.reviewed_tools):
@@ -958,6 +968,7 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
             raise HTTPException(409, "The selected provider does not support response streaming.")
         cloud_requires_consent = service.provider_requires_explicit_cloud_consent(
             current["coordinator"].provider)
+        _require_project_brief_preview(body, cloud_requires_consent)
         knowledge = service.chat_knowledge()
         retrieval_started_at = time.perf_counter()
         auto_context = None

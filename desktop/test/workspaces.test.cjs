@@ -20,6 +20,7 @@ class Window extends EventEmitter {
   loadURL(url) { this.url = url; }
   show() { this.shown = true; }
   focus() { this.focused = true; }
+  setTitle(title) { this.title = title; }
   close() { this.emit("close"); this.destroyed = true; this.emit("closed"); }
 }
 function fixture(t) {
@@ -30,13 +31,14 @@ function fixture(t) {
     preload: "/preload.cjs", file, workArea: () => ({ x: 0, y: 0, width: 1280, height: 900 }) });
   return { create, file };
 }
-test("new windows and Ctrl+N share the manager; Settings is a nonmodal singleton", t => {
+test("chat Ctrl+N reaches tabs; explicit new windows share the nonmodal Settings manager", t => {
   const { create } = fixture(t); const manager = create(); manager.restore();
   const first = manager.first(); assert.match(first.url, /\/ui\/chat\?desktop=1$/);
   let prevented = false;
   first.webContents.emit("before-input-event", { preventDefault() { prevented = true; } },
     { type: "keyDown", control: true, key: "n" });
-  assert.equal(prevented, true); assert.equal(manager.all().length, 2);
+  assert.equal(prevented, false); assert.equal(manager.all().length, 1);
+  manager.create("chat");
   const settings = manager.create("settings");
   assert.equal(manager.create("settings"), settings); assert.equal(settings.focused, true);
   assert.equal(settings.options.modal, undefined); assert.equal(manager.all().length, 3);
@@ -62,7 +64,7 @@ test("restart restores bounded identifiers and geometry without serializing acti
   const raw = fs.readFileSync(file, "utf8"); assert.doesNotMatch(raw, /secret|approval|prompt|token/);
   const restored = create(); restored.restore();
   assert.equal(restored.all().length, 3);
-  assert.deepEqual(restored.all()[0].selection, { conversation: "abc123", agent: "researcher", model: "local:3b", project: "p1" });
+  assert.deepEqual(restored.all()[0].selection, { conversation: "abc123", agent: "researcher", provider: "", model: "local:3b", project: "p1" });
   assert.ok(restored.all().every(record => record.window.options.x >= 0));
 });
 test("invalid stored files recover to chat and offscreen bounds are clamped", t => {

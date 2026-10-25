@@ -48,6 +48,10 @@ class CapabilityActionApproval:
     denied_by: str | None = None
     denied_at: str | None = None
     consumed_at: str | None = None
+    workspace_id: str = ""
+    workspace_agent_id: str = ""
+    workspace_project_id: str = ""
+    workspace_model_id: str = ""
 
 
 class CapabilityApprovalService:
@@ -112,11 +116,19 @@ class CapabilityApprovalService:
                  "payload_digest": payload_digest, "target_digest": target_digest,
                  "policy_version": POLICY_VERSION, "risk": risk,
                  "irreversible": irreversible, "expires_at": expiry.isoformat()}
+        from .chat_workspaces import current_workspace
+        workspace = current_workspace.get()
+        provenance = ({"workspace_id": workspace.id, "workspace_agent_id": workspace.agent_id,
+                       "workspace_project_id": workspace.project_id, "workspace_model_id": workspace.model_id}
+                      if workspace is not None else {})
+        if workspace is not None and workspace.owner != actor_id:
+            raise PermissionError("Workspace owner does not match this action")
+        bound.update(provenance)
         digest = _fingerprint(bound)
         approval = CapabilityActionApproval(
             uuid4().hex, actor_id, capability_id, action_id, action_summary, target_ref,
             scope_type, scope_id, payload_digest, target_digest, POLICY_VERSION,
-            risk, irreversible, now.isoformat(), expiry.isoformat(), digest)
+            risk, irreversible, now.isoformat(), expiry.isoformat(), digest, **provenance)
         with self._lock:
             if len(self._records) >= self.MAX_APPROVALS:
                 raise CapabilityApprovalError("Approval record capacity is full")
@@ -139,12 +151,20 @@ class CapabilityApprovalService:
                 "approval_digest": approval.approval_digest, "status": status,
                 "approved_by": approval.approved_by, "approved_at": approval.approved_at,
                 "denied_by": approval.denied_by, "denied_at": approval.denied_at,
-                "consumed_at": approval.consumed_at}
+                "consumed_at": approval.consumed_at,
+                "workspace_id": approval.workspace_id, "workspace_agent_id": approval.workspace_agent_id,
+                "workspace_project_id": approval.workspace_project_id, "workspace_model_id": approval.workspace_model_id}
+
+    @staticmethod
+    def _workspace_matches(record):
+        from .chat_workspaces import current_workspace
+        workspace = current_workspace.get()
+        return record.workspace_id == (workspace.id if workspace is not None else "")
 
     def get(self, approval_id: str) -> CapabilityActionApproval:
         with self._lock:
             record = self._records.get(approval_id)
-            if record is None:
+            if record is None or not self._workspace_matches(record):
                 raise CapabilityApprovalNotFound("Approval request is unavailable")
             return record
 
@@ -153,7 +173,7 @@ class CapabilityApprovalService:
         with self._lock:
             return tuple(sorted(
                 (record for record in self._records.values()
-                 if record.actor_id == actor_id
+                 if record.actor_id == actor_id and self._workspace_matches(record)
                  and record.status in {"pending", "approved"}
                  and datetime.fromisoformat(record.expires_at) > now),
                 key=lambda record: record.requested_at, reverse=True))
@@ -239,7 +259,7 @@ class CapabilityApprovalService:
 
     def _get_locked(self, approval_id: str) -> CapabilityActionApproval:
         record = self._records.get(approval_id)
-        if record is None:
+        if record is None or not self._workspace_matches(record):
             raise CapabilityApprovalNotFound("Approval request is unavailable")
         return record
 

@@ -1216,6 +1216,16 @@ setup; application data is preserved.
 
 The bounded `desktop/workspaces.json` file stores window geometry and conversation/Agent/model/project identifiers only. Restore clamps coordinates to the current primary work area, never replays a turn or action, and never enables retention. An unretained or missing conversation opens empty with an explanation. Independent model/project selection and server-side workspace/approval isolation remain Task 215; visible resource queue and exclusive capture ownership remain Task 216. Source-mode Windows checks establish window lifecycle behavior, not packaged installer or concurrent model-workload acceptance.
 
+## Isolated per-window workspaces (Task 215)
+
+Each trusted chat window registers a bounded owner-scoped workspace identifier with an Agent, provider/model route and optional Project. The selection and immutable conversation association are persisted in SQLite schema version 5 with WAL and a busy timeout. Changing a selector creates a new empty conversation context; it does not mutate the Agent registry, replay a message, transfer an approval or rewrite an existing conversation's Project.
+
+`X-Chat-Workspace` is a scoped reference, not authentication. The existing backend authenticates the owner before resolving it, and conversation routes replace the current window selection with the conversation's stored selection. Conversation catalogs, optional durable history, retrieval traces, Task proposals and exact-action approvals recheck that association. Approval digests record the requesting window, Agent, Project and model. Project retrieval uses the existing verified Project Knowledge path; a workspace cannot select another Project for an existing conversation.
+
+Local model choices come from the existing installed-model inventory. Provider-reported non-chat models fail before a turn, while unknown capability stays unknown. Existing ResourceManager slots reserve the actual selected provider/model route and release in `finally`. An alternate workspace model is currently text-only and non-streaming; images and one-step delegation require the Agent's configured route. Project briefs are explicit owner configuration, stored separately, bounded, rejected when they resemble credentials, and inserted only as delimited untrusted user context. Cloud sends preview the exact brief and require its digest plus the existing per-turn consent.
+
+The workspace service shares providers, settings and the Brain index. Local selection may inspect installed inventory and model-reported capability, but it performs no generation or model transfer. It adds no principal, permission, background work or action replay. Task 216 separately owns visible queue position, exclusive microphone/camera/screen ownership and per-window stop controls.
+
 ## Windows Electron distribution (Task 127)
 
 The per-user Windows x64 installer packages Electron 44.7.0, a Next.js

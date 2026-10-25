@@ -104,6 +104,8 @@ class ChatTaskProposalService:
 
         chat = self._application.owned_chat()
         current = chat.get(owner_id, conversation_id)
+        if current.get("workspace") is not None and current["workspace"]["project_id"] != project_id:
+            raise ValueError("Task proposals must use this workspace's selected project")
         conversation = current["conversation"]
         if conversation.status is not ConversationStatus.OPEN:
             raise ValueError("Cannot propose a Task from a closed conversation")
@@ -235,7 +237,11 @@ class ChatTaskProposalService:
         _text(owner_id, "owner_id", 256)
         if self._persistence is None:
             return ()
-        return self._persistence.list_proposals(owner_id, self._now())
+        records = self._persistence.list_proposals(owner_id, self._now())
+        factory = getattr(self._application, "chat_workspaces", None)
+        if callable(factory):
+            records = tuple(record for record in records if factory().permits(owner_id, record["conversation_id"]))
+        return records
 
     def confirm(
         self,

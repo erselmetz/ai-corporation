@@ -62,6 +62,7 @@ def build_chat_messages(
     presentation_preferences: dict | None = None,
     brain_enabled: bool = False,
     role_instructions: str | None = None,
+    project_context: str | None = None,
 ) -> list[dict[str, str]]:
     """Build system, completed history, optional untrusted blocks, and the current user turn."""
     if not isinstance(request, str) or not request.strip():
@@ -93,6 +94,7 @@ def build_chat_messages(
         if item["content"].strip():
             messages.append({"role": item["role"], "content": item["content"]})
     for title, content in (("RETRIEVED KNOWLEDGE", retrieved_context),
+                           ("PROJECT BRIEF", project_context),
                            ("REVIEWED TOOL RESULTS", tool_context),
                            ("OCR EVIDENCE", ocr_context)):
         block = _reference_block(title, content)

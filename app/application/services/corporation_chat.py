@@ -54,6 +54,7 @@ class CorporationChatService:
         self._used_reviews: set[str] = set()
         self._chat = EmployeeChatService(EmployeeRegistry(), orchestrator.agents)
         self.history = None
+        self.project_context = None
 
     def _durable(self, conversation_id):
         return self.history is not None and self.history.is_active(conversation_id)
@@ -182,6 +183,7 @@ class CorporationChatService:
         messages = build_chat_messages(
             text, history, retrieved_context=retrieved_context,
             tool_context=tool_context,
+            project_context=self.project_context(conversation_id) if callable(self.project_context) else None,
             presentation_preferences=presentation_preferences,
             brain_enabled=brain_enabled,
             role_instructions=(role_instructions if role_instructions is not None else
@@ -282,6 +284,7 @@ class CorporationChatService:
             ) or None
         messages = build_chat_messages(
             text, history, ocr_context=ocr_context,
+            project_context=self.project_context(conversation_id) if callable(self.project_context) else None,
             presentation_preferences=presentation_preferences,
             role_instructions=self._orchestrator.agents.get(record.coordinator_agent_id).system_prompt or None,
         )
@@ -339,6 +342,7 @@ class CorporationChatService:
         ]
         messages = build_chat_messages(
             text, history, retrieved_context=retrieved_context,
+            project_context=self.project_context(conversation_id) if callable(self.project_context) else None,
             presentation_preferences=presentation_preferences,
             brain_enabled=brain_enabled,
             role_instructions=self._orchestrator.agents.get(record.coordinator_agent_id).system_prompt or None,

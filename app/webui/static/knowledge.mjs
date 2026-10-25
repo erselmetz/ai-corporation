@@ -8,6 +8,7 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
   const state = el("knowledge-state"), indexState = el("knowledge-index-status");
   const list = el("knowledge-list"), detail = el("knowledge-detail");
   let ownerId = null, selected = null, semanticAvailable = false, busy = false;
+  let legacyBrainFile = null, legacyBrainPlan = null;
   const MAX_FILES_PER_BATCH = 25;
   const ALLOWED_EXTENSIONS = new Set(".txt .md .pdf .docx .csv .py .js .mjs .cjs .ts .tsx .jsx .json .html .htm .css .scss .yaml .yml .toml .ini .xml .sql .sh .ps1 .bat .java .c .h .cpp .hpp .go .rs .rb .php .cs .kt .swift .vue .svelte .mdx .rst .log".split(" "));
   const statusList = el("brain-ingestion-list");
@@ -39,6 +40,9 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
       const button = el(id);
       if (button) button.disabled = value || (["knowledge-index", "knowledge-inspect"].includes(id) && (!selected || !semanticAvailable)) || (id === "knowledge-delete" && !selected);
     }
+    const preview = el("v3code-brain-preview"), commit = el("v3code-brain-import");
+    if (preview) preview.disabled = value || !legacyBrainFile;
+    if (commit) commit.disabled = value || !legacyBrainFile || !legacyBrainPlan;
   }
   function stagedRow(file) {
     const row = documentRef.createElement("li");
@@ -226,6 +230,73 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
       await refreshAfterAction();
     } catch (error) { state.textContent = error.message; }
     finally { setBusy(false); }
+  }
+  function selectLegacyBrainFile(event) {
+    legacyBrainFile = event?.target?.files?.[0] || null;
+    legacyBrainPlan = null;
+    el("v3code-brain-state").textContent = legacyBrainFile
+      ? `${legacyBrainFile.name || "Selected JSON"} selected (${legacyBrainFile.size || 0} bytes). Preview before import.`
+      : "Choose a v3code brain.json export to begin.";
+    setBusy(busy);
+  }
+  async function previewLegacyBrain() {
+    if (busy) return;
+    const file = legacyBrainFile;
+    if (!file || !(file.name || "").toLowerCase().endsWith(".json")) {
+      el("v3code-brain-state").textContent = "Choose a v3code Brain .json export.";
+      return;
+    }
+    if (!file.size || file.size > 12 * 1024 * 1024) {
+      el("v3code-brain-state").textContent = "Choose a non-empty Brain export no larger than 12 MiB.";
+      return;
+    }
+    setBusy(true);
+    el("v3code-brain-state").textContent = "Validating the selected Brain export locally…";
+    try {
+      const formData = new FormData(); formData.append("file", file, file.name);
+      const result = await request("/api/memory/owner/v3code/preview", { method: "POST", formData });
+      if (!/^[a-f0-9]{64}$/i.test(result.digest || "")
+          || ![result.chunk_count, result.source_count, result.note_count].every(value => Number.isSafeInteger(value) && value > 0)
+          || result.ignored_embeddings !== true) throw new Error("Brain preview response was invalid.");
+      legacyBrainPlan = { digest: result.digest, summary: result, file };
+      el("v3code-brain-state").textContent = `Preview: ${result.chunk_count} chunks from ${result.source_count} sources become ${result.note_count} private notes. Legacy vectors are discarded; no model runs or downloads.`;
+    } catch (error) {
+      legacyBrainPlan = null;
+      el("v3code-brain-state").textContent = error.message;
+    } finally { setBusy(false); }
+  }
+  async function importLegacyBrain() {
+    if (busy) return;
+    if (!legacyBrainPlan || legacyBrainPlan.file !== legacyBrainFile) {
+      el("v3code-brain-state").textContent = "Preview the currently selected Brain export first.";
+      return;
+    }
+    if (!el("knowledge-consent").checked) {
+      el("v3code-brain-state").textContent = "Confirm local retention consent before importing private notes.";
+      return;
+    }
+    const expiry = new Date(now().getTime() + Number(el("knowledge-expiry").value) * 86400000).toISOString();
+    const { digest, summary } = legacyBrainPlan;
+    const confirmation = `Import ${summary.chunk_count} legacy chunks from ${summary.source_count} sources as ${summary.note_count} owner-only local notes? They will expire ${expiry}. The old vectors are discarded; no model is run or downloaded. Existing matching import records are skipped. SHA-256: ${digest}`;
+    if (!confirmImpl(confirmation)) {
+      el("v3code-brain-state").textContent = "Import cancelled. No notes were added.";
+      return;
+    }
+    setBusy(true);
+    el("v3code-brain-state").textContent = "Importing into your private Brain…";
+    try {
+      const formData = new FormData(); formData.append("file", legacyBrainFile, legacyBrainFile.name);
+      const query = new URLSearchParams({ expected_digest: digest, expires_at: expiry, retention_opt_in: "true" });
+      const result = await request(`/api/memory/owner/v3code/import?${query}`, { method: "POST", formData });
+      legacyBrainFile = null; legacyBrainPlan = null;
+      if (el("v3code-brain-file")) el("v3code-brain-file").value = "";
+      el("knowledge-consent").checked = false;
+      el("v3code-brain-state").textContent = `${result.created_count} notes imported; ${result.skipped_count} matching notes already existed. ${result.chunk_count} source chunks retained in owner-only storage. Semantic indexing remains optional and local.`;
+      try { await refreshAfterAction(); }
+      catch { el("v3code-brain-state").textContent += " The Brain list did not refresh; the import result was saved."; }
+    } catch (error) {
+      el("v3code-brain-state").textContent = error.message;
+    } finally { setBusy(false); }
   }
   async function refreshAfterAction() {
     const data = await request("/api/memory/owner");
@@ -423,6 +494,9 @@ export function mountOwnerKnowledge({ documentRef = globalThis.document, fetchIm
   el("knowledge-upload-form").addEventListener("submit", event => void upload(event));
   el("knowledge-file").addEventListener("change", event => setSelectedFiles(event.target.files));
   el("knowledge-folder").addEventListener("change", event => setSelectedFiles(event.target.files));
+  el("v3code-brain-file")?.addEventListener("change", selectLegacyBrainFile);
+  el("v3code-brain-preview")?.addEventListener("click", () => void previewLegacyBrain());
+  el("v3code-brain-import")?.addEventListener("click", () => void importLegacyBrain());
   const dropZone = el("brain-drop-zone");
   dropZone?.addEventListener("click", () => el("knowledge-file")?.click());
   dropZone?.addEventListener("keydown", event => {

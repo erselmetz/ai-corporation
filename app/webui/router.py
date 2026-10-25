@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 router = APIRouter()
 
@@ -19,7 +19,7 @@ def _navigation(active_path: str, *, desktop_settings_available: bool = True) ->
         ("AI", (("Agents", "/ui/agents"), ("Employees", "/ui/employees"), ("Positions", "/ui/positions"),
                 ("Organization map", "/ui/structure"), ("Providers &amp; models", "/ui/providers"),
                 ("Sage Core", "/ui/sage-core"),
-                ("3D visualization", "/ui/visualization"), ("Memory", "/ui/memory"))),
+                ("3D visualization", "/ui/visualization"), ("Brain", "/ui/knowledge"))),
         ("OPERATIONS", (("Tasks", "/ui/tasks"), ("Workflows", "/ui/workflows"),
                         ("Workflow map", "/ui/workflow-map"), ("Activity", "/ui/activity"),
                         ("Computer automation", "/ui/automation"))),
@@ -832,13 +832,15 @@ def project_management_page() -> HTMLResponse:
 
 
 @router.get("/ui/memory", response_class=HTMLResponse, include_in_schema=False)
-def memory_page() -> HTMLResponse:
-    return HTMLResponse("""<!doctype html><html lang="en"><head>
-      <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Memory â€” ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
-      <script type="module" src="/ui/static/memory.mjs"></script></head><body>
-      <main class="content"><a href="/ui">Back to dashboard</a><h1>Memory management</h1>
-      <p>In default API mode, browser sign-in is not configured. Reads require memory:read; changes require memory:manage and owner authority. Owner identity comes from the authenticated session.</p>
+def memory_page():
+    """Compatibility route; Brain is the single user-facing knowledge workspace."""
+    return RedirectResponse("/ui/knowledge#advanced-memory", status_code=307)
+
+
+def _advanced_memory_sections() -> str:
+    return """
+      <details id="advanced-memory" class="management-card"><summary>Advanced scopes, correction, and search</summary>
+      <div><p>Inspect exact conversation, Project, or Corporation scopes. Reads require memory:read; changes require memory:manage and owner authority.</p>
       <section class="management-card"><h2>Inspect stored memory</h2>
       <label for="memory-scope">Scope</label><select id="memory-scope"><option value="owner">My saved knowledge</option><option value="conversation">Conversation</option><option value="project">Project</option><option value="corporation">Corporation publication</option></select>
       <label for="memory-scope-id">Conversation, Project, or Corporation ID</label><input id="memory-scope-id" autocomplete="off">
@@ -865,7 +867,7 @@ def memory_page() -> HTMLResponse:
       <p id="memory-map-state" role="status" aria-live="polite">Choose a scope and refresh to load its authorized records.</p>
       <div id="memory-map-root" class="memory-map-root" role="group" aria-label="Selected memory scope"></div>
       <ol id="memory-relationship-list" class="memory-map-nodes" aria-label="Memory records and their recorded relationships"></ol>
-      </section></main></body></html>""")
+      </section></div></details>"""
 
 
 @router.get("/ui/knowledge", response_class=HTMLResponse, include_in_schema=False)
@@ -873,8 +875,8 @@ def owner_knowledge_page() -> HTMLResponse:
     return HTMLResponse("""<!doctype html><html lang="en"><head>
       <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Brain - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css"><link rel="stylesheet" href="/ui/static/brain-graph.css">
-      <script type="module" src="/ui/static/knowledge.mjs"></script></head><body>
-      <main class="content brain-page"><nav aria-label="Brain navigation"><a href="/ui/chat">Chat</a> | <a href="/ui/login?next=/ui/knowledge">Owner sign-in</a> | <a href="/ui/memory">Advanced memory</a></nav>
+      <script type="module" src="/ui/static/knowledge.mjs"></script><script type="module" src="/ui/static/memory.mjs"></script></head><body>
+      <main class="content brain-page"><nav aria-label="Brain navigation"><a href="/ui/chat">Chat</a> | <a href="/ui/login?next=/ui/knowledge">Owner sign-in</a> | <a href="#advanced-memory">Advanced scopes</a></nav>
       <p class="eyebrow">PRIVATE TO THIS OWNER</p><h1>Brain</h1>
       <p>Save notes or add local files for grounded chat. Items stay on this device, expire within 30 days, and are never shared without per-turn review and consent.</p>
       <section class="management-card" aria-labelledby="knowledge-add-title"><h2 id="knowledge-add-title">Add knowledge</h2>
@@ -889,6 +891,12 @@ def owner_knowledge_page() -> HTMLResponse:
       <div id="brain-drop-zone" class="brain-drop-zone" role="button" tabindex="0" aria-label="Choose files or drop supported files here">Drop files here or use the picker above</div>
       <p id="brain-selection-status" role="status" aria-live="polite">No files selected.</p>
       <button id="knowledge-upload" type="submit">Add selected files</button></form>
+      <section aria-labelledby="v3code-brain-import-title"><h3 id="v3code-brain-import-title">Import a legacy v3code Brain</h3>
+      <p>Preview a v3code brain.json export up to 12 MiB. The preview reports counts and a digest, not note contents. Import ignores old vectors and knowledge_pack.json, groups chunks into bounded notes, keeps them in this owner-only Brain, requires the retention choice above, and never runs or downloads a model.</p>
+      <label for="v3code-brain-file">Choose brain.json</label><input id="v3code-brain-file" type="file" accept=".json,application/json">
+      <button id="v3code-brain-preview" type="button" disabled>Preview legacy Brain</button>
+      <button id="v3code-brain-import" type="button" disabled>Import previewed notes</button>
+      <p id="v3code-brain-state" role="status" aria-live="polite">Choose a v3code brain.json export to begin.</p></section>
       <ol id="brain-ingestion-list" aria-label="File processing status" aria-live="polite"></ol>
       <p id="knowledge-state" role="status" aria-live="polite"></p></section>
       <section class="management-card" aria-labelledby="knowledge-library-title"><h2 id="knowledge-library-title">Saved notes</h2>
@@ -919,6 +927,7 @@ def owner_knowledge_page() -> HTMLResponse:
       <button id="knowledge-inspect" type="button" disabled>Check index status</button>
       <button id="knowledge-delete" type="button" disabled>Forget selected note</button>
       <p>Indexing is local. When an embedding pack is unavailable, chat uses lexical retrieval. Deleting a note also invalidates its derived index. Use the Chat knowledge control to review exact citations before sending context to a provider.</p></section>
+      """ + _advanced_memory_sections() + """
       </main></body></html>""")
 
 
@@ -983,6 +992,9 @@ def coordinator_chat_page():
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chat - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
     <link rel="stylesheet" href="/ui/static/chat-ui.css?v=195">
+    <link rel="stylesheet" href="/ui/static/brain-graph.css">
+    <link rel="stylesheet" href="/ui/static/prototype-shell.css?v=223">
+    <script type="module" src="/ui/static/prototype-shell.mjs?v=223"></script>
     <script type="module" src="/ui/static/chat.mjs?v=195"></script></head><body class="chat-page">
     <main class="chat-app"><aside id="chat-sidebar" class="chat-sidebar" aria-label="Chat navigation">
       <div class="chat-sidebar-top"><a class="chat-brand" href="/ui/chat">ERSELMETZ AI</a><button id="chat-nav-toggle" type="button" aria-label="Collapse sidebar" aria-expanded="true">&#9776;</button></div>
@@ -998,13 +1010,18 @@ def coordinator_chat_page():
       </details>
       <label class="visually-hidden" for="chat-conversation">Choose conversation</label><select id="chat-conversation" class="visually-hidden"></select>
       <details class="chat-advanced-nav"><summary>Advanced</summary><button id="chat-refresh" type="button" class="chat-sidebar-refresh">Refresh chats</button><button id="chat-close" type="button" class="chat-sidebar-close">Close conversation</button><nav aria-label="Advanced pages">
-        <a href="/ui/knowledge">Brain</a><a href="/ui/employees">Employees</a><a href="/ui/positions">Positions</a><a href="/ui/structure">Organization map</a><a href="/ui/providers">Providers &amp; models</a><a href="/ui/visualization">3D visualization</a><a href="/ui/memory">Advanced memory</a><a href="/ui/tasks">Tasks</a><a href="/ui/workflows">Workflows</a><a href="/ui/workflow-map">Workflow map</a><a href="/ui/activity">Activity</a><a href="/ui/inventory">Software inventory</a><a href="/ui/readiness">Performance readiness</a><a href="/ui/backup">Backup &amp; restore</a><a href="/ui/documentation">Documentation</a><a href="/ui/updates">Updates</a><a href="/ui/preferences">Preferences</a><a href="/ui/settings/capabilities">Capabilities &amp; privacy</a><a href="/ui/employee-chat">Employee chat</a><a href="/ui/login?next=/ui/chat">Owner sign-in</a>
+        <a href="/ui/knowledge">Brain</a><a href="/ui/employees">Employees</a><a href="/ui/positions">Positions</a><a href="/ui/structure">Organization map</a><a href="/ui/providers">Providers &amp; models</a><a href="/ui/visualization">3D visualization</a><a href="/ui/tasks">Tasks</a><a href="/ui/workflows">Workflows</a><a href="/ui/workflow-map">Workflow map</a><a href="/ui/activity">Activity</a><a href="/ui/inventory">Software inventory</a><a href="/ui/readiness">Performance readiness</a><a href="/ui/backup">Backup &amp; restore</a><a href="/ui/documentation">Documentation</a><a href="/ui/updates">Updates</a><a href="/ui/preferences">Preferences</a><a href="/ui/settings/capabilities">Capabilities &amp; privacy</a><a href="/ui/employee-chat">Employee chat</a><a href="/ui/login?next=/ui/chat">Owner sign-in</a>
       </nav></details><a class="chat-settings-link" href="/ui/settings/capabilities">Settings</a>
     </aside><section class="chat-workspace">
     <header class="chat-header">
       <button id="chat-menu-button" type="button" aria-label="Open navigation" aria-expanded="false">&#9776;</button>
       <a class="chat-header-brand" href="/ui/chat">ERSELMETZ AI</a>
       <span id="chat-header-model" class="chat-header-model" aria-live="polite"></span>
+      <div class="chat-workspace-selectors" aria-label="Window workspace">
+        <label for="workspace-model"><span class="visually-hidden">Window model</span><select id="workspace-model" aria-label="Window model"><option value="">Agent default model</option></select></label>
+        <label for="chat-agent"><span class="visually-hidden">Window Agent</span><select id="chat-agent" aria-label="Window Agent"></select></label>
+        <label for="workspace-project"><span class="visually-hidden">Window project</span><select id="workspace-project" aria-label="Window project"><option value="">Personal</option></select></label>
+      </div>
       <label class="chat-autonomy-chip" for="chat-autonomy-level">Autonomy <select id="chat-autonomy-level" aria-label="Chat autonomy level"><option value="chat_only">Chat only</option><option value="auto_safe">Auto for safe actions</option><option value="ask_every_action">Ask before every action</option></select></label>
       <button id="chat-emergency-stop" class="chat-emergency-stop" type="button" aria-label="Emergency stop protected activity" title="Stop protected activity" hidden>&#9632;</button>
       </header>
@@ -1016,8 +1033,9 @@ def coordinator_chat_page():
       <div class="chat-examples"><button type="button" data-chat-example="Explain a topic simply">Explain a topic simply</button><button type="button" data-chat-example="Help me plan a project">Help me plan a project</button><button type="button" data-chat-example="Review a piece of code">Review a piece of code</button></div>
     </section>
     <section id="chat-history" aria-label="Conversation messages" aria-live="polite"></section>
-    <p id="cloud-consent-panel" class="chat-consent-inline" hidden><label><input id="cloud-consent" type="checkbox"> I consent to send this message and the selected context shown above to Google Gemini for this reply only.</label></p>
+    <div id="cloud-consent-panel" class="chat-consent-inline" hidden><p id="workspace-cloud-brief" hidden></p><label><input id="cloud-consent" type="checkbox"> I consent to send this message and the selected context shown above to Google Gemini for this reply only.</label></div>
     <div class="chat-compose-row"><details id="chat-settings" class="chat-settings-popover"><summary aria-label="Add image, camera, screen capture, or knowledge">&#43;</summary><div class="chat-settings-content">
+      <details id="workspace-brief-panel" hidden><summary>Project brief</summary><p>Saved locally for this project's chats. It is reference text, not permission to act. Cloud replies require a fresh review and consent.</p><label for="workspace-brief">Project instructions and context</label><textarea id="workspace-brief" maxlength="2000" rows="4"></textarea><button id="workspace-brief-save" type="button">Save project brief</button></details>
       <button id="chat-add-image-action" type="button">Add image <span>Attach an image for this reply.</span></button>
       <button id="chat-camera-action" type="button">Camera <span>Capture one frame only when you choose.</span></button>
       <button id="chat-screen-action" type="button">Screen capture <span>Choose one display or window for this reply.</span></button>
@@ -1157,7 +1175,6 @@ def coordinator_chat_page():
     <form id="chat-form" class="chat-composer">
     <label class="visually-hidden" for="chat-input">Message (up to 8192 UTF-8 bytes)</label>
     <textarea id="chat-input" rows="1" maxlength="8192" required placeholder="Message ERSELMETZ AI&#8230;" aria-label="Message ERSELMETZ AI"></textarea>
-    <label class="chat-model-label" for="chat-agent"><span class="visually-hidden">Coordinator model</span><select id="chat-agent" aria-label="Coordinator model"></select></label>
     <button id="chat-mic" type="button" aria-label="Start voice input">&#127908;</button>
     <button id="chat-send" type="submit" aria-label="Send message">Send</button></form></div>
     </div></section></main></body></html>""")

@@ -76,7 +76,8 @@ def _utc(now):
 
 
 class ChatHistoryService:
-    def __init__(self, corporation_id: str):
+    def __init__(self, corporation_id: str, *, workspaces=None):
+        self._workspaces = workspaces
         self._corporation_id = corporation_id
         self._active: set[str] = set()
         self._lock = RLock()
@@ -196,6 +197,8 @@ class ChatHistoryService:
                     (self._corporation_id, owner)).fetchall()
                 items = []
                 for row in rows:
+                    if self._workspaces is not None and not self._workspaces.permits(owner, row["id"]):
+                        continue
                     pending = connection.execute(
                         "SELECT COUNT(*) FROM chat_history_messages WHERE conversation_id = ? AND status = 'pending'",
                         (row["id"],)).fetchone()[0]
@@ -208,6 +211,8 @@ class ChatHistoryService:
                 connection.close()
 
     def _owned(self, connection, owner, conversation_id):
+        if self._workspaces is not None and not self._workspaces.permits(owner, conversation_id):
+            raise HistoryNotFound("Conversation history not found")
         row = connection.execute(
             "SELECT * FROM chat_history WHERE id = ? AND corporation_id = ? AND owner_id = ?",
             (conversation_id, self._corporation_id, owner)).fetchone()
@@ -277,6 +282,8 @@ class ChatHistoryService:
                     ids = [r[0] for r in connection.execute(
                         "SELECT id FROM chat_history WHERE corporation_id = ? AND owner_id = ?",
                         (self._corporation_id, owner))]
+                    if self._workspaces is not None:
+                        ids = [identifier for identifier in ids if self._workspaces.permits(owner, identifier)]
                     for identifier in ids:
                         connection.execute("DELETE FROM chat_history_messages WHERE conversation_id = ?", (identifier,))
                         connection.execute("DELETE FROM chat_history WHERE id = ?", (identifier,))

@@ -1,6 +1,18 @@
 {
   "items": [
     {
+      "date": "2026-10-24",
+      "type": "development",
+      "title": "Task 218 owner-scoped v3code Brain import",
+      "summary": "Added a digest-matched preview and explicit retention-consented import for legacy v3code brain.json. The importer ignores old vectors and knowledge_pack.json, bundles 852 chunks from the actual export into 94 owner-only notes, enforces atomic/idempotent writes, and starts no model or download. Read-only actual-file preview left the Brain unchanged. Focused Python tests: 30 passed; Brain UI: 9 passed; browser/Electron/docs: 359 passed. The full Python run had 1,443 passed, 5 skipped and one unrelated pre-existing SQLite version assertion mismatch (expected 4, observed 5). Import has not been run; no push or deployment."
+    },
+    {
+      "date": "2026-10-24",
+      "type": "development",
+      "title": "Task 215 isolated per-window workspaces",
+      "summary": "Added compact per-window model, Agent and Project selection without changing global Agent assignments; durable immutable conversation associations; server-enforced conversation, history, approval, trace and Project Brain isolation; approval provenance; bounded untrusted Project briefs with exact cloud preview; and SQLite WAL concurrency. Full validation: Python 1436 passed / 5 skipped / 0 failed, browser modules 294, Electron 43, public docs 21, plus desktop UI production/type build. An isolated source-mode Windows Electron run passed two distinct Project workspaces, cross-window access denial, Ctrl+N, singleton Settings, same-process second launch and four-window restart restoration. Packaged Electron and concurrent live Ollama workloads remain unverified. Alternate workspace models are currently non-streaming text-only; Task 216 owns visible queues and exclusive device controls. Local checkpoint task-215-isolated-window-workspaces; no push or deployment."
+    },
+    {
       "date": "2026-10-23",
       "type": "development",
       "title": "Task 214 shared-backend Electron windows",

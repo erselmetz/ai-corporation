@@ -15,12 +15,20 @@ const ids = ["knowledge-state", "knowledge-index-status", "knowledge-list", "kno
   "knowledge-upload-form", "knowledge-file", "knowledge-upload", "knowledge-refresh", "knowledge-index",
   "knowledge-inspect", "knowledge-delete", "knowledge-folder", "brain-selection-status", "brain-drop-zone",
   "brain-ingestion-list", "brain-faiss-state", "brain-faiss-install", "brain-faiss-test", "brain-faiss-detail",
-  "brain-embedding-state", "brain-embedding-download", "brain-embedding-test", "brain-embedding-detail"];
+  "brain-embedding-state", "brain-embedding-download", "brain-embedding-test", "brain-embedding-detail",
+  "v3code-brain-file", "v3code-brain-preview", "v3code-brain-import", "v3code-brain-state"];
 const response = (payload, status = 200) => ({ ok: status === 200, status, json: async () => payload });
 const record = { id: "note-1", scope: "owner", scope_id: "local-owner", source_reference: "notes.md", expires_at: "2026-10-20T00:00:00+00:00" };
 const auth = { identity: "local-owner", csrf: "csrf", permissions: ["memory:read", "memory:manage", "memory:index"] };
 const summary = (items = [record], state = "disabled") => ({ scope: "owner", scope_id: "local-owner", items,
   semantic: { state, model: state === "configured" ? "local-embed" : null, detail: "optional local capability" } });
+async function waitFor(predicate, timeoutMs = 1000) {
+  const deadline = Date.now() + timeoutMs;
+  while (!predicate()) {
+    if (Date.now() >= deadline) throw new Error("Timed out waiting for the Brain UI state");
+    await new Promise(resolve => setTimeout(resolve, 5));
+  }
+}
 function setup(handler, confirmImpl = () => true) {
   const elements = Object.fromEntries(ids.map(id => [id, new Element()]));
   elements["knowledge-expiry"].value = "7";
@@ -94,7 +102,8 @@ test("Brain accepts a bounded multi-file batch and reports each file through chu
   ui.elements["knowledge-file"].files = [firstFile, secondFile];
   ui.elements["knowledge-consent"].checked = true;
   ui.elements["knowledge-upload-form"].listeners.submit({ preventDefault() {} });
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await waitFor(() => uploads === 2 && ui.brainEvents.filter(
+    event => event.type === "brain:ingestion" && event.detail.state === "ready").length === 2);
   assert.equal(uploads, 2);
   const states = ui.brainEvents.filter(event => event.type === "brain:ingestion").map(event => event.detail.state);
   assert.deepEqual(states, ["extracting", "ready", "extracting", "ready"]);
@@ -202,4 +211,49 @@ test("embedding Test it action reports only the local Ollama self-test", async (
   assert.match(ui.elements["brain-embedding-state"].textContent, /Working/);
   assert.match(ui.elements["brain-embedding-detail"].textContent, /bounded local embedding vector/);
   assert.ok(ui.calls.some(call => call.path === "/api/memory/brain/embedding/self-test"));
+});
+
+test("v3code Brain import previews counts and requires explicit retention plus a digest match", async () => {
+  const digest = "d".repeat(64);
+  let confirmation = "";
+  let ui;
+  ui = setup((path, options) => {
+    if (path === "/api/local/session") return response(auth);
+    if (path === "/api/memory/owner/v3code/preview") return response({ digest, chunk_count: 852,
+      source_count: 19, note_count: 93, ignored_embeddings: true });
+    if (path.startsWith("/api/memory/owner/v3code/import?")) return response({ digest,
+      chunk_count: 852, source_count: 19, note_count: 93, created_count: 93,
+      skipped_count: 0, ignored_embeddings: true });
+    if (path === "/api/memory/owner") return response(summary([]));
+    return null;
+  }, question => { confirmation = question; return true; });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const file = new Blob(["legacy export"]);
+  Object.defineProperty(file, "name", { value: "brain.json" });
+  ui.elements["v3code-brain-file"].files = [file];
+  ui.elements["v3code-brain-file"].listeners.change({ target: ui.elements["v3code-brain-file"] });
+  ui.elements["v3code-brain-preview"].listeners.click();
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.match(ui.elements["v3code-brain-state"].textContent, /852 chunks.*19 sources.*93 private notes/);
+  assert.equal(ui.calls.some(call => call.path.includes("/v3code/import?")), false);
+
+  ui.elements["v3code-brain-import"].listeners.click();
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.match(ui.elements["v3code-brain-state"].textContent, /retention consent/);
+  assert.equal(ui.calls.some(call => call.path.includes("/v3code/import?")), false);
+
+  ui.elements["knowledge-consent"].checked = true;
+  ui.elements["v3code-brain-import"].listeners.click();
+  await new Promise(resolve => setTimeout(resolve, 30));
+  assert.match(confirmation, /852 legacy chunks.*93 owner-only local/);
+  assert.match(confirmation, new RegExp(digest));
+  const previewCall = ui.calls.find(call => call.path === "/api/memory/owner/v3code/preview");
+  assert.equal(previewCall.options.headers["X-Local-CSRF"], "csrf");
+  const imported = ui.calls.find(call => call.path.startsWith("/api/memory/owner/v3code/import?"));
+  assert.ok(imported);
+  assert.equal(imported.options.headers["X-Local-CSRF"], "csrf");
+  assert.match(imported.path, /retention_opt_in=true/);
+  assert.match(imported.path, new RegExp(digest));
+  assert.equal(ui.elements["knowledge-consent"].checked, false);
+  assert.match(ui.elements["v3code-brain-state"].textContent, /93 notes imported/);
 });
