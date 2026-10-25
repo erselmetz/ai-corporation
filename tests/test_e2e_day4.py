@@ -32,7 +32,7 @@ def test_e2e_provider_model_flow(require_ollama_service):
         name="Verification Agent",
         role="Tester",
         provider="ollama",
-        model="llama3.2:3b",
+        model=require_ollama_service,
     )
     agent_registry.register(agent)
     

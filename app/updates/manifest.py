@@ -37,8 +37,20 @@ class CuratedUpdatesManifest:
 
     @staticmethod
     def _parse_entry(entry: object) -> UpdateSummary:
-        if not isinstance(entry, dict) or set(entry) != _UPDATE_FIELDS:
+        if (not isinstance(entry, dict)
+                or set(entry) not in (_UPDATE_FIELDS, _UPDATE_FIELDS | {"history"})):
             raise UpdatesSourceUnavailable
+
+        # Historical milestones are source records, never extra current updates.
+        # Validate them with the same strict schema; nested histories fail closed.
+        if "history" in entry:
+            history = entry["history"]
+            if not isinstance(history, list) or not 1 <= len(history) <= 100:
+                raise UpdatesSourceUnavailable
+            for previous in history:
+                if not isinstance(previous, dict) or set(previous) != _UPDATE_FIELDS:
+                    raise UpdatesSourceUnavailable
+                CuratedUpdatesManifest._parse_entry(previous)
 
         entry_date = entry["date"]
         entry_type = entry["type"]

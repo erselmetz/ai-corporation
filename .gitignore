@@ -73,3 +73,4 @@ desktop/task*-review-profile/
 /task*-review-profile/
 /task223-native-pytest.log
 /task223-native-focused.log
+/task222-*.log

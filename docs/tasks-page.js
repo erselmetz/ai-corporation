@@ -4,16 +4,9 @@ import { verificationLabels } from "./roadmap-status.js";
 const container = document.querySelector("#roadmap-groups");
 const summary = document.querySelector("#roadmap-summary");
 const categoryIndex = document.querySelector("#category-index");
-function cleanText(value) {
-  return value
-    .replace(/\u00e2\u20ac\u2014/g, "\u2014")
-    .replace(/\u00e2\u20ac\u2013/g, "\u2013")
-    .replace(/\u00c2\u00b7/g, "\u00b7")
-    .replace(/\u00e2\u20ac\u2122/g, "\u2019");
-}
 function textNode(tag, content, parent) {
   const node = document.createElement(tag);
-  node.textContent = cleanText(content);
+  node.textContent = String(content);
   parent.append(node);
   return node;
 }
@@ -39,7 +32,7 @@ for (const [name, rule] of Object.entries(roadmapRules)) {
   rulesPanel.append(paragraph);
 }
 
-for (const group of [...taskGroups].reverse()) {
+for (const group of [...taskGroups].sort((a, b) => Math.max(...b.range.match(/\d+/g).map(Number)) - Math.max(...a.range.match(/\d+/g).map(Number)))) {
   const sectionId = `tasks-${group.range.replace("–", "-")}`;
   const categoryLink = document.createElement("a");
   categoryLink.href = `#${sectionId}`;
@@ -69,7 +62,7 @@ for (const group of [...taskGroups].reverse()) {
     title.textContent = task.title;
     const status = document.createElement("span");
     status.className = `status status-${task.status === "completed" ? "complete" : task.status === "deferred" ? "deferred" : "planned"}`;
-    status.textContent = task.status === "completed" ? "Completed" : task.status === "deferred" ? "Deferred — incomplete" : task.status === "design_only" ? "Design only" : "Planned";
+    status.textContent = task.status === "completed" ? "Completed" : task.status === "deferred" ? "Deferred — incomplete" : task.status === "design_only" ? "Design only" : task.status === "superseded" ? "Superseded by 223-227" : task.status === "not_done" ? "Not done — scope undefined" : "Planned";
     const description = document.createElement("span");
     description.className = "task-description";
     description.textContent = task.description;
@@ -93,11 +86,13 @@ for (const group of [...taskGroups].reverse()) {
       contractList(details, "Follow-up validation (unverified coverage)", task.followUpValidation);
       contractList(details, "Owner decisions before dependent code", task.decisions);
       if (task.checkpoint) {
-        const link = textNode("a", `Verified checkpoint: ${task.checkpoint}`, details);
+        const link = textNode("a", `${task.status === "superseded" ? "Historical" : "Recorded"} checkpoint: ${task.checkpoint}`, details);
         link.href = `https://github.com/erselmetz/ai-corporation/${task.checkpoint.startsWith("task-") ? "tree" : "commit"}/${encodeURIComponent(task.checkpoint)}`;
       }
       contractList(details, "Recorded validation", task.validation);
       contractList(details, "Known limitations", task.limitations);
+      contractList(details, "History", task.history?.map(entry => `${entry.date}: ${entry.summary}`));
+      contractList(details, "Release readiness (source / packaged / real device)", task.releaseReadiness?.map(entry => `${entry.capability}: ${entry.source} / ${entry.packaged} / ${entry.realDevice}. ${entry.evidence}`));
       item.append(details);
     }
     list.append(item);
@@ -111,7 +106,7 @@ const completeCount = tasks.filter((task) => task.status === "completed").length
 const deferredCount = tasks.filter((task) => task.status === "deferred").length;
 const plannedCount = tasks.filter((task) => task.status === "planned").length;
 const designOnlyCount = tasks.filter((task) => task.status === "design_only").length;
-summary.textContent = `${tasks.length} roadmap tasks · ${completeCount} completed scoped checkpoints · ${deferredCount} deferred and incomplete · ${plannedCount} planned · ${designOnlyCount} design only`;
+summary.textContent = `${tasks.length} roadmap tasks · ${completeCount} completed scoped checkpoints · ${deferredCount} deferred and incomplete · ${plannedCount} planned · ${designOnlyCount} design only · ${tasks.filter(task => task.status === "superseded").length} superseded · ${tasks.filter(task => task.status === "not_done").length} not done`;
 const introTitle = document.querySelector("#task-page-title");
 if (introTitle) introTitle.textContent = `Tasks 1-${Math.max(...tasks.map(task => task.number))}`;
 const introStatus = document.querySelector("#task-page-status");

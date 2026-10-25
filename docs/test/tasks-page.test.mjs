@@ -25,13 +25,13 @@ test("shows all task contracts in descending order and identifies the next plann
   const groups = elements["roadmap-groups"].children;
   assert.equal(groups[0].id, "tasks-227-227");
   const items = groups.flatMap(group => group.children[1].children);
-  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), [227, 226, 225, 224, 223, 219, 218, 217, 216, 215, 214, 213, 211, 210, 209, 208, 207, ...Array.from({ length: 203 }, (_, index) => 203 - index)]);
-  assert.match(elements["roadmap-summary"].textContent, /220 roadmap tasks.*204 completed scoped checkpoints.*4 deferred and incomplete.*11 planned.*1 design only/);
-  assert.match(elements["next-task"].textContent, /Task 209/);
+  assert.deepEqual(items.map(item => Number(item.children[0].textContent)), [227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 211, 210, 209, 208, 207, 206, 205, 204, ...Array.from({ length: 203 }, (_, index) => 203 - index)]);
+  assert.match(elements["roadmap-summary"].textContent, /226 roadmap tasks.*201 completed scoped checkpoints.*4 deferred and incomplete.*8 planned.*1 design only.*9 superseded.*3 not done/);
+  assert.match(elements["next-task"].textContent, /Task 223/);
   const newest = items[0];
   assert.equal(newest.id, "task-227");
   const latestCompleted = items.find(item => item.id === "task-215");
-  assert.equal(latestCompleted.children[2].textContent, "Completed");
+  assert.equal(latestCompleted.children[2].textContent, "Superseded by 223-227");
   assert.match(latestCompleted.children[4].textContent, /AI-verified \(deterministic\/fake evidence recorded\)/);
   assert.equal(latestCompleted.children[5].textContent, "Real hardware/live provider: partially verified");
   assert.equal(latestCompleted.id, "task-215");
@@ -96,10 +96,10 @@ test("renders completion evidence separately from planned decision gates and exp
   assert.equal(distribution.children[2].textContent, "Completed");
   assert.match(distribution.textContent, /task-131-supported-packaging-distribution-strategy/);
   assert.equal(completed.children[2].textContent, "Completed");
-  assert.match(completed.textContent, /Verified checkpoint: d1ca364/);
+  assert.match(completed.textContent, /Recorded checkpoint: d1ca364/);
   assert.match(completed.textContent, /876 Python passed/);
   const localSetup = items.find(item => item.id === "task-104");
-  assert.match(localSetup.textContent, /Verified checkpoint: task-104-local-model-setup/);
+  assert.match(localSetup.textContent, /Recorded checkpoint: task-104-local-model-setup/);
   assert.ok(localSetup.children[6].children.some(node => node.href === "https://github.com/erselmetz/ai-corporation/tree/task-104-local-model-setup"));
   const onlineProvider = items.find(item => item.id === "task-105");
   assert.equal(onlineProvider.children[2].textContent, "Completed");
@@ -167,7 +167,7 @@ test("publishes completed milestones and remaining phases with their current sta
     [174, "completed"], [175, "completed"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
     [180, "completed"], [181, "completed"], [182, "completed"], [183, "completed"], [184, "completed"], [185, "completed"],
     [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"], [191, "completed"], [192, "completed"], [193, "deferred"], [194, "deferred"], [195, "completed"],
-    [196, "completed"], [197, "completed"], [198, "completed"], [199, "completed"], [200, "completed"], [201, "completed"], [202, "completed"], [203, "completed"], [207, "completed"], [208, "completed"], [209, "planned"], [210, "planned"], [211, "planned"], [213, "completed"], [214, "completed"], [215, "completed"], [216, "planned"], [217, "planned"], [218, "planned"], [219, "planned"], [223, "completed"], [224, "planned"], [225, "planned"], [226, "planned"], [227, "planned"],
+    [196, "completed"], [197, "completed"], [198, "completed"], [199, "completed"], [200, "completed"], [201, "completed"], [202, "completed"], [203, "completed"], [204, "not_done"], [205, "not_done"], [206, "not_done"], [207, "completed"], [208, "completed"], [209, "planned"], [210, "planned"], [211, "planned"], [213, "superseded"], [214, "superseded"], [215, "superseded"], [216, "superseded"], [217, "superseded"], [218, "superseded"], [219, "superseded"], [220, "superseded"], [221, "superseded"], [222, "completed"], [223, "planned"], [224, "planned"], [225, "planned"], [226, "planned"], [227, "planned"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, "task-177-auto-rag-trace");
   assert.equal(tasks.find(task => task.number === 178).checkpoint, "task-178-nav-fix");
@@ -192,7 +192,7 @@ test("publishes completed milestones and remaining phases with their current sta
     assert.equal(task.manualVerification, undefined);
     assert.ok(task.followUpValidation.length);
   }
-  assert.deepEqual(recommendedOrder.map(({ number }) => number), [178, 176, 177, 175, 180, 184, 181, 182, 183, 185, 186, 187, 188, 189, 190, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 207, 208, 209, 210, 211, 213, 214, 215, 216, 217]);
+  assert.deepEqual(recommendedOrder.map(({ number }) => number), [222, 223, 224, 225, 226, 227, 178, 176, 177, 175, 180, 184, 181, 182, 183, 185, 186, 187, 188, 189, 190, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 207, 208, 209, 210, 211, 213, 214, 215, 216, 217]);
   const corporationMap = tasks.find(task => task.number === 172);
   assert.match(corporationMap.description, /interactive, evidence-backed 3D map/);
   assert.match(corporationMap.acceptance.join(" "), /zoom\/orbit\/pan.*filters\/layers/i);
@@ -213,4 +213,41 @@ test("publishes completed milestones and remaining phases with their current sta
   assert.match(usability.validation.join(" "), /Expert heuristic walkthrough.*not a representative owner study/);
   assert.match(usability.limitations.join(" "), /No representative new or experienced owner participated/);
   assert.match(usability.limitations.join(" "), /No usability or accessibility conformance claim is made/);
+});
+
+test("preserves history and distinguishes superseded and undefined work", () => {
+  const elements = render();
+  const items = elements["roadmap-groups"].children.flatMap(group => group.children[1].children);
+  const superseded = items.find(item => item.id === "task-214");
+  assert.match(superseded.textContent, /Superseded by 223-227/);
+  assert.match(superseded.textContent, /Historical checkpoint/);
+  assert.match(superseded.textContent, /History/);
+  for (const number of [204, 205, 206]) {
+    const task = tasks.find(task => task.number === number);
+    assert.equal(task.scopeDefined, false);
+    assert.equal(task.status, "not_done");
+    assert.match(items.find(item => item.id === `task-${number}`).textContent, /Not done — scope undefined/);
+  }
+  for (const number of [180, 184]) {
+    assert.ok(tasks.find(task => task.number === number).history.length > 1);
+    assert.equal(items.filter(item => item.id === `task-${number}`).length, 1);
+  }
+});
+
+test("renders bounded readiness claims and retains revised phase contracts", () => {
+  const record = tasks.find(task => task.number === 222);
+  assert.ok(record.releaseReadiness.some(row => row.capability === "chat:send"));
+  for (const row of record.releaseReadiness) {
+    assert.ok(["Source-verified", "Unverified"].includes(row.source));
+    assert.equal(row.packaged, "Unverified");
+    assert.equal(row.realDevice, "Unverified");
+    assert.ok(row.evidence);
+  }
+  const elements = render();
+  assert.match(elements["roadmap-groups"].textContent, /Release readiness.*Source-verified.*Unverified/);
+  assert.match(tasks.find(task => task.number === 223).acceptance.join(" "), /300 and 2,000 nodes/);
+  assert.match(tasks.find(task => task.number === 224).acceptance.join(" "), /800 characters with 100 overlap/);
+  assert.match(tasks.find(task => task.number === 225).acceptance.join(" "), /knowledge_pack.json/);
+  assert.match(tasks.find(task => task.number === 226).acceptance.join(" "), /rename\/delete/);
+  assert.match(tasks.find(task => task.number === 227).acceptance.join(" "), /without replaying actions/);
 });

@@ -20,6 +20,9 @@ class CapturedOllama:
     def __init__(self):
         self.requests = []
         self.lock = threading.Lock()
+        self.capabilities=["completion"]
+        self.remote_host=None
+        self.thinking_metadata=None
 
 
 @pytest.fixture
@@ -32,7 +35,10 @@ def chat_capture(monkeypatch, tmp_path):
             with capture.lock:
                 capture.requests.append((self.path, raw.decode("utf-8")))
             request = json.loads(raw)
-            if request.get("stream") is True:
+            if self.path=="/api/show":
+                body=json.dumps({"capabilities":capture.capabilities,"remote_host":capture.remote_host,"thinking":capture.thinking_metadata}).encode()
+                content_type="application/json"
+            elif request.get("stream") is True:
                 payloads = (
                     {"message": {"role": "assistant", "content": "captured "}, "done": False},
                     {"message": {"role": "assistant", "content": "stream"}, "done": True},
@@ -89,6 +95,39 @@ def _start_coordinator(client, headers):
     )
     assert response.status_code == 200
     return response.json()["conversation"]["id"]
+
+
+def test_answer_only_backend_disables_unrequested_native_thinking(chat_capture):
+    client,headers,capture=chat_capture
+    capture.capabilities=["completion","thinking"]
+    identifier=_start_coordinator(client,headers)
+    response=client.post(f"/api/chat/conversations/{identifier}/messages",json={"text":"Give a short final answer"},headers=headers)
+    assert response.status_code==200,response.text
+    body=json.loads(capture.requests[-1][1])
+    assert capture.requests[-1][0]=="/api/chat"
+    assert body["think"] is False
+    assert body["options"]["num_predict"]==512
+    assert body["messages"][-1]=={"role":"user","content":"Give a short final answer"}
+
+
+def test_remote_ollama_metadata_fails_before_transferring_any_prompt(chat_capture):
+    client,headers,capture=chat_capture
+    capture.remote_host="https://remote.example"
+    identifier=_start_coordinator(client,headers)
+    response=client.post(f"/api/chat/conversations/{identifier}/messages",json={"text":"private-local-only-request"},headers=headers)
+    assert response.status_code==502
+    assert not any(path=="/api/chat" for path,_raw in capture.requests)
+    assert all("private-local-only-request" not in raw for _path,raw in capture.requests)
+
+
+def test_named_thinking_levels_are_not_forced_to_an_unsupported_boolean(chat_capture):
+    client,headers,capture=chat_capture
+    capture.capabilities=["completion","thinking"]
+    capture.thinking_metadata={"values":["low","medium","high"],"default":"medium"}
+    identifier=_start_coordinator(client,headers)
+    response=client.post(f"/api/chat/conversations/{identifier}/messages",json={"text":"answer"},headers=headers)
+    assert response.status_code==200
+    assert "think" not in json.loads(capture.requests[-1][1])
 
 
 def _assert_no_request_envelope(path, raw_body, *, stream):

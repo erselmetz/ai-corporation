@@ -1,0 +1,676 @@
+{
+  "date": "2026-10-25",
+  "base_commit": "e7ea9844567c74b8e7b4ac1a43a282b96bfd19a0",
+  "scope": "Task 222 local source/backend checks; no deployment or packaged Electron run",
+  "runs": {
+    "live-baseline-results": {
+      "agent_choice": {
+        "correct": 0,
+        "total": 5,
+        "mean_ms": 30053.87,
+        "cases": [
+          {
+            "question": "Review a Python function for a bug and propose a minimal patch without executing code.",
+            "expected_agent": "developer",
+            "valid_choice": false,
+            "correct": false,
+            "error_type": "ReadTimeout",
+            "error": "timed out",
+            "elapsed_ms": 30080.92
+          },
+          {
+            "question": "Compare two approaches using owner-authorized references and cite the evidence.",
+            "expected_agent": "researcher",
+            "valid_choice": false,
+            "correct": false,
+            "error_type": "ReadTimeout",
+            "error": "timed out",
+            "elapsed_ms": 30049.02
+          },
+          {
+            "question": "Organize the approved Brain notes by source and preserve their provenance.",
+            "expected_agent": "librarian",
+            "valid_choice": false,
+            "correct": false,
+            "error_type": "ReadTimeout",
+            "error": "timed out",
+            "elapsed_ms": 30043.18
+          },
+          {
+            "question": "Describe the layout of an owner-provided screenshot, with no clicks or continuous capture.",
+            "expected_agent": "observer",
+            "valid_choice": false,
+            "correct": false,
+            "error_type": "ReadTimeout",
+            "error": "timed out",
+            "elapsed_ms": 30055.06
+          },
+          {
+            "question": "Design unit tests for a Python parser and explain edge cases, without running commands.",
+            "expected_agent": "developer",
+            "valid_choice": false,
+            "correct": false,
+            "error_type": "ReadTimeout",
+            "error": "timed out",
+            "elapsed_ms": 30041.18
+          }
+        ]
+      },
+      "documents": [
+        {
+          "path": "desktop/requirements-build.txt",
+          "bytes": 21,
+          "sha256": "e4844211dcb381b52e184ae64c83008bf4e283eb580898333a22d41902e43ecd",
+          "http_status": 200
+        },
+        {
+          "path": "requirements-knowledge.txt",
+          "bytes": 139,
+          "sha256": "2b722aeaab96aaa618b9ff2abd23bc8d520f2952b30069c9b8be07fbaa06b421",
+          "http_status": 200
+        },
+        {
+          "path": "review/task-223-native-python.md",
+          "bytes": 4230,
+          "sha256": "2e460fd0f3c922a8de2bdbfbfbc8be48d2cbe0a73487047876268bd337fe8c1f",
+          "http_status": 200
+        },
+        {
+          "path": "review/task-214-window-review.md",
+          "bytes": 4347,
+          "sha256": "f415d4d76e47fa78eed797ee42d5cf01fd49bb4f0a8071c9d3e47f395ec59f25",
+          "http_status": 200
+        },
+        {
+          "path": "review/task-223-prototype-shell.md",
+          "bytes": 7697,
+          "sha256": "5b2349fd8566dac7617110ad654578041c58665c2dc2dcf355ff0cbe4cf049e5",
+          "http_status": 200
+        }
+      ],
+      "rag": {
+        "completed": 0,
+        "expected_source_retrieved": 6,
+        "strict_string_match": 0,
+        "inline_citation": 0,
+        "total": 10,
+        "mean_ms": 30220.89,
+        "cases": [
+          {
+            "question": "Which PyInstaller version is pinned in requirements-build.txt?",
+            "expected_source": "requirements-build.txt",
+            "accepted_strings": [
+              "6.22.3"
+            ],
+            "retrieved_sources": [
+              "task-223-native-python.md",
+              "task-223-prototype-shell.md"
+            ],
+            "expected_source_retrieved": false,
+            "completed": false,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "error_type": "RuntimeError",
+            "error": "Chat response failed; check the configured provider and model. No automatic retry occurred.",
+            "elapsed_ms": 30228.07
+          },
+          {
+            "question": "Which build tool is named in requirements-build.txt?",
+            "expected_source": "requirements-build.txt",
+            "accepted_strings": [
+              "pyinstaller"
+            ],
+            "retrieved_sources": [
+              "task-223-prototype-shell.md",
+              "task-214-window-review.md"
+            ],
+            "expected_source_retrieved": false,
+            "completed": false,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "error_type": "RuntimeError",
+            "error": "Chat response failed; check the configured provider and model. No automatic retry occurred.",
+            "elapsed_ms": 30214.63
+          },
+          {
+            "question": "Which sentence embedding library is listed in requirements-knowledge.txt?",
+            "expected_source": "requirements-knowledge.txt",
+            "accepted_strings": [
+              "sentence-transformers"
+            ],
+            "retrieved_sources": [
+              "task-223-native-python.md",
+              "requirements-knowledge.txt"
+            ],
+            "expected_source_retrieved": true,
+            "completed": false,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "error_type": "RuntimeError",
+            "error": "Chat response failed; check the configured provider and model. No automatic retry occurred.",
+            "elapsed_ms": 30219.66
+          },
+          {
+            "question": "Which vector database is listed in requirements-knowledge.txt?",
+            "expected_source": "requirements-knowledge.txt",
+            "accepted_strings": [
+              "chromadb"
+            ],
+            "retrieved_sources": [
+              "task-223-native-python.md"
+            ],
+            "expected_source_retrieved": false,
+            "completed": false,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "error_type": "RuntimeError",
+            "error": "Chat response failed; check the configured provider and model. No automatic retry occurred.",
+            "elapsed_ms": 30193.49
+          },
+          {
+            "question": "According to task-223-native-python.md, which native UI toolkit was used in that historical spike?",
+            "expected_source": "task-223-native-python.md",
+            "accepted_strings": [
+              "tk"
+            ],
+            "retrieved_sources": [
+              "task-223-native-python.md",
+              "task-223-prototype-shell.md"
+            ],
+            "expected_source_retrieved": true,
+            "completed": false,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "error_type": "RuntimeError",
+            "error": "Chat response failed; check the configured provider and model. No automatic retry occurred.",
+            "elapsed_ms": 30219.77
+          },
+          {
+            "question": "According to task-223-native-python.md, what forgery protection was retained alongside session cookies?",
+            "expected_source": "task-223-native-python.md",
+            "accepted_strings": [
+              "csrf"
+            ],
+            "retrieved_sources": [
+              "task-214-window-review.md",
+              "task-223-prototype-shell.md"
+            ],
+            "expected_source_retrieved": false,
+            "completed": false,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "error_type": "RuntimeError",
+            "error": "Chat response failed; check the configured provider and model. No automatic retry occurred.",
+            "elapsed_ms": 30219.22
+          },
+          {
+            "question": "According to task-214-window-review.md, what is the maximum number of saved window descriptors?",
+            "expected_source": "task-214-window-review.md",
+            "accepted_strings": [
+              "ten",
+              "10"
+            ],
+            "retrieved_sources": [
+              "task-214-window-review.md",
+              "task-223-prototype-shell.md"
+            ],
+            "expected_source_retrieved": true,
+            "completed": false,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "error_type": "RuntimeError",
+            "error": "Chat response failed; check the configured provider and model. No automatic retry occurred.",
+            "elapsed_ms": 30228.45
+          },
+          {
+            "question": "According to task-214-window-review.md, does restoring windows replay an action?",
+            "expected_source": "task-214-window-review.md",
+            "accepted_strings": [
+              "not",
+              "no",
+              "never"
+            ],
+            "retrieved_sources": [
+              "task-214-window-review.md",
+              "task-223-prototype-shell.md"
+            ],
+            "expected_source_retrieved": true,
+            "completed": false,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "error_type": "RuntimeError",
+            "error": "Chat response failed; check the configured provider and model. No automatic retry occurred.",
+            "elapsed_ms": 30219.75
+          },
+          {
+            "question": "Which optional image library caused the failed full Python gate in task-223-prototype-shell.md?",
+            "expected_source": "task-223-prototype-shell.md",
+            "accepted_strings": [
+              "pillow"
+            ],
+            "retrieved_sources": [
+              "task-223-prototype-shell.md",
+              "task-223-native-python.md"
+            ],
+            "expected_source_retrieved": true,
+            "completed": false,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "error_type": "RuntimeError",
+            "error": "Chat response failed; check the configured provider and model. No automatic retry occurred.",
+            "elapsed_ms": 30228.92
+          },
+          {
+            "question": "Which phase was stopped at the verification gate in task-223-prototype-shell.md?",
+            "expected_source": "task-223-prototype-shell.md",
+            "accepted_strings": [
+              "223"
+            ],
+            "retrieved_sources": [
+              "task-223-prototype-shell.md",
+              "task-223-native-python.md"
+            ],
+            "expected_source_retrieved": true,
+            "completed": false,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "error_type": "RuntimeError",
+            "error": "Chat response failed; check the configured provider and model. No automatic retry occurred.",
+            "elapsed_ms": 30236.94
+          }
+        ]
+      },
+      "media": [
+        {
+          "pack_id": "eyes",
+          "before": "installed",
+          "result": {
+            "pack_id": "eyes",
+            "state": "installed",
+            "detail": "Image libraries loaded. Install Tesseract and language data separately, then configure its executable path before OCR can be tested."
+          },
+          "capture_or_playback": false
+        },
+        {
+          "pack_id": "ears",
+          "before": "installed",
+          "result": {
+            "pack_id": "ears",
+            "state": "installed",
+            "detail": "Local speech runtime and microphone device are present. Record a five-second push-to-talk test from Chat to verify transcription; no audio was captured by this check."
+          },
+          "capture_or_playback": false
+        },
+        {
+          "pack_id": "voice",
+          "before": "installed",
+          "result": {
+            "pack_id": "voice",
+            "state": "installed",
+            "detail": "Offline speech libraries loaded. Use Chat's local voice test to verify playback and Stop on this device."
+          },
+          "capture_or_playback": false
+        }
+      ]
+    },
+    "live-results": {
+      "agent_choice": {
+        "correct": 5,
+        "total": 5,
+        "mean_ms": 3499.15,
+        "cases": [
+          {
+            "question": "Review a Python function for a bug and propose a minimal patch without executing code.",
+            "expected_agent": "developer",
+            "selected_agent": "developer",
+            "valid_choice": true,
+            "correct": true,
+            "elapsed_ms": 9751.38
+          },
+          {
+            "question": "Compare two approaches using owner-authorized references and cite the evidence.",
+            "expected_agent": "researcher",
+            "selected_agent": "researcher",
+            "valid_choice": true,
+            "correct": true,
+            "elapsed_ms": 1973.71
+          },
+          {
+            "question": "Organize the approved Brain notes by source and preserve their provenance.",
+            "expected_agent": "librarian",
+            "selected_agent": "librarian",
+            "valid_choice": true,
+            "correct": true,
+            "elapsed_ms": 1979.68
+          },
+          {
+            "question": "Describe the layout of an owner-provided screenshot, with no clicks or continuous capture.",
+            "expected_agent": "observer",
+            "selected_agent": "observer",
+            "valid_choice": true,
+            "correct": true,
+            "elapsed_ms": 1881.4
+          },
+          {
+            "question": "Design unit tests for a Python parser and explain edge cases, without running commands.",
+            "expected_agent": "developer",
+            "selected_agent": "developer",
+            "valid_choice": true,
+            "correct": true,
+            "elapsed_ms": 1909.6
+          }
+        ]
+      },
+      "documents": [
+        {
+          "path": "desktop/requirements-build.txt",
+          "bytes": 21,
+          "sha256": "e4844211dcb381b52e184ae64c83008bf4e283eb580898333a22d41902e43ecd",
+          "http_status": 200
+        },
+        {
+          "path": "requirements-knowledge.txt",
+          "bytes": 139,
+          "sha256": "2b722aeaab96aaa618b9ff2abd23bc8d520f2952b30069c9b8be07fbaa06b421",
+          "http_status": 200
+        },
+        {
+          "path": "review/task-223-native-python.md",
+          "bytes": 4230,
+          "sha256": "2e460fd0f3c922a8de2bdbfbfbc8be48d2cbe0a73487047876268bd337fe8c1f",
+          "http_status": 200
+        },
+        {
+          "path": "review/task-214-window-review.md",
+          "bytes": 4347,
+          "sha256": "f415d4d76e47fa78eed797ee42d5cf01fd49bb4f0a8071c9d3e47f395ec59f25",
+          "http_status": 200
+        },
+        {
+          "path": "review/task-223-prototype-shell.md",
+          "bytes": 7697,
+          "sha256": "5b2349fd8566dac7617110ad654578041c58665c2dc2dcf355ff0cbe4cf049e5",
+          "http_status": 200
+        }
+      ],
+      "rag": {
+        "completed": 10,
+        "expected_source_retrieved": 8,
+        "strict_string_match": 7,
+        "inline_citation": 1,
+        "total": 10,
+        "mean_ms": 5838.33,
+        "cases": [
+          {
+            "question": "Which PyInstaller version is pinned in requirements-build.txt?",
+            "expected_source": "requirements-build.txt",
+            "accepted_strings": [
+              "6.22.3"
+            ],
+            "retrieved_sources": [
+              "task-223-native-python.md",
+              "requirements-build.txt",
+              "task-214-window-review.md",
+              "task-223-prototype-shell.md"
+            ],
+            "expected_source_retrieved": true,
+            "strict_string_match": true,
+            "inline_citation": false,
+            "completed": true,
+            "elapsed_ms": 4778.24
+          },
+          {
+            "question": "Which build tool is named in requirements-build.txt?",
+            "expected_source": "requirements-build.txt",
+            "accepted_strings": [
+              "pyinstaller"
+            ],
+            "retrieved_sources": [
+              "task-223-prototype-shell.md",
+              "task-214-window-review.md"
+            ],
+            "expected_source_retrieved": false,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "completed": true,
+            "elapsed_ms": 4427.57
+          },
+          {
+            "question": "Which sentence embedding library is listed in requirements-knowledge.txt?",
+            "expected_source": "requirements-knowledge.txt",
+            "accepted_strings": [
+              "sentence-transformers"
+            ],
+            "retrieved_sources": [
+              "task-223-native-python.md",
+              "requirements-knowledge.txt"
+            ],
+            "expected_source_retrieved": true,
+            "strict_string_match": true,
+            "inline_citation": false,
+            "completed": true,
+            "elapsed_ms": 6259.07
+          },
+          {
+            "question": "Which vector database is listed in requirements-knowledge.txt?",
+            "expected_source": "requirements-knowledge.txt",
+            "accepted_strings": [
+              "chromadb"
+            ],
+            "retrieved_sources": [
+              "task-223-native-python.md"
+            ],
+            "expected_source_retrieved": false,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "completed": true,
+            "elapsed_ms": 4509.87
+          },
+          {
+            "question": "According to task-223-native-python.md, which native UI toolkit was used in that historical spike?",
+            "expected_source": "task-223-native-python.md",
+            "accepted_strings": [
+              "tk"
+            ],
+            "retrieved_sources": [
+              "task-223-native-python.md",
+              "task-214-window-review.md"
+            ],
+            "expected_source_retrieved": true,
+            "strict_string_match": true,
+            "inline_citation": false,
+            "completed": true,
+            "elapsed_ms": 3854.1
+          },
+          {
+            "question": "According to task-223-native-python.md, what forgery protection was retained alongside session cookies?",
+            "expected_source": "task-223-native-python.md",
+            "accepted_strings": [
+              "csrf"
+            ],
+            "retrieved_sources": [
+              "task-214-window-review.md",
+              "task-223-native-python.md"
+            ],
+            "expected_source_retrieved": true,
+            "strict_string_match": false,
+            "inline_citation": false,
+            "completed": true,
+            "elapsed_ms": 7518.47
+          },
+          {
+            "question": "According to task-214-window-review.md, what is the maximum number of saved window descriptors?",
+            "expected_source": "task-214-window-review.md",
+            "accepted_strings": [
+              "ten",
+              "10"
+            ],
+            "retrieved_sources": [
+              "task-214-window-review.md",
+              "task-223-native-python.md",
+              "task-223-prototype-shell.md"
+            ],
+            "expected_source_retrieved": true,
+            "strict_string_match": true,
+            "inline_citation": false,
+            "completed": true,
+            "elapsed_ms": 4572.82
+          },
+          {
+            "question": "According to task-214-window-review.md, does restoring windows replay an action?",
+            "expected_source": "task-214-window-review.md",
+            "accepted_strings": [
+              "not",
+              "no",
+              "never"
+            ],
+            "retrieved_sources": [
+              "task-214-window-review.md",
+              "task-223-native-python.md",
+              "task-223-prototype-shell.md"
+            ],
+            "expected_source_retrieved": true,
+            "strict_string_match": true,
+            "inline_citation": false,
+            "completed": true,
+            "elapsed_ms": 5982.67
+          },
+          {
+            "question": "Which optional image library caused the failed full Python gate in task-223-prototype-shell.md?",
+            "expected_source": "task-223-prototype-shell.md",
+            "accepted_strings": [
+              "pillow"
+            ],
+            "retrieved_sources": [
+              "task-223-prototype-shell.md",
+              "task-223-native-python.md"
+            ],
+            "expected_source_retrieved": true,
+            "strict_string_match": true,
+            "inline_citation": true,
+            "completed": true,
+            "elapsed_ms": 10143.08
+          },
+          {
+            "question": "Which phase was stopped at the verification gate in task-223-prototype-shell.md?",
+            "expected_source": "task-223-prototype-shell.md",
+            "accepted_strings": [
+              "223"
+            ],
+            "retrieved_sources": [
+              "task-223-prototype-shell.md",
+              "task-223-native-python.md"
+            ],
+            "expected_source_retrieved": true,
+            "strict_string_match": true,
+            "inline_citation": false,
+            "completed": true,
+            "elapsed_ms": 6337.45
+          }
+        ]
+      },
+      "media": [
+        {
+          "pack_id": "eyes",
+          "before": "installed",
+          "result": {
+            "pack_id": "eyes",
+            "state": "installed",
+            "detail": "Image libraries loaded. Install Tesseract and language data separately, then configure its executable path before OCR can be tested."
+          },
+          "capture_or_playback": false
+        },
+        {
+          "pack_id": "ears",
+          "before": "installed",
+          "result": {
+            "pack_id": "ears",
+            "state": "installed",
+            "detail": "Local speech runtime and microphone device are present. Record a five-second push-to-talk test from Chat to verify transcription; no audio was captured by this check."
+          },
+          "capture_or_playback": false
+        },
+        {
+          "pack_id": "voice",
+          "before": "installed",
+          "result": {
+            "pack_id": "voice",
+            "state": "installed",
+            "detail": "Offline speech libraries loaded. Use Chat's local voice test to verify playback and Stop on this device."
+          },
+          "capture_or_playback": false
+        }
+      ]
+    }
+  },
+  "model": "qwen3.5:4b",
+  "model_digest": "d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04",
+  "limits": {
+    "step_timeout_seconds": 30,
+    "step_token_budget": 512,
+    "context_bytes": 1800
+  },
+  "after_fix_source_sha256": {
+    "app/providers/ollama.py": "a1b25083be9c2e5c91eb4e0db9a2ef2fce19f7db29c1d32d033b1d60c86fb7c6",
+    "tools/task222_live_check.py": "63d996338500967c5d927dcd3cc38845dc11e03e5ce6e7f19103f321295e76b9"
+  },
+  "diagnostics": {
+    "thinking-disabled-diagnostic": {
+      "request": {
+        "model": "qwen3.5:4b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Reply with exactly OK."
+          }
+        ],
+        "think": false,
+        "stream": false,
+        "options": {
+          "num_predict": 32,
+          "num_ctx": 4096
+        }
+      },
+      "elapsed_ms": 562.37,
+      "response": {
+        "model": "qwen3.5:4b",
+        "created_at": "2026-10-25T05:07:50.5103565Z",
+        "message": {
+          "role": "assistant",
+          "content": "OK"
+        },
+        "done": true,
+        "done_reason": "stop",
+        "total_duration": 561549700,
+        "load_duration": 4704500,
+        "prompt_eval_count": 17,
+        "prompt_eval_cached_count": 0,
+        "prompt_eval_duration": 369712000,
+        "eval_count": 2,
+        "eval_duration": 61712000
+      }
+    },
+    "default-thinking-diagnostic": {
+      "request": {
+        "model": "qwen3.5:4b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Reply with exactly OK."
+          }
+        ],
+        "stream": false,
+        "options": {
+          "num_predict": 32,
+          "num_ctx": 4096
+        }
+      },
+      "elapsed_ms": 1911.03,
+      "content": "",
+      "thinking_bytes": 120,
+      "eval_count": 32,
+      "done_reason": "length",
+      "thinking_metadata": null
+    }
+  }
+}

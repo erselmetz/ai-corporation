@@ -686,11 +686,21 @@ export const post100Tasks = [
     "outOfScope": [
       "Fabricated progress percentages, queue positions or agent activity."
     ],
-    "decisions": ["Resolved conservatively: freshness is a point-in-time snapshot contract. The map carries a server generated_at and a 60-second stale_after_seconds; the page refetches only on explicit refresh or node selection, marks a snapshot stale after 60 seconds, and keeps the last snapshot labelled stale if the connection drops. Retention is the existing process-local workflow state and event list; no event stream, push channel or persistence was introduced. Operational delegation/handoff edges are returned separately from organizational reporting edges, and no link between a work item and a position is inferred."],
+    "decisions": [
+      "Resolved conservatively: freshness is a point-in-time snapshot contract. The map carries a server generated_at and a 60-second stale_after_seconds; the page refetches only on explicit refresh or node selection, marks a snapshot stale after 60 seconds, and keeps the last snapshot labelled stale if the connection drops. Retention is the existing process-local workflow state and event list; no event stream, push channel or persistence was introduced. Operational delegation/handoff edges are returned separately from organizational reporting edges, and no link between a work item and a position is inferred."
+    ],
     "area": "P07b",
     "checkpoint": "task-115-workflow-map-progress-evidence",
-    "validation": ["New workflow-map Python tests: 7 passed, covering separate operational and reporting edges, content/raw-error/secret omission, outcome evidence, state changes, forbidden Agent/position masking, empty data, the freshness contract and the local API 401/403 paths.","Workflow-map browser-module tests: 5 passed, covering separate lists, stale and empty snapshots, selection and state changes, forbidden labels, disconnect retaining a stale snapshot and 401/403/500 errors; all 111 browser-module tests passed and the public documentation suite passed. Pylance reported no diagnostics in the new service and tests.","Full Python suite: 979 passed, 3 skipped (pre-existing conditional skips), and the same 2 unrelated pre-existing model-assignment failures (test_model_set_command, test_model_replacement_uses_existing_assignment_service). No live or paid calls."],
-    "limitations": ["Read-only list/tree rendering of point-in-time snapshots; there is no graph, 3D view, event stream or live push, and workflow state remains process-local and cleared on restart.","Prompts and outputs are never returned; only whether output exists, bounded reasons, and reviewer/owner evidence text are shown. Agent and destination identifiers are masked without agent:read, and reporting links without position:read.","Work items are not linked to positions or employees because no recorded relationship exists; staleness is a client-side age check against the snapshot timestamp."]
+    "validation": [
+      "New workflow-map Python tests: 7 passed, covering separate operational and reporting edges, content/raw-error/secret omission, outcome evidence, state changes, forbidden Agent/position masking, empty data, the freshness contract and the local API 401/403 paths.",
+      "Workflow-map browser-module tests: 5 passed, covering separate lists, stale and empty snapshots, selection and state changes, forbidden labels, disconnect retaining a stale snapshot and 401/403/500 errors; all 111 browser-module tests passed and the public documentation suite passed. Pylance reported no diagnostics in the new service and tests.",
+      "Full Python suite: 979 passed, 3 skipped (pre-existing conditional skips), and the same 2 unrelated pre-existing model-assignment failures (test_model_set_command, test_model_replacement_uses_existing_assignment_service). No live or paid calls."
+    ],
+    "limitations": [
+      "Read-only list/tree rendering of point-in-time snapshots; there is no graph, 3D view, event stream or live push, and workflow state remains process-local and cleared on restart.",
+      "Prompts and outputs are never returned; only whether output exists, bounded reasons, and reviewer/owner evidence text are shown. Agent and destination identifiers are masked without agent:read, and reporting links without position:read.",
+      "Work items are not linked to positions or employees because no recorded relationship exists; staleness is a client-side age check against the snapshot timestamp."
+    ]
   },
   {
     "number": 116,
@@ -715,8 +725,16 @@ export const post100Tasks = [
     ],
     "area": "P07c",
     "checkpoint": "task-116-accessible-3d-visualization",
-    "validation": ["tests/test_visualization_ui.mjs: 9 passed (scene model cap/edges/layout, changed-state detection, real Three.js scene build without a renderer, render-cost sampling, default 3D, reduced-motion and WebGL-failure list fallback, pulse only on verified change, keyboard selection, 403/disconnected sections).","tests/test_visualization_page.py: 2 passed (page, CSP and same-origin vendored Three.js with license).","All browser-module tests 120 passed; docs tests passed; full Python suite 981 passed, 3 skipped, 2 unrelated pre-existing failures (test_model_set_command, test_model_replacement_uses_existing_assignment_service)."],
-    "limitations": ["Rendering cost is measured only on the user device and shown in the page; no benchmark against local inference was run in CI. Real WebGL is not exercised in Node tests.","The map updates only on explicit refresh; there is no live event stream, so pulses reflect changes between refreshes. Data remains process-local.","The 3D scene is read-only and carries no execution authority."]
+    "validation": [
+      "tests/test_visualization_ui.mjs: 9 passed (scene model cap/edges/layout, changed-state detection, real Three.js scene build without a renderer, render-cost sampling, default 3D, reduced-motion and WebGL-failure list fallback, pulse only on verified change, keyboard selection, 403/disconnected sections).",
+      "tests/test_visualization_page.py: 2 passed (page, CSP and same-origin vendored Three.js with license).",
+      "All browser-module tests 120 passed; docs tests passed; full Python suite 981 passed, 3 skipped, 2 unrelated pre-existing failures (test_model_set_command, test_model_replacement_uses_existing_assignment_service)."
+    ],
+    "limitations": [
+      "Rendering cost is measured only on the user device and shown in the page; no benchmark against local inference was run in CI. Real WebGL is not exercised in Node tests.",
+      "The map updates only on explicit refresh; there is no live event stream, so pulses reflect changes between refreshes. Data remains process-local.",
+      "The 3D scene is read-only and carries no execution authority."
+    ]
   },
   {
     "number": 117,
@@ -742,8 +760,15 @@ export const post100Tasks = [
     ],
     "area": "P08",
     "checkpoint": "task-117-owned-chat-knowledge",
-    "validation": ["tests/test_chat_knowledge.py: 7 passed (no automatic retention or injection; consent and bounded expiry; explicit traced untrusted context creating no Tasks; expiry, withdrawal and changed-revision freshness; cross-conversation and foreign-owner boundaries; permissions and secret-paste guard).","Full Python suite 988 passed, 3 skipped, 2 unrelated pre-existing failures (test_model_set_command, test_model_replacement_uses_existing_assignment_service); docs tests passed."],
-    "limitations": ["API only: there are no browser controls yet.","Lexical matching only; traces are process-local and cleared on restart; retained records use the existing local database and are not encrypted.","Withdrawal cannot recall text already sent to a provider, earlier replies or prepared Task proposals."]
+    "validation": [
+      "tests/test_chat_knowledge.py: 7 passed (no automatic retention or injection; consent and bounded expiry; explicit traced untrusted context creating no Tasks; expiry, withdrawal and changed-revision freshness; cross-conversation and foreign-owner boundaries; permissions and secret-paste guard).",
+      "Full Python suite 988 passed, 3 skipped, 2 unrelated pre-existing failures (test_model_set_command, test_model_replacement_uses_existing_assignment_service); docs tests passed."
+    ],
+    "limitations": [
+      "API only: there are no browser controls yet.",
+      "Lexical matching only; traces are process-local and cleared on restart; retained records use the existing local database and are not encrypted.",
+      "Withdrawal cannot recall text already sent to a provider, earlier replies or prepared Task proposals."
+    ]
   },
   {
     "number": 118,
@@ -1070,7 +1095,7 @@ export const post100Tasks = [
     "limitations": [
       "The launcher requires Windows, the current Python environment with Tkinter and the repository checkout; it is not an installed executable. Electron packaging and runtime/dependency bundling are Task 127.",
       "The GUI owns one Uvicorn server thread inside its current process on fixed 127.0.0.1:8000. It cannot manage a CLI-started server, another app process or services on other ports. Port conflicts are reported and the existing listener is left untouched.",
-      "The owner enters the password in the GUI on every start/restart and still signs in through the Web UI. DPAPI protects only a salted verifier; sessions, provider credentials and runtime state keep their existing lifecycle. The launcher does not persist raw passwords or application logs. Lost/corrupt verifier recovery is an explicit owner action: remove only `%LOCALAPPDATA%\ERSELMETZ AI\owner-credential.dpapi` and repeat GUI setup; application data is retained."
+      "The owner enters the password in the GUI on every start/restart and still signs in through the Web UI. DPAPI protects only a salted verifier; sessions, provider credentials and runtime state keep their existing lifecycle. The launcher does not persist raw passwords or application logs. Lost/corrupt verifier recovery is an explicit owner action: remove only `%LOCALAPPDATA%\\ERSELMETZ AI\\owner-credential.dpapi` and repeat GUI setup; application data is retained."
     ]
   },
   {
@@ -1219,7 +1244,10 @@ export const post100Tasks = [
     "description": "Add explicit, local semantic indexing and scoped retrieval over already-approved memory while preserving deterministic context behavior.",
     "category": "Post-100 Usable Command Center",
     "status": "completed",
-    "dependsOn": [117, 129],
+    "dependsOn": [
+      117,
+      129
+    ],
     "acceptance": [
       "Add replaceable embedding and vector-store abstractions with an optional local implementation; missing optional dependencies do not prevent core startup and models are never downloaded automatically.",
       "Chunk explicitly selected retained conversation, Project, or Corporation knowledge with deterministic bounded chunks and safe provenance metadata; never scan arbitrary files, all database records, transcripts, credentials or generated responses.",
@@ -1304,8 +1332,12 @@ export const post100Tasks = [
     "decisions": [],
     "area": "P17",
     "checkpoint": "task-132-guided-first-run-setup",
-    "validation": ["Next.js static production build passed; 3 deterministic onboarding tests and 5 existing Electron security tests passed; public docs suite passed (15 tests); syntax, JSON and diff checks passed."],
-    "limitations": ["The overview confirms the local service process, not installer signature or package integrity. Provider availability, installed model inventory, and optional capability packs remain UNKNOWN until existing supported explicit checks are run; model inventory is available separately in local-owner mode. No live provider check, model download, installer rebuild, or packaged-install smoke was performed for this UI-only checkpoint."]
+    "validation": [
+      "Next.js static production build passed; 3 deterministic onboarding tests and 5 existing Electron security tests passed; public docs suite passed (15 tests); syntax, JSON and diff checks passed."
+    ],
+    "limitations": [
+      "The overview confirms the local service process, not installer signature or package integrity. Provider availability, installed model inventory, and optional capability packs remain UNKNOWN until existing supported explicit checks are run; model inventory is available separately in local-owner mode. No live provider check, model download, installer rebuild, or packaged-install smoke was performed for this UI-only checkpoint."
+    ]
   },
   {
     "number": 133,
@@ -1330,8 +1362,12 @@ export const post100Tasks = [
     "decisions": [],
     "area": "P17",
     "checkpoint": "task-133-provider-model-setup-guidance",
-    "validation": ["Next.js static production build passed; 4 deterministic onboarding and provider-guidance tests and 5 Electron security tests passed; public documentation tests passed; roadmap, manifest, syntax and diff checks passed."],
-    "limitations": ["Guidance covers only the existing Ollama and Google Gemini setup paths. The home screen does not make provider calls, verify hardware fit, edit credentials, or mutate assignments. There is no dedicated resource-settings page; configured request slots represent software concurrency only. No general preferences page exists yet; Task 171 remains the planned unified-preferences scope. The Electron installer was not rebuilt; a fresh package is required to include these UI source changes."]
+    "validation": [
+      "Next.js static production build passed; 4 deterministic onboarding and provider-guidance tests and 5 Electron security tests passed; public documentation tests passed; roadmap, manifest, syntax and diff checks passed."
+    ],
+    "limitations": [
+      "Guidance covers only the existing Ollama and Google Gemini setup paths. The home screen does not make provider calls, verify hardware fit, edit credentials, or mutate assignments. There is no dedicated resource-settings page; configured request slots represent software concurrency only. No general preferences page exists yet; Task 171 remains the planned unified-preferences scope. The Electron installer was not rebuilt; a fresh package is required to include these UI source changes."
+    ]
   },
   {
     "number": 134,
@@ -1358,7 +1394,9 @@ export const post100Tasks = [
     "area": "P17",
     "checkpoint": null,
     "validation": [],
-    "limitations": ["Deferred before implementation because the current packaged runtime has no verified first-party pack artifact source, publisher trust anchor, or isolated runtime-loading boundary. This task remains incomplete. Task 152 uses a separately installed optional dependency and does not install or manage capability packs, so it does not require this lifecycle."]
+    "limitations": [
+      "Deferred before implementation because the current packaged runtime has no verified first-party pack artifact source, publisher trust anchor, or isolated runtime-loading boundary. This task remains incomplete. Task 152 uses a separately installed optional dependency and does not install or manage capability packs, so it does not require this lifecycle."
+    ]
   },
   {
     "number": 135,
@@ -1967,14 +2005,31 @@ export const post100Tasks = [
     "description": "Define a replaceable OCR provider contract with language, confidence, bounding-box, and source-image provenance.",
     "category": "Phase E - Vision",
     "status": "completed",
-    "dependsOn": [150, 152],
-    "acceptance": ["Bound region count, output text, processing time, and errors.", "Distinguish unsupported, unavailable, low-confidence, and success."],
-    "outOfScope": ["OCR output is untrusted data, not an action instruction. No OCR engine, UI/API, chat submission, or provider transfer is included."],
-    "decisions": ["Use a provider protocol plus an in-memory service over existing owner-scoped Task 150 image attachments. Validate source digest, dimensions, language tags, confidence, pixel boxes, and bounded text. Enforce a maximum five-second call deadline; serialize each service instance so a stuck provider cannot spawn unbounded work."],
+    "dependsOn": [
+      150,
+      152
+    ],
+    "acceptance": [
+      "Bound region count, output text, processing time, and errors.",
+      "Distinguish unsupported, unavailable, low-confidence, and success."
+    ],
+    "outOfScope": [
+      "OCR output is untrusted data, not an action instruction. No OCR engine, UI/API, chat submission, or provider transfer is included."
+    ],
+    "decisions": [
+      "Use a provider protocol plus an in-memory service over existing owner-scoped Task 150 image attachments. Validate source digest, dimensions, language tags, confidence, pixel boxes, and bounded text. Enforce a maximum five-second call deadline; serialize each service instance so a stuck provider cannot spawn unbounded work."
+    ],
     "area": "P21",
     "checkpoint": "task-153-bounded-ocr-provider-contract",
-    "validation": ["Focused OCR contract and image attachment regressions: 13 passed.", "Full Python suite: 1180 passed, 6 skipped; two previously recorded unrelated model-assignment failures remain.", "Public documentation tests: 15 passed; Python compilation and git diff --check passed."],
-    "limitations": ["No OCR backend is configured or bundled. The replaceable provider contract is tested with deterministic fakes only; OCR accuracy, language coverage, and real engine performance are not claimed.", "A provider must honor its supplied deadline. The service returns at the configured timeout and permits only one active provider call per service instance; a hung daemon call keeps that instance unavailable until it exits. OCR text is explicitly untrusted and is not used as an instruction."]
+    "validation": [
+      "Focused OCR contract and image attachment regressions: 13 passed.",
+      "Full Python suite: 1180 passed, 6 skipped; two previously recorded unrelated model-assignment failures remain.",
+      "Public documentation tests: 15 passed; Python compilation and git diff --check passed."
+    ],
+    "limitations": [
+      "No OCR backend is configured or bundled. The replaceable provider contract is tested with deterministic fakes only; OCR accuracy, language coverage, and real engine performance are not claimed.",
+      "A provider must honor its supplied deadline. The service returns at the configured timeout and permits only one active provider call per service instance; a hung daemon call keeps that instance unavailable until it exits. OCR text is explicitly untrusted and is not used as an instruction."
+    ]
   },
   {
     "number": 154,
@@ -1982,14 +2037,31 @@ export const post100Tasks = [
     "description": "Implement an explicitly configured local OCR provider and report external Tesseract installation requirements.",
     "category": "Phase E - Vision",
     "status": "completed",
-    "dependsOn": [153],
-    "acceptance": ["Detect missing engine/language packs without breaking core startup.", "Keep pytesseract/Tesseract and EasyOCR optional alternatives.", "Test permissions, malformed image, timeout, and sanitized failure."],
-    "outOfScope": ["Do not silently download OCR models or binaries. No bundled engine, model installation, API/UI, or chat auto-submit."],
-    "decisions": ["Select the Tesseract CLI as the first optional backend. Its Apache-2.0 engine is invoked only at an explicitly configured absolute path, over stdin/stdout, without a shell or image temp files. The binary and chosen traineddata language files must be installed separately by the owner. Task 134 remains deferred; this manually configured backend does not depend on its package lifecycle. Do not add the pytesseract wrapper or EasyOCR/Torch dependencies: the former still requires the external engine and the latter defaults to downloading model weights."],
+    "dependsOn": [
+      153
+    ],
+    "acceptance": [
+      "Detect missing engine/language packs without breaking core startup.",
+      "Keep pytesseract/Tesseract and EasyOCR optional alternatives.",
+      "Test permissions, malformed image, timeout, and sanitized failure."
+    ],
+    "outOfScope": [
+      "Do not silently download OCR models or binaries. No bundled engine, model installation, API/UI, or chat auto-submit."
+    ],
+    "decisions": [
+      "Select the Tesseract CLI as the first optional backend. Its Apache-2.0 engine is invoked only at an explicitly configured absolute path, over stdin/stdout, without a shell or image temp files. The binary and chosen traineddata language files must be installed separately by the owner. Task 134 remains deferred; this manually configured backend does not depend on its package lifecycle. Do not add the pytesseract wrapper or EasyOCR/Torch dependencies: the former still requires the external engine and the latter defaults to downloading model weights."
+    ],
     "area": "P21",
     "checkpoint": "task-154-explicit-optional-tesseract-backend",
-    "validation": ["Focused Tesseract, OCR contract, Task 150 image, Task 152 processing, and update regressions: 34 passed.", "Full Python suite: 1185 passed, 6 skipped; two previously recorded unrelated model-assignment failures remain.", "Public documentation tests: 15 passed; Python compilation and git diff --check passed."],
-    "limitations": ["No Tesseract binary or traineddata is bundled, downloaded, or installed. Recognition is tested with deterministic subprocess fakes; no live engine accuracy, language coverage, or hardware performance is claimed.", "The explicitly configured engine runs with the application's OS privileges. Command execution uses no shell and no image files on disk, but it is not an OS sandbox. Only a bounded TSV output and bounded OCR result are accepted."]
+    "validation": [
+      "Focused Tesseract, OCR contract, Task 150 image, Task 152 processing, and update regressions: 34 passed.",
+      "Full Python suite: 1185 passed, 6 skipped; two previously recorded unrelated model-assignment failures remain.",
+      "Public documentation tests: 15 passed; Python compilation and git diff --check passed."
+    ],
+    "limitations": [
+      "No Tesseract binary or traineddata is bundled, downloaded, or installed. Recognition is tested with deterministic subprocess fakes; no live engine accuracy, language coverage, or hardware performance is claimed.",
+      "The explicitly configured engine runs with the application's OS privileges. Command execution uses no shell and no image files on disk, but it is not an OS sandbox. Only a bounded TSV output and bounded OCR result are accepted."
+    ]
   },
   {
     "number": 155,
@@ -2230,7 +2302,7 @@ export const post100Tasks = [
     "validation": [
       "Focused protected Python map, provenance, resource, access, and page regressions: 66 passed.",
       "Visualization, structure-list, and workflow-map Node tests: 20 passed; public docs/task/update-manifest suite: 13 passed.",
-      "Full Python suite excluding the pre-existing syntactically invalid tests/test_automation_traces.py: 1219 passed, 5 skipped, and the two previously recorded unrelated model-assignment failures; the Task 161 updates-manifest regression passed after correcting the entry schema.",
+      "Full Python suite excluding the pre-existing syntactically invalid tests/test_automation_traces.py: 1219 passed, 5 skipped, and the two previously recorded unrelated model-assignment failures; the Task 161 updates-manifest regression passed after correcting the entry schema."
     ],
     "limitations": [
       "Corporation knowledge is limited to the ten latest records returned by the existing memory:read scoped list and exposes provenance metadata only; private Conversation/Project memory and content are not shown.",
@@ -2847,6 +2919,33 @@ export const post100Tasks = [
     "automatedVerification": [
       "Run packaged Windows setup, restart, data-retention and recovery against isolated app-data, inspect installed paths and ACLs using OS APIs, and record artifact/source identity. A separate Windows account or VM is optional follow-up coverage.",
       "Exercise Ollama installation/pull progress/cancel/recheck and Gemini catalog/consent/DPAPI/error paths through controlled adapters and UI automation. Record real integrations separately; credentials, paid calls and downloads are not prerequisites for deterministic acceptance."
+    ],
+    "history": [
+      {
+        "date": "2026-10-16",
+        "summary": "Task 176 implemented; manual acceptance pending: Task 176 implementation is complete; automated validation passed: 1,270 Python passed / 6 skipped / 0 failed; 175 browser modules; 16 public docs; 21 Electron tests; static Next.js build, TypeScript checks, Python compilation, and git diff --check passed. Manual clean-profile Windows acceptance has NOT been performed: real Ollama install/download/chat, Gemini chat, DPAPI restart persistence, and recovery checks remain pending. Task 176 remains planned until this evidence is recorded. No live Gemini request or Ollama download was made; no LICENSE file was added pending owner license choice.",
+        "source": "corporation_updates.json"
+      },
+      {
+        "date": "2026-10-17",
+        "summary": "Task 176 partial Windows acceptance: Verified part of Task 176 using the rebuilt Windows installer in temporary install and LOCALAPPDATA directories under the current Windows account: owner-password setup, explicit selection of already-installed Ollama llama3.2:3b, a real local Coordinator reply, restart without repeating provider setup, a new chat after restart, uninstall data retention, and reinstall recovery. This is not clean separate-user-profile acceptance. Task 176 remains planned. Ollama installer/model downloads, Gemini/key/DPAPI flows, and Ollama/offline recovery remain pending. Full Python 1,287 passed / 3 skipped; browser modules 216; Electron 23; public docs 17; frozen backend and installed-package smoke passed. No paid Gemini request or download was made.",
+        "source": "corporation_updates.json"
+      },
+      {
+        "date": "2026-10-18",
+        "summary": "Task 176 acceptance fixes; manual gates still pending: Fixed two bounded first-run integration gaps found while verifying the live Ollama metadata path: the official Windows installer preview now accepts the current 1.58 GB release within a 2 GB cap, and the model-manifest preview computes a SHA-256 digest when Ollama’s registry omits the digest header. Deterministic validation: full Python suite 1,288 passed / 3 skipped / 0 failed; browser modules 216 passed; Electron tests 24 passed; public docs 17 passed. A fresh isolated Windows installer build and app-data smoke passed for owner setup, existing-model chat, restart, uninstall retention, and reinstall recovery. Python compilation, JavaScript syntax, and git diff --check passed. Live official installer/model metadata previews succeeded with no downloads. Task 176 remains planned: separate clean Windows profile, owner-confirmed Ollama install/model pull, Gemini validation/chat/DPAPI restart, and recovery cases are unverified. No credentials were entered, no paid Gemini request was made, and no installer/model was downloaded.",
+        "source": "corporation_updates.json"
+      },
+      {
+        "date": "2026-10-18",
+        "summary": "Task 176 current-source installer smoke; clean-profile checks pending: Rebuilt the Next.js UI, frozen Python backend, and Windows x64 installer from the current source. In temporary install/app-data directories, the package completed owner setup, used an already-installed Ollama model for a real Coordinator reply, retained provider setup across restart, preserved owner data on uninstall, and recovered it after reinstall. Full Python suite 1,293 passed / 3 skipped / 0 failed (2 deprecation warnings); browser, public-docs, and Electron suites 257 passed. The temporary profile belongs to the current Windows account. Separate clean-user-profile setup, app-managed Ollama install/model download, Gemini key/chat/DPAPI restart, and live recovery cases remain pending; no Gemini key is configured, and no paid request or model/installer download was made. Task 176 remains planned.",
+        "source": "corporation_updates.json"
+      },
+      {
+        "date": "2026-10-18",
+        "summary": "Task 176 Windows first-run acceptance completed: The preserved Windows x64 installer passed an automated packaged-app smoke using temporary install/app-data paths: owner setup, real local llama3.2:3b chat, restart without repeating setup, another chat, uninstall data retention, and reinstall recovery. Artifact: ERSELMETZ-AI-Setup-0.1.0-win-x64.exe, 162,986,424 bytes, SHA-256 C550611C90C70DBEB58B888C0B88F027D8AEF4C459BC9A65486DD9EB376C732B; source commit provenance for this preserved artifact is unavailable. PowerShell Get-Acl inspection of %LOCALAPPDATA%\\ERSELMETZ AI and its SQLite database showed current-user ownership and FullControl, inherited CodexSandboxUsers ReadAndExecute/Synchronize, SYSTEM and Administrators FullControl. Deterministic first-run tests cover installer/model metadata and digest checks, pull progress/cancel/recheck, explicit confirmation and Retry, Gemini catalog failure redaction, and current-user DPAPI credential opt-in. Validation: 1,319 Python passed / 5 skipped / 0 failed (2 warnings), 220 browser modules, 17 public docs, and 24 Electron tests. No clean secondary account, real Gemini request, Ollama installer/model download, offline-provider retry, assistive-technology session, or representative-user study was performed.",
+        "source": "corporation_updates.json"
+      }
     ]
   },
   {
@@ -2897,6 +2996,18 @@ export const post100Tasks = [
       "Traces and exact one-turn prompt views do not survive app restart. Persisted notes and SQLite memory do; derived semantic storage depends on the configured local index provider.",
       "Optional Task 88 web ingestion and the former Task 177 Part 4 3D globe are not implemented. The globe is now a separate planned Task 186. The current trace remains 2D and accessible.",
       "Task 176 is complete for its scoped contract; clean-secondary-account and live-provider coverage remain unverified follow-up. Task 177 is complete for its scoped contract; broader citation quality remains unverified."
+    ],
+    "history": [
+      {
+        "date": "2026-10-16",
+        "summary": "Task 177 implementation checkpoint (2026-10-16): Implemented owner-opt-in Auto-RAG with exact scope selection, lexical plus optional semantic retrieval, cited bounded excerpts, private note and file intake, explicit local indexing, sanitized per-turn answer traces, and one-turn opt-in exact prompts for local models. Automated validation: 97 focused Python tests; full Python suite 1,281 passed / 8 skipped / 0 failed; 214 browser-module tests; 16 public-doc tests. No live Ollama llama3.2:3b or Gemini call was made; real citation quality and local-model behavior remain unverified. Optional Task 88 web ingestion and Part 4 3D trace visualization are not implemented. At this 2026-10-16 checkpoint, Task 177 remained planned pending live local-model acceptance.",
+        "source": "corporation_updates.json"
+      },
+      {
+        "date": "2026-10-17",
+        "summary": "Task 177 local-model acceptance: Completed Task 177 after an isolated real Ollama llama3.2:3b turn retrieved a temporary owner note stating that the Orion test server uses port 8123. The reply matched the note; the answer trace identified provider/model and source/chunk, score, and expiry, with no Task or Tool side effects. Focused regressions: 65 passed; full Python suite: 1,287 passed / 3 skipped / 0 failed (2 deprecation warnings); browser modules: 216 passed; public docs: 17 passed. One synthetic fact and one local turn do not establish general answer or citation quality. Gemini was not called; no user database or model files were changed.",
+        "source": "corporation_updates.json"
+      }
     ]
   },
   {
@@ -3000,6 +3111,18 @@ export const post100Tasks = [
     ],
     "followUpValidation": [
       "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ],
+    "history": [
+      {
+        "date": "2026-10-18",
+        "summary": "Task 180 hardware profile implementation; acceptance pending: Implementation progress: an owner-protected, read-only local profile reports CPU, GPU, RAM, and Ollama destination disk facts with source/timestamp and UNKNOWN where unavailable. Its bounded Ollama size guidance warns about CPU inference, does not claim fit, and never downloads or changes routing. Current automated validation: Python 1,311 passed / 5 skipped / 0 failed (2 deprecation warnings), browser modules 220 passed, public docs 17 passed, Electron 24 passed; Python compilation, focused hardware-profile tests, JavaScript syntax and git diff --check passed. Prior recorded manual comparison covered one GPU-equipped Windows host; CPU-only behavior is not verified. Task 180 was still planned at this progress checkpoint; the later AI-run acceptance completed the scoped task. Physical CPU-only behavior and broader recommendation accuracy remain unverified follow-up.",
+        "source": "corporation_updates.json"
+      },
+      {
+        "date": "2026-10-18",
+        "summary": "Task 180 AI-run hardware profile acceptance completed: Completed scoped review of the existing read-only local hardware profile. Focused deterministic service/API tests passed 5; the full Electron suite passed 26 including 2 new settings-summary checks for provenance, CPU-only warning, UNKNOWN fields, and no-download text. Desktop UI TypeScript check passed. Read-only Windows observations matched independent WMI/OS CPU/GPU names and total RAM; Ollama destination disk matched the local C: volume within sampling-time change. Full Python suite: 1,321 passed / 3 skipped / 0 failed (2 warnings); browser modules 220 passed; public docs 17 passed. No live inference, download, route change, or telemetry upload occurred. Physical CPU-only behavior, broader recommendation accuracy, usable VRAM, and actual Ollama GPU use remain unverified follow-up. Implementation source commit: 15f49fc044c41ae4d4f936a67fbda71f241640d8. Checkpoint: task-180-hardware-profile-ai-acceptance.",
+        "source": "corporation_updates.json"
+      }
     ]
   },
   {
@@ -3083,6 +3206,18 @@ export const post100Tasks = [
     ],
     "followUpValidation": [
       "No live Gemini transfer was performed; actual external-provider handling of selected private document excerpts remains unverified. This does not block the deterministic read-only tool contract, and no human QA sign-off is required under the revised development policy."
+    ],
+    "history": [
+      {
+        "date": "2026-10-18",
+        "summary": "Task 182 reviewed local tools progress; acceptance pending: Added explicitly selected bounded arithmetic and owner-authorized lookup in one top-level corporation_docs file to Coordinator chat. Both are read-only; selected results are labeled untrusted and recorded with source, safe parameters, outcome, and timing in the per-turn trace. Documentation lookup requires documentation:read; existing per-turn Gemini consent covers selected tool results. Web search remains disabled and no arbitrary filesystem access or side-effecting tool is available. Focused automated validation passed; Task 182 remains planned pending manual owner verification of the UI, traces, and denied-access path.",
+        "source": "corporation_updates.json"
+      },
+      {
+        "date": "2026-10-18",
+        "summary": "Task 182 reviewed local chat tools completed: Completed the existing bounded, read-only calculator and exact-file lookup in one owner-selected corporation_docs document through the protected Documentation Application Service. Lookup requires documentation:read, unsupported tools fail closed, document excerpts are labeled untrusted, and per-turn trace records bounded/redacted parameters, source, outcome and elapsed time. The owner confirms the selected tool call before Send; Gemini continues to require separate per-turn cloud consent. No web search, arbitrary file access, code execution or side effects are exposed. Focused reviewed-tool/API/knowledge tests: 21 passed; focused chat UI tests: 24 passed; full Python: 1,329 passed / 3 skipped / 0 failed; browser modules: 223 passed; Electron: 26 passed; public docs: 17 passed. No live Gemini transfer was performed. Checkpoint: task-182-reviewed-chat-tools.",
+        "source": "corporation_updates.json"
+      }
     ]
   },
   {
@@ -3122,6 +3257,18 @@ export const post100Tasks = [
     ],
     "followUpValidation": [
       "No live Gemini, provider timeout on a real service, or representative-owner workflow study was performed. These remain explicitly unverified follow-up; deterministic tests do not establish live-provider behavior or answer quality and no human QA sign-off is required for scoped development completion."
+    ],
+    "history": [
+      {
+        "date": "2026-10-18",
+        "summary": "Task 183 visible workflow scaffolding progress; acceptance pending: Coordinator Chat now shows a bounded deterministic plan and asks before starting retrieval, selected reviewed tools, or provider work. Per-turn traces distinguish the observed plan, retrieval, each selected tool, and answer with sources, outcomes, and timings; provider failures remain sanitized and visible. Focused tests passed. Task 183 remains planned pending manual owner verification; Task 182 also remains planned pending its separate manual acceptance.",
+        "source": "corporation_updates.json"
+      },
+      {
+        "date": "2026-10-18",
+        "summary": "Task 183 visible chat workflow scaffolding completed: Completed the existing bounded owner-confirmed plan and per-turn workflow trace. The trace records actual retrieval, selected read-only tool and answer outcomes with sources and elapsed timing; skipped steps stay skipped, failed steps stay failed/unknown, and failed-turn summaries are visible without raw provider diagnostics. A focused regression verifies combined retrieval+tool+answer trace order and provider failure reporting. Focused Python trace/tool/chat tests: 37 passed; focused chat UI: 24 passed; full Python: 1,329 passed / 3 skipped / 0 failed; browser modules: 223 passed; Electron: 26 passed; public docs: 17 passed. No live Gemini/provider service or representative-owner study was performed. Checkpoint: task-183-visible-chat-workflow-scaffolding.",
+        "source": "corporation_updates.json"
+      }
     ]
   },
   {
@@ -3156,7 +3303,7 @@ export const post100Tasks = [
       "Implementation source was reviewed in checkpoint commit efed521; no new persistence architecture or schema behavior was added for this evidence checkpoint.",
       "Focused Task 184 persistence/proposal regressions: `python -m pytest -q tests/test_operator_state_persistence.py tests/test_chat_task_proposals.py` passed 10, including real separate-interpreter restart, additive schema rollback, opt-in conversation storage, owner isolation, read-only recovery, slot reset, proposal invalidation, and consumed-fingerprint replay prevention.",
       "Employee history UI regressions: `node --test tests/test_employee_chat_ui.mjs` passed 3, including retention opt-in and explicit confirmed deletion. Full Python suite: 1,321 passed / 3 skipped / 0 failed (2 warnings); browser modules 220 passed; Electron tests 26 passed; public docs 17 passed.",
-      "Windows app-data inspection confirmed `%LOCALAPPDATA%\ERSELMETZ AI\projects\ai_corporation.db` exists. `Get-Acl` showed the current Windows account owns the file with FullControl; inherited CodexSandboxUsers has ReadAndExecute/Synchronize, while SYSTEM and Administrators have FullControl. A separate user profile was not used.",
+      "Windows app-data inspection confirmed `%LOCALAPPDATA%\\ERSELMETZ AI\\projects\\ai_corporation.db` exists. `Get-Acl` showed the current Windows account owns the file with FullControl; inherited CodexSandboxUsers has ReadAndExecute/Synchronize, while SYSTEM and Administrators have FullControl. A separate user profile was not used.",
       "No live model call, credential persistence, cloud sync, download, or telemetry was used. Retained Employee messages are stored only after explicit per-conversation opt-in and are not encrypted by this local SQLite database."
     ],
     "limitations": [
@@ -3169,6 +3316,18 @@ export const post100Tasks = [
     ],
     "followUpValidation": [
       "Unavailable real hardware, provider-account, physical-device and representative-user coverage is recorded as unverified enhancement work; it does not require human QA sign-off for this development checkpoint."
+    ],
+    "history": [
+      {
+        "date": "2026-10-18",
+        "summary": "Task 184 persistence implementation progress; Windows acceptance pending: Added schema version 3 transactional SQLite tables for corporate positions, configured slot limits, owner-scoped proposal review/replay state, and owner-opt-in Employee chat retention. Positions and limits survive service reconstruction; live allocations remain transient. Prepared proposals are invalidated after restart. Retained chat is unencrypted only when explicitly selected, stays until explicit deletion, and returns read-only with uncertain turns never replayed. Updated local data-path documentation: packaged Windows data is at %LOCALAPPDATA%\\ERSELMETZ AI\\projects\\ai_corporation.db. Validation: Python 1,311 passed / 5 skipped / 0 failed (2 deprecation warnings), browser modules 220 passed, public docs 17 passed, and Electron 24 passed; Python compilation, JavaScript syntax, focused employee-chat UI, and git diff --check passed. Task 184 was still planned at this progress checkpoint; later AI-run acceptance completed the scoped task. No fresh Windows profile or preserved production-database migration was tested; those remain unverified follow-up.",
+        "source": "corporation_updates.json"
+      },
+      {
+        "date": "2026-10-18",
+        "summary": "Task 184 AI-run persistence acceptance completed: Completed scoped review of the existing schema-v3 local operator-state persistence. A deterministic real-process test verified positions, configured limits, and explicitly retained Employee history across two Python processes; live resource allocations reset to zero; recovered chat stayed owner-scoped and read-only. Proposal restart invalidation and replay protection plus injected migration rollback passed focused tests. Current Windows database path and ACL were inspected: current account owns the file with FullControl, inherited CodexSandboxUsers has ReadAndExecute/Synchronize, SYSTEM/Administrators have FullControl. No separate Windows account, production database upgrade, or clean-profile recovery was tested. Retained chat remains unencrypted and requires explicit opt-in/deletion. Full Python: 1,321 passed / 3 skipped / 0 failed (2 warnings); browser modules 220; Electron 26; public docs 17. Checkpoint: task-184-operator-state-ai-acceptance.",
+        "source": "corporation_updates.json"
+      }
     ]
   },
   {
@@ -3438,7 +3597,11 @@ export const post100Tasks = [
     "description": "Start the protected Electron backend and open Coordinator Chat directly, automatically configuring only installed local Ollama resources without a first-run wizard or silent download.",
     "category": "Phase AA - Direct-to-chat Quick Start",
     "status": "completed",
-    "dependsOn": [176, 68, 72],
+    "dependsOn": [
+      176,
+      68,
+      72
+    ],
     "decisions": [
       "Task 191 supersedes Task 176's wizard-first provider setup where they conflict. Existing owner-password credentials remain required at launch; new installations use a random per-launch Electron session token and can enable a DPAPI-protected password lock in Settings.",
       "Prefer installed llama3.2:3b; otherwise inspect bounded Ollama tags/show metadata and choose the smallest installed completion-capable model. Keep a saved model choice stable across restarts; never download or install automatically. Persist one-slot Ollama resource limits and defer manager construction until controlled execution needs it."
@@ -3460,11 +3623,18 @@ export const post100Tasks = [
     ],
     "area": "P43",
     "checkpoint": "task-191-direct-to-chat",
-    "validation": ["Full Python suite: 1,334 passed / 8 skipped / 0 failed (2 warnings; Ollama pointed to a closed loopback test port). Focused Task 191 Python regressions: 53 passed; targeted chat/quick-start browser tests: 28 passed; full browser-module suite: 235 passed; Electron tests: 34 passed; public-docs tests: 18 passed. Next.js static build and TypeScript checks passed; Python compilation/import checks and git diff --check passed."],
+    "validation": [
+      "Full Python suite: 1,334 passed / 8 skipped / 0 failed (2 warnings; Ollama pointed to a closed loopback test port). Focused Task 191 Python regressions: 53 passed; targeted chat/quick-start browser tests: 28 passed; full browser-module suite: 235 passed; Electron tests: 34 passed; public-docs tests: 18 passed. Next.js static build and TypeScript checks passed; Python compilation/import checks and git diff --check passed."
+    ],
     "realWorldVerification": {
       "status": "partial",
-      "evidence": ["A real local llama3.2:3b request through Ollama returned the requested reply in 5.417 s; Ollama reported the model at 100% GPU on the RX 570."],
-      "unverified": ["The installed packaged Electron artifact predates Task 191. The current Electron launch, packaged app navigation to chat, and first reply in the packaged app were not verified.", "Clean-profile installation, restart persistence, password-lock behavior, and recovery remain unverified in this run."]
+      "evidence": [
+        "A real local llama3.2:3b request through Ollama returned the requested reply in 5.417 s; Ollama reported the model at 100% GPU on the RX 570."
+      ],
+      "unverified": [
+        "The installed packaged Electron artifact predates Task 191. The current Electron launch, packaged app navigation to chat, and first reply in the packaged app were not verified.",
+        "Clean-profile installation, restart persistence, password-lock behavior, and recovery remain unverified in this run."
+      ]
     },
     "limitations": [
       "Manual clean-Windows-profile acceptance remains pending: real Ollama absent/stopped/install/model download and chat, Gemini key/cloud-consent chat, restart persistence with and without DPAPI lock, recovery after offline/bad credentials, and physical CPU/GPU inference speed were not performed.",
@@ -3484,7 +3654,16 @@ export const post100Tasks = [
     "description": "Measure the real local Ollama, RAG, reviewed-tool, vision, voice, globe, and hardware journeys on the current Windows host, then make narrowly scoped, evidence-led enhancements.",
     "category": "Phase AB - Real-world Verification",
     "status": "completed",
-    "dependsOn": [191, 177, 180, 182, 186, 187, 188, 189],
+    "dependsOn": [
+      191,
+      177,
+      180,
+      182,
+      186,
+      187,
+      188,
+      189
+    ],
     "acceptance": [
       "Record actual outcomes, model/provider identity, latency, errors, and provenance for Task 191 packaged direct-to-chat; three explicitly selected knowledge notes and five RAG questions; read-only arithmetic and documentation lookup with a real local model; and a local vision turn using an already installed vision-capable Ollama model. Do not make paid/cloud calls or download a model without explicit owner confirmation.",
       "Record voice checks that are possible without a physical microphone and mark unavailable physical-device checks UNVERIFIED. Measure the existing capped 3D map on the installed RX 570 while a local model generates, verify the accessible list fallback, and compare reported hardware with OS inventory and Ollama's actual processor report.",
@@ -3504,11 +3683,24 @@ export const post100Tasks = [
     "area": "P44",
     "checkpoint": "task-192-small-model-answer-quality",
     "decisions": [],
-    "validation": ["Task 192 answer-quality checkpoint: full Python suite 1,344 passed / 3 skipped / 0 failed (2 dependency deprecation warnings); browser-module suite 235 passed / 0 failed; Electron suite 34 passed / 0 failed; public-docs suite 21 passed / 0 failed. Focused Ollama/chat/RAG regressions: 50 passed. Deterministic tests cover separate system prompt routing and unchanged raw prompts. Real local model evaluations and limitations are recorded in realWorldVerification. git diff --check and Python compilation passed."],
+    "validation": [
+      "Task 192 answer-quality checkpoint: full Python suite 1,344 passed / 3 skipped / 0 failed (2 dependency deprecation warnings); browser-module suite 235 passed / 0 failed; Electron suite 34 passed / 0 failed; public-docs suite 21 passed / 0 failed. Focused Ollama/chat/RAG regressions: 50 passed. Deterministic tests cover separate system prompt routing and unchanged raw prompts. Real local model evaluations and limitations are recorded in realWorldVerification. git diff --check and Python compilation passed."
+    ],
     "realWorldVerification": {
       "status": "partial",
-      "evidence": ["Real local Ollama llama3.2:3b chat: requested 'hello' response returned in 5.417 s; model load 5.115 s; Ollama reported 100% GPU.", "Real local RAG over three temporary notes: Q1 Atlas port 8123 correct, 3.838 s, trace listed all three notes; Q2 Atlas maintenance Tuesday 14:30 correct, 3.887 s, trace listed all three; Q3 Cedar path D:\\Work\\Cedar was formatted incorrectly in the answer, 3.237 s, trace listed only Cedar; Q4 Cedar QA lead correct, 4.207 s, trace listed all three; Q5 rollback command 'revert deploy 42' correct, 4.526 s, trace listed all three. The intended source was present in all five traces; strict factual answers were 4/5 and four traces were overinclusive.", "Real local reviewed tools completed in 13.834 s: calculator returned 731 for (43 * 17), and exact read-only documentation lookup returned source corporation_docs:api-and-web-ui-boundaries. No Tasks were created and no cloud route was used. The answer was verbose and described the selected document structure rather than giving a concise response. An initial test-harness lookup used a nonexistent .md-suffixed ID and got the expected safe unavailable result; retry with the exact ID succeeded.", "Ollama inventory: gemma4:26b (18 GB reported, local, vision capability); llama3.2:3b (2.0 GB, local, no vision capability); cloud references gemma4:31b-cloud and glm-5.3-flash:cloud are not local models and were not called. Hardware: AMD Ryzen 5 PRO 4650G (6 cores/12 logical), Radeon RX 570 Series (reported 4 GB), 15.8 GB total RAM and 5.4 GiB available at inspection; C: has 42.6 GiB free. Ollama reported 100% GPU for llama3.2:3b.", "After explicit owner approval, pulled nomic-embed-text locally with Ollama: 274 MB, 768-dimensional nomic-bert, model ID 0a109f422b47; no Python package or cloud service was added. Real embedding endpoint returned four vectors in 3.399 s on first measured batch. On Task 135's three semantic fixture queries, real-model query latency was 60.8 to 65.5 ms (mean 63.4 ms); Recall@5 1.00, MRR 1.00, Precision@5 0.50, with no excluded-record leakage and stale candidates rejected. The fixture's deterministic fake baseline reports Recall@5 1.00, MRR 1.00, Precision@5 1.00. These small synthetic-fixture results do not establish general retrieval quality.", "Real local llama3.2:3b ten-question comparison sent the concise Coordinator instruction through Ollama separate system field. Without retrieval, it returned 0/10 fixture values and abstained on all 10; mean latency 929 ms. With one selected note per question, it returned all 10 expected facts exactly and included [1] in all 10 answers; mean latency 1,187 ms. The Windows path used one backslash in this run. This is a single default-sampling run, not a general model-quality guarantee."],
-      "unverified": ["Packaged Task 191 direct-to-chat flow: existing installed package predates Task 191, and native/browser UI automation was unavailable.", "Vision end-to-end: gemma4:26b is the only installed local model reporting vision, but at 18.6 GB it is larger than system RAM; no load/image request was attempted. No vision model was downloaded.", "Voice input/output without a physical microphone/audio session; live 3D globe FPS/frame-time under inference and interactive list fallback; CPU-only hardware behavior."]
+      "evidence": [
+        "Real local Ollama llama3.2:3b chat: requested 'hello' response returned in 5.417 s; model load 5.115 s; Ollama reported 100% GPU.",
+        "Real local RAG over three temporary notes: Q1 Atlas port 8123 correct, 3.838 s, trace listed all three notes; Q2 Atlas maintenance Tuesday 14:30 correct, 3.887 s, trace listed all three; Q3 Cedar path D:\\Work\\Cedar was formatted incorrectly in the answer, 3.237 s, trace listed only Cedar; Q4 Cedar QA lead correct, 4.207 s, trace listed all three; Q5 rollback command 'revert deploy 42' correct, 4.526 s, trace listed all three. The intended source was present in all five traces; strict factual answers were 4/5 and four traces were overinclusive.",
+        "Real local reviewed tools completed in 13.834 s: calculator returned 731 for (43 * 17), and exact read-only documentation lookup returned source corporation_docs:api-and-web-ui-boundaries. No Tasks were created and no cloud route was used. The answer was verbose and described the selected document structure rather than giving a concise response. An initial test-harness lookup used a nonexistent .md-suffixed ID and got the expected safe unavailable result; retry with the exact ID succeeded.",
+        "Ollama inventory: gemma4:26b (18 GB reported, local, vision capability); llama3.2:3b (2.0 GB, local, no vision capability); cloud references gemma4:31b-cloud and glm-5.3-flash:cloud are not local models and were not called. Hardware: AMD Ryzen 5 PRO 4650G (6 cores/12 logical), Radeon RX 570 Series (reported 4 GB), 15.8 GB total RAM and 5.4 GiB available at inspection; C: has 42.6 GiB free. Ollama reported 100% GPU for llama3.2:3b.",
+        "After explicit owner approval, pulled nomic-embed-text locally with Ollama: 274 MB, 768-dimensional nomic-bert, model ID 0a109f422b47; no Python package or cloud service was added. Real embedding endpoint returned four vectors in 3.399 s on first measured batch. On Task 135's three semantic fixture queries, real-model query latency was 60.8 to 65.5 ms (mean 63.4 ms); Recall@5 1.00, MRR 1.00, Precision@5 0.50, with no excluded-record leakage and stale candidates rejected. The fixture's deterministic fake baseline reports Recall@5 1.00, MRR 1.00, Precision@5 1.00. These small synthetic-fixture results do not establish general retrieval quality.",
+        "Real local llama3.2:3b ten-question comparison sent the concise Coordinator instruction through Ollama separate system field. Without retrieval, it returned 0/10 fixture values and abstained on all 10; mean latency 929 ms. With one selected note per question, it returned all 10 expected facts exactly and included [1] in all 10 answers; mean latency 1,187 ms. The Windows path used one backslash in this run. This is a single default-sampling run, not a general model-quality guarantee."
+      ],
+      "unverified": [
+        "Packaged Task 191 direct-to-chat flow: existing installed package predates Task 191, and native/browser UI automation was unavailable.",
+        "Vision end-to-end: gemma4:26b is the only installed local model reporting vision, but at 18.6 GB it is larger than system RAM; no load/image request was attempted. No vision model was downloaded.",
+        "Voice input/output without a physical microphone/audio session; live 3D globe FPS/frame-time under inference and interactive list fallback; CPU-only hardware behavior."
+      ]
     },
     "automatedVerification": [
       "Use the full Python, browser-module, Electron, and public-docs suites before each implementation checkpoint. Use deterministic fixtures/fakes for contract tests and report their counts separately from live local-model runs.",
@@ -3529,7 +3721,12 @@ export const post100Tasks = [
     "description": "Send native role-based chat messages to local and Gemini providers and make the served Coordinator Chat the focused, accessible desktop conversation surface.",
     "category": "Phase AC - Structured Chat and Desktop Experience",
     "status": "deferred",
-    "dependsOn": [177, 178, 191, 192],
+    "dependsOn": [
+      177,
+      178,
+      191,
+      192
+    ],
     "decisions": [],
     "acceptance": [
       "Build Ollama chat requests from a short system message, completed user/assistant history, optional untrusted retrieved/tool/OCR excerpts, and the current user text. Never place corporation identity, request envelopes, empty context/history, or presentation preference objects in provider prompts.",
@@ -3546,7 +3743,6 @@ export const post100Tasks = [
     ],
     "area": "P45",
     "checkpoint": null,
-    "decisions": [],
     "validation": [
       "Full automated validation: Python 1,351 passed / 3 skipped / 0 failed (2 deprecation warnings); browser modules 239 passed / 0 failed; Electron 34 passed / 0 failed; public docs 21 passed / 0 failed; desktop-ui TypeScript no-emit passed. Python compilation and git diff --check passed. A Next.js production build and packaged Electron launch were not run; the desktop chat route is Python-served."
     ],
@@ -3581,7 +3777,10 @@ export const post100Tasks = [
     "description": "Remove request-envelope serialization from every chat entry point and identify the exact packaged backend commit before Electron accepts it.",
     "category": "Phase AD - Chat Prompt Correctness",
     "status": "deferred",
-    "dependsOn": [193, 191],
+    "dependsOn": [
+      193,
+      191
+    ],
     "acceptance": [
       "Coordinator, direct-to-chat, streaming, non-streaming, retrieval, image-capable structured chat, Gemini, and individual Employee chat send role-based messages only; provider adapters reject mappings before provider invocation.",
       "A local fake Ollama HTTP server captures the exact request body through authenticated real API routes and verifies system/user/assistant roles, no internal request-envelope fields, empty context omission, streaming parity, prior history, and only selected retrieval excerpts.",
@@ -3615,7 +3814,8 @@ export const post100Tasks = [
     },
     "limitations": [
       "Live Gemini is not called. Fake-server route captures validate only the outbound contract and do not prove third-party service behavior.",
-      "The current packaged app exits before window/backend startup with exit code 0, so this checkpoint remains deferred despite the source-level route captures and successful build. The packaging script stamps Git HEAD and does not fingerprint dirty source changes; the built artifact's embedded 56b7d94 identity therefore does not identify the uncommitted Task 194 tree. No runtime failure cause is claimed. Other Windows profiles, GPU/CPU configurations, accessibility devices, and representative user behavior are not inferred."
+      "The current packaged app exits before window/backend startup with exit code 0, so this checkpoint remains deferred despite the source-level route captures and successful build. The packaging script stamps Git HEAD and does not fingerprint dirty source changes; the built artifact's embedded 56b7d94 identity therefore does not identify the uncommitted Task 194 tree. No runtime failure cause is claimed. Other Windows profiles, GPU/CPU configurations, accessibility devices, and representative user behavior are not inferred.",
+      "Packaged-startup blocker: superseded by the Python shell (Tasks 223-227); not fixed. No packaged Electron debugging was performed in Task 222."
     ],
     "automatedVerification": [
       "Use an ephemeral loopback HTTP capture server and the authenticated real chat route, not a direct service-only mock. Verify exact request body paths and payload fields for every applicable chat mode.",
@@ -3623,6 +3823,15 @@ export const post100Tasks = [
     ],
     "followUpValidation": [
       "Diagnose why the isolated packaged Windows app exits before Electron startup, then verify its build stamp and the four real local llama3.2:3b turns. Exercise Gemini only with an authorized test account; assess representative-user experience, native accessibility and additional Windows hardware separately."
+    ],
+    "releaseReadiness": [
+      {
+        "capability": "Packaged startup/install/uninstall/update artifact",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Task 194 blocker not fixed; Python artifact verification in 227"
+      }
     ]
   },
   {
@@ -3631,7 +3840,12 @@ export const post100Tasks = [
     "description": "Make the actual Electron-served Python Coordinator Chat the focused conversation surface, keeping advanced operator controls grouped under Advanced and Settings.",
     "category": "Phase AE - Minimal Chat Experience",
     "status": "completed",
-    "dependsOn": [178, 191, 193, 194],
+    "dependsOn": [
+      178,
+      191,
+      193,
+      194
+    ],
     "acceptance": [
       "Electron's actual chat route is identified and redesigned: centered greeting, three prompt suggestions, one rounded multiline composer, compact model selector, one-use plus menu, accessible conversation sidebar, safe Markdown, and collapsed per-reply trace.",
       "Capability cards, permission lists, global navigation injection, and secondary sidebar controls do not clutter /ui/chat; the detailed capability and privacy panel stays reachable from Settings, and existing controls remain available through progressive disclosure.",
@@ -3657,8 +3871,12 @@ export const post100Tasks = [
     ],
     "realWorldVerification": {
       "status": "partial",
-      "evidence": ["Windows source-mode Electron connected to the local Ollama service and returned one genuine llama3.2:3b greeting. Source Electron opened the Python /ui/chat route directly; the base revision health stamp was d4e33a5d08f2 while Task 195 changes were uncommitted."],
-      "unverified": ["A Task 195 packaged installer/build, Gemini, physical microphone/camera/screen capture, screen reader and representative-owner usability were not exercised."]
+      "evidence": [
+        "Windows source-mode Electron connected to the local Ollama service and returned one genuine llama3.2:3b greeting. Source Electron opened the Python /ui/chat route directly; the base revision health stamp was d4e33a5d08f2 while Task 195 changes were uncommitted."
+      ],
+      "unverified": [
+        "A Task 195 packaged installer/build, Gemini, physical microphone/camera/screen capture, screen reader and representative-owner usability were not exercised."
+      ]
     },
     "limitations": [
       "The Next.js static UI still contains the product home and Settings surfaces; it does not expose a duplicate chat route. Electron's configured chat experience is served by the Python /ui/chat page.",
@@ -3669,7 +3887,9 @@ export const post100Tasks = [
       "Cover composer keyboard behavior, image/camera/screen/knowledge popover actions, conversation grouping/search/rename/pin/delete, default-collapsed trace, inline chat without capability/permission panels, responsive navigation, and emergency-stop visibility for voice, camera, screen, speech playback, and automation.",
       "Run full Python, browser-module, Electron, and public-docs suites, plus Python compilation and git diff --check; use no paid/cloud calls or automatic downloads."
     ],
-    "followUpValidation": ["Build and launch a clean packaged Windows release after checkpointing; test Gemini consent and the actual capture devices separately, and gather representative-owner/accessibility feedback without treating this local automated pass as that evidence."]
+    "followUpValidation": [
+      "Build and launch a clean packaged Windows release after checkpointing; test Gemini consent and the actual capture devices separately, and gather representative-owner/accessibility feedback without treating this local automated pass as that evidence."
+    ]
   },
   {
     "number": 196,
@@ -3677,8 +3897,13 @@ export const post100Tasks = [
     "description": "Provide one owner-controlled Brain for retained notes and supported files, with bounded extraction, durable source records, optional local semantic indexing, lexical fallback, and cited knowledge previews in chat.",
     "category": "Phase AF - Brain and Retrieval",
     "status": "completed",
-    "dependsOn": [177, 192],
-    "decisions": ["Optional FAISS capability uses exact official PyPI wheel pins and SHA-256 validation, installed only after explicit owner confirmation into an isolated app-local package directory. Ollama embedding models are listed, previewed, and pulled only after separate owner confirmation."],
+    "dependsOn": [
+      177,
+      192
+    ],
+    "decisions": [
+      "Optional FAISS capability uses exact official PyPI wheel pins and SHA-256 validation, installed only after explicit owner confirmation into an isolated app-local package directory. Ollama embedding models are listed, previewed, and pulled only after separate owner confirmation."
+    ],
     "acceptance": [
       "The Brain page accepts owner-selected UTF-8 text, Markdown, code, CSV, PDF, and DOCX files, folders, drag-and-drop, and pasted text. Each item reports queued, extracting, chunking, embedding, ready, or failed truthfully; unsupported or oversized content gets a clear bounded error.",
       "Retained owner notes require explicit retention consent and expiry. Text extraction and overlapping chunking are bounded; deleting/forgetting an item removes its derived chunks and vectors. Authoritative metadata/content stays in SQLite, with an optional persistent FAISS CPU index and lexical fallback when the pack/model is unavailable.",
@@ -3686,20 +3911,51 @@ export const post100Tasks = [
       "When selected Brain items are used, chat previews the exact owner-authorized excerpts, retrieves at most five bounded chunks, marks retrieved text untrusted, and records citations in the real answer trace. Empty or irrelevant selection produces an honest no-answer notice. Gemini sends selected excerpts only after the existing exact-preview and per-turn cloud consent checks.",
       "Deterministic tests cover file bounds/extraction, auth, owner scope, expiry, deletion, persistence/rebuild, digest-confirmed wheel install, explicit model-pull consent, lexical fallback, preview revalidation, citations, and cloud-consent behavior. Real local acceptance adds five files and one pasted note, runs ten questions, and reports citation/factual outcomes, real embedding Recall@5/MRR, and ingestion timing separately from fakes."
     ],
-    "outOfScope": ["No OCR/image intake, 3D Brain renderer, voice/camera/screen pack, task planning, code execution, automated source ingestion, silent installation/model pull, or arbitrary package source. ChromaDB and sentence-transformers remain optional integrations, not automatic base dependencies."],
-    "risks": ["Semantic ranking and small-model answer quality vary by corpus, model, and host. A bounded offline evaluation is not a general quality guarantee.", "FAISS native wheels and DLL loading may differ in packaged/frozen Windows builds; exact hashes and fakes do not prove packaged binary compatibility.", "SQLite/vector deletion is logical application deletion, not secure erasure from disk or backups."],
+    "outOfScope": [
+      "No OCR/image intake, 3D Brain renderer, voice/camera/screen pack, task planning, code execution, automated source ingestion, silent installation/model pull, or arbitrary package source. ChromaDB and sentence-transformers remain optional integrations, not automatic base dependencies."
+    ],
+    "risks": [
+      "Semantic ranking and small-model answer quality vary by corpus, model, and host. A bounded offline evaluation is not a general quality guarantee.",
+      "FAISS native wheels and DLL loading may differ in packaged/frozen Windows builds; exact hashes and fakes do not prove packaged binary compatibility.",
+      "SQLite/vector deletion is logical application deletion, not secure erasure from disk or backups."
+    ],
     "area": "P48",
     "checkpoint": "task-196-brain-memory-grounded-retrieval",
     "validation": [
       "Automated validation: full Python suite 1,370 passed / 5 skipped / 0 failed (2 dependency deprecation warnings); browser modules 253 passed / 0 failed; Electron 38 passed / 0 failed; public docs 21 passed / 0 failed. Focused Python Brain/chat/retrieval tests 77 passed / 1 warning; focused Brain/chat UI modules 44 passed. Desktop UI production build and TypeScript checks passed; Python compileall and git diff --check passed.",
       "Real local acceptance on Windows with Ollama llama3.2:3b and nomic-embed-text: six source items (five uploaded files plus one pasted note), ten questions, 10/10 expected facts correct after semantic adjudication, 10/10 expected sources in traces, and real embedding ranking Recall@5 1.00 / MRR 1.00 on this small six-note fixture. Model-emitted inline citation markers appeared in 0/10; the UI renders trace-grounded citations beneath answers.",
       "Real chat latency averaged 3,181 ms across ten questions. Ingestion/storage averaged 21 ms/item (128 ms total); this measurement did not include semantic embeddings because the FAISS pack was not installed. Empty Brain returned an explicit no-answer in 29 ms without provider execution. A JSON snake_case lookup returned the expected 02:00 UTC backup window in 2,927 ms.",
-      "Task 196 includes an explicit official-PyPI pinned SHA-256 wheel preview/confirmation flow and persisted FAISS store integration; no wheel was installed in this acceptance. All automated package tests use deterministic fake artifacts and do not download wheels."
+      "Task 196 includes an explicit official-PyPI pinned SHA-256 wheel preview/confirmation flow and persisted FAISS store integration; no wheel was installed in this acceptance. All automated package tests use deterministic fake artifacts and do not download wheels.",
+      "Task 222 five real documents ingested; 10/10 responses, expected-source retrieval 8/10, strict fact strings 7/10, inline numeric citations 1/10. Lexical-only 1800-byte context; live quality remains partial. See review/task-222-live-summary.json."
     ],
-    "realWorldVerification": {"status": "partial", "evidence": ["Windows source-mode local Ollama chat and Brain retrieval exercised with llama3.2:3b; installed nomic-embed-text queried for real Recall@5/MRR on six synthetic notes."], "unverified": ["FAISS wheel installation and native-library loading, packaged Electron integration, semantic-index persistence/rebuild with the installed pack, other Windows/Python versions, and broader corpus/model quality."]},
-    "limitations": ["This small synthetic corpus and one local GPU-equipped Windows host do not establish general retrieval or response quality. The 10/10 fact score was manually adjudicated for one semantically equivalent date formatting; model inline citation markers were 0/10, so citations are rendered from the actual trace instead.", "FAISS was not installed because its PyPI wheels require a separate explicit owner action; the real embedding ranking metric measures the installed Ollama embedding model, while live chat used lexical retrieval."],
-    "automatedVerification": ["Use deterministic fake embeddings/providers for normal tests. Assert all remote/model/package actions require explicit owner confirmation and loopback-only routes where applicable."],
-    "followUpValidation": ["After owner-confirmed FAISS pack installation, verify actual wheel hashes, app-local isolation, native DLL load, persistent semantic index/rebuild and deletion in source and packaged Electron. Exercise supported file types with a broader corpus and a representative owner; report model quality separately."]
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": [
+        "Windows source-mode local Ollama chat and Brain retrieval exercised with llama3.2:3b; installed nomic-embed-text queried for real Recall@5/MRR on six synthetic notes."
+      ],
+      "unverified": [
+        "FAISS wheel installation and native-library loading, packaged Electron integration, semantic-index persistence/rebuild with the installed pack, other Windows/Python versions, and broader corpus/model quality."
+      ]
+    },
+    "limitations": [
+      "This small synthetic corpus and one local GPU-equipped Windows host do not establish general retrieval or response quality. The 10/10 fact score was manually adjudicated for one semantically equivalent date formatting; model inline citation markers were 0/10, so citations are rendered from the actual trace instead.",
+      "FAISS was not installed because its PyPI wheels require a separate explicit owner action; the real embedding ranking metric measures the installed Ollama embedding model, while live chat used lexical retrieval."
+    ],
+    "automatedVerification": [
+      "Use deterministic fake embeddings/providers for normal tests. Assert all remote/model/package actions require explicit owner confirmation and loopback-only routes where applicable."
+    ],
+    "followUpValidation": [
+      "After owner-confirmed FAISS pack installation, verify actual wheel hashes, app-local isolation, native DLL load, persistent semantic index/rebuild and deletion in source and packaged Electron. Exercise supported file types with a broader corpus and a representative owner; report model quality separately."
+    ],
+    "releaseReadiness": [
+      {
+        "capability": "Brain ingestion/retrieval",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Five unchanged repository documents; ten live questions, quality partial"
+      }
+    ]
   },
   {
     "number": 197,
@@ -3707,7 +3963,11 @@ export const post100Tasks = [
     "description": "Add an optional Three.js Brain visualization based only on actual authorized document/chunk relationships, with a complete accessible list fallback.",
     "category": "Phase AG - Brain Visualization",
     "status": "completed",
-    "dependsOn": [196, 172, 162],
+    "dependsOn": [
+      196,
+      172,
+      162
+    ],
     "decisions": [],
     "acceptance": [
       "Render real Brain documents/chunks as nodes positioned by actual embeddings/projection or recorded document clusters; edges represent measured similarity or a same-source relation only. No random or fabricated telemetry/data.",
@@ -3715,8 +3975,13 @@ export const post100Tasks = [
       "Use bounded/instanced geometry, cap animation rate, pause work when the page is hidden, respect reduced-motion, and fall back automatically to an equivalent keyboard-accessible 2D list when WebGL or frame-time checks are poor.",
       "Automate real-data mapping, owner-scope, event highlighting, accessible fallback, reduced-motion, and pause/cap behavior. Measure frame time on available hardware during local model generation and label the hardware/configuration."
     ],
-    "outOfScope": ["No inferred corporate hierarchy, generated graph nodes, cross-owner memory visibility, continuous model polling, or replacement of existing corporation maps."],
-    "risks": ["Projection and similarity can mislead if presented as facts; labels must state their actual basis and preserve unknown states.", "WebGL/GPU timing varies widely; one host's result is not a general performance guarantee."],
+    "outOfScope": [
+      "No inferred corporate hierarchy, generated graph nodes, cross-owner memory visibility, continuous model polling, or replacement of existing corporation maps."
+    ],
+    "risks": [
+      "Projection and similarity can mislead if presented as facts; labels must state their actual basis and preserve unknown states.",
+      "WebGL/GPU timing varies widely; one host's result is not a general performance guarantee."
+    ],
     "area": "P49",
     "checkpoint": "task-197-brain-visualization",
     "validation": [
@@ -3724,10 +3989,33 @@ export const post100Tasks = [
       "Owner-only graph API returns metadata without source content; selected source/chunk text is fetched through the existing owner memory authorization boundary. Layout is deterministic by file-type/note grouping derived from authorized source metadata; edges are source-to-chunk only. No semantic similarity score is available from the existing API and none is shown.",
       "The 3D view uses vendored Three.js instanced geometry, caps continuous animation at 24 FPS and at 320 rendered nodes/480 edges, pauses while the document is hidden, honors reduced-motion preference and switches to the full keyboard-accessible list when WebGL is unavailable or frame-time thresholds are exceeded."
     ],
-    "realWorldVerification": {"status": "partial", "evidence": ["On this Windows machine, a local llama3.2:3b generation completed in 11.9 seconds while the Brain implementation was under review. Host CPU/GPU process metrics were not sufficient to attribute inference to the RX 570 or measure Brain canvas FPS."], "unverified": ["RX 570 frame-time/FPS measurement while Ollama generates, packaged Electron WebGL rendering, representative-owner usability and GPU-driver-specific fallback behavior."]},
-    "limitations": ["The existing Task 196 memory interface does not expose stored embedding coordinates or pairwise similarity values. The implemented 3D layout uses deterministic source groups and source-to-chunk links only; it does not claim semantic relationships."],
-    "automatedVerification": ["Use deterministic embeddings and graph records, never random decorative nodes; test list parity, keyboard access, visibility pause, frame cap and fallback."],
-    "followUpValidation": ["Measure actual Brain canvas frame time on the RX 570 while local Ollama generation is active, and verify renderer FPS/CPU/GPU via supported Windows telemetry. Test packaged Electron WebGL. Confirm the accessible list flow with a representative user."]
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": [
+        "On this Windows machine, a local llama3.2:3b generation completed in 11.9 seconds while the Brain implementation was under review. Host CPU/GPU process metrics were not sufficient to attribute inference to the RX 570 or measure Brain canvas FPS."
+      ],
+      "unverified": [
+        "RX 570 frame-time/FPS measurement while Ollama generates, packaged Electron WebGL rendering, representative-owner usability and GPU-driver-specific fallback behavior."
+      ]
+    },
+    "limitations": [
+      "The existing Task 196 memory interface does not expose stored embedding coordinates or pairwise similarity values. The implemented 3D layout uses deterministic source groups and source-to-chunk links only; it does not claim semantic relationships."
+    ],
+    "automatedVerification": [
+      "Use deterministic embeddings and graph records, never random decorative nodes; test list parity, keyboard access, visibility pause, frame cap and fallback."
+    ],
+    "followUpValidation": [
+      "Measure actual Brain canvas frame time on the RX 570 while local Ollama generation is active, and verify renderer FPS/CPU/GPU via supported Windows telemetry. Test packaged Electron WebGL. Confirm the accessible list flow with a representative user."
+    ],
+    "releaseReadiness": [
+      {
+        "capability": "Historical Brain web graph",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Task 197 existing record; native widget not implemented"
+      }
+    ]
   },
   {
     "number": 198,
@@ -3735,8 +4023,17 @@ export const post100Tasks = [
     "description": "Offer owner-installed local image/OCR, microphone/transcription, and speech-output capabilities as separate optional packs with real self-tests and visible use indicators.",
     "category": "Phase AH - Multimodal Packs",
     "status": "completed",
-    "dependsOn": [155, 145, 146, 148, 149, 196],
-    "decisions": ["Owner approved official PyPI as the only wheel source, exact version and SHA-256 pins, owner confirmation, and isolated wheel-only installation; this does not authorize downloading or installing during development."],
+    "dependsOn": [
+      155,
+      145,
+      146,
+      148,
+      149,
+      196
+    ],
+    "decisions": [
+      "Owner approved official PyPI as the only wheel source, exact version and SHA-256 pins, owner confirmation, and isolated wheel-only installation; this does not authorize downloading or installing during development."
+    ],
     "acceptance": [
       "For every pack, show Not installed / Installed / Working from observed facts, exact pinned source/version/size/digest and compatibility before an owner-confirmed wheel-only isolated install. Base installer remains small; no unverified or silent downloads.",
       "Eyes: bounded image processing and one-shot screen capture/OCR using maintained local libraries; Tesseract installation/language data are guided separately, EasyOCR remains an optional heavy pack. Self-test captures a selected local screen/window only after permission, recognizes text, and reports the result. Provider transfer requires explicit per-turn consent.",
@@ -3745,8 +4042,13 @@ export const post100Tasks = [
       "Vision chat lists only installed Ollama models that report vision capability. If none exists, offer choices with sizes and wait for owner confirmation before a pull. Image preview states exactly which provider receives the image and requires existing one-turn consent.",
       "Use deterministic adapter fakes for suites, and exercise real OCR, a five-second microphone recording/transcription, offline TTS/Stop, and one image turn on available Windows hardware where devices/models permit. Record unavailable physical devices as UNVERIFIED."
     ],
-    "outOfScope": ["No cloud speech recognizer by default, remote audio/image storage, microphone always-on mode, automatic model/library installation, hidden capture, or claim that a package is working without its self-test."],
-    "risks": ["Audio, OCR and vision wheel/model compatibility, licenses, language quality, device drivers and hardware use vary by Windows/Python version.", "Optional model downloads can consume substantial bandwidth/storage and may expose private content if transfer consent is misunderstood."],
+    "outOfScope": [
+      "No cloud speech recognizer by default, remote audio/image storage, microphone always-on mode, automatic model/library installation, hidden capture, or claim that a package is working without its self-test."
+    ],
+    "risks": [
+      "Audio, OCR and vision wheel/model compatibility, licenses, language quality, device drivers and hardware use vary by Windows/Python version.",
+      "Optional model downloads can consume substantial bandwidth/storage and may expose private content if transfer consent is misunderstood."
+    ],
     "area": "P50",
     "checkpoint": "task-198-multimodal-capability-packs",
     "validation": [
@@ -3755,7 +4057,13 @@ export const post100Tasks = [
       "Desktop UI production/type build, Python compileall, and git diff --check passed.",
       "Focused capability pack, speech model, local TTS, voice API, and emergency-stop tests: 25 passed (1 Starlette TestClient deprecation warning); focused browser capability/stop tests: 5 passed."
     ],
-    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["No optional pack or FasterWhisper model was downloaded or installed. Real OCR/Tesseract, microphone recording/transcription, physical TTS playback/Stop, screen/camera capture, vision-model chat, and packaged Windows loading were not exercised."]},
+    "realWorldVerification": {
+      "status": "pending",
+      "evidence": [],
+      "unverified": [
+        "No optional pack or FasterWhisper model was downloaded or installed. Real OCR/Tesseract, microphone recording/transcription, physical TTS playback/Stop, screen/camera capture, vision-model chat, and packaged Windows loading were not exercised."
+      ]
+    },
     "limitations": [
       "Optional wheels are currently offered only for official PyPI CPython 3.14 Windows x64 artifacts with exact version, size and SHA-256 preview, owner confirmation, and isolated wheel-only installation; this does not verify compatibility on other Python/Windows targets.",
       "Tesseract and its language data require a separately guided installation. EasyOCR is not offered as a heavy pack. Coqui TTS is excluded because compatible maintained Windows wheels were not established. Existing Task 189 vision behavior is reused; this task did not verify a real vision-capable model or image turn.",
@@ -3766,7 +4074,25 @@ export const post100Tasks = [
       "Fake OCR, local speech, TTS, API and UI tests cover actual self-test state transitions, permission checks, visible activity, Stop/emergency stop, bounded model pull confirmation, and safe error reporting.",
       "Security review confirmed no import-time downloads, implicit package/model installation, cloud speech fallback, or bypass of existing capture/provider consent."
     ],
-    "followUpValidation": ["On a clean supported Windows profile, explicitly install each desired pack, test OCR on a known local image, record/transcribe five seconds of microphone input, exercise offline TTS and Stop, check screen/camera consent indicators, and run a real image turn only with an installed vision model and existing consent. Validate packaged wheel/DLL loading and unsupported-target messaging."]
+    "followUpValidation": [
+      "On a clean supported Windows profile, explicitly install each desired pack, test OCR on a known local image, record/transcribe five seconds of microphone input, exercise offline TTS and Stop, check screen/camera consent indicators, and run a real image turn only with an installed vision model and existing consent. Validate packaged wheel/DLL loading and unsupported-target messaging."
+    ],
+    "releaseReadiness": [
+      {
+        "capability": "Optional media library loading",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Hands-free Task 198 imports and microphone enumeration only"
+      },
+      {
+        "capability": "OCR/transcription/playback",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "No capture, OCR engine configuration or playback proof"
+      }
+    ]
   },
   {
     "number": 199,
@@ -3774,7 +4100,14 @@ export const post100Tasks = [
     "description": "Extend the existing allowlisted Playwright and Windows UI Automation boundaries with visible previews, per-action owner approval, bounded execution, and a reliable emergency stop.",
     "category": "Phase AI - Owner-Gated Automation",
     "status": "completed",
-    "dependsOn": [142, 143, 144, 156, 157, 158],
+    "dependsOn": [
+      142,
+      143,
+      144,
+      156,
+      157,
+      158
+    ],
     "decisions": [],
     "acceptance": [
       "Reuse existing Playwright/UI Automation providers, capability authorization, exact-action approvals, trace/audit services, and emergency-stop controls. Optional package installation is owner-confirmed, version-pinned, hash-checked and isolated.",
@@ -3783,8 +4116,13 @@ export const post100Tasks = [
       "Never interpret a timed-out/unconfirmed action as success or retry it automatically. Preserve origin/process/window scoping, fail-closed authorization, audit, owner consent and existing one-use high-risk approval.",
       "Test deterministic no-side-effect previews, denied/non-allowlisted targets, exact approval binding, expiry/replay, stop-before-action, action limits and unknown outcomes. Any real browser/native action test must use a disposable allowlisted target and explicit per-action confirmation."
     ],
-    "outOfScope": ["Do not embed Open Interpreter or implement arbitrary code/shell execution. Task 190 remains design-only unless its threat model receives a separate owner review and authorization."],
-    "risks": ["Browser/native UI actions may cause irreversible external changes; owner confirmation cannot guarantee the remote system's resulting state.", "A hotkey or process-level stop cannot cancel every native in-flight driver call; uncertain outcomes must remain unknown and never be replayed."],
+    "outOfScope": [
+      "Do not embed Open Interpreter or implement arbitrary code/shell execution. Task 190 remains design-only unless its threat model receives a separate owner review and authorization."
+    ],
+    "risks": [
+      "Browser/native UI actions may cause irreversible external changes; owner confirmation cannot guarantee the remote system's resulting state.",
+      "A hotkey or process-level stop cannot cancel every native in-flight driver call; uncertain outcomes must remain unknown and never be replayed."
+    ],
     "area": "P51",
     "checkpoint": "task-199-owner-gated-computer-automation",
     "validation": [
@@ -3793,7 +4131,13 @@ export const post100Tasks = [
       "Desktop UI production/type build, Python compileall, and git diff --check passed.",
       "Focused local automation, owner API, browser, desktop, and capability-pack tests: 32 passed (1 Starlette TestClient deprecation warning); approval-flow UI tests: 2 passed."
     ],
-    "realWorldVerification": {"status": "pending", "evidence": [], "unverified": ["No live website action or native Windows UI Automation action was performed. The pywinauto pack was not installed; visible Chromium isolation, a disposable allowlisted site, real UIA target discovery/invocation, and emergency stop during a live action remain unverified."]},
+    "realWorldVerification": {
+      "status": "pending",
+      "evidence": [],
+      "unverified": [
+        "No live website action or native Windows UI Automation action was performed. The pywinauto pack was not installed; visible Chromium isolation, a disposable allowlisted site, real UIA target discovery/invocation, and emergency stop during a live action remain unverified."
+      ]
+    },
     "limitations": [
       "Allowlists, action counters, and automation adapters are process-local. The browser uses a fresh visible temporary context; same-origin GET/HEAD inspection can still have site-side effects, so the exact URL is shown and the owner must confirm before inspection. No credentials, downloads, cross-origin requests, WebSockets, arbitrary scripts, keys, coordinates, shell commands, or PyAutoGUI are exposed.",
       "Native UI Automation is limited to invoking one exact enabled direct-child button. Emergency stop blocks new actions and is rechecked before dispatch, but an in-flight driver call cannot always be canceled; its outcome remains unknown and is never retried automatically.",
@@ -3805,7 +4149,9 @@ export const post100Tasks = [
       "Optional UI Automation support uses exact official PyPI wheels with pinned versions, sizes and SHA-256, CPython 3.14/Windows x64 compatibility gating, owner confirmation, isolated wheel-only installation, and a read-only native self-test. No package was downloaded or installed during validation.",
       "Security review confirmed that Task 190 remains design-only, the base runtime exposes no arbitrary shell/keyboard/coordinate automation, and default external-origin/process policies remain empty."
     ],
-    "followUpValidation": ["On a disposable owner-controlled HTTPS site and a benign Windows test window, install the UI Automation pack only after reviewing its exact PyPI manifest, then verify visible browser behavior, one-action confirmation, native button invocation, emergency stop, and unknown-outcome handling. Keep Task 190's separate design gate closed."]
+    "followUpValidation": [
+      "On a disposable owner-controlled HTTPS site and a benign Windows test window, install the UI Automation pack only after reviewing its exact PyPI manifest, then verify visible browser behavior, one-action confirmation, native button invocation, emergency stop, and unknown-outcome handling. Keep Task 190's separate design gate closed."
+    ]
   },
   {
     "number": 200,
@@ -3813,7 +4159,15 @@ export const post100Tasks = [
     "description": "Provision six editable, role-scoped profiles in the existing Agent and Employee model, with safe default routes, tool/Brain allowlists, honest status, and shared one-at-a-time model capacity.",
     "category": "Phase AJ - Built-in Agent Team",
     "status": "completed",
-    "dependsOn": [68, 71, 72, 130, 136, 191, 199],
+    "dependsOn": [
+      68,
+      71,
+      72,
+      130,
+      136,
+      191,
+      199
+    ],
     "decisions": [],
     "acceptance": [
       "First-run/runtime construction idempotently provisions Coordinator, Researcher, Developer, Librarian, Observer, and Operator through existing Agent and Employee registries. Existing owner-edited profile state is preserved; the Coordinator remains the default chat identity.",
@@ -3823,8 +4177,13 @@ export const post100Tasks = [
       "Coordinator and Employee chat receive the selected Agent's role prompt. Chat tool and Brain requests are checked against that Agent's allowlists. All chat turns use one shared configured ResourceManager slot; an assigned model route can be accounted without resetting allocation-ID history.",
       "Tests cover clean provisioning, repeat provisioning, coder preference without download, owner profile controls/persistence, fail-closed permission/CSRF checks, built-in protection, role prompt/tool scope, real status sources, and one-at-a-time slot reservation/release."
     ],
-    "outOfScope": ["Do not add new Agent/Employee/Position domain models, UI pages, delegation, approval inbox behavior, background work, autonomous loops, live web search, provider fallback, hardware capability claims, or new dependencies. Exact-host web retrieval remains distinct from search."],
-    "risks": ["All roles use the assigned provider/model and are profiles, not separate AI brains. A single shared slot serializes model turns locally; status and runtime metrics are process-local.", "Availability probes and installed model inventory can fail or be unsupported; report error/unavailable rather than fabricate readiness. Owner changes to profile permission metadata do not bypass existing service authorization or per-action approval."],
+    "outOfScope": [
+      "Do not add new Agent/Employee/Position domain models, UI pages, delegation, approval inbox behavior, background work, autonomous loops, live web search, provider fallback, hardware capability claims, or new dependencies. Exact-host web retrieval remains distinct from search."
+    ],
+    "risks": [
+      "All roles use the assigned provider/model and are profiles, not separate AI brains. A single shared slot serializes model turns locally; status and runtime metrics are process-local.",
+      "Availability probes and installed model inventory can fail or be unsupported; report error/unavailable rather than fabricate readiness. Owner changes to profile permission metadata do not bypass existing service authorization or per-action approval."
+    ],
     "area": "P52",
     "checkpoint": "task-200-builtin-agent-team",
     "validation": [
@@ -3832,14 +4191,24 @@ export const post100Tasks = [
       "Full browser-module suite: 265 passed, 0 failed; Electron suite: 38 passed, 0 failed; public docs suite: 21 passed, 0 failed.",
       "Focused Agent team, profile API, resource slot, local model, migration, backup/restore, and browser regressions passed. git diff --check and Python compileall passed."
     ],
-    "realWorldVerification": {"status": "unverified", "evidence": [], "unverified": ["No live local llama3.2:3b mixed-question delegation run is claimed for this phase; Task 202 will perform the requested Coordinator choice/latency/failure evaluation when its real delegation behavior exists."]},
-    "limitations": ["Built-in profiles are role instructions and scoped metadata over shared providers/models, not isolated minds. The Researcher may retrieve only exact HTTPS URLs from the existing owner allowlist; it does not provide general web search. The six role positions are not auto-created because the existing Position templates are a separate owner-managed structure and do not include all six roles."],
+    "realWorldVerification": {
+      "status": "unverified",
+      "evidence": [],
+      "unverified": [
+        "No live local llama3.2:3b mixed-question delegation run is claimed for this phase; Task 202 will perform the requested Coordinator choice/latency/failure evaluation when its real delegation behavior exists."
+      ]
+    },
+    "limitations": [
+      "Built-in profiles are role instructions and scoped metadata over shared providers/models, not isolated minds. The Researcher may retrieve only exact HTTPS URLs from the existing owner allowlist; it does not provide general web search. The six role positions are not auto-created because the existing Position templates are a separate owner-managed structure and do not include all six roles."
+    ],
     "automatedVerification": [
       "Deterministic tests cover idempotent provisioning, existing profile preservation, coder preference using only installed-model evidence, role prompt/tool/Brain boundaries, owner-only profile access and CSRF, edits/pause/duplicate/reset persistence, built-in protection, runtime status evidence, and one shared ResourceManager slot.",
       "Default and private encrypted backup paths preserve the Agent profile table under the existing owner-controlled Backup & Restore behavior; profile data is not exposed by the ordinary Agent read API.",
       "All required deterministic suites passed: Python 1,398/5 skipped, browser modules 265, Electron 38, public docs 21."
     ],
-    "followUpValidation": ["Task 202 must evaluate five real Coordinator questions with local llama3.2:3b and report selected Agent, choice suitability, latency, and failures. Packaged Windows profile provisioning and real provider/status behavior remain separate follow-up evidence."]
+    "followUpValidation": [
+      "Task 202 must evaluate five real Coordinator questions with local llama3.2:3b and report selected Agent, choice suitability, latency, and failures. Packaged Windows profile provisioning and real provider/status behavior remain separate follow-up evidence."
+    ]
   },
   {
     "number": 201,
@@ -3847,20 +4216,42 @@ export const post100Tasks = [
     "description": "Add a clean Agents workspace showing real role profiles, routes, states, activity, organization view, and owner-scoped editing.",
     "category": "Phase AK - Agents Workspace",
     "status": "completed",
-    "dependsOn": [200],
+    "dependsOn": [
+      200
+    ],
     "decisions": [],
-    "acceptance": ["Show All, Active, Paused, Error, and Built-in filters; List and existing organization Tree views; agent avatar/name/role/model/status/last activity and Chat action; and a New Agent form using existing records.", "Agent details expose role prompt, model, Brain scopes, tools, permissions and recent activity with advanced fields collapsed. Built-ins can be edited/reset/paused/duplicated through authorized APIs; status is sourced from runtime checks.", "Explain in plain language that profiles share model brains and local model work is serialized one at a time. Accessible responsive navigation and empty/loading/error states are covered by browser tests."],
-    "outOfScope": ["No new Agent domain model, autonomous work, provider/model downloads, or permissions beyond existing owner APIs."],
-    "risks": ["Provider checks may be slow or unavailable; the page must expose unknown/error states and avoid presenting a stale result as current."],
+    "acceptance": [
+      "Show All, Active, Paused, Error, and Built-in filters; List and existing organization Tree views; agent avatar/name/role/model/status/last activity and Chat action; and a New Agent form using existing records.",
+      "Agent details expose role prompt, model, Brain scopes, tools, permissions and recent activity with advanced fields collapsed. Built-ins can be edited/reset/paused/duplicated through authorized APIs; status is sourced from runtime checks.",
+      "Explain in plain language that profiles share model brains and local model work is serialized one at a time. Accessible responsive navigation and empty/loading/error states are covered by browser tests."
+    ],
+    "outOfScope": [
+      "No new Agent domain model, autonomous work, provider/model downloads, or permissions beyond existing owner APIs."
+    ],
+    "risks": [
+      "Provider checks may be slow or unavailable; the page must expose unknown/error states and avoid presenting a stale result as current."
+    ],
     "area": "P53",
     "checkpoint": "task-201-agents-page",
     "validation": [
       "Full validation: Python 1,396 passed / 8 skipped / 0 failed; browser modules 270 passed; Electron 38 passed; public docs 21 passed. Python compileall and git diff --check passed."
     ],
-    "realWorldVerification": {"status": "unverified", "evidence": [], "unverified": ["Packaged Electron rendering, live provider/model status, and representative owner usability were not exercised; route and browser interaction checks used the local TestClient and deterministic fixtures."]},
-    "limitations": ["Last-activity timestamps are process-local and disappear on restart. The organization tree shows actual recorded Positions and only their existing Employee/Agent links; it does not create a new Agent hierarchy. New Agents are created by duplicating an existing profile and Employee identity; no deletion control is added."],
-    "automatedVerification": ["Full validation passed: Python 1,396/8 skipped, browser modules 270, Electron 38, public docs 21. Focused legacy chat regressions: 28 passed after aligning Ollama fakes with the native generate_chat adapter. Focused browser tests cover runtime-state filters, existing organization-map data, read-only permission denial, collapsed profile editing, CSRF-backed pause/reset, custom profile duplication, selected Employee chat routing, and single-slot wording. API tests verify built-in classification is exposed without role prompts, permissions, or other profile data."],
-    "followUpValidation": ["Inspect the Agents page in the packaged Windows application and confirm real provider/model/status details match the current host."]
+    "realWorldVerification": {
+      "status": "unverified",
+      "evidence": [],
+      "unverified": [
+        "Packaged Electron rendering, live provider/model status, and representative owner usability were not exercised; route and browser interaction checks used the local TestClient and deterministic fixtures."
+      ]
+    },
+    "limitations": [
+      "Last-activity timestamps are process-local and disappear on restart. The organization tree shows actual recorded Positions and only their existing Employee/Agent links; it does not create a new Agent hierarchy. New Agents are created by duplicating an existing profile and Employee identity; no deletion control is added."
+    ],
+    "automatedVerification": [
+      "Full validation passed: Python 1,396/8 skipped, browser modules 270, Electron 38, public docs 21. Focused legacy chat regressions: 28 passed after aligning Ollama fakes with the native generate_chat adapter. Focused browser tests cover runtime-state filters, existing organization-map data, read-only permission denial, collapsed profile editing, CSRF-backed pause/reset, custom profile duplication, selected Employee chat routing, and single-slot wording. API tests verify built-in classification is exposed without role prompts, permissions, or other profile data."
+    ],
+    "followUpValidation": [
+      "Inspect the Agents page in the packaged Windows application and confirm real provider/model/status details match the current host."
+    ]
   },
   {
     "number": 202,
@@ -3868,21 +4259,62 @@ export const post100Tasks = [
     "description": "Let owners chat with a selected role profile and let the Coordinator propose at most one visible, bounded Agent handoff with a trace and an owner approvals inbox.",
     "category": "Phase AL - Agent Delegation and Approvals",
     "status": "completed",
-    "dependsOn": [177, 182, 183, 191, 200, 201],
+    "dependsOn": [
+      177,
+      182,
+      183,
+      191,
+      200,
+      201
+    ],
     "decisions": [],
-    "acceptance": ["Default chat remains Coordinator; exact @Name selection or an Agent Chat action selects that existing Agent identity and conversation safely.", "Coordinator delegation is limited to one named Agent handoff, one active local model slot, a small fixed maximum number of steps, and no loops, retries, replay, or background work. The owner starts every run and every handoff plus actual evidence appears in the existing answer trace.", "A sidebar inbox surfaces actual pending, expiring exact-action approvals from existing approval services with preview, approve, deny, and expiry behavior. Side-effect actions, cloud calls, file changes and automation retain their existing explicit approval/consent and spend gates.", "Queue state is visible when the shared model slot is occupied. Five mixed real local llama3.2:3b Coordinator prompts report chosen Agent, suitability, latency and failures separately from deterministic tests."],
-    "outOfScope": ["No autonomous/background Agent activity, multi-agent parallel execution, unlimited loops, silent cloud routing, new approval authority, or hidden execution."],
-    "risks": ["Model-generated Agent selections and handoff summaries are untrusted proposals; coordinator limits and owner approval remain enforced by trusted code. Local model quality may produce unsuitable choices."],
+    "acceptance": [
+      "Default chat remains Coordinator; exact @Name selection or an Agent Chat action selects that existing Agent identity and conversation safely.",
+      "Coordinator delegation is limited to one named Agent handoff, one active local model slot, a small fixed maximum number of steps, and no loops, retries, replay, or background work. The owner starts every run and every handoff plus actual evidence appears in the existing answer trace.",
+      "A sidebar inbox surfaces actual pending, expiring exact-action approvals from existing approval services with preview, approve, deny, and expiry behavior. Side-effect actions, cloud calls, file changes and automation retain their existing explicit approval/consent and spend gates.",
+      "Queue state is visible when the shared model slot is occupied. Five mixed real local llama3.2:3b Coordinator prompts report chosen Agent, suitability, latency and failures separately from deterministic tests."
+    ],
+    "outOfScope": [
+      "No autonomous/background Agent activity, multi-agent parallel execution, unlimited loops, silent cloud routing, new approval authority, or hidden execution."
+    ],
+    "risks": [
+      "Model-generated Agent selections and handoff summaries are untrusted proposals; coordinator limits and owner approval remain enforced by trusted code. Local model quality may produce unsuitable choices."
+    ],
     "area": "P54",
     "checkpoint": "task-202-agent-delegation-approvals",
     "validation": [
       "Full validation: Python 1,401 passed / 8 skipped / 0 failed (2 dependency deprecation warnings); browser modules 272 passed / 0 failed; Electron 38 passed / 0 failed; public docs 21 passed / 0 failed. Focused delegation/resource/approval regressions passed (including preserved cloud slot-exhaustion behavior); Python compileall, JavaScript syntax checks, and git diff --check passed.",
       "Focused delegation, approval, and resource regressions passed; Python compilation and JavaScript syntax checks passed."
     ],
-    "realWorldVerification": {"status": "unverified", "evidence": [], "unverified": ["The live llama3.2:3b evaluation was not possible: http://127.0.0.1:11434/api/tags refused the local connection. The requested five mixed prompts, suitability, and real-model latency were not tested. Packaged Electron interaction was also not exercised."]},
-    "limitations": ["Delegation is an owner-confirmed, synchronous local request: the Coordinator proposes one eligible installed-model Agent, trusted code validates it, and the selected Agent gets one plain-text answer turn. Tools, Brain context, cloud routes, retries, replay, and background execution are excluded. Shared-slot wait is process-local, bounded to 16 waiters and 30 seconds; a timed-out request is not admitted. It does not coordinate external processes or unsynchronized registry/resource changes.", "The inbox reads actual owner-scoped expiring approval records. Approve records the exact owner decision but never executes the action; the protected operation still needs its existing guarded execution path. Denial is audited and cannot execute. Existing approval records do not identify a requesting Agent, so no Agent is labeled as waiting for approval without that provenance."],
-    "automatedVerification": ["Deterministic API/service tests cover one Coordinator selection plus one Agent answer, strict candidate validation, no second call on invalid selection, trace provenance, shared slot waiting/release, failed-answer cleanup, no secret diagnostics, owner-scoped approval listing, exact-digest approve/deny, CSRF, audit, expiry and no execution from approval alone.", "Browser tests cover explicit one-turn delegation confirmation, plain-text restrictions, visible pending/waiting state, permission-gated approval count, exact action preview, CSRF-backed denial, refresh, and safe DOM rendering."],
-    "followUpValidation": ["When loopback Ollama is available, run five mixed prompts through the current local app and report actual replies, selected Agent, suitability, latency, and failures. Confirm packaged Electron status and owner approval inbox against actual runtime records."]
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": [
+        "Task 222 qwen3.5:4b choice-only rerun: five of five expected roles, mean 3499.15 ms. No delegated actions or final handoff answers tested."
+      ],
+      "unverified": [
+        "Delegated action execution, packaged native UI and physical devices."
+      ]
+    },
+    "limitations": [
+      "Delegation is an owner-confirmed, synchronous local request: the Coordinator proposes one eligible installed-model Agent, trusted code validates it, and the selected Agent gets one plain-text answer turn. Tools, Brain context, cloud routes, retries, replay, and background execution are excluded. Shared-slot wait is process-local, bounded to 16 waiters and 30 seconds; a timed-out request is not admitted. It does not coordinate external processes or unsynchronized registry/resource changes.",
+      "The inbox reads actual owner-scoped expiring approval records. Approve records the exact owner decision but never executes the action; the protected operation still needs its existing guarded execution path. Denial is audited and cannot execute. Existing approval records do not identify a requesting Agent, so no Agent is labeled as waiting for approval without that provenance."
+    ],
+    "automatedVerification": [
+      "Deterministic API/service tests cover one Coordinator selection plus one Agent answer, strict candidate validation, no second call on invalid selection, trace provenance, shared slot waiting/release, failed-answer cleanup, no secret diagnostics, owner-scoped approval listing, exact-digest approve/deny, CSRF, audit, expiry and no execution from approval alone.",
+      "Browser tests cover explicit one-turn delegation confirmation, plain-text restrictions, visible pending/waiting state, permission-gated approval count, exact action preview, CSRF-backed denial, refresh, and safe DOM rendering."
+    ],
+    "followUpValidation": [
+      "When loopback Ollama is available, run five mixed prompts through the current local app and report actual replies, selected Agent, suitability, latency, and failures. Confirm packaged Electron status and owner approval inbox against actual runtime records."
+    ],
+    "releaseReadiness": [
+      {
+        "capability": "Agent choice (not action execution)",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Task 222 five-question live choice; tests/test_agent_runtime.py"
+      }
+    ]
   },
   {
     "number": 203,
@@ -3890,18 +4322,157 @@ export const post100Tasks = [
     "description": "Visualize the real Agent team as original amber concentric sigils with a 2D accessible fallback, using runtime state and real handoff/source links only.",
     "category": "Phase AM - Sage Core Visualization",
     "status": "completed",
-    "dependsOn": [197, 200, 201, 202],
+    "dependsOn": [
+      197,
+      200,
+      201,
+      202
+    ],
     "decisions": [],
-    "acceptance": ["Create an original canvas/WebGL ring-and-glyph display on its own page and optional Agents-page compact view. Coordinator is centered; actual Agents occupy stable orbit positions, and selecting a sigil opens that Agent's real details.", "Brightness, pulse and rays are derived only from actual idle/working/waiting-approval/error/unavailable states; source and handoff links appear only while backed by real trace events. No random activity or copied anime artwork, glyph sheets, names, or assets.", "Provide a complete keyboard-accessible 2D list fallback, reduced-motion mode, hidden-page pause, capped frame rate and automatic fallback when WebGL is unavailable or measured frame time exceeds the threshold.", "Measure frame time on this RX 570 while a local model generates and report renderer/build identity, workload and results. Automated tests assert no fabricated nodes/edges, stable mappings, fallbacks and reduced-motion behavior."],
-    "outOfScope": ["No copied third-party art, fake telemetry, idle animations that imply work, model-performance inference, or changes to Agent state/execution."],
-    "risks": ["GPU/WebGL performance varies by driver and app packaging; a visual effect must never imply execution or approval that did not occur."],
+    "acceptance": [
+      "Create an original canvas/WebGL ring-and-glyph display on its own page and optional Agents-page compact view. Coordinator is centered; actual Agents occupy stable orbit positions, and selecting a sigil opens that Agent's real details.",
+      "Brightness, pulse and rays are derived only from actual idle/working/waiting-approval/error/unavailable states; source and handoff links appear only while backed by real trace events. No random activity or copied anime artwork, glyph sheets, names, or assets.",
+      "Provide a complete keyboard-accessible 2D list fallback, reduced-motion mode, hidden-page pause, capped frame rate and automatic fallback when WebGL is unavailable or measured frame time exceeds the threshold.",
+      "Measure frame time on this RX 570 while a local model generates and report renderer/build identity, workload and results. Automated tests assert no fabricated nodes/edges, stable mappings, fallbacks and reduced-motion behavior."
+    ],
+    "outOfScope": [
+      "No copied third-party art, fake telemetry, idle animations that imply work, model-performance inference, or changes to Agent state/execution."
+    ],
+    "risks": [
+      "GPU/WebGL performance varies by driver and app packaging; a visual effect must never imply execution or approval that did not occur."
+    ],
     "area": "P55",
     "checkpoint": "task-203-sage-core-live-state-visualization",
-    "validation": ["Full validation: Python 1,403 passed / 8 skipped / 0 failed; browser modules 281 passed / 0 failed; Electron 38 passed / 0 failed; public docs 21 passed / 0 failed. Python compilation, JavaScript syntax checks and git diff --check passed."],
-    "realWorldVerification": {"status": "unverified", "evidence": [], "unverified": ["The loopback Ollama endpoint refused connection, so no live model generation was available. The requested RX 570 rendering/frame-time run while a local model generated was not performed. Packaged Electron rendering was not exercised."]},
-    "limitations": ["The local map is read-only and renders at most 100 current Agent profiles, traces from the 20 most recent in-memory owner conversations, 60 handoffs, and 100 current Brain-source links. Trace links show recorded events, not a live transfer stream; no conversation text or Brain content is returned by the map API.", "Task 202 approval records do not identify a requesting Agent, and the current runtime status service does not produce an Agent-specific waiting-for-approval state. The visualization supports that state if a future authorized source reports it, but does not infer it from a generic pending approval.", "This implementation uses original Canvas 2D sigils rather than WebGL. Automatic fallback measures JavaScript draw duration; it does not establish GPU completion timing. RX 570 and packaged Electron measurements remain follow-up."],
-    "automatedVerification": ["The protected snapshot requires both agent:read and chat:read, returns only bounded Agent metadata and current trace identifiers, strips conversation content, ignores stale Brain sources, and emits only validated handoff/source links.", "Browser tests verify actual-record-only nodes and links, ID-stable orbit placement, Coordinator center from the built-in profile key, state rendering, keyboard-selectable details, accessible list relationships, reduced-motion default, absent-canvas fallback, hidden-page pause, 24 FPS cap and draw-budget fallback."],
-    "followUpValidation": ["Run the packaged Electron app on the RX 570 while a local model generates; record the exact build identity and observed frame timing. Confirm the accessible list and reduced-motion behavior in the packaged app. Live local inference remains unavailable in this acceptance environment."]
+    "validation": [
+      "Full validation: Python 1,403 passed / 8 skipped / 0 failed; browser modules 281 passed / 0 failed; Electron 38 passed / 0 failed; public docs 21 passed / 0 failed. Python compilation, JavaScript syntax checks and git diff --check passed."
+    ],
+    "realWorldVerification": {
+      "status": "unverified",
+      "evidence": [],
+      "unverified": [
+        "The loopback Ollama endpoint refused connection, so no live model generation was available. The requested RX 570 rendering/frame-time run while a local model generated was not performed. Packaged Electron rendering was not exercised."
+      ]
+    },
+    "limitations": [
+      "The local map is read-only and renders at most 100 current Agent profiles, traces from the 20 most recent in-memory owner conversations, 60 handoffs, and 100 current Brain-source links. Trace links show recorded events, not a live transfer stream; no conversation text or Brain content is returned by the map API.",
+      "Task 202 approval records do not identify a requesting Agent, and the current runtime status service does not produce an Agent-specific waiting-for-approval state. The visualization supports that state if a future authorized source reports it, but does not infer it from a generic pending approval.",
+      "This implementation uses original Canvas 2D sigils rather than WebGL. Automatic fallback measures JavaScript draw duration; it does not establish GPU completion timing. RX 570 and packaged Electron measurements remain follow-up."
+    ],
+    "automatedVerification": [
+      "The protected snapshot requires both agent:read and chat:read, returns only bounded Agent metadata and current trace identifiers, strips conversation content, ignores stale Brain sources, and emits only validated handoff/source links.",
+      "Browser tests verify actual-record-only nodes and links, ID-stable orbit placement, Coordinator center from the built-in profile key, state rendering, keyboard-selectable details, accessible list relationships, reduced-motion default, absent-canvas fallback, hidden-page pause, 24 FPS cap and draw-budget fallback."
+    ],
+    "followUpValidation": [
+      "Run the packaged Electron app on the RX 570 while a local model generates; record the exact build identity and observed frame timing. Confirm the accessible list and reduced-motion behavior in the packaged app. Live local inference remains unavailable in this acceptance environment."
+    ]
+  },
+  {
+    "number": 204,
+    "title": "Undefined historical Task 204 — not done",
+    "description": "No authoritative task definition or completion evidence existed at the Task 222 audit. Scope must be supplied before implementation.",
+    "category": "Historical scope gaps",
+    "area": "Stabilization and native migration",
+    "status": "not_done",
+    "dependsOn": [],
+    "acceptance": [
+      "Record evidence against the authorized contract before claiming completion."
+    ],
+    "outOfScope": [
+      "No push or deployment."
+    ],
+    "risks": [
+      "Historical evidence does not prove the revised native UI."
+    ],
+    "automatedVerification": [
+      "Run affected deterministic regressions and record their actual results."
+    ],
+    "followUpValidation": [
+      "Packaged and physical-device verification remains unverified until exercised."
+    ],
+    "limitations": [
+      "No implementation or verification is implied by this record."
+    ],
+    "validation": [],
+    "checkpoint": null,
+    "realWorldVerification": {
+      "status": "unverified"
+    },
+    "scopeDefined": false,
+    "decisions": [
+      "Owner must define this task; no scope has been invented."
+    ]
+  },
+  {
+    "number": 205,
+    "title": "Undefined historical Task 205 — not done",
+    "description": "No authoritative task definition or completion evidence existed at the Task 222 audit. Scope must be supplied before implementation.",
+    "category": "Historical scope gaps",
+    "area": "Stabilization and native migration",
+    "status": "not_done",
+    "dependsOn": [],
+    "acceptance": [
+      "Record evidence against the authorized contract before claiming completion."
+    ],
+    "outOfScope": [
+      "No push or deployment."
+    ],
+    "risks": [
+      "Historical evidence does not prove the revised native UI."
+    ],
+    "automatedVerification": [
+      "Run affected deterministic regressions and record their actual results."
+    ],
+    "followUpValidation": [
+      "Packaged and physical-device verification remains unverified until exercised."
+    ],
+    "limitations": [
+      "No implementation or verification is implied by this record."
+    ],
+    "validation": [],
+    "checkpoint": null,
+    "realWorldVerification": {
+      "status": "unverified"
+    },
+    "scopeDefined": false,
+    "decisions": [
+      "Owner must define this task; no scope has been invented."
+    ]
+  },
+  {
+    "number": 206,
+    "title": "Undefined historical Task 206 — not done",
+    "description": "No authoritative task definition or completion evidence existed at the Task 222 audit. Scope must be supplied before implementation.",
+    "category": "Historical scope gaps",
+    "area": "Stabilization and native migration",
+    "status": "not_done",
+    "dependsOn": [],
+    "acceptance": [
+      "Record evidence against the authorized contract before claiming completion."
+    ],
+    "outOfScope": [
+      "No push or deployment."
+    ],
+    "risks": [
+      "Historical evidence does not prove the revised native UI."
+    ],
+    "automatedVerification": [
+      "Run affected deterministic regressions and record their actual results."
+    ],
+    "followUpValidation": [
+      "Packaged and physical-device verification remains unverified until exercised."
+    ],
+    "limitations": [
+      "No implementation or verification is implied by this record."
+    ],
+    "validation": [],
+    "checkpoint": null,
+    "realWorldVerification": {
+      "status": "unverified"
+    },
+    "scopeDefined": false,
+    "decisions": [
+      "Owner must define this task; no scope has been invented."
+    ]
   },
   {
     "number": 207,
@@ -3909,18 +4480,49 @@ export const post100Tasks = [
     "description": "Route every chat provider call through one synchronous Agent Runtime with bounded direct responses, a capped planner/tool interface, trace metadata, timeouts, token limits, and the existing emergency stop.",
     "category": "Phase AN - Agent Runtime",
     "status": "completed",
-    "dependsOn": [177, 182, 200, 201, 202],
+    "dependsOn": [
+      177,
+      182,
+      200,
+      201,
+      202
+    ],
     "decisions": [],
-    "acceptance": ["Coordinator, Employee, image, alternate-route, streaming and non-streaming chat calls share one runtime boundary; ordinary turns use one direct answer step.", "The synchronous planner contract is capped at five steps, bounded by total/per-step time and output-token budgets, validates exact answer/tool decision fields, marks tool output untrusted, and does not retry malformed tool calls.", "Registered tools declare a schema and risk class, provide a preview and dry-run, and may opt into undo. Unknown risk fails closed as control. Only explicitly authorized read tools can auto-run; every other risk is rejected with an approval-required preview.", "Runtime operations check the existing global emergency stop, emit a compact streaming status, and attach metadata-only runtime steps to the existing owner-scoped chat trace. No prompt, tool result, secret, or raw exception is stored in runtime metadata."],
-    "outOfScope": ["No background/restarting loop, automatic tool selection, autonomy setting, model-quality policy, remote web search, task dispatch, or silent side effects; those remain later phase scope."],
-    "risks": ["A synchronous local stop check cannot forcibly interrupt arbitrary blocking third-party code; provider adapters must honor runtime deadlines and check the stop between chunks."],
+    "acceptance": [
+      "Coordinator, Employee, image, alternate-route, streaming and non-streaming chat calls share one runtime boundary; ordinary turns use one direct answer step.",
+      "The synchronous planner contract is capped at five steps, bounded by total/per-step time and output-token budgets, validates exact answer/tool decision fields, marks tool output untrusted, and does not retry malformed tool calls.",
+      "Registered tools declare a schema and risk class, provide a preview and dry-run, and may opt into undo. Unknown risk fails closed as control. Only explicitly authorized read tools can auto-run; every other risk is rejected with an approval-required preview.",
+      "Runtime operations check the existing global emergency stop, emit a compact streaming status, and attach metadata-only runtime steps to the existing owner-scoped chat trace. No prompt, tool result, secret, or raw exception is stored in runtime metadata."
+    ],
+    "outOfScope": [
+      "No background/restarting loop, automatic tool selection, autonomy setting, model-quality policy, remote web search, task dispatch, or silent side effects; those remain later phase scope."
+    ],
+    "risks": [
+      "A synchronous local stop check cannot forcibly interrupt arbitrary blocking third-party code; provider adapters must honor runtime deadlines and check the stop between chunks."
+    ],
     "area": "P56",
     "checkpoint": "task-207-bounded-agent-runtime",
-    "validation": ["Full validation passed: Python 1,414 passed / 5 skipped / 0 failed; browser modules 279 passed / 0 failed; Electron 38 passed / 0 failed; public docs 21 passed / 0 failed. Focused Agent Runtime/chat/tool tests passed (79 passed); Python compileall and git diff --check passed."],
-    "realWorldVerification": {"status": "partial", "evidence": ["A real local TestClient chat route using the installed Ollama llama3.2:3b returned 'Hi!' to 'hello'; the attached metadata-only runtime trace recorded classify, plan and answer in 875 ms."], "unverified": ["Packaged Electron behavior and runtime interruption during a real provider generation were not exercised."]},
-    "limitations": ["Agent Runtime direct chat is integrated with provider timeout/token bounds and emergency-stop checks. Its bounded planner interface is tested with deterministic fakes; automatic routing and production tool orchestration are later Tasks 208-210. The real local check used the Python-served API in an isolated temporary data directory, not a packaged Electron build."],
-    "automatedVerification": ["Focused deterministic tests cover all chat routes through the runtime, structured provider messages, limits, stop checks, streaming cleanup, metadata-only traces, tool schemas, previews, read-only admission, approval denial, untrusted observations, and malformed structured output."],
-    "followUpValidation": ["Run the local-model evaluation after the automatic tool-routing and quality-gating phases are implemented. Confirm stop and bounded generation in the packaged Windows application when a local model is available."]
+    "validation": [
+      "Full validation passed: Python 1,414 passed / 5 skipped / 0 failed; browser modules 279 passed / 0 failed; Electron 38 passed / 0 failed; public docs 21 passed / 0 failed. Focused Agent Runtime/chat/tool tests passed (79 passed); Python compileall and git diff --check passed."
+    ],
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": [
+        "A real local TestClient chat route using the installed Ollama llama3.2:3b returned 'Hi!' to 'hello'; the attached metadata-only runtime trace recorded classify, plan and answer in 875 ms."
+      ],
+      "unverified": [
+        "Packaged Electron behavior and runtime interruption during a real provider generation were not exercised."
+      ]
+    },
+    "limitations": [
+      "Agent Runtime direct chat is integrated with provider timeout/token bounds and emergency-stop checks. Its bounded planner interface is tested with deterministic fakes; automatic routing and production tool orchestration are later Tasks 208-210. The real local check used the Python-served API in an isolated temporary data directory, not a packaged Electron build."
+    ],
+    "automatedVerification": [
+      "Focused deterministic tests cover all chat routes through the runtime, structured provider messages, limits, stop checks, streaming cleanup, metadata-only traces, tool schemas, previews, read-only admission, approval denial, untrusted observations, and malformed structured output."
+    ],
+    "followUpValidation": [
+      "Run the local-model evaluation after the automatic tool-routing and quality-gating phases are implemented. Confirm stop and bounded generation in the packaged Windows application when a local model is available."
+    ]
   },
   {
     "number": 208,
@@ -3928,18 +4530,46 @@ export const post100Tasks = [
     "description": "Route ordinary chat directly and select bounded agentic handling only when a supported capability clearly matches; classification failures fall back to direct chat.",
     "category": "Phase AO - Auto-routing",
     "status": "completed",
-    "dependsOn": [207, 182, 196],
+    "dependsOn": [
+      207,
+      182,
+      196
+    ],
     "decisions": [],
-    "acceptance": ["Deterministic greetings and ordinary chat use one direct response; owner-selected Brain/reviewed read tools and the existing explicit one-step delegation select only their supported path and are recorded in the real trace.", "Unsupported web/screen/code cues, unknown tools, and classifier errors fall back to direct response without repeating tools or hiding failures.", "This implementation has no model-based classifier. Any future classifier fallback must use constrained structured output, exact field validation, and at most one repair retry; malformed tool calls cannot execute."],
-    "outOfScope": ["No automatic cloud/provider/model switching, unsupported web/screen/code capabilities, background activity, or silent side effects."],
-    "risks": ["Keyword heuristics may misclassify ambiguous language; fail-safe behavior is a direct answer and visible trace rather than a guessed tool call."],
+    "acceptance": [
+      "Deterministic greetings and ordinary chat use one direct response; owner-selected Brain/reviewed read tools and the existing explicit one-step delegation select only their supported path and are recorded in the real trace.",
+      "Unsupported web/screen/code cues, unknown tools, and classifier errors fall back to direct response without repeating tools or hiding failures.",
+      "This implementation has no model-based classifier. Any future classifier fallback must use constrained structured output, exact field validation, and at most one repair retry; malformed tool calls cannot execute."
+    ],
+    "outOfScope": [
+      "No automatic cloud/provider/model switching, unsupported web/screen/code capabilities, background activity, or silent side effects."
+    ],
+    "risks": [
+      "Keyword heuristics may misclassify ambiguous language; fail-safe behavior is a direct answer and visible trace rather than a guessed tool call."
+    ],
     "area": "P57",
     "checkpoint": "task-208-deterministic-chat-routing",
-    "validation": ["Full validation passed: Python 1,421 passed / 3 skipped / 0 failed (2 Starlette deprecation warnings); browser modules 281 passed / 0 failed; Electron 38 passed / 0 failed; public docs 21 passed / 0 failed; desktop UI production/type build passed; Python compileall and git diff --check passed."],
-    "realWorldVerification": {"status": "ai-verified-only", "evidence": ["Routing is a deterministic local rule set and does not ask a model to classify tool requests. End-to-end route tests verify direct greetings, selected Brain/reviewed-tool paths, trace metadata, and direct fallback for unsupported web/screen/code cues and classifier failure."], "unverified": ["No representative-user or packaged-Electron route usability run was performed. Task 211 real-model evaluation remains pending."]},
-    "limitations": ["Brain retrieval and reviewed read tools still require their existing owner-selected scopes/previews or exact tool parameters; delegation remains an explicit one-step owner action. Mentioning a capability never grants permission. Web search, screen access, code execution, unknown tools, and classifier failures use a direct answer path; this phase adds no model-based classifier or automatic repair."],
-    "automatedVerification": ["Deterministic tests cover greeting/ordinary direct routing, owner-selected supported paths, unsupported capability fallback, unknown tools, classifier exceptions, route trace persistence and safe UI rendering."],
-    "followUpValidation": ["Task 211 compares measured direct-versus-agentic outcomes on installed local models; representative-owner usability remains follow-up and is not substituted by tests."]
+    "validation": [
+      "Full validation passed: Python 1,421 passed / 3 skipped / 0 failed (2 Starlette deprecation warnings); browser modules 281 passed / 0 failed; Electron 38 passed / 0 failed; public docs 21 passed / 0 failed; desktop UI production/type build passed; Python compileall and git diff --check passed."
+    ],
+    "realWorldVerification": {
+      "status": "ai-verified-only",
+      "evidence": [
+        "Routing is a deterministic local rule set and does not ask a model to classify tool requests. End-to-end route tests verify direct greetings, selected Brain/reviewed-tool paths, trace metadata, and direct fallback for unsupported web/screen/code cues and classifier failure."
+      ],
+      "unverified": [
+        "No representative-user or packaged-Electron route usability run was performed. Task 211 real-model evaluation remains pending."
+      ]
+    },
+    "limitations": [
+      "Brain retrieval and reviewed read tools still require their existing owner-selected scopes/previews or exact tool parameters; delegation remains an explicit one-step owner action. Mentioning a capability never grants permission. Web search, screen access, code execution, unknown tools, and classifier failures use a direct answer path; this phase adds no model-based classifier or automatic repair."
+    ],
+    "automatedVerification": [
+      "Deterministic tests cover greeting/ordinary direct routing, owner-selected supported paths, unsupported capability fallback, unknown tools, classifier exceptions, route trace persistence and safe UI rendering."
+    ],
+    "followUpValidation": [
+      "Task 211 compares measured direct-versus-agentic outcomes on installed local models; representative-owner usability remains follow-up and is not substituted by tests."
+    ]
   },
   {
     "number": 209,
@@ -3947,17 +4577,35 @@ export const post100Tasks = [
     "description": "Add one persisted autonomy preference for chat-only, safe read actions, or approval before every action, while reusing current consent, approval and emergency-stop controls.",
     "category": "Phase AP - Autonomy controls",
     "status": "planned",
-    "dependsOn": [207, 208, 142, 144, 182],
+    "dependsOn": [
+      207,
+      208,
+      142,
+      144,
+      182
+    ],
     "decisions": [],
-    "acceptance": ["Settings and a compact chat control offer Chat only, Auto for safe actions (default), and Ask before every action; the selected value is persisted per owner and fail-closed on corrupt/missing data.", "Only declared read tools can execute automatically at the default level. Write, external, and control actions create an exact-preview inline approval card with owner approve/deny and expiry, before execution.", "Cloud calls retain per-turn consent and spend limits; Operator/automation remain disabled until separately enabled in Settings; the existing one-click emergency stop remains visible and effective."],
-    "outOfScope": ["No change to fail-closed authentication, capability grants, existing permission requirements, cloud consent, spending limits, or approval execution contracts."],
-    "risks": ["A persisted preference must never grant broader authority than current permissions or silently approve stale/changed action previews."],
+    "acceptance": [
+      "Settings and a compact chat control offer Chat only, Auto for safe actions (default), and Ask before every action; the selected value is persisted per owner and fail-closed on corrupt/missing data.",
+      "Only declared read tools can execute automatically at the default level. Write, external, and control actions create an exact-preview inline approval card with owner approve/deny and expiry, before execution.",
+      "Cloud calls retain per-turn consent and spend limits; Operator/automation remain disabled until separately enabled in Settings; the existing one-click emergency stop remains visible and effective."
+    ],
+    "outOfScope": [
+      "No change to fail-closed authentication, capability grants, existing permission requirements, cloud consent, spending limits, or approval execution contracts."
+    ],
+    "risks": [
+      "A persisted preference must never grant broader authority than current permissions or silently approve stale/changed action previews."
+    ],
     "area": "P58",
     "checkpoint": null,
     "validation": [],
     "limitations": [],
-    "automatedVerification": ["Test owner isolation, migration/corruption fallback, each autonomy level, exact-preview digest, denial, expiry, CSRF, emergency stop and zero side effects without approval."],
-    "followUpValidation": ["Review the three levels and approval clarity in the local UI; manual usability feedback remains follow-up and is not substituted by tests."]
+    "automatedVerification": [
+      "Test owner isolation, migration/corruption fallback, each autonomy level, exact-preview digest, denial, expiry, CSRF, emergency stop and zero side effects without approval."
+    ],
+    "followUpValidation": [
+      "Review the three levels and approval clarity in the local UI; manual usability feedback remains follow-up and is not substituted by tests."
+    ]
   },
   {
     "number": 210,
@@ -3965,17 +4613,34 @@ export const post100Tasks = [
     "description": "Prefer verified native tool calling when supported and otherwise use bounded structured output, then compare installed local models before suggesting any owner-confirmed model change.",
     "category": "Phase AQ - Tool-calling quality",
     "status": "planned",
-    "dependsOn": [207, 208, 209, 182],
+    "dependsOn": [
+      207,
+      208,
+      209,
+      182
+    ],
     "decisions": [],
-    "acceptance": ["Provider capability evidence determines whether native tool calling is supported; unknown capability uses validated structured output, never model-name assumptions.", "Every proposed call is validated against the registered tool schema and risk before preview, approval or execution; malformed output gets at most one repair and never loops.", "Compare llama3.2:3b with any larger installed local model on the same deterministic tool cases. The UI may suggest a larger installed model with evidence, but switching requires owner confirmation; no download occurs."],
-    "outOfScope": ["No silent model switching/downloads, cloud calls, paid services, fabricated capability evidence, or quality claims without measured results."],
-    "risks": ["Native tool support and structured output vary by model/runtime; incorrect capability declarations can produce invalid or unsafe calls, which must fail closed."],
+    "acceptance": [
+      "Provider capability evidence determines whether native tool calling is supported; unknown capability uses validated structured output, never model-name assumptions.",
+      "Every proposed call is validated against the registered tool schema and risk before preview, approval or execution; malformed output gets at most one repair and never loops.",
+      "Compare llama3.2:3b with any larger installed local model on the same deterministic tool cases. The UI may suggest a larger installed model with evidence, but switching requires owner confirmation; no download occurs."
+    ],
+    "outOfScope": [
+      "No silent model switching/downloads, cloud calls, paid services, fabricated capability evidence, or quality claims without measured results."
+    ],
+    "risks": [
+      "Native tool support and structured output vary by model/runtime; incorrect capability declarations can produce invalid or unsafe calls, which must fail closed."
+    ],
     "area": "P59",
     "checkpoint": null,
     "validation": [],
     "limitations": [],
-    "automatedVerification": ["Use deterministic fake providers to test supported/unsupported/unknown capability paths, strict schemas, single repair, no invalid execution, bounded traces and explicit model-change confirmation."],
-    "followUpValidation": ["Record model IDs, provider-reported capability, measured tool accuracy and latency for real local evaluations separately from fakes."]
+    "automatedVerification": [
+      "Use deterministic fake providers to test supported/unsupported/unknown capability paths, strict schemas, single repair, no invalid execution, bounded traces and explicit model-change confirmation."
+    ],
+    "followUpValidation": [
+      "Record model IDs, provider-reported capability, measured tool accuracy and latency for real local evaluations separately from fakes."
+    ]
   },
   {
     "number": 211,
@@ -3983,307 +4648,1445 @@ export const post100Tasks = [
     "description": "Evaluate realistic plain-chat, Brain, read-tool, and approval-required requests against installed local models and keep agent mode experimental for models with poor measured results.",
     "category": "Phase AR - Runtime evaluation",
     "status": "planned",
-    "dependsOn": [207, 208, 209, 210],
+    "dependsOn": [
+      207,
+      208,
+      209,
+      210
+    ],
     "decisions": [],
-    "acceptance": ["Provide 30 reproducible tasks: 10 plain chat, 10 Brain/retrieval, 5 web/read, and 5 approval-required. Run only installed local models with no cloud/paid calls or downloads.", "Report each model’s success rate, wrong-tool rate, average steps, latency and failures with model/runtime identity and retained evidence sufficient to reproduce the score.", "Models with poor measured results are labeled experimental and agent mode is not enabled by default for them; unknown/incomplete evaluations do not count as passing."],
-    "outOfScope": ["No model downloads, paid/cloud evaluation, silent capability changes, or automatic promotion based on synthetic/fake-provider scores."],
-    "risks": ["A small evaluation set may not predict general user quality; scores must remain bounded to the exact test set and hardware/runtime used."],
+    "acceptance": [
+      "Provide 30 reproducible tasks: 10 plain chat, 10 Brain/retrieval, 5 web/read, and 5 approval-required. Run only installed local models with no cloud/paid calls or downloads.",
+      "Report each model’s success rate, wrong-tool rate, average steps, latency and failures with model/runtime identity and retained evidence sufficient to reproduce the score.",
+      "Models with poor measured results are labeled experimental and agent mode is not enabled by default for them; unknown/incomplete evaluations do not count as passing."
+    ],
+    "outOfScope": [
+      "No model downloads, paid/cloud evaluation, silent capability changes, or automatic promotion based on synthetic/fake-provider scores."
+    ],
+    "risks": [
+      "A small evaluation set may not predict general user quality; scores must remain bounded to the exact test set and hardware/runtime used."
+    ],
     "area": "P60",
     "checkpoint": null,
     "validation": [],
     "limitations": [],
-    "automatedVerification": ["Test the harness with deterministic providers for task accounting, scoring math, wrong-tool detection, latency aggregation, failure reporting and gating of unmeasured models."],
-    "followUpValidation": ["Run all 30 tasks with the real installed llama3.2:3b and any larger installed local model; publish actual replies, model identity and hardware/runtime limitations."]
+    "automatedVerification": [
+      "Test the harness with deterministic providers for task accounting, scoring math, wrong-tool detection, latency aggregation, failure reporting and gating of unmeasured models."
+    ],
+    "followUpValidation": [
+      "Run all 30 tasks with the real installed llama3.2:3b and any larger installed local model; publish actual replies, model identity and hardware/runtime limitations."
+    ]
   },
   {
     "number": 213,
     "title": "Shared UI foundation and polish",
-    "description": "Make the existing Next.js and Python-served screens consistent, accessible, resilient, and reviewable through reproducible visual checks.",
+    "description": "Superseded by 223-227. Make the existing Next.js and Python-served screens consistent, accessible, resilient, and reviewable through reproducible visual checks.",
     "category": "Phase AS - UI Foundation",
-    "status": "completed",
-    "dependsOn": [178, 191, 195, 201],
-    "decisions": ["The owner approved the light/dark visual direction for continued development. Final before/after visuals were approved by the owner on 2026-10-23."],
-    "acceptance": ["Use one shared set of color, spacing, type, radius and motion tokens and shared button, input, card, dialog, popover, banner and list primitives across both UI stacks.", "Audit each screen's empty, loading, error and offline states; remove stale technical copy, raw diagnostics, clipped text, dead links and overflow without changing runtime authority.", "Retain screenshot baselines for key screens in light/dark at 480/768/1280/1920 CSS pixels and simulated 100/125/150 percent device scales; report actual Windows scaling separately.", "Run axe with zero critical issues and check keyboard navigation, focus, contrast, reduced motion, labels and long Taglish/name/word resilience. Provide a before/after fix list for owner review."],
-    "outOfScope": ["No multi-window behavior, workspace isolation, model-queue implementation, provider calls, downloads, or change to authentication and consent."],
-    "risks": ["Dark-only page overrides can break light-theme contrast; viewport/device-scale simulation does not prove native Windows scaling or assistive-technology behavior."],
-    "area": "P61", "checkpoint": "task-213-ui-foundation-polish", "validation": ["Python 1422 passed / 5 skipped / 0 failed; browser modules 289 passed; Electron 38 passed; public docs 21 passed. Next 16.4.2 production/type build, dependency audit (zero vulnerabilities), compilation and diff integrity passed. Latest 35-screen normal/error/offline/loading matrices passed 490 screenshots with keyboard focus, overflow, serious/critical axe, local-link and layout-shift checks. Twelve screenshot baselines retained; earlier key-screen matrix covered 480/768/1280/1920 widths and simulated 100/125/150 percent scales. Owner approved final visuals on 2026-10-23."],
-    "realWorldVerification": {"status": "ai-verified-only", "evidence": ["Owner reviewed and approved the final screenshot direction; deterministic Chromium checks exercise isolated local pages."], "unverified": ["Packaged Electron theme persistence, actual Windows scaling, assistive technology and representative-user behavior are unverified."]},
-    "limitations": ["The latest normal/error/offline/loading matrices passed 490 screenshots across 35 screens; earlier key-screen checks covered four widths and three simulated scales. Full Python: 1422 passed, 5 skipped; browser modules: 289 passed; Electron: 38 passed; public docs: 21 passed. Actual Windows scaling, packaged theme persistence and assistive technology remain unverified. Exhaustive dynamic-dialog keyboard flows, packaged theme persistence and native assistive technology are not established by automated Tab traversal. Tasks 214-217 remain separate planned scope."],
-    "automatedVerification": ["Use an isolated local profile and fake provider, screenshot comparisons, axe, keyboard/focus checks, long-text stress cases and injected API failures. Run the full Python, browser-module, Electron and public-docs suites before the checkpoint."],
-    "followUpValidation": ["Record packaged Electron, actual Windows scaling, assistive-technology and representative-user coverage honestly; no simulated check proves those integrations."]
+    "status": "superseded",
+    "dependsOn": [
+      178,
+      191,
+      195,
+      201
+    ],
+    "decisions": [
+      "The owner approved the light/dark visual direction for continued development. Final before/after visuals were approved by the owner on 2026-10-23."
+    ],
+    "acceptance": [
+      "Use one shared set of color, spacing, type, radius and motion tokens and shared button, input, card, dialog, popover, banner and list primitives across both UI stacks.",
+      "Audit each screen's empty, loading, error and offline states; remove stale technical copy, raw diagnostics, clipped text, dead links and overflow without changing runtime authority.",
+      "Retain screenshot baselines for key screens in light/dark at 480/768/1280/1920 CSS pixels and simulated 100/125/150 percent device scales; report actual Windows scaling separately.",
+      "Run axe with zero critical issues and check keyboard navigation, focus, contrast, reduced motion, labels and long Taglish/name/word resilience. Provide a before/after fix list for owner review."
+    ],
+    "outOfScope": [
+      "No multi-window behavior, workspace isolation, model-queue implementation, provider calls, downloads, or change to authentication and consent."
+    ],
+    "risks": [
+      "Dark-only page overrides can break light-theme contrast; viewport/device-scale simulation does not prove native Windows scaling or assistive-technology behavior."
+    ],
+    "area": "P61",
+    "checkpoint": "task-213-ui-foundation-polish",
+    "validation": [
+      "Python 1422 passed / 5 skipped / 0 failed; browser modules 289 passed; Electron 38 passed; public docs 21 passed. Next 16.4.2 production/type build, dependency audit (zero vulnerabilities), compilation and diff integrity passed. Latest 35-screen normal/error/offline/loading matrices passed 490 screenshots with keyboard focus, overflow, serious/critical axe, local-link and layout-shift checks. Twelve screenshot baselines retained; earlier key-screen matrix covered 480/768/1280/1920 widths and simulated 100/125/150 percent scales. Owner approved final visuals on 2026-10-23."
+    ],
+    "realWorldVerification": {
+      "status": "ai-verified-only",
+      "evidence": [
+        "Owner reviewed and approved the final screenshot direction; deterministic Chromium checks exercise isolated local pages."
+      ],
+      "unverified": [
+        "Packaged Electron theme persistence, actual Windows scaling, assistive technology and representative-user behavior are unverified."
+      ]
+    },
+    "limitations": [
+      "The latest normal/error/offline/loading matrices passed 490 screenshots across 35 screens; earlier key-screen checks covered four widths and three simulated scales. Full Python: 1422 passed, 5 skipped; browser modules: 289 passed; Electron: 38 passed; public docs: 21 passed. Actual Windows scaling, packaged theme persistence and assistive technology remain unverified. Exhaustive dynamic-dialog keyboard flows, packaged theme persistence and native assistive technology are not established by automated Tab traversal. Tasks 214-217 remain separate planned scope."
+    ],
+    "automatedVerification": [
+      "Use an isolated local profile and fake provider, screenshot comparisons, axe, keyboard/focus checks, long-text stress cases and injected API failures. Run the full Python, browser-module, Electron and public-docs suites before the checkpoint."
+    ],
+    "followUpValidation": [
+      "Record packaged Electron, actual Windows scaling, assistive-technology and representative-user coverage honestly; no simulated check proves those integrations."
+    ],
+    "history": [
+      {
+        "date": "2026-10-25",
+        "summary": "Prior status: completed; retained historical checkpoint: task-213-ui-foundation-polish. Revised owner contract supersedes this phase.",
+        "source": "Task 222 revised and pure-Python addendum"
+      }
+    ],
+    "supersededBy": [
+      223,
+      224,
+      225,
+      226,
+      227
+    ]
   },
   {
     "number": 214,
     "title": "Shared-backend Electron windows",
-    "description": "Open independent chat windows in one Electron process and one loopback Python backend, with a separate nonblocking Settings window and safe workspace restoration.",
-    "category": "Phase AT - Window Architecture", "status": "completed",
-    "dependsOn": [213, 191, 178], "decisions": [],
-    "acceptance": ["Keep the single-instance lock; second launch and Ctrl+N create a new chat window using the existing backend. App launch stays direct-to-chat.", "Settings has one reusable window that can be focused without blocking chat windows.", "Restore window bounds, selected model/agent/project and conversation after close/reopen or restart, validating stored values and never replaying actions.", "Replace single-window trust assumptions with explicit trusted-window records while preserving owner authentication, loopback restrictions, Origin/CSRF checks and per-use native permission decisions."],
-    "outOfScope": ["No second backend, hidden action replay, cross-owner sessions, silent provider/model loading, or public network binding."],
-    "risks": ["Native IPC and media grants must not accept stale or untrusted windows; restored coordinates must remain reachable on changed monitors."],
-    "area": "P62", "checkpoint": "task-214-shared-backend-windows", "validation": ["Full Python suite: 1422 passed / 5 skipped / 0 failed; browser modules 292 passed; Electron 43 passed; public docs 21 passed. JavaScript syntax and diff integrity passed. Real source-mode Electron 44.7.0 check passed direct chat, native Ctrl+N event handling, separate singleton Settings, second launch in the same main process with unchanged backend listener PID, and four-window restart restoration."],
-    "realWorldVerification": {"status": "partial", "evidence": ["Isolated source-mode Windows Electron main PID 16432 and backend listener PID 21000: second launch reused both processes; four windows restored after restart. Electron was extracted from the existing local cache after matching its dependency SHA-256, without a download."], "unverified": ["Packaged installer, physical keyboard/media, multiple monitors, actual Windows scaling, retained production conversations and concurrent real model workloads are unverified."]},
-    "limitations": ["Only geometry and bounded identifiers are restored; messages depend on existing owner-controlled retention. Missing/unretained conversations open a new empty chat with an explanation, never replaying actions or silently enabling retention. Descriptor fields include model/project, while independent selectors and server-enforced workspace/project/approval isolation remain Task 215. Native shortcut testing used Electron sendInputEvent, not a physical keyboard. The source-mode run used a dirty worktree based on Task 213, not a packaged Task 214 build stamp."],
-    "automatedVerification": ["Test single-instance/second-launch behavior, Ctrl+N, singleton Settings, shared backend lifecycle, trusted-window IPC, safe bounds restoration and absence of replay. Run all four suites."],
-    "followUpValidation": ["Record actual packaged Windows close/reopen/restart and monitor/scaling behavior separately from fakes."]
+    "description": "Superseded by 223-227. Open independent chat windows in one Electron process and one loopback Python backend, with a separate nonblocking Settings window and safe workspace restoration.",
+    "category": "Phase AT - Window Architecture",
+    "status": "superseded",
+    "dependsOn": [
+      213,
+      191,
+      178
+    ],
+    "decisions": [],
+    "acceptance": [
+      "Keep the single-instance lock; second launch and Ctrl+N create a new chat window using the existing backend. App launch stays direct-to-chat.",
+      "Settings has one reusable window that can be focused without blocking chat windows.",
+      "Restore window bounds, selected model/agent/project and conversation after close/reopen or restart, validating stored values and never replaying actions.",
+      "Replace single-window trust assumptions with explicit trusted-window records while preserving owner authentication, loopback restrictions, Origin/CSRF checks and per-use native permission decisions."
+    ],
+    "outOfScope": [
+      "No second backend, hidden action replay, cross-owner sessions, silent provider/model loading, or public network binding."
+    ],
+    "risks": [
+      "Native IPC and media grants must not accept stale or untrusted windows; restored coordinates must remain reachable on changed monitors."
+    ],
+    "area": "P62",
+    "checkpoint": "task-214-shared-backend-windows",
+    "validation": [
+      "Full Python suite: 1422 passed / 5 skipped / 0 failed; browser modules 292 passed; Electron 43 passed; public docs 21 passed. JavaScript syntax and diff integrity passed. Real source-mode Electron 44.7.0 check passed direct chat, native Ctrl+N event handling, separate singleton Settings, second launch in the same main process with unchanged backend listener PID, and four-window restart restoration."
+    ],
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": [
+        "Isolated source-mode Windows Electron main PID 16432 and backend listener PID 21000: second launch reused both processes; four windows restored after restart. Electron was extracted from the existing local cache after matching its dependency SHA-256, without a download."
+      ],
+      "unverified": [
+        "Packaged installer, physical keyboard/media, multiple monitors, actual Windows scaling, retained production conversations and concurrent real model workloads are unverified."
+      ]
+    },
+    "limitations": [
+      "Only geometry and bounded identifiers are restored; messages depend on existing owner-controlled retention. Missing/unretained conversations open a new empty chat with an explanation, never replaying actions or silently enabling retention. Descriptor fields include model/project, while independent selectors and server-enforced workspace/project/approval isolation remain Task 215. Native shortcut testing used Electron sendInputEvent, not a physical keyboard. The source-mode run used a dirty worktree based on Task 213, not a packaged Task 214 build stamp."
+    ],
+    "automatedVerification": [
+      "Test single-instance/second-launch behavior, Ctrl+N, singleton Settings, shared backend lifecycle, trusted-window IPC, safe bounds restoration and absence of replay. Run all four suites."
+    ],
+    "followUpValidation": [
+      "Record actual packaged Windows close/reopen/restart and monitor/scaling behavior separately from fakes."
+    ],
+    "history": [
+      {
+        "date": "2026-10-25",
+        "summary": "Prior status: completed; retained historical checkpoint: task-214-shared-backend-windows. Revised owner contract supersedes this phase.",
+        "source": "Task 222 revised and pure-Python addendum"
+      }
+    ],
+    "supersededBy": [
+      223,
+      224,
+      225,
+      226,
+      227
+    ]
   },
   {
     "number": 215,
     "title": "Isolated per-window workspaces",
-    "description": "Give each window its own conversation, model, agent and project while sharing owner auth, providers, Brain index and settings safely.",
-    "category": "Phase AU - Workspace Sessions", "status": "completed",
-    "dependsOn": [214, 184, 200, 202], "decisions": [],
-    "acceptance": ["Expose compact model/agent/project selectors and a matching window title; support different models, agents or projects per window without silently changing global Agent assignments.", "Isolate conversation, approvals, selected route and trace by workspace; show requesting window/agent/project on approval previews and enforce the same provenance server-side.", "Use the existing project Brain scope and instructions with durable workspace/conversation association. Shared settings and providers remain owner-scoped.", "Enable and verify SQLite WAL and serialized writers where required; concurrent writes and restart recovery must not mix or corrupt workspaces."],
-    "outOfScope": ["No new Agent/Employee model, new authority, cross-project retrieval, action replay, background autonomous work or silent provider transfer."],
-    "risks": ["Client-only workspace labels cannot establish authorization; selection changes must preserve immutable existing conversation scopes and approval digests."],
-    "area": "P63", "checkpoint": "task-215-isolated-window-workspaces",
-    "validation": ["Full Python suite: 1,446 passed / 3 skipped / 0 failed; browser modules 295 passed; Electron 43 passed; public docs 21 passed. Python compilation, JavaScript syntax, desktop UI production/type build and diff integrity passed. An isolated real Windows source-mode Electron 44.7.0 run passed two project workspaces with distinct conversations and server-side cross-window denial, Ctrl+N, singleton Settings, second launch in the same main/backend process, and four-window restart restoration."],
-    "realWorldVerification": {"status": "partial", "evidence": ["A source-mode Windows run used two real fixture Projects in an isolated profile and confirmed distinct window identifiers, selections and conversations plus cross-window HTTP 404 enforcement. Deterministic tests exercised model selection, immutable project association, scoped Brain retrieval, durable-history isolation, approval provenance, cloud project-brief preview, WAL writes and streaming context."], "unverified": ["Packaged Electron, retained production conversations, live Ollama model replies, simultaneous real model workloads, physical devices, multiple monitors and actual Windows scaling are unverified."]},
-    "limitations": ["Workspace routes use existing providers and installed local models only. A provider-reported non-chat model is rejected; unknown capability remains unknown rather than a readiness claim. An alternate workspace model currently uses bounded non-streaming text chat; image turns and one-step delegation require the selected Agent's configured route. Project briefs are explicit owner configuration, bounded and treated as untrusted user context; cloud turns require a preview digest and existing per-turn consent. Workspace metadata is capped at 100 records per corporation. Visible queue position, exclusive device ownership and per-window stop are Task 216."],
-    "automatedVerification": ["Test two-window model/agent/project combinations, conversation and trace isolation, approval provenance, cross-project denials, concurrent writes, migrations and restart restoration. Run all four suites."],
-    "followUpValidation": ["Exercise packaged Windows sessions and real model conversations separately; report unavailable clean-profile coverage."]
+    "description": "Superseded by 223-227. Give each window its own conversation, model, agent and project while sharing owner auth, providers, Brain index and settings safely.",
+    "category": "Phase AU - Workspace Sessions",
+    "status": "superseded",
+    "dependsOn": [
+      214,
+      184,
+      200,
+      202
+    ],
+    "decisions": [],
+    "acceptance": [
+      "Expose compact model/agent/project selectors and a matching window title; support different models, agents or projects per window without silently changing global Agent assignments.",
+      "Isolate conversation, approvals, selected route and trace by workspace; show requesting window/agent/project on approval previews and enforce the same provenance server-side.",
+      "Use the existing project Brain scope and instructions with durable workspace/conversation association. Shared settings and providers remain owner-scoped.",
+      "Enable and verify SQLite WAL and serialized writers where required; concurrent writes and restart recovery must not mix or corrupt workspaces."
+    ],
+    "outOfScope": [
+      "No new Agent/Employee model, new authority, cross-project retrieval, action replay, background autonomous work or silent provider transfer."
+    ],
+    "risks": [
+      "Client-only workspace labels cannot establish authorization; selection changes must preserve immutable existing conversation scopes and approval digests."
+    ],
+    "area": "P63",
+    "checkpoint": "task-215-isolated-window-workspaces",
+    "validation": [
+      "Full Python suite: 1,446 passed / 3 skipped / 0 failed; browser modules 295 passed; Electron 43 passed; public docs 21 passed. Python compilation, JavaScript syntax, desktop UI production/type build and diff integrity passed. An isolated real Windows source-mode Electron 44.7.0 run passed two project workspaces with distinct conversations and server-side cross-window denial, Ctrl+N, singleton Settings, second launch in the same main/backend process, and four-window restart restoration."
+    ],
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": [
+        "A source-mode Windows run used two real fixture Projects in an isolated profile and confirmed distinct window identifiers, selections and conversations plus cross-window HTTP 404 enforcement. Deterministic tests exercised model selection, immutable project association, scoped Brain retrieval, durable-history isolation, approval provenance, cloud project-brief preview, WAL writes and streaming context."
+      ],
+      "unverified": [
+        "Packaged Electron, retained production conversations, live Ollama model replies, simultaneous real model workloads, physical devices, multiple monitors and actual Windows scaling are unverified."
+      ]
+    },
+    "limitations": [
+      "Workspace routes use existing providers and installed local models only. A provider-reported non-chat model is rejected; unknown capability remains unknown rather than a readiness claim. An alternate workspace model currently uses bounded non-streaming text chat; image turns and one-step delegation require the selected Agent's configured route. Project briefs are explicit owner configuration, bounded and treated as untrusted user context; cloud turns require a preview digest and existing per-turn consent. Workspace metadata is capped at 100 records per corporation. Visible queue position, exclusive device ownership and per-window stop are Task 216."
+    ],
+    "automatedVerification": [
+      "Test two-window model/agent/project combinations, conversation and trace isolation, approval provenance, cross-project denials, concurrent writes, migrations and restart restoration. Run all four suites."
+    ],
+    "followUpValidation": [
+      "Exercise packaged Windows sessions and real model conversations separately; report unavailable clean-profile coverage."
+    ],
+    "history": [
+      {
+        "date": "2026-10-25",
+        "summary": "Prior status: completed; retained historical checkpoint: task-215-isolated-window-workspaces. Revised owner contract supersedes this phase.",
+        "source": "Task 222 revised and pure-Python addendum"
+      }
+    ],
+    "supersededBy": [
+      223,
+      224,
+      225,
+      226,
+      227
+    ]
   },
   {
     "number": 216,
     "title": "Visible shared resources and capture ownership",
-    "description": "Coordinate model capacity and protected local devices across workspaces with visible bounded waiting and reliable stop controls.",
-    "category": "Phase AV - Concurrency and Resources", "status": "planned",
-    "dependsOn": [215, 68, 70, 144, 200], "decisions": [],
-    "acceptance": ["Route all chat model calls through the existing ResourceManager and show queue position, waiting-for-model state and cancellation without replay.", "Report actual Ollama loaded-model/parallel-capability observations or unknown; warn about likely reload cost and suggest one model without changing Ollama settings or loading/downloading models.", "Provide a configurable soft window cap with a warning, defaulting to three.", "Grant microphone, camera and screen capture to one workspace at a time with real ownership indicators and a clear denial in other windows. Provide global and per-window emergency stop, preserving per-turn cloud consent and global spend limits."],
-    "outOfScope": ["No distributed coordination, automatic model download/load, changed Ollama configuration, silent cloud fallback or weakened native/owner consent."],
-    "risks": ["A cancelled wait must release no unowned capacity; runtime failure and window close must release acquired slots/devices while reporting uncertain remote outcomes truthfully."],
-    "area": "P64", "checkpoint": null, "validation": [], "limitations": [],
-    "automatedVerification": ["Test queue ordering/position/cancel, capacity cleanup on failure/stop/close, unknown capability states, soft cap, capture exclusivity, global/per-window stop and spending/consent boundaries. Run all four suites."],
-    "followUpValidation": ["Measure installed Ollama behavior and real device handoff/stop on Windows; fake concurrency does not establish RAM/VRAM feasibility."]
+    "description": "Superseded by 223-227. Coordinate model capacity and protected local devices across workspaces with visible bounded waiting and reliable stop controls.",
+    "category": "Phase AV - Concurrency and Resources",
+    "status": "superseded",
+    "dependsOn": [
+      215,
+      68,
+      70,
+      144,
+      200
+    ],
+    "decisions": [],
+    "acceptance": [
+      "Route all chat model calls through the existing ResourceManager and show queue position, waiting-for-model state and cancellation without replay.",
+      "Report actual Ollama loaded-model/parallel-capability observations or unknown; warn about likely reload cost and suggest one model without changing Ollama settings or loading/downloading models.",
+      "Provide a configurable soft window cap with a warning, defaulting to three.",
+      "Grant microphone, camera and screen capture to one workspace at a time with real ownership indicators and a clear denial in other windows. Provide global and per-window emergency stop, preserving per-turn cloud consent and global spend limits."
+    ],
+    "outOfScope": [
+      "No distributed coordination, automatic model download/load, changed Ollama configuration, silent cloud fallback or weakened native/owner consent."
+    ],
+    "risks": [
+      "A cancelled wait must release no unowned capacity; runtime failure and window close must release acquired slots/devices while reporting uncertain remote outcomes truthfully."
+    ],
+    "area": "P64",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [],
+    "automatedVerification": [
+      "Test queue ordering/position/cancel, capacity cleanup on failure/stop/close, unknown capability states, soft cap, capture exclusivity, global/per-window stop and spending/consent boundaries. Run all four suites."
+    ],
+    "followUpValidation": [
+      "Measure installed Ollama behavior and real device handoff/stop on Windows; fake concurrency does not establish RAM/VRAM feasibility."
+    ],
+    "history": [
+      {
+        "date": "2026-10-25",
+        "summary": "Prior status: planned; retained historical checkpoint: none. Revised owner contract supersedes this phase.",
+        "source": "Task 222 revised and pure-Python addendum"
+      }
+    ],
+    "supersededBy": [
+      223,
+      224,
+      225,
+      226,
+      227
+    ]
   },
   {
     "number": 217,
     "title": "Real multi-window workspace QA",
-    "description": "Evaluate three-window isolation, resource waiting and rendering using the actual local app and installed Ollama models.",
-    "category": "Phase AW - Multi-window QA", "status": "planned",
-    "dependsOn": [213, 214, 215, 216], "decisions": [],
-    "acceptance": ["Run parallel prompts in three windows for different installed local models, the same model with different agents, and the same model/agent with different projects.", "Record actual replies, isolation, queue/cancel behavior, project citations, crashes, latency and available RAM/VRAM observations with their provenance. Mark unavailable combinations unverified without downloading models.", "Repeat the visual matrix for workspace headers and the separate Settings window; report actual Windows scaling separately from device-scale simulation."],
-    "outOfScope": ["No paid/cloud calls, model downloads, fabricated GPU telemetry, public release, push or deployment."],
-    "risks": ["Results are limited to installed models and this machine; a passing deterministic test is not proof of live-provider performance or physical-device behavior."],
-    "area": "P65", "checkpoint": null, "validation": [], "limitations": [],
-    "automatedVerification": ["Run reproducible isolated multi-window scenarios and all Python, browser-module, Electron and public-docs suites; preserve logs and screenshots without owner content or credentials."],
-    "followUpValidation": ["List untested hardware, clean-account, microphone/camera/screen and representative-user combinations explicitly."]
+    "description": "Superseded by 223-227. Evaluate three-window isolation, resource waiting and rendering using the actual local app and installed Ollama models.",
+    "category": "Phase AW - Multi-window QA",
+    "status": "superseded",
+    "dependsOn": [
+      213,
+      214,
+      215,
+      216
+    ],
+    "decisions": [],
+    "acceptance": [
+      "Run parallel prompts in three windows for different installed local models, the same model with different agents, and the same model/agent with different projects.",
+      "Record actual replies, isolation, queue/cancel behavior, project citations, crashes, latency and available RAM/VRAM observations with their provenance. Mark unavailable combinations unverified without downloading models.",
+      "Repeat the visual matrix for workspace headers and the separate Settings window; report actual Windows scaling separately from device-scale simulation."
+    ],
+    "outOfScope": [
+      "No paid/cloud calls, model downloads, fabricated GPU telemetry, public release, push or deployment."
+    ],
+    "risks": [
+      "Results are limited to installed models and this machine; a passing deterministic test is not proof of live-provider performance or physical-device behavior."
+    ],
+    "area": "P65",
+    "checkpoint": null,
+    "validation": [],
+    "limitations": [],
+    "automatedVerification": [
+      "Run reproducible isolated multi-window scenarios and all Python, browser-module, Electron and public-docs suites; preserve logs and screenshots without owner content or credentials."
+    ],
+    "followUpValidation": [
+      "List untested hardware, clean-account, microphone/camera/screen and representative-user combinations explicitly."
+    ],
+    "history": [
+      {
+        "date": "2026-10-25",
+        "summary": "Prior status: planned; retained historical checkpoint: none. Revised owner contract supersedes this phase.",
+        "source": "Task 222 revised and pure-Python addendum"
+      }
+    ],
+    "supersededBy": [
+      223,
+      224,
+      225,
+      226,
+      227
+    ]
   },
   {
     "number": 218,
     "title": "Owner-scoped v3code Brain import",
-    "description": "Provide a preview-first migration for legacy v3code brain.json chunks into the existing private Brain without transferring legacy vectors or bypassing retention controls.",
-    "category": "Phase AX - Brain Migration", "status": "planned",
-    "dependsOn": [196], "decisions": [],
-    "acceptance": ["Validate a bounded UTF-8 JSON export, show only its digest and counts during preview, and require the exact preview digest at commit.", "Ignore legacy vectors and knowledge_pack.json; bundle source chunks into bounded notes, preserve sanitized source references, and enforce owner-only scope.", "Require explicit retention consent and an expiry within the existing 30-day policy; perform an atomic idempotent import and never call or download an embedding model automatically.", "Expose the import in the Brain page with a second preview/confirmation step and clear imported/skipped results."],
-    "outOfScope": ["Importing knowledge_pack.json, preserving or trusting legacy vectors, changing the retention policy, sharing content across scopes, automatic indexing, model downloads, and importing data without a separate owner confirmation."],
-    "risks": ["The importer handles personal knowledge; malformed or changed exports must fail closed, and a preview must not disclose note text."],
-    "area": "P66", "checkpoint": null,
-    "validation": ["Implementation is present locally. Focused Brain parser/API/management tests passed: 30 passed; Brain UI tests: 9 passed. Full suites passed: 1,446 Python / 3 skipped / 0 failed, 295 browser modules, 43 Electron, and 21 public docs. A read-only API preview of D:/source/AI/v3code/brain.json returned 852 chunks, 19 sources, 94 bounded notes and left the owner Brain empty. A reviewed local checkpoint is still pending."],
-    "realWorldVerification": {"status": "partial", "evidence": ["The actual 9.5 MiB legacy export passed the read-only API preview; its 768-dimensional vectors were ignored and no database writes occurred."], "unverified": ["The owner has not yet run the explicit retention-consented import; semantic re-indexing of imported notes remains an optional owner action."]},
-    "limitations": ["Only brain.json text chunks are migrated. Legacy vectors and knowledge_pack.json persona/rules/instant replies are not imported. The destination uses current owner-only notes with a user-selected expiry of up to 30 days; semantic indexing is not started automatically."],
-    "automatedVerification": ["Test bounded parse/UTF-8/source sanitization, preview no-write, permissions, digest mismatch, retention/expiry validation, atomic idempotent owner-scope writes, UI confirmation and same-origin CSRF. Run relevant Python and browser tests plus the public-docs roadmap suite."],
-    "followUpValidation": ["Review the displayed counts and selected expiry in the Brain page; the final import remains an explicit owner action. Record separately whether local semantic indexing is desired and available."]
+    "description": "Superseded by 223-227. Provide a preview-first migration for legacy v3code brain.json chunks into the existing private Brain without transferring legacy vectors or bypassing retention controls.",
+    "category": "Phase AX - Brain Migration",
+    "status": "superseded",
+    "dependsOn": [
+      196
+    ],
+    "decisions": [],
+    "acceptance": [
+      "Validate a bounded UTF-8 JSON export, show only its digest and counts during preview, and require the exact preview digest at commit.",
+      "Ignore legacy vectors and knowledge_pack.json; bundle source chunks into bounded notes, preserve sanitized source references, and enforce owner-only scope.",
+      "Require explicit retention consent and an expiry within the existing 30-day policy; perform an atomic idempotent import and never call or download an embedding model automatically.",
+      "Expose the import in the Brain page with a second preview/confirmation step and clear imported/skipped results."
+    ],
+    "outOfScope": [
+      "Importing knowledge_pack.json, preserving or trusting legacy vectors, changing the retention policy, sharing content across scopes, automatic indexing, model downloads, and importing data without a separate owner confirmation."
+    ],
+    "risks": [
+      "The importer handles personal knowledge; malformed or changed exports must fail closed, and a preview must not disclose note text."
+    ],
+    "area": "P66",
+    "checkpoint": null,
+    "validation": [
+      "Implementation is present locally. Focused Brain parser/API/management tests passed: 30 passed; Brain UI tests: 9 passed. Full suites passed: 1,446 Python / 3 skipped / 0 failed, 295 browser modules, 43 Electron, and 21 public docs. A read-only API preview of D:/source/AI/v3code/brain.json returned 852 chunks, 19 sources, 94 bounded notes and left the owner Brain empty. A reviewed local checkpoint is still pending."
+    ],
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": [
+        "The actual 9.5 MiB legacy export passed the read-only API preview; its 768-dimensional vectors were ignored and no database writes occurred."
+      ],
+      "unverified": [
+        "The owner has not yet run the explicit retention-consented import; semantic re-indexing of imported notes remains an optional owner action."
+      ]
+    },
+    "limitations": [
+      "Only brain.json text chunks are migrated. Legacy vectors and knowledge_pack.json persona/rules/instant replies are not imported. The destination uses current owner-only notes with a user-selected expiry of up to 30 days; semantic indexing is not started automatically."
+    ],
+    "automatedVerification": [
+      "Test bounded parse/UTF-8/source sanitization, preview no-write, permissions, digest mismatch, retention/expiry validation, atomic idempotent owner-scope writes, UI confirmation and same-origin CSRF. Run relevant Python and browser tests plus the public-docs roadmap suite."
+    ],
+    "followUpValidation": [
+      "Review the displayed counts and selected expiry in the Brain page; the final import remains an explicit owner action. Record separately whether local semantic indexing is desired and available."
+    ],
+    "history": [
+      {
+        "date": "2026-10-25",
+        "summary": "Prior status: planned; retained historical checkpoint: none. Revised owner contract supersedes this phase.",
+        "source": "Task 222 revised and pure-Python addendum"
+      }
+    ],
+    "supersededBy": [
+      223,
+      224,
+      225,
+      226,
+      227
+    ]
   },
   {
     "number": 219,
     "title": "Unified Brain and Memory workspace",
-    "description": "Present everyday knowledge intake, retrieval, citations, and scoped memory inspection through one Brain destination while preserving the existing authorization and retention boundaries.",
-    "category": "Phase AY - Unified Brain Experience", "status": "planned",
-    "dependsOn": [196, 218], "decisions": [],
-    "acceptance": ["Expose one Brain destination for file, folder, paste-text, import, indexing, retrieval, and citation workflows.", "Place corporation, project, and conversation memory inspection, correction, semantic search, and relationship tools under a collapsed Advanced scopes section on the same page.", "Redirect the legacy /ui/memory route to the unified Brain page without duplicating UI or changing the existing APIs.", "Preserve owner permissions, scope isolation, provenance, expiry, consent, deletion, and untrusted-context handling."],
-    "outOfScope": ["Merging private and published memory scopes, removing expiry or consent controls, importing knowledge_pack.json instructions, trusting legacy vectors, automatic model downloads, and automatic indexing without owner action."],
-    "risks": ["A visual merge must not collapse domain scopes or make private material available to a broader chat, project, corporation, or cloud-provider context."],
-    "area": "P67", "checkpoint": null,
-    "validation": ["Implementation is present locally. Focused Brain/memory/import/API checks passed: 32 Python tests and 22 browser-module tests. Full suites passed: 1,446 Python / 3 skipped / 0 failed, 295 browser modules, 43 Electron, and 21 public docs. Four deterministic light/dark screenshots at 480px and 1280px showed no horizontal overflow. A reviewed local checkpoint is pending."],
-    "realWorldVerification": {"status": "partial", "evidence": ["The actual legacy brain.json was read only during Task 218 preview; the unified screen itself was rendered in deterministic browser screenshots."], "unverified": ["Packaged Electron navigation, owner-performed import, live Ollama retrieval over imported notes, representative-owner usability, assistive technology, and actual Windows scaling remain unverified."]},
-    "limitations": ["Brain and scoped Memory remain separate governed domain services behind one user-facing page. The legacy /ui/memory address is compatibility-only. Advanced controls remain available but collapsed by default."],
-    "automatedVerification": ["Test the compatibility redirect, unified script/controller mounting, navigation uniqueness, scoped authorization, import controls, correction/search/relationship tools, narrow layout, and all four project suites before completion."],
-    "followUpValidation": ["Run the packaged app and owner import separately; record live-provider and representative-user evidence without treating deterministic screenshots as real-world proof."]
+    "description": "Superseded by 223-227. Present everyday knowledge intake, retrieval, citations, and scoped memory inspection through one Brain destination while preserving the existing authorization and retention boundaries.",
+    "category": "Phase AY - Unified Brain Experience",
+    "status": "superseded",
+    "dependsOn": [
+      196,
+      218
+    ],
+    "decisions": [],
+    "acceptance": [
+      "Expose one Brain destination for file, folder, paste-text, import, indexing, retrieval, and citation workflows.",
+      "Place corporation, project, and conversation memory inspection, correction, semantic search, and relationship tools under a collapsed Advanced scopes section on the same page.",
+      "Redirect the legacy /ui/memory route to the unified Brain page without duplicating UI or changing the existing APIs.",
+      "Preserve owner permissions, scope isolation, provenance, expiry, consent, deletion, and untrusted-context handling."
+    ],
+    "outOfScope": [
+      "Merging private and published memory scopes, removing expiry or consent controls, importing knowledge_pack.json instructions, trusting legacy vectors, automatic model downloads, and automatic indexing without owner action."
+    ],
+    "risks": [
+      "A visual merge must not collapse domain scopes or make private material available to a broader chat, project, corporation, or cloud-provider context."
+    ],
+    "area": "P67",
+    "checkpoint": null,
+    "validation": [
+      "Implementation is present locally. Focused Brain/memory/import/API checks passed: 32 Python tests and 22 browser-module tests. Full suites passed: 1,446 Python / 3 skipped / 0 failed, 295 browser modules, 43 Electron, and 21 public docs. Four deterministic light/dark screenshots at 480px and 1280px showed no horizontal overflow. A reviewed local checkpoint is pending."
+    ],
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": [
+        "The actual legacy brain.json was read only during Task 218 preview; the unified screen itself was rendered in deterministic browser screenshots."
+      ],
+      "unverified": [
+        "Packaged Electron navigation, owner-performed import, live Ollama retrieval over imported notes, representative-owner usability, assistive technology, and actual Windows scaling remain unverified."
+      ]
+    },
+    "limitations": [
+      "Brain and scoped Memory remain separate governed domain services behind one user-facing page. The legacy /ui/memory address is compatibility-only. Advanced controls remain available but collapsed by default."
+    ],
+    "automatedVerification": [
+      "Test the compatibility redirect, unified script/controller mounting, navigation uniqueness, scoped authorization, import controls, correction/search/relationship tools, narrow layout, and all four project suites before completion."
+    ],
+    "followUpValidation": [
+      "Run the packaged app and owner import separately; record live-provider and representative-user evidence without treating deterministic screenshots as real-world proof."
+    ],
+    "history": [
+      {
+        "date": "2026-10-25",
+        "summary": "Prior status: planned; retained historical checkpoint: none. Revised owner contract supersedes this phase.",
+        "source": "Task 222 revised and pure-Python addendum"
+      }
+    ],
+    "supersededBy": [
+      223,
+      224,
+      225,
+      226,
+      227
+    ]
+  },
+  {
+    "number": 220,
+    "title": "Historical Task 220 — superseded",
+    "description": "Superseded by 223-227. Historical Task 220 — superseded",
+    "category": "Superseded native migration",
+    "area": "Stabilization and native migration",
+    "status": "superseded",
+    "dependsOn": [],
+    "acceptance": [
+      "Record evidence against the authorized contract before claiming completion."
+    ],
+    "outOfScope": [
+      "No push or deployment."
+    ],
+    "risks": [
+      "Historical evidence does not prove the revised native UI."
+    ],
+    "automatedVerification": [
+      "Run affected deterministic regressions and record their actual results."
+    ],
+    "followUpValidation": [
+      "Packaged and physical-device verification remains unverified until exercised."
+    ],
+    "limitations": [
+      "No implementation or verification is implied by this record."
+    ],
+    "validation": [],
+    "checkpoint": null,
+    "realWorldVerification": {
+      "status": "unverified"
+    },
+    "scopeDefined": false,
+    "history": [
+      {
+        "date": "2026-10-25",
+        "summary": "Prior status: planned; retained historical checkpoint: none. Revised owner contract supersedes this phase.",
+        "source": "Task 222 revised and pure-Python addendum"
+      }
+    ],
+    "supersededBy": [
+      223,
+      224,
+      225,
+      226,
+      227
+    ],
+    "decisions": []
+  },
+  {
+    "number": 221,
+    "title": "Historical Task 221 — superseded",
+    "description": "Superseded by 223-227. Historical Task 221 — superseded",
+    "category": "Superseded native migration",
+    "area": "Stabilization and native migration",
+    "status": "superseded",
+    "dependsOn": [],
+    "acceptance": [
+      "Record evidence against the authorized contract before claiming completion."
+    ],
+    "outOfScope": [
+      "No push or deployment."
+    ],
+    "risks": [
+      "Historical evidence does not prove the revised native UI."
+    ],
+    "automatedVerification": [
+      "Run affected deterministic regressions and record their actual results."
+    ],
+    "followUpValidation": [
+      "Packaged and physical-device verification remains unverified until exercised."
+    ],
+    "limitations": [
+      "No implementation or verification is implied by this record."
+    ],
+    "validation": [],
+    "checkpoint": null,
+    "realWorldVerification": {
+      "status": "unverified"
+    },
+    "scopeDefined": false,
+    "history": [
+      {
+        "date": "2026-10-25",
+        "summary": "Prior status: planned; retained historical checkpoint: none. Revised owner contract supersedes this phase.",
+        "source": "Task 222 revised and pure-Python addendum"
+      }
+    ],
+    "supersededBy": [
+      223,
+      224,
+      225,
+      226,
+      227
+    ],
+    "decisions": []
+  },
+  {
+    "number": 222,
+    "title": "Stabilization before the pure-Python rewrite",
+    "description": "Local-only safety tag, documentation integrity, live backend evidence, release-readiness and dependency inventory; no new UI features or packaged Electron debugging.",
+    "category": "Task 222 - Stabilization",
+    "area": "Stabilization and native migration",
+    "status": "completed",
+    "dependsOn": [
+      196,
+      198,
+      202
+    ],
+    "acceptance": [
+      "Create local legacy-electron-ui tag at the starting commit; retain Task 194 startup failure as not fixed.",
+      "Repair UTF-8/serialization source, merge duplicate task histories and enforce integrity with regressions; audit 197/204/205/206 and supersede 213-221.",
+      "Run installed local Ollama five-question choice, five actual documents and hands-free optional media checks only while Ollama is available.",
+      "Record release-readiness per capability and Node dependency replacements without deleting sources.",
+      "Run full Python and remaining source suites; one local commit and task-222-stabilization tag; no push."
+    ],
+    "outOfScope": [
+      "No push or deployment."
+    ],
+    "risks": [
+      "Historical evidence does not prove the revised native UI."
+    ],
+    "automatedVerification": [
+      "Run affected deterministic regressions and record their actual results."
+    ],
+    "followUpValidation": [
+      "Packaged and physical-device verification remains unverified until exercised."
+    ],
+    "limitations": [
+      "RAG answer quality remains partial; installed media imports/device enumeration do not verify OCR/transcription/playback.",
+      "Packaged Electron and Task 203 frame-time checks intentionally superseded, not fixed or measured.",
+      "The preserved Tk experiment is not completion of revised Task 223."
+    ],
+    "validation": [
+      "Evidence, commands, source identity and actual results: review/task-222-stabilization.md and review/task-222-live-summary.json. Local checkpoint only; no artifact/device promotion.",
+      "Final full Python with OLLAMA_TEST_MODEL=qwen3.5:4b: 1465 passed, 3 Windows symlink privilege skips, 0 failed in 206.40 s (2 dependency warnings). Browser modules: 295 passed. Legacy Electron source: 44 passed. Public docs: 23 passed. Python integrity CLI and diff checks passed. No packaged Electron check."
+    ],
+    "checkpoint": "task-222-stabilization",
+    "realWorldVerification": {
+      "status": "unverified"
+    },
+    "releaseReadiness": [
+      {
+        "capability": "Authentication, Origin/CSRF and authorization",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "tests/test_local_access.py; tests/test_capability_authorization.py"
+      },
+      {
+        "capability": "Local answer-only chat",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "tests/test_chat_http_capture.py; qwen3.5:4b live rerun"
+      },
+      {
+        "capability": "Agent choice (not action execution)",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Task 222 five-question live choice; tests/test_agent_runtime.py"
+      },
+      {
+        "capability": "Brain ingestion/retrieval",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Five unchanged repository documents; ten live questions, quality partial"
+      },
+      {
+        "capability": "Historical Brain web graph",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Task 197 existing record; native widget not implemented"
+      },
+      {
+        "capability": "Optional media library loading",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Hands-free Task 198 imports and microphone enumeration only"
+      },
+      {
+        "capability": "OCR/transcription/playback",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "No capture, OCR engine configuration or playback proof"
+      },
+      {
+        "capability": "Native PySide6 shell/multi-window/accessibility",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Revised Tasks 223-227 pending"
+      },
+      {
+        "capability": "Packaged startup/install/uninstall/update artifact",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Task 194 blocker not fixed; Python artifact verification in 227"
+      },
+      {
+        "capability": "Backup/update policy source",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Existing backend tests; no installer or signer/publisher action"
+      },
+      {
+        "capability": "Online providers/paid calls",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "No live online provider calls authorized or performed"
+      },
+      {
+        "capability": "Code execution",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Task 190 remains design-only"
+      },
+      {
+        "capability": "RX 570 rendering and device ownership",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Qt/Tk spike and native ownership checks pending"
+      },
+      {
+        "capability": "activity:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "agent:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "agent:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "assignment-policy:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "assignment-policy:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "backup:export",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "backup:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "backup:restore",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "browser:act",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "desktop:act",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "chat-history:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "chat-knowledge:retain",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "chat-knowledge:withdraw",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "capability-approval:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "capability-audit:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "capability-emergency:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "capability-emergency:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "capability-grant:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "capability-pack:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "chat-task:create",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "chat:close",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "chat:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "chat:send",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "chat:start",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "corporation:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "documentation:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "documentation:review",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "employee-chat:close",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "employee-chat:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "employee-chat:send",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "employee-chat:start",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "employee:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "employee:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "embedding-model:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "github:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "inventory:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "local-model:select",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "maintenance:activate",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "maintenance:approve",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "maintenance:checkpoint",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "maintenance:experiment",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "memory:index",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "memory:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "memory:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "model-runtime:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "model:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "model:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "online-provider:connect",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "online-provider:disconnect",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "position:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "position:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "project:create",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "project:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "provider-connection:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "provider-connection:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "provider:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "provider:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "screen:capture",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "camera:capture",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "software:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "software:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "system:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "task:create",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "task:dispatch",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "task:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "updates:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "updates:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "workflow:manage",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      },
+      {
+        "capability": "workflow:read",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Authorization catalog and deny-by-default tests only; does not certify the action or a complete user journey."
+      }
+    ],
+    "decisions": []
   },
   {
     "number": 223,
-    "title": "Prototype three-pane shell",
-    "description": "Owner-authorized native Python prototype migration (2026-10-25). Main startup/build must not require Node.js, Electron, or a browser engine. Preserve legacy features and runtime safety.",
+    "title": "PySide6 three-pane shell and window foundation",
+    "description": "PySide6 three-pane shell and window foundation under the pure-Python owner addendum.",
     "category": "Phase 223 - Prototype Alignment",
-    "status": "completed",
+    "status": "planned",
     "dependsOn": [
-        197,
-        215
+      222
     ],
     "decisions": [],
     "acceptance": [
-        "Open a native Python/Tkinter shell with resizable sidebar, Brain/observed-step pane, persistent chat pane and original amber-on-dark styling; no Node.js/Electron runtime or build dependency.",
-        "Ctrl+B toggles the sidebar; hidden sidebar leaves equal Brain/chat widths; Ctrl+N and + create conversation tabs.",
-        "Keep existing features in separate allowlisted Advanced windows, with one Brain destination and Memory controls under Brain settings.",
-        "Preserve authentication, per-conversation scope, retention/expiry, cloud consent, approvals and stop controls."
+      "Before committing UI changes, benchmark PySide6 QPainter projected-3D with glow and customtkinter/Tk Canvas at 300 and 2,000 nodes on this RX 570 PC. Report FPS and appearance; use PySide6 unless a documented blocker requires customtkinter.",
+      "Report both backend options before choosing: an in-process facade through the same permission/approval/consent/spend layers, or the existing authenticated loopback HTTP API. Never bypass these layers.",
+      "One Python process and one single-instance lock (QLockFile or local socket). A second launch and Ctrl+N create independent chat windows in the same process and backend. Each owns conversation/model/agent/project selections.",
+      "Settings and Advanced are separate singleton windows that focus when already open. Keep existing Python-served Advanced pages, including Employees, Positions, Workflows, Backup and Providers, in the default browser or pywebview on 127.0.0.1. Exchange a one-use short-lived launch token for a session cookie; loopback only and fail closed.",
+      "Match the supplied simple three-pane prototype with one Qt theme module (gold/amber on dark, spacing, type, radius, motion), shared widgets, designed empty/loading/error/offline states, long Taglish wrapping, Windows 100/125/150% DPI, keyboard operation, visible focus, contrast, reduced motion and accessible control names.",
+      "Report PySide6 LGPL obligations and repository licensing recommendations; do not silently select a project license. Keep the app usable and legacy sources available through parity.",
+      "Ctrl+B/burger hides the sidebar; hidden Brain and chat panes each occupy half, and chat stays visible. Keep one Brain destination, with Memory controls under Advanced > Brain settings.",
+      "Preserve chat tabs and per-conversation identity while Ctrl+N/second launch create a new independent chat window per the revised addendum."
     ],
     "outOfScope": [
-        "Deleting existing features, silent model downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+      "No push, deployment or premature removal of the usable legacy UI.",
+      "No permission, consent, approval or spend-limit bypass."
     ],
     "risks": [
-        "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
-    "checkpoint": "task-223-native-python-shell",
-    "validation": [
-        "Native source-mode Tk/backend smoke: six checks passed, including separate Advanced window, authenticated Brain note save, tabs and equal hidden-sidebar panes.",
-        "Native model boundary and repaired legacy browser regressions: 5 Python tests passed. Full Python run: 1444 passed, 3 skipped, 2 legacy browser failures; both failures were then repaired and passed focused rerun. Original Pillow worker failure was fixed by passing its isolated verified import root to the worker.",
-        "Evidence: review/task-223-native-python.md. Source screenshots: desktop/task223-native-review. No packaged, live-model or GPU-performance claim at this phase."
-    ],
+    "checkpoint": null,
+    "validation": [],
     "limitations": [
-        "Native Advanced retains existing API operations in separate windows; its operator forms remain technical. Steps/thinking settings will connect to the bounded loop in Task 226. Existing intake retains its older size/chunking limits until Task 224.",
-        "Legacy browser/Electron sources are preserved for compatibility; the default native startup/build does not run Node.js or Electron."
+      "Not complete under the revised PySide6 contract. Historical source experiments do not establish native parity."
     ],
     "automatedVerification": [
-        "Run affected regression and source-mode UI checks; retain failures as failures."
+      "Run affected regression and source-mode UI checks; retain failures as failures."
     ],
     "followUpValidation": [
-        "Record unavailable real-world checks as UNVERIFIED with their impact."
+      "Record unavailable real-world checks as UNVERIFIED with their impact."
     ],
     "realWorldVerification": {
-        "status": "partial",
-        "evidence": [
-            "Actual native Windows Tk window, source screenshots, authenticated loopback session and local Brain note save were exercised."
-        ],
-        "unverified": [
-            "Packaged native artifact, live tool loop, physical media devices, assistive technology and RX 570 performance."
-        ]
-    }
-},
+      "status": "unverified"
+    },
+    "history": [
+      {
+        "date": "2026-10-25",
+        "summary": "Tk experiment at e7ea984/task-223-native-python-shell retained as historical evidence. It does not satisfy revised PySide6, true multi-window or Advanced launch requirements.",
+        "source": "review/task-223-native-python.md"
+      }
+    ],
+    "releaseReadiness": [
+      {
+        "capability": "Native PySide6 shell/multi-window/accessibility",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Revised Tasks 223-227 pending"
+      }
+    ]
+  },
   {
     "number": 224,
-    "title": "Real-data Brain visualization and intake",
-    "description": "Owner-authorized native Python prototype migration (2026-10-25). Main startup/build must not require Node.js, Electron, or a browser engine. Preserve legacy features and runtime safety.",
+    "title": "Shared real-data Brain and 3D visualization",
+    "description": "Shared real-data Brain and 3D visualization under the pure-Python owner addendum.",
     "category": "Phase 224 - Prototype Alignment",
     "status": "planned",
     "dependsOn": [
-        223
+      223,
+      196
     ],
     "decisions": [],
     "acceptance": [
-        "Render real chunks and source clusters, bounded node grouping, real retrieval/link highlights, an anchored source/snippet/date/Forget card, performance controls and a 2D fallback.",
-        "Support files, folders and text through app-wide drop/paste and explicit local retention controls; chunk at 800 characters with 100 overlap.",
-        "Skip junk directories and files over 5 MB; replace re-fed sources using stable absolute-path/content keys, skip unchanged hashes and save atomically.",
-        "Reuse cached normalized search matrices and installed FAISS where available; never invent graph activity or fetch models silently."
+      "One shared Brain/3D widget, full-window views without text blocks. Click a real node to open an anchored card beside it; Esc/back returns to chat.",
+      "Offer an accessible list fallback. Render only real scoped Brain and runtime data; no invented nodes, activity or success.",
+      "Measure the shared widget against the Qt/Tk spike and preserve theme, DPI and keyboard requirements from Task 223.",
+      "Render real chunks and source clusters, bounded node grouping, real retrieval/link highlights, an anchored source/snippet/date/Forget card, performance controls and a 2D fallback.",
+      "Support files, folders and text through app-wide drop/paste and explicit local retention controls; chunk at 800 characters with 100 overlap.",
+      "Skip junk directories and files over 5 MB; replace re-fed sources using stable absolute-path/content keys, skip unchanged hashes and save atomically.",
+      "Reuse cached normalized search matrices and installed FAISS where available; never invent graph activity or fetch models silently."
     ],
     "outOfScope": [
-        "Deleting existing features, silent model downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+      "No push, deployment or premature removal of the usable legacy UI.",
+      "No permission, consent, approval or spend-limit bypass."
     ],
     "risks": [
-        "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
     "checkpoint": null,
     "validation": [],
-    "limitations": [],
+    "limitations": [
+      "Not complete under the revised PySide6 contract. Historical source experiments do not establish native parity."
+    ],
     "automatedVerification": [
-        "Run affected regression and source-mode UI checks; retain failures as failures."
+      "Run affected regression and source-mode UI checks; retain failures as failures."
     ],
     "followUpValidation": [
-        "Record unavailable real-world checks as UNVERIFIED with their impact."
+      "Record unavailable real-world checks as UNVERIFIED with their impact."
+    ],
+    "realWorldVerification": {
+      "status": "unverified"
+    },
+    "releaseReadiness": [
+      {
+        "capability": "Historical Brain web graph",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Task 197 existing record; native widget not implemented"
+      },
+      {
+        "capability": "RX 570 rendering and device ownership",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Qt/Tk spike and native ownership checks pending"
+      }
     ]
-},
+  },
   {
     "number": 225,
-    "title": "Shipped knowledge pack and exact tools",
-    "description": "Owner-authorized native Python prototype migration (2026-10-25). Main startup/build must not require Node.js, Electron, or a browser engine. Preserve legacy features and runtime safety.",
+    "title": "Shipped knowledge pack, instant replies and exact tools",
+    "description": "Separate shipped/user knowledge, exact tools and measured prefixed embeddings; no new carry-over items.",
     "category": "Phase 225 - Prototype Alignment",
     "status": "planned",
     "dependsOn": [
-        224
+      224
     ],
     "decisions": [],
     "acceptance": [
-        "Separate user Brain, shipped knowledge_pack.json and rebuildable pack-hash embedding cache.",
-        "Answer exact-match greetings/thanks/identity without model calls; put persona/rules in system messages and retrieve two or three pack entries.",
-        "Provide bounded exact calculate, solve_equation and convert_units through existing sandbox/authority guards.",
-        "Use installed nomic-embed-text with search_document/search_query prefixes; measure before/after retrieval thresholds on real examples and publish actual numbers."
+      "Preserve permissions, exact-action approvals, consent, spend limits, audit traces and bounded execution. No additional carry-over items are assigned to this phase.",
+      "Separate user Brain, shipped knowledge_pack.json and rebuildable pack-hash embedding cache.",
+      "Answer exact-match greetings/thanks/identity without model calls; put persona/rules in system messages and retrieve two or three pack entries.",
+      "Provide bounded exact calculate, solve_equation and convert_units through existing sandbox/authority guards.",
+      "Use installed nomic-embed-text with search_document/search_query prefixes; measure before/after retrieval thresholds on real examples and publish actual numbers."
     ],
     "outOfScope": [
-        "Deleting existing features, silent model downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+      "No push, deployment or premature removal of the usable legacy UI.",
+      "No permission, consent, approval or spend-limit bypass."
     ],
     "risks": [
-        "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
     "checkpoint": null,
     "validation": [],
-    "limitations": [],
+    "limitations": [
+      "Not complete under the revised PySide6 contract. Historical source experiments do not establish native parity."
+    ],
     "automatedVerification": [
-        "Run affected regression and source-mode UI checks; retain failures as failures."
+      "Run affected regression and source-mode UI checks; retain failures as failures."
     ],
     "followUpValidation": [
-        "Record unavailable real-world checks as UNVERIFIED with their impact."
+      "Record unavailable real-world checks as UNVERIFIED with their impact."
+    ],
+    "realWorldVerification": {
+      "status": "unverified"
+    },
+    "releaseReadiness": [
+      {
+        "capability": "Revised knowledge pack and exact math tools",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Task 225 revised contract is planned; no implementation implied."
+      }
     ]
-},
+  },
   {
     "number": 226,
-    "title": "Bounded agent loop and hardened tools",
-    "description": "Owner-authorized native Python prototype migration (2026-10-25). Main startup/build must not require Node.js, Electron, or a browser engine. Preserve legacy features and runtime safety.",
+    "title": "Resource coordination and truthful chat actions",
+    "description": "Resource coordination and truthful chat actions under the pure-Python owner addendum.",
     "category": "Phase 226 - Prototype Alignment",
     "status": "planned",
     "dependsOn": [
-        225
+      225,
+      207
     ],
     "decisions": [],
     "acceptance": [
-        "Support bounded tool steps, duplicate-call prevention, result caps, streaming answers, optional native/tagged thinking, visible observed logs and Stop.",
-        "Keep raw user history; inject retrieved context only for the current model call; bound history and explicitly set num_ctx; send real chat messages without internal envelopes.",
-        "List installed Ollama models, verify tool capability and allow per-tab choice; no fixed llama3.2:3b, silent downloads, cloud sends or fallback.",
-        "Confirm exact http/https browser destinations; block local/private/file web retrieval with redirect/DNS protections and mark fetched context untrusted.",
-        "Restrict file tools to user-chosen roots, block secret files and require exact write diff approval; require capture/device/action consent, local faster-whisper, indicators and kill switches; log Brain/clipboard writes."
+      "All model calls pass through ResourceManager, with visible queue state and cancel; honestly warn when different models cause reloads.",
+      "Only one window owns mic/camera/screen at a time, with an ownership indicator; implement global and per-window emergency stop.",
+      "Reproduce conversation rename/delete defects before fixing them; add regressions in the new shell.",
+      "Deterministic open youtube/open_url rules: http/https only, inline exact-action approval, and truthful replies only after confirmed tool results. Never claim an action happened without tool confirmation.",
+      "Support bounded tool steps, duplicate-call prevention, result caps, streaming answers, optional native/tagged thinking, visible observed logs and Stop.",
+      "Keep raw user history; inject retrieved context only for the current model call; bound history and explicitly set num_ctx; send real chat messages without internal envelopes.",
+      "List installed Ollama models, verify tool capability and allow per-tab choice; no fixed llama3.2:3b, silent downloads, cloud sends or fallback.",
+      "Confirm exact http/https browser destinations; block local/private/file web retrieval with redirect/DNS protections and mark fetched context untrusted.",
+      "Restrict file tools to user-chosen roots, block secret files and require exact write diff approval; require capture/device/action consent, local faster-whisper, indicators and kill switches; log Brain/clipboard writes."
     ],
     "outOfScope": [
-        "Deleting existing features, silent model downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+      "No push, deployment or premature removal of the usable legacy UI.",
+      "No permission, consent, approval or spend-limit bypass."
     ],
     "risks": [
-        "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
     "checkpoint": null,
     "validation": [],
-    "limitations": [],
+    "limitations": [
+      "Not complete under the revised PySide6 contract. Historical source experiments do not establish native parity."
+    ],
     "automatedVerification": [
-        "Run affected regression and source-mode UI checks; retain failures as failures."
+      "Run affected regression and source-mode UI checks; retain failures as failures."
     ],
     "followUpValidation": [
-        "Record unavailable real-world checks as UNVERIFIED with their impact."
+      "Record unavailable real-world checks as UNVERIFIED with their impact."
+    ],
+    "realWorldVerification": {
+      "status": "unverified"
+    },
+    "releaseReadiness": [
+      {
+        "capability": "Native PySide6 shell/multi-window/accessibility",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Revised Tasks 223-227 pending"
+      },
+      {
+        "capability": "RX 570 rendering and device ownership",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Qt/Tk spike and native ownership checks pending"
+      }
     ]
-},
+  },
   {
     "number": 227,
-    "title": "Prototype journey verification and polish",
-    "description": "Owner-authorized native Python prototype migration (2026-10-25). Main startup/build must not require Node.js, Electron, or a browser engine. Preserve legacy features and runtime safety.",
+    "title": "Python packaging, verification and Node retirement",
+    "description": "Python packaging, verification and Node retirement under the pure-Python owner addendum.",
     "category": "Phase 227 - Prototype Alignment",
     "status": "planned",
     "dependsOn": [
-        226
+      226
     ],
     "decisions": [],
     "acceptance": [
-        "Feed five real files and one folder; ask ten questions and report factual/cited counts and retrieval quality before/after prefixes.",
-        "Exercise browser opening, math, tool failure, mid-run Stop, an injection file and a localhost URL using local Ollama and an installed model.",
-        "Run full Python and native desktop suites, build/launch the Python artifact and perform a dead-control sweep; preserve legacy browser/Electron regressions where their sources remain supported; measure PC performance without inferring GPU use.",
-        "Report Verified real, AI-verified only, Unverified or Broken per phase; use one reviewed local commit/tag per passing phase; never push or deploy."
+      "Restore open window descriptors without replaying actions. Run pytest/pytest-qt, widget.grab baseline screenshot matrix across sizes/themes/DPI, dead-control sweep and deterministic fake Ollama/Gemini checks.",
+      "Port useful browser-module/Electron tests to Python or explicitly document each retired coverage category. Report before/after counts; never silently drop coverage.",
+      "Only after chat, Brain, agent loop, Settings and Advanced parity, remove Node/Electron/Next.js sources, package.json, node_modules and unused build scripts in one commit tagged task-227-no-node. The final app/build must not require Node, npm, Electron, Next.js, Playwright or WebGL.",
+      "Use PyInstaller one-folder (preferred) or Nuitka plus Inno Setup/NSIS; per-user data, uninstall keeps data by default, matching build stamp, opt-in verified installer updates and local-only failure metadata. A smoke script must fail on early exit or no visible window.",
+      "Keep public pages static and ai.erselmetz.com working; convert Node docs source/tooling to JSON or Python-generated data. No push/deploy is authorized.",
+      "Report package size, startup time, memory use and Brain FPS on this PC, with exact artifact identity and unverified limitations.",
+      "Feed five real files and one folder; ask ten questions and report factual/cited counts and retrieval quality before/after prefixes.",
+      "Exercise browser opening, math, tool failure, mid-run Stop, an injection file and a localhost URL using local Ollama and an installed model.",
+      "Report Verified real, AI-verified only, Unverified or Broken per phase; use one reviewed local commit/tag per passing phase; never push or deploy."
     ],
     "outOfScope": [
-        "Deleting existing features, silent model downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+      "No push, deployment or premature removal of the usable legacy UI.",
+      "No permission, consent, approval or spend-limit bypass."
     ],
     "risks": [
-        "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
     "checkpoint": null,
     "validation": [],
-    "limitations": [],
+    "limitations": [
+      "Not complete under the revised PySide6 contract. Historical source experiments do not establish native parity."
+    ],
     "automatedVerification": [
-        "Run affected regression and source-mode UI checks; retain failures as failures."
+      "Run affected regression and source-mode UI checks; retain failures as failures."
     ],
     "followUpValidation": [
-        "Record unavailable real-world checks as UNVERIFIED with their impact."
+      "Record unavailable real-world checks as UNVERIFIED with their impact."
+    ],
+    "realWorldVerification": {
+      "status": "unverified"
+    },
+    "releaseReadiness": [
+      {
+        "capability": "Packaged startup/install/uninstall/update artifact",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Task 194 blocker not fixed; Python artifact verification in 227"
+      }
     ]
-}
+  }
 ];
 
 export const roadmapRules = {
@@ -4301,6 +6104,7 @@ export const roadmapRules = {
 };
 
 const futureRoadmapGroups = [
+  ...[ ["Historical scope gaps", "204-206"], ["Superseded native migration", "220-221"], ["Task 222 - Stabilization", "222-222"] ].map(([name, range]) => ({ name, range, tasks: post100Tasks.filter(task => task.category === name).map(({title, description}) => [title, description]) })),
   { name: "Phase A - Install and Onboarding", range: "131-134", tasks: post100Tasks.filter(task => task.category === "Phase A - Install and Onboarding").map(({ title, description }) => [title, description]) },
   { name: "Phase B - Knowledge and RAG", range: "135-139", tasks: post100Tasks.filter(task => task.category === "Phase B - Knowledge and RAG").map(({ title, description }) => [title, description]) },
   { name: "Phase C - Capability Governance", range: "140-144", tasks: post100Tasks.filter(task => task.category === "Phase C - Capability Governance").map(({ title, description }) => [title, description]) },
@@ -4362,6 +6166,7 @@ export const taskGroups = [...foundationTaskGroups, {
 }, ...futureRoadmapGroups];
 export const tasks = [...foundationTasks, ...post100Tasks];
 export const recommendedOrder = [
+  ...[222,223,224,225,226,227].map(number => ({number, reason: "Owner-directed stabilization then pure-Python strangler order; preserve usability and security boundaries."})),
   { number: 178, reason: "Complete the navigation acceptance gate before asking owners to test the setup journey." },
   { number: 176, reason: "Verify fresh-profile install, provider setup, restart, and recovery before building on onboarding." },
   { number: 177, reason: "Accept RAG and factual traces before routing, tools, and visible multi-step work depend on them." },

@@ -22,6 +22,21 @@ def require_ollama_service():
         pytest.skip(
             f"Ollama is unavailable at {endpoint.hostname}:{port}: {exc}"
         )
+    from app.providers import OllamaProvider
+    provider = OllamaProvider(base_url)
+    inventory = provider.local_model_inventory()
+    assert inventory.state == "available", "Live integration requires a bounded local model inventory"
+    requested = os.environ.get("OLLAMA_TEST_MODEL")
+    candidates = [name for name in inventory.models
+                  if not name.casefold().endswith((":cloud", "-cloud"))
+                  and not name.casefold().startswith("llama3.2:")]
+    if requested:
+        assert requested in candidates, "OLLAMA_TEST_MODEL must be an installed permitted local model"
+        candidates = [requested]
+    for name in candidates:
+        if provider.supports_model_chat(name) is True:
+            return name
+    pytest.fail("No installed local chat model other than retiring llama3.2 is available; no download or fallback")
 
 
 @pytest.fixture(autouse=True)

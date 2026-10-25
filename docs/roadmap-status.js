@@ -1,6 +1,9 @@
 import { tasks, nextTask, recommendedOrder } from "./tasks-data.mjs";
 
 export function verificationLabels(task) {
+  if (task.releaseReadiness?.length) {
+    return { automated: "Source-verified / Unverified: see capability readiness table", realWorld: "Packaged-verified: unverified · Real-device-verified: unverified" };
+  }
   const automated = task.validation?.length
     ? "AI-verified (deterministic/fake evidence recorded)"
     : "AI verification: not recorded";
@@ -29,7 +32,8 @@ export function statusLabel(status) {
   return status === "completed" ? "Completed"
     : status === "deferred" ? "Deferred — incomplete"
       : status === "design_only" ? "Design only"
-        : "Planned";
+        : status === "superseded" ? "Superseded by 223-227"
+          : status === "not_done" ? "Not done — scope undefined" : "Planned";
 }
 
 export function renderStatusSummary(element, taskRecords = tasks) {
@@ -40,7 +44,7 @@ export function renderStatusSummary(element, taskRecords = tasks) {
   const deferred = counts.deferred?.length ?? 0;
   const planned = counts.planned?.length ?? 0;
   const designOnly = counts.design_only?.length ?? 0;
-  element.textContent = `${taskRecords.length} tasks · ${complete} completed · ${deferred} deferred and incomplete · ${planned} planned · ${designOnly} design only`;
+  element.textContent = `${taskRecords.length} tasks · ${complete} completed · ${deferred} deferred and incomplete · ${planned} planned · ${designOnly} design only · ${counts.superseded?.length ?? 0} superseded · ${counts.not_done?.length ?? 0} not done`;
 }
 
 export function renderRecommendedOrder(list, taskRecords = tasks, order = recommendedOrder) {

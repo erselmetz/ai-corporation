@@ -44,12 +44,16 @@ class OllamaProvider(AIProvider):
         return self._supports_model_capability(model, "completion")
 
     def _supports_model_capability(self, model: str, capability: str) -> bool | None:
+        if isinstance(model,str) and model.casefold().endswith((":cloud","-cloud")):
+            return False
         if (not self._is_loopback_endpoint() or not isinstance(model, str)
                 or not model.strip() or len(model.encode("utf-8")) > 256):
             return None
         try:
             payload = self._bounded_request("POST", "/api/show", {"model": model})
             data = json.loads(payload)
+            if isinstance(data,dict) and (data.get("remote_host") or data.get("remote_model")):
+                return False
             capabilities = data.get("capabilities") if isinstance(data, dict) else None
             if not isinstance(capabilities, list) or len(capabilities) > 32:
                 return None
@@ -200,6 +204,7 @@ class OllamaProvider(AIProvider):
         if not isinstance(prompt, str) or len(prompt.encode("utf-8")) > 32768:
             raise ValueError("Prompt exceeds byte limit")
         request_body = {"model": model, "prompt": prompt, "stream": True}
+        self._prepare_answer_request(model,request_body)
         received_bytes = 0
         output_bytes = 0
         completed = False
@@ -276,8 +281,33 @@ class OllamaProvider(AIProvider):
                     payload.extend(chunk)
         return bytes(payload)
 
+    def _prepare_answer_request(self,model,body):
+        """Preserve the answer-only contract within the existing runtime budget.
+
+        Native thinking is not currently an exposed chat control. On models that
+        permit it, disable unrequested reasoning so it cannot consume the entire
+        final-answer budget. Thinking UI/stream control remains Task 226.
+        """
+        if not isinstance(model,str): raise ValueError("Invalid model identifier")
+        if model.casefold().endswith((":cloud","-cloud")):
+            raise ValueError("Ollama cloud models require a separately reviewed cloud-consent path")
+        if not self._is_loopback_endpoint(): return
+        try:
+            metadata=json.loads(self._bounded_request("POST","/api/show",{"model":model}))
+        except (httpx.HTTPError,ValueError,TypeError): return
+        if not isinstance(metadata,dict): return
+        if metadata.get("remote_host") or metadata.get("remote_model"):
+            raise ValueError("A remote Ollama model cannot use the local-only chat path")
+        thinking=metadata.get("thinking")
+        values=thinking.get("values",[]) if isinstance(thinking,dict) else []
+        permits_off=thinking is None or (isinstance(values,list) and any(value is False for value in values))
+        capabilities=metadata.get("capabilities",[])
+        if isinstance(capabilities,list) and "thinking" in capabilities and permits_off:
+            body["think"]=False
+
     def generate(self, model: str, prompt: str) -> str:
         request_body = {"model": model, "prompt": prompt, "stream": False}
+        self._prepare_answer_request(model,request_body)
         with httpx.Client(
             timeout=120.0, trust_env=False, follow_redirects=False
         ) as client:
@@ -295,6 +325,7 @@ class OllamaProvider(AIProvider):
             raise ValueError("Invalid model identifier")
         normalized = validate_chat_messages(messages)
         request_body = {"model": model, "messages": normalized, "stream": False}
+        self._prepare_answer_request(model,request_body)
         if current_invocation() is not None:
             request_body["options"] = {"num_predict": runtime_output_token_budget()}
         response_body = bytearray()
@@ -328,6 +359,7 @@ class OllamaProvider(AIProvider):
         completed = False
         try:
             request_body = {"model": model, "messages": normalized, "stream": True}
+            self._prepare_answer_request(model,request_body)
             if current_invocation() is not None:
                 request_body["options"] = {"num_predict": runtime_output_token_budget()}
             with httpx.Client(timeout=min(_STREAM_TIMEOUT, runtime_timeout_seconds(_STREAM_TIMEOUT)), trust_env=False,

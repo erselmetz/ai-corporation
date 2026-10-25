@@ -21,7 +21,7 @@ def test_orchestrator_run_employee(require_ollama_service):
         name="Tech Agent 1",
         role="Executor",
         provider="ollama",
-        model="llama3.2:3b",
+        model=require_ollama_service,
     )
     agent_registry.register(agent)
     
@@ -90,7 +90,7 @@ def test_backward_compatibility(require_ollama_service):
         name="Tech Agent 1",
         role="Executor",
         provider="ollama",
-        model="llama3.2:3b",
+        model=require_ollama_service,
     )
     agent_registry.register(agent)
     

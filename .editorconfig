@@ -1,0 +1,11 @@
+root = true
+
+[docs/**]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+
+[{README.md,ARCHITECTURE.md,corporation_updates.json}]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true

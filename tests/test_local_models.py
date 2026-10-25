@@ -272,6 +272,9 @@ def test_ollama_chat_uses_structured_messages_and_no_json_envelope(monkeypatch):
 
     def handler(request):
         requests.append(request)
+        if request.url.path == "/api/show":
+            assert json.loads(request.read()) == {"model": "llama3.2:3b"}
+            return httpx.Response(200, json={"capabilities": ["completion"]})
         return httpx.Response(200, json={"message": {"role": "assistant", "content": "ok"}})
 
     def factory(**kwargs):
@@ -282,7 +285,8 @@ def test_ollama_chat_uses_structured_messages_and_no_json_envelope(monkeypatch):
                                                {"role": "assistant", "content": "reply"}])
     provider = OllamaProvider("http://127.0.0.1:11434")
     assert provider.generate_chat("llama3.2:3b", messages) == "ok"
-    payload = json.loads(requests[0].read())
+    assert [r.url.path for r in requests] == ["/api/show", "/api/chat"]
+    payload = json.loads(requests[1].read())
     assert payload["messages"] == messages
     assert payload["messages"][0]["role"] == "system"
     assert payload["messages"][-1] == {"role": "user", "content": "Hello"}
@@ -298,28 +302,37 @@ def test_ollama_chat_stream_uses_chat_delta_content(monkeypatch):
     real_client = httpx.Client
     def handler(request):
         requests.append(request)
+        if request.url.path == "/api/show":
+            assert json.loads(request.read()) == {"model": "llama3.2:3b"}
+            return httpx.Response(200, json={"capabilities": ["completion"]})
         return httpx.Response(200, content=stream)
     monkeypatch.setattr("app.providers.ollama.httpx.Client", lambda **kwargs:
                         real_client(transport=httpx.MockTransport(handler), **kwargs))
     provider = OllamaProvider("http://127.0.0.1:11434")
     messages = build_chat_messages("hello")
     assert list(provider.generate_chat_stream("llama3.2:3b", messages)) == ["Hello", " there!"]
-    body = json.loads(requests[0].read())
+    assert [r.url.path for r in requests] == ["/api/show", "/api/chat"]
+    body = json.loads(requests[1].read())
     assert body["messages"] == messages and body["stream"] is True
 
 
 def test_ollama_stream_yields_only_real_bounded_chunks_until_final_marker(monkeypatch):
     requests = []
+    timeouts = []
     stream = b'{"response":"first ","done":false}\n{"response":"reply","done":false}\n{"response":"","done":true}\n'
     real_client = httpx.Client
 
     def handler(request):
         requests.append(request)
+        if request.url.path == "/api/show":
+            assert json.loads(request.read()) == {"model": "model"}
+            return httpx.Response(200, json={"capabilities": ["completion"]})
         return httpx.Response(200, content=stream)
 
     def factory(**kwargs):
+        timeouts.append(kwargs["timeout"])
         assert kwargs == {
-            "timeout": 120.0,
+            "timeout": 5.0 if len(timeouts) == 1 else 120.0,
             "trust_env": False,
             "follow_redirects": False,
         }
@@ -328,8 +341,9 @@ def test_ollama_stream_yields_only_real_bounded_chunks_until_final_marker(monkey
     monkeypatch.setattr("app.providers.ollama.httpx.Client", factory)
     provider = OllamaProvider("http://127.0.0.1:11434")
     assert list(provider.generate_stream("model", "prompt")) == ["first ", "reply"]
-    assert requests[0].url.path == "/api/generate"
-    assert json.loads(requests[0].read()) == {
+    assert timeouts == [5.0, 120.0]
+    assert [r.url.path for r in requests] == ["/api/show", "/api/generate"]
+    assert json.loads(requests[1].read()) == {
         "model": "model", "prompt": "prompt", "stream": True,
     }
 

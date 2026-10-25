@@ -47,6 +47,26 @@ def update(
     }
 
 
+def test_manifest_retains_one_current_record_with_validated_history(tmp_path):
+    item = update()
+    item["history"] = [update("2026-09-30")]
+    path = tmp_path / "updates.json"
+    write_manifest(path, [item])
+    result = CuratedUpdatesManifest(path).list_updates()
+    assert len(result) == 1
+    assert result[0].date == "2026-10-02"
+
+
+@pytest.mark.parametrize("history", [[], "invalid", [{"date": "bad"}], [dict(date="bad", type="development", title="Old", summary="Old")]])
+def test_manifest_rejects_malformed_history(tmp_path, history):
+    item = update()
+    item["history"] = history
+    path = tmp_path / "updates.json"
+    write_manifest(path, [item])
+    with pytest.raises(UpdatesSourceUnavailable):
+        CuratedUpdatesManifest(path).list_updates()
+
+
 def test_manifest_returns_only_curated_fields_newest_first(tmp_path: Path):
     manifest_path = tmp_path / "updates.json"
     write_manifest(
@@ -176,5 +196,9 @@ def test_updates_api_reads_the_default_version_controlled_manifest():
 
     manifest_path = Path(__file__).parents[1] / "corporation_updates.json"
     expected = json.loads(manifest_path.read_text(encoding="utf-8"))
+    # The current-update API retains its four-field contract; historical source
+    # milestones are validated by the manifest and rendered by the public docs.
+    expected = {"items": [{k: v for k, v in item.items() if k != "history"}
+                          for item in expected["items"]]}
     assert response.status_code == 200
     assert response.json() == expected
