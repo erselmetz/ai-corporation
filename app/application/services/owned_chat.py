@@ -218,6 +218,11 @@ class OwnedChatService:
     def complete_without_provider(self, owner, identifier, text, reply):
         """Complete an owner-scoped safe response without reserving a model slot."""
         with self._access(owner, identifier) as entry:
+            current,provider=self._coordinator(entry.coordinator.id)
+            if ((current.provider,current.model)!=(entry.coordinator.provider,entry.coordinator.model)
+                    or provider is not entry.provider):
+                raise ChatConflict("Coordinator assignment changed; start a new conversation")
+            self._workspace_route(owner,identifier,entry)
             if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
                 raise ChatLimit("Conversation message limit reached; start a new conversation")
             record = self._chat.complete_without_provider(identifier, text, reply)
@@ -229,7 +234,7 @@ class OwnedChatService:
     def send(self, owner, identifier, text, retrieved_context=None, *, presentation_preferences=None,
              tool_context=None, image_ids=(),
              image_consent=False, ocr_evidence=(), prompt_observer=None, turn_route=None,
-             route_consent=False, brain_enabled=False):
+             route_consent=False, brain_enabled=False, shipped_pack_enabled=False):
         if turn_route is not None:
             if (route_consent is not True or not isinstance(turn_route, tuple) or len(turn_route) != 2
                     or any(not isinstance(value, str) or not value.strip() or len(value) > 256
@@ -289,7 +294,8 @@ class OwnedChatService:
                 return self._send(entry, identifier, text, retrieved_context, presentation_preferences,
                                   tool_context=tool_context,
                                   prompt_observer=prompt_observer, turn_route=turn_route,
-                                  brain_enabled=brain_enabled)
+                                  brain_enabled=brain_enabled,
+                                 shipped_pack_enabled=shipped_pack_enabled)
 
     def send_delegated(self, owner, identifier, text, choose_agent: Callable,
                        *, handoff_observer: Callable[[dict], None] | None = None):
@@ -352,7 +358,7 @@ class OwnedChatService:
             })
 
     def stream(self, owner, identifier, text, retrieved_context=None, presentation_preferences=None,
-               *, brain_enabled=False):
+               *, brain_enabled=False, shipped_pack_enabled=False):
         with self._access(owner, identifier) as entry:
             if self._workspace_route(owner, identifier, entry):
                 raise ChatUnavailable("This selected workspace model uses the non-streaming chat endpoint")
@@ -367,7 +373,7 @@ class OwnedChatService:
             with self.agent_request(entry.coordinator.id,
                                     wait_for_slot=getattr(entry.provider, "is_local", False) is True):
                 for event in self._chat.send_stream(identifier, text, retrieved_context,
-                                                    presentation_preferences, brain_enabled=brain_enabled):
+                                                    presentation_preferences, brain_enabled=brain_enabled, shipped_pack_enabled=shipped_pack_enabled):
                     if event["type"] == "complete":
                         yield self._workspace_response(owner, identifier, {
                             **event,
@@ -378,7 +384,7 @@ class OwnedChatService:
                         yield event
 
     def _send(self, entry, identifier, text, retrieved_context=None, presentation_preferences=None,
-              tool_context=None, prompt_observer=None, turn_route=None, brain_enabled=False):
+              tool_context=None, prompt_observer=None, turn_route=None, brain_enabled=False, shipped_pack_enabled=False):
         current, provider = self._coordinator(entry.coordinator.id)
         if (current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model):
             raise ChatConflict("Coordinator assignment changed; start a new conversation")
@@ -386,13 +392,17 @@ class OwnedChatService:
             raise ChatConflict("Coordinator connection changed; start a new conversation")
         if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
             raise ChatLimit("Conversation message limit reached; start a new conversation")
+        pack_evidence=[]
         record = self._chat.send(identifier, text, retrieved_context, presentation_preferences,
                                  tool_context=tool_context,
                                  prompt_observer=prompt_observer, turn_route=turn_route,
                                  brain_enabled=brain_enabled,
+                                 shipped_pack_enabled=shipped_pack_enabled,
+                                 pack_observer=pack_evidence.append,
                                  expected_assignment=(entry.coordinator.provider, entry.coordinator.model)
                                  if turn_route is not None else None)
         result = {"conversation": record, "coordinator": entry.coordinator}
+        if pack_evidence:result['shipped_guidance']=pack_evidence[0]
         if turn_route is not None:
             result["turn_route"] = {"provider_id": turn_route[0], "model_id": turn_route[1]}
         return self._workspace_response(entry.owner, identifier, result)

@@ -73,7 +73,7 @@ def normalized(vector):
 
 
 class NativeBrain:
-    def __init__(self,embedding=None,*,prefixed=False,invalidator=None,stopper=lambda:False):
+    def __init__(self,embedding=None,*,prefixed=True,invalidator=None,stopper=lambda:False):
         self.embedding=embedding or OllamaEmbeddingProvider("nomic-embed-text:latest")
         self.prefixed=prefixed; self.lock=RLock(); self.matrix=(); self.signature=None
         self.invalidator=invalidator

@@ -45,6 +45,16 @@ class Transport:
     def launch(self, page):
         return self.session.request('POST', '/api/local/advanced-launch', {'page': page})['url']
 
+    def send_math(self,chat,text,tool,emit):
+        if not chat.conversation:self.start(chat)
+        response=self.session.client.post('/api/chat/conversations/'+chat.conversation+'/messages',
+            json={'text':text,'reviewed_tools':[tool],'exact_math_only':True},
+            headers={'X-Local-CSRF':self.session.credentials['csrf'],'X-Chat-Workspace':chat.workspace})
+        response.raise_for_status();result=response.json()
+        messages=result['conversation']['messages']
+        emit({'type':'chunk','text':messages[-1]['content']})
+        emit({'type':'complete'})
+
     def feed_data(self, window_id, stable_key, filename, data, stop):
         if stop.is_set(): raise RuntimeError('Feed cancelled')
         job=self.session.request('POST','/api/memory/owner/native-job')['id']

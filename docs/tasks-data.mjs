@@ -5843,7 +5843,7 @@ export const post100Tasks = [
       "Explicit final Qt source smoke after UI polish/thread-delivery fixes: same local qwen reply in 10363.68 ms; initial 20538.35 ms retained. Actual two-launch process check passed again. Source screenshots committed with the phase evidence."
     ],
     "limitations": [
-      "Source-mode shell only; native Brain/intake 224, pack/math 225, agent/device/queue/Stop/rename-delete 226, packaging/restore/Node retirement 227 remain outstanding.",
+      "Source-mode shell only; Brain/intake 224 and pack/math 225 now have separate source checkpoints; agent/device/queue/Stop/rename-delete 226 and packaging/restore/Node retirement 227 remain outstanding.",
       "Windows desktop settings at 125/150%, assistive technology, native artifact and final parity are unverified. Default-browser tab/window placement is controlled by the browser; Settings/Advanced Qt launchers are singleton."
     ],
     "automatedVerification": [
@@ -5922,7 +5922,7 @@ export const post100Tasks = [
     "limitations": [
       "Source-mode Qt widget and authenticated intake only. Packaged/assistive-technology/physical Explorer drag and actual changed Windows DPI remain Unverified.",
       "Default 300-marker budget; optional 2000 markers can be slow. Layout does not represent model understanding; graph visual sample bounded to 2000 real chunks.",
-      "Shipped knowledge/exact math 225; native agent context/queue/device/stop parity 226; screenshot baselines, packaging, safe restore and Node retirement 227."
+      "Shipped knowledge/exact math has checkpoint 225; native agent context/queue/device/stop parity 226; screenshot baselines, packaging, safe restore and Node retirement 227."
     ],
     "automatedVerification": [
       "Domain/Qt MIME/drop/card/grouping/return tests, actual SQLite cache erasure and accepted-cancellation rollback; visible installed-model intake and retrieval; shared-widget real-data render measurement."
@@ -5956,7 +5956,7 @@ export const post100Tasks = [
     "title": "Shipped knowledge pack, instant replies and exact tools",
     "description": "Separate shipped/user knowledge, exact tools and measured prefixed embeddings; no new carry-over items.",
     "category": "Phase 225 - Prototype Alignment",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       224
     ],
@@ -5976,27 +5976,43 @@ export const post100Tasks = [
       "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
-    "checkpoint": null,
-    "validation": [],
+    "checkpoint": "task-225-knowledge-pack",
+    "validation": [
+      "Full Python: 1541 passed, 3 Windows symlink privilege skips, 0 failed; 323.44 s. Final bridge/Core regressions: 22 passed; broader chat/math/pack/workspace gate: 104 passed.",
+      "Visible Windows Qt: eleven actual read-only Core entries and three actual retrieval highlights; greeting and three exact math reviews avoided model calls; a normal coding prompt received an installed qwen3.5:4b reply.",
+      "Same 36 real chunks and ten questions: before prefixes Recall@5 0.80/MRR 0.75; after prefixes 0.70/0.70. Measured thresholds 0 through 0.65; retain conservative 0.35. This small-corpus regression is not a quality improvement.",
+      "Legacy browser modules: 295 passed; Electron source: 44 passed; public docs: 23 passed. Evidence and hashes: review/task-225-knowledge-pack.md and review/task-225-knowledge-evidence.json."
+    ],
     "limitations": [
-      "Not complete under the revised PySide6 contract. Historical source experiments do not establish native parity."
+      "Source-mode checkpoint only. Native private-Brain answer/citation and hardened agent/device/resource controls remain 226; safe restore, packaging and Node retirement remain 227.",
+      "Exact equations support one-variable real linear/quadratic polynomials; conversions use listed units. Complex roots, arbitrary unit grammar and generic code execution are unsupported.",
+      "No-model replies still took seconds end to end in source mode; no instant-latency claim. Same-tag replacement of embedding weights requires rebuilding derived cache.",
+      "Packaged/assistive-technology/physical-device coverage remains Unverified."
     ],
     "automatedVerification": [
-      "Run affected regression and source-mode UI checks; retain failures as failures."
+      "Exact rational AST arithmetic, bounded polynomial/unit guards, owned no-provider history/traces, CSRF/closed-state/stop denial, real read-only Core graph and all three Qt math review mappings; no coverage retired."
     ],
     "followUpValidation": [
-      "Record unavailable real-world checks as UNVERIFIED with their impact."
+      "Packaged resource inclusion and final visual/performance matrix in 227. Native model/embedding ResourceManager coordination and end-to-end private-Brain answers in 226."
     ],
     "realWorldVerification": {
-      "status": "unverified"
+      "status": "partial",
+      "evidence": "Visible source Qt on this PC, real installed qwen/nomic and fixed real-document prefix comparison; no packaged or physical capture claim."
     },
     "releaseReadiness": [
       {
-        "capability": "Revised knowledge pack and exact math tools",
-        "source": "Unverified",
+        "capability": "Shipped Core, exact replies/math and prefixed local retrieval",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Real-device-verified",
+        "evidence": "Visible Windows source Qt plus installed local models. Retrieval-only quality regressed on the measured corpus; review/task-225-knowledge-pack.md."
+      },
+      {
+        "capability": "Packaged knowledge resources and final native parity",
+        "source": "Source-verified",
         "packaged": "Unverified",
         "realDevice": "Unverified",
-        "evidence": "Task 225 revised contract is planned; no implementation implied."
+        "evidence": "Packaging and complete native parity remain 226-227."
       }
     ]
   },

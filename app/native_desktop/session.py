@@ -74,18 +74,19 @@ class NativeSession:
         headers = {"X-Local-CSRF": self.credentials["csrf"], "X-Chat-Workspace": workspace}
         base=f"/api/chat/conversations/{conversation}"
         current=self.client.get(base,headers=headers); current.raise_for_status()
-        if not current.json().get("streaming_supported"):
-            response=self.client.post(base+"/messages",json={"text":text},headers=headers)
+        from app.knowledge.shipped_pack import shipped_pack
+        if not current.json().get("streaming_supported") or shipped_pack().instant(text) is not None:
+            response=self.client.post(base+"/messages",json={"text":text,"shipped_pack_enabled":True},headers=headers)
             if not response.is_success: raise RuntimeError(str(response.json().get("detail","Chat unavailable"))[:1000])
             if not stop.is_set():
                 result=response.json()
                 messages=result.get("conversation",{}).get("messages",[])
                 answer=next((item.get("content","") for item in reversed(messages) if item.get("role")=="assistant"),"")
-                emit({"type":"chunk","text":answer}); emit({"type":"complete"})
+                emit({"type":"chunk","text":answer}); emit({"type":"complete","shipped_guidance":result.get('shipped_guidance')})
             return
         # Existing backend owns conversation history, context, model routing and permissions.
         with self.client.stream("POST", base+"/messages/stream",
-                                json={"text": text}, headers=headers) as response:
+                                json={"text": text,"shipped_pack_enabled":True}, headers=headers) as response:
             if not response.is_success:
                 response.read()
                 raise RuntimeError(str(response.json().get("detail", "Chat unavailable"))[:1000])

@@ -167,7 +167,8 @@ class CorporationChatService:
              tool_context=None,
              prompt_observer=None, turn_route: tuple[str, str] | None = None,
              expected_assignment: tuple[str, str] | None = None, brain_enabled: bool = False,
-             responding_agent_id: str | None = None, role_instructions: str | None = None):
+             responding_agent_id: str | None = None, role_instructions: str | None = None,
+             shipped_pack_enabled: bool = False, pack_observer=None):
         record = self.get(conversation_id)
         if record.status is not ConversationStatus.OPEN:
             raise ValueError("Cannot send to a closed conversation")
@@ -181,7 +182,7 @@ class CorporationChatService:
         history = [{"role": m.role.value, "content": m.content}
                    for m in record.messages[-16:] if m.status is MessageStatus.COMPLETED]
         messages = build_chat_messages(
-            text, history, retrieved_context=retrieved_context,
+            text, history, shipped_pack_enabled=shipped_pack_enabled, pack_observer=pack_observer, retrieved_context=retrieved_context,
             tool_context=tool_context,
             project_context=self.project_context(conversation_id) if callable(self.project_context) else None,
             presentation_preferences=presentation_preferences,
@@ -322,7 +323,8 @@ class CorporationChatService:
         return self.get(conversation_id)
 
     def send_stream(self, conversation_id: str, text: str, retrieved_context=None, presentation_preferences=None,
-                    *, brain_enabled: bool = False):
+                    *, brain_enabled: bool = False, shipped_pack_enabled: bool = False):
+        pack_evidence=[]
         record = self.get(conversation_id)
         if record.status is not ConversationStatus.OPEN:
             raise ValueError("Cannot send to a closed conversation")
@@ -341,7 +343,7 @@ class CorporationChatService:
             if message.status is MessageStatus.COMPLETED
         ]
         messages = build_chat_messages(
-            text, history, retrieved_context=retrieved_context,
+            text, history, shipped_pack_enabled=shipped_pack_enabled, pack_observer=pack_evidence.append, retrieved_context=retrieved_context,
             project_context=self.project_context(conversation_id) if callable(self.project_context) else None,
             presentation_preferences=presentation_preferences,
             brain_enabled=brain_enabled,
@@ -396,4 +398,5 @@ class CorporationChatService:
         yield {
             "type": "complete",
             "conversation": self.get(conversation_id),
+            **({'shipped_guidance':pack_evidence[0]} if pack_evidence else {}),
         }

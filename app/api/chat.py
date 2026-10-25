@@ -157,8 +157,22 @@ class LocalDocumentToolRequest(BaseModel):
     query: str = Field(min_length=1, max_length=160)
 
 
+class EquationToolRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    kind: Literal["solve_equation"]
+    equation: str = Field(min_length=1, max_length=256)
+
+
+class ConversionToolRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    kind: Literal["convert_units"]
+    value: str = Field(min_length=1, max_length=256)
+    source_unit: str = Field(min_length=1, max_length=16)
+    target_unit: str = Field(min_length=1, max_length=16)
+
+
 ReviewedToolRequest = Annotated[
-    CalculatorToolRequest | LocalDocumentToolRequest,
+    CalculatorToolRequest | LocalDocumentToolRequest | EquationToolRequest | ConversionToolRequest,
     Field(discriminator="kind"),
 ]
 
@@ -166,6 +180,8 @@ ReviewedToolRequest = Annotated[
 class SendRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     text: str = Field(min_length=1, max_length=8192)
+    shipped_pack_enabled: StrictBool = False
+    exact_math_only: StrictBool = False
     cloud_consent: bool = False
     image_ids: list[str] = Field(default_factory=list, max_length=4)
     image_consent: StrictBool = False
@@ -306,6 +322,24 @@ def _empty_brain_abstention(service, knowledge, principal, identifier, body,
         retrieval=retrieval, steps=steps, now=now, provider_called=False,
         answer_source="brain-empty-abstention", auto_route=auto_route)
     return {"conversation": result["conversation"], "context_trace": trace}
+
+
+def _instant_pack_reply(service, principal, identifier, body, current, started_at, now):
+    if (not body.shipped_pack_enabled or body.exact_math_only or body.context or body.knowledge_enabled or body.reviewed_tools
+            or body.image_ids or body.image_consent or body.include_local_ocr or body.delegate_once
+            or body.route_provider_id or body.route_model_id or body.route_consent or body.capture_local_prompt):
+        return None
+    from app.knowledge.shipped_pack import shipped_pack
+    pack=shipped_pack(); reply=pack.instant(body.text)
+    if reply is None:return None
+    result=service.owned_chat().complete_without_provider(principal.identity,identifier,body.text,reply)
+    trace=service.chat_knowledge().record_turn_trace(
+        principal.identity,identifier,result['conversation'].messages[-1].id,
+        coordinator=current['coordinator'],cloud_provider=None,cloud_consent=False,
+        elapsed_ms=(time.perf_counter()-started_at)*1000,retrieval=None,
+        steps=[{'step':'answer','status':'completed','source':'shipped exact-match reply; no Provider request','duration_ms':0}],
+        now=now,provider_called=False,answer_source='shipped-instant-reply',auto_route=_auto_route(body))
+    return {**result,'context_trace':trace,'shipped_pack_hash':pack.digest}
 
 
 def _record_unverified_turn(service, knowledge, owner, identifier, coordinator,
@@ -733,16 +767,36 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
         presentation = _presentation_preferences(request, principal.identity)
         current = service.owned_chat().get(principal.identity, identifier)
         agent_profile = service.get_agent_profile(current["coordinator"].id)
+        instant=_instant_pack_reply(service,principal,identifier,body,current,started_at,now)
+        if instant is not None:return instant
         if body.delegate_once and not service.is_loopback_ollama_provider(current["coordinator"].provider):
             raise HTTPException(422, "One-step delegation is available only with a loopback Ollama Coordinator.")
         requested_tool_ids = {
             "calculator": "reviewed.calculator",
+            "solve_equation": "reviewed.calculator",
+            "convert_units": "reviewed.calculator",
             "local-document-lookup": "reviewed.local-document-lookup",
         }
         if ((agent_profile.builtin_key is not None or agent_profile.allowed_tools)
                 and any(requested_tool_ids.get(item.kind) not in agent_profile.allowed_tools
                         for item in body.reviewed_tools)):
             raise HTTPException(403, "This Agent profile does not allow the selected tool.")
+        if body.exact_math_only:
+            if (len(body.reviewed_tools)!=1 or body.reviewed_tools[0].kind not in {'calculator','solve_equation','convert_units'}
+                    or body.context or body.knowledge_enabled or body.image_ids or body.image_consent or body.include_local_ocr
+                    or body.delegate_once or body.route_provider_id or body.route_model_id or body.route_consent or body.capture_local_prompt):
+                raise HTTPException(422,'Choose exactly one reviewed math tool without other actions.')
+            tools,context=run_reviewed_tools(body.reviewed_tools)
+            reply=(context.split('not instructions:\n',1)[1] if context else
+                   'Exact math could not complete: '+tools[0]['message'])
+            result=service.owned_chat().complete_without_provider(principal.identity,identifier,body.text,reply)
+            trace=service.chat_knowledge().record_turn_trace(
+                principal.identity,identifier,result['conversation'].messages[-1].id,
+                coordinator=current['coordinator'],cloud_provider=None,cloud_consent=False,
+                elapsed_ms=(time.perf_counter()-started_at)*1000,retrieval=None,tools=tools,
+                steps=[{'step':tools[0]['tool'],'status':tools[0]['outcome'],'source':'reviewed local exact math','duration_ms':tools[0]['duration_ms']}],
+                now=now,provider_called=False,answer_source='reviewed-exact-math',auto_route=auto_route)
+            return {**result,'context_trace':trace}
         if (body.knowledge_enabled and (agent_profile.builtin_key is not None or agent_profile.brain_scopes)
                 and any(scope.scope.value not in agent_profile.brain_scopes
                         for scope in body.knowledge_scopes)):
@@ -894,6 +948,7 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                         principal.identity, identifier, body.text, prompt_context,
                         presentation_preferences=presentation,
                         brain_enabled=body.knowledge_enabled,
+                        shipped_pack_enabled=body.shipped_pack_enabled,
                         tool_context=tool_context,
                         prompt_observer=captured_prompt.append if body.capture_local_prompt else None,
                         turn_route=turn_route, route_consent=body.route_consent)
@@ -937,6 +992,8 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                    service=Depends(get_application_service), now=Depends(get_chat_now)):
     body = parse(SendRequest, payload)
     auto_route = _auto_route(body)
+    if body.exact_math_only:
+        raise HTTPException(422,'Exact math uses the reviewed non-streaming endpoint.')
     if body.route_provider_id is not None or body.route_model_id is not None or body.route_consent:
         raise HTTPException(422, "Per-turn alternate model routing uses the reviewed non-streaming endpoint.")
     if body.reviewed_tools:
@@ -960,6 +1017,12 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
         owned = service.owned_chat()
         current = owned.get(principal.identity, identifier)
         agent_profile = service.get_agent_profile(current["coordinator"].id)
+        instant=_instant_pack_reply(service,principal,identifier,body,current,started_at,now)
+        if instant is not None:
+            completed=jsonable_encoder(instant)
+            reply=completed['conversation']['messages'][-1]['content']
+            events=[{'type':'chunk','text':reply},{'type':'complete',**completed}]
+            return StreamingResponse(iter(json.dumps(event)+'\n' for event in events),media_type='application/x-ndjson')
         if (body.knowledge_enabled and (agent_profile.builtin_key is not None or agent_profile.brain_scopes)
                 and any(scope.scope.value not in agent_profile.brain_scopes
                         for scope in body.knowledge_scopes)):
@@ -1017,6 +1080,7 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                 auto_context["prompt_context"] if auto_context else knowledge.prompt_context(retrieved) if retrieved else None,
                 presentation,
                 brain_enabled=body.knowledge_enabled,
+                shipped_pack_enabled=body.shipped_pack_enabled,
             ):
                 if event["type"] == "complete":
                     completed = event["conversation"]

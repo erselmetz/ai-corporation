@@ -325,7 +325,7 @@ class ChatKnowledgeService:
                           vision=None, provider_called=True, answer_source="provider", handoff=None,
                           runtime=None, auto_route=None):
         self._application.owned_chat().authorize_owner(owner, conversation_id)
-        if type(provider_called) is not bool or answer_source not in {"provider", "brain-empty-abstention"}:
+        if type(provider_called) is not bool or answer_source not in {"provider", "brain-empty-abstention", "shipped-instant-reply", "reviewed-exact-math"}:
             raise ValueError("Answer provenance is invalid")
         if retrieval and "enabled" not in retrieval:
             retrieval = {

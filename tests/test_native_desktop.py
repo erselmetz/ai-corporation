@@ -31,10 +31,18 @@ def test_native_api_bridge_refuses_non_application_destinations():
 
 def test_native_bridge_sends_real_messages_through_existing_backend(tmp_path,monkeypatch):
     import threading
+    import importlib
+    from app.knowledge.shipped_pack import ShippedPack
     from app.providers import AIProvider
     from app.providers.inventory import LocalModelInventory
     from app.runtime.factory import create_corporation_runtime
     monkeypatch.setenv("LOCALAPPDATA",str(tmp_path)); monkeypatch.chdir(tmp_path)
+    class Embedding:
+        identity='native-bridge-deterministic'
+        def embed_batch(self,texts):return [[1.,0.] for _ in texts]
+        def embed_one(self,text):return [1.,0.]
+    pack=ShippedPack(Embedding(),tmp_path)
+    monkeypatch.setattr(importlib.import_module('app.knowledge.shipped_pack'),'_pack',pack)
     class Provider(AIProvider):
         is_local=True
         def generate(self,model,prompt):
@@ -47,5 +55,6 @@ def test_native_bridge_sends_real_messages_through_existing_backend(tmp_path,mon
     try:
         workspace,conversation=session.new_chat("installed-test")
         events=[]; session.send(workspace,conversation,"native bridge message",threading.Event(),events.append)
-        assert events==[{"type":"chunk","text":"Native backend reply"},{"type":"complete"}]
+        assert events==[{"type":"chunk","text":"Native backend reply"},{"type":"complete","shipped_guidance":{
+            'pack_hash':pack.digest,'mode':'semantic','ids':['core:'+pack.digest+':'+e['id'] for e in pack.entries[:3]]}}]
     finally: session.close()

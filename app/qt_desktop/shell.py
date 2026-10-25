@@ -9,7 +9,7 @@ from PySide6.QtGui import QAction, QKeySequence, QTextCursor
 from PySide6.QtWidgets import (QMainWindow, QWidget, QDialog, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QSplitter, QComboBox, QTabWidget, QTextBrowser, QPlainTextEdit,
     QScrollArea, QCheckBox, QInputDialog, QMessageBox, QListWidget, QFrame, QFileDialog,
-    QLineEdit, QTextEdit)
+    QLineEdit, QTextEdit, QFormLayout)
 from .brain import BrainPanel
 
 from app.api.advanced_launch import PAGES
@@ -111,6 +111,12 @@ class ShellManager(QObject):
         if self.brain_loading: self.brain_dirty=True; return
         self.brain_loading=True
         def loaded(graph):
+            from app.knowledge.shipped_pack import shipped_pack
+            core=shipped_pack().graph()
+            graph={**graph,'nodes':[*graph.get('nodes',[]),*core['nodes']],
+                   'edges':[*graph.get('edges',[]),*core['edges']],
+                   'user_chunks':graph.get('total_chunks',0),'core_chunks':core['total_chunks'],
+                   'total_chunks':graph.get('total_chunks',0)+core['total_chunks']}
             self.brain_loading=False; self.graph=graph
             for window in self.windows:
                 if not window.closed: window.brain.set_graph(graph)
@@ -193,6 +199,7 @@ class ChatWindow(QMainWindow):
         side.addWidget(button('Feed file', self.choose_files))
         side.addWidget(button('Feed folder', self.choose_folder))
         side.addWidget(button('Add note', self.add_note))
+        side.addWidget(button('Exact math', self.open_math))
         self.cancel_feed_button=button('Cancel feed',self.cancel_feed); self.cancel_feed_button.setEnabled(False); side.addWidget(self.cancel_feed_button)
         side.addWidget(label('THIS CHAT'))
         self.model, self.agent, self.project = QComboBox(), QComboBox(), QComboBox()
@@ -291,25 +298,58 @@ class ChatWindow(QMainWindow):
         box = self.tabs.currentWidget(); cursor = box.textCursor(); cursor.movePosition(QTextCursor.MoveOperation.End)
         cursor.insertText(text); box.setTextCursor(cursor); box.ensureCursorVisible()
 
-    def send(self):
+    def open_math(self):
+        if self.busy or self.feeding:return
+        dialog=QDialog(self);dialog.setWindowTitle('Reviewed local exact math');dialog.setMinimumWidth(360)
+        layout=QVBoxLayout(dialog);layout.addWidget(label('Review the exact inputs, then Run locally. No model call or cloud transfer. Equations support x up to degree two.'))
+        form=QFormLayout();layout.addLayout(form)
+        operation=QComboBox();operation.addItems(['Calculate','Solve equation','Convert units']);operation.setAccessibleName('Math operation');form.addRow('Operation',operation)
+        value=QLineEdit();value.setMaxLength(256);value.setAccessibleName('Math expression or equation');form.addRow('Expression / equation',value)
+        from app.application.services.exact_math import UNITS
+        source=QComboBox();target=QComboBox()
+        for widget,name in [(source,'Source unit'),(target,'Target unit')]:widget.addItems(list(UNITS));widget.setAccessibleName(name)
+        form.addRow('From unit',source);form.addRow('To unit',target)
+        def changed():
+            converting=operation.currentIndex()==2;source.setEnabled(converting);target.setEnabled(converting)
+        operation.currentIndexChanged.connect(changed);changed()
+        status=label('');layout.addWidget(status)
+        def run():
+            text=value.text().strip()
+            if not text:status.setText('Enter an expression or equation.');value.setFocus();return
+            tool=({'kind':'calculator','expression':text} if operation.currentIndex()==0 else
+                  {'kind':'solve_equation','equation':text} if operation.currentIndex()==1 else
+                  {'kind':'convert_units','value':text,'source_unit':source.currentText(),'target_unit':target.currentText()})
+            dialog.accept();self.send(math_tool=tool)
+        layout.addWidget(button('Run locally',run));layout.addWidget(button('Cancel',dialog.reject));dialog.exec()
+
+    def send(self, *, math_tool=None):
         if self.busy or self.feeding: return
-        text = self.composer.toPlainText().strip(); chat = self.current()
+        text = self.composer.toPlainText().strip() if math_tool is None else 'Exact math: '+', '.join(str(v) for k,v in math_tool.items() if k!='kind')
+        chat = self.current()
         if not text: return
         if not chat.model:
             self.status.setText('Choose an installed local model first.'); return
         if len(text.encode('utf-8')) > 16000:
             self.status.setText('That message is too long. Send a shorter message.'); return
-        self.busy = True; self.response_error = False; self.stop_event.clear(); self.composer.clear()
+        self.busy = True; self.response_error = False; self.stop_event.clear()
+        if math_tool is None:self.composer.clear()
         for widget in [self.model, self.agent, self.project, self.tabs]: widget.setEnabled(False)
         self.send_button.setEnabled(False)
         self.append(f'\n\nYou\n{text}\n\nERSELMETZ AI\n')
-        self.status.setText(f'Local · {chat.model} · replying…'); self.steps.addItem('Sending this message to the selected local model.')
+        self.brain.scene.highlights.clear();self.brain.scene.update()
+        from app.knowledge.shipped_pack import shipped_pack
+        local_reply=math_tool is not None or shipped_pack().instant(text) is not None
+        self.status.setText('Answering locally · no model call' if local_reply else f'Local · {chat.model} · replying…')
+        self.steps.addItem('Reviewed local math or exact-match reply; no model call.' if local_reply else 'Sending this message to the selected local model with shipped general guidance.')
         emit = lambda event: self.manager.work.event.emit(self, event)
-        self.manager.submit(lambda: self.manager.transport.send(chat, text, self.stop_event, emit),
+        self.manager.submit(lambda: self.manager.transport.send_math(chat,text,math_tool,emit) if math_tool is not None else self.manager.transport.send(chat, text, self.stop_event, emit),
                             lambda result: self.done(), self.failed)
 
     def receive(self, event):
         if event.get('type') == 'chunk': self.append(event.get('text', ''))
+        elif event.get('type')=='complete' and event.get('shipped_guidance'):
+            guidance=event['shipped_guidance'];self.brain.scene.highlights=set(guidance['ids']);self.brain.scene.update()
+            self.steps.addItem(f"Used {len(guidance['ids'])} actual shipped Core entries ({guidance['mode']}).")
         elif event.get('type')=='brain-progress':
             self.steps.addItem(event['text']); self.manager.refresh_brain()
         elif event.get('type') == 'error':
@@ -419,6 +459,11 @@ class ChatWindow(QMainWindow):
         self.manager.submit(lambda:self.manager.transport.cancel_feed(id(self)),lambda result:None,lambda error:None)
 
     def inspect_node(self,identifier):
+        if identifier.startswith('core:'):
+            from app.knowledge.shipped_pack import shipped_pack
+            try:self.brain.show_detail(shipped_pack().inspect(identifier))
+            except KeyError:self.status.setText('That shipped entry changed. Refresh the Brain.')
+            return
         from urllib.parse import urlencode
         self.manager.submit(lambda:self.manager.session.request('GET','/api/memory/owner/native-node?'+urlencode({'identifier':identifier})),
             self.brain.show_detail,lambda error:self.status.setText('This chunk changed or expired. Refresh Brain.'))

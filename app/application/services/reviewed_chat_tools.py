@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import ast
-import math
-import operator
 import re
 import time
 
@@ -26,53 +23,10 @@ class ReviewedToolError(ValueError):
     """A safe, user-displayable reviewed-tool failure."""
 
 
-_BINARY_OPERATORS = {
-    ast.Add: operator.add,
-    ast.Sub: operator.sub,
-    ast.Mult: operator.mul,
-    ast.Div: operator.truediv,
-    ast.FloorDiv: operator.floordiv,
-    ast.Mod: operator.mod,
-    ast.Pow: operator.pow,
-}
-
-
 def calculate(expression: str) -> str:
-    """Evaluate basic arithmetic without names, calls, attributes, or builtins."""
-    if not isinstance(expression, str) or not expression.strip() or len(expression) > MAX_EXPRESSION_CHARS:
-        raise ReviewedToolError("Calculator input must be 1–256 characters.")
-    try:
-        root = ast.parse(expression, mode="eval")
-    except (SyntaxError, ValueError):
-        raise ReviewedToolError("Calculator accepts arithmetic expressions only.") from None
-    nodes = list(ast.walk(root))
-    if len(nodes) > MAX_EXPRESSION_NODES:
-        raise ReviewedToolError("Calculator expression is too complex.")
-
-    def evaluate(node):
-        if isinstance(node, ast.Expression):
-            return evaluate(node.body)
-        if isinstance(node, ast.Constant) and type(node.value) in (int, float):
-            value = node.value
-        elif isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
-            operand = evaluate(node.operand)
-            value = operand if isinstance(node.op, ast.UAdd) else -operand
-        elif isinstance(node, ast.BinOp) and type(node.op) in _BINARY_OPERATORS:
-            left, right = evaluate(node.left), evaluate(node.right)
-            if isinstance(node.op, ast.Pow) and abs(right) > 12:
-                raise ReviewedToolError("Calculator exponent is outside the supported range.")
-            try:
-                value = _BINARY_OPERATORS[type(node.op)](left, right)
-            except (ArithmeticError, OverflowError):
-                raise ReviewedToolError("Calculator could not evaluate that expression.") from None
-        else:
-            raise ReviewedToolError("Calculator accepts arithmetic expressions only.")
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or abs(value) > MAX_ABS_NUMBER:
-            raise ReviewedToolError("Calculator result is outside the supported range.")
-        return value
-
-    value = evaluate(root)
-    return str(int(value)) if isinstance(value, float) and value.is_integer() else str(value)
+    from .exact_math import calculate as exact_calculate, ExactMathError
+    try: return exact_calculate(expression)
+    except ExactMathError as error: raise ReviewedToolError(str(error)) from None
 
 
 def lookup_document(documentation_service, document_id: str, query: str) -> dict:
@@ -124,6 +78,17 @@ def run_reviewed_tools(requests, documentation_service=None) -> tuple[list[dict]
                 safe_parameters = {"expression": item.expression}
                 output = calculate(item.expression)
                 text = output
+            elif item.kind in {"solve_equation", "convert_units"}:
+                from .exact_math import solve_equation, convert_units, ExactMathError
+                source = "local exact math"
+                try:
+                    if item.kind == "solve_equation":
+                        safe_parameters = {"equation": item.equation}
+                        text = solve_equation(item.equation)
+                    else:
+                        safe_parameters = {"value": item.value, "source_unit": item.source_unit, "target_unit": item.target_unit}
+                        text = convert_units(item.value, item.source_unit, item.target_unit)
+                except ExactMathError as error: raise ReviewedToolError(str(error)) from None
             elif item.kind == "local-document-lookup":
                 safe_parameters = {"document_id": item.document_id, "query": item.query}
                 source = f"corporation_docs:{_SECRET.sub('[redacted]', item.document_id)}"[:300]

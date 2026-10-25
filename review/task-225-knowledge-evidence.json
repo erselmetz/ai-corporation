@@ -1,0 +1,809 @@
+{
+  "base_commit": "a6ac9b0",
+  "source_check": {
+    "kind": "Visible Windows source Qt; no packaged claim",
+    "models": [
+      {
+        "name": "qwen3.5:4b",
+        "digest": "d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04"
+      },
+      {
+        "name": "nomic-embed-text:latest",
+        "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+      }
+    ],
+    "math": [
+      {
+        "operation": 0,
+        "input": "0.1+0.2",
+        "answer": "0.3",
+        "ms": 1482.95,
+        "trace": {
+          "query": null,
+          "scope": null,
+          "scope_id": null,
+          "retrieved_at": "2026-10-25T15:30:39.379771+00:00",
+          "scanned_records": null,
+          "limits_reached": null,
+          "sources": [],
+          "route": {
+            "agent_id": "local_worker",
+            "agent": "Coordinator",
+            "provider": "ollama",
+            "model": "qwen3.5:4b",
+            "source": "Coordinator selected by owner when this conversation started.",
+            "responder_agent_id": null,
+            "responder_agent": null
+          },
+          "handoff": null,
+          "retrieval": {
+            "enabled": false,
+            "reason": "Use my knowledge was off."
+          },
+          "cloud": {
+            "provider_used": null,
+            "consent_given": false,
+            "private_knowledge_sent": false
+          },
+          "timing": {
+            "turn_elapsed_ms": 1043
+          },
+          "outcome": "completed",
+          "provider_called": false,
+          "answer_source": "reviewed-exact-math",
+          "vision": {
+            "used": false
+          },
+          "failure": null,
+          "tools": [
+            {
+              "tool": "calculator",
+              "parameters": {
+                "expression": "0.1+0.2"
+              },
+              "source": "local calculator",
+              "outcome": "completed",
+              "duration_ms": 0,
+              "result_characters": 3,
+              "message": null
+            }
+          ],
+          "steps": [
+            {
+              "step": "calculator",
+              "status": "completed",
+              "source": "reviewed local exact math",
+              "duration_ms": 0
+            }
+          ],
+          "runtime": null,
+          "auto_route": {
+            "mode": "agentic",
+            "capability": "reviewed_read_tool",
+            "reason": "owner_selected_supported_tool",
+            "fallback": false
+          },
+          "actions": {
+            "tools_run": true,
+            "tasks_created": false
+          },
+          "advanced_prompt_retained": false
+        }
+      },
+      {
+        "operation": 1,
+        "input": "x*x-5*x+6=0",
+        "answer": "x = 2, 3",
+        "ms": 1551.6,
+        "trace": {
+          "query": null,
+          "scope": null,
+          "scope_id": null,
+          "retrieved_at": "2026-10-25T15:30:40.919607+00:00",
+          "scanned_records": null,
+          "limits_reached": null,
+          "sources": [],
+          "route": {
+            "agent_id": "local_worker",
+            "agent": "Coordinator",
+            "provider": "ollama",
+            "model": "qwen3.5:4b",
+            "source": "Coordinator selected by owner when this conversation started.",
+            "responder_agent_id": null,
+            "responder_agent": null
+          },
+          "handoff": null,
+          "retrieval": {
+            "enabled": false,
+            "reason": "Use my knowledge was off."
+          },
+          "cloud": {
+            "provider_used": null,
+            "consent_given": false,
+            "private_knowledge_sent": false
+          },
+          "timing": {
+            "turn_elapsed_ms": 1104
+          },
+          "outcome": "completed",
+          "provider_called": false,
+          "answer_source": "reviewed-exact-math",
+          "vision": {
+            "used": false
+          },
+          "failure": null,
+          "tools": [
+            {
+              "tool": "solve_equation",
+              "parameters": {
+                "equation": "x*x-5*x+6=0"
+              },
+              "source": "local exact math",
+              "outcome": "completed",
+              "duration_ms": 0,
+              "result_characters": 8,
+              "message": null
+            }
+          ],
+          "steps": [
+            {
+              "step": "solve_equation",
+              "status": "completed",
+              "source": "reviewed local exact math",
+              "duration_ms": 0
+            }
+          ],
+          "runtime": null,
+          "auto_route": {
+            "mode": "direct_fallback",
+            "capability": "none",
+            "reason": "unsupported_selected_tool",
+            "fallback": true
+          },
+          "actions": {
+            "tools_run": true,
+            "tasks_created": false
+          },
+          "advanced_prompt_retained": false
+        }
+      },
+      {
+        "operation": 2,
+        "input": "1",
+        "answer": "100 cm",
+        "ms": 1539.08,
+        "trace": {
+          "query": null,
+          "scope": null,
+          "scope_id": null,
+          "retrieved_at": "2026-10-25T15:30:42.437141+00:00",
+          "scanned_records": null,
+          "limits_reached": null,
+          "sources": [],
+          "route": {
+            "agent_id": "local_worker",
+            "agent": "Coordinator",
+            "provider": "ollama",
+            "model": "qwen3.5:4b",
+            "source": "Coordinator selected by owner when this conversation started.",
+            "responder_agent_id": null,
+            "responder_agent": null
+          },
+          "handoff": null,
+          "retrieval": {
+            "enabled": false,
+            "reason": "Use my knowledge was off."
+          },
+          "cloud": {
+            "provider_used": null,
+            "consent_given": false,
+            "private_knowledge_sent": false
+          },
+          "timing": {
+            "turn_elapsed_ms": 1045
+          },
+          "outcome": "completed",
+          "provider_called": false,
+          "answer_source": "reviewed-exact-math",
+          "vision": {
+            "used": false
+          },
+          "failure": null,
+          "tools": [
+            {
+              "tool": "convert_units",
+              "parameters": {
+                "value": "1",
+                "source_unit": "m",
+                "target_unit": "cm"
+              },
+              "source": "local exact math",
+              "outcome": "completed",
+              "duration_ms": 0,
+              "result_characters": 6,
+              "message": null
+            }
+          ],
+          "steps": [
+            {
+              "step": "convert_units",
+              "status": "completed",
+              "source": "reviewed local exact math",
+              "duration_ms": 0
+            }
+          ],
+          "runtime": null,
+          "auto_route": {
+            "mode": "direct_fallback",
+            "capability": "none",
+            "reason": "unsupported_selected_tool",
+            "fallback": true
+          },
+          "actions": {
+            "tools_run": true,
+            "tasks_created": false
+          },
+          "advanced_prompt_retained": false
+        }
+      }
+    ],
+    "actual_core_entries": 11,
+    "instant_ms": 3926.62,
+    "instant_reply": "Hello! How can I help you today?",
+    "highlighted_core_ids": [
+      "core:a05c05b79e2854d5f3336a3895b9c377533e3f505d384c4b86355b759b1c6e62:coding",
+      "core:a05c05b79e2854d5f3336a3895b9c377533e3f505d384c4b86355b759b1c6e62:coding-python-errors",
+      "core:a05c05b79e2854d5f3336a3895b9c377533e3f505d384c4b86355b759b1c6e62:math"
+    ],
+    "model_reply": "Always check if variables are initialized before using them, especially in loops or conditional checks.",
+    "model_reply_ms": 26829.48,
+    "pack_hash": "a05c05b79e2854d5f3336a3895b9c377533e3f505d384c4b86355b759b1c6e62"
+  },
+  "prefix_comparison": {
+    "model": "nomic-embed-text:latest",
+    "model_digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "corpus": [
+      {
+        "path": "desktop\\requirements-build.txt",
+        "bytes": 21,
+        "sha256": "e4844211dcb381b52e184ae64c83008bf4e283eb580898333a22d41902e43ecd"
+      },
+      {
+        "path": "requirements-knowledge.txt",
+        "bytes": 139,
+        "sha256": "2b722aeaab96aaa618b9ff2abd23bc8d520f2952b30069c9b8be07fbaa06b421"
+      },
+      {
+        "path": "review\\task-223-native-python.md",
+        "bytes": 4230,
+        "sha256": "2e460fd0f3c922a8de2bdbfbfbc8be48d2cbe0a73487047876268bd337fe8c1f"
+      },
+      {
+        "path": "review\\task-214-window-review.md",
+        "bytes": 4347,
+        "sha256": "f415d4d76e47fa78eed797ee42d5cf01fd49bb4f0a8071c9d3e47f395ec59f25"
+      },
+      {
+        "path": "review\\task-223-prototype-shell.md",
+        "bytes": 7697,
+        "sha256": "5b2349fd8566dac7617110ad654578041c58665c2dc2dcf355ff0cbe4cf049e5"
+      },
+      {
+        "path": "frozen-folder/requirements-knowledge.txt",
+        "sha256": "96583a7f3162b06a14770ad3a9364e9e2381a902bc75e693469093d3b21ce18a",
+        "bytes": 136
+      },
+      {
+        "path": "frozen-folder/README.md",
+        "sha256": "0c0a23c9ef100ad14b9f8640afba06dba8eae738c72e8179df558adc0b4e49ac",
+        "bytes": 5786
+      }
+    ],
+    "chunks": 36,
+    "results": [
+      {
+        "prefixed": false,
+        "cases": [
+          {
+            "question": "Which PyInstaller version is pinned?",
+            "expected": "requirements-build.txt",
+            "rank": 1,
+            "sources": [
+              "requirements-build.txt",
+              "task-223-native-python.md",
+              "README.md",
+              "task-214-window-review.md",
+              "task-223-native-python.md"
+            ],
+            "scores": [
+              0.7617074071991985,
+              0.5771520445727267,
+              0.5508542332476962,
+              0.5453499693773444,
+              0.5257038818450062
+            ],
+            "ms": 231.44
+          },
+          {
+            "question": "What is the build tool?",
+            "expected": "requirements-build.txt",
+            "rank": null,
+            "sources": [
+              "README.md",
+              "task-223-native-python.md",
+              "README.md",
+              "task-223-native-python.md",
+              "README.md"
+            ],
+            "scores": [
+              0.5639624562148362,
+              0.539045183344981,
+              0.5299424221545777,
+              0.5256441442451228,
+              0.5019516176819826
+            ],
+            "ms": 93.36
+          },
+          {
+            "question": "Which sentence embedding library is listed?",
+            "expected": "requirements-knowledge.txt",
+            "rank": 1,
+            "sources": [
+              "requirements-knowledge.txt",
+              "requirements-knowledge.txt",
+              "README.md",
+              "task-223-native-python.md",
+              "task-214-window-review.md"
+            ],
+            "scores": [
+              0.6656082763213744,
+              0.6656082763213744,
+              0.5629093284346167,
+              0.5600881571162353,
+              0.5590925645169287
+            ],
+            "ms": 97.25
+          },
+          {
+            "question": "Which vector database is listed?",
+            "expected": "requirements-knowledge.txt",
+            "rank": 2,
+            "sources": [
+              "task-223-prototype-shell.md",
+              "requirements-knowledge.txt",
+              "requirements-knowledge.txt",
+              "task-214-window-review.md",
+              "task-223-native-python.md"
+            ],
+            "scores": [
+              0.5423321793055987,
+              0.5163544961819452,
+              0.5163544961819452,
+              0.5120129655091796,
+              0.49785245706977493
+            ],
+            "ms": 98.53
+          },
+          {
+            "question": "Which native toolkit was used in the historical native Python spike?",
+            "expected": "task-223-native-python.md",
+            "rank": 1,
+            "sources": [
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "README.md"
+            ],
+            "scores": [
+              0.6646489670647426,
+              0.6622363856287614,
+              0.6574339952968724,
+              0.6187542018455754,
+              0.6105588306202058
+            ],
+            "ms": 100.01
+          },
+          {
+            "question": "What forgery protection was retained with session cookies?",
+            "expected": "task-223-native-python.md",
+            "rank": null,
+            "sources": [
+              "task-223-prototype-shell.md",
+              "task-214-window-review.md",
+              "task-214-window-review.md",
+              "task-214-window-review.md",
+              "README.md"
+            ],
+            "scores": [
+              0.5860948731418841,
+              0.5814390056128701,
+              0.5791812922220141,
+              0.569111860526053,
+              0.5526824670378386
+            ],
+            "ms": 106.35
+          },
+          {
+            "question": "What is the maximum number of saved window descriptors?",
+            "expected": "task-214-window-review.md",
+            "rank": 1,
+            "sources": [
+              "task-214-window-review.md",
+              "task-214-window-review.md",
+              "requirements-knowledge.txt",
+              "requirements-knowledge.txt",
+              "task-214-window-review.md"
+            ],
+            "scores": [
+              0.5880545896951808,
+              0.5862675233446291,
+              0.5578549703420704,
+              0.5578549703420704,
+              0.5478308743370907
+            ],
+            "ms": 144.68
+          },
+          {
+            "question": "Does restoring windows replay an action?",
+            "expected": "task-214-window-review.md",
+            "rank": 1,
+            "sources": [
+              "task-214-window-review.md",
+              "task-214-window-review.md",
+              "task-214-window-review.md",
+              "README.md",
+              "task-223-prototype-shell.md"
+            ],
+            "scores": [
+              0.5722902805964639,
+              0.5371797333698981,
+              0.5176013987617577,
+              0.5095138418317878,
+              0.4974545137274948
+            ],
+            "ms": 96.26
+          },
+          {
+            "question": "Which optional image library caused the failed full Python gate?",
+            "expected": "task-223-prototype-shell.md",
+            "rank": 1,
+            "sources": [
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-native-python.md"
+            ],
+            "scores": [
+              0.6514207351501833,
+              0.6345665820497939,
+              0.6308234526978145,
+              0.6019425580860631,
+              0.5812347779905817
+            ],
+            "ms": 99.74
+          },
+          {
+            "question": "Which phase was stopped at its verification gate?",
+            "expected": "task-223-prototype-shell.md",
+            "rank": 1,
+            "sources": [
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-214-window-review.md",
+              "task-223-prototype-shell.md"
+            ],
+            "scores": [
+              0.7160324170097305,
+              0.7027021722626896,
+              0.6877164571699791,
+              0.6321628143561521,
+              0.617650882734755
+            ],
+            "ms": 103.09
+          }
+        ],
+        "thresholds": [
+          {
+            "threshold": 0,
+            "recall_at_5": 0.8,
+            "mrr": 0.75
+          },
+          {
+            "threshold": 0.25,
+            "recall_at_5": 0.8,
+            "mrr": 0.75
+          },
+          {
+            "threshold": 0.35,
+            "recall_at_5": 0.8,
+            "mrr": 0.75
+          },
+          {
+            "threshold": 0.45,
+            "recall_at_5": 0.8,
+            "mrr": 0.75
+          },
+          {
+            "threshold": 0.55,
+            "recall_at_5": 0.7,
+            "mrr": 0.7
+          },
+          {
+            "threshold": 0.65,
+            "recall_at_5": 0.5,
+            "mrr": 0.5
+          }
+        ]
+      },
+      {
+        "prefixed": true,
+        "cases": [
+          {
+            "question": "Which PyInstaller version is pinned?",
+            "expected": "requirements-build.txt",
+            "rank": 1,
+            "sources": [
+              "requirements-build.txt",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-prototype-shell.md"
+            ],
+            "scores": [
+              0.762506761984552,
+              0.6271667892015971,
+              0.599986183429763,
+              0.5857604145659836,
+              0.5838044568043479
+            ],
+            "ms": 3978.36
+          },
+          {
+            "question": "What is the build tool?",
+            "expected": "requirements-build.txt",
+            "rank": null,
+            "sources": [
+              "task-223-native-python.md",
+              "README.md",
+              "README.md",
+              "task-223-native-python.md",
+              "README.md"
+            ],
+            "scores": [
+              0.5968972711101894,
+              0.5957817725530313,
+              0.585712895178501,
+              0.5762656914935206,
+              0.5748949821316423
+            ],
+            "ms": 108.32
+          },
+          {
+            "question": "Which sentence embedding library is listed?",
+            "expected": "requirements-knowledge.txt",
+            "rank": 1,
+            "sources": [
+              "requirements-knowledge.txt",
+              "requirements-knowledge.txt",
+              "task-214-window-review.md",
+              "README.md",
+              "task-223-native-python.md"
+            ],
+            "scores": [
+              0.645577007288478,
+              0.645577007288478,
+              0.6317009628619841,
+              0.6199091576085481,
+              0.6156669078317689
+            ],
+            "ms": 112.99
+          },
+          {
+            "question": "Which vector database is listed?",
+            "expected": "requirements-knowledge.txt",
+            "rank": null,
+            "sources": [
+              "task-223-prototype-shell.md",
+              "README.md",
+              "task-214-window-review.md",
+              "task-214-window-review.md",
+              "task-223-native-python.md"
+            ],
+            "scores": [
+              0.6567327887106208,
+              0.619986920069172,
+              0.6169492368497986,
+              0.615626928317186,
+              0.608172995095257
+            ],
+            "ms": 108.93
+          },
+          {
+            "question": "Which native toolkit was used in the historical native Python spike?",
+            "expected": "task-223-native-python.md",
+            "rank": 1,
+            "sources": [
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-214-window-review.md"
+            ],
+            "scores": [
+              0.6993009352390556,
+              0.6880037449297961,
+              0.6692091227081669,
+              0.6523342205432997,
+              0.633850516850055
+            ],
+            "ms": 114.06
+          },
+          {
+            "question": "What forgery protection was retained with session cookies?",
+            "expected": "task-223-native-python.md",
+            "rank": null,
+            "sources": [
+              "README.md",
+              "task-214-window-review.md",
+              "README.md",
+              "task-214-window-review.md",
+              "task-223-prototype-shell.md"
+            ],
+            "scores": [
+              0.6325461469769482,
+              0.6309276803899758,
+              0.6164784699435075,
+              0.6124214223036979,
+              0.6123591999433642
+            ],
+            "ms": 110.45
+          },
+          {
+            "question": "What is the maximum number of saved window descriptors?",
+            "expected": "task-214-window-review.md",
+            "rank": 1,
+            "sources": [
+              "task-214-window-review.md",
+              "task-223-prototype-shell.md",
+              "README.md",
+              "task-214-window-review.md",
+              "task-223-prototype-shell.md"
+            ],
+            "scores": [
+              0.6899419565040534,
+              0.6417048320339611,
+              0.6367888452128205,
+              0.6361313964036936,
+              0.6180705229427929
+            ],
+            "ms": 95.66
+          },
+          {
+            "question": "Does restoring windows replay an action?",
+            "expected": "task-214-window-review.md",
+            "rank": 1,
+            "sources": [
+              "task-214-window-review.md",
+              "task-214-window-review.md",
+              "README.md",
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md"
+            ],
+            "scores": [
+              0.658755352405695,
+              0.6231617874393437,
+              0.6020496688951433,
+              0.6013352551195276,
+              0.5992806770316914
+            ],
+            "ms": 103.71
+          },
+          {
+            "question": "Which optional image library caused the failed full Python gate?",
+            "expected": "task-223-prototype-shell.md",
+            "rank": 1,
+            "sources": [
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md"
+            ],
+            "scores": [
+              0.6712627496052227,
+              0.6594319977862838,
+              0.6450465712304813,
+              0.6246092989635214,
+              0.6236176011494008
+            ],
+            "ms": 96.77
+          },
+          {
+            "question": "Which phase was stopped at its verification gate?",
+            "expected": "task-223-prototype-shell.md",
+            "rank": 1,
+            "sources": [
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-native-python.md",
+              "task-223-prototype-shell.md"
+            ],
+            "scores": [
+              0.733544751073363,
+              0.7305708490162159,
+              0.7074760844818127,
+              0.6549585848333053,
+              0.6543180640689028
+            ],
+            "ms": 109.16
+          }
+        ],
+        "thresholds": [
+          {
+            "threshold": 0,
+            "recall_at_5": 0.7,
+            "mrr": 0.7
+          },
+          {
+            "threshold": 0.25,
+            "recall_at_5": 0.7,
+            "mrr": 0.7
+          },
+          {
+            "threshold": 0.35,
+            "recall_at_5": 0.7,
+            "mrr": 0.7
+          },
+          {
+            "threshold": 0.45,
+            "recall_at_5": 0.7,
+            "mrr": 0.7
+          },
+          {
+            "threshold": 0.55,
+            "recall_at_5": 0.7,
+            "mrr": 0.7
+          },
+          {
+            "threshold": 0.65,
+            "recall_at_5": 0.6,
+            "mrr": 0.6
+          }
+        ]
+      }
+    ],
+    "measurement": "Expected-source retrieval only, not answer quality or independently held-out threshold tuning."
+  },
+  "tests": {
+    "focused_before_full": {
+      "passed": 104,
+      "seconds": 35.68
+    },
+    "core_focused": {
+      "passed": 61,
+      "seconds": 35.19
+    },
+    "browser_modules": 295,
+    "electron_source": 44,
+    "python_final": {
+      "passed": 1541,
+      "skipped": 3,
+      "seconds": 323.44,
+      "warnings": 4
+    },
+    "final_contract": {
+      "passed": 22,
+      "seconds": 19.91
+    },
+    "docs": 23
+  },
+  "limits": [
+    "No packaged verification; final bundle must include knowledge_pack.json.",
+    "Prefix retrieval regression is recorded, not claimed as quality improvement.",
+    "Local exact-match responses avoided models but source end-to-end latency remains seconds."
+  ]
+}

@@ -37,6 +37,16 @@ def test_anchored_card_requires_exact_second_confirmation_before_forget(qtbot):
     assert not panel.card.isVisible()
 
 
+def test_real_shipped_core_card_is_read_only(manager,qtbot):
+    window=manager.new_window();qtbot.waitUntil(lambda:manager.graph is not None)
+    core=next(n for n in manager.graph['nodes'] if n.get('trust')=='shipped knowledge' and n.get('kind')=='chunk')
+    forgotten=QSignalSpy(window.brain.forget_requested)
+    window.brain.picked(core,QPointF(80,80))
+    assert window.brain.card.isVisible() and 'Shipped pack' in window.brain.title.text()
+    assert window.brain.snippet.toPlainText()==core['snippet'] and not window.brain.forget.isVisible()
+    window.brain.confirm_forget();window.brain.confirm_forget();assert forgotten.count()==0
+
+
 def test_full_window_uses_same_widget_and_escape_returns_to_chat(manager,qtbot):
     window=manager.new_window(); qtbot.waitUntil(lambda:window.model.count()==1)
     original=window.brain; window.toggle_full_brain()

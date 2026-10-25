@@ -107,7 +107,8 @@ class BrainScene(QWidget):
             # invented similarity edge between chunks.
             actual=[n for n in members if any(m['id'] in source_ids for m in n.get('members',[n]))]
             if len(actual)<2: continue
-            hub=vector(str(cluster)); hub_point=QPointF(cx+(hub[0]*math.cos(self.angle)+hub[2]*math.sin(self.angle))*.67*scale,cy+hub[1]*.67*scale)
+            hub=vector(str(cluster));hub_radius=.22 if actual[0].get('trust')=='shipped knowledge' else .67
+            hub_point=QPointF(cx+(hub[0]*math.cos(self.angle)+hub[2]*math.sin(self.angle))*hub_radius*scale,cy+hub[1]*hub_radius*scale)
             for node in actual:
                 hot=any(m['id'] in self.highlights for m in node.get('members',[node]))
                 painter.setPen(QPen(QColor('#edb94e' if hot else '#504229'),1.5 if hot else .6))
@@ -180,7 +181,8 @@ class BrainPanel(QWidget):
     def update_coverage(self):
         loaded=sum(n.get('kind')=='chunk' for n in self.graph.get('nodes',[]))
         total=self.graph.get('total_chunks',loaded)
-        self.coverage.setText(f'{loaded}/{total} chunks loaded · {len(self.scene.nodes)} markers')
+        core=self.graph.get('core_chunks',0)
+        self.coverage.setText(f'{loaded}/{total} chunks loaded · {len(self.scene.nodes)} markers'+(f' · {core} shipped core' if core else ''))
 
     def set_graph(self,graph):
         self.graph=graph; self.scene.set_graph(graph); self.close_card(); self.search_hits=None; self.fill_list(); self.update_coverage()
@@ -217,11 +219,13 @@ class BrainPanel(QWidget):
         if not self.selected or self.selected['id']!=detail['id']: return
         self.selected=detail
         source=str(detail['source']).replace('\\','/').split('/')[-1]
-        self.title.setText(source+'\nSaved '+str(detail['date'])[:10]+' · reference material')
+        caption=str(detail['date']) if detail.get('read_only') else 'Saved '+str(detail['date'])[:10]+' · reference material'
+        self.title.setText(source+'\n'+caption)
         self.title.setToolTip(str(detail['source']))
-        self.snippet.setPlainText(detail['snippet']); self.forget.show(); self.card.adjustSize()
+        self.snippet.setPlainText(detail['snippet']); self.forget.setVisible(not detail.get('read_only',False)); self.card.adjustSize()
 
     def confirm_forget(self):
+        if not self.selected or self.selected.get('read_only'):return
         if not self.pending_forget:
             self.pending_forget=True; self.forget.setText('Confirm forget'); self.title.setText('Forget this note and its derived index? This removes all chunks of this note. Close to cancel.'); self.card.adjustSize()
         else:
