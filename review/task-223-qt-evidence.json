@@ -1,0 +1,251 @@
+{
+  "base_commit": "4e31c7cb6dafc5b07d2a26c09a0018849f8eb6cc",
+  "qt_version": "6.12.0",
+  "gpu_inventory": {
+    "name": "Radeon RX 570 Series",
+    "driver": "31.0.21925.1001"
+  },
+  "benchmark": [
+    {
+      "toolkit": "qt",
+      "nodes": 2000,
+      "frames": 62,
+      "wall_seconds": 4.785,
+      "repaint_fps": 13.58,
+      "mean_frame_ms": 73.63,
+      "p95_frame_ms": 76.23,
+      "kind": "Visible synthetic CPU projected-3D repaint throughput, not GPU/display-present FPS",
+      "dimensions": [
+        880,
+        680
+      ],
+      "qt_platform": "windows",
+      "dpr": 1.0
+    },
+    {
+      "toolkit": "qt",
+      "nodes": 300,
+      "frames": 365,
+      "wall_seconds": 4.866,
+      "repaint_fps": 81.83,
+      "mean_frame_ms": 12.22,
+      "p95_frame_ms": 13.63,
+      "kind": "Visible synthetic CPU projected-3D repaint throughput, not GPU/display-present FPS",
+      "dimensions": [
+        880,
+        680
+      ],
+      "qt_platform": "windows",
+      "dpr": 1.0
+    },
+    {
+      "toolkit": "tk",
+      "nodes": 2000,
+      "frames": 29,
+      "wall_seconds": 4.713,
+      "repaint_fps": 6.44,
+      "mean_frame_ms": 155.29,
+      "p95_frame_ms": 159.91,
+      "kind": "Visible synthetic CPU projected-3D repaint throughput, not GPU/display-present FPS",
+      "dimensions": [
+        880,
+        680
+      ],
+      "qt_platform": "windows",
+      "dpr": 1.0
+    },
+    {
+      "toolkit": "tk",
+      "nodes": 300,
+      "frames": 157,
+      "wall_seconds": 4.571,
+      "repaint_fps": 41.53,
+      "mean_frame_ms": 24.08,
+      "p95_frame_ms": 24.83,
+      "kind": "Visible synthetic CPU projected-3D repaint throughput, not GPU/display-present FPS",
+      "dimensions": [
+        880,
+        680
+      ],
+      "qt_platform": "windows",
+      "dpr": 1.0
+    }
+  ],
+  "source": {
+    "reply": "Hello! How can I help you today?",
+    "chat_ms": 10363.68,
+    "checks": [
+      "Real installed qwen chat through authenticated workspace API",
+      "Ctrl+N creates another independent chat window",
+      "Singleton separate Settings and Advanced windows",
+      "One-use launch token exchanges for a browser cookie, then fails replay",
+      "Ctrl+B leaves equal Brain/chat panes"
+    ],
+    "process_id": 7320,
+    "model": "qwen3.5:4b",
+    "dpr": 1.0,
+    "kind": "Windows visible source mode; no packaged claim"
+  },
+  "layout": [
+    [
+      {
+        "image": "1.25-dark-1360.png",
+        "logical_size": [
+          1360,
+          820
+        ],
+        "dpr": 1.25,
+        "chat_width": 530,
+        "composer_width": 530
+      },
+      {
+        "image": "1.25-dark-800.png",
+        "logical_size": [
+          800,
+          580
+        ],
+        "dpr": 1.25,
+        "chat_width": 250,
+        "composer_width": 250
+      },
+      {
+        "image": "1.25-light-1360.png",
+        "logical_size": [
+          1360,
+          820
+        ],
+        "dpr": 1.25,
+        "chat_width": 530,
+        "composer_width": 530
+      },
+      {
+        "image": "1.25-light-800.png",
+        "logical_size": [
+          800,
+          580
+        ],
+        "dpr": 1.25,
+        "chat_width": 250,
+        "composer_width": 250
+      }
+    ],
+    [
+      {
+        "image": "1.5-dark-1360.png",
+        "logical_size": [
+          1360,
+          820
+        ],
+        "dpr": 1.5,
+        "chat_width": 530,
+        "composer_width": 530
+      },
+      {
+        "image": "1.5-dark-800.png",
+        "logical_size": [
+          800,
+          580
+        ],
+        "dpr": 1.5,
+        "chat_width": 250,
+        "composer_width": 250
+      },
+      {
+        "image": "1.5-light-1360.png",
+        "logical_size": [
+          1283,
+          707
+        ],
+        "dpr": 1.5,
+        "chat_width": 491,
+        "composer_width": 491
+      },
+      {
+        "image": "1.5-light-800.png",
+        "logical_size": [
+          800,
+          580
+        ],
+        "dpr": 1.5,
+        "chat_width": 250,
+        "composer_width": 250
+      }
+    ],
+    [
+      {
+        "image": "1-dark-1360.png",
+        "logical_size": [
+          1360,
+          820
+        ],
+        "dpr": 1.0,
+        "chat_width": 530,
+        "composer_width": 530
+      },
+      {
+        "image": "1-dark-800.png",
+        "logical_size": [
+          800,
+          580
+        ],
+        "dpr": 1.0,
+        "chat_width": 250,
+        "composer_width": 250
+      },
+      {
+        "image": "1-light-1360.png",
+        "logical_size": [
+          1360,
+          820
+        ],
+        "dpr": 1.0,
+        "chat_width": 530,
+        "composer_width": 530
+      },
+      {
+        "image": "1-light-800.png",
+        "logical_size": [
+          800,
+          580
+        ],
+        "dpr": 1.0,
+        "chat_width": 250,
+        "composer_width": 250
+      }
+    ]
+  ],
+  "process_boundary": {
+    "launcher_pid": 1520,
+    "process_id": 27144,
+    "source_venv_redirector": true,
+    "second_launch_exit": 0,
+    "windows_same_pid": 2,
+    "child_processes": 0,
+    "profile_isolated": true,
+    "kind": "Actual Windows source entry point; no packaged claim",
+    "graceful_exit": true
+  },
+  "source_sha256_at_checkpoint": {
+    "app/qt_desktop/__init__.py": "714434dc157aa510d0a8192eede4b9e4f0eb6af90200b465ace730914d3bf588",
+    "app/qt_desktop/__main__.py": "a553a473d70ff0559d16ac97f74aba35912257e6a40de27f677225b45e5e7057",
+    "app/qt_desktop/instance.py": "344721210d7a79530fe2c7f2ea4a7e2a972c97bbbc9d1255200440f9c5c48426",
+    "app/qt_desktop/shell.py": "a54d1fa4bb4e6660e5891e0b6a2d5a364417d8d4e7ed018f0070c9e0e71b16d2",
+    "app/qt_desktop/theme.py": "14ffcb710ac60bc44f81342569266fe8fe9a9319a296a69bff532d959d250d62",
+    "app/qt_desktop/transport.py": "e6fdb3dd3976162f2d2b09340fdfe66db59cd6b837ddd1281e787e6e7df3b79c"
+  },
+  "source_initial": {
+    "reply": "Hello! How can I help you today?",
+    "chat_ms": 20538.35,
+    "checks": [
+      "Real installed qwen chat through authenticated workspace API",
+      "Ctrl+N creates another independent chat window",
+      "Singleton separate Settings and Advanced windows",
+      "One-use launch token exchanges for a browser cookie, then fails replay",
+      "Ctrl+B leaves equal Brain/chat panes"
+    ],
+    "process_id": 14700,
+    "model": "qwen3.5:4b",
+    "dpr": 1.0,
+    "kind": "Windows visible source mode; no packaged claim"
+  }
+}

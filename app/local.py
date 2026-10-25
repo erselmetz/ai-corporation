@@ -71,6 +71,8 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
                              emergency_stop_service=emergency_stop_service,
                              with_builtin_agent_team=application_service is None)
     application.state.local_automation_registry_lock = threading.Lock()
+    from app.api.advanced_launch import install_advanced_launch
+    install_advanced_launch(application, backend)
     from app.application.services.owner_preferences import OwnerPreferencesService
     application.state.owner_preferences_service = OwnerPreferencesService()
     from app.api.local_preferences import router as local_preferences_router

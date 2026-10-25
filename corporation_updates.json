@@ -3,6 +3,12 @@
     {
       "date": "2026-10-25",
       "type": "development",
+      "title": "Task 223 PySide6 shell and window foundation",
+      "summary": "Qt three-pane source shell, one lock/backend, independent chat windows, singleton Settings/Advanced launchers and one-use loopback browser session exchange. Qt/Tk 300-node spike: 81.83/41.53 repaint FPS; 2000-node spike: 13.58/6.44. Qt selected. Visible source qwen chat and 12 layout grabs passed; full Python 1475 passed, 3 skipped; final Qt/Advanced 10 passed. Native parity/packaging/Node removal remain 224-227; no push or deploy."
+    },
+    {
+      "date": "2026-10-25",
+      "type": "development",
       "title": "Task 222 local stabilization before the Python rewrite",
       "summary": "Preserved legacy-electron-ui locally; repaired UTF-8 and merged duplicate milestone histories; documented Node replacements and revised phases. Installed qwen3.5:4b chose 5/5 expected roles after disabling unrequested thinking within unchanged limits. Five real documents ingested; 10/10 responses, 8/10 expected-source retrievals, 7/10 strict fact matches, 1/10 numeric citations. RAG quality remains partial; media capture/playback and packaged/device checks remain unverified. Python 1465 passed, 3 skipped; browser modules 295; Electron source 44. No push or deploy."
     },

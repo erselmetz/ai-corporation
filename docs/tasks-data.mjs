@@ -5811,7 +5811,7 @@ export const post100Tasks = [
     "title": "PySide6 three-pane shell and window foundation",
     "description": "PySide6 three-pane shell and window foundation under the pure-Python owner addendum.",
     "category": "Phase 223 - Prototype Alignment",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       222
     ],
@@ -5834,10 +5834,17 @@ export const post100Tasks = [
       "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
-    "checkpoint": null,
-    "validation": [],
+    "checkpoint": "task-223-pyside6-shell",
+    "validation": [
+      "Qt/Tk visible synthetic CPU repaint spike: 300 nodes 81.83 vs 41.53 FPS; 2000 nodes 13.58 vs 6.44 FPS. Qt selected; no GPU FPS claim.",
+      "Actual Qt source-mode qwen3.5:4b chat replied in 20538.35 ms; Ctrl+N, singleton Settings/Advanced, one-use browser cookie exchange/replay denial and Ctrl+B equal panes passed.",
+      "Full Python: 1475 passed, 3 Windows symlink privilege skips, 0 failed; 229.37 s. Final Qt worker/UI-thread delivery and Advanced regressions passed. Twelve Qt scale/size/theme grabs generated. Evidence: review/task-223-qt-shell.md.",
+      "Actual entry point launched twice: second launch exited 0, two windows shared one UI/backend worker with no child processes; graceful exit. Windows venv redirector is separate launcher only. Final focused Qt/Advanced/local access 23 passed; browser 295, Electron source 44, docs 23 passed. No artifact claim.",
+      "Explicit final Qt source smoke after UI polish/thread-delivery fixes: same local qwen reply in 10363.68 ms; initial 20538.35 ms retained. Actual two-launch process check passed again. Source screenshots committed with the phase evidence."
+    ],
     "limitations": [
-      "Not complete under the revised PySide6 contract. Historical source experiments do not establish native parity."
+      "Source-mode shell only; native Brain/intake 224, pack/math 225, agent/device/queue/Stop/rename-delete 226, packaging/restore/Node retirement 227 remain outstanding.",
+      "Windows desktop settings at 125/150%, assistive technology, native artifact and final parity are unverified. Default-browser tab/window placement is controlled by the browser; Settings/Advanced Qt launchers are singleton."
     ],
     "automatedVerification": [
       "Run affected regression and source-mode UI checks; retain failures as failures."
@@ -5846,7 +5853,13 @@ export const post100Tasks = [
       "Record unavailable real-world checks as UNVERIFIED with their impact."
     ],
     "realWorldVerification": {
-      "status": "unverified"
+      "status": "partial",
+      "evidence": [
+        "Visible Windows Qt source-mode window and local qwen reply; 300/2000-node Qt/Tk renderer spike on this RX 570 PC."
+      ],
+      "unverified": [
+        "Packaged app, assistive technology, physical device capture/playback, native agent-loop parity and final performance."
+      ]
     },
     "history": [
       {
@@ -5857,11 +5870,18 @@ export const post100Tasks = [
     ],
     "releaseReadiness": [
       {
-        "capability": "Native PySide6 shell/multi-window/accessibility",
-        "source": "Unverified",
+        "capability": "Qt shell and authenticated Advanced launch",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Real-device-verified",
+        "evidence": "Visible Windows source-mode chat/shortcuts; installed qwen reply. Device claim is scoped to this source window, not media, GPU or accessibility conformance."
+      },
+      {
+        "capability": "DPI/layout/keyboard and accessible names",
+        "source": "Source-verified",
         "packaged": "Unverified",
         "realDevice": "Unverified",
-        "evidence": "Revised Tasks 223-227 pending"
+        "evidence": "pytest-qt plus Qt scale-factor 1/1.25/1.5 layout grabs; actual Windows DPI changes and assistive technology unverified."
       }
     ]
   },

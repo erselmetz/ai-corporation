@@ -1,6 +1,6 @@
 # ERSELMETZ AI
 
-Tasks 223–227 now target **PySide6**, following the owner's three-pane prototype. The current `app.native_desktop` entry point is a historical Tk experiment, not completion of that revised contract. The Python backend still imports Playwright and its bundled Node runtime; the final app/build is not yet Node-free. Legacy sources stay available until native parity is verified. Existing Python-served Advanced pages will remain, launched securely on loopback. See [Task 222 stabilization](review/task-222-stabilization.md) for measured evidence, dependency replacements and the revised phase assignments. No new packaged artifact has been verified.
+The native entry point now opens the **PySide6 three-pane shell** (`app.qt_desktop`, Task 223). It uses one Python process, independent chat windows and the existing authenticated loopback API. Install `requirements-desktop.txt` alongside backend requirements for source mode. Native Brain/intake, pack/math, agent/device controls and packaging/Node removal remain Tasks 224–227. Legacy sources and Python Playwright still remain until parity; the final app/build is not yet Node-free. See [Task 223 evidence](review/task-223-qt-shell.md).
 
 ERSELMETZ AI is a local-first desktop workspace for coordinating AI providers, models, people, projects and Tasks through a Python backend and an Electron interface.
 
@@ -25,7 +25,7 @@ These features are scoped foundations. Provider registration, a model name, or c
 
 ## Known limits and roadmap status
 
-Tasks 213–221 are superseded by the revised pure-Python Tasks 223–227; their original evidence is retained as history. Task 222 records the local stabilization checkpoint. Task 197 exists; absent Tasks 204–206 now have explicit not-done, scope-undefined records. Task 212 still has no published definition. Task 223's earlier Tk experiment does not satisfy the new Qt contract. See [the roadmap](docs/tasks.html) for the current phase assignments.
+Tasks 213–221 are superseded by the revised pure-Python Tasks 223–227; their original evidence is retained as history. Task 222 records the local stabilization checkpoint. Task 197 exists; absent Tasks 204–206 now have explicit not-done, scope-undefined records. Task 212 still has no published definition. Task 223 now has a separate Qt source checkpoint; the earlier Tk experiment remains historical. See [the roadmap](docs/tasks.html) for the current phase assignments.
 
 The Task 222 live rerun used installed local qwen3.5:4b. Five agent-choice questions selected the expected roles (selection only, no delegated action execution). Five unchanged repository documents ingested successfully; ten questions produced ten responses, eight expected-source retrievals, seven strict fact-string matches and one inline numeric citation. RAG quality remains partial. Installed Eyes/Ears/Voice library checks did not verify OCR, recording, transcription or playback. Packaged Electron startup is superseded, not fixed; RX 570 FPS and the future Qt artifact remain unverified. See [the measured report](review/task-222-stabilization.md).
 

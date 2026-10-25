@@ -1,0 +1,5 @@
+-r requirements-desktop.txt
+pytest-qt==4.5.0
+psutil==7.2.2
+# Comparison spike only; not required by the application or final bundle.
+customtkinter==6.0.0

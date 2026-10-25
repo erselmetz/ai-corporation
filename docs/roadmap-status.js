@@ -2,7 +2,9 @@ import { tasks, nextTask, recommendedOrder } from "./tasks-data.mjs";
 
 export function verificationLabels(task) {
   if (task.releaseReadiness?.length) {
-    return { automated: "Source-verified / Unverified: see capability readiness table", realWorld: "Packaged-verified: unverified · Real-device-verified: unverified" };
+    const packaged = task.releaseReadiness.some(row => row.packaged === "Packaged-verified") ? "scoped evidence in table" : "unverified";
+    const device = task.releaseReadiness.some(row => row.realDevice === "Real-device-verified") ? "scoped evidence in table" : "unverified";
+    return { automated: "Source-verified / Unverified: see capability readiness table", realWorld: `Packaged-verified: ${packaged} · Real-device-verified: ${device}` };
   }
   const automated = task.validation?.length
     ? "AI-verified (deterministic/fake evidence recorded)"

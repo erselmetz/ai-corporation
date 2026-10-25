@@ -1,0 +1,2 @@
+# QtCore/Gui/Widgets/Network only; no QtWebEngine dependency.
+PySide6-Essentials==6.12.0

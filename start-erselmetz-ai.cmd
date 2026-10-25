@@ -5,4 +5,10 @@ if not exist ".venv\Scripts\pythonw.exe" (
  pause
  exit /b 1
 )
-start "" /b ".venv\Scripts\pythonw.exe" -m app.native_desktop
+".venv\Scripts\python.exe" -c "import PySide6.QtWidgets" >nul 2>&1
+if errorlevel 1 (
+ echo Qt is missing. Run .venv\Scripts\python.exe -m pip install -r requirements-desktop.txt
+ pause
+ exit /b 1
+)
+start "" /b ".venv\Scripts\pythonw.exe" -m app.native_desktop %*
