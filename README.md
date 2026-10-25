@@ -1,6 +1,6 @@
 # ERSELMETZ AI
 
-The native entry point now opens the **PySide6 three-pane shell** (`app.qt_desktop`, Task 223). It uses one Python process, independent chat windows and the existing authenticated loopback API. Install `requirements-desktop.txt` alongside backend requirements for source mode. Native Brain/intake, pack/math, agent/device controls and packaging/Node removal remain Tasks 224–227. Legacy sources and Python Playwright still remain until parity; the final app/build is not yet Node-free. See [Task 223 evidence](review/task-223-qt-shell.md).
+The native entry point now opens the **PySide6 three-pane shell** (`app.qt_desktop`, Task 223). It uses one Python process, independent chat windows and the existing authenticated loopback API. Install `requirements-desktop.txt` alongside backend requirements for source mode. The shared real-data Brain and consented intake are implemented in Task 224. Pack/math, agent/device controls and packaging/Node removal remain Tasks 225–227. Legacy sources and Python Playwright still remain until parity; the final app/build is not yet Node-free. See [Task 223 evidence](review/task-223-qt-shell.md) and [Task 224 evidence](review/task-224-qt-brain.md).
 
 ERSELMETZ AI is a local-first desktop workspace for coordinating AI providers, models, people, projects and Tasks through a Python backend and an Electron interface.
 

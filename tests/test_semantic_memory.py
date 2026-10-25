@@ -336,10 +336,14 @@ def test_ollama_embedding_provider_is_bounded_local_only_and_never_downloads(mon
             calls.append((request.full_url, request.get_method(), json.loads(request.data), timeout))
             return Response(json.dumps({"embeddings": [[0.25, 0.75], [0.5, 0.5]]}).encode())
 
-    monkeypatch.setattr(urllib.request, "build_opener", lambda handler: Opener())
+    handlers=[]
+    def opener(*selected):
+        handlers.extend(selected); return Opener()
+    monkeypatch.setattr(urllib.request, "build_opener", opener)
     provider = OllamaEmbeddingProvider("nomic-embed-text")
     vectors = provider.embed_batch(["dog puppy", "canine animal"])
     assert vectors == ((0.25, 0.75), (0.5, 0.5))
+    assert any(isinstance(handler,urllib.request.ProxyHandler) and handler.proxies=={} for handler in handlers)
     assert provider.identity.startswith("ollama-embedding-")
     assert "nomic-embed-text" not in provider.identity
     assert calls == [("http://127.0.0.1:11434/api/embed", "POST",
@@ -358,7 +362,7 @@ def test_ollama_embedding_provider_hides_local_service_errors(monkeypatch):
         def open(self, request, timeout):
             raise OSError("secret-path-or-token")
 
-    monkeypatch.setattr(urllib.request, "build_opener", lambda handler: Opener())
+    monkeypatch.setattr(urllib.request, "build_opener", lambda *handlers: Opener())
     with pytest.raises(RuntimeError, match="Local Ollama embedding request failed or timed out") as error:
         OllamaEmbeddingProvider("nomic-embed-text").embed_one("dog")
     assert "secret-path-or-token" not in str(error.value)

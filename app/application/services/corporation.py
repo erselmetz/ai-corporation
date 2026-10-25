@@ -246,6 +246,8 @@ class CorporationApplicationService:
         self._owned_chat_slot_waiters = 0
         self._semantic_memory_index = None
         self._semantic_memory_lock = Lock()
+        self._native_brain_index = None
+        self._native_brain_lock = RLock()
         self._knowledge_proposals = None
         self._knowledge_proposals_lock = Lock()
         self._corporation = corporation
@@ -1181,6 +1183,16 @@ class CorporationApplicationService:
         service = self._semantic_memory_index
         if service is not None:
             service.invalidate_all_owners(memory_id, scope=scope, scope_id=scope_id)
+        if self._native_brain_index is not None:
+            self._native_brain_index.invalidate_derived()
+
+    def native_brain(self, *, stopper):
+        """One shared private Brain; callers retain their existing API guards."""
+        with self._native_brain_lock:
+            if self._native_brain_index is None:
+                from app.knowledge.native_brain import NativeBrain
+                self._native_brain_index = NativeBrain(invalidator=self.invalidate_semantic_memory, stopper=stopper)
+            return self._native_brain_index
 
     def semantic_memory(self):
         """Return the optional local semantic capability; it never downloads a model."""

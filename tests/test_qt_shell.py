@@ -9,6 +9,7 @@ from app.qt_desktop.instance import Instance
 class Session:
     def models(self): return [{'name':'test-local','tools':True}]
     def request(self, method, path, body=None):
+        if path == '/api/memory/owner/native-graph': return {'nodes':[],'edges':[],'total_chunks':0}
         if path == '/api/agents': return {'items':[{'id':'local_worker','name':'Coordinator'}]}
         if path == '/api/projects': return {'items':[{'id':'project-a','name':'Project A'}]}
         raise AssertionError((method,path,body))

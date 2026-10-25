@@ -5890,7 +5890,7 @@ export const post100Tasks = [
     "title": "Shared real-data Brain and 3D visualization",
     "description": "Shared real-data Brain and 3D visualization under the pure-Python owner addendum.",
     "category": "Phase 224 - Prototype Alignment",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       223,
       196
@@ -5913,34 +5913,41 @@ export const post100Tasks = [
       "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
-    "checkpoint": null,
-    "validation": [],
+    "checkpoint": "task-224-qt-brain",
+    "validation": [
+      "Full Python: 1490 passed, 3 Windows symlink privilege skips, 0 failed; 318.24 s. Final focused Brain/backend/Qt/bridge regressions: 43 passed; final render-index adjustment also covered by Qt checks.",
+      "Visible source UI and real installed nomic: five documents produced 26 chunks in 16114.69 ms; folder feed reached 36, unchanged re-feed preserved count, confirmed Forget reduced 36 to 35. Retrieval-only expected-source Recall@5 0.80 / MRR 0.75, before prefixes.",
+      "Shared real-data CPU render benchmark and exact source hashes: review/task-224-brain-evidence.json; implementation, test scope and limits: review/task-224-qt-brain.md."
+    ],
     "limitations": [
-      "Not complete under the revised PySide6 contract. Historical source experiments do not establish native parity."
+      "Source-mode Qt widget and authenticated intake only. Packaged/assistive-technology/physical Explorer drag and actual changed Windows DPI remain Unverified.",
+      "Default 300-marker budget; optional 2000 markers can be slow. Layout does not represent model understanding; graph visual sample bounded to 2000 real chunks.",
+      "Shipped knowledge/exact math 225; native agent context/queue/device/stop parity 226; screenshot baselines, packaging, safe restore and Node retirement 227."
     ],
     "automatedVerification": [
-      "Run affected regression and source-mode UI checks; retain failures as failures."
+      "Domain/Qt MIME/drop/card/grouping/return tests, actual SQLite cache erasure and accepted-cancellation rollback; visible installed-model intake and retrieval; shared-widget real-data render measurement."
     ],
     "followUpValidation": [
-      "Record unavailable real-world checks as UNVERIFIED with their impact."
+      "Packaged smoke, final screenshot baselines and control sweep in 227. Assistive technology and physical device capture remain Unverified."
     ],
     "realWorldVerification": {
-      "status": "unverified"
+      "status": "partial",
+      "evidence": "Visible Windows source Qt, real local nomic and real repository documents; no packaged or assistive-technology claim."
     },
     "releaseReadiness": [
       {
-        "capability": "Historical Brain web graph",
+        "capability": "Shared Qt Brain, consented intake and actual local retrieval",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Real-device-verified",
+        "evidence": "Visible source shell with actual retained files and installed nomic; review/task-224-qt-brain.md. CPU rendering on RX 570 PC is not GPU throughput."
+      },
+      {
+        "capability": "Packaged Brain and assistive technology",
         "source": "Source-verified",
         "packaged": "Unverified",
         "realDevice": "Unverified",
-        "evidence": "Task 197 existing record; native widget not implemented"
-      },
-      {
-        "capability": "RX 570 rendering and device ownership",
-        "source": "Unverified",
-        "packaged": "Unverified",
-        "realDevice": "Unverified",
-        "evidence": "Qt/Tk spike and native ownership checks pending"
+        "evidence": "Packaged and assistive-technology checks not performed."
       }
     ]
   },

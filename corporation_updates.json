@@ -3,6 +3,12 @@
     {
       "date": "2026-10-25",
       "type": "development",
+      "title": "Task 224 shared real-data Qt Brain and consented intake",
+      "summary": "One shared preview/full-window Brain with actual source clusters, anchored cards, exact confirmed Forget, list fallback and consented bounded file/folder/text intake. Actual local nomic: five real files, 26 chunks in 16114.69 ms; folder reached 36, unchanged re-feed unchanged; Forget 36 to 35. Retrieval-only expected-source Recall@5 0.80/MRR 0.75 before prefixes. Python 1490 passed, 3 skipped; final focused 43 passed. Packaged/assistive checks remain unverified. Local checkpoint task-224-qt-brain; no push or deploy."
+    },
+    {
+      "date": "2026-10-25",
+      "type": "development",
       "title": "Task 223 PySide6 shell and window foundation",
       "summary": "Qt three-pane source shell, one lock/backend, independent chat windows, singleton Settings/Advanced launchers and one-use loopback browser session exchange. Qt/Tk 300-node spike: 81.83/41.53 repaint FPS; 2000-node spike: 13.58/6.44. Qt selected. Visible source qwen chat and 12 layout grabs passed; full Python 1475 passed, 3 skipped; final Qt/Advanced 10 passed. Native parity/packaging/Node removal remain 224-227; no push or deploy."
     },

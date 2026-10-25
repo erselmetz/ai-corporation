@@ -30,6 +30,8 @@ class NativeSession:
         headers = {}
         if method != "GET":
             headers["X-Local-CSRF"] = self.credentials["csrf"]
+            headers["Content-Type"] = "application/json"
+            if body is None: body = {}
         response = self.client.request(method, path, json=body, headers=headers)
         if not response.is_success:
             detail = response.json().get("detail", "Local request failed")

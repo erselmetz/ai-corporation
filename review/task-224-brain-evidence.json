@@ -1,0 +1,1074 @@
+{
+  "base_commit": "f074a8aac9c23a24d04751b2d0c0d501414a3aad",
+  "source_check": {
+    "model": "nomic-embed-text:latest",
+    "model_digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "documents": [
+      {
+        "path": "desktop\\requirements-build.txt",
+        "bytes": 21,
+        "sha256": "e4844211dcb381b52e184ae64c83008bf4e283eb580898333a22d41902e43ecd"
+      },
+      {
+        "path": "requirements-knowledge.txt",
+        "bytes": 139,
+        "sha256": "2b722aeaab96aaa618b9ff2abd23bc8d520f2952b30069c9b8be07fbaa06b421"
+      },
+      {
+        "path": "review\\task-223-native-python.md",
+        "bytes": 4230,
+        "sha256": "2e460fd0f3c922a8de2bdbfbfbc8be48d2cbe0a73487047876268bd337fe8c1f"
+      },
+      {
+        "path": "review\\task-214-window-review.md",
+        "bytes": 4347,
+        "sha256": "f415d4d76e47fa78eed797ee42d5cf01fd49bb4f0a8071c9d3e47f395ec59f25"
+      },
+      {
+        "path": "review\\task-223-prototype-shell.md",
+        "bytes": 7697,
+        "sha256": "5b2349fd8566dac7617110ad654578041c58665c2dc2dcf355ff0cbe4cf049e5"
+      }
+    ],
+    "five_file_ingest_ms": 16114.69,
+    "five_file_chunks": 26,
+    "folder_fed": true,
+    "unchanged_refeed_kept_chunk_count": true,
+    "final_chunks": 35,
+    "folder_source_commit": "f074a8aac9c23a24d04751b2d0c0d501414a3aad",
+    "folder_documents": [
+      {
+        "name": "README.md",
+        "bytes": 5786,
+        "sha256": "0c0a23c9ef100ad14b9f8640afba06dba8eae738c72e8179df558adc0b4e49ac"
+      },
+      {
+        "name": "requirements-knowledge.txt",
+        "bytes": 136,
+        "sha256": "96583a7f3162b06a14770ad3a9364e9e2381a902bc75e693469093d3b21ce18a"
+      }
+    ],
+    "confirmed_forget": true,
+    "before_forget_chunks": 36,
+    "after_forget_chunks": 35,
+    "recall_at_5": 0.8,
+    "mrr": 0.75,
+    "cases": [
+      {
+        "question": "Which PyInstaller version is pinned?",
+        "expected": "requirements-build.txt",
+        "sources": [
+          "requirements-build.txt",
+          "task-223-native-python.md",
+          "readme.md",
+          "task-214-window-review.md",
+          "task-223-native-python.md"
+        ],
+        "rank": 1,
+        "mode": "semantic",
+        "ms": 138.08
+      },
+      {
+        "question": "What is the build tool?",
+        "expected": "requirements-build.txt",
+        "sources": [
+          "readme.md",
+          "task-223-native-python.md",
+          "readme.md",
+          "task-223-native-python.md",
+          "readme.md"
+        ],
+        "rank": null,
+        "mode": "semantic",
+        "ms": 126.84
+      },
+      {
+        "question": "Which sentence embedding library is listed?",
+        "expected": "requirements-knowledge.txt",
+        "sources": [
+          "requirements-knowledge.txt",
+          "requirements-knowledge.txt",
+          "readme.md",
+          "task-223-native-python.md",
+          "task-214-window-review.md"
+        ],
+        "rank": 1,
+        "mode": "semantic",
+        "ms": 123.22
+      },
+      {
+        "question": "Which vector database is listed?",
+        "expected": "requirements-knowledge.txt",
+        "sources": [
+          "task-223-prototype-shell.md",
+          "requirements-knowledge.txt",
+          "requirements-knowledge.txt",
+          "task-214-window-review.md",
+          "task-223-native-python.md"
+        ],
+        "rank": 2,
+        "mode": "semantic",
+        "ms": 114.46
+      },
+      {
+        "question": "Which native toolkit was used in the historical native Python spike?",
+        "expected": "task-223-native-python.md",
+        "sources": [
+          "task-223-native-python.md",
+          "task-223-native-python.md",
+          "task-223-native-python.md",
+          "task-223-native-python.md",
+          "readme.md"
+        ],
+        "rank": 1,
+        "mode": "semantic",
+        "ms": 119.29
+      },
+      {
+        "question": "What forgery protection was retained with session cookies?",
+        "expected": "task-223-native-python.md",
+        "sources": [
+          "task-223-prototype-shell.md",
+          "task-214-window-review.md",
+          "task-214-window-review.md",
+          "task-214-window-review.md",
+          "readme.md"
+        ],
+        "rank": null,
+        "mode": "semantic",
+        "ms": 109.79
+      },
+      {
+        "question": "What is the maximum number of saved window descriptors?",
+        "expected": "task-214-window-review.md",
+        "sources": [
+          "task-214-window-review.md",
+          "task-214-window-review.md",
+          "requirements-knowledge.txt",
+          "requirements-knowledge.txt",
+          "task-214-window-review.md"
+        ],
+        "rank": 1,
+        "mode": "semantic",
+        "ms": 123.11
+      },
+      {
+        "question": "Does restoring windows replay an action?",
+        "expected": "task-214-window-review.md",
+        "sources": [
+          "task-214-window-review.md",
+          "task-214-window-review.md",
+          "task-214-window-review.md",
+          "readme.md",
+          "task-223-prototype-shell.md"
+        ],
+        "rank": 1,
+        "mode": "semantic",
+        "ms": 111.62
+      },
+      {
+        "question": "Which optional image library caused the failed full Python gate?",
+        "expected": "task-223-prototype-shell.md",
+        "sources": [
+          "task-223-prototype-shell.md",
+          "task-223-prototype-shell.md",
+          "task-223-prototype-shell.md",
+          "task-223-prototype-shell.md",
+          "task-223-native-python.md"
+        ],
+        "rank": 1,
+        "mode": "semantic",
+        "ms": 130.74
+      },
+      {
+        "question": "Which phase was stopped at its verification gate?",
+        "expected": "task-223-prototype-shell.md",
+        "sources": [
+          "task-223-prototype-shell.md",
+          "task-223-prototype-shell.md",
+          "task-223-prototype-shell.md",
+          "task-214-window-review.md",
+          "task-223-prototype-shell.md"
+        ],
+        "rank": 1,
+        "mode": "semantic",
+        "ms": 109.6
+      }
+    ],
+    "answer_quality": "Not measured here; retrieval only. Native chat-context wiring belongs to agent-loop parity.",
+    "ui_checks": [
+      "actual source grows after file/folder intake",
+      "anchored real-node card",
+      "list fallback",
+      "same-widget full-window and Esc return",
+      "real retrieval highlight"
+    ],
+    "activity": [
+      "Ready. No action has run.",
+      "requirements-build.txt: saved 1 chunks.",
+      "requirements-knowledge.txt: saved 1 chunks.",
+      "task-223-native-python.md: saved 6 chunks.",
+      "task-214-window-review.md: saved 7 chunks.",
+      "task-223-prototype-shell.md: saved 11 chunks.",
+      "requirements-build.txt: unchanged, skipped.",
+      "README.md: saved 9 chunks.",
+      "requirements-knowledge.txt: saved 1 chunks.",
+      "Brain search: 5 actual matches (local embeddings).",
+      "Forgot the selected note and derived index."
+    ]
+  },
+  "render": [
+    {
+      "nodes": 300,
+      "rendered_nodes": 300,
+      "repaint_fps": 119.41,
+      "mean_frame_ms": 8.37,
+      "p95_frame_ms": 10.02,
+      "mean_paint_ms": 7.44,
+      "dpr": 1.0,
+      "dimensions": [
+        880,
+        680
+      ],
+      "fixture": "Real tracked-file chunks, in memory only; not retained user knowledge or a model-activity claim",
+      "measurement": "Uncapped CPU repaint throughput; production animation is capped at approximately 30 FPS",
+      "sources": [
+        {
+          "path": "app/agent_runtime.py",
+          "sha256": "18d3883cee840e32be4a77ffe71e82637a766a26cbdc20db05479f2db7d6c5ce"
+        },
+        {
+          "path": "app/agents/__init__.py",
+          "sha256": "dd14415c42f924b78cd84e8542b88234df1bea7a2f11c88df09b736718bcbde3"
+        },
+        {
+          "path": "app/agents/agent.py",
+          "sha256": "4de98c9e17f369aa7842d4f52be2e05bdb6279f085c7a14044083b4d6cd0f9fa"
+        },
+        {
+          "path": "app/agents/builtins.py",
+          "sha256": "53b237b9d9fcfab1067e42581e73aa46538cb18c54548275f47816604c4dc93a"
+        },
+        {
+          "path": "app/agents/employee.py",
+          "sha256": "49d8442ee9b169a4d58e9209be39267f8729171e66ebdbc281dccc8cbfdc0969"
+        },
+        {
+          "path": "app/agents/employee_registry.py",
+          "sha256": "ff87c506930518e0597419f25fd0b43ca40439e84854b2b94594be9bc02098e6"
+        },
+        {
+          "path": "app/agents/management.py",
+          "sha256": "4751503c520849ac663ee8e5c49cdccbceac873389fe4a9afc580b5a99e41a46"
+        },
+        {
+          "path": "app/agents/model_management.py",
+          "sha256": "0d6ac4429b88686bdb2638b37d62353a475bcaa59961506b58f51b9d47a85975"
+        },
+        {
+          "path": "app/agents/registry.py",
+          "sha256": "9897a0de01a10247d76e7105cbbd0f8c3f39ed02bebf8b108ce5c22ec1e08302"
+        },
+        {
+          "path": "app/api/__init__.py",
+          "sha256": "40091b696a22667d5889bc57e8b3288e1600862105024c81cc7a0a2a4df84741"
+        },
+        {
+          "path": "app/api/advanced_launch.py",
+          "sha256": "020f48e10b9ba94d4862d298350df3671ff54171700f41a1ff1edaccddf946a6"
+        },
+        {
+          "path": "app/api/agent_profiles.py",
+          "sha256": "dcb9e94ae8bb946c370c8794b07b10445600f6162df178a7ff0dae6d8c18d7cb"
+        },
+        {
+          "path": "app/api/app.py",
+          "sha256": "33882775040fa4c6d8924ddf22724e5f1370d56fba7b943f0858c199712ac5db"
+        },
+        {
+          "path": "app/api/assignment_policy.py",
+          "sha256": "e215339fa31bf204a23c63434e6b320847d09ff6c4f84499ef4b5934953c4254"
+        },
+        {
+          "path": "app/api/capability_approvals.py",
+          "sha256": "43bf15143d0d01967ba207b3e0c0c9f426b6104de4743f4de008bcbba9dede68"
+        },
+        {
+          "path": "app/api/capability_audit.py",
+          "sha256": "f158e4c370c8a27cc86ff4ec54c0a7e0cb0d202622cc5cfb9fe92da81fa338f1"
+        },
+        {
+          "path": "app/api/capability_grants.py",
+          "sha256": "acd509c0512bfb709899b1688e1e83fcd479b1d5e7dc416fc1786190c78ccb79"
+        },
+        {
+          "path": "app/api/capability_packs.py",
+          "sha256": "c654ac495c1752f79f2cbde2287091f6112951b18e2bfacb569038d2c2c4c8b9"
+        },
+        {
+          "path": "app/api/chat.py",
+          "sha256": "c66b08763cdf64fae604134b0407d4c097adbd28ca5792e1c54c2cd2ab37ddf9"
+        },
+        {
+          "path": "app/api/chat_history.py",
+          "sha256": "428cf7e6f7e282bb7b4f4ddd80915215ad6f2967e41b305a77d2bae067c43914"
+        },
+        {
+          "path": "app/api/chat_workspaces.py",
+          "sha256": "a0338aae31badf09e53764eb6f006ad311891494574ec5e53fa1d7a85174543c"
+        },
+        {
+          "path": "app/api/data_portability.py",
+          "sha256": "11473de3ecbdfbc1eca49651e21c002f9455d0dbe12183c5433074188994a4c4"
+        },
+        {
+          "path": "app/api/documentation_review.py",
+          "sha256": "cd1007f3f8026876b5e41b8f9151571c593c9f83d4fcd545799dbc738a6092ae"
+        },
+        {
+          "path": "app/api/emergency_stop.py",
+          "sha256": "3f8556f56ab14c6044546b7d8d1b13bf3d128c0b6e1ead1d9d519537e5302c25"
+        },
+        {
+          "path": "app/api/employee_chat.py",
+          "sha256": "c13b9024c1defaba54e67c0b21f194b7557fb15db432f79a95d4a1945ad63541"
+        }
+      ]
+    },
+    {
+      "nodes": 2000,
+      "rendered_nodes": 2000,
+      "repaint_fps": 19.61,
+      "mean_frame_ms": 50.98,
+      "p95_frame_ms": 61.19,
+      "mean_paint_ms": 50.12,
+      "dpr": 1.0,
+      "dimensions": [
+        880,
+        680
+      ],
+      "fixture": "Real tracked-file chunks, in memory only; not retained user knowledge or a model-activity claim",
+      "measurement": "Uncapped CPU repaint throughput; production animation is capped at approximately 30 FPS",
+      "sources": [
+        {
+          "path": "app/agent_runtime.py",
+          "sha256": "18d3883cee840e32be4a77ffe71e82637a766a26cbdc20db05479f2db7d6c5ce"
+        },
+        {
+          "path": "app/agents/__init__.py",
+          "sha256": "dd14415c42f924b78cd84e8542b88234df1bea7a2f11c88df09b736718bcbde3"
+        },
+        {
+          "path": "app/agents/agent.py",
+          "sha256": "4de98c9e17f369aa7842d4f52be2e05bdb6279f085c7a14044083b4d6cd0f9fa"
+        },
+        {
+          "path": "app/agents/builtins.py",
+          "sha256": "53b237b9d9fcfab1067e42581e73aa46538cb18c54548275f47816604c4dc93a"
+        },
+        {
+          "path": "app/agents/employee.py",
+          "sha256": "49d8442ee9b169a4d58e9209be39267f8729171e66ebdbc281dccc8cbfdc0969"
+        },
+        {
+          "path": "app/agents/employee_registry.py",
+          "sha256": "ff87c506930518e0597419f25fd0b43ca40439e84854b2b94594be9bc02098e6"
+        },
+        {
+          "path": "app/agents/management.py",
+          "sha256": "4751503c520849ac663ee8e5c49cdccbceac873389fe4a9afc580b5a99e41a46"
+        },
+        {
+          "path": "app/agents/model_management.py",
+          "sha256": "0d6ac4429b88686bdb2638b37d62353a475bcaa59961506b58f51b9d47a85975"
+        },
+        {
+          "path": "app/agents/registry.py",
+          "sha256": "9897a0de01a10247d76e7105cbbd0f8c3f39ed02bebf8b108ce5c22ec1e08302"
+        },
+        {
+          "path": "app/api/__init__.py",
+          "sha256": "40091b696a22667d5889bc57e8b3288e1600862105024c81cc7a0a2a4df84741"
+        },
+        {
+          "path": "app/api/advanced_launch.py",
+          "sha256": "020f48e10b9ba94d4862d298350df3671ff54171700f41a1ff1edaccddf946a6"
+        },
+        {
+          "path": "app/api/agent_profiles.py",
+          "sha256": "dcb9e94ae8bb946c370c8794b07b10445600f6162df178a7ff0dae6d8c18d7cb"
+        },
+        {
+          "path": "app/api/app.py",
+          "sha256": "33882775040fa4c6d8924ddf22724e5f1370d56fba7b943f0858c199712ac5db"
+        },
+        {
+          "path": "app/api/assignment_policy.py",
+          "sha256": "e215339fa31bf204a23c63434e6b320847d09ff6c4f84499ef4b5934953c4254"
+        },
+        {
+          "path": "app/api/capability_approvals.py",
+          "sha256": "43bf15143d0d01967ba207b3e0c0c9f426b6104de4743f4de008bcbba9dede68"
+        },
+        {
+          "path": "app/api/capability_audit.py",
+          "sha256": "f158e4c370c8a27cc86ff4ec54c0a7e0cb0d202622cc5cfb9fe92da81fa338f1"
+        },
+        {
+          "path": "app/api/capability_grants.py",
+          "sha256": "acd509c0512bfb709899b1688e1e83fcd479b1d5e7dc416fc1786190c78ccb79"
+        },
+        {
+          "path": "app/api/capability_packs.py",
+          "sha256": "c654ac495c1752f79f2cbde2287091f6112951b18e2bfacb569038d2c2c4c8b9"
+        },
+        {
+          "path": "app/api/chat.py",
+          "sha256": "c66b08763cdf64fae604134b0407d4c097adbd28ca5792e1c54c2cd2ab37ddf9"
+        },
+        {
+          "path": "app/api/chat_history.py",
+          "sha256": "428cf7e6f7e282bb7b4f4ddd80915215ad6f2967e41b305a77d2bae067c43914"
+        },
+        {
+          "path": "app/api/chat_workspaces.py",
+          "sha256": "a0338aae31badf09e53764eb6f006ad311891494574ec5e53fa1d7a85174543c"
+        },
+        {
+          "path": "app/api/data_portability.py",
+          "sha256": "11473de3ecbdfbc1eca49651e21c002f9455d0dbe12183c5433074188994a4c4"
+        },
+        {
+          "path": "app/api/documentation_review.py",
+          "sha256": "cd1007f3f8026876b5e41b8f9151571c593c9f83d4fcd545799dbc738a6092ae"
+        },
+        {
+          "path": "app/api/emergency_stop.py",
+          "sha256": "3f8556f56ab14c6044546b7d8d1b13bf3d128c0b6e1ead1d9d519537e5302c25"
+        },
+        {
+          "path": "app/api/employee_chat.py",
+          "sha256": "c13b9024c1defaba54e67c0b21f194b7557fb15db432f79a95d4a1945ad63541"
+        },
+        {
+          "path": "app/api/first_run.py",
+          "sha256": "1fdbb292000ecbd611ae808fc854f11e5ff15def51f6eb44ec7c813ea32d247f"
+        },
+        {
+          "path": "app/api/github.py",
+          "sha256": "cda90ccb2fe54361130ef99263b9a794fb6acf6a55d52432b4a8c1ebb9b5c3f4"
+        },
+        {
+          "path": "app/api/inventory.py",
+          "sha256": "92d25219dac778be44a9ec817a6b430875ea66674df05ca9fb215c1f6c89dafa"
+        },
+        {
+          "path": "app/api/local_access.py",
+          "sha256": "00e349610dfdc7253d93ead74c613aa161f35ff4ca5718cf1628c350b22b2c57"
+        },
+        {
+          "path": "app/api/local_automation.py",
+          "sha256": "e7ce981c2ec07cb4f46c0df31d43af84129f1f7334cc55ee6bf44c7b884a57fb"
+        },
+        {
+          "path": "app/api/local_models.py",
+          "sha256": "351d7ba7531375885d017f0eec5da41c016d521e70ec10271e4fdf5bd59d3e5b"
+        },
+        {
+          "path": "app/api/local_online_provider.py",
+          "sha256": "ea7d4d60fa284f35e5cc670b6a4507a1fa286dcb4d6c8dc84d6e6578f50d7075"
+        },
+        {
+          "path": "app/api/local_preferences.py",
+          "sha256": "1ec15c2c0f9d02c0d683827110ee92351c64e7c45a624aedde6da220f6e83530"
+        },
+        {
+          "path": "app/api/local_readiness.py",
+          "sha256": "37d261537e8a45763299705d0f958961114228a39291aa7c986fe18cdb7c6558"
+        },
+        {
+          "path": "app/api/local_suggestions.py",
+          "sha256": "3f0e3183cedf697fd4be142e79f655609e96c5e2bf8664d5494c0ad8bc00c84a"
+        },
+        {
+          "path": "app/api/local_voice.py",
+          "sha256": "6c3e0862dfe05a74afd746e548f588ba34526079a91701da238e6eaefacdfa76"
+        },
+        {
+          "path": "app/api/maintenance_approvals.py",
+          "sha256": "6d3e713eb5f14697437871e042b750ced52ccd21c5223ed22f83c3eacdddc165"
+        },
+        {
+          "path": "app/api/maintenance_checkpoints.py",
+          "sha256": "61c8bacc21eeca8446f7674d197dc0d997a18cfc224409859e4238b9436224e7"
+        },
+        {
+          "path": "app/api/maintenance_experiments.py",
+          "sha256": "80a998322c5790f550633a90f396194c471de0d7670725fcf11930debeea55be"
+        },
+        {
+          "path": "app/api/managed_software.py",
+          "sha256": "2a23e6cd13ad4d91a1717bf8501d63ac6f663df141fe91f3efd878f6580f0d71"
+        },
+        {
+          "path": "app/api/memory.py",
+          "sha256": "dae16a16b9b63dab9d26d1fba07f881da0e5d22fa239d211192188fa6559194d"
+        },
+        {
+          "path": "app/api/models.py",
+          "sha256": "89da6fe055a4a6d459d25dee075d7ee7b949edc118d467a626ba1aaec9d5de93"
+        },
+        {
+          "path": "app/api/provider_connections.py",
+          "sha256": "aca5bcf73763e7934053671702187c2fbc52a6ead36d31a3e96d1a09c6b98c6a"
+        },
+        {
+          "path": "app/api/security.py",
+          "sha256": "0310cc7f4376a8bfc308f141ff7fa8f6a27ab83c498a38f2f9599d411534d847"
+        },
+        {
+          "path": "app/api/structure_map.py",
+          "sha256": "83d8121a29d2e4c3ce08dea99689423236c578e73c6fe61f842b6e97a4e1e3f6"
+        },
+        {
+          "path": "app/api/system_monitoring.py",
+          "sha256": "da4ba3e065f6607bb362ca269bf66e3f3ca08127d81c31a264d8c661a790f2fd"
+        },
+        {
+          "path": "app/api/task_dispatch.py",
+          "sha256": "fd13c12ab2731973b9b0b31495cf961b5925ff047ac255786abcf6783fa619a8"
+        },
+        {
+          "path": "app/api/workflows.py",
+          "sha256": "8b6ee6598b9fca11a778dc3701aea231cc67f35b71d485ba9ebf0007065a322e"
+        },
+        {
+          "path": "app/application/__init__.py",
+          "sha256": "112a052f23f95a918eb3f2255d31b9cef267307e433cc4eba20638599d5f8dea"
+        },
+        {
+          "path": "app/application/services/__init__.py",
+          "sha256": "6ad7d8561cece537093ad9b379bba5278d28b3567077fc2e71805a0f93418ae6"
+        },
+        {
+          "path": "app/application/services/assignment_policy.py",
+          "sha256": "688fabc48b3047112f9621b5ea8778a83a93d01a5fbde171feb358600fba29b0"
+        },
+        {
+          "path": "app/application/services/automation_traces.py",
+          "sha256": "7d46c632184681f5486fe2d2ce994f50c407c0db952e4c340984deb0f1609d89"
+        },
+        {
+          "path": "app/application/services/capability_approvals.py",
+          "sha256": "429c4fcd1528d9fc64bb2d77dbe769b827051a12369ce0cb575f0959b74f1ca4"
+        },
+        {
+          "path": "app/application/services/capability_audit.py",
+          "sha256": "ef2f68bfceef1f8a98ad2edec87aa466a94c3d2302ced11deb49d9334ffde222"
+        },
+        {
+          "path": "app/application/services/capability_authorization.py",
+          "sha256": "ac8e1723be1a70ce69063364a0d9a49df389024dd31f795ca4a07d27d3bdf456"
+        },
+        {
+          "path": "app/application/services/capability_grants.py",
+          "sha256": "aa3c9e01d608f832801a70aa0cbf1d1d3bcc2d73f57293b96505b19346793c91"
+        },
+        {
+          "path": "app/application/services/capability_integration.py",
+          "sha256": "0a84600873624606605fb01687e12f8909b01381a07611e766531cc515ea0a15"
+        },
+        {
+          "path": "app/application/services/chat_history.py",
+          "sha256": "55721a81caad0d6df30a26029c41a072f1f5f2028fa2e831a4996e0505f5fc58"
+        },
+        {
+          "path": "app/application/services/chat_images.py",
+          "sha256": "6130e19768fa7c7ed04fe1232140a2f6890b0ae0c13980e0e4b1e20466082f3d"
+        },
+        {
+          "path": "app/application/services/chat_knowledge.py",
+          "sha256": "f38a832b8120c224c9a33fec603303d920cc8b3a01427b72e52bbf3457819649"
+        },
+        {
+          "path": "app/application/services/chat_route_suggestions.py",
+          "sha256": "879653d26754961d32f0239c5611e8b37d8d37788f84878425f5aa9451803fc2"
+        },
+        {
+          "path": "app/application/services/chat_task_proposals.py",
+          "sha256": "5cae8735e9b7f1de24c914adbce178349ffffe9d90453fa9efbf70227f83cb3a"
+        },
+        {
+          "path": "app/application/services/chat_workspaces.py",
+          "sha256": "3d257f1a685f023726f361c0017dd6e5c69623ef07ba841e64d31e7d8c421bf7"
+        },
+        {
+          "path": "app/application/services/code_review.py",
+          "sha256": "38a874c41abdc6df8b444c60416e8132562075841500b47e3ddec658fa70c4d7"
+        },
+        {
+          "path": "app/application/services/context_retrieval.py",
+          "sha256": "74544791a37a562cd3101a07bd11c63569b7cd4e08c3b66b84436e2a1514b77f"
+        },
+        {
+          "path": "app/application/services/controlled_execution.py",
+          "sha256": "adb04610992c60c0d791bc234a8489712c09115a162899644ee79c3e9f6fc9e9"
+        },
+        {
+          "path": "app/application/services/corporation.py",
+          "sha256": "710cb3cc823f85bce25a32e9da4d893f0f7d5beba364c4f866e4ec7b00aacf2a"
+        },
+        {
+          "path": "app/application/services/corporation_chat.py",
+          "sha256": "a27a22fa3520e41140524831c63e6060f65728733d4145515dc82f3b5d99e58c"
+        },
+        {
+          "path": "app/application/services/corporation_knowledge.py",
+          "sha256": "888c694e3670f3da2ab53a0666573aa63127f172544714e236ade57e11ecc72d"
+        },
+        {
+          "path": "app/application/services/diagnostics.py",
+          "sha256": "84994cc44daedad2ce8c66504fe3e3425c9da2bc94824aedd8afc8d59e962409"
+        },
+        {
+          "path": "app/application/services/documentation.py",
+          "sha256": "92475e9446066fc14d3f650467ffd85f3cd1fa5fe109dd9d484d296eee8e2d08"
+        },
+        {
+          "path": "app/application/services/documentation_review.py",
+          "sha256": "07c84805501e4c52b08d098ba459766614aff3816d83247e0f8190236558626d"
+        },
+        {
+          "path": "app/application/services/emergency_stop.py",
+          "sha256": "a965952c4a20391cf522e665bef9c6381822ac8748d04321e1810237501f1783"
+        },
+        {
+          "path": "app/application/services/failure_detection.py",
+          "sha256": "4f86b56df4e1ee334980c5a4626a4e82696b08fbf1b2eb1344100896be5561c0"
+        },
+        {
+          "path": "app/application/services/first_run_setup.py",
+          "sha256": "a708f29eb2658d2a6b22ea8f84e2ee60ee551e1f3b225847a1f3be6644ef1b1a"
+        },
+        {
+          "path": "app/application/services/git_checkpoints.py",
+          "sha256": "11f760344010959cd414c9002c6f418b44b035b11ee90cf6256b54221684f383"
+        },
+        {
+          "path": "app/application/services/github_inspection.py",
+          "sha256": "b18d905c25377ced8073b0fcb440af9629d465b5d4957dbf984e0ee67ebffb61"
+        },
+        {
+          "path": "app/application/services/hardware_profile.py",
+          "sha256": "9bd8c6168faf5538a7cf59150d73c7e991366226ffa2a22e8d4d2ef6d82f155c"
+        },
+        {
+          "path": "app/application/services/knowledge_proposals.py",
+          "sha256": "2dbaf19d84a681568aa8b4d7b2e5146c0bb7466db7a44236730e282f6106c9c3"
+        },
+        {
+          "path": "app/application/services/local_online_provider.py",
+          "sha256": "c70748d23b067106c46bbdd02e9bf3a5f73db425052db24f016cce93401d3323"
+        },
+        {
+          "path": "app/application/services/maintenance_approvals.py",
+          "sha256": "5e269db323aee8a38e14d6e1b4f9a987e048d44b2f1d4b9fe4e160e55ee3c521"
+        },
+        {
+          "path": "app/application/services/maintenance_proposals.py",
+          "sha256": "1e014cb63b98e9cf65a0f6a92e48d6afed2d560311e6b87e7d95f5bc3c5f614b"
+        },
+        {
+          "path": "app/application/services/maintenance_sandbox.py",
+          "sha256": "798b59ca4f99193cf74fc8af5653abb6c352e96b8e8aebd610ae2a13d7c2f57f"
+        },
+        {
+          "path": "app/application/services/maintenance_workflow.py",
+          "sha256": "4503d77caaa3755363165d0eeabb75afd8a2d5b0a9bb00cf5accf16f3f9ac92a"
+        },
+        {
+          "path": "app/application/services/managed_software.py",
+          "sha256": "ffb9776ef95e70ad42173ff72161d2d942ce6c9f71ac3c1a452938a9e045a62e"
+        },
+        {
+          "path": "app/application/services/memory_management.py",
+          "sha256": "8b502bf0633a1cc9b5913f71c102660c8183211777da99a77d2eedb83065a318"
+        },
+        {
+          "path": "app/application/services/operator_state_store.py",
+          "sha256": "89385aa8cce629f4b3fe8e721696a43b5a325ba3e881ff692afddacafd24724e"
+        },
+        {
+          "path": "app/application/services/organization_coordination.py",
+          "sha256": "7d66743d9f849adba4e191b4f28046aae5d48059a28f0d1c4b5de05e46b470ba"
+        },
+        {
+          "path": "app/application/services/organization_planning.py",
+          "sha256": "75969bb32ab8c40f8575bf53e09410c88d6d18a8d525773e372c61b6e54fd0c6"
+        },
+        {
+          "path": "app/application/services/owned_chat.py",
+          "sha256": "08a48404e0eea1935fb6fab4061d1880d1451f8ee3ba599d22bec593f7b7addc"
+        },
+        {
+          "path": "app/application/services/owned_employee_chat.py",
+          "sha256": "73bf4882af8da50b143c5251361bb04cd247e69d5c059211694071b133320606"
+        },
+        {
+          "path": "app/application/services/owner_preferences.py",
+          "sha256": "cc6f536e9f87a4389a3930d3e50072fe5d540835538328e8de2b937732f85fea"
+        },
+        {
+          "path": "app/application/services/owner_suggestions.py",
+          "sha256": "5bdb9999853b6b72731693dd01b671de01cecd253084b0389987b444f54b5a10"
+        },
+        {
+          "path": "app/application/services/patch_development.py",
+          "sha256": "f7e46b9238ee159eb4983aa31164ad1c1675077fc60ef781540f6d3065644ede"
+        },
+        {
+          "path": "app/application/services/platform_overview.py",
+          "sha256": "b0acd02739629dd55f437ff4c1a6beac5a0c3d6bd3b7003589834ca27f1d38f4"
+        },
+        {
+          "path": "app/application/services/project_knowledge.py",
+          "sha256": "1179290d73d22315d0e99c10a4de1749015c5aabaa6d229ea6461389969b8b21"
+        },
+        {
+          "path": "app/application/services/provider_connections.py",
+          "sha256": "e5ff1e8afa6a01e43a9006bcba2960a67b41ac0223c4fdae59a417705f327f29"
+        },
+        {
+          "path": "app/application/services/readiness_evidence.py",
+          "sha256": "8c20bd6db77691e22896f873d2abad97d1a1ba61615346807e5a9bfd3ec49b03"
+        },
+        {
+          "path": "app/application/services/repository_study.py",
+          "sha256": "d925857b15233fd22abc998f3d5f7ed09d2e672e148c362b25ee3675488c1ace"
+        },
+        {
+          "path": "app/application/services/reviewed_chat_tools.py",
+          "sha256": "db6420825211abdff574b460782ac9cb538fe13f559da93db42d352b7d997dab"
+        },
+        {
+          "path": "app/application/services/structure_map.py",
+          "sha256": "bf5584ca97863dd523cb45c9930ae09f796b76c4e2fa45914f4ff036b76de5ed"
+        },
+        {
+          "path": "app/application/services/system_monitoring.py",
+          "sha256": "96f625d310f1bf5311d872f17e7b090d108e8a0e40dc742e102c26568dd60606"
+        },
+        {
+          "path": "app/application/services/task_dispatch.py",
+          "sha256": "3049dc2fe140a7b7a81be16d5b20ad253698079f96d4607901e1b6496fe158a3"
+        },
+        {
+          "path": "app/application/services/task_planning.py",
+          "sha256": "e542fcf6a13e867aba865f337b319f563a17f51c3101fd6c3d4371feb3cd1a53"
+        },
+        {
+          "path": "app/application/services/testing_workflow.py",
+          "sha256": "1c8fa8099284aef54a7e86a6013f6b27a803cf8e555af06436e424f4cae52959"
+        },
+        {
+          "path": "app/application/services/updates.py",
+          "sha256": "9c7d3507cc31914d90d2d3fe086ed838c8b95be0d1e7c44316b4afbd92d1ae52"
+        },
+        {
+          "path": "app/application/services/workflow_map.py",
+          "sha256": "b1789543558aab6450962386166d9ddb209b8b8771d728ae17c1d694ccd0acaa"
+        },
+        {
+          "path": "app/application/services/workflow_review.py",
+          "sha256": "7b67cbc6f7f34d04012d76f5009344ece526f5707ee8321e004dfaa92fd3acec"
+        },
+        {
+          "path": "app/application/services/workforce_review.py",
+          "sha256": "c34f83727b81624077afa71151056b9be5b1e3fdfd454bb8409e531ed4752412"
+        },
+        {
+          "path": "app/approval/__init__.py",
+          "sha256": "288c642341c64d326b57e90d21ac7650536a6756bb80c29273e009fbe5c28cd5"
+        },
+        {
+          "path": "app/approval/models.py",
+          "sha256": "be7931a03491ac2dd8345f08edc487c82a69df93c92dbd04ef79bf3b0830d0a5"
+        },
+        {
+          "path": "app/approval/registry.py",
+          "sha256": "2dd528339e5c4ee16121bbaf0c528896b1cd51d2af3d168bbd4816053ed80899"
+        },
+        {
+          "path": "app/auto_routing.py",
+          "sha256": "6bc93280786074daccd2590dc7a2d8786318d4d6299e0376e1253a2191ad376f"
+        },
+        {
+          "path": "app/build_stamp.py",
+          "sha256": "056ca5b5f70990c0528852d3b1ef77eb84cc899815d7325110e59fa46cb1e8a3"
+        },
+        {
+          "path": "app/capabilities.py",
+          "sha256": "d8e69f5166f0ba672a681f51559c3d8324714173ca30df6bf32d40ecb612ced7"
+        },
+        {
+          "path": "app/capability_discovery.py",
+          "sha256": "aaa5233bb8f159c69dbaabd449ef57c49c8cac2c7b5d4a56e799c528a6a5d070"
+        },
+        {
+          "path": "app/capability_evaluation.py",
+          "sha256": "0bd99c241f0bb5dab2aa34d4986a5c9d7e678a0a33b434684ad6a0c2d3bcf944"
+        },
+        {
+          "path": "app/chat_prompt.py",
+          "sha256": "c8d79f3b71d35c03ef591b9575e4645bbdc2f381db8554d8c4e70373026edaab"
+        },
+        {
+          "path": "app/client/__init__.py",
+          "sha256": "be5d756419b96f12e90d2900b390e4481f102f373509c733ff57a6fa529bcf26"
+        },
+        {
+          "path": "app/client/models.py",
+          "sha256": "97540b7ccbd2daa71fd6effd8248fe2344c609bbce2c1d1b985dc13bbc95b9fe"
+        },
+        {
+          "path": "app/client/service.py",
+          "sha256": "f8c5bfb012d72d23f699cb8027a3468ae7732bc82d90db7673629d7e1fd1448e"
+        },
+        {
+          "path": "app/conversations/__init__.py",
+          "sha256": "66b07f9cd2ad310071272dd780ad52452de40a200c79df12434a23e50f77d127"
+        },
+        {
+          "path": "app/conversations/employee_chat.py",
+          "sha256": "565d35ada84a077692b412fc0a5b468ad68e3506392cce13f07d5c835b9d6136"
+        },
+        {
+          "path": "app/conversations/models.py",
+          "sha256": "8b6cca9c5ee8294f5b332a75b36ee0c5561ddc74423d57097d745fc51f6517c0"
+        },
+        {
+          "path": "app/corporation/__init__.py",
+          "sha256": "6f9bf398f7e6c003084125636d6bfa363426b6d51ad9cb46802b1f178fcb7174"
+        },
+        {
+          "path": "app/corporation/models.py",
+          "sha256": "b902d3ab1453fbec5dc661a1853c7243da7609dd1447904817e199a868b6432d"
+        },
+        {
+          "path": "app/corporation/registry.py",
+          "sha256": "aa531a538ba5a069ba7b818deb7c93250cc24e64ffc89f7eafd010c2cea1cdee"
+        },
+        {
+          "path": "app/database/__init__.py",
+          "sha256": "6ab9ee2637715ab04311da0d2f1a11cdec8db851686d0e236b327c87affeefa5"
+        },
+        {
+          "path": "app/database/connection.py",
+          "sha256": "631e401255889a3f495afff7e252dc2901a5374cd1895547ec0f01a8a3fd8b5d"
+        },
+        {
+          "path": "app/database/init.py",
+          "sha256": "f9c7b54dbcbdf3d7d69cae8aec9cd140b9f74ff6c5da9349ebd9b324597ea813"
+        },
+        {
+          "path": "app/database/logger.py",
+          "sha256": "452d378d3daab569e1467176a65e0c7b215ec501723bb3b9c59b52a09cec3e04"
+        },
+        {
+          "path": "app/desktop_launcher.py",
+          "sha256": "a9511d7e5cb78b7f4f9817be303656a94ac3aa4190242b3b2e13b8789c5e8f4c"
+        },
+        {
+          "path": "app/desktop_lock.py",
+          "sha256": "2a2edb587c9b8e2f83a21ce39ed8bf7e5dcc1b531d255c3fdbc531427daecf6f"
+        },
+        {
+          "path": "app/desktop_runtime.py",
+          "sha256": "7f25e7c76961ed94df226fd3cb8e88aaa2b216c136c5077631a84ef69561bdd3"
+        },
+        {
+          "path": "app/documentation/__init__.py",
+          "sha256": "01e0757f6cb4b64ca0f412fea0d8d49ae42fbca751e1a77cc4df01eba08cb115"
+        },
+        {
+          "path": "app/documentation/markdown_source.py",
+          "sha256": "06ed40d95dde08d43bcb47ae5ba844106150a89d9a4df89a3d9575ed22f664d8"
+        },
+        {
+          "path": "app/integrations/__init__.py",
+          "sha256": "ed2a23ee5a579192eaee3b21f020a332e339d9d66bad217cf95fcbb7c63577cc"
+        },
+        {
+          "path": "app/integrations/analysis.py",
+          "sha256": "7884668c68f93df6e2ce9905aeb5c856e4baef4f952089976798c6efe12b0d74"
+        },
+        {
+          "path": "app/integrations/browser_inspection.py",
+          "sha256": "03eb8bf955b448958dd38e2ead634e0549e6257768259043000e3aa31bff22bf"
+        },
+        {
+          "path": "app/integrations/capability_packs.py",
+          "sha256": "7de0351b8a06b08de6ce0e72f33eb7a3cf9708a2c8717e6f55ba607f12aa55b0"
+        },
+        {
+          "path": "app/integrations/discovery.py",
+          "sha256": "3aca51ee7f0f89f6129b2102015c4afc1dafc8a868ac1d0f3a6824431abc25a9"
+        },
+        {
+          "path": "app/integrations/docker_sandbox.py",
+          "sha256": "9b66070f0df19b197b61346573d5d8fd6fb92f87322131e00a92b54ed03a73a7"
+        }
+      ]
+    }
+  ],
+  "tests": {
+    "python_full": {
+      "passed": 1490,
+      "skipped": 3,
+      "seconds": 318.24
+    },
+    "focused_final": {
+      "passed": 43,
+      "seconds": 15.84
+    },
+    "widgets_after_render_index_change": {
+      "passed": 8,
+      "seconds": 6.71
+    },
+    "browser_modules": 295,
+    "electron_source": 44,
+    "docs": 23
+  },
+  "limitations": [
+    "CPU repaint throughput, not GPU/display FPS; production timer approximately 30 FPS.",
+    "No packaged, assistive technology, physical Explorer drag or actual Windows DPI change claim."
+  ],
+  "layout": [
+    [
+      {
+        "image": "1-dark-1360.png",
+        "logical_size": [
+          1360,
+          820
+        ],
+        "dpr": 1.0,
+        "chat_width": 530,
+        "composer_width": 530
+      },
+      {
+        "image": "1-dark-800.png",
+        "logical_size": [
+          800,
+          580
+        ],
+        "dpr": 1.0,
+        "chat_width": 250,
+        "composer_width": 250
+      },
+      {
+        "image": "1-light-1360.png",
+        "logical_size": [
+          1360,
+          820
+        ],
+        "dpr": 1.0,
+        "chat_width": 530,
+        "composer_width": 530
+      },
+      {
+        "image": "1-light-800.png",
+        "logical_size": [
+          800,
+          580
+        ],
+        "dpr": 1.0,
+        "chat_width": 250,
+        "composer_width": 250
+      }
+    ],
+    [
+      {
+        "image": "1.25-dark-1360.png",
+        "logical_size": [
+          1360,
+          820
+        ],
+        "dpr": 1.25,
+        "chat_width": 530,
+        "composer_width": 530
+      },
+      {
+        "image": "1.25-dark-800.png",
+        "logical_size": [
+          800,
+          580
+        ],
+        "dpr": 1.25,
+        "chat_width": 250,
+        "composer_width": 250
+      },
+      {
+        "image": "1.25-light-1360.png",
+        "logical_size": [
+          1360,
+          820
+        ],
+        "dpr": 1.25,
+        "chat_width": 530,
+        "composer_width": 530
+      },
+      {
+        "image": "1.25-light-800.png",
+        "logical_size": [
+          800,
+          580
+        ],
+        "dpr": 1.25,
+        "chat_width": 250,
+        "composer_width": 250
+      }
+    ],
+    [
+      {
+        "image": "1.5-dark-1360.png",
+        "logical_size": [
+          1360,
+          820
+        ],
+        "dpr": 1.5,
+        "chat_width": 530,
+        "composer_width": 530
+      },
+      {
+        "image": "1.5-dark-800.png",
+        "logical_size": [
+          800,
+          580
+        ],
+        "dpr": 1.5,
+        "chat_width": 250,
+        "composer_width": 250
+      },
+      {
+        "image": "1.5-light-1360.png",
+        "logical_size": [
+          1283,
+          707
+        ],
+        "dpr": 1.5,
+        "chat_width": 491,
+        "composer_width": 491
+      },
+      {
+        "image": "1.5-light-800.png",
+        "logical_size": [
+          800,
+          580
+        ],
+        "dpr": 1.5,
+        "chat_width": 250,
+        "composer_width": 250
+      }
+    ]
+  ]
+}

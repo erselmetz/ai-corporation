@@ -107,7 +107,7 @@ class OllamaEmbeddingProvider:
             headers={"Content-Type": "application/json", "Accept": "application/json"},
             method="POST")
         try:
-            opener = urllib.request.build_opener(self._NoRedirect())
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), self._NoRedirect())
             with opener.open(request, timeout=self.TIMEOUT_SECONDS) as response:
                 payload = response.read(self.MAX_RESPONSE_BYTES + 1)
             if len(payload) > self.MAX_RESPONSE_BYTES:

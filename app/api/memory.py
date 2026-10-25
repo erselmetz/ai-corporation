@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 import json
 import sqlite3
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 
@@ -20,6 +20,75 @@ from .security import AuthenticatedPrincipal, require_permission
 
 router = APIRouter(prefix="/api/memory")
 Identifier = Annotated[str, Query(min_length=1, max_length=256)]
+
+
+def native_brain(request: Request):
+    if hasattr(request.app.state,'native_brain'):
+        return request.app.state.native_brain  # Explicit isolated-test injection.
+    stop_service=request.app.state.emergency_stop_service
+    return request.app.state.application_service.native_brain(stopper=lambda:stop_service.stopped)
+
+
+@router.post("/owner/native-feed")
+async def native_feed(file: UploadFile=File(...),stable_key: str=Form(...,min_length=1,max_length=4096),
+                      consent: bool=Form(...),days: int=Form(30,ge=1,le=30),
+                      job_id: str=Form(...,min_length=32,max_length=32),
+                      principal=Depends(require_permission("memory:manage")),brain=Depends(native_brain)):
+    from app.knowledge.native_brain import MAX_FILE_BYTES
+    from starlette.concurrency import run_in_threadpool
+    data=await file.read(MAX_FILE_BYTES+1)
+    try:
+        result=await run_in_threadpool(brain.feed,principal.identity,stable_key,file.filename or "note.txt",data,consent=consent,days=days,job_id=job_id)
+        brain.finish_job(principal.identity,job_id)
+        return result
+    except (ValueError,UnicodeError) as error: raise HTTPException(422,str(error)[:300]) from None
+    except RuntimeError as error: raise HTTPException(409,str(error)[:300]) from None
+    finally: brain.finish_job(principal.identity,job_id,"failed")
+
+
+@router.post("/owner/native-job")
+def native_job(principal=Depends(require_permission("memory:manage")),brain=Depends(native_brain)):
+    try: return {"id":brain.new_job(principal.identity)}
+    except ValueError as error: raise HTTPException(409,str(error)) from None
+
+
+@router.post("/owner/native-cancel/{identifier}")
+def native_cancel(identifier: str,principal=Depends(require_permission("memory:manage")),brain=Depends(native_brain)):
+    try: return {"state":brain.cancel_job(principal.identity,identifier)}
+    except ValueError: raise HTTPException(404,"Brain job unavailable") from None
+
+
+@router.get("/owner/native-graph")
+def native_graph(principal=Depends(require_permission("memory:read")),brain=Depends(native_brain)):
+    return brain.graph(principal.identity)
+
+
+@router.get("/owner/native-node")
+def native_node(identifier: str=Query(...,min_length=1,max_length=300),
+                principal=Depends(require_permission("memory:read")),brain=Depends(native_brain)):
+    try: return brain.inspect(principal.identity,identifier)
+    except KeyError: raise HTTPException(404,"Brain chunk unavailable or expired") from None
+
+
+class NativeRecall(BaseModel):
+    model_config=ConfigDict(extra="forbid")
+    query: str=Field(min_length=1,max_length=2000)
+    k: int=Field(default=5,ge=1,le=10)
+    threshold: float=Field(default=.35,ge=0,le=1)
+
+
+@router.post("/owner/native-recall")
+def native_recall(body: NativeRecall,principal=Depends(require_permission("memory:read")),brain=Depends(native_brain)):
+    return brain.recall(principal.identity,body.query,body.k,body.threshold)
+
+
+@router.delete("/owner/native-item/{identifier}")
+def native_forget(identifier: str,revision: str=Query(...,min_length=64,max_length=64),
+                  principal=Depends(require_permission("memory:manage")),brain=Depends(native_brain)):
+    try: brain.forget(principal.identity,identifier,revision)
+    except KeyError: raise HTTPException(404,"Brain item unavailable") from None
+    except ValueError: raise HTTPException(409,"Brain item changed; inspect it again") from None
+    return {"forgotten":True}
 
 
 class MemoryProvenanceSummary(BaseModel):

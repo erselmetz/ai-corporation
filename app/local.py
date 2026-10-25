@@ -267,7 +267,7 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
                             and content_type == "audio/wav")
             backup_upload = (request.url.path in {"/api/local/backup/inspect", "/api/local/backup/restore"}
                              and content_type == "multipart/form-data")
-            knowledge_upload = (request.url.path == "/api/memory/owner/upload"
+            knowledge_upload = (request.url.path in {"/api/memory/owner/upload","/api/memory/owner/native-feed"}
                                 and content_type == "multipart/form-data")
             if backup_upload:
                 from app.portability.backups import MAX_BACKUP_BYTES
@@ -276,8 +276,9 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
                     return JSONResponse({"detail": "Backup request exceeds the supported size"}, status_code=413)
             if knowledge_upload:
                 content_length = request.headers.get("content-length", "")
-                if not content_length.isdecimal() or int(content_length) > 1_048_576 + 16_384:
-                    return JSONResponse({"detail": "Knowledge upload exceeds the 1 MiB file limit"}, status_code=413)
+                upload_limit=5*1024*1024 if request.url.path.endswith("/native-feed") else 1_048_576
+                if not content_length.isdecimal() or int(content_length) > upload_limit + 16_384:
+                    return JSONResponse({"detail": "Knowledge upload exceeds the file limit"}, status_code=413)
             if content_type != "application/json" and not voice_upload and not backup_upload and not knowledge_upload:
                 return JSONResponse({"detail": "JSON request required"}, status_code=415)
             stopped = application.state.emergency_stop_service.stopped
@@ -286,6 +287,7 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
                                      "/api/local/logout"}
                 or (request.url.path.startswith("/api/capabilities/grants/")
                     and request.url.path.endswith("/revoke"))
+                or request.url.path.startswith("/api/memory/owner/native-cancel/")
             )
             if stopped and not allowed_while_stopped:
                 return JSONResponse({"detail": "Emergency stop is active; new protected actions are blocked"},
