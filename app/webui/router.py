@@ -992,9 +992,6 @@ def coordinator_chat_page():
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chat - ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
     <link rel="stylesheet" href="/ui/static/chat-ui.css?v=195">
-    <link rel="stylesheet" href="/ui/static/brain-graph.css">
-    <link rel="stylesheet" href="/ui/static/prototype-shell.css?v=223">
-    <script type="module" src="/ui/static/prototype-shell.mjs?v=223"></script>
     <script type="module" src="/ui/static/chat.mjs?v=195"></script></head><body class="chat-page">
     <main class="chat-app"><aside id="chat-sidebar" class="chat-sidebar" aria-label="Chat navigation">
       <div class="chat-sidebar-top"><a class="chat-brand" href="/ui/chat">ERSELMETZ AI</a><button id="chat-nav-toggle" type="button" aria-label="Collapse sidebar" aria-expanded="true">&#9776;</button></div>

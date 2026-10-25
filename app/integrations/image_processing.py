@@ -127,6 +127,15 @@ class PillowImageProcessingAdapter:
         started = time.monotonic()
         worker = Path(__file__).with_name("image_processing_worker.py")
         project_root = worker.resolve().parents[2]
+        # Optional capability packs add their verified runtime to the parent's
+        # import path. A fresh worker needs that same Pillow root explicitly;
+        # do not inherit unrelated dynamic import paths or weaken worker limits.
+        import os
+        environment = dict(os.environ)
+        spec = importlib.util.find_spec("PIL")
+        if spec is not None and spec.origin:
+            pillow_root = Path(spec.origin).resolve().parent.parent
+            environment["PYTHONPATH"] = os.pathsep.join((str(project_root), str(pillow_root)))
         try:
             result = self._worker_runner(
                 [sys.executable, str(worker)],
@@ -135,6 +144,7 @@ class PillowImageProcessingAdapter:
                 text=True,
                 timeout=self._timeout_seconds,
                 cwd=project_root,
+                env=environment,
                 check=False,
             )
         except subprocess.TimeoutExpired:

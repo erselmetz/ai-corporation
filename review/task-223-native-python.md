@@ -1,0 +1,21 @@
+# Task 223 — native Python shell
+
+Owner direction on 2026-10-25 supersedes the earlier Electron/web-only constraint: reproduce the prototype in a pure Python desktop, remove Node.js from the main startup/build, preserve features and safety, and continue Tasks 223–227. No push or deployment is authorized for these new phase checkpoints.
+
+The native Tk shell has three resizable panes, Ctrl+B sidebar toggle/equal hidden-sidebar Brain/chat split, Ctrl+N/plus conversation tabs, per-tab installed model selection, the prototype's Brain/feed/note/settings placement, a real-data Brain view, steps area, inline consent cards, and separate native Advanced windows. Main startup is `start-erselmetz-ai.cmd` or `.venv\Scripts\python.exe -m app.native_desktop`; build is `build-erselmetz-ai.cmd`, using Python/PyInstaller only. Existing web/Electron sources remain compatibility sources; the legacy browser route no longer loads the prototype overlay. No feature API was deleted.
+
+The owner password lock is checked with the existing credential store before a native desktop session is created. The existing current-user lease, loopback server, session cookie, permissions, CSRF and application services remain in use. Model discovery reads local metadata only, rejects cloud stubs/remote metadata, and orders installed models by reported tools/thinking support and size; it does not download models or infer quality/GPU feasibility. On this host the preferred route is qwen3.5:4b. Advanced native windows expose existing API operations; mutations require a preview and retain backend authorization/approval gates.
+
+Validation:
+
+- `.venv\Scripts\python.exe tools/native_shell_check.py`: six real Windows Tk/backend checks passed. Three panes, independent chat tabs, equal hidden-sidebar split, separate Advanced window, actual local Brain note save, existing session/CSRF. An isolated temporary LOCALAPPDATA profile was used.
+- `.venv\Scripts\python.exe -m pytest -q tests/test_native_desktop.py`: three tests passed, covering the local-only model boundary, API destinations and an actual authenticated loopback chat turn with a deterministic provider. The latter proves the native bridge uses the existing conversation API and correctly handles an alternate model's non-streaming route; it is not a real model-quality test.
+- Full Python run: 1,444 passed, 3 skipped, 2 failed in 286.01 seconds. Both failures came from the earlier web prototype overlay (mobile sidebar expectation and a login link forced into another window). The legacy route was restored; focused browser/product/native rerun: **5 passed**. A later full run is required after the remaining phases.
+- The original optional Pillow failure did not recur. Its worker now receives the same Pillow import root that the parent resolves, rather than assuming a dynamically added optional-pack path is inherited. Worker size/time limits are preserved. No package was installed or downloaded.
+- Screenshot capture uses Python stdlib/Windows GDI, with no Node.js or image package required.
+
+Actual native source screenshot: [three panes](../desktop/task223-native-review/three-pane.png). [With Advanced window](../desktop/task223-native-review/with-advanced.png). These are source-mode native screenshots, not a packaged or live-generation claim.
+
+Changed scope: `app/native_desktop/`, `native_entry.py`, `start-erselmetz-ai.cmd`, Python build launcher/helper, native smoke/capture tools and regression tests, the legacy Chat asset references, Pillow worker environment handoff, roadmap/tests, README and generated-log ignore entries. Base: `66907bbf3a97b0030d4636b357268778e0513d73`. Local phase checkpoint/tag: `task-223-native-python-shell`.
+
+Limitations for later phases: file intake still has the older bounded extraction contract; steps/thinking controls will connect to the Task 226 loop. Core Knowledge layers, anchored Forget, drop/paste intake, cached prefixed retrieval, exact math and expanded tools remain Tasks 224–226. Packaged artifact, physical media, assistive technology and RX 570 measurements remain unverified. Native Advanced API forms are technical operator controls, kept outside the main screen. Next authorized phase: 224.

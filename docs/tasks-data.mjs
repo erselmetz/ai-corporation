@@ -4104,177 +4104,186 @@ export const post100Tasks = [
   {
     "number": 223,
     "title": "Prototype three-pane shell",
-    "description": "Owner-authorized prototype alignment. Local-only work; no push or deployment. Stop at a failed phase gate.",
+    "description": "Owner-authorized native Python prototype migration (2026-10-25). Main startup/build must not require Node.js, Electron, or a browser engine. Preserve legacy features and runtime safety.",
     "category": "Phase 223 - Prototype Alignment",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
-      197,
-      215
+        197,
+        215
     ],
     "decisions": [],
     "acceptance": [
-      "Open on resizable sidebar, Brain/observed-step pane, and persistent chat pane with amber-on-dark tokens.",
-      "Ctrl+B toggles the sidebar; hidden sidebar leaves equal Brain/chat widths; Ctrl+N and + create conversation tabs.",
-      "Keep existing features in separate allowlisted Advanced windows, with one Brain destination and Memory controls under Brain settings.",
-      "Preserve authentication, per-conversation scope, retention/expiry, cloud consent, approvals and stop controls."
+        "Open a native Python/Tkinter shell with resizable sidebar, Brain/observed-step pane, persistent chat pane and original amber-on-dark styling; no Node.js/Electron runtime or build dependency.",
+        "Ctrl+B toggles the sidebar; hidden sidebar leaves equal Brain/chat widths; Ctrl+N and + create conversation tabs.",
+        "Keep existing features in separate allowlisted Advanced windows, with one Brain destination and Memory controls under Brain settings.",
+        "Preserve authentication, per-conversation scope, retention/expiry, cloud consent, approvals and stop controls."
     ],
     "outOfScope": [
-      "Porting Tkinter code, deleting existing features, silent downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+        "Deleting existing features, silent model downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
     ],
     "risks": [
-      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+        "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
-    "checkpoint": null,
+    "checkpoint": "task-223-native-python-shell",
     "validation": [
-      "Phase implementation is present locally; no completion checkpoint or phase tag.",
-      "Source-mode Electron checks passed: inline consented note save, tabs, keyboard split, equal hidden-sidebar panes and separate Advanced Brain settings.",
-      "Full Python gate failed: 1445 passed, 3 skipped, 1 failed (optional Pillow worker resize). Focused rerun skipped because PIL is unavailable; the failed gate remains unresolved.",
-      "Evidence: review/task-223-prototype-shell.md. Tasks 224-227 were not started."
+        "Native source-mode Tk/backend smoke: six checks passed, including separate Advanced window, authenticated Brain note save, tabs and equal hidden-sidebar panes.",
+        "Native model boundary and repaired legacy browser regressions: 5 Python tests passed. Full Python run: 1444 passed, 3 skipped, 2 legacy browser failures; both failures were then repaired and passed focused rerun. Original Pillow worker failure was fixed by passing its isolated verified import root to the worker.",
+        "Evidence: review/task-223-native-python.md. Source screenshots: desktop/task223-native-review. No packaged, live-model or GPU-performance claim at this phase."
     ],
     "limitations": [
-      "No completion claim. Real-provider, packaged and hardware evidence must be recorded separately."
+        "Native Advanced retains existing API operations in separate windows; its operator forms remain technical. Steps/thinking settings will connect to the bounded loop in Task 226. Existing intake retains its older size/chunking limits until Task 224.",
+        "Legacy browser/Electron sources are preserved for compatibility; the default native startup/build does not run Node.js or Electron."
     ],
     "automatedVerification": [
-      "Run affected regression and source-mode UI checks; retain failures as failures."
+        "Run affected regression and source-mode UI checks; retain failures as failures."
     ],
     "followUpValidation": [
-      "Record unavailable real-world checks as UNVERIFIED with their impact."
-    ]
-  },
+        "Record unavailable real-world checks as UNVERIFIED with their impact."
+    ],
+    "realWorldVerification": {
+        "status": "partial",
+        "evidence": [
+            "Actual native Windows Tk window, source screenshots, authenticated loopback session and local Brain note save were exercised."
+        ],
+        "unverified": [
+            "Packaged native artifact, live tool loop, physical media devices, assistive technology and RX 570 performance."
+        ]
+    }
+},
   {
     "number": 224,
     "title": "Real-data Brain visualization and intake",
-    "description": "Owner-authorized prototype alignment. Local-only work; no push or deployment. Stop at a failed phase gate.",
+    "description": "Owner-authorized native Python prototype migration (2026-10-25). Main startup/build must not require Node.js, Electron, or a browser engine. Preserve legacy features and runtime safety.",
     "category": "Phase 224 - Prototype Alignment",
     "status": "planned",
     "dependsOn": [
-      223
+        223
     ],
     "decisions": [],
     "acceptance": [
-      "Render real chunks and source clusters, bounded node grouping, real retrieval/link highlights, an anchored source/snippet/date/Forget card, performance controls and a 2D fallback.",
-      "Support files, folders and text through app-wide drop/paste and explicit local retention controls; chunk at 800 characters with 100 overlap.",
-      "Skip junk directories and files over 5 MB; replace re-fed sources using stable absolute-path/content keys, skip unchanged hashes and save atomically.",
-      "Reuse cached normalized search matrices and installed FAISS where available; never invent graph activity or fetch models silently."
+        "Render real chunks and source clusters, bounded node grouping, real retrieval/link highlights, an anchored source/snippet/date/Forget card, performance controls and a 2D fallback.",
+        "Support files, folders and text through app-wide drop/paste and explicit local retention controls; chunk at 800 characters with 100 overlap.",
+        "Skip junk directories and files over 5 MB; replace re-fed sources using stable absolute-path/content keys, skip unchanged hashes and save atomically.",
+        "Reuse cached normalized search matrices and installed FAISS where available; never invent graph activity or fetch models silently."
     ],
     "outOfScope": [
-      "Porting Tkinter code, deleting existing features, silent downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+        "Deleting existing features, silent model downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
     ],
     "risks": [
-      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+        "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
     "checkpoint": null,
     "validation": [],
     "limitations": [],
     "automatedVerification": [
-      "Run affected regression and source-mode UI checks; retain failures as failures."
+        "Run affected regression and source-mode UI checks; retain failures as failures."
     ],
     "followUpValidation": [
-      "Record unavailable real-world checks as UNVERIFIED with their impact."
+        "Record unavailable real-world checks as UNVERIFIED with their impact."
     ]
-  },
+},
   {
     "number": 225,
     "title": "Shipped knowledge pack and exact tools",
-    "description": "Owner-authorized prototype alignment. Local-only work; no push or deployment. Stop at a failed phase gate.",
+    "description": "Owner-authorized native Python prototype migration (2026-10-25). Main startup/build must not require Node.js, Electron, or a browser engine. Preserve legacy features and runtime safety.",
     "category": "Phase 225 - Prototype Alignment",
     "status": "planned",
     "dependsOn": [
-      224
+        224
     ],
     "decisions": [],
     "acceptance": [
-      "Separate user Brain, shipped knowledge_pack.json and rebuildable pack-hash embedding cache.",
-      "Answer exact-match greetings/thanks/identity without model calls; put persona/rules in system messages and retrieve two or three pack entries.",
-      "Provide bounded exact calculate, solve_equation and convert_units through existing sandbox/authority guards.",
-      "Use installed nomic-embed-text with search_document/search_query prefixes; measure before/after retrieval thresholds on real examples and publish actual numbers."
+        "Separate user Brain, shipped knowledge_pack.json and rebuildable pack-hash embedding cache.",
+        "Answer exact-match greetings/thanks/identity without model calls; put persona/rules in system messages and retrieve two or three pack entries.",
+        "Provide bounded exact calculate, solve_equation and convert_units through existing sandbox/authority guards.",
+        "Use installed nomic-embed-text with search_document/search_query prefixes; measure before/after retrieval thresholds on real examples and publish actual numbers."
     ],
     "outOfScope": [
-      "Porting Tkinter code, deleting existing features, silent downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+        "Deleting existing features, silent model downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
     ],
     "risks": [
-      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+        "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
     "checkpoint": null,
     "validation": [],
     "limitations": [],
     "automatedVerification": [
-      "Run affected regression and source-mode UI checks; retain failures as failures."
+        "Run affected regression and source-mode UI checks; retain failures as failures."
     ],
     "followUpValidation": [
-      "Record unavailable real-world checks as UNVERIFIED with their impact."
+        "Record unavailable real-world checks as UNVERIFIED with their impact."
     ]
-  },
+},
   {
     "number": 226,
     "title": "Bounded agent loop and hardened tools",
-    "description": "Owner-authorized prototype alignment. Local-only work; no push or deployment. Stop at a failed phase gate.",
+    "description": "Owner-authorized native Python prototype migration (2026-10-25). Main startup/build must not require Node.js, Electron, or a browser engine. Preserve legacy features and runtime safety.",
     "category": "Phase 226 - Prototype Alignment",
     "status": "planned",
     "dependsOn": [
-      225
+        225
     ],
     "decisions": [],
     "acceptance": [
-      "Support bounded tool steps, duplicate-call prevention, result caps, streaming answers, optional native/tagged thinking, visible observed logs and Stop.",
-      "Keep raw user history; inject retrieved context only for the current model call; bound history and explicitly set num_ctx; send real chat messages without internal envelopes.",
-      "List installed Ollama models, verify tool capability and allow per-tab choice; no fixed llama3.2:3b, silent downloads, cloud sends or fallback.",
-      "Confirm exact http/https browser destinations; block local/private/file web retrieval with redirect/DNS protections and mark fetched context untrusted.",
-      "Restrict file tools to user-chosen roots, block secret files and require exact write diff approval; require capture/device/action consent, local faster-whisper, indicators and kill switches; log Brain/clipboard writes."
+        "Support bounded tool steps, duplicate-call prevention, result caps, streaming answers, optional native/tagged thinking, visible observed logs and Stop.",
+        "Keep raw user history; inject retrieved context only for the current model call; bound history and explicitly set num_ctx; send real chat messages without internal envelopes.",
+        "List installed Ollama models, verify tool capability and allow per-tab choice; no fixed llama3.2:3b, silent downloads, cloud sends or fallback.",
+        "Confirm exact http/https browser destinations; block local/private/file web retrieval with redirect/DNS protections and mark fetched context untrusted.",
+        "Restrict file tools to user-chosen roots, block secret files and require exact write diff approval; require capture/device/action consent, local faster-whisper, indicators and kill switches; log Brain/clipboard writes."
     ],
     "outOfScope": [
-      "Porting Tkinter code, deleting existing features, silent downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+        "Deleting existing features, silent model downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
     ],
     "risks": [
-      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+        "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
     "checkpoint": null,
     "validation": [],
     "limitations": [],
     "automatedVerification": [
-      "Run affected regression and source-mode UI checks; retain failures as failures."
+        "Run affected regression and source-mode UI checks; retain failures as failures."
     ],
     "followUpValidation": [
-      "Record unavailable real-world checks as UNVERIFIED with their impact."
+        "Record unavailable real-world checks as UNVERIFIED with their impact."
     ]
-  },
+},
   {
     "number": 227,
     "title": "Prototype journey verification and polish",
-    "description": "Owner-authorized prototype alignment. Local-only work; no push or deployment. Stop at a failed phase gate.",
+    "description": "Owner-authorized native Python prototype migration (2026-10-25). Main startup/build must not require Node.js, Electron, or a browser engine. Preserve legacy features and runtime safety.",
     "category": "Phase 227 - Prototype Alignment",
     "status": "planned",
     "dependsOn": [
-      226
+        226
     ],
     "decisions": [],
     "acceptance": [
-      "Feed five real files and one folder; ask ten questions and report factual/cited counts and retrieval quality before/after prefixes.",
-      "Exercise browser opening, math, tool failure, mid-run Stop, an injection file and a localhost URL using local Ollama and an installed model.",
-      "Run full Python, browser and Electron suites, UI build and dead-control sweep; record screenshots and measured PC/RX 570 performance without inferring GPU use.",
-      "Report Verified real, AI-verified only, Unverified or Broken per phase; use one reviewed local commit/tag per passing phase; never push or deploy."
+        "Feed five real files and one folder; ask ten questions and report factual/cited counts and retrieval quality before/after prefixes.",
+        "Exercise browser opening, math, tool failure, mid-run Stop, an injection file and a localhost URL using local Ollama and an installed model.",
+        "Run full Python and native desktop suites, build/launch the Python artifact and perform a dead-control sweep; preserve legacy browser/Electron regressions where their sources remain supported; measure PC performance without inferring GPU use.",
+        "Report Verified real, AI-verified only, Unverified or Broken per phase; use one reviewed local commit/tag per passing phase; never push or deploy."
     ],
     "outOfScope": [
-      "Porting Tkinter code, deleting existing features, silent downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
+        "Deleting existing features, silent model downloads or cloud fallback, weakening runtime consent, unrestricted execution, deployment or git push."
     ],
     "risks": [
-      "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
+        "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
     "checkpoint": null,
     "validation": [],
     "limitations": [],
     "automatedVerification": [
-      "Run affected regression and source-mode UI checks; retain failures as failures."
+        "Run affected regression and source-mode UI checks; retain failures as failures."
     ],
     "followUpValidation": [
-      "Record unavailable real-world checks as UNVERIFIED with their impact."
+        "Record unavailable real-world checks as UNVERIFIED with their impact."
     ]
-  }
+}
 ];
 
 export const roadmapRules = {

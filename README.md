@@ -1,5 +1,7 @@
 # ERSELMETZ AI
 
+The current Tasks 223–227 migration targets a **native Python desktop**, following the owner's three-pane prototype. Start it with `start-erselmetz-ai.cmd` or `.venv\Scripts\python.exe -m app.native_desktop`. Its main window uses Python's built-in Tkinter; Node.js, Electron and a browser engine are not required. `build-erselmetz-ai.cmd` now uses the already-installed Python/PyInstaller toolchain. Legacy web/Electron sources remain available for compatibility while their features move into native Advanced windows; historical validation below describes those earlier surfaces. Native phase evidence is recorded separately.
+
 ERSELMETZ AI is a local-first desktop workspace for coordinating AI providers, models, people, projects and Tasks through a Python backend and an Electron interface.
 
 > **Screenshot placeholder:** capture the Command Center after the clean-profile Windows acceptance run.
