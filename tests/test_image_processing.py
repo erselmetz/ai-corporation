@@ -44,8 +44,16 @@ def assert_worker_ready(monkeypatch):
 
 def test_optional_image_dependency_is_not_part_of_core_requirements():
     root = Path(__file__).resolve().parents[1]
-    assert "Pillow" not in (root / "requirements.txt").read_text(encoding="utf-16")
+    assert "Pillow" not in (root / "requirements.txt").read_text(encoding="utf-8")
     assert "Pillow==12.3.0" in (root / "requirements-image-processing.txt").read_text(encoding="utf-8")
+
+
+def test_single_process_bundle_does_not_spawn_the_gui_executable_as_an_image_worker(monkeypatch):
+    monkeypatch.setattr(sys,'frozen',True,raising=False);calls=[]
+    adapter=PillowImageProcessingAdapter(worker_runner=lambda *a,**k:calls.append(a))
+    assert adapter.status().state=='unavailable' and 'not included' in adapter.status().message
+    with pytest.raises(ImageProcessingError,match='unavailable'):adapter.resize(png_header(),max_width=4,max_height=4)
+    assert calls==[]
 
 
 def test_importing_image_adapter_does_not_import_pillow():

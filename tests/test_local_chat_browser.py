@@ -2,7 +2,7 @@
 import socket
 from threading import Event, Thread
 
-from playwright.sync_api import sync_playwright, expect
+from tools.headless_browser import Browser
 import uvicorn
 
 from app.local import create_local_app
@@ -42,60 +42,48 @@ def test_local_owner_signin_chat_safe_reply_close_and_logout(tmp_path):
     thread.start()
     try:
         assert started.wait(10), "Local test server did not start"
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch()
-            try:
-                page = browser.new_page(viewport={"width": 1200, "height": 1000})
-                def approve_reviewed_chat_plan(dialog):
-                    assert "Review this chat plan before work begins" in dialog.message
-                    assert "No Task execution" in dialog.message
-                    dialog.accept()
-                page.on("dialog", approve_reviewed_chat_plan)
-                page.goto(origin + "/ui/login")
-                page.locator("#password").fill("test-only-browser-password")
-                page.get_by_role("button", name="Sign in", exact=True).click()
-                page.wait_for_url(origin + "/ui")
-                expect(page.locator("#setup-state")).to_contain_text("PARTIALLY CONFIGURED")
-                dashboard_screenshot = tmp_path / "local-dashboard.png"
-                page.screenshot(path=str(dashboard_screenshot), full_page=True)
-                print(f"Dashboard review screenshot: {dashboard_screenshot}")
-                assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-                page.set_viewport_size({"width": 390, "height": 844})
-                assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-                expect(page.get_by_role("link", name="Start Chat", exact=True)).to_be_visible()
-                page.goto(origin + "/ui/chat?desktop=1")
-                expect(page.locator("#chat-identity")).to_contain_text("Local Worker")
-                expect(page.locator("#chat-input")).to_be_enabled()
-                assert page.locator("#chat-settings").get_attribute("open") is None
-                toggle = page.locator("#chat-menu-button")
-                page.locator("#chat-input").fill("Hello from the browser")
-                page.locator("#chat-input").press("Enter")
-                expect(page.locator("#chat-history")).to_contain_text("Fake browser reply")
-                expect(page.locator("#chat-history")).to_contain_text("user - completed")
-                assert page.evaluate("window.providerInjected === undefined")
-                assert page.locator("#chat-history script").count() == 0
-                assert provider.calls == 1
-                screenshot = tmp_path / "local-chat.png"
-                page.screenshot(path=str(screenshot), full_page=True)
-                print(f"Browser review screenshot: {screenshot}")
-                # Check narrow-screen usability without another model request.
-                page.set_viewport_size({"width": 390, "height": 844})
-                assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-                expect(page.locator("#chat-sidebar")).to_be_hidden()
-                toggle.click()
-                expect(toggle).to_have_attribute("aria-expanded", "true")
-                expect(page.locator("#chat-sidebar")).to_be_visible()
-                page.locator(".chat-advanced-nav > summary").click()
-                page.get_by_role("button", name="Close conversation", exact=True).click()
-                expect(page.locator("#chat-input")).to_be_disabled()
-                page.get_by_role("link", name="Owner sign-in", exact=True).click()
-                page.get_by_role("button", name="Sign out", exact=True).click()
-                expect(page.locator("#login-state")).to_have_text("Signed out")
-                page.goto(origin + "/ui/chat")
-                expect(page.locator("#chat-state")).to_contain_text("Sign in")
-                assert provider.calls == 1
-            finally:
-                browser.close()
+        with Browser() as browser:
+            def approve_reviewed_chat_plan(message):
+                assert "Review this chat plan before work begins" in message
+                assert "No Task execution" in message
+                return True
+            browser.dialog_handler=approve_reviewed_chat_plan
+            browser.viewport(1200,1000)
+            browser.navigate(origin+"/ui/login")
+            browser.fill('#password','test-only-browser-password')
+            browser.click('#local-login button[type="submit"]')
+            browser.wait('location.pathname === "/ui"')
+            browser.wait('document.querySelector("#setup-state")?.textContent.includes("PARTIALLY CONFIGURED")')
+            browser.screenshot(tmp_path/'local-dashboard.png')
+            assert browser.evaluate('document.documentElement.scrollWidth <= innerWidth')
+            browser.viewport(390,844)
+            assert browser.evaluate('document.documentElement.scrollWidth <= innerWidth')
+            browser.wait("""[...document.querySelectorAll('a')].some(a=>{const clone=a.cloneNode(true);clone.querySelectorAll('[aria-hidden="true"]').forEach(e=>e.remove());return clone.textContent.trim()==='Start Chat' && a.getClientRects().length})""")
+            browser.navigate(origin+'/ui/chat?desktop=1')
+            browser.wait('document.querySelector("#chat-identity")?.textContent.includes("Local Worker")')
+            browser.wait('document.querySelector("#chat-input")?.disabled === false')
+            assert browser.evaluate('!document.querySelector("#chat-settings").hasAttribute("open")')
+            browser.fill('#chat-input','Hello from the browser');browser.enter('#chat-input')
+            browser.wait('document.querySelector("#chat-history")?.textContent.includes("Fake browser reply")')
+            assert browser.evaluate('document.querySelector("#chat-history").textContent.includes("user - completed")')
+            assert browser.evaluate('window.providerInjected === undefined && document.querySelectorAll("#chat-history script").length === 0')
+            assert provider.calls==1
+            browser.screenshot(tmp_path/'local-chat.png')
+            browser.viewport(390,844)
+            assert browser.evaluate('document.documentElement.scrollWidth <= innerWidth')
+            assert browser.evaluate('document.querySelector("#chat-sidebar").getBoundingClientRect().right <= 0')
+            browser.click('#chat-menu-button')
+            browser.wait('document.querySelector("#chat-menu-button").getAttribute("aria-expanded") === "true"')
+            browser.wait('document.querySelector("#chat-sidebar").getBoundingClientRect().right > 0')
+            browser.click('.chat-advanced-nav > summary');browser.click('#chat-close')
+            browser.wait('document.querySelector("#chat-input").disabled === true')
+            browser.click('a[href^="/ui/login"]')
+            browser.wait('location.pathname === "/ui/login"')
+            browser.click('#local-logout')
+            browser.wait('document.querySelector("#login-state")?.textContent === "Signed out"')
+            browser.navigate(origin+'/ui/chat')
+            browser.wait('document.querySelector("#chat-state")?.textContent.includes("Sign in")')
+            assert provider.calls==1
     finally:
         server.should_exit = True
         thread.join(timeout=10)

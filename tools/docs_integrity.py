@@ -6,13 +6,11 @@ import json
 import re
 
 ROOT=Path(__file__).resolve().parents[1]
-MOJIBAKE=re.compile(r"\ufffd|\u00c2[\u0080-\u00bf]|\u00c3[\u0080-\u00bf]|\u00e2(?:[\u0080-\u00bf]|[\u2000-\u20ff])|Task details \?|Tasks \d+\?\d+|Task \d+ \? 20\d\d|Loading(?: task data| the next planned task)?\?")
+MOJIBAKE=re.compile(r"\ufffd|\u00c2[\u0080-\u00bf]|\u00c3[\u0080-\u00bf]|\u00e2(?:[\u0080-\u00bf]|[\u2000-\u20ff])|Task details \?|Tasks \d+\?\d+|Task \d+ \? 20\d\d|Loading(?: task data| task count| the next planned task)?\?")
 
 
 def post100_records(text):
-    marker="export const post100Tasks = "
-    start=text.index(marker)+len(marker)
-    records,_=json.JSONDecoder().raw_decode(text[start:].lstrip())
+    records=json.loads(text)['post100Tasks']
     if not isinstance(records,list): raise ValueError("Post-100 source must remain a literal record array")
     return records
 
@@ -46,7 +44,7 @@ def check(root=ROOT):
                 if count>1: failures.append(f"{path.relative_to(root)}: duplicate HTML id {identifier}")
             for number,count in Counter(parser.task_articles).items():
                 if count>1: failures.append(f"{path.relative_to(root)}: duplicate current task article {number}")
-    records=post100_records((root/"docs/tasks-data.mjs").read_text(encoding="utf-8"))
+    records=post100_records((root/"docs/tasks-data.json").read_text(encoding="utf-8"))
     for number,count in Counter(item["number"] for item in records).items():
         if count>1: failures.append(f"Duplicate authoritative task {number}")
     updates=json.loads((root/"corporation_updates.json").read_text(encoding="utf-8"))["items"]

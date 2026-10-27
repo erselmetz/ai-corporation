@@ -7,8 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 
-from playwright.sync_api import Error as PlaywrightError
-from playwright.sync_api import Route, sync_playwright
+from .offline_browser import BrowserError, Route, sync_browser
 
 from .web_research import (
     MAX_TEXT_CHARACTERS,
@@ -186,7 +185,7 @@ class ReadOnlyBrowserInspector:
     def inspect(self, url: str) -> BrowserInspectionResult:
         page_document = self._web_research.fetch_page(url)
         try:
-            with sync_playwright() as playwright:
+            with sync_browser() as playwright:
                 browser = playwright.chromium.launch(
                     headless=True,
                     chromium_sandbox=True,
@@ -224,7 +223,7 @@ class ReadOnlyBrowserInspector:
                         context.close()
                 finally:
                     browser.close()
-        except PlaywrightError:
+        except BrowserError:
             raise BrowserInspectionUnavailable(
                 "The read-only browser inspection could not be completed"
             ) from None

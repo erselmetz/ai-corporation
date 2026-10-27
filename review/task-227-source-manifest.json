@@ -1,0 +1,1884 @@
+{
+  "base_commit": "977b738e58cf50bcc16077e7921c49cc2b35ca8b",
+  "method": "SHA256 of content with CRLF normalized to LF for listed text extensions; binary bytes unchanged; self excluded",
+  "checkpoint_paths": [
+    ".gitignore",
+    "AGENTS.md",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md",
+    "app/api/app.py",
+    "app/application/services/chat_history.py",
+    "app/build_stamp.py",
+    "app/desktop_runtime.py",
+    "app/integrations/browser_inspection.py",
+    "app/integrations/image_processing.py",
+    "app/integrations/offline_browser.py",
+    "app/integrations/offline_chromium_transport.py",
+    "app/integrations/scoped_browser.py",
+    "app/integrations/scoped_browser_automation.py",
+    "app/integrations/scoped_chromium_transport.py",
+    "app/local.py",
+    "app/qt_desktop/__main__.py",
+    "app/qt_desktop/capture_controls.py",
+    "app/qt_desktop/failures.py",
+    "app/qt_desktop/shell.py",
+    "app/qt_desktop/transport.py",
+    "app/qt_desktop/windows.py",
+    "app/updates/trusted_release.py",
+    "app/webui/router.py",
+    "app/webui/static/brain-three.mjs",
+    "app/webui/static/brain-view.mjs",
+    "app/webui/static/three-scene.mjs",
+    "app/webui/static/vendor/three/LICENSE",
+    "app/webui/static/vendor/three/three.core.js",
+    "app/webui/static/vendor/three/three.module.js",
+    "app/webui/static/visualization.mjs",
+    "corporation_updates.json",
+    "desktop-ui/next-env.d.ts",
+    "desktop-ui/next.config.ts",
+    "desktop-ui/package-lock.json",
+    "desktop-ui/package.json",
+    "desktop-ui/scripts/sync-design-tokens.mjs",
+    "desktop-ui/src/app/app-shell.tsx",
+    "desktop-ui/src/app/design-tokens.css",
+    "desktop-ui/src/app/first-run-wizard.tsx",
+    "desktop-ui/src/app/layout.tsx",
+    "desktop-ui/src/app/page.tsx",
+    "desktop-ui/src/app/settings/hardware-summary.ts",
+    "desktop-ui/src/app/settings/page.tsx",
+    "desktop-ui/src/app/style.css",
+    "desktop-ui/tsconfig.json",
+    "desktop/README.md",
+    "desktop/bootstrap.css",
+    "desktop/bootstrap.html",
+    "desktop/bootstrap.js",
+    "desktop/erselmetz-backend.spec",
+    "desktop/local-diagnostics.cjs",
+    "desktop/local-reset.cjs",
+    "desktop/main.cjs",
+    "desktop/ollama-installer.cjs",
+    "desktop/package-lock.json",
+    "desktop/package.json",
+    "desktop/preload.cjs",
+    "desktop/requirements-build.txt",
+    "desktop/requirements-desktop-automation.txt",
+    "desktop/screen-capture.cjs",
+    "desktop/scripts/build-backend.ps1",
+    "desktop/scripts/build-installer.ps1",
+    "desktop/scripts/sign-release-manifest.cjs",
+    "desktop/scripts/smoke-backend.py",
+    "desktop/scripts/smoke-installer.py",
+    "desktop/scripts/uninstaller.nsh",
+    "desktop/test/build-stamp.test.cjs",
+    "desktop/test/camera-security.test.cjs",
+    "desktop/test/hardware-profile-ui.test.cjs",
+    "desktop/test/local-diagnostics.test.cjs",
+    "desktop/test/local-reset.test.cjs",
+    "desktop/test/navigation.test.cjs",
+    "desktop/test/ollama-installer.test.cjs",
+    "desktop/test/onboarding.test.cjs",
+    "desktop/test/prototype-shell.test.cjs",
+    "desktop/test/screen-capture.test.cjs",
+    "desktop/test/security.test.cjs",
+    "desktop/test/sign-release-manifest.test.cjs",
+    "desktop/test/workspaces.test.cjs",
+    "desktop/workspaces.cjs",
+    "docs/architecture.html",
+    "docs/documentation.html",
+    "docs/implementation-history.md",
+    "docs/package.json",
+    "docs/roadmap-status.js",
+    "docs/roadmap.html",
+    "docs/server.mjs",
+    "docs/tasks-data.json",
+    "docs/tasks-data.mjs",
+    "docs/tasks.html",
+    "docs/test/site.test.mjs",
+    "docs/test/tasks-page.test.mjs",
+    "docs/test/vercel.test.mjs",
+    "docs/vercel.json",
+    "native_entry.py",
+    "packaging/README.md",
+    "packaging/hooks/hook-PySide6.QtGui.py",
+    "packaging/licenses/GPL-3.0.txt",
+    "packaging/licenses/LGPL-2.1.txt",
+    "packaging/licenses/LGPL-3.0.txt",
+    "packaging/licenses/sources.json",
+    "packaging/native.iss",
+    "packaging/third-party-sources.json",
+    "requirements-build.txt",
+    "requirements-desktop-dev.txt",
+    "requirements.txt",
+    "review/task-227-coverage-migration.json",
+    "review/task-227-no-node.md",
+    "review/task-227-real-evidence.json",
+    "review/task-227-retired-files.json",
+    "review/task-227-source-manifest.json",
+    "tests/baselines/qt-shell/dark-1-1100x720.png",
+    "tests/baselines/qt-shell/dark-1-1280x900.png",
+    "tests/baselines/qt-shell/dark-1-1600x1000.png",
+    "tests/baselines/qt-shell/dark-1.25-1100x720.png",
+    "tests/baselines/qt-shell/dark-1.25-1280x900.png",
+    "tests/baselines/qt-shell/dark-1.25-1600x1000.png",
+    "tests/baselines/qt-shell/dark-1.5-1100x720.png",
+    "tests/baselines/qt-shell/dark-1.5-1280x900.png",
+    "tests/baselines/qt-shell/dark-1.5-1600x1000.png",
+    "tests/baselines/qt-shell/light-1-1100x720.png",
+    "tests/baselines/qt-shell/light-1-1280x900.png",
+    "tests/baselines/qt-shell/light-1-1600x1000.png",
+    "tests/baselines/qt-shell/light-1.25-1100x720.png",
+    "tests/baselines/qt-shell/light-1.25-1280x900.png",
+    "tests/baselines/qt-shell/light-1.25-1600x1000.png",
+    "tests/baselines/qt-shell/light-1.5-1100x720.png",
+    "tests/baselines/qt-shell/light-1.5-1280x900.png",
+    "tests/baselines/qt-shell/light-1.5-1600x1000.png",
+    "tests/browser_contracts/harness.mjs",
+    "tests/browser_contracts/local-automation-ui.test.mjs",
+    "tests/browser_contracts/manifest.json",
+    "tests/browser_contracts/test_activity_ui.mjs",
+    "tests/browser_contracts/test_agents_ui.mjs",
+    "tests/browser_contracts/test_assignment_policy_ui.mjs",
+    "tests/browser_contracts/test_backup_ui.mjs",
+    "tests/browser_contracts/test_brain_visualization_ui.mjs",
+    "tests/browser_contracts/test_camera_capture.mjs",
+    "tests/browser_contracts/test_camera_stop.mjs",
+    "tests/browser_contracts/test_capability_packs_ui.mjs",
+    "tests/browser_contracts/test_chat_images_ui.mjs",
+    "tests/browser_contracts/test_chat_markdown.mjs",
+    "tests/browser_contracts/test_chat_ui.mjs",
+    "tests/browser_contracts/test_chat_workspace_ui.mjs",
+    "tests/browser_contracts/test_dashboard_data.mjs",
+    "tests/browser_contracts/test_documentation_ui.mjs",
+    "tests/browser_contracts/test_emergency_stop_ui.mjs",
+    "tests/browser_contracts/test_employee_chat_ui.mjs",
+    "tests/browser_contracts/test_employee_ui.mjs",
+    "tests/browser_contracts/test_inventory_ui.mjs",
+    "tests/browser_contracts/test_knowledge_ui.mjs",
+    "tests/browser_contracts/test_local_login_ui.mjs",
+    "tests/browser_contracts/test_local_models_ui.mjs",
+    "tests/browser_contracts/test_memory_ui.mjs",
+    "tests/browser_contracts/test_online_provider_ui.mjs",
+    "tests/browser_contracts/test_owner_suggestions_ui.mjs",
+    "tests/browser_contracts/test_position_ui.mjs",
+    "tests/browser_contracts/test_project_ui.mjs",
+    "tests/browser_contracts/test_provider_connections_ui.mjs",
+    "tests/browser_contracts/test_provider_ui.mjs",
+    "tests/browser_contracts/test_quick_start_ui.mjs",
+    "tests/browser_contracts/test_readiness_ui.mjs",
+    "tests/browser_contracts/test_release_update_ui.mjs",
+    "tests/browser_contracts/test_sage_core.mjs",
+    "tests/browser_contracts/test_screen_capture.mjs",
+    "tests/browser_contracts/test_semantic_memory_ui.mjs",
+    "tests/browser_contracts/test_shared_navigation.mjs",
+    "tests/browser_contracts/test_structure_ui.mjs",
+    "tests/browser_contracts/test_task_progress.mjs",
+    "tests/browser_contracts/test_task_ui.mjs",
+    "tests/browser_contracts/test_text_to_speech.mjs",
+    "tests/browser_contracts/test_theme_ui.mjs",
+    "tests/browser_contracts/test_ui_details.mjs",
+    "tests/browser_contracts/test_updates_ui.mjs",
+    "tests/browser_contracts/test_visualization_ui.mjs",
+    "tests/browser_contracts/test_voice_ui.mjs",
+    "tests/browser_contracts/test_workflow_map_ui.mjs",
+    "tests/browser_contracts/test_workflows_ui.mjs",
+    "tests/browser_contracts/worker.mjs",
+    "tests/local-automation-ui.test.mjs",
+    "tests/test_activity_ui.mjs",
+    "tests/test_agents_ui.mjs",
+    "tests/test_assignment_policy_ui.mjs",
+    "tests/test_backup_ui.mjs",
+    "tests/test_brain_visualization_ui.mjs",
+    "tests/test_browser_contracts.py",
+    "tests/test_browser_inspection.py",
+    "tests/test_camera_capture.mjs",
+    "tests/test_camera_stop.mjs",
+    "tests/test_capability_packs_ui.mjs",
+    "tests/test_chat_images_ui.mjs",
+    "tests/test_chat_markdown.mjs",
+    "tests/test_chat_ui.mjs",
+    "tests/test_chat_workspace_ui.mjs",
+    "tests/test_dashboard_data.mjs",
+    "tests/test_desktop_runtime.py",
+    "tests/test_docs_integrity.py",
+    "tests/test_documentation_ui.mjs",
+    "tests/test_emergency_stop_ui.mjs",
+    "tests/test_employee_chat_ui.mjs",
+    "tests/test_employee_ui.mjs",
+    "tests/test_gemini_tcp_contract.py",
+    "tests/test_image_processing.py",
+    "tests/test_inventory_ui.mjs",
+    "tests/test_knowledge_ui.mjs",
+    "tests/test_local_chat_browser.py",
+    "tests/test_local_login_ui.mjs",
+    "tests/test_local_models_ui.mjs",
+    "tests/test_memory_ui.mjs",
+    "tests/test_native_build_stamp.py",
+    "tests/test_native_failure_metadata.py",
+    "tests/test_native_installer.py",
+    "tests/test_native_session_security.py",
+    "tests/test_no_node_stack.py",
+    "tests/test_offline_browser.py",
+    "tests/test_online_provider_ui.mjs",
+    "tests/test_owner_suggestions_ui.mjs",
+    "tests/test_position_ui.mjs",
+    "tests/test_product_audit.py",
+    "tests/test_project_ui.mjs",
+    "tests/test_provider_connections_ui.mjs",
+    "tests/test_provider_ui.mjs",
+    "tests/test_public_docs.py",
+    "tests/test_public_docs_browser.py",
+    "tests/test_qt_advanced_controls.py",
+    "tests/test_qt_dead_controls.py",
+    "tests/test_qt_screenshot_matrix.py",
+    "tests/test_qt_window_restore.py",
+    "tests/test_quick_start_ui.mjs",
+    "tests/test_readiness_ui.mjs",
+    "tests/test_release_update_ui.mjs",
+    "tests/test_sage_core.mjs",
+    "tests/test_scoped_browser_automation.py",
+    "tests/test_scoped_browser_cdp.py",
+    "tests/test_screen_capture.mjs",
+    "tests/test_semantic_memory_ui.mjs",
+    "tests/test_shared_navigation.mjs",
+    "tests/test_structure_ui.mjs",
+    "tests/test_task_progress.mjs",
+    "tests/test_task_ui.mjs",
+    "tests/test_text_to_speech.mjs",
+    "tests/test_theme_ui.mjs",
+    "tests/test_ui_coverage_migration.py",
+    "tests/test_ui_details.mjs",
+    "tests/test_updates_ui.mjs",
+    "tests/test_visualization_page.py",
+    "tests/test_visualization_ui.mjs",
+    "tests/test_voice_ui.mjs",
+    "tests/test_workflow_map_ui.mjs",
+    "tests/test_workflows_ui.mjs",
+    "tools/audit_native_artifact.py",
+    "tools/build_installer.py",
+    "tools/build_native.py",
+    "tools/docs_integrity.py",
+    "tools/frozen_corpus.py",
+    "tools/generate_docs.py",
+    "tools/headless_browser.py",
+    "tools/installer_smoke.py",
+    "tools/native_brain_answers_check.py",
+    "tools/native_hybrid_check.py",
+    "tools/native_prefix_check.py",
+    "tools/native_safety_check.py",
+    "tools/package_notices.py",
+    "tools/packaged_advanced_check.py",
+    "tools/packaged_browser_check.py",
+    "tools/packaged_chat_check.py",
+    "tools/packaged_restore_check.py",
+    "tools/qt_action_audit.py",
+    "tools/qt_brain_render_check.py",
+    "tools/qt_restore_process_check.py",
+    "tools/qt_screenshot_matrix.py",
+    "tools/serve_docs.py",
+    "tools/smoke_native.py",
+    "tools/task213_visual_matrix.py",
+    "tools/task214_electron_check.cjs",
+    "tools/task223_shell_check.cjs"
+  ],
+  "files": [
+    {
+      "path": ".gitignore",
+      "state": "present",
+      "bytes": 1300,
+      "sha256": "272acf727a7a4fe01625fe5cd453dc6d54432aebf2672fdc1b1407d0874560c3",
+      "normalization": "none"
+    },
+    {
+      "path": "AGENTS.md",
+      "state": "present",
+      "bytes": 9581,
+      "sha256": "b865b5629ef9c0ac72a039f3faf1e37cec36600a773aa64b4302420487d9e361",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "README.md",
+      "state": "present",
+      "bytes": 3803,
+      "sha256": "a916d99d15f22b80020121b72a6ba85a1fcf765f0b5ad14dbb6ec75306206aeb",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "state": "present",
+      "bytes": 4507,
+      "sha256": "ed58e08791a2d4b34be8378763dd1d15b169e5664ab12148f68851655e0ea937",
+      "normalization": "none"
+    },
+    {
+      "path": "app/api/app.py",
+      "state": "present",
+      "bytes": 42812,
+      "sha256": "2cee98a5b0f046c95494eb634f5a3354974dab2af54bf71c5692cf87a0aa7fff",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "app/application/services/chat_history.py",
+      "state": "present",
+      "bytes": 15576,
+      "sha256": "f97724caa00e94438d4d2e10d82b6252bffd3bf1ab2706e5b4f999fa5acd9a7c",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "app/build_stamp.py",
+      "state": "present",
+      "bytes": 2418,
+      "sha256": "8f06c101dcb146846acb80ce1d975cd5ccc2e224f330435a6417bdbb4cc005e8",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "app/desktop_runtime.py",
+      "state": "deleted"
+    },
+    {
+      "path": "app/integrations/browser_inspection.py",
+      "state": "present",
+      "bytes": 7508,
+      "sha256": "54c80f3616aadc5876f321a4e9e82f4e93751f26a0cf31e45453dedc2db800ca",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "app/integrations/image_processing.py",
+      "state": "present",
+      "bytes": 9486,
+      "sha256": "88b31cbf1aeafb2cda6b9c2423aba6340769ca0f0ebc5ba1b3dfe928f5a1cc71",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "app/integrations/offline_browser.py",
+      "state": "present",
+      "bytes": 3155,
+      "sha256": "aa4f0caecb50ce6763805d42cfe0d2b2afa35437446b136a06e1d2f809f3d493",
+      "normalization": "none"
+    },
+    {
+      "path": "app/integrations/offline_chromium_transport.py",
+      "state": "present",
+      "bytes": 5487,
+      "sha256": "4a5f1040cbd53ed9ad4125ff037e820114978358adaedb15a13c58cf484ba463",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "app/integrations/scoped_browser.py",
+      "state": "present",
+      "bytes": 11671,
+      "sha256": "bc0bd068938b527a3193a5e70275fb727b8492c09e154cb6563dbc7731787631",
+      "normalization": "none"
+    },
+    {
+      "path": "app/integrations/scoped_browser_automation.py",
+      "state": "present",
+      "bytes": 27819,
+      "sha256": "4043e77b316a11d0655bb8584396c780267163cb02e82a9dc3504a838388ca62",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "app/integrations/scoped_chromium_transport.py",
+      "state": "present",
+      "bytes": 5970,
+      "sha256": "5a32dda7bdf50131ebc8f6a96b5bd3367ce059f28c8760f8f5b14c7887a4e86a",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "app/local.py",
+      "state": "present",
+      "bytes": 27816,
+      "sha256": "c4347588645ad8b7957147fec73014b34f0b3193dcabf425950de2f3afcf4a7c",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "app/qt_desktop/__main__.py",
+      "state": "present",
+      "bytes": 3384,
+      "sha256": "9eb25a3736a6d9d8a1f8fa88e269e883bda1a8c3929e256a8aecf953289718ac",
+      "normalization": "none"
+    },
+    {
+      "path": "app/qt_desktop/capture_controls.py",
+      "state": "present",
+      "bytes": 10891,
+      "sha256": "180bc8da3e491040f784fd05da295a28b2090ed12b152caf1dd3859b69b85138",
+      "normalization": "none"
+    },
+    {
+      "path": "app/qt_desktop/failures.py",
+      "state": "present",
+      "bytes": 2817,
+      "sha256": "ede4e392b8a366485ecb3211b54f4db99d7ee7c194007f54cf2108a1edbf9104",
+      "normalization": "none"
+    },
+    {
+      "path": "app/qt_desktop/shell.py",
+      "state": "present",
+      "bytes": 66650,
+      "sha256": "01753cbd770b184d504f158dc2d75d7056ff80dd879115db9a8d6909338af1a9",
+      "normalization": "none"
+    },
+    {
+      "path": "app/qt_desktop/transport.py",
+      "state": "present",
+      "bytes": 13083,
+      "sha256": "6f557e88798e36419f2aa6f2b80b558697235d75c7ad9c9dfed005cbad55cef5",
+      "normalization": "none"
+    },
+    {
+      "path": "app/qt_desktop/windows.py",
+      "state": "present",
+      "bytes": 4166,
+      "sha256": "20f631bd6ad16164c7878f7da9c67824d5aa7d602ce91ae8969c1bacdfd22eef",
+      "normalization": "none"
+    },
+    {
+      "path": "app/updates/trusted_release.py",
+      "state": "present",
+      "bytes": 17020,
+      "sha256": "112b5ccf0a14cd9796b26750a4393326b32f9b783f094dd0844111369cf0aaa1",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "app/webui/router.py",
+      "state": "present",
+      "bytes": 128485,
+      "sha256": "c617d5f2c180b1b4fe69a96f880a5e3e6de2d3e73d77a2c4471b4e53fe25cff9",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "app/webui/static/brain-three.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/brain-view.mjs",
+      "state": "present",
+      "bytes": 8859,
+      "sha256": "0187bf184fcdfe938549b9e322fdfe65de39b93aeb01bee75186728d04db0d9f",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "app/webui/static/three-scene.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/vendor/three/LICENSE",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/vendor/three/three.core.js",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/vendor/three/three.module.js",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/visualization.mjs",
+      "state": "present",
+      "bytes": 23819,
+      "sha256": "30eb74ed4e8fc3e49b1b7149181edff58354c52dea96493fee200e2ddfebdd18",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "corporation_updates.json",
+      "state": "present",
+      "bytes": 168946,
+      "sha256": "d551b9c0da5adb34102d57c007074927905478797a8c0dd77b05cd59aa272a15",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "desktop-ui/next-env.d.ts",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/next.config.ts",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/package-lock.json",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/package.json",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/scripts/sync-design-tokens.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/src/app/app-shell.tsx",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/src/app/design-tokens.css",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/src/app/first-run-wizard.tsx",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/src/app/layout.tsx",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/src/app/page.tsx",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/src/app/settings/hardware-summary.ts",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/src/app/settings/page.tsx",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/src/app/style.css",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop-ui/tsconfig.json",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/README.md",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/bootstrap.css",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/bootstrap.html",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/bootstrap.js",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/erselmetz-backend.spec",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/local-diagnostics.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/local-reset.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/main.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/ollama-installer.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/package-lock.json",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/package.json",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/preload.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/requirements-build.txt",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/requirements-desktop-automation.txt",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/screen-capture.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/scripts/build-backend.ps1",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/scripts/build-installer.ps1",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/scripts/sign-release-manifest.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/scripts/smoke-backend.py",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/scripts/smoke-installer.py",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/scripts/uninstaller.nsh",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/build-stamp.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/camera-security.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/hardware-profile-ui.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/local-diagnostics.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/local-reset.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/navigation.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/ollama-installer.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/onboarding.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/prototype-shell.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/screen-capture.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/security.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/sign-release-manifest.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/test/workspaces.test.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "desktop/workspaces.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "docs/architecture.html",
+      "state": "present",
+      "bytes": 3707,
+      "sha256": "510f7c50e0fb5e15d09897d14a19d11994bb32c2612d3f2d55b8ab7d34b37810",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "docs/documentation.html",
+      "state": "present",
+      "bytes": 2361,
+      "sha256": "f58383ef6a18acdeffd588f85e4c51bc7d971f809113fc9e4985f815e74aff9e",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "docs/implementation-history.md",
+      "state": "present",
+      "bytes": 148188,
+      "sha256": "452ac83d5c8c02dc0fdd2899bbed664b31d06e08d6eb7c09cd137ff6397efe17",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "docs/package.json",
+      "state": "deleted"
+    },
+    {
+      "path": "docs/roadmap-status.js",
+      "state": "present",
+      "bytes": 7078,
+      "sha256": "36339fe34b714c585e2db53c1515e96aaff18a1fd8e06332e02e818f1036802e",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "docs/roadmap.html",
+      "state": "present",
+      "bytes": 2834,
+      "sha256": "bb64309894f9ff1efb05e06832b4d5b36fa85e012dbc77d55d849f891f37fa55",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "docs/server.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "docs/tasks-data.json",
+      "state": "present",
+      "bytes": 517640,
+      "sha256": "b4cd03394359f9a770c2e6cb6b60a5f51c099e66394a68fdaa3e02b2d847ceca",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "docs/tasks-data.mjs",
+      "state": "present",
+      "bytes": 504879,
+      "sha256": "27891c0308cf28b57cbd3102b488bece2b99f41f6ef09beafe8b9ce9a15c74b2",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "docs/tasks.html",
+      "state": "present",
+      "bytes": 2696,
+      "sha256": "d79c7ec7ed313bb051b72f78778a85925b5d1e67de390a4260852bacb44483d6",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "docs/test/site.test.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "docs/test/tasks-page.test.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "docs/test/vercel.test.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "docs/vercel.json",
+      "state": "present",
+      "bytes": 1054,
+      "sha256": "e9bb366cf6e3a61f6b02117a459a89914d49c1249fd5d752be7b68fc390a0fb8",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "native_entry.py",
+      "state": "present",
+      "bytes": 168,
+      "sha256": "c30671b51523a2d7ebae0aff6e62c9c33723f5c3052380261e49f6df48e699e0",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "packaging/README.md",
+      "state": "present",
+      "bytes": 4335,
+      "sha256": "71013d5418786f0adb93f3be3d0a223b22a12e62341a62b3fc906b9c4034358e",
+      "normalization": "none"
+    },
+    {
+      "path": "packaging/hooks/hook-PySide6.QtGui.py",
+      "state": "present",
+      "bytes": 518,
+      "sha256": "7262166cc5a50a98d51d31a31532b8e4e1e0ff4ef0966608e380b3c048280215",
+      "normalization": "none"
+    },
+    {
+      "path": "packaging/licenses/GPL-3.0.txt",
+      "state": "present",
+      "bytes": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "normalization": "none"
+    },
+    {
+      "path": "packaging/licenses/LGPL-2.1.txt",
+      "state": "present",
+      "bytes": 26419,
+      "sha256": "20e50fe7aae3e56378ebf0417d9de904f55a0e61e4df315333e632a4d3555d95",
+      "normalization": "none"
+    },
+    {
+      "path": "packaging/licenses/LGPL-3.0.txt",
+      "state": "present",
+      "bytes": 7652,
+      "sha256": "e3a994d82e644b03a792a930f574002658412f62407f5fee083f2555c5f23118",
+      "normalization": "none"
+    },
+    {
+      "path": "packaging/licenses/sources.json",
+      "state": "present",
+      "bytes": 562,
+      "sha256": "a0cd112fc8b3da001f1a338cdf4a1d2edab15d5cb64f230357b667ae70fdaa95",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "packaging/native.iss",
+      "state": "present",
+      "bytes": 1888,
+      "sha256": "0fd2b5555a61b310f8b689385e318a44664f81264fde8afbad079eff00361796",
+      "normalization": "none"
+    },
+    {
+      "path": "packaging/third-party-sources.json",
+      "state": "present",
+      "bytes": 1846,
+      "sha256": "b20030877a39529abdce312660313aa013c30a8bad7900cd914c3c5a13d053d2",
+      "normalization": "none"
+    },
+    {
+      "path": "requirements-build.txt",
+      "state": "present",
+      "bytes": 20,
+      "sha256": "11c0aa19d14e0081c5bc5c1c6683b057d81223478639fab99a9c603d76828204",
+      "normalization": "none"
+    },
+    {
+      "path": "requirements-desktop-dev.txt",
+      "state": "present",
+      "bytes": 243,
+      "sha256": "c8617b408332d2b18f053a3cc41de0683bd777015b3330d51a3ef2427659f78f",
+      "normalization": "none"
+    },
+    {
+      "path": "requirements.txt",
+      "state": "present",
+      "bytes": 738,
+      "sha256": "58fa8345c02d2cddbbbeb6adc4be0c6170d8b5791e2f0b250ed5b474ea684333",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "review/task-227-coverage-migration.json",
+      "state": "present",
+      "bytes": 185343,
+      "sha256": "33044644277389fdfeaa2d6d3f71ae0a4b0d0476d8aa559c05282cdc783bb4f7",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "review/task-227-no-node.md",
+      "state": "present",
+      "bytes": 12659,
+      "sha256": "ca771701dd44c027074b9544e3ff1757cf1418fa7db31fac324b63dd3b370daf",
+      "normalization": "none"
+    },
+    {
+      "path": "review/task-227-real-evidence.json",
+      "state": "present",
+      "bytes": 183160,
+      "sha256": "359352d702fb83def04f3952c246c06a04b6bf050080e59f8853e2d631101c62",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "review/task-227-retired-files.json",
+      "state": "present",
+      "bytes": 23270,
+      "sha256": "888c6264083df66cf48bc8fe29d55e5db2002a301a7dae8acfad209c7a1be11f",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/baselines/qt-shell/dark-1-1100x720.png",
+      "state": "present",
+      "bytes": 53168,
+      "sha256": "4ec653b186a679a57c2b331c47e88602a9fbb0d22a4fd89073f603f22bd205e9",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/dark-1-1280x900.png",
+      "state": "present",
+      "bytes": 59088,
+      "sha256": "ba86c844c60ae5d4e68015b24cc5dcda548401ac30a4881d8c4786772ff79187",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/dark-1-1600x1000.png",
+      "state": "present",
+      "bytes": 65823,
+      "sha256": "0f7e0be9c6a3b35fa1dc95c2848131e618427ea75ad967cbe9e98fef7afcce8a",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/dark-1.25-1100x720.png",
+      "state": "present",
+      "bytes": 88721,
+      "sha256": "c0b859dbb8db9da5b548b49bd0717a67477f8aadf413ac39ed1d0221360093e3",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/dark-1.25-1280x900.png",
+      "state": "present",
+      "bytes": 96663,
+      "sha256": "c8fad81a1739d183b64f601afb4d24c2bf26f71e3163925160e398582536a238",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/dark-1.25-1600x1000.png",
+      "state": "present",
+      "bytes": 97253,
+      "sha256": "e018c7870534812630b8186de291d2b3df57f078007ca46e0bae5aa4f6268095",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/dark-1.5-1100x720.png",
+      "state": "present",
+      "bytes": 103796,
+      "sha256": "1f6c5a50c176d728a131c5f6f78050afdda9f2f28e76b633e0ce34b5b75e35ed",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/dark-1.5-1280x900.png",
+      "state": "present",
+      "bytes": 105331,
+      "sha256": "9cd1c5eddada840b165baca3a239b56f0584f81ffc3363eb42ea6d609fd36ab5",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/dark-1.5-1600x1000.png",
+      "state": "present",
+      "bytes": 105437,
+      "sha256": "c3d0717e9baf0bc6ca0c91388fbf1c6b55c7b49cfd7b16f317d333c5378f268c",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/light-1-1100x720.png",
+      "state": "present",
+      "bytes": 52857,
+      "sha256": "acd64b742a6fd9bd07ae6a91f7e859b09e58370cf964893d1c998456ad239a0a",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/light-1-1280x900.png",
+      "state": "present",
+      "bytes": 58643,
+      "sha256": "dac990b5f0bf9b6d3ad76d933efb8d72209cfff65a033ce61c51af2567225d4f",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/light-1-1600x1000.png",
+      "state": "present",
+      "bytes": 65298,
+      "sha256": "6f5597edb0bdcd8cf3fec047fba99279981b10065288666698e5fbd7bc1d429b",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/light-1.25-1100x720.png",
+      "state": "present",
+      "bytes": 88232,
+      "sha256": "e39c9da18b42d0839259c25eb9419f234f6319af5a19b9db028c41d9b8c8680a",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/light-1.25-1280x900.png",
+      "state": "present",
+      "bytes": 96134,
+      "sha256": "8390ff2cc8033b5eb1787c5a2eab9c943b60c3a5d08f9938ab7f01ad3f2fc6e0",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/light-1.25-1600x1000.png",
+      "state": "present",
+      "bytes": 96782,
+      "sha256": "45bddd64b14faa28f7efb9c1706b36f256da7527dd44e1d2098834b806f0077a",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/light-1.5-1100x720.png",
+      "state": "present",
+      "bytes": 102812,
+      "sha256": "04c2bfddb6b0de70c3e5c184db34edb4008524679755cf53f0a1d8ecad37c5a1",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/light-1.5-1280x900.png",
+      "state": "present",
+      "bytes": 104142,
+      "sha256": "55d38defa7c3da6af3147ba8fe44ce9ac59c48a0679f83967971eb0194024fa9",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/baselines/qt-shell/light-1.5-1600x1000.png",
+      "state": "present",
+      "bytes": 104304,
+      "sha256": "b0707e04777560b7ad4e56189fb1179f4deebf57f751f2513e235cd7e22fe50a",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/browser_contracts/harness.mjs",
+      "state": "present",
+      "bytes": 2906,
+      "sha256": "cdd8015b5a9e7e42d27c96ade7592516cc388d1df02aae1a31c2f5781b5a2910",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/browser_contracts/local-automation-ui.test.mjs",
+      "state": "present",
+      "bytes": 2802,
+      "sha256": "2b953dc15140346e14f9609fc5c2bb8b73c453301289e130846fb71e4a93e0f5",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/manifest.json",
+      "state": "present",
+      "bytes": 32316,
+      "sha256": "0d49507af179ff562d38a4cf68b1fdc383605417d3a6da53eecbfefa455fe7c9",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_activity_ui.mjs",
+      "state": "present",
+      "bytes": 9853,
+      "sha256": "dcb74b6cdd39638631f62a8a9e412f692bf24c5706feed710a9fecac360f3c37",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_agents_ui.mjs",
+      "state": "present",
+      "bytes": 10053,
+      "sha256": "89b664a37aaeeb2c172c05375b8d186c2e00e969a9bd7518913a7f04e0824319",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_assignment_policy_ui.mjs",
+      "state": "present",
+      "bytes": 5065,
+      "sha256": "ffe8d0fec20b658d1d931dd0301afc6529cae6070664897c5764b44f19838d17",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_backup_ui.mjs",
+      "state": "present",
+      "bytes": 4269,
+      "sha256": "71075dc52533181139ac814990d148f49602acc41cecfc7f4be97af03b6ce733",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_brain_visualization_ui.mjs",
+      "state": "present",
+      "bytes": 7150,
+      "sha256": "1e3ad9b6ff8a82ae1500f52b2ae1aef7f935034cd84f3709400d041ea230c742",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_camera_capture.mjs",
+      "state": "present",
+      "bytes": 5091,
+      "sha256": "e62cce919c1203b0debced19f7e53697f5020fbf1f6f20b0b05e93ad35eb70cc",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_camera_stop.mjs",
+      "state": "present",
+      "bytes": 1430,
+      "sha256": "4bb30ce159ee79fe9b8566a5727ba8f97011e9b966af73a8f578dab93fcaf625",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_capability_packs_ui.mjs",
+      "state": "present",
+      "bytes": 4570,
+      "sha256": "935d3fde0c858f55ab76e4acc0375f25f53dfafec9f88d5b95006c444582764f",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_chat_images_ui.mjs",
+      "state": "present",
+      "bytes": 4844,
+      "sha256": "523e088221e5784e83737f83d0601471f105f6a0c4597fbd2ce384f7db210ba6",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_chat_markdown.mjs",
+      "state": "present",
+      "bytes": 1869,
+      "sha256": "e72d98eb9ea8c5648fc552e4f3d024bf3fcfcd038d430499cb2387790505f636",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_chat_ui.mjs",
+      "state": "present",
+      "bytes": 59273,
+      "sha256": "0dcd6e81c0e652469dd68892dd9f2631f707e5eaf227eb17884e0b7555416efa",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_chat_workspace_ui.mjs",
+      "state": "present",
+      "bytes": 3440,
+      "sha256": "f184cbcd445c629bfcaf4d3fd1e0c346f906ddc6a95920ebf7fdc3ed2ef98b74",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_dashboard_data.mjs",
+      "state": "present",
+      "bytes": 13866,
+      "sha256": "8f8d6675c1b293da02d53ce5f97ba640d5f316ab2d1fee245b081e5d28f03bdd",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_documentation_ui.mjs",
+      "state": "present",
+      "bytes": 8351,
+      "sha256": "5d8f9f2f32d443236403780c5d958cd650d46afe380de99828c19ba8a37a5dc6",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_emergency_stop_ui.mjs",
+      "state": "present",
+      "bytes": 6906,
+      "sha256": "29cc4a05f1c6ed7791fed23c74ab74082fda3d8e5f445a0efc1d43fdcc9d2514",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_employee_chat_ui.mjs",
+      "state": "present",
+      "bytes": 9623,
+      "sha256": "c58dcfb6b4f4659b83f21b175de764c9e7e78143ce5880ef94c57d01d247bd32",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_employee_ui.mjs",
+      "state": "present",
+      "bytes": 12711,
+      "sha256": "4b687059fdb9dba1513361872032778d2d3df8b7909ce2402d7c4bee67eee335",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_inventory_ui.mjs",
+      "state": "present",
+      "bytes": 7204,
+      "sha256": "8027cd9d1c41f57b79e222eb68990147b5e3670a4df591c6220b1617c5f681d5",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_knowledge_ui.mjs",
+      "state": "present",
+      "bytes": 16463,
+      "sha256": "14ee145cfa9f232acf05d0a2f4d64a697e023f9475202d10cf6c59441549143c",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_local_login_ui.mjs",
+      "state": "present",
+      "bytes": 3734,
+      "sha256": "b36722858a5e60344a95be892041ffb9b582798e7495d0da9fa723f5c92b1fa4",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_local_models_ui.mjs",
+      "state": "present",
+      "bytes": 7469,
+      "sha256": "0877a27087a6bf8b902bf2f02136b2bd6ed29fb84eb6e81fb60cfafa31d46af2",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_memory_ui.mjs",
+      "state": "present",
+      "bytes": 6549,
+      "sha256": "e5354c7931eaa73361126ce6f91b397a1d5409fca34f26ce44dcf6ec49eac767",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_online_provider_ui.mjs",
+      "state": "present",
+      "bytes": 9122,
+      "sha256": "ac7c7cd672fa29156f9ff7d8cbed020f0f873c752834cfaf9a863e43f181f489",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_owner_suggestions_ui.mjs",
+      "state": "present",
+      "bytes": 6051,
+      "sha256": "239e7373f85506314141b9759e2552d49496049f963394ca8fa1a7d333fcb96f",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_position_ui.mjs",
+      "state": "present",
+      "bytes": 7371,
+      "sha256": "9388fa3756797d675d74291a5501ff23525045f2ac216c94cda9b277749117ba",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_project_ui.mjs",
+      "state": "present",
+      "bytes": 13510,
+      "sha256": "97c5c6aece49f59490eb14b17b9ac543cd39e1d38dcd0ee7c43663c5d7c92dd9",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_provider_connections_ui.mjs",
+      "state": "present",
+      "bytes": 10770,
+      "sha256": "9244f775a3a239ff22f95b116279d1c1a09f094663317102a21a2a8e59554cf3",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_provider_ui.mjs",
+      "state": "present",
+      "bytes": 16335,
+      "sha256": "1ddc2c9f5d37c92f49c72757963474f9038d936ac0356efe2b9022ce6bde1d97",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_quick_start_ui.mjs",
+      "state": "present",
+      "bytes": 3230,
+      "sha256": "8c8364dc28eaa37908edd4c94f4672b3b0bed1a50ce9e07acbba7266e413bf23",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_readiness_ui.mjs",
+      "state": "present",
+      "bytes": 1793,
+      "sha256": "4d5a624f35f5d442a66807774c92efa065e0968e8adab7c8c19f2d94015be4e2",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_release_update_ui.mjs",
+      "state": "present",
+      "bytes": 4889,
+      "sha256": "91d1dc7ce444bcc2b48ffb21cccffde256ff32b0d8c9412568dd973a81476b00",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_sage_core.mjs",
+      "state": "present",
+      "bytes": 8923,
+      "sha256": "0e67a4701b0d0031d9311fd0c6f004f9b549f1529f9075031be5ba532ffc62a4",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_screen_capture.mjs",
+      "state": "present",
+      "bytes": 6291,
+      "sha256": "01ec8063378ff602468e8108c212a589ab9230c1e9730a773fc5747e84495a62",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_semantic_memory_ui.mjs",
+      "state": "present",
+      "bytes": 7339,
+      "sha256": "fc014494088e846bfba490fc291487a70952b94dbd3d4108fcde025c4ddf9adf",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_shared_navigation.mjs",
+      "state": "present",
+      "bytes": 2744,
+      "sha256": "f93ae14218bbe53bff4e73c0cad8cd6b64cf142ae89897da053251249cea17cd",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_structure_ui.mjs",
+      "state": "present",
+      "bytes": 4492,
+      "sha256": "2fd87079ac7a227b04e351947c974a16023b47f2b6238bb2cc0dea07af2b316d",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_task_progress.mjs",
+      "state": "present",
+      "bytes": 3781,
+      "sha256": "2309b3da70a8c59df89f81d6ab54a477e50e956d3da402f523a246d5d2ea0b1b",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_task_ui.mjs",
+      "state": "present",
+      "bytes": 20114,
+      "sha256": "8470d14810d8ab4b0690a85f66684989112362b5bfc1ea99ffa3941ad179f8a1",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_text_to_speech.mjs",
+      "state": "present",
+      "bytes": 4805,
+      "sha256": "24891ad861551c1f0c6e2f64c838259ccfa8f80b0b6d71dff5968b99fa042691",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_theme_ui.mjs",
+      "state": "present",
+      "bytes": 1690,
+      "sha256": "5e1b724144b6960f88e6aeebfa171c00284d0b4dded2c5156db8b95610601f82",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_ui_details.mjs",
+      "state": "present",
+      "bytes": 1061,
+      "sha256": "115551394e32a6bbf12cdffd2be2a73a398bff7e39bf5315f8c95a2887e55de9",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_updates_ui.mjs",
+      "state": "present",
+      "bytes": 7508,
+      "sha256": "f3fbe8a55be8062e9a2c7b7b3ab43988353e7f77c0cfcde936b05a71bf04fa0b",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_visualization_ui.mjs",
+      "state": "present",
+      "bytes": 17244,
+      "sha256": "75e7181fc17d4e480238ce108df78a7dc34553b31ea668e8e32a36a2764357ee",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_voice_ui.mjs",
+      "state": "present",
+      "bytes": 26556,
+      "sha256": "28c858472ab5d8a068b4a6ba03e9b33c5c70bd28b348007b755a405638ad29fc",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_workflow_map_ui.mjs",
+      "state": "present",
+      "bytes": 7614,
+      "sha256": "c236c585790721e9a48c9e819d49fe6e8487dc76622657f98cd566378887972c",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/test_workflows_ui.mjs",
+      "state": "present",
+      "bytes": 1925,
+      "sha256": "5d6c0e73544a49ddbc791532cc1a06c3d67cb54053965bb40f2429cd4ca7315b",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/browser_contracts/worker.mjs",
+      "state": "present",
+      "bytes": 415,
+      "sha256": "d3f425517a2e2d0b12d2068ea3842eb20c902474a809d78faf7982b46bc3be00",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/local-automation-ui.test.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_activity_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_agents_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_assignment_policy_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_backup_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_brain_visualization_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_browser_contracts.py",
+      "state": "present",
+      "bytes": 4025,
+      "sha256": "488251b0a56029eb8346aaaca6f29d644856def1edcaefbd447a9ffb2e1e4924",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_browser_inspection.py",
+      "state": "present",
+      "bytes": 9165,
+      "sha256": "e4babcc1fcb2f359dce3c1a39803ed3fb0bb3e99ace8e3a41c577cb43eb0cad6",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/test_camera_capture.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_camera_stop.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_capability_packs_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_chat_images_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_chat_markdown.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_chat_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_chat_workspace_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_dashboard_data.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_desktop_runtime.py",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_docs_integrity.py",
+      "state": "present",
+      "bytes": 1737,
+      "sha256": "6980c976d15be29f14848ae1457a1c554ec976df05c9b25fbe1fc890d79b2046",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/test_documentation_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_emergency_stop_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_employee_chat_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_employee_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_gemini_tcp_contract.py",
+      "state": "present",
+      "bytes": 3929,
+      "sha256": "353993a61e3c1c4229fc85d1ab892dc845bb9947376e34cf42122e900d4fc8fb",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_image_processing.py",
+      "state": "present",
+      "bytes": 6392,
+      "sha256": "b2146b0a9d1c2d44283b9ed546ff56298cf19bc519d32b29fc9f243e7301f28b",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/test_inventory_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_knowledge_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_local_chat_browser.py",
+      "state": "present",
+      "bytes": 5073,
+      "sha256": "617dae78344e9155def0d14fdcedb35561832330130b8cb070fc2fe4eb9e0a22",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/test_local_login_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_local_models_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_memory_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_native_build_stamp.py",
+      "state": "present",
+      "bytes": 2569,
+      "sha256": "1aa3b5744be291d8427a44ddf607215f7ca3942f39b599f77a1e1b5e37be92d2",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_native_failure_metadata.py",
+      "state": "present",
+      "bytes": 1970,
+      "sha256": "2a5a19407139aa95cc6aac61ce16be0f0dd8cf755d7364577057d8d5b0122b6e",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_native_installer.py",
+      "state": "present",
+      "bytes": 1647,
+      "sha256": "7dd79ab77909f62f77ec2ecc3dae07cb149e70a722c116a819f89d05c829886d",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_native_session_security.py",
+      "state": "present",
+      "bytes": 3616,
+      "sha256": "bf8c0776e42abbead7554861523ff1fb1d0bb0daaf3989ca9f146f47e7a3bfcd",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/test_no_node_stack.py",
+      "state": "present",
+      "bytes": 1712,
+      "sha256": "1c31d4e16c5fd77b40da704d398e335a772b17a033cf76e772e9668fa2267ef5",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_offline_browser.py",
+      "state": "present",
+      "bytes": 1987,
+      "sha256": "65f21686acee4ed815b67832b42fd7a1ec649b58dfc0419beff0536e058d5345",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_online_provider_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_owner_suggestions_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_position_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_product_audit.py",
+      "state": "present",
+      "bytes": 5490,
+      "sha256": "009155450200daab92494b9cb09686c115e930f88e25a5cdd7bbc9315f6694cd",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/test_project_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_provider_connections_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_provider_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_public_docs.py",
+      "state": "present",
+      "bytes": 6844,
+      "sha256": "e849c0aeeea2f28f7304a6f2d2543f9c94914f45d3fd14cb9d7d0bd8793708ef",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_public_docs_browser.py",
+      "state": "present",
+      "bytes": 3177,
+      "sha256": "c027c33746e53f8447311e54cf10f4fc4d02f4b9012abf033896bef09e152dbe",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/test_qt_advanced_controls.py",
+      "state": "present",
+      "bytes": 2013,
+      "sha256": "638d5e9b6ded0c43029a086d66224033175ae35a0a73eea4453e776a6cf933fe",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_qt_dead_controls.py",
+      "state": "present",
+      "bytes": 10429,
+      "sha256": "90bcb8eedaf6e230c8f238d5db52a19905ec77127219c3c6bf7908175ff3ba74",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_qt_screenshot_matrix.py",
+      "state": "present",
+      "bytes": 819,
+      "sha256": "7bce707afd270b78dfc9caf4ef113462f1376d6173c1ec69ed4993e23a2c8575",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_qt_window_restore.py",
+      "state": "present",
+      "bytes": 4834,
+      "sha256": "9b69386c8015348cf1e9b0fa8266945680e8b9d967869f50087f10e98c3dea31",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_quick_start_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_readiness_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_release_update_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_sage_core.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_scoped_browser_automation.py",
+      "state": "present",
+      "bytes": 17320,
+      "sha256": "beae8ad461402b6a8942e36afbae25ff9754c8991426cb9557423ff343b24b29",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/test_scoped_browser_cdp.py",
+      "state": "present",
+      "bytes": 3869,
+      "sha256": "17b727d847707cc07b701a4e5908a45fa5a3eef820c694638bb07ca65a12a136",
+      "normalization": "none"
+    },
+    {
+      "path": "tests/test_screen_capture.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_semantic_memory_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_shared_navigation.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_structure_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_task_progress.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_task_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_text_to_speech.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_theme_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_ui_coverage_migration.py",
+      "state": "present",
+      "bytes": 1433,
+      "sha256": "37859c750485857693837cddbeaa72c6ff1c2a2dc50090802937922e69c61280",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/test_ui_details.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_updates_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_visualization_page.py",
+      "state": "present",
+      "bytes": 3738,
+      "sha256": "268c1bcfbc628ac55e8252577a9ef8326d2096e313b3188f320e05fa593207a8",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tests/test_visualization_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_voice_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_workflow_map_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_workflows_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tools/audit_native_artifact.py",
+      "state": "present",
+      "bytes": 3364,
+      "sha256": "7abdb4949d4051f41dd14fd5c3c56a1a8884f163455abde70f27414d0e1b328e",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/build_installer.py",
+      "state": "present",
+      "bytes": 2319,
+      "sha256": "5a626f869352204bf3136ba3e3d36b7ebefce850c7bffc173cb48ecabffd7dac",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/build_native.py",
+      "state": "present",
+      "bytes": 4615,
+      "sha256": "ef1609301fd668da4a8b4bd0dd617e538d1ae7e06852a56f2cfc22f50ba9407b",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tools/docs_integrity.py",
+      "state": "present",
+      "bytes": 3257,
+      "sha256": "76cae7f3538e726773e3240c725b9fcb770c36bb4bc1ee908a1325567d5f7384",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tools/frozen_corpus.py",
+      "state": "present",
+      "bytes": 768,
+      "sha256": "591f90eb2e631d59284664d5ce6cecaf9f8b747ebf584776e1b7798be25eaa19",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/generate_docs.py",
+      "state": "present",
+      "bytes": 2663,
+      "sha256": "4770e159d324db27171c1500f90eb2ac3480d1cef433f0a1c5ab9637ef5cb422",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/headless_browser.py",
+      "state": "present",
+      "bytes": 7708,
+      "sha256": "7f104d15dd74f971d3004b236a49ffff8f0583a35a5be24545eb7a1a675fa575",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/installer_smoke.py",
+      "state": "present",
+      "bytes": 4239,
+      "sha256": "7dcbb9ecc333eaba7a14ed170484f14502869a7c335fc7b658c7c0338aefcfe0",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/native_brain_answers_check.py",
+      "state": "present",
+      "bytes": 6355,
+      "sha256": "306b088086f10a9a874b9b737a8926b2c7323ea5a853edd5b69c056959489bb2",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tools/native_hybrid_check.py",
+      "state": "present",
+      "bytes": 4275,
+      "sha256": "f6e21f5a7fa5306c359309a936aaa6d024d7f90505eb3b61690685d2c3b6ed83",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tools/native_prefix_check.py",
+      "state": "present",
+      "bytes": 4570,
+      "sha256": "62411f7b1d34a38f46b566b4c15a0edae3953786c68b5f23171e4446a250252b",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tools/native_safety_check.py",
+      "state": "present",
+      "bytes": 6903,
+      "sha256": "49dba2fe50aa97ec86a140c244e8a63402e076a3a64187cee8dcb8fde6044890",
+      "normalization": "CRLF to LF"
+    },
+    {
+      "path": "tools/package_notices.py",
+      "state": "present",
+      "bytes": 2255,
+      "sha256": "138a89cf632986d15c3c1adebaeb1eca19138890f252b8bb021b75925a453f13",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/packaged_advanced_check.py",
+      "state": "present",
+      "bytes": 5020,
+      "sha256": "0d6684baf1a0b910bd5ea6da95fe9fa17cc26e9081e5b80e7bbd44f819ca7bcf",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/packaged_browser_check.py",
+      "state": "present",
+      "bytes": 3695,
+      "sha256": "2ea54e4a77b2f4dec05ee557c321cc2edc9ab7a8ca8958fac7dc5f73353a63ab",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/packaged_chat_check.py",
+      "state": "present",
+      "bytes": 5622,
+      "sha256": "ef0b4d9f7852e4bac518329e79abb4723c45d66374d5e1c8bb8a56b150a7264c",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/packaged_restore_check.py",
+      "state": "present",
+      "bytes": 3704,
+      "sha256": "2382bc9dfea6afb02b9c6659b0c95e8f0cf1aa3502047cf282ce9d4d2ba45ab1",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/qt_action_audit.py",
+      "state": "present",
+      "bytes": 2283,
+      "sha256": "d635574b3949872ff95b914bc28c5ea1610d47b958ac78b21262730eb52464b5",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/qt_brain_render_check.py",
+      "state": "present",
+      "bytes": 3561,
+      "sha256": "64012876c36a2d942946c10ec42363c5be6fb56b2c23e43e640b02f682b7d6bf",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/qt_restore_process_check.py",
+      "state": "present",
+      "bytes": 6467,
+      "sha256": "2f51f3f177cf1a54ec3ead389602853aedf9b7c2f21254e21e97fb88f3143e8d",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/qt_screenshot_matrix.py",
+      "state": "present",
+      "bytes": 3678,
+      "sha256": "8b0cef5f555b41c53e38ef09011addf743424f0c1e98054ce09e91e97e096fa4",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/serve_docs.py",
+      "state": "present",
+      "bytes": 2722,
+      "sha256": "410d1b66ed68af50d6ccb4ed5793331f2ab84b1ff0038339ae88612fb6522077",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/smoke_native.py",
+      "state": "present",
+      "bytes": 3857,
+      "sha256": "40085f63011e46cb164f29d3357819daa93570c0e9e64ce2d93ab3285ed46baf",
+      "normalization": "none"
+    },
+    {
+      "path": "tools/task213_visual_matrix.py",
+      "state": "deleted"
+    },
+    {
+      "path": "tools/task214_electron_check.cjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tools/task223_shell_check.cjs",
+      "state": "deleted"
+    }
+  ]
+}

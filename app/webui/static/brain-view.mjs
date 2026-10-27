@@ -1,13 +1,18 @@
 import { layoutBrainGraph, readLastBrainRetrieval } from "./brain-graph.mjs";
 
 export function mountBrainView({ documentRef = globalThis.document, fetchImpl = globalThis.fetch,
-  sessionStorage = globalThis.sessionStorage, importThree = () => import("./vendor/three/three.module.js"),
+  sessionStorage = globalThis.sessionStorage,
   createRenderer = null,
   reducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true,
  } = {}) {
   const byId = id => documentRef.getElementById(id);
   const status = byId("brain-map-status"), list = byId("brain-map-list"), canvasWrap = byId("brain-map-canvas-wrap");
   if (!status || !list) return { refresh: async () => {}, dispose() {} };
+  if (!createRenderer) {
+    if (canvasWrap) canvasWrap.hidden = true;
+    list.hidden = false;
+    byId('brain-map-view-toggle').textContent = 'Desktop 3D help';
+  }
   let graph = { nodes: [], edges: [] }, layout = layoutBrainGraph(graph), renderer = null;
   let selectedNode = null, active3d = false, resizeObserver = null;
   const retrieval = readLastBrainRetrieval(sessionStorage);
@@ -92,7 +97,7 @@ export function mountBrainView({ documentRef = globalThis.document, fetchImpl = 
     active3d = false; canvasWrap.hidden = true;
     list.hidden = false;
     byId("brain-map-view-toggle").setAttribute("aria-pressed", "false");
-    byId("brain-map-view-toggle").textContent = "Show 3D map";
+    byId("brain-map-view-toggle").textContent = createRenderer ? "Show 3D map" : "Desktop 3D help";
     setStatus(`${reason} The complete keyboard-accessible list remains available.`);
   }
   async function enable3d() {
@@ -109,11 +114,7 @@ export function mountBrainView({ documentRef = globalThis.document, fetchImpl = 
             byId("brain-map-frame-stats").textContent = `3D capped at 24 FPS; observed ${stats.fps.toFixed(1)} FPS, p95 interval ${stats.interval_p95_ms.toFixed(1)} ms. Render CPU ${stats.render_cpu_ms.toFixed(2)} ms.`;
           }, onFallback: fallback };
         if (createRenderer) renderer = createRenderer({ ...callbacks, documentRef });
-        else {
-          const THREE = await importThree();
-          const { createBrainThreeView } = await import("./brain-three.mjs");
-          renderer = createBrainThreeView({ THREE, ...callbacks, documentRef });
-        }
+        else { fallback('Open Brain in the desktop app for the native 3D view.'); return; }
         renderer.setGraph(renderGraph());
         renderer.setHighlights(retrieved, cited, [...ingestion.values()].filter(item => !["ready", "failed"].includes(item.state)));
         renderer.setReducedMotion(false);

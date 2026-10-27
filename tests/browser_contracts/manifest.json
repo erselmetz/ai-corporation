@@ -1,0 +1,598 @@
+{
+  "legacy_cases": 295,
+  "ported_cases": 284,
+  "retired_cases": 11,
+  "files": [
+    {
+      "file": "local-automation-ui.test.mjs",
+      "cases": [
+        "automation UI confirms the exact preview and executes only after digest approval",
+        "declining exact action approval never calls approve or execute"
+      ],
+      "legacy_file": "tests/local-automation-ui.test.mjs"
+    },
+    {
+      "file": "test_activity_ui.mjs",
+      "cases": [
+        "loads the bounded Activity API with same-origin credentials and displays its exact response fields",
+        "uses only the supported limit and optional task_id query parameters",
+        "does not send an unsupported limit value",
+        "renders a successful empty result differently from an API failure",
+        "distinguishes authentication, forbidden, invalid-query and general API failures",
+        "refresh uses the API again and prevents duplicate requests",
+        "failed refresh clears displayed records instead of leaving them as current",
+        "network and malformed-response failures are explicit, not successful empty lists",
+        "uses no Activity detail route, unsupported methods, secrets, or internal layers"
+      ],
+      "legacy_file": "tests/test_activity_ui.mjs"
+    },
+    {
+      "file": "test_agents_ui.mjs",
+      "cases": [
+        "failed refresh keeps a readable error panel and removes stale Agent actions",
+        "Agents page filters by real runtime state and switches to existing organization tree",
+        "profile details remain safe for read-only sessions and link chat to the matching Employee",
+        "owner profile editor is collapsed by default and uses existing pause/reset APIs",
+        "New Agent clones an existing profile through the owner API with CSRF"
+      ],
+      "legacy_file": "tests/test_agents_ui.mjs"
+    },
+    {
+      "file": "test_assignment_policy_ui.mjs",
+      "cases": [
+        "owner enables, previews, and disables recommendations with same-origin CSRF",
+        "declined enable and read-only sessions cannot mutate the policy"
+      ],
+      "legacy_file": "tests/test_assignment_policy_ui.mjs"
+    },
+    {
+      "file": "test_backup_ui.mjs",
+      "cases": [
+        "backup UI starts without requests and private-data opt-in is off",
+        "preview, safe diagnostics, and export run only after explicit owner actions",
+        "restore requires the same inspected file, passphrase, typed confirmation, and final prompt"
+      ],
+      "legacy_file": "tests/test_backup_ui.mjs"
+    },
+    {
+      "file": "test_brain_visualization_ui.mjs",
+      "cases": [
+        "Brain graph layout uses real groups and source edges, caps only the renderer",
+        "retrieval highlight persistence stores bounded chunk identifiers without content",
+        "Brain page exposes a complete keyboard list and loads selected text only on selection",
+        "reduced motion and renderer failures preserve the complete list fallback",
+        "ingestion events create actual temporary graph nodes while the keyboard list stays visible"
+      ],
+      "legacy_file": "tests/test_brain_visualization_ui.mjs"
+    },
+    {
+      "file": "test_camera_capture.mjs",
+      "cases": [
+        "one owner-triggered camera frame requests video only, bounds pixels and stops the track",
+        "camera denial, unsupported input and emergency stop never retain a frame",
+        "camera UI requires both scoped permissions and attaches only one frame with CSRF"
+      ],
+      "legacy_file": "tests/test_camera_capture.mjs"
+    },
+    {
+      "file": "test_camera_stop.mjs",
+      "cases": [
+        "camera capture fails closed when the server reports emergency stop"
+      ],
+      "legacy_file": "tests/test_camera_stop.mjs"
+    },
+    {
+      "file": "test_capability_packs_ui.mjs",
+      "cases": [
+        "pack UI renders observed status and exact reviewed wheel manifest",
+        "cancelled install makes no write request",
+        "confirmed install binds confirmation to the displayed manifest and CSRF session",
+        "self-test action runs only after pack status says installed"
+      ],
+      "legacy_file": "tests/test_capability_packs_ui.mjs"
+    },
+    {
+      "file": "test_chat_images_ui.mjs",
+      "cases": [
+        "temporary images are unselected by default and require per-turn consent before exposing selected IDs",
+        "online image preview identifies the destination and requires distinct cloud consent"
+      ],
+      "legacy_file": "tests/test_chat_images_ui.mjs"
+    },
+    {
+      "file": "test_chat_markdown.mjs",
+      "cases": [
+        "renders common Markdown with inert text nodes and no HTML execution surface",
+        "code copy uses the clipboard API and reports completion"
+      ],
+      "legacy_file": "tests/test_chat_markdown.mjs"
+    },
+    {
+      "file": "test_chat_ui.mjs",
+      "cases": [
+        "local transcript is added after an unsent typed draft and never submits the chat",
+        "speech source labels distinguish local, local-model, and consented online transcripts",
+        "composer sends on Enter, keeps Shift+Enter for a newline, and stays keyboard operable",
+        "plus actions stay explicit and start only the chosen capture or knowledge control",
+        "Brain defaults on when owner knowledge exists and previews selected chunks automatically before a turn",
+        "narrow sidebar uses the menu toggle and Escape closes it",
+        "dark theme is the default and the explicit toggle persists light and dark",
+        "stored light theme updates the Chat toggle label on first render",
+        "conversation sidebar groups by date, supports search, rename, and pin",
+        "answer trace is collapsed by default and remains available after a reply",
+        "approval inbox is permission-gated, previews exact scope, and deny uses CSRF without execution",
+        "Coordinator delegation is explicit, plain-text only, and shows the bounded plan before sending",
+        "delete is visible only to an authorized owner and sends an explicit confirmed delete",
+        "emergency stop is hidden until protected activity is reported",
+        "emergency stop appears for each protected activity source and hides when it ends",
+        "Send becomes Stop while a turn is pending and aborts local waiting without replay",
+        "start and send use same-origin, session CSRF and actual coordinator identity; text stays inert",
+        "Electron direct launch opens a coordinator conversation and sends local chat without a setup confirmation",
+        "chat autonomy chip loads and persists the owner-scoped setting with CSRF",
+        "desktop restoration loads only the saved conversation and never replays a turn",
+        "a fresh desktop window does not adopt another window's latest conversation",
+        "an unretained desktop chat opens empty with an explanation and no replay",
+        "canceling the reviewed chat plan starts no retrieval, tools, or provider request",
+        "canceling a plan with a selected calculator does not submit the tool or chat turn",
+        "alternate route is opt-in per turn and displayed before confirmation",
+        "declining an alternate route confirmation performs no provider request",
+        "streaming chat renders provider chunks and verifies the completed response",
+        "knowledge requires an exact preview and displays returned citations in How I answered",
+        "reviewed tool calls are explicit, one-turn, and routed through non-streaming chat",
+        "local document choices load only after opening reviewed tools with documentation permission",
+        "Stop display hides chunks but continues consuming the provider response",
+        "repository study sends explicit scope with CSRF and renders untrusted report as text",
+        "repository study is unavailable without the separate GitHub read permission",
+        "Gemini requires per-turn cloud consent and sends only an explicit consent flag",
+        "pending send prevents duplicate turns and selection changes; provider failure is inspected without replay",
+        "blank and UTF-8 oversized messages never submit",
+        "recognized Gemini key paste is blocked with setup guidance before submission",
+        "authorization and empty data are distinct and failed refresh removes stale data",
+        "existing owner conversation can be selected after refresh and closed explicitly",
+        "coordinator proposal is shown before an explicit pending-Task confirmation",
+        "a failed send that discovers closure keeps input disabled and never replays",
+        "stopping a model wait aborts local waiting but records an unknown remote outcome without replay",
+        "exact assembled prompt is visible only after explicit local-model opt-in and is inert text"
+      ],
+      "legacy_file": "tests/test_chat_ui.mjs"
+    },
+    {
+      "file": "test_chat_workspace_ui.mjs",
+      "cases": [
+        "two window controllers keep model, project and request scope independent",
+        "selection change opens a new context without sending a model turn or changing another window"
+      ],
+      "legacy_file": "tests/test_chat_workspace_ui.mjs"
+    },
+    {
+      "file": "test_dashboard_data.mjs",
+      "cases": [
+        "setup guidance distinguishes sign-in, missing configuration, and unchecked availability",
+        "setup read failure is unavailable, not an empty or healthy provider state",
+        "loads the existing protected read resources with same-origin credentials",
+        "preserves empty lists as successful data rather than converting failures to empty",
+        "distinguishes authentication, authorization, and other failures per resource",
+        "signed-out dashboard makes one identity request and clears and hides protected panels",
+        "renders empty collections explicitly",
+        "dashboard shows only pending work and active projects, with unknown source freshness where timestamps are absent",
+        "renders failed and partial responses without hiding successful panel data",
+        "shows distinct authentication and forbidden failures for combined panels"
+      ],
+      "legacy_file": "tests/test_dashboard_data.mjs"
+    },
+    {
+      "file": "test_documentation_ui.mjs",
+      "cases": [
+        "loads document summaries and content from the protected same-origin API",
+        "renders a successful empty response as an empty state",
+        "authentication, permission, invalid response, and server failures are not empty results",
+        "missing and failed document reads clear previously displayed content",
+        "failed refresh prevents duplicates and clears stale records and content",
+        "network failures are explicit and invalid document payloads are rejected"
+      ],
+      "legacy_file": "tests/test_documentation_ui.mjs"
+    },
+    {
+      "file": "test_emergency_stop_ui.mjs",
+      "cases": [
+        "safety panel stops, revokes grants, reports activity, and confirms resume"
+      ],
+      "legacy_file": "tests/test_emergency_stop_ui.mjs"
+    },
+    {
+      "file": "test_employee_chat_ui.mjs",
+      "cases": [
+        "Agent Chat link preselects its linked Employee without starting a conversation",
+        "Employee chat uses CSRF, inert rendering and explicit per-turn Gemini consent",
+        "Employee chat streams only from an advertised provider and handles the final snapshot",
+        "retained Employee history requires opt-in and explicit confirmed deletion"
+      ],
+      "legacy_file": "tests/test_employee_chat_ui.mjs"
+    },
+    {
+      "file": "test_employee_ui.mjs",
+      "cases": [
+        "lists employees and requests details using the existing response fields",
+        "creates only API-supported fields, prevents duplicate submits, refreshes and selects created employee",
+        "requires confirmation before DELETE and clears selected details after successful removal",
+        "distinguishes auth failures, stale details, conflicts, and validation failures",
+        "keeps failed list requests distinct from a successful empty collection",
+        "clears previously selected employee details when a refreshed list request fails",
+        "keeps removal failures visible and re-enables retry"
+      ],
+      "legacy_file": "tests/test_employee_ui.mjs"
+    },
+    {
+      "file": "test_inventory_ui.mjs",
+      "cases": [
+        "inventory UI requires sign-in before requesting inventory data",
+        "inventory UI renders verified records as inert text and shows limitations",
+        "inventory UI denies sessions without inventory permission",
+        "software lifecycle requires exact preview and separate explicit confirmation"
+      ],
+      "legacy_file": "tests/test_inventory_ui.mjs"
+    },
+    {
+      "file": "test_knowledge_ui.mjs",
+      "cases": [
+        "owner notes require explicit retention consent and send CSRF-bound local data",
+        "explicit note save persists content and expiry, and index diagnostics stay truthful",
+        "Brain accepts a bounded multi-file batch and reports each file through chunking to lexical-ready",
+        "index inspection and deletion use the selected owner scope",
+        "optional FAISS pack is reviewed before install and cancellation downloads nothing",
+        "FAISS Test it action reports its self-test result",
+        "nomic embedding download requires a digest/size preview and owner confirmation",
+        "embedding Test it action reports only the local Ollama self-test",
+        "v3code Brain import previews counts and requires explicit retention plus a digest match"
+      ],
+      "legacy_file": "tests/test_knowledge_ui.mjs"
+    },
+    {
+      "file": "test_local_login_ui.mjs",
+      "cases": [
+        "login clears password immediately, suppresses duplicate submits and navigates after success",
+        "login failure is visible, clears input and does not navigate",
+        "logout uses session CSRF and reports revoked session",
+        "sign-in returns to the same-origin app page and rejects external destinations"
+      ],
+      "legacy_file": "tests/test_local_login_ui.mjs"
+    },
+    {
+      "file": "test_local_models_ui.mjs",
+      "cases": [
+        "refresh is explicit and selection uses CSRF, same-origin and inert installed identifiers",
+        "model reassignment previews identity, privacy and affected work before confirmation",
+        "incomplete affected-work reads fail closed before local reassignment",
+        "read-only session cannot select and changing coordinator clears stale evidence",
+        "busy refresh suppresses duplicate calls and conflicts remove stale selection",
+        "unavailable and unknown observations show guidance without enabling selection",
+        "missing local login reports sign-in guidance"
+      ],
+      "legacy_file": "tests/test_local_models_ui.mjs"
+    },
+    {
+      "file": "test_memory_ui.mjs",
+      "cases": [
+        "explicit scoped reads use session credentials and render text safely",
+        "correction sends explicit consent and revision without owner spoofing",
+        "read failure 401 clears previous records",
+        "read failure 403 clears previous records",
+        "read failure 500 clears previous records",
+        "stale correction conflict clears cached content",
+        "expired metadata never fetches content and requires confirmed owner deletion",
+        "named corporation reader cannot correct or withdraw",
+        "changed scope rejects in-flight content",
+        "pending correction cannot be submitted twice"
+      ],
+      "legacy_file": "tests/test_memory_ui.mjs"
+    },
+    {
+      "file": "test_online_provider_ui.mjs",
+      "cases": [
+        "Gemini key is used only for the dedicated catalog request and is cleared immediately",
+        "Gemini reassignment previews affected work and requires explicit confirmation",
+        "confirmed Gemini assignment carries the observed Agent identity and connection",
+        "staged credential erase uses same-origin CSRF protected local endpoint"
+      ],
+      "legacy_file": "tests/test_online_provider_ui.mjs"
+    },
+    {
+      "file": "test_owner_suggestions_ui.mjs",
+      "cases": [
+        "quiet periods use browser local time, including windows across midnight",
+        "disabled suggestions do not read workflow signals and controls remain available",
+        "enabled suggestions disclose source, support owner dismissal, and refresh only on request",
+        "quiet-period settings suppress fetching and displaying suggestion cards"
+      ],
+      "legacy_file": "tests/test_owner_suggestions_ui.mjs"
+    },
+    {
+      "file": "test_position_ui.mjs",
+      "cases": [
+        "loads actual position and revision data as inert text",
+        "creates a position through same-origin API with CSRF and independent references",
+        "position readers without employee:read retain existing employee references"
+      ],
+      "legacy_file": "tests/test_position_ui.mjs"
+    },
+    {
+      "file": "test_project_ui.mjs",
+      "cases": [
+        "loads project list and details through the existing protected APIs",
+        "creates only name and description, then refreshes and loads returned project through API",
+        "prevents duplicate Project submissions while the first request is pending",
+        "rejects blank names locally while allowing an omitted description",
+        "clears selected details and stale list entry when a Project detail returns 404",
+        "clears cached Project list and selected details when a refresh fails",
+        "distinguishes authentication, authorization, conflict, validation, not-found and server errors",
+        "renders successful empty collections separately from failed responses",
+        "network failures are explicit and never rendered as an empty Project list",
+        "Project UI exposes no unsupported deletion or lifecycle actions",
+        "browser Project module has no credentials or direct internal-layer access"
+      ],
+      "legacy_file": "tests/test_project_ui.mjs"
+    },
+    {
+      "file": "test_provider_connections_ui.mjs",
+      "cases": [
+        "Gemini setup clears the key, displays truthful capacity, and confirms assignment",
+        "read-only owner session cannot add or assign provider connections",
+        "local runtime controls show provider evidence and confirm bounded load and unload",
+        "model lifecycle controls require their distinct permission"
+      ],
+      "legacy_file": "tests/test_provider_connections_ui.mjs"
+    },
+    {
+      "file": "test_provider_ui.mjs",
+      "cases": [
+        "loads provider and model lists using the existing APIs and displays detail fields",
+        "creates Provider with only id and name and refreshes list/detail",
+        "prevents duplicate Provider creation while the first request is pending",
+        "requires confirmation before Provider DELETE and refreshes after success",
+        "loads model detail and replaces with exactly provider_id/model_id then refreshes",
+        "prevents duplicate model replacements while the first request is pending",
+        "keeps auth, permission, conflict, validation, missing, and general failures explicit",
+        "renders successful empty lists separately from failed requests"
+      ],
+      "legacy_file": "tests/test_provider_ui.mjs"
+    },
+    {
+      "file": "test_quick_start_ui.mjs",
+      "cases": [
+        "shows exact stopped Ollama recovery state and Retry when installation exists",
+        "offers the existing confirmed installer only when Ollama is not installed",
+        "shows registry-derived model size and keeps download behind explicit confirmation"
+      ],
+      "legacy_file": "tests/test_quick_start_ui.mjs"
+    },
+    {
+      "file": "test_readiness_ui.mjs",
+      "cases": [
+        "readiness UI requests a bounded same-origin snapshot only after refresh",
+        "authorization failures clear stale readiness evidence"
+      ],
+      "legacy_file": "tests/test_readiness_ui.mjs"
+    },
+    {
+      "file": "test_release_update_ui.mjs",
+      "cases": [
+        "renders only verified release data and enables preparation for authorized owners",
+        "release page performs no network check until the owner explicitly selects the check button",
+        "prepares only an explicitly selected checked version and includes the session CSRF token",
+        "keeps preparation unavailable without manage permission or after invalid release data"
+      ],
+      "legacy_file": "tests/test_release_update_ui.mjs"
+    },
+    {
+      "file": "test_sage_core.mjs",
+      "cases": [
+        "Sage Core only maps recorded Agents and current trace edges with stable positions",
+        "original canvas rendering draws only existing nodes and links without random decorations",
+        "Agent details and equivalent keyboard-accessible list are available",
+        "reduced motion and missing canvas select the accessible list",
+        "hidden page stops animation and poll timer; visibility restores a fresh snapshot",
+        "repeated over-budget draws automatically switch to the accessible list",
+        "working-state animation respects the 24 FPS frame interval",
+        "failed and unauthorized snapshots clear stale Agent nodes",
+        "failed refresh clears the prior canvas snapshot instead of leaving stale Agent signals visible"
+      ],
+      "legacy_file": "tests/test_sage_core.mjs"
+    },
+    {
+      "file": "test_screen_capture.mjs",
+      "cases": [
+        "captures one bounded frame with user-selected surface and no audio, then stops all tracks",
+        "unsupported surface types and oversized output fail closed and stop tracks",
+        "permission cancellation, emergency stop, and unsupported browsers do not retain frames",
+        "UI requires both chat permissions and sends only the bounded capture request fields with CSRF"
+      ],
+      "legacy_file": "tests/test_screen_capture.mjs"
+    },
+    {
+      "file": "test_semantic_memory_ui.mjs",
+      "cases": [
+        "only explicitly selected owner records can be indexed and results preserve exact scope",
+        "disabled capability and failed search clear stale results",
+        "scope changes discard pending results and never relabel a private search"
+      ],
+      "legacy_file": "tests/test_semantic_memory_ui.mjs"
+    },
+    {
+      "file": "test_shared_navigation.mjs",
+      "cases": [
+        "shared navigation stays visible on wide screens and has a working narrow-window menu",
+        "Escape closes the compact navigation and wide resize restores the visible rail"
+      ],
+      "legacy_file": "tests/test_shared_navigation.mjs"
+    },
+    {
+      "file": "test_structure_ui.mjs",
+      "cases": [
+        "renders a keyboard-reachable tree with explicit missing and forbidden labels",
+        "selecting shows current details and flags stale revision or vanished positions",
+        "separates Agent identity from protected provider/model assignment details",
+        "reports sign-in and permission failures without data"
+      ],
+      "legacy_file": "tests/test_structure_ui.mjs"
+    },
+    {
+      "file": "test_task_progress.mjs",
+      "cases": [
+        "shows actual pending lifecycle and only allowed fields",
+        "shows actual running lifecycle and only allowed fields",
+        "shows actual completed lifecycle and only allowed fields",
+        "shows actual failed lifecycle and only allowed fields",
+        "clears previously rendered progress on 401",
+        "clears previously rendered progress on 403",
+        "clears previously rendered progress on 404",
+        "clears previously rendered progress on 500",
+        "does not fetch without a selected Task",
+        "rejects mismatched Task identities and unsupported status",
+        "a changed selection invalidates an in-flight response"
+      ],
+      "legacy_file": "tests/test_task_progress.mjs"
+    },
+    {
+      "file": "test_task_ui.mjs",
+      "cases": [
+        "loads Task records and displays the existing Task response fields",
+        "creates a Task with only supported non-empty fields and refreshes details",
+        "prevents duplicate Task submissions while the first request is pending",
+        "rejects blank and multiple routing selectors before submission",
+        "uses the existing non-mutating dry-run endpoint and renders its declared response",
+        "handles missing/deleted Task detail and refreshes the list",
+        "clears previously loaded Tasks and details when a list refresh fails",
+        "distinguishes authentication, permission, validation, conflict, missing and general errors",
+        "renders a successful empty Task list distinctly from a failed request",
+        "dispatch UI is hidden without permission and requires explicit confirmation with CSRF",
+        "interrupted queue resolution requires a human note and never dispatches again",
+        "does not implement unsupported Task deletion or lifecycle mutation",
+        "browser Task module contains no credentials or direct internal-layer access"
+      ],
+      "legacy_file": "tests/test_task_ui.mjs"
+    },
+    {
+      "file": "test_text_to_speech.mjs",
+      "cases": [
+        "provider reports unavailable when device-local speech is absent",
+        "only explicitly local voices are listed and selected for output",
+        "output validates language and bounded text rather than truncating the reply",
+        "voice disappearing is reported and stop cancels local playback and queued text",
+        "reply queue is sequential and bounded by item count and UTF-8 bytes"
+      ],
+      "legacy_file": "tests/test_text_to_speech.mjs"
+    },
+    {
+      "file": "test_theme_ui.mjs",
+      "cases": [
+        "stored local theme applies to document and body",
+        "storage failure keeps the default dark theme",
+        "a browser refusing access to the storage property still gets dark theme"
+      ],
+      "legacy_file": "tests/test_theme_ui.mjs"
+    },
+    {
+      "file": "test_ui_details.mjs",
+      "cases": [
+        "review details retain nested evidence and exact values without a JSON envelope",
+        "empty lists and plain strings have explicit readable output"
+      ],
+      "legacy_file": "tests/test_ui_details.mjs"
+    },
+    {
+      "file": "test_updates_ui.mjs",
+      "cases": [
+        "loads the same-origin Updates API and displays explicit entry fields",
+        "shows an explicit loading state while the request is pending",
+        "distinguishes a successful empty manifest from authentication, permission, and API errors",
+        "failed refresh clears previously rendered updates instead of retaining stale data",
+        "renders document-supplied strings as text and rejects malformed response data",
+        "refresh reloads from the API and prevents duplicate requests"
+      ],
+      "legacy_file": "tests/test_updates_ui.mjs"
+    },
+    {
+      "file": "test_voice_ui.mjs",
+      "cases": [
+        "WAV encoder fixes the transcription input to mono 16 kHz PCM and 10 seconds",
+        "local mode requires processLocally and never falls back to cloud",
+        "local microphone capture ends after its ten-second limit",
+        "microphone activity exposes permission, capture duration, and transcription state",
+        "stopping during local capability detection cancels startup",
+        "clearing a chat cancels pending microphone startup before capture can begin",
+        "emergency stop aborts local capture and blocks a new voice start until resumed",
+        "sensitive local transcript is discarded before it enters chat",
+        "local voice denial and unsupported language fail closed without cloud fallback",
+        "browser-managed downloadable speech languages require a separate owner action",
+        "cloud audio requires one-use consent and places only the reviewed transcript in chat",
+        "optional local model is selected explicitly, processes audio locally, and inserts a reviewable draft",
+        "stopping a cloud transcription stops local waiting and records an unknown provider outcome",
+        "stopping at the capture-finalization boundary discards audio instead of making it ready to send",
+        "reply audio uses an installed local voice and can be stopped",
+        "a saved local voice is restored only when that device-local voice is still available",
+        "missing local speech output is visible and does not try an online fallback"
+      ],
+      "legacy_file": "tests/test_voice_ui.mjs"
+    },
+    {
+      "file": "test_workflow_map_ui.mjs",
+      "cases": [
+        "keeps operational links and reporting links in separate lists",
+        "flags stale snapshots and distinguishes empty data",
+        "selection shows current evidence and reflects state changes",
+        "shows Agent assignment source, unrecorded reason, and truthful outcome evidence",
+        "labels missing Agent and uncertain provider outcomes without claiming a response",
+        "forbidden agents and reporting data are labelled",
+        "disconnect keeps the last snapshot marked stale; errors show no data"
+      ],
+      "legacy_file": "tests/test_workflow_map_ui.mjs"
+    },
+    {
+      "file": "test_workflows_ui.mjs",
+      "cases": [
+        "renders verified workflow state as text only",
+        "reports sign-in requirement without data"
+      ],
+      "legacy_file": "tests/test_workflows_ui.mjs"
+    },
+    {
+      "file": "test_visualization_ui.mjs",
+      "cases": [
+        "scene model contains only recorded nodes and edges, with a hard cap",
+        "only recorded state changes count as changes",
+        "corporation map includes only exact source-backed relationships and caps each selected layer view",
+        "interactive map uses separate authorized snapshots, source-backed layers and actionable selection",
+        "reduced-motion preference starts in list mode without loading graphics",
+        "WebGL failure falls back to the list with a notice",
+        "keyboard selection, effects toggle, forbidden and failed sections",
+        "shows only recorded Agent associations, provenance metadata, and software slot budgets"
+      ],
+      "legacy_file": "tests/test_visualization_ui.mjs"
+    }
+  ],
+  "retired": [
+    {
+      "file": "tests/test_brain_visualization_ui.mjs",
+      "cases": [
+        "Three.js renderer caps frames, pauses while hidden, and falls back under slow frame timing"
+      ],
+      "reason": "Obsolete Three.js/WebGL renderer; Qt projected rendering and the accessible fallback replace it. Backend graph/permissions remain Python-tested."
+    },
+    {
+      "file": "tests/test_visualization_ui.mjs",
+      "cases": [
+        "real Three.js scene builds one mesh per node and effects can be disabled",
+        "globe positions contain only recorded nodes, remain stable by ID, and lie on the visual shell",
+        "Three.js renderer enforces node and recorded-edge ceilings even for oversized input",
+        "initial resize survives model creation and frames all recorded nodes",
+        "interactive rendering is capped at 30 FPS and does not start a continuous frame loop",
+        "view records render cost and pulses only requested nodes",
+        "frame pacing benchmark is opt-in, bounded to 300 intervals, and reports inference limits",
+        "3D is the default view with list as a selectable alternative",
+        "pulse only follows a verified state change and never under reduced motion",
+        "turning on reduced motion while viewing 3D switches to the equivalent list view"
+      ],
+      "reason": "Obsolete Three.js/WebGL renderer; Qt projected rendering and the accessible fallback replace it. Backend graph/permissions remain Python-tested."
+    }
+  ]
+}

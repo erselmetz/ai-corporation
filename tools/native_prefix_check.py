@@ -22,6 +22,10 @@ def isolated_profile():
 
 
 def main():
+    import argparse
+    from frozen_corpus import document
+    parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path);args=parser.parse_args()
+    if args.output:args.output=args.output.resolve();args.output.parent.mkdir(parents=True,exist_ok=True)
     with httpx.Client(trust_env=False,timeout=5) as client:
         try:response=client.get('http://127.0.0.1:11434/api/tags');response.raise_for_status()
         except (httpx.HTTPError,OSError):raise SystemExit('STOP: Start Ollama at 127.0.0.1:11434 before this check.')
@@ -35,7 +39,7 @@ def main():
         from app.knowledge.native_brain import NativeBrain
         initialize_database();brain=NativeBrain(prefixed=False);manifest=[]
         for item in baseline['documents']:
-            path=ROOT/item['path'];data=path.read_bytes()
+            path,data=document(ROOT,item)
             assert hashlib.sha256(data).hexdigest()==item['sha256'],'The real corpus changed; do not silently change the comparison.'
             brain.feed('prefix-check',str(path),path.name,data,consent=True);manifest.append(item)
         folder=profile/'chosen-folder';folder.mkdir()
@@ -62,7 +66,7 @@ def main():
             results.append({'prefixed':prefixed,'cases':cases,'thresholds':thresholds})
         result={'model':model['name'],'model_digest':model['digest'],'corpus':manifest,'chunks':len(brain.rows('prefix-check')),
                 'results':results,'measurement':'Expected-source retrieval only, not answer quality or independently held-out threshold tuning.'}
-        (output/'prefix-comparison.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
+        (args.output or output/'prefix-comparison.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
         print(json.dumps({'chunks':result['chunks'],'results':[{'prefixed':r['prefixed'],'thresholds':r['thresholds']} for r in results]}))
 
 

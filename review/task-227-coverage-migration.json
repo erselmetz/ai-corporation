@@ -1,0 +1,4010 @@
+{
+  "legacy_counts": {
+    "browser": 295,
+    "electron": 44,
+    "docs": 23
+  },
+  "cases": [
+    {
+      "suite": "browser",
+      "legacy_file": "tests/local-automation-ui.test.mjs",
+      "legacy_name": "automation UI confirms the exact preview and executes only after digest approval",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/local-automation-ui.test.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/local-automation-ui.test.mjs",
+      "legacy_name": "declining exact action approval never calls approve or execute",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/local-automation-ui.test.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_activity_ui.mjs",
+      "legacy_name": "loads the bounded Activity API with same-origin credentials and displays its exact response fields",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_activity_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_activity_ui.mjs",
+      "legacy_name": "uses only the supported limit and optional task_id query parameters",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_activity_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_activity_ui.mjs",
+      "legacy_name": "does not send an unsupported limit value",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_activity_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_activity_ui.mjs",
+      "legacy_name": "renders a successful empty result differently from an API failure",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_activity_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_activity_ui.mjs",
+      "legacy_name": "distinguishes authentication, forbidden, invalid-query and general API failures",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_activity_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_activity_ui.mjs",
+      "legacy_name": "refresh uses the API again and prevents duplicate requests",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_activity_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_activity_ui.mjs",
+      "legacy_name": "failed refresh clears displayed records instead of leaving them as current",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_activity_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_activity_ui.mjs",
+      "legacy_name": "network and malformed-response failures are explicit, not successful empty lists",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_activity_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_activity_ui.mjs",
+      "legacy_name": "uses no Activity detail route, unsupported methods, secrets, or internal layers",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_activity_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_agents_ui.mjs",
+      "legacy_name": "failed refresh keeps a readable error panel and removes stale Agent actions",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_agents_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_agents_ui.mjs",
+      "legacy_name": "Agents page filters by real runtime state and switches to existing organization tree",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_agents_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_agents_ui.mjs",
+      "legacy_name": "profile details remain safe for read-only sessions and link chat to the matching Employee",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_agents_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_agents_ui.mjs",
+      "legacy_name": "owner profile editor is collapsed by default and uses existing pause/reset APIs",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_agents_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_agents_ui.mjs",
+      "legacy_name": "New Agent clones an existing profile through the owner API with CSRF",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_agents_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_assignment_policy_ui.mjs",
+      "legacy_name": "owner enables, previews, and disables recommendations with same-origin CSRF",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_assignment_policy_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_assignment_policy_ui.mjs",
+      "legacy_name": "declined enable and read-only sessions cannot mutate the policy",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_assignment_policy_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_backup_ui.mjs",
+      "legacy_name": "backup UI starts without requests and private-data opt-in is off",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_backup_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_backup_ui.mjs",
+      "legacy_name": "preview, safe diagnostics, and export run only after explicit owner actions",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_backup_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_backup_ui.mjs",
+      "legacy_name": "restore requires the same inspected file, passphrase, typed confirmation, and final prompt",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_backup_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_brain_visualization_ui.mjs",
+      "legacy_name": "Brain graph layout uses real groups and source edges, caps only the renderer",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_brain_visualization_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_brain_visualization_ui.mjs",
+      "legacy_name": "retrieval highlight persistence stores bounded chunk identifiers without content",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_brain_visualization_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_brain_visualization_ui.mjs",
+      "legacy_name": "Brain page exposes a complete keyboard list and loads selected text only on selection",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_brain_visualization_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_brain_visualization_ui.mjs",
+      "legacy_name": "reduced motion and renderer failures preserve the complete list fallback",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_brain_visualization_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_brain_visualization_ui.mjs",
+      "legacy_name": "ingestion events create actual temporary graph nodes while the keyboard list stays visible",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_brain_visualization_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_brain_visualization_ui.mjs",
+      "legacy_name": "Three.js renderer caps frames, pauses while hidden, and falls back under slow frame timing",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_brain.py"
+      ],
+      "reason": "Three.js/WebGL renderer-specific behavior is retired in favor of shared Qt QPainter projected-3D, anchored cards and list fallback. No assertion silently removed."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_camera_capture.mjs",
+      "legacy_name": "one owner-triggered camera frame requests video only, bounds pixels and stops the track",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_camera_capture.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_camera_capture.mjs",
+      "legacy_name": "camera denial, unsupported input and emergency stop never retain a frame",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_camera_capture.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_camera_capture.mjs",
+      "legacy_name": "camera UI requires both scoped permissions and attaches only one frame with CSRF",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_camera_capture.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_camera_stop.mjs",
+      "legacy_name": "camera capture fails closed when the server reports emergency stop",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_camera_stop.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_capability_packs_ui.mjs",
+      "legacy_name": "pack UI renders observed status and exact reviewed wheel manifest",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_capability_packs_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_capability_packs_ui.mjs",
+      "legacy_name": "cancelled install makes no write request",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_capability_packs_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_capability_packs_ui.mjs",
+      "legacy_name": "confirmed install binds confirmation to the displayed manifest and CSRF session",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_capability_packs_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_capability_packs_ui.mjs",
+      "legacy_name": "self-test action runs only after pack status says installed",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_capability_packs_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_images_ui.mjs",
+      "legacy_name": "temporary images are unselected by default and require per-turn consent before exposing selected IDs",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_images_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_images_ui.mjs",
+      "legacy_name": "online image preview identifies the destination and requires distinct cloud consent",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_images_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_markdown.mjs",
+      "legacy_name": "renders common Markdown with inert text nodes and no HTML execution surface",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_markdown.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_markdown.mjs",
+      "legacy_name": "code copy uses the clipboard API and reports completion",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_markdown.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "local transcript is added after an unsent typed draft and never submits the chat",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "speech source labels distinguish local, local-model, and consented online transcripts",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "composer sends on Enter, keeps Shift+Enter for a newline, and stays keyboard operable",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "plus actions stay explicit and start only the chosen capture or knowledge control",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "Brain defaults on when owner knowledge exists and previews selected chunks automatically before a turn",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "narrow sidebar uses the menu toggle and Escape closes it",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "dark theme is the default and the explicit toggle persists light and dark",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "stored light theme updates the Chat toggle label on first render",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "conversation sidebar groups by date, supports search, rename, and pin",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "answer trace is collapsed by default and remains available after a reply",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "approval inbox is permission-gated, previews exact scope, and deny uses CSRF without execution",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "Coordinator delegation is explicit, plain-text only, and shows the bounded plan before sending",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "delete is visible only to an authorized owner and sends an explicit confirmed delete",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "emergency stop is hidden until protected activity is reported",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "emergency stop appears for each protected activity source and hides when it ends",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "Send becomes Stop while a turn is pending and aborts local waiting without replay",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "start and send use same-origin, session CSRF and actual coordinator identity; text stays inert",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "Electron direct launch opens a coordinator conversation and sends local chat without a setup confirmation",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "chat autonomy chip loads and persists the owner-scoped setting with CSRF",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "desktop restoration loads only the saved conversation and never replays a turn",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "a fresh desktop window does not adopt another window's latest conversation",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "an unretained desktop chat opens empty with an explanation and no replay",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "canceling the reviewed chat plan starts no retrieval, tools, or provider request",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "canceling a plan with a selected calculator does not submit the tool or chat turn",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "alternate route is opt-in per turn and displayed before confirmation",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "declining an alternate route confirmation performs no provider request",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "streaming chat renders provider chunks and verifies the completed response",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "knowledge requires an exact preview and displays returned citations in How I answered",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "reviewed tool calls are explicit, one-turn, and routed through non-streaming chat",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "local document choices load only after opening reviewed tools with documentation permission",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "Stop display hides chunks but continues consuming the provider response",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "repository study sends explicit scope with CSRF and renders untrusted report as text",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "repository study is unavailable without the separate GitHub read permission",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "Gemini requires per-turn cloud consent and sends only an explicit consent flag",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "pending send prevents duplicate turns and selection changes; provider failure is inspected without replay",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "blank and UTF-8 oversized messages never submit",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "recognized Gemini key paste is blocked with setup guidance before submission",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "authorization and empty data are distinct and failed refresh removes stale data",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "existing owner conversation can be selected after refresh and closed explicitly",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "coordinator proposal is shown before an explicit pending-Task confirmation",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "a failed send that discovers closure keeps input disabled and never replays",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "stopping a model wait aborts local waiting but records an unknown remote outcome without replay",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_ui.mjs",
+      "legacy_name": "exact assembled prompt is visible only after explicit local-model opt-in and is inert text",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_workspace_ui.mjs",
+      "legacy_name": "two window controllers keep model, project and request scope independent",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_workspace_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_chat_workspace_ui.mjs",
+      "legacy_name": "selection change opens a new context without sending a model turn or changing another window",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_chat_workspace_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_dashboard_data.mjs",
+      "legacy_name": "setup guidance distinguishes sign-in, missing configuration, and unchecked availability",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_dashboard_data.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_dashboard_data.mjs",
+      "legacy_name": "setup read failure is unavailable, not an empty or healthy provider state",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_dashboard_data.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_dashboard_data.mjs",
+      "legacy_name": "loads the existing protected read resources with same-origin credentials",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_dashboard_data.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_dashboard_data.mjs",
+      "legacy_name": "preserves empty lists as successful data rather than converting failures to empty",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_dashboard_data.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_dashboard_data.mjs",
+      "legacy_name": "distinguishes authentication, authorization, and other failures per resource",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_dashboard_data.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_dashboard_data.mjs",
+      "legacy_name": "signed-out dashboard makes one identity request and clears and hides protected panels",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_dashboard_data.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_dashboard_data.mjs",
+      "legacy_name": "renders empty collections explicitly",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_dashboard_data.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_dashboard_data.mjs",
+      "legacy_name": "dashboard shows only pending work and active projects, with unknown source freshness where timestamps are absent",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_dashboard_data.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_dashboard_data.mjs",
+      "legacy_name": "renders failed and partial responses without hiding successful panel data",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_dashboard_data.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_dashboard_data.mjs",
+      "legacy_name": "shows distinct authentication and forbidden failures for combined panels",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_dashboard_data.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_documentation_ui.mjs",
+      "legacy_name": "loads document summaries and content from the protected same-origin API",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_documentation_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_documentation_ui.mjs",
+      "legacy_name": "renders a successful empty response as an empty state",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_documentation_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_documentation_ui.mjs",
+      "legacy_name": "authentication, permission, invalid response, and server failures are not empty results",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_documentation_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_documentation_ui.mjs",
+      "legacy_name": "missing and failed document reads clear previously displayed content",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_documentation_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_documentation_ui.mjs",
+      "legacy_name": "failed refresh prevents duplicates and clears stale records and content",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_documentation_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_documentation_ui.mjs",
+      "legacy_name": "network failures are explicit and invalid document payloads are rejected",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_documentation_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_emergency_stop_ui.mjs",
+      "legacy_name": "safety panel stops, revokes grants, reports activity, and confirms resume",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_emergency_stop_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_employee_chat_ui.mjs",
+      "legacy_name": "Agent Chat link preselects its linked Employee without starting a conversation",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_employee_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_employee_chat_ui.mjs",
+      "legacy_name": "Employee chat uses CSRF, inert rendering and explicit per-turn Gemini consent",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_employee_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_employee_chat_ui.mjs",
+      "legacy_name": "Employee chat streams only from an advertised provider and handles the final snapshot",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_employee_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_employee_chat_ui.mjs",
+      "legacy_name": "retained Employee history requires opt-in and explicit confirmed deletion",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_employee_chat_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_employee_ui.mjs",
+      "legacy_name": "lists employees and requests details using the existing response fields",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_employee_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_employee_ui.mjs",
+      "legacy_name": "creates only API-supported fields, prevents duplicate submits, refreshes and selects created employee",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_employee_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_employee_ui.mjs",
+      "legacy_name": "requires confirmation before DELETE and clears selected details after successful removal",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_employee_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_employee_ui.mjs",
+      "legacy_name": "distinguishes auth failures, stale details, conflicts, and validation failures",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_employee_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_employee_ui.mjs",
+      "legacy_name": "keeps failed list requests distinct from a successful empty collection",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_employee_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_employee_ui.mjs",
+      "legacy_name": "clears previously selected employee details when a refreshed list request fails",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_employee_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_employee_ui.mjs",
+      "legacy_name": "keeps removal failures visible and re-enables retry",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_employee_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_inventory_ui.mjs",
+      "legacy_name": "inventory UI requires sign-in before requesting inventory data",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_inventory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_inventory_ui.mjs",
+      "legacy_name": "inventory UI renders verified records as inert text and shows limitations",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_inventory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_inventory_ui.mjs",
+      "legacy_name": "inventory UI denies sessions without inventory permission",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_inventory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_inventory_ui.mjs",
+      "legacy_name": "software lifecycle requires exact preview and separate explicit confirmation",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_inventory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_knowledge_ui.mjs",
+      "legacy_name": "owner notes require explicit retention consent and send CSRF-bound local data",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_knowledge_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_knowledge_ui.mjs",
+      "legacy_name": "explicit note save persists content and expiry, and index diagnostics stay truthful",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_knowledge_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_knowledge_ui.mjs",
+      "legacy_name": "Brain accepts a bounded multi-file batch and reports each file through chunking to lexical-ready",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_knowledge_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_knowledge_ui.mjs",
+      "legacy_name": "index inspection and deletion use the selected owner scope",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_knowledge_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_knowledge_ui.mjs",
+      "legacy_name": "optional FAISS pack is reviewed before install and cancellation downloads nothing",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_knowledge_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_knowledge_ui.mjs",
+      "legacy_name": "FAISS Test it action reports its self-test result",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_knowledge_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_knowledge_ui.mjs",
+      "legacy_name": "nomic embedding download requires a digest/size preview and owner confirmation",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_knowledge_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_knowledge_ui.mjs",
+      "legacy_name": "embedding Test it action reports only the local Ollama self-test",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_knowledge_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_knowledge_ui.mjs",
+      "legacy_name": "v3code Brain import previews counts and requires explicit retention plus a digest match",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_knowledge_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_local_login_ui.mjs",
+      "legacy_name": "login clears password immediately, suppresses duplicate submits and navigates after success",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_local_login_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_local_login_ui.mjs",
+      "legacy_name": "login failure is visible, clears input and does not navigate",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_local_login_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_local_login_ui.mjs",
+      "legacy_name": "logout uses session CSRF and reports revoked session",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_local_login_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_local_login_ui.mjs",
+      "legacy_name": "sign-in returns to the same-origin app page and rejects external destinations",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_local_login_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_local_models_ui.mjs",
+      "legacy_name": "refresh is explicit and selection uses CSRF, same-origin and inert installed identifiers",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_local_models_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_local_models_ui.mjs",
+      "legacy_name": "model reassignment previews identity, privacy and affected work before confirmation",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_local_models_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_local_models_ui.mjs",
+      "legacy_name": "incomplete affected-work reads fail closed before local reassignment",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_local_models_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_local_models_ui.mjs",
+      "legacy_name": "read-only session cannot select and changing coordinator clears stale evidence",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_local_models_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_local_models_ui.mjs",
+      "legacy_name": "busy refresh suppresses duplicate calls and conflicts remove stale selection",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_local_models_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_local_models_ui.mjs",
+      "legacy_name": "unavailable and unknown observations show guidance without enabling selection",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_local_models_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_local_models_ui.mjs",
+      "legacy_name": "missing local login reports sign-in guidance",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_local_models_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_memory_ui.mjs",
+      "legacy_name": "explicit scoped reads use session credentials and render text safely",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_memory_ui.mjs",
+      "legacy_name": "correction sends explicit consent and revision without owner spoofing",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_memory_ui.mjs",
+      "legacy_name": "read failure 401 clears previous records",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_memory_ui.mjs",
+      "legacy_name": "read failure 403 clears previous records",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_memory_ui.mjs",
+      "legacy_name": "read failure 500 clears previous records",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_memory_ui.mjs",
+      "legacy_name": "stale correction conflict clears cached content",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_memory_ui.mjs",
+      "legacy_name": "expired metadata never fetches content and requires confirmed owner deletion",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_memory_ui.mjs",
+      "legacy_name": "named corporation reader cannot correct or withdraw",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_memory_ui.mjs",
+      "legacy_name": "changed scope rejects in-flight content",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_memory_ui.mjs",
+      "legacy_name": "pending correction cannot be submitted twice",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_online_provider_ui.mjs",
+      "legacy_name": "Gemini key is used only for the dedicated catalog request and is cleared immediately",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_online_provider_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_online_provider_ui.mjs",
+      "legacy_name": "Gemini reassignment previews affected work and requires explicit confirmation",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_online_provider_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_online_provider_ui.mjs",
+      "legacy_name": "confirmed Gemini assignment carries the observed Agent identity and connection",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_online_provider_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_online_provider_ui.mjs",
+      "legacy_name": "staged credential erase uses same-origin CSRF protected local endpoint",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_online_provider_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_owner_suggestions_ui.mjs",
+      "legacy_name": "quiet periods use browser local time, including windows across midnight",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_owner_suggestions_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_owner_suggestions_ui.mjs",
+      "legacy_name": "disabled suggestions do not read workflow signals and controls remain available",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_owner_suggestions_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_owner_suggestions_ui.mjs",
+      "legacy_name": "enabled suggestions disclose source, support owner dismissal, and refresh only on request",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_owner_suggestions_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_owner_suggestions_ui.mjs",
+      "legacy_name": "quiet-period settings suppress fetching and displaying suggestion cards",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_owner_suggestions_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_position_ui.mjs",
+      "legacy_name": "loads actual position and revision data as inert text",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_position_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_position_ui.mjs",
+      "legacy_name": "creates a position through same-origin API with CSRF and independent references",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_position_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_position_ui.mjs",
+      "legacy_name": "position readers without employee:read retain existing employee references",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_position_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_project_ui.mjs",
+      "legacy_name": "loads project list and details through the existing protected APIs",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_project_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_project_ui.mjs",
+      "legacy_name": "creates only name and description, then refreshes and loads returned project through API",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_project_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_project_ui.mjs",
+      "legacy_name": "prevents duplicate Project submissions while the first request is pending",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_project_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_project_ui.mjs",
+      "legacy_name": "rejects blank names locally while allowing an omitted description",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_project_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_project_ui.mjs",
+      "legacy_name": "clears selected details and stale list entry when a Project detail returns 404",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_project_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_project_ui.mjs",
+      "legacy_name": "clears cached Project list and selected details when a refresh fails",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_project_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_project_ui.mjs",
+      "legacy_name": "distinguishes authentication, authorization, conflict, validation, not-found and server errors",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_project_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_project_ui.mjs",
+      "legacy_name": "renders successful empty collections separately from failed responses",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_project_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_project_ui.mjs",
+      "legacy_name": "network failures are explicit and never rendered as an empty Project list",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_project_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_project_ui.mjs",
+      "legacy_name": "Project UI exposes no unsupported deletion or lifecycle actions",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_project_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_project_ui.mjs",
+      "legacy_name": "browser Project module has no credentials or direct internal-layer access",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_project_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_provider_connections_ui.mjs",
+      "legacy_name": "Gemini setup clears the key, displays truthful capacity, and confirms assignment",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_provider_connections_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_provider_connections_ui.mjs",
+      "legacy_name": "read-only owner session cannot add or assign provider connections",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_provider_connections_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_provider_connections_ui.mjs",
+      "legacy_name": "local runtime controls show provider evidence and confirm bounded load and unload",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_provider_connections_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_provider_connections_ui.mjs",
+      "legacy_name": "model lifecycle controls require their distinct permission",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_provider_connections_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_provider_ui.mjs",
+      "legacy_name": "loads provider and model lists using the existing APIs and displays detail fields",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_provider_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_provider_ui.mjs",
+      "legacy_name": "creates Provider with only id and name and refreshes list/detail",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_provider_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_provider_ui.mjs",
+      "legacy_name": "prevents duplicate Provider creation while the first request is pending",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_provider_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_provider_ui.mjs",
+      "legacy_name": "requires confirmation before Provider DELETE and refreshes after success",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_provider_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_provider_ui.mjs",
+      "legacy_name": "loads model detail and replaces with exactly provider_id/model_id then refreshes",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_provider_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_provider_ui.mjs",
+      "legacy_name": "prevents duplicate model replacements while the first request is pending",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_provider_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_provider_ui.mjs",
+      "legacy_name": "keeps auth, permission, conflict, validation, missing, and general failures explicit",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_provider_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_provider_ui.mjs",
+      "legacy_name": "renders successful empty lists separately from failed requests",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_provider_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_quick_start_ui.mjs",
+      "legacy_name": "shows exact stopped Ollama recovery state and Retry when installation exists",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_quick_start_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_quick_start_ui.mjs",
+      "legacy_name": "offers the existing confirmed installer only when Ollama is not installed",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_quick_start_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_quick_start_ui.mjs",
+      "legacy_name": "shows registry-derived model size and keeps download behind explicit confirmation",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_quick_start_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_readiness_ui.mjs",
+      "legacy_name": "readiness UI requests a bounded same-origin snapshot only after refresh",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_readiness_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_readiness_ui.mjs",
+      "legacy_name": "authorization failures clear stale readiness evidence",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_readiness_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_release_update_ui.mjs",
+      "legacy_name": "renders only verified release data and enables preparation for authorized owners",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_release_update_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_release_update_ui.mjs",
+      "legacy_name": "release page performs no network check until the owner explicitly selects the check button",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_release_update_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_release_update_ui.mjs",
+      "legacy_name": "prepares only an explicitly selected checked version and includes the session CSRF token",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_release_update_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_release_update_ui.mjs",
+      "legacy_name": "keeps preparation unavailable without manage permission or after invalid release data",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_release_update_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_sage_core.mjs",
+      "legacy_name": "Sage Core only maps recorded Agents and current trace edges with stable positions",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_sage_core.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_sage_core.mjs",
+      "legacy_name": "original canvas rendering draws only existing nodes and links without random decorations",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_sage_core.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_sage_core.mjs",
+      "legacy_name": "Agent details and equivalent keyboard-accessible list are available",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_sage_core.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_sage_core.mjs",
+      "legacy_name": "reduced motion and missing canvas select the accessible list",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_sage_core.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_sage_core.mjs",
+      "legacy_name": "hidden page stops animation and poll timer; visibility restores a fresh snapshot",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_sage_core.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_sage_core.mjs",
+      "legacy_name": "repeated over-budget draws automatically switch to the accessible list",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_sage_core.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_sage_core.mjs",
+      "legacy_name": "working-state animation respects the 24 FPS frame interval",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_sage_core.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_sage_core.mjs",
+      "legacy_name": "failed and unauthorized snapshots clear stale Agent nodes",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_sage_core.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_sage_core.mjs",
+      "legacy_name": "failed refresh clears the prior canvas snapshot instead of leaving stale Agent signals visible",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_sage_core.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_screen_capture.mjs",
+      "legacy_name": "captures one bounded frame with user-selected surface and no audio, then stops all tracks",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_screen_capture.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_screen_capture.mjs",
+      "legacy_name": "unsupported surface types and oversized output fail closed and stop tracks",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_screen_capture.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_screen_capture.mjs",
+      "legacy_name": "permission cancellation, emergency stop, and unsupported browsers do not retain frames",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_screen_capture.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_screen_capture.mjs",
+      "legacy_name": "UI requires both chat permissions and sends only the bounded capture request fields with CSRF",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_screen_capture.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_semantic_memory_ui.mjs",
+      "legacy_name": "only explicitly selected owner records can be indexed and results preserve exact scope",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_semantic_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_semantic_memory_ui.mjs",
+      "legacy_name": "disabled capability and failed search clear stale results",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_semantic_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_semantic_memory_ui.mjs",
+      "legacy_name": "scope changes discard pending results and never relabel a private search",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_semantic_memory_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_shared_navigation.mjs",
+      "legacy_name": "shared navigation stays visible on wide screens and has a working narrow-window menu",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_shared_navigation.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_shared_navigation.mjs",
+      "legacy_name": "Escape closes the compact navigation and wide resize restores the visible rail",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_shared_navigation.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_structure_ui.mjs",
+      "legacy_name": "renders a keyboard-reachable tree with explicit missing and forbidden labels",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_structure_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_structure_ui.mjs",
+      "legacy_name": "selecting shows current details and flags stale revision or vanished positions",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_structure_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_structure_ui.mjs",
+      "legacy_name": "separates Agent identity from protected provider/model assignment details",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_structure_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_structure_ui.mjs",
+      "legacy_name": "reports sign-in and permission failures without data",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_structure_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_progress.mjs",
+      "legacy_name": "shows actual pending lifecycle and only allowed fields",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_progress.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_progress.mjs",
+      "legacy_name": "shows actual running lifecycle and only allowed fields",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_progress.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_progress.mjs",
+      "legacy_name": "shows actual completed lifecycle and only allowed fields",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_progress.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_progress.mjs",
+      "legacy_name": "shows actual failed lifecycle and only allowed fields",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_progress.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_progress.mjs",
+      "legacy_name": "clears previously rendered progress on 401",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_progress.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_progress.mjs",
+      "legacy_name": "clears previously rendered progress on 403",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_progress.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_progress.mjs",
+      "legacy_name": "clears previously rendered progress on 404",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_progress.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_progress.mjs",
+      "legacy_name": "clears previously rendered progress on 500",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_progress.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_progress.mjs",
+      "legacy_name": "does not fetch without a selected Task",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_progress.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_progress.mjs",
+      "legacy_name": "rejects mismatched Task identities and unsupported status",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_progress.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_progress.mjs",
+      "legacy_name": "a changed selection invalidates an in-flight response",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_progress.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "loads Task records and displays the existing Task response fields",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "creates a Task with only supported non-empty fields and refreshes details",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "prevents duplicate Task submissions while the first request is pending",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "rejects blank and multiple routing selectors before submission",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "uses the existing non-mutating dry-run endpoint and renders its declared response",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "handles missing/deleted Task detail and refreshes the list",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "clears previously loaded Tasks and details when a list refresh fails",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "distinguishes authentication, permission, validation, conflict, missing and general errors",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "renders a successful empty Task list distinctly from a failed request",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "dispatch UI is hidden without permission and requires explicit confirmation with CSRF",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "interrupted queue resolution requires a human note and never dispatches again",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "does not implement unsupported Task deletion or lifecycle mutation",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_task_ui.mjs",
+      "legacy_name": "browser Task module contains no credentials or direct internal-layer access",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_task_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_text_to_speech.mjs",
+      "legacy_name": "provider reports unavailable when device-local speech is absent",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_text_to_speech.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_text_to_speech.mjs",
+      "legacy_name": "only explicitly local voices are listed and selected for output",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_text_to_speech.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_text_to_speech.mjs",
+      "legacy_name": "output validates language and bounded text rather than truncating the reply",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_text_to_speech.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_text_to_speech.mjs",
+      "legacy_name": "voice disappearing is reported and stop cancels local playback and queued text",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_text_to_speech.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_text_to_speech.mjs",
+      "legacy_name": "reply queue is sequential and bounded by item count and UTF-8 bytes",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_text_to_speech.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_theme_ui.mjs",
+      "legacy_name": "stored local theme applies to document and body",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_theme_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_theme_ui.mjs",
+      "legacy_name": "storage failure keeps the default dark theme",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_theme_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_theme_ui.mjs",
+      "legacy_name": "a browser refusing access to the storage property still gets dark theme",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_theme_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_ui_details.mjs",
+      "legacy_name": "review details retain nested evidence and exact values without a JSON envelope",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_ui_details.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_ui_details.mjs",
+      "legacy_name": "empty lists and plain strings have explicit readable output",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_ui_details.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_updates_ui.mjs",
+      "legacy_name": "loads the same-origin Updates API and displays explicit entry fields",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_updates_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_updates_ui.mjs",
+      "legacy_name": "shows an explicit loading state while the request is pending",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_updates_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_updates_ui.mjs",
+      "legacy_name": "distinguishes a successful empty manifest from authentication, permission, and API errors",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_updates_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_updates_ui.mjs",
+      "legacy_name": "failed refresh clears previously rendered updates instead of retaining stale data",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_updates_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_updates_ui.mjs",
+      "legacy_name": "renders document-supplied strings as text and rejects malformed response data",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_updates_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_updates_ui.mjs",
+      "legacy_name": "refresh reloads from the API and prevents duplicate requests",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_updates_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "scene model contains only recorded nodes and edges, with a hard cap",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_visualization_ui.mjs"
+      ],
+      "reason": "Useful source-backed model, permission, provenance, list and selection assertions retained under Python/CDP; no Three.js import."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "only recorded state changes count as changes",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_visualization_ui.mjs"
+      ],
+      "reason": "Useful source-backed model, permission, provenance, list and selection assertions retained under Python/CDP; no Three.js import."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "corporation map includes only exact source-backed relationships and caps each selected layer view",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_visualization_ui.mjs"
+      ],
+      "reason": "Useful source-backed model, permission, provenance, list and selection assertions retained under Python/CDP; no Three.js import."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "real Three.js scene builds one mesh per node and effects can be disabled",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_brain.py"
+      ],
+      "reason": "Three.js/WebGL renderer-specific behavior is retired in favor of shared Qt QPainter projected-3D, anchored cards and list fallback. No assertion silently removed."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "globe positions contain only recorded nodes, remain stable by ID, and lie on the visual shell",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_brain.py"
+      ],
+      "reason": "Three.js/WebGL renderer-specific behavior is retired in favor of shared Qt QPainter projected-3D, anchored cards and list fallback. No assertion silently removed."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "Three.js renderer enforces node and recorded-edge ceilings even for oversized input",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_brain.py"
+      ],
+      "reason": "Three.js/WebGL renderer-specific behavior is retired in favor of shared Qt QPainter projected-3D, anchored cards and list fallback. No assertion silently removed."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "initial resize survives model creation and frames all recorded nodes",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_brain.py"
+      ],
+      "reason": "Three.js/WebGL renderer-specific behavior is retired in favor of shared Qt QPainter projected-3D, anchored cards and list fallback. No assertion silently removed."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "interactive rendering is capped at 30 FPS and does not start a continuous frame loop",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_brain.py"
+      ],
+      "reason": "Three.js/WebGL renderer-specific behavior is retired in favor of shared Qt QPainter projected-3D, anchored cards and list fallback. No assertion silently removed."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "view records render cost and pulses only requested nodes",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_brain.py"
+      ],
+      "reason": "Three.js/WebGL renderer-specific behavior is retired in favor of shared Qt QPainter projected-3D, anchored cards and list fallback. No assertion silently removed."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "interactive map uses separate authorized snapshots, source-backed layers and actionable selection",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_visualization_ui.mjs"
+      ],
+      "reason": "Useful source-backed model, permission, provenance, list and selection assertions retained under Python/CDP; no Three.js import."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "frame pacing benchmark is opt-in, bounded to 300 intervals, and reports inference limits",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_brain.py"
+      ],
+      "reason": "Three.js/WebGL renderer-specific behavior is retired in favor of shared Qt QPainter projected-3D, anchored cards and list fallback. No assertion silently removed."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "3D is the default view with list as a selectable alternative",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_brain.py"
+      ],
+      "reason": "Three.js/WebGL renderer-specific behavior is retired in favor of shared Qt QPainter projected-3D, anchored cards and list fallback. No assertion silently removed."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "pulse only follows a verified state change and never under reduced motion",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_brain.py"
+      ],
+      "reason": "Three.js/WebGL renderer-specific behavior is retired in favor of shared Qt QPainter projected-3D, anchored cards and list fallback. No assertion silently removed."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "reduced-motion preference starts in list mode without loading graphics",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_visualization_ui.mjs"
+      ],
+      "reason": "Useful source-backed model, permission, provenance, list and selection assertions retained under Python/CDP; no Three.js import."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "turning on reduced motion while viewing 3D switches to the equivalent list view",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_brain.py"
+      ],
+      "reason": "Three.js/WebGL renderer-specific behavior is retired in favor of shared Qt QPainter projected-3D, anchored cards and list fallback. No assertion silently removed."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "WebGL failure falls back to the list with a notice",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_visualization_ui.mjs"
+      ],
+      "reason": "Useful source-backed model, permission, provenance, list and selection assertions retained under Python/CDP; no Three.js import."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "keyboard selection, effects toggle, forbidden and failed sections",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_visualization_ui.mjs"
+      ],
+      "reason": "Useful source-backed model, permission, provenance, list and selection assertions retained under Python/CDP; no Three.js import."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_visualization_ui.mjs",
+      "legacy_name": "shows only recorded Agent associations, provenance metadata, and software slot budgets",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_visualization_ui.mjs"
+      ],
+      "reason": "Useful source-backed model, permission, provenance, list and selection assertions retained under Python/CDP; no Three.js import."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "WAV encoder fixes the transcription input to mono 16 kHz PCM and 10 seconds",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "local mode requires processLocally and never falls back to cloud",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "local microphone capture ends after its ten-second limit",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "microphone activity exposes permission, capture duration, and transcription state",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "stopping during local capability detection cancels startup",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "clearing a chat cancels pending microphone startup before capture can begin",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "emergency stop aborts local capture and blocks a new voice start until resumed",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "sensitive local transcript is discarded before it enters chat",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "local voice denial and unsupported language fail closed without cloud fallback",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "browser-managed downloadable speech languages require a separate owner action",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "cloud audio requires one-use consent and places only the reviewed transcript in chat",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "optional local model is selected explicitly, processes audio locally, and inserts a reviewable draft",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "stopping a cloud transcription stops local waiting and records an unknown provider outcome",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "stopping at the capture-finalization boundary discards audio instead of making it ready to send",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "reply audio uses an installed local voice and can be stopped",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "a saved local voice is restored only when that device-local voice is still available",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_voice_ui.mjs",
+      "legacy_name": "missing local speech output is visible and does not try an online fallback",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_voice_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_workflow_map_ui.mjs",
+      "legacy_name": "keeps operational links and reporting links in separate lists",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_workflow_map_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_workflow_map_ui.mjs",
+      "legacy_name": "flags stale snapshots and distinguishes empty data",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_workflow_map_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_workflow_map_ui.mjs",
+      "legacy_name": "selection shows current evidence and reflects state changes",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_workflow_map_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_workflow_map_ui.mjs",
+      "legacy_name": "shows Agent assignment source, unrecorded reason, and truthful outcome evidence",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_workflow_map_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_workflow_map_ui.mjs",
+      "legacy_name": "labels missing Agent and uncertain provider outcomes without claiming a response",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_workflow_map_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_workflow_map_ui.mjs",
+      "legacy_name": "forbidden agents and reporting data are labelled",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_workflow_map_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_workflow_map_ui.mjs",
+      "legacy_name": "disconnect keeps the last snapshot marked stale; errors show no data",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_workflow_map_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_workflows_ui.mjs",
+      "legacy_name": "renders verified workflow state as text only",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_workflows_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "browser",
+      "legacy_file": "tests/test_workflows_ui.mjs",
+      "legacy_name": "reports sign-in requirement without data",
+      "disposition": "ported",
+      "replacement_checks": [
+        "tests/test_browser_contracts.py",
+        "tests/browser_contracts/test_workflows_ui.mjs"
+      ],
+      "reason": "Original browser JavaScript assertions run under Python pytest/CDP module workers, without Node or Playwright."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/build-stamp.test.cjs",
+      "legacy_name": "packaged startup passes the build commit and refuses an unidentifiable package",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_native_build_stamp.py",
+        "tests/test_desktop_launcher.py",
+        "tests/test_qt_shell.py"
+      ],
+      "reason": "Qt build identity, loopback backend and single-instance replacement."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/build-stamp.test.cjs",
+      "legacy_name": "review builds can use isolated output directories without deleting prior releases",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_native_build_stamp.py",
+        "tests/test_desktop_launcher.py",
+        "tests/test_qt_shell.py"
+      ],
+      "reason": "Qt build identity, loopback backend and single-instance replacement."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/build-stamp.test.cjs",
+      "legacy_name": "desktop test port remains loopback-only and rejects invalid port values",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_native_build_stamp.py",
+        "tests/test_desktop_launcher.py",
+        "tests/test_qt_shell.py"
+      ],
+      "reason": "Qt build identity, loopback backend and single-instance replacement."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/camera-security.test.cjs",
+      "legacy_name": "camera grant requires a trusted chat main frame and native allow-once decision",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_native_capture_api.py",
+        "tests/test_qt_capture.py"
+      ],
+      "reason": "Electron media permission hooks are retired; native exact-action approval and device leases replace them."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/camera-security.test.cjs",
+      "legacy_name": "Electron grants only video-only media once to the trusted chat and preload exposes one camera request",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_native_capture_api.py",
+        "tests/test_qt_capture.py"
+      ],
+      "reason": "Electron media permission hooks are retired; native exact-action approval and device leases replace them."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/hardware-profile-ui.test.cjs",
+      "legacy_name": "hardware settings expose per-field provenance and warn when CPU inference is expected",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_hardware_profile.py",
+        "tests/test_hardware_profile_api.py"
+      ],
+      "reason": "Existing authenticated hardware API retains provenance and unknown values; Electron settings renderer is retired."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/hardware-profile-ui.test.cjs",
+      "legacy_name": "hardware settings preserve UNKNOWN and sanitized source fields",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_hardware_profile.py",
+        "tests/test_hardware_profile_api.py"
+      ],
+      "reason": "Existing authenticated hardware API retains provenance and unknown values; Electron settings renderer is retired."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/local-diagnostics.test.cjs",
+      "legacy_name": "local crash records whitelist metadata and never persist messages, stacks, paths, or secrets",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_native_failure_metadata.py"
+      ],
+      "reason": "Whitelisted bounded local-only Qt failure records replace Electron process events."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/local-diagnostics.test.cjs",
+      "legacy_name": "local crash records are capped by count and oversized files fail closed",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_native_failure_metadata.py"
+      ],
+      "reason": "Whitelisted bounded local-only Qt failure records replace Electron process events."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/local-reset.test.cjs",
+      "legacy_name": "reset waits for the parent to exit, then deletes only the fixed per-user data folder",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_local_owner_credential.py",
+        "tests/test_first_run_setup.py"
+      ],
+      "reason": "Electron reset IPC retired. Existing owner-scoped Python reset/setup checks remain; native reset UI parity still pending review. These Electron-only entry points are intentionally not shipped: app data is preserved, Ollama is installed separately, and release signing remains a separately authorized owner workflow. No claim of native automatic installers, destructive reset IPC or a replacement signing UI is made."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/local-reset.test.cjs",
+      "legacy_name": "reset refuses an unexpected data path and times out without deleting anything",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_local_owner_credential.py",
+        "tests/test_first_run_setup.py"
+      ],
+      "reason": "Electron reset IPC retired. Existing owner-scoped Python reset/setup checks remain; native reset UI parity still pending review. These Electron-only entry points are intentionally not shipped: app data is preserved, Ollama is installed separately, and release signing remains a separately authorized owner workflow. No claim of native automatic installers, destructive reset IPC or a replacement signing UI is made."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/local-reset.test.cjs",
+      "legacy_name": "reset does not remove a locked profile until its parent releases the open file",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_local_owner_credential.py",
+        "tests/test_first_run_setup.py"
+      ],
+      "reason": "Electron reset IPC retired. Existing owner-scoped Python reset/setup checks remain; native reset UI parity still pending review. These Electron-only entry points are intentionally not shipped: app data is preserved, Ollama is installed separately, and release signing remains a separately authorized owner workflow. No claim of native automatic installers, destructive reset IPC or a replacement signing UI is made."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/navigation.test.cjs",
+      "legacy_name": "Next routes use one root navigation shell instead of page-owned sidebars",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_shell.py",
+        "tests/test_advanced_launch.py"
+      ],
+      "reason": "Electron URL navigation hooks retired; Qt shell and one-use Advanced browser handoff replace them."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/navigation.test.cjs",
+      "legacy_name": "static navigation covers Python UI destinations and compact navigation is controlled",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_shell.py",
+        "tests/test_advanced_launch.py"
+      ],
+      "reason": "Electron URL navigation hooks retired; Qt shell and one-use Advanced browser handoff replace them."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/ollama-installer.test.cjs",
+      "legacy_name": "Ollama installer preview is pinned to official release metadata and exact asset",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_first_run_setup.py"
+      ],
+      "reason": "Electron automatic Ollama installer is not carried into native startup. Installed-model discovery remains; any installer replacement must be separately verified. These Electron-only entry points are intentionally not shipped: app data is preserved, Ollama is installed separately, and release signing remains a separately authorized owner workflow. No claim of native automatic installers, destructive reset IPC or a replacement signing UI is made."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/ollama-installer.test.cjs",
+      "legacy_name": "installer preview accepts a bounded large release and refuses sizes above its cap",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_first_run_setup.py"
+      ],
+      "reason": "Electron automatic Ollama installer is not carried into native startup. Installed-model discovery remains; any installer replacement must be separately verified. These Electron-only entry points are intentionally not shipped: app data is preserved, Ollama is installed separately, and release signing remains a separately authorized owner workflow. No claim of native automatic installers, destructive reset IPC or a replacement signing UI is made."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/ollama-installer.test.cjs",
+      "legacy_name": "installer verifies exact downloaded bytes before launching without shell or elevation",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_first_run_setup.py"
+      ],
+      "reason": "Electron automatic Ollama installer is not carried into native startup. Installed-model discovery remains; any installer replacement must be separately verified. These Electron-only entry points are intentionally not shipped: app data is preserved, Ollama is installed separately, and release signing remains a separately authorized owner workflow. No claim of native automatic installers, destructive reset IPC or a replacement signing UI is made."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/ollama-installer.test.cjs",
+      "legacy_name": "installer refuses digest changes and unapproved download hosts",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_first_run_setup.py"
+      ],
+      "reason": "Electron automatic Ollama installer is not carried into native startup. Installed-model discovery remains; any installer replacement must be separately verified. These Electron-only entry points are intentionally not shipped: app data is preserved, Ollama is installed separately, and release signing remains a separately authorized owner workflow. No claim of native automatic installers, destructive reset IPC or a replacement signing UI is made."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/onboarding.test.cjs",
+      "legacy_name": "new Electron launches start the loopback service and open Coordinator Chat with a per-launch token",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py"
+      ],
+      "reason": "Electron onboarding view retired; existing authenticated first-run backend and Qt offline/model-selection behavior replace it."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/onboarding.test.cjs",
+      "legacy_name": "Electron health handshake requires a matching version and source commit stamp",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py"
+      ],
+      "reason": "Electron onboarding view retired; existing authenticated first-run backend and Qt offline/model-selection behavior replace it."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/onboarding.test.cjs",
+      "legacy_name": "first-run checks are bounded and report unsupported evidence as unknown",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py"
+      ],
+      "reason": "Electron onboarding view retired; existing authenticated first-run backend and Qt offline/model-selection behavior replace it."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/onboarding.test.cjs",
+      "legacy_name": "onboarding explains the shortest chat path and keeps operator controls separate",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py"
+      ],
+      "reason": "Electron onboarding view retired; existing authenticated first-run backend and Qt offline/model-selection behavior replace it."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/onboarding.test.cjs",
+      "legacy_name": "provider guidance links everyday preferences to the grouped settings hub",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py"
+      ],
+      "reason": "Electron onboarding view retired; existing authenticated first-run backend and Qt offline/model-selection behavior replace it."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/onboarding.test.cjs",
+      "legacy_name": "settings hub reads scoped values and changes only the explicit desktop password lock",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py"
+      ],
+      "reason": "Electron onboarding view retired; existing authenticated first-run backend and Qt offline/model-selection behavior replace it."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/onboarding.test.cjs",
+      "legacy_name": "first-run overview does not mutate provider or model configuration",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py"
+      ],
+      "reason": "Electron onboarding view retired; existing authenticated first-run backend and Qt offline/model-selection behavior replace it."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/onboarding.test.cjs",
+      "legacy_name": "settings exposes local-only recovery records and a separate owner-confirmed full reset",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py"
+      ],
+      "reason": "Electron onboarding view retired; existing authenticated first-run backend and Qt offline/model-selection behavior replace it."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/prototype-shell.test.cjs",
+      "legacy_name": "Advanced opens only allowlisted same-origin pages in sandboxed registered windows",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_shell.py",
+        "tests/test_qt_screenshot_matrix.py"
+      ],
+      "reason": "Three-pane Qt layout and real widget screenshots replace Electron prototype markup."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/screen-capture.test.cjs",
+      "legacy_name": "trusted request receives only the exact source selected by the owner",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_native_capture_api.py",
+        "tests/test_qt_capture.py"
+      ],
+      "reason": "Electron desktopCapturer grants retired; Qt one-shot approvals and shared capture lease replace them."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/screen-capture.test.cjs",
+      "legacy_name": "untrusted, canceled, stale source, empty list, and errors fail closed",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_native_capture_api.py",
+        "tests/test_qt_capture.py"
+      ],
+      "reason": "Electron desktopCapturer grants retired; Qt one-shot approvals and shared capture lease replace them."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/screen-capture.test.cjs",
+      "legacy_name": "the handler never selects a source when source inventory is empty",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_native_capture_api.py",
+        "tests/test_qt_capture.py"
+      ],
+      "reason": "Electron desktopCapturer grants retired; Qt one-shot approvals and shared capture lease replace them."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/security.test.cjs",
+      "legacy_name": "Windows distribution is per-user, preserves owner data, and has no auto-updater",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_shell.py",
+        "tests/test_advanced_launch.py",
+        "tests/test_native_runtime.py"
+      ],
+      "reason": "Electron preload, IPC sender and renderer sandbox tests retired with that process boundary. Loopback authentication, CSRF and native window ownership retain Python checks."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/security.test.cjs",
+      "legacy_name": "Electron renderer windows are isolated and navigation stays on owned content",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_shell.py",
+        "tests/test_advanced_launch.py",
+        "tests/test_native_runtime.py"
+      ],
+      "reason": "Electron preload, IPC sender and renderer sandbox tests retired with that process boundary. Loopback authentication, CSRF and native window ownership retain Python checks."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/security.test.cjs",
+      "legacy_name": "preload exposes only bounded startup operations, never raw Electron IPC",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_shell.py",
+        "tests/test_advanced_launch.py",
+        "tests/test_native_runtime.py"
+      ],
+      "reason": "Electron preload, IPC sender and renderer sandbox tests retired with that process boundary. Loopback authentication, CSRF and native window ownership retain Python checks."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/security.test.cjs",
+      "legacy_name": "local recovery IPC is app-origin and owner-permission guarded with native reset confirmation",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_shell.py",
+        "tests/test_advanced_launch.py",
+        "tests/test_native_runtime.py"
+      ],
+      "reason": "Electron preload, IPC sender and renderer sandbox tests retired with that process boundary. Loopback authentication, CSRF and native window ownership retain Python checks."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/security.test.cjs",
+      "legacy_name": "Ollama installer bridge is app-origin restricted and presents verified details before execution",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_shell.py",
+        "tests/test_advanced_launch.py",
+        "tests/test_native_runtime.py"
+      ],
+      "reason": "Electron preload, IPC sender and renderer sandbox tests retired with that process boundary. Loopback authentication, CSRF and native window ownership retain Python checks."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/security.test.cjs",
+      "legacy_name": "microphone requests need an explicit native confirmation and one-use audio grant",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_shell.py",
+        "tests/test_advanced_launch.py",
+        "tests/test_native_runtime.py"
+      ],
+      "reason": "Electron preload, IPC sender and renderer sandbox tests retired with that process boundary. Loopback authentication, CSRF and native window ownership retain Python checks."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/security.test.cjs",
+      "legacy_name": "static Next export contains only local command-center destinations",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_qt_shell.py",
+        "tests/test_advanced_launch.py",
+        "tests/test_native_runtime.py"
+      ],
+      "reason": "Electron preload, IPC sender and renderer sandbox tests retired with that process boundary. Loopback authentication, CSRF and native window ownership retain Python checks."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/sign-release-manifest.test.cjs",
+      "legacy_name": "signs only the version-matched Windows artifact using an external Ed25519 key",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_trusted_release.py"
+      ],
+      "reason": "Node signing helper retirement pending: signed-manifest verification remains Python; no signing or release is authorized. These Electron-only entry points are intentionally not shipped: app data is preserved, Ollama is installed separately, and release signing remains a separately authorized owner workflow. No claim of native automatic installers, destructive reset IPC or a replacement signing UI is made."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/sign-release-manifest.test.cjs",
+      "legacy_name": "refuses an artifact whose filename does not match the release version",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_trusted_release.py"
+      ],
+      "reason": "Node signing helper retirement pending: signed-manifest verification remains Python; no signing or release is authorized. These Electron-only entry points are intentionally not shipped: app data is preserved, Ollama is installed separately, and release signing remains a separately authorized owner workflow. No claim of native automatic installers, destructive reset IPC or a replacement signing UI is made."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/workspaces.test.cjs",
+      "legacy_name": "chat Ctrl+N reaches tabs; explicit new windows share the nonmodal Settings manager",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_chat_workspaces.py",
+        "tests/test_qt_window_restore.py",
+        "tests/test_native_runtime.py"
+      ],
+      "reason": "Electron workspace IPC replaced by immutable backend scopes and metadata-only Qt restore."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/workspaces.test.cjs",
+      "legacy_name": "only registered live windows with matching origins and routes are trusted",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_chat_workspaces.py",
+        "tests/test_qt_window_restore.py",
+        "tests/test_native_runtime.py"
+      ],
+      "reason": "Electron workspace IPC replaced by immutable backend scopes and metadata-only Qt restore."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/workspaces.test.cjs",
+      "legacy_name": "restart restores bounded identifiers and geometry without serializing actions or secrets",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_chat_workspaces.py",
+        "tests/test_qt_window_restore.py",
+        "tests/test_native_runtime.py"
+      ],
+      "reason": "Electron workspace IPC replaced by immutable backend scopes and metadata-only Qt restore."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/workspaces.test.cjs",
+      "legacy_name": "invalid stored files recover to chat and offscreen bounds are clamped",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_chat_workspaces.py",
+        "tests/test_qt_window_restore.py",
+        "tests/test_native_runtime.py"
+      ],
+      "reason": "Electron workspace IPC replaced by immutable backend scopes and metadata-only Qt restore."
+    },
+    {
+      "suite": "electron",
+      "legacy_file": "desktop/test/workspaces.test.cjs",
+      "legacy_name": "chat navigation opens Settings separately and blocks external navigation",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_chat_workspaces.py",
+        "tests/test_qt_window_restore.py",
+        "tests/test_native_runtime.py"
+      ],
+      "reason": "Electron workspace IPC replaced by immutable backend scopes and metadata-only Qt restore."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "serves every page and navigation links target existing pages",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "serves required page assets and does not expose paths outside the allowlist",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "keeps public docs and the update manifest valid UTF-8 without known mojibake",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "renders evidence badges separately from task status",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "derives latest completed and next planned cards from task records",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "resolves local public links including generated task and category anchors",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "preserves the first 100 tasks and exposes only explicitly recorded contracts",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "records verified, deferred, and planned work without treating deferral as completion",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "renders every authoritative task in home, roadmap, changelog, and task status views",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "summarizes the roadmap while preserving the full task contracts",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "publishes the Task 190 design gate without claiming execution authority",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "keeps public overview pages concise and aligned with the latest roadmap status",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "publishes release limitations without implying stable status or independent review",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "requires explicit post-100 acceptance, prior dependencies and truthful checkpoint evidence",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "records approved future multi-provider, self-maintenance, voice and desktop direction without reopening completed work",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/site.test.mjs",
+      "legacy_name": "serves only read methods",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/tasks-page.test.mjs",
+      "legacy_name": "shows all task contracts in descending order and identifies the next planned task",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/tasks-page.test.mjs",
+      "legacy_name": "renders completion evidence separately from planned decision gates and exposes handoff rules",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/tasks-page.test.mjs",
+      "legacy_name": "publishes completed milestones and remaining phases with their current status",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/tasks-page.test.mjs",
+      "legacy_name": "preserves history and distinguishes superseded and undefined work",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/tasks-page.test.mjs",
+      "legacy_name": "renders bounded readiness claims and retains revised phase contracts",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/vercel.test.mjs",
+      "legacy_name": "Vercel default export serves public assets and preserves read-only boundaries",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    },
+    {
+      "suite": "docs",
+      "legacy_file": "docs/test/vercel.test.mjs",
+      "legacy_name": "Vercel function bundle explicitly includes the public file assets",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_public_docs.py",
+        "tests/test_public_docs_browser.py",
+        "tests/test_docs_integrity.py"
+      ],
+      "reason": "Python static server, JSON authority/generator and real browser DOM checks replace Node fixtures. Node server-function hosting test is retired in favor of explicit static routes."
+    }
+  ]
+}

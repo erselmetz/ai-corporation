@@ -15,6 +15,10 @@ def fact_match(index,answer):
 
 
 def main():
+    import argparse
+    from frozen_corpus import document
+    parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path);args=parser.parse_args()
+    if args.output:args.output=args.output.resolve();args.output.parent.mkdir(parents=True,exist_ok=True)
     with httpx.Client(trust_env=False,timeout=5) as client:
         try:response=client.get('http://127.0.0.1:11434/api/tags');response.raise_for_status()
         except (httpx.HTTPError,OSError):raise SystemExit('STOP: Start Ollama at 127.0.0.1:11434.')
@@ -26,12 +30,13 @@ def main():
     from app.qt_desktop.transport import Transport,Chat
     session=NativeSession();transport=Transport(session);report={'kind':'Real local owned API, frozen repository documents, not physical UI or held-out quality',
         'models':{name:installed[name]['digest'] for name in ['qwen3.5:4b','nomic-embed-text:latest']},'corpus':[],'cases':[]}
-    output=ROOT/'task226-review/real-brain-answers.json'
+    output=args.output or ROOT/'task226-review/real-brain-answers.json'
+    output.parent.mkdir(parents=True,exist_ok=True)
     def save():output.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     try:
         wid=session.request('POST','/api/native/windows',{})['id'];stop=threading.Event()
         for item in baseline['documents']:
-            path=ROOT/item['path'];data=path.read_bytes()
+            path,data=document(ROOT,item)
             assert hashlib.sha256(data).hexdigest()==item['sha256'],'Frozen corpus changed'
             result=transport.feed_data(wid,str(path),path.name,data,stop)
             assert result['state']=='ready',result

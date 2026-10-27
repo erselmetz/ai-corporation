@@ -6,7 +6,7 @@ from html.parser import HTMLParser
 from urllib.parse import urlsplit
 
 from fastapi.testclient import TestClient
-from playwright.sync_api import sync_playwright
+from tools.headless_browser import Browser
 import uvicorn
 
 from app.webui.router import router as ui_router
@@ -50,14 +50,10 @@ def test_every_ui_page_browser_layout_and_script_health(tmp_path):
     listener.bind(("127.0.0.1", 0))
     listener.listen(5)
     origin = f"http://127.0.0.1:{listener.getsockname()[1]}"
-    desktop_export = Path(__file__).resolve().parents[1] / "desktop-ui" / "out"
     app = create_local_app(password="test-only-audit-password", origin=origin,
-                           application_service=runtime.application_service,
-                           desktop_ui_dir=desktop_export if desktop_export.is_dir() else None)
+                           application_service=runtime.application_service)
     paths = sorted({route.path for route in [*ui_router.routes, *app.routes] if getattr(route, "path", "").startswith("/ui")
                     and "{" not in route.path and "GET" in getattr(route, "methods", set())})
-    if desktop_export.is_dir():
-        paths.extend(["/desktop/", "/desktop/settings/"])
     started = Event()
     class Server(uvicorn.Server):
         async def startup(self, sockets=None):
@@ -69,52 +65,38 @@ def test_every_ui_page_browser_layout_and_script_health(tmp_path):
     thread.start()
     try:
         assert started.wait(10)
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch()
-            try:
-                page = browser.new_page(viewport={"width": 1280, "height": 900})
-                errors = []
-                page.on("pageerror", lambda error: errors.append(f"{page.url}: {error.stack}"))
-                # This is a layout/script audit. Do not trigger host WMI or
-                # hardware inspection from a browser test; those contracts
-                # have separate deterministic service tests.
-                page.route("**/api/system/hardware-profile", lambda route: route.fulfill(
-                    status=200, content_type="application/json", body="{}"))
-                page.goto(origin + "/ui")
-                page.wait_for_function("document.querySelector('#setup-state').textContent.includes('SIGN')")
-                assert page.locator(".dashboard-grid .dashboard-card:visible").count() == 0
-                page.goto(origin + "/ui/chat")
-                page.locator(".chat-advanced-nav > summary").click()
-                page.get_by_label("Chat navigation").get_by_role(
-                    "link", name="Owner sign-in", exact=True).click()
-                page.wait_for_url(origin + "/ui/login?next=/ui/chat")
-                page.locator("#password").fill("test-only-audit-password")
-                page.get_by_role("button", name="Sign in", exact=True).click()
-                page.wait_for_url(origin + "/ui/chat")
-                findings = []
-                for path in paths:
-                    # Settings hydrates bounded owner-protected summaries after
-                    # the document loads. Those requests are not part of the
-                    # static-page/layout health assertion, and networkidle can
-                    # remain pending when the browser keeps an API request open.
-                    page.goto(origin + path, wait_until="domcontentloaded")
-                    page.locator("h1").wait_for(state="visible")
-                    assert page.locator("h1").count() == 1, path
-                    for width in (1280, 768, 390):
-                        page.set_viewport_size({"width": width, "height": 900})
-                        overflow = page.evaluate("document.documentElement.scrollWidth > innerWidth")
-                        if overflow:
-                            findings.append(f"{path}: horizontal overflow at {width}px")
-                    page.set_viewport_size({"width": 1280, "height": 900})
-                    if path in {"/ui", "/ui/chat", "/ui/memory", "/ui/visualization", "/ui/provider-connections", "/desktop/", "/desktop/settings/"}:
-                        page.screenshot(path=str(tmp_path / (path.replace("/", "_") + ".png")), full_page=True)
-                print("Browser audit screenshots:", tmp_path)
-                print("Browser audit page count:", len(paths))
-                print("Browser audit layout findings:", findings)
-                assert not errors, errors
-                assert not findings, findings
-            finally:
-                browser.close()
+        with Browser() as browser:
+            browser.viewport(1280,900)
+            # This static/layout check must not invoke WMI or inspect devices.
+            browser.stub_json(origin+'/api/system/hardware-profile',{})
+            browser.navigate(origin+'/ui')
+            browser.wait('document.querySelector("#setup-state")?.textContent.includes("SIGN")')
+            assert browser.evaluate('[...document.querySelectorAll(".dashboard-grid .dashboard-card")].filter(e=>e.getClientRects().length).length === 0')
+            browser.navigate(origin+'/ui/chat')
+            browser.click('.chat-advanced-nav > summary')
+            browser.click('[aria-label="Chat navigation"] a[href^="/ui/login"]')
+            browser.wait('location.pathname === "/ui/login" && location.search === "?next=/ui/chat"')
+            browser.fill('#password','test-only-audit-password');browser.click('#local-login button[type="submit"]')
+            browser.wait('location.pathname === "/ui/chat"')
+            findings=[];errors=[]
+            for path in paths:
+                browser.navigate(origin+path)
+                browser.wait('document.querySelector("h1")?.getClientRects().length > 0')
+                assert browser.evaluate('document.querySelectorAll("h1").length')==1,path
+                for width in (1280,768,390):
+                    browser.viewport(width,900)
+                    if browser.evaluate('document.documentElement.scrollWidth > innerWidth'):
+                        findings.append(f'{path}: horizontal overflow at {width}px')
+                browser.viewport(1280,900)
+                if path in {'/ui','/ui/chat','/ui/memory','/ui/visualization','/ui/provider-connections','/desktop/','/desktop/settings/'}:
+                    browser.screenshot(tmp_path/(path.replace('/','_')+'.png'))
+                browser.evaluate('true')
+                errors.extend(event for event in browser.events if event.get('method')=='Runtime.exceptionThrown')
+            print('Browser audit screenshots:',tmp_path)
+            print('Browser audit page count:',len(paths))
+            print('Browser audit layout findings:',findings)
+            assert not errors,errors
+            assert not findings,findings
     finally:
         server.should_exit = True
         thread.join(timeout=10)

@@ -13,13 +13,13 @@ def _client():
     return TestClient(app, base_url=ORIGIN, client=("127.0.0.1", 50000))
 
 
-def test_visualization_page_is_3d_first_with_accessible_alternatives_and_setup_links():
+def test_advanced_map_starts_as_accessible_list_with_native_3d_help_and_setup_links():
     with _client() as client:
         response = client.get("/ui/visualization")
         assert response.status_code == 200
         html = response.text
         for fragment in ('id="viz-canvas"', 'aria-label="3D organizational globe, not geographic"',
-                         'id="viz-mode-3d" type="button" aria-pressed="true">3D globe</button>',
+                         'id="viz-mode-3d" type="button" aria-pressed="false">Desktop 3D help</button>',
                          'The globe is a visual layout, not a geographic map', 'tabindex="0"',
                          'id="viz-list"', 'Accessible list view of the same records and relationships', 'id="viz-reduce-motion"',
                          'id="viz-effects"', 'id="viz-evidence-data"',
@@ -35,14 +35,16 @@ def test_visualization_page_is_3d_first_with_accessible_alternatives_and_setup_l
         assert "script-src 'self'" in response.headers["content-security-policy"]
 
 
-def test_vendored_three_is_served_same_origin_as_javascript_with_license():
+def test_advanced_map_has_no_vendored_webgl_and_keeps_same_origin_client():
     with _client() as client:
         for name in ("three.module.js", "three.core.js"):
             response = client.get(f"/ui/static/vendor/three/{name}")
-            assert response.status_code == 200
-            assert "javascript" in response.headers["content-type"] or name.endswith(".js")
-        assert "MIT" in client.get("/ui/static/vendor/three/LICENSE").text
-        assert client.get("/ui/static/visualization.mjs").headers["content-type"].startswith("text/javascript")
+            assert response.status_code == 404
+        assert client.get('/ui/static/brain-three.mjs').status_code==404
+        assert client.get('/ui/static/three-scene.mjs').status_code==404
+        module=client.get("/ui/static/visualization.mjs")
+        assert module.headers["content-type"].startswith("text/javascript")
+        assert 'vendor/three' not in module.text and 'import("./three-scene.mjs")' not in module.text
 
 
 def test_sage_core_page_is_a_read_only_agent_map_with_accessible_fallback():

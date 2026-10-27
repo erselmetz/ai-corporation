@@ -1,0 +1,30 @@
+{
+  "purpose": "Local artifact notice and source inventory; no public distribution or source offer is authorized here.",
+  "components": [
+    {
+      "name": "Qt",
+      "version": "6.12.0",
+      "selected_modules": ["Core", "Gui", "Widgets", "Network", "Multimedia"],
+      "license_option": "LGPL-3.0",
+      "source": "https://download.qt.io/official_releases/qt/6.12/6.12.0/single/qt-everywhere-src-6.12.0.tar.xz",
+      "instructions": "https://doc.qt.io/qt-6.12/windows-building.html"
+    },
+    {
+      "name": "PySide6 and Shiboken",
+      "version": "6.12.0",
+      "license_option": "LGPL-3.0",
+      "source": "https://download.qt.io/official_releases/QtForPython/pyside6/PySide6-6.12.0-src/pyside-setup-everywhere-src-6.12.0.tar.xz",
+      "instructions": "https://doc.qt.io/qtforpython-6/licenses.html"
+    },
+    {
+      "name": "FFmpeg",
+      "version": "9.0.1",
+      "license_option": "LGPL-2.1-or-later plus component notices",
+      "source": "https://ffmpeg.org/releases/ffmpeg-9.0.1.tar.xz",
+      "qt_attribution_and_build_sources": "https://doc.qt.io/qt-6/qtmultimedia-attribution-ffmpeg.html",
+      "instructions": "Keep matching source, any Qt patches/build scripts and all applicable component notices when distributing the exact binaries. The local inventory records the binaries' actual license/configuration exports."
+    }
+  ],
+  "distribution_gate": "Before distribution, provide the exact corresponding sources and build material or a compliant source offer/access arrangement, preserve library replacement and debugging rights, and review the complete transitive notices. Upstream links and local QA alone are not a claim of completed distribution compliance.",
+  "application_license": "No application-wide license grant is selected. Third-party LGPL use does not license the whole repository under LGPL."
+}

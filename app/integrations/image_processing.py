@@ -66,6 +66,12 @@ class PillowImageProcessingAdapter:
 
     @staticmethod
     def status() -> ImageProcessingStatus:
+        if getattr(sys,'frozen',False):
+            # The native bundle owns one Python UI/backend process. Reusing its
+            # GUI executable as the old bounded decoder would start another app,
+            # and moving decoding in-process would discard the hard timeout.
+            return ImageProcessingStatus('unavailable','Pillow',None,
+                'This image editing tool is not included in this build. Image attachments and reviewed captures remain available.')
         try:
             spec = importlib.util.find_spec("PIL")
         except (ImportError, ValueError):

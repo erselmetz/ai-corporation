@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 
 import pytest
-from playwright.sync_api import Error as PlaywrightError
+from app.integrations.scoped_browser import BrowserError
 from app.application.services.capability_approvals import CapabilityApprovalService
 from app.application.services.capability_authorization import (
     CapabilityAuthorizationService,
@@ -75,7 +75,7 @@ class FakeLocator:
         self.page.action_route = FakeRoute(f"{ORIGIN}/save", method="POST")
         self.page.route_handler(self.page.action_route)
         if self.page.click_error:
-            raise PlaywrightError("simulated timeout with sensitive internal detail")
+            raise BrowserError("simulated timeout with sensitive internal detail")
 
     def fill(self, value, *, timeout):
         assert timeout == 2500

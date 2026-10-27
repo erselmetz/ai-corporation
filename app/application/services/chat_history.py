@@ -262,6 +262,7 @@ class ChatHistoryService:
                                      "status": "uncertain" if uncertain else m["status"],
                                      "needs_review": uncertain, "review": m["review"]})
                 return {"id": row["id"], "title":row['title'], "agent_id": row["agent_id"], "status": row["status"],
+                        "selection":self._workspaces.conversation_selection(owner,conversation_id) if self._workspaces else None,
                         "expires_at": row["expires_at"], "origin": row["origin"], "live": live,
                         "read_only": not live, "messages": messages,
                         "recovery_notice": None if live else RECOVERY_NOTICE}

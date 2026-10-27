@@ -1,25 +1,15 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "server.mjs",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "*.html",
-          "site.css",
-          "tasks-data.mjs",
-          "tasks-page.js",
-          "roadmap-status.js",
-          "design/task-190-code-execution-threat-model.md"
-        ]
-      }
-    }
-  ],
+  "framework": null,
+  "buildCommand": "",
+  "installCommand": "",
+  "outputDirectory": ".",
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "server.mjs"
-    }
+    {"src": "/(.*)", "headers": {"X-Content-Type-Options": "nosniff", "Referrer-Policy": "strict-origin-when-cross-origin", "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'"}, "continue": true},
+    {"src": "/(.*)", "methods": ["POST", "PUT", "PATCH", "DELETE", "OPTIONS", "TRACE"], "status": 405, "headers": {"Allow": "GET, HEAD"}},
+    {"src": "/$", "dest": "/index.html"},
+    {"src": "/(index|documentation|architecture|organization|how-it-works|integrations|security|roadmap|tasks|updates|about)\\.html$", "dest": "/$1.html"},
+    {"src": "/(site\\.css|tasks-data\\.mjs|tasks-data\\.json|tasks-page\\.js|roadmap-status\\.js)$", "dest": "/$1"},
+    {"src": "/design/task-190-code-execution-threat-model\\.md$", "dest": "/design/task-190-code-execution-threat-model.md"},
+    {"src": "/(.*)", "status": 404}
   ]
 }

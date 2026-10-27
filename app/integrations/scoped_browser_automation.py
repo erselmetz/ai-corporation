@@ -1,4 +1,4 @@
-"""Owner-approved, exact-origin browser actions with ephemeral Playwright contexts."""
+"""Owner-approved, exact-origin browser actions with ephemeral Python-controlled Chromium contexts."""
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -12,7 +12,7 @@ import threading
 from typing import Literal
 from urllib.parse import urljoin, urlsplit
 
-from playwright.sync_api import Error as PlaywrightError, Route, sync_playwright
+from .scoped_browser import BrowserError, Route, sync_browser
 
 from app.application.services.automation_traces import AutomationTraceService
 from app.application.services.capability_approvals import (
@@ -318,7 +318,7 @@ class ScopedBrowserAutomation:
             if "target state has changed" in str(error):
                 raise BrowserActionStale("The page changed after approval; preview and approve again") from None
             raise ScopedBrowserError("The owner approval is no longer usable") from None
-        except PlaywrightError:
+        except BrowserError:
             message = (
                 "The approved browser action may have been dispatched; its remote outcome is unknown. Do not retry automatically."
                 if action_attempted else
@@ -431,7 +431,7 @@ class ScopedBrowserAutomation:
                     browser.close()
         except (BrowserPolicyDenied, BrowserTargetUnavailable):
             raise
-        except PlaywrightError:
+        except BrowserError:
             if yielded_page:
                 raise
             raise BrowserActionUnavailable("The scoped browser request could not be completed") from None
@@ -500,7 +500,7 @@ class ScopedBrowserAutomation:
 
     @staticmethod
     def _launch_chromium():
-        return sync_playwright()
+        return sync_browser()
 
 
 def _normalize_origin(value: str) -> str:

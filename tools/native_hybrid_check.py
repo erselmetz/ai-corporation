@@ -6,6 +6,10 @@ ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 
 
 def main():
+    import argparse
+    from frozen_corpus import document
+    parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path);args=parser.parse_args()
+    if args.output:args.output=args.output.resolve();args.output.parent.mkdir(parents=True,exist_ok=True)
     with httpx.Client(trust_env=False,timeout=5) as client:
         try:response=client.get('http://127.0.0.1:11434/api/tags');response.raise_for_status()
         except (httpx.HTTPError,OSError):raise SystemExit('STOP: Start Ollama at 127.0.0.1:11434.')
@@ -22,7 +26,7 @@ def main():
     try:
         brain=NativeBrain(prefixed=True);manifest=[]
         for item in baseline['documents']:
-            path=ROOT/item['path'];data=path.read_bytes()
+            path,data=document(ROOT,item)
             assert hashlib.sha256(data).hexdigest()==item['sha256'],'Frozen corpus changed'
             brain.feed('hybrid-check',str(path),path.name,data,consent=True);manifest.append(item)
         for name in ['requirements-knowledge.txt','README.md']:
@@ -45,7 +49,7 @@ def main():
         report={'measurement':'Expected-source retrieval, same frozen questions/corpus; not held out or answer accuracy. Current table-aware chunking in both arms.',
             'model':model['name'],'model_digest':model['digest'],'threshold':.35,'rrf_k':60,'lexical':'BM25 k1=1.2 b=0.75',
             'corpus':manifest,'chunks':len(brain.rows('hybrid-check')),'results':results}
-        (ROOT/'task226-review/hybrid-comparison.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+        (args.output or ROOT/'task226-review/hybrid-comparison.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
         print(json.dumps({**{k:v for k,v in report.items() if k not in {'results','corpus'}},'results':[{k:v for k,v in result.items() if k!='cases'} for result in results]}))
     finally:application_service.reset(token)
 

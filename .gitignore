@@ -80,3 +80,5 @@ desktop/task*-review-profile/
 /task225-review-*.log
 
 /task226-review-*.log
+/task227-review-*.log
+/legacy-electron-artifacts/

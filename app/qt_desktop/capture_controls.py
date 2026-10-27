@@ -20,6 +20,7 @@ class CaptureControls(QObject):
     def start(self,kind):
         w=self.window
         if w.busy or w.feeding or w.window_stopped or w.global_stopped or not w.native_id:return
+        if w.current().read_only:w.status.setText('Open a new chat before capturing; restored history is read-only.');return
         if self.preview is not None:w.status.setText('Finish reviewing the previous capture first.');return
         if self.lease is not None:w.status.setText('Release the previous capture before starting another.');return
         try:devices=available_devices(kind)

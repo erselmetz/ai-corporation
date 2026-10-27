@@ -1,0 +1,591 @@
+{
+  "local_only": true,
+  "safety_tag": "legacy-electron-ui",
+  "files": [
+    {
+      "path": "app/desktop_runtime.py",
+      "sha256": "7f25e7c76961ed94df226fd3cb8e88aaa2b216c136c5077631a84ef69561bdd3"
+    },
+    {
+      "path": "app/webui/static/brain-three.mjs",
+      "sha256": "a6a7b2409a9959236d5a64f2601e4ea727b94a77510e18b37ba9bab04ace29f1"
+    },
+    {
+      "path": "app/webui/static/three-scene.mjs",
+      "sha256": "96ba9e66a3889c294c5e871968aef37421d9937f6de747515b8b54e675bab2aa"
+    },
+    {
+      "path": "app/webui/static/vendor/three/LICENSE",
+      "sha256": "5d5dad8147523d59bc15cca838ae0bdaae7075230ec49132c551a1d18e7b3412"
+    },
+    {
+      "path": "app/webui/static/vendor/three/three.core.js",
+      "sha256": "8bf68efebbef2b6f162a5bc5746ec88a60523254c4ae0b042277ed0ce0b30a07"
+    },
+    {
+      "path": "app/webui/static/vendor/three/three.module.js",
+      "sha256": "211760950dc7bddeb46b09ca7fa4d3620ddde43168a4fba8560489f86a92548f"
+    },
+    {
+      "path": "desktop-ui/next-env.d.ts",
+      "sha256": "1b59d4c6b83807db275d43f3cf2cc8e9323f465fab764eea091cc5becd5bad37"
+    },
+    {
+      "path": "desktop-ui/next.config.ts",
+      "sha256": "5bb78651fe0c116ef50f0ad72de587e52c43270b4234662bbe60373fe54a9789"
+    },
+    {
+      "path": "desktop-ui/package-lock.json",
+      "sha256": "35a33c699fb8732a33a8f6871ccb1539ed682a864935b528aa706573f8f8317f"
+    },
+    {
+      "path": "desktop-ui/package.json",
+      "sha256": "fb8099db0683a159f559871492c2a71492946e9ca440b7d6e1148d5ad82e65b4"
+    },
+    {
+      "path": "desktop-ui/scripts/sync-design-tokens.mjs",
+      "sha256": "1b267730f63d330a46d39a5e3d25450f0d1e2ff0edb5f02a01f23ddd5e62115b"
+    },
+    {
+      "path": "desktop-ui/src/app/app-shell.tsx",
+      "sha256": "3e675984d00fea40f00a97aa2969f2267222cc06f560d42f811b7d9916ea1f17"
+    },
+    {
+      "path": "desktop-ui/src/app/design-tokens.css",
+      "sha256": "44399fd71d7d593cf0da15bccd9ab8392c28b4c2007ef0c8f03e86f9b1e69a64"
+    },
+    {
+      "path": "desktop-ui/src/app/first-run-wizard.tsx",
+      "sha256": "0d47f86d9472ab34603731d058ba539ce4dfb82fb8e84251b510e4aa59978f4b"
+    },
+    {
+      "path": "desktop-ui/src/app/layout.tsx",
+      "sha256": "3aa2c01268fd7f469f3a40694a222ced1f62b220edaf3abd9eae7f2665599ea8"
+    },
+    {
+      "path": "desktop-ui/src/app/page.tsx",
+      "sha256": "672b1541221663121ed2dc9680032392869c5d4705142f3e6107a80e291287ad"
+    },
+    {
+      "path": "desktop-ui/src/app/settings/hardware-summary.ts",
+      "sha256": "d509e41f4afb23ea706c6cd51ba455b620d2f19f6c9d08a07990b0a77e30cdf6"
+    },
+    {
+      "path": "desktop-ui/src/app/settings/page.tsx",
+      "sha256": "2e6f8f7e982b53f371a912ec7ee162da536c59dd23a3f3da654b20cf289e9483"
+    },
+    {
+      "path": "desktop-ui/src/app/style.css",
+      "sha256": "a9b4222c744acdbf4d934b0067fb01009ca3601c5d5dc775cb882c6e5d24e96e"
+    },
+    {
+      "path": "desktop-ui/tsconfig.json",
+      "sha256": "ca26bae4e156c255d4533afa7fdce793dfa3eae6e3773790c68fec7fc571c300"
+    },
+    {
+      "path": "desktop/README.md",
+      "sha256": "4ed1528c64001a970c9764e8270a883fce6006b722c5505664fcfc97eb305bfc"
+    },
+    {
+      "path": "desktop/bootstrap.css",
+      "sha256": "1a109bb5478509becf656873a69253293dd53e45885d9231116a664a9198be2c"
+    },
+    {
+      "path": "desktop/bootstrap.html",
+      "sha256": "53287457283c988d5a77736183f0a044fd330daf7dd202415475974e6f3ba92b"
+    },
+    {
+      "path": "desktop/bootstrap.js",
+      "sha256": "ffcccc6ddb17ee26e1bd3fc29fd7272f03a153e52e132611d145a1b69bc536b4"
+    },
+    {
+      "path": "desktop/erselmetz-backend.spec",
+      "sha256": "d43902314d2aa712ca773095ef149b4203082e898eb77075d3a862efb1e5e72e"
+    },
+    {
+      "path": "desktop/local-diagnostics.cjs",
+      "sha256": "5be0b3050263e72e976cc5bb841cf33ea21ec8e0c85266e52fb30697423d7a8b"
+    },
+    {
+      "path": "desktop/local-reset.cjs",
+      "sha256": "4a8add8e1df7a2735450b38cacd99b95979ee7acc3e5545d6187bb65cbf6827b"
+    },
+    {
+      "path": "desktop/main.cjs",
+      "sha256": "e44484696988ef451db4576b6e79a65f74bba06eac7ca12dbb1a910522044f10"
+    },
+    {
+      "path": "desktop/ollama-installer.cjs",
+      "sha256": "36753a8e172d937f5ac959c1d9ae1435c5df093079bed4d8b5dbe27a4b1bce71"
+    },
+    {
+      "path": "desktop/package-lock.json",
+      "sha256": "4cba4bc934bc771fce8f8f06ca960eba2867cac60a9f2da9928348e535171bb7"
+    },
+    {
+      "path": "desktop/package.json",
+      "sha256": "6ae1cb7f869013ed4b86897770735ed4a3a17031e523329d0ae01145ec08fb1e"
+    },
+    {
+      "path": "desktop/preload.cjs",
+      "sha256": "01db4c13a473031c6178afeb42b5240ba0deae5b102bc28d2b155004e25305be"
+    },
+    {
+      "path": "desktop/requirements-build.txt",
+      "sha256": "e4844211dcb381b52e184ae64c83008bf4e283eb580898333a22d41902e43ecd"
+    },
+    {
+      "path": "desktop/requirements-desktop-automation.txt",
+      "sha256": "367108fc9ca1a1ea45a8491386369f923d4c7bb1fcf3f2ca1a7fa1d66a87ea82"
+    },
+    {
+      "path": "desktop/screen-capture.cjs",
+      "sha256": "2518b84f192857849961e52e93c9f45c4bc776e127b185076c77bc3660359504"
+    },
+    {
+      "path": "desktop/scripts/build-backend.ps1",
+      "sha256": "b914f1eb60a2ced39396f28b1be0a00346b6f543937e54d41dcda836e616d486"
+    },
+    {
+      "path": "desktop/scripts/build-installer.ps1",
+      "sha256": "4b687f153ebf7dee076ec5e55ab043170cfd70f236580e84ea94c3a9fc175cfd"
+    },
+    {
+      "path": "desktop/scripts/sign-release-manifest.cjs",
+      "sha256": "8bd2415701050467c41e840025e95842a99a74d0cde8519672dd8941b736ee06"
+    },
+    {
+      "path": "desktop/scripts/smoke-backend.py",
+      "sha256": "e4d04f26e95e4210c103e0f3908af2128f6a0f1f6a8ba34bec2eb8d3aef89407"
+    },
+    {
+      "path": "desktop/scripts/smoke-installer.py",
+      "sha256": "215574a1bd81b0679746433292fd53ad2f8fe9ea7820cef4c6fa3d7713901e8d"
+    },
+    {
+      "path": "desktop/scripts/uninstaller.nsh",
+      "sha256": "3576dc6c9eac7564f52f60273c5669dbea3d89aa3f1f2a000fe3e77150224519"
+    },
+    {
+      "path": "desktop/test/build-stamp.test.cjs",
+      "sha256": "49864f4ba8647d6520295ac1da9bc220504d2f91783442fccf41be18480730ee"
+    },
+    {
+      "path": "desktop/test/camera-security.test.cjs",
+      "sha256": "eb12f093e33e0651964410bb7cc67fc1bbd159166d94aba00f5e30d0404fe023"
+    },
+    {
+      "path": "desktop/test/hardware-profile-ui.test.cjs",
+      "sha256": "9c882d47143494ac45ad31e5d5b1252ae31c9df7c4d850fe7b8353d7d2c84bf7"
+    },
+    {
+      "path": "desktop/test/local-diagnostics.test.cjs",
+      "sha256": "06f4dca4fcd1ee71cabd9f370aa73005e5f16c23add0ff19093a7c9a5a3d706c"
+    },
+    {
+      "path": "desktop/test/local-reset.test.cjs",
+      "sha256": "0fb9a6b8354cfdfbff53a33dd3fe1d1b587a407a69c9b658977d1ae017e1de23"
+    },
+    {
+      "path": "desktop/test/navigation.test.cjs",
+      "sha256": "20d13054b0abb9e87d95f6badbcaed2fe85da39e439158c58f9836a9a9b3c399"
+    },
+    {
+      "path": "desktop/test/ollama-installer.test.cjs",
+      "sha256": "c906b007040c62f98adfe5984c748d5ed300d3d67e9c18665d5e5a354191e30f"
+    },
+    {
+      "path": "desktop/test/onboarding.test.cjs",
+      "sha256": "5dfc3ea87ca5f7f4d043438e8ff707605dc3d1eb46cae06e3b468f4e7a9ecccd"
+    },
+    {
+      "path": "desktop/test/prototype-shell.test.cjs",
+      "sha256": "9f4f66e9248845d38d6b4418ae1cf7d5079bc2b53e4d8a1353c206628df0e4a8"
+    },
+    {
+      "path": "desktop/test/screen-capture.test.cjs",
+      "sha256": "6a237ffc793e90548f422b4f177d2256718b7b2610bb686d93f0849e42a96a7f"
+    },
+    {
+      "path": "desktop/test/security.test.cjs",
+      "sha256": "a918b564451bc28c54cddf21bdf47aedb08395b7f9aee00fecd4f3f2e3bc9509"
+    },
+    {
+      "path": "desktop/test/sign-release-manifest.test.cjs",
+      "sha256": "76db043d29c52b817343b838108535710685d8bf1a7faa60856249f7de2eb615"
+    },
+    {
+      "path": "desktop/test/workspaces.test.cjs",
+      "sha256": "4c2bc38763916dcf84218810487075f5b2cb0dee5ba398c1683177ee86e4bf69"
+    },
+    {
+      "path": "desktop/workspaces.cjs",
+      "sha256": "38672a03dd3b4025b220af55fe764d93c39886780ec92524a978750f6bad68ba"
+    },
+    {
+      "path": "docs/package.json",
+      "sha256": "2b2cb460f865388f9e7c02fc36e91f59d65a159ca90e285cd72bcbdf89c04c64"
+    },
+    {
+      "path": "docs/server.mjs",
+      "sha256": "4b596951c4ff2444e99c392547c7ba6fde37e26917c1c1eafff361736602744a"
+    },
+    {
+      "path": "docs/test/site.test.mjs",
+      "sha256": "251a31706ed166e005bed899c7707c5bfe2ec69ce233484b21bd3b0083d97fff"
+    },
+    {
+      "path": "docs/test/tasks-page.test.mjs",
+      "sha256": "fb4ffc4f0df6eca1828703d008c61986ff6cc7c1f84a8f1c8e979ddb4a09f4c2"
+    },
+    {
+      "path": "docs/test/vercel.test.mjs",
+      "sha256": "0c6f81f828ef9306b1f6e23dec2238acbb269ad7a6a047122598a52ffc8a367b"
+    },
+    {
+      "path": "tests/local-automation-ui.test.mjs",
+      "sha256": "0068cd432ac1cae8353e83196cc8c7793f2fcae84c3372a83901742a5519dc23"
+    },
+    {
+      "path": "tests/test_activity_ui.mjs",
+      "sha256": "223bf5f11e2d311a816a63db47e38975732df647166fef0e01b61a579e0915e9"
+    },
+    {
+      "path": "tests/test_agents_ui.mjs",
+      "sha256": "29bdf8543690460297eae65a49a10ae581c5c7250a73d595fbcef082c86f1298"
+    },
+    {
+      "path": "tests/test_assignment_policy_ui.mjs",
+      "sha256": "31f3637fea1d620baf763cac563ce656402285b7c28e586b55a38a5a29e597a1"
+    },
+    {
+      "path": "tests/test_backup_ui.mjs",
+      "sha256": "a60cd2ce6ef028f98341ed073a08db1e841e2f1a4d2ca69201c36ab1138a737d"
+    },
+    {
+      "path": "tests/test_brain_visualization_ui.mjs",
+      "sha256": "ed5b4552c19a9132b6b70aeafda5bc2bede224b4fcbf42280b15bf957d2dcab7"
+    },
+    {
+      "path": "tests/test_camera_capture.mjs",
+      "sha256": "8a7c44f5c4579136564ef12295a5d5e16ff72c844f66fe63712a44efdf5d42ee"
+    },
+    {
+      "path": "tests/test_camera_stop.mjs",
+      "sha256": "22775f877baf0b9921f0a1b73a6e0d5d495603a08a14d512238a436e42de4dcd"
+    },
+    {
+      "path": "tests/test_capability_packs_ui.mjs",
+      "sha256": "06f8c4b0f709a5e6df011c12cb5ee46772e02d817ec415cc5258307c9d3ea1f6"
+    },
+    {
+      "path": "tests/test_chat_images_ui.mjs",
+      "sha256": "95909d4917d252c610b4b3e1e68cad39160157400d6bd7af08f61e7b142b7610"
+    },
+    {
+      "path": "tests/test_chat_markdown.mjs",
+      "sha256": "d7830a4b3d92a4f2fa651a45e02a0ab57db9b3c343c3471641a79d278ea04e33"
+    },
+    {
+      "path": "tests/test_chat_ui.mjs",
+      "sha256": "37de31fc1b2cdb9bd4483cf322acea98b1578b84d1b79eb40c290c60e9bd3072"
+    },
+    {
+      "path": "tests/test_chat_workspace_ui.mjs",
+      "sha256": "eb6f2919bb7fc788284f2e3fbd9cffacb1441b69d8c858de5e06994e33696de4"
+    },
+    {
+      "path": "tests/test_dashboard_data.mjs",
+      "sha256": "9e0fdae988b13ad542753d3783ca373dcdfaba0326084a3f9675868a8431fbea"
+    },
+    {
+      "path": "tests/test_desktop_runtime.py",
+      "sha256": "488853688f279c12c56934cd52c2e9297125779d3e4c9f322cd8dafef6d7c7cf"
+    },
+    {
+      "path": "tests/test_documentation_ui.mjs",
+      "sha256": "9baa06002f406ce7d22e600d9b072d0c145e1aec4658e93afbf652cce9cac824"
+    },
+    {
+      "path": "tests/test_emergency_stop_ui.mjs",
+      "sha256": "0877e677b015c2f5e6231aea88140c581c45e4445cd09401d38cf23a9edcf280"
+    },
+    {
+      "path": "tests/test_employee_chat_ui.mjs",
+      "sha256": "58a5a3c0425ddf785410478507bb8a0bc3e13229db4c49142ad85ef667156758"
+    },
+    {
+      "path": "tests/test_employee_ui.mjs",
+      "sha256": "e5e485d7f45202ab45bf55c365ddcd79c42e2f584ec954801e050f17526d1823"
+    },
+    {
+      "path": "tests/test_inventory_ui.mjs",
+      "sha256": "b174244e3a48bcf513506259d945c8ac7e522b0e0bef51f43c55ffb908e48b0e"
+    },
+    {
+      "path": "tests/test_knowledge_ui.mjs",
+      "sha256": "4f55a586061faa4c7bb66546a30b53ff73ef9e009b00b257eb0917d2763218a0"
+    },
+    {
+      "path": "tests/test_local_login_ui.mjs",
+      "sha256": "6015bf756aa1fddf34fc6ebbb9dcd85b10488aab2581e26b14bbec55fbbd261f"
+    },
+    {
+      "path": "tests/test_local_models_ui.mjs",
+      "sha256": "1ad8cde1cfb4252ae695faa241c6e08477437ea924328ca8745a8f103b82b488"
+    },
+    {
+      "path": "tests/test_memory_ui.mjs",
+      "sha256": "5dfbfe759554004008f611a6031dd64904aa09ce2c50fc4b3f6b689386e6d3d2"
+    },
+    {
+      "path": "tests/test_online_provider_ui.mjs",
+      "sha256": "2ee2a34210a3e669827d88aeb31ab886f1368553e493c36c22b9bcde185f5dad"
+    },
+    {
+      "path": "tests/test_owner_suggestions_ui.mjs",
+      "sha256": "3d9175a354747ac3c6709166be4bc7d43973d4a4a6d6077c15f399adb36ba181"
+    },
+    {
+      "path": "tests/test_position_ui.mjs",
+      "sha256": "c86a5596d91a465bfd68d4faab458df2714ff7134c366ed671fe491b441b7390"
+    },
+    {
+      "path": "tests/test_project_ui.mjs",
+      "sha256": "84ecca6adf4315f7486d1a06889eaeddbdf2c3d77d07ed6e0f7d146362b3ba88"
+    },
+    {
+      "path": "tests/test_provider_connections_ui.mjs",
+      "sha256": "19cbdefe925ea544f200fd6cf6895a6197c959fcab2b7c327402335502b4f46b"
+    },
+    {
+      "path": "tests/test_provider_ui.mjs",
+      "sha256": "2d560c07145c1ebae390b25e318de93bab47574d47637118ff1786cd4f92aea4"
+    },
+    {
+      "path": "tests/test_quick_start_ui.mjs",
+      "sha256": "b4b561a351262d7cea648bfd28ce4c0b7d69c9d63e58932196f9e82f1faff1e9"
+    },
+    {
+      "path": "tests/test_readiness_ui.mjs",
+      "sha256": "b4c3808f10dc9d953f6d7c4310105883d1afc37987e7e7264f9b178f39b30af4"
+    },
+    {
+      "path": "tests/test_release_update_ui.mjs",
+      "sha256": "1de1e2b05c00d94591edaad313d345cba1e8624866056de75e34288d0688a5bf"
+    },
+    {
+      "path": "tests/test_sage_core.mjs",
+      "sha256": "955a22aea898e16b2bf064c68beff45ff3393b7a2c91bf96f8e483f56e9423d5"
+    },
+    {
+      "path": "tests/test_screen_capture.mjs",
+      "sha256": "37700fd6288d3a5a851131030638d2eedefe328da94baf8e3b75b2c490908046"
+    },
+    {
+      "path": "tests/test_semantic_memory_ui.mjs",
+      "sha256": "830112ecf0f617a860f77ef4a8d6955681c854b48c26c7cef9c799821bc02706"
+    },
+    {
+      "path": "tests/test_shared_navigation.mjs",
+      "sha256": "7132a4d859557c051979ea7a279e1c41f5ce21c7de8c28152ec683df3ed69653"
+    },
+    {
+      "path": "tests/test_structure_ui.mjs",
+      "sha256": "1157a13744e6045f5438783e5239ef3c2dd83f009bc712be9ce7387f7e506d56"
+    },
+    {
+      "path": "tests/test_task_progress.mjs",
+      "sha256": "f889db03dea2123286e3a87a4ddbd47730ff27727958da057a20a525f953ba5c"
+    },
+    {
+      "path": "tests/test_task_ui.mjs",
+      "sha256": "88faa8ca5053cad6beb5410419cb5ce968ad70bb7c75cca3608ef6f69cc238dd"
+    },
+    {
+      "path": "tests/test_text_to_speech.mjs",
+      "sha256": "582a83c97feb06093b584a25e1ec31c9374de7443e8825fe07d8d1de0db771d5"
+    },
+    {
+      "path": "tests/test_theme_ui.mjs",
+      "sha256": "334dfa061973639da273162c36c26db83fc7e0ee0bc7073ffee3d35663ff6d73"
+    },
+    {
+      "path": "tests/test_ui_details.mjs",
+      "sha256": "49db4e2e3b93702c482331789c8db64790d714a2cfb26cdd803bc4a69954f376"
+    },
+    {
+      "path": "tests/test_updates_ui.mjs",
+      "sha256": "4145352767adef93034d7ca0df63a5395e5683f67cb1403fdc02ca62bd0cbcbb"
+    },
+    {
+      "path": "tests/test_visualization_ui.mjs",
+      "sha256": "ee7c116023df450c8dace92e019d93c984041b670cc5560cf6e854f6a0cacf4c"
+    },
+    {
+      "path": "tests/test_voice_ui.mjs",
+      "sha256": "28af82278a6be7ea6d2ce815075661c9bcebe4229b9f3f2399e003200be2ef82"
+    },
+    {
+      "path": "tests/test_workflow_map_ui.mjs",
+      "sha256": "5649457b2d50b9638e67244e17a6b14144bc122c5b1501f4e7199df8df4a7c6c"
+    },
+    {
+      "path": "tests/test_workflows_ui.mjs",
+      "sha256": "4ddbc4279531b0d6dd4ca0184c0360f1d3cc9b66c7483aa1e1c98ce1794f9020"
+    },
+    {
+      "path": "tools/task213_visual_matrix.py",
+      "sha256": "684482013d72f152c04c48886a7c071a2a5fc616da36552cbd714ebce8dfb180"
+    },
+    {
+      "path": "tools/task214_electron_check.cjs",
+      "sha256": "9a9ae891d61b0f2441f2c7b3b9bcbb5b39a3fce1cf391b451436143b58ab8007"
+    },
+    {
+      "path": "tools/task223_shell_check.cjs",
+      "sha256": "bf3264749421ee35f2dd087e4d81fc6908ca898cce61c4d19f8cd2bddad7133a"
+    }
+  ],
+  "python_cases": [
+    {
+      "legacy_name": "test_desktop_static_export_uses_local_api_origin_and_hash_scoped_csp",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_local_owner_credential.py",
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py",
+        "tests/test_qt_window_restore.py"
+      ],
+      "reason": "Electron stdin sidecar, Next static bootstrap and Electron token-generation helpers retired; Qt owns the single process/session and existing credential APIs remain tested."
+    },
+    {
+      "legacy_name": "test_local_web_runtime_keeps_original_routes_and_default_csp_without_desktop_ui",
+      "disposition": "preserved",
+      "replacement_checks": [
+        "tests/test_native_session_security.py"
+      ],
+      "reason": "Native cookie/Origin and owner-lock assertions retained."
+    },
+    {
+      "legacy_name": "test_built_next_export_assets_are_served_from_the_local_api_origin",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_local_owner_credential.py",
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py",
+        "tests/test_qt_window_restore.py"
+      ],
+      "reason": "Electron stdin sidecar, Next static bootstrap and Electron token-generation helpers retired; Qt owns the single process/session and existing credential APIs remain tested."
+    },
+    {
+      "legacy_name": "test_navigation_is_present_after_transition_from_exported_home_to_python_chat",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_local_owner_credential.py",
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py",
+        "tests/test_qt_window_restore.py"
+      ],
+      "reason": "Electron stdin sidecar, Next static bootstrap and Electron token-generation helpers retired; Qt owns the single process/session and existing credential APIs remain tested."
+    },
+    {
+      "legacy_name": "test_electron_design_tokens_are_generated_from_python_canonical_source",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_local_owner_credential.py",
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py",
+        "tests/test_qt_window_restore.py"
+      ],
+      "reason": "Electron stdin sidecar, Next static bootstrap and Electron token-generation helpers retired; Qt owns the single process/session and existing credential APIs remain tested."
+    },
+    {
+      "legacy_name": "test_desktop_owner_setup_creates_only_through_existing_credential_api",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_local_owner_credential.py",
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py",
+        "tests/test_qt_window_restore.py"
+      ],
+      "reason": "Electron stdin sidecar, Next static bootstrap and Electron token-generation helpers retired; Qt owns the single process/session and existing credential APIs remain tested."
+    },
+    {
+      "legacy_name": "test_token_only_startup_is_desktop_scoped_and_password_lock_stays_enforced",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_local_owner_credential.py",
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py",
+        "tests/test_qt_window_restore.py"
+      ],
+      "reason": "Electron stdin sidecar, Next static bootstrap and Electron token-generation helpers retired; Qt owns the single process/session and existing credential APIs remain tested."
+    },
+    {
+      "legacy_name": "test_electron_session_token_authenticates_only_when_present_and_origin_is_valid",
+      "disposition": "preserved",
+      "replacement_checks": [
+        "tests/test_native_session_security.py"
+      ],
+      "reason": "Native cookie/Origin and owner-lock assertions retained."
+    },
+    {
+      "legacy_name": "test_optional_desktop_password_lock_can_be_enabled_and_removed_with_owner_password",
+      "disposition": "preserved",
+      "replacement_checks": [
+        "tests/test_native_session_security.py"
+      ],
+      "reason": "Native cookie/Origin and owner-lock assertions retained."
+    },
+    {
+      "legacy_name": "test_desktop_first_run_requires_matching_confirmation",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_local_owner_credential.py",
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py",
+        "tests/test_qt_window_restore.py"
+      ],
+      "reason": "Electron stdin sidecar, Next static bootstrap and Electron token-generation helpers retired; Qt owns the single process/session and existing credential APIs remain tested."
+    },
+    {
+      "legacy_name": "test_desktop_sidecar_owns_only_loopback_backend_and_stops_through_parent_pipe",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_local_owner_credential.py",
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py",
+        "tests/test_qt_window_restore.py"
+      ],
+      "reason": "Electron stdin sidecar, Next static bootstrap and Electron token-generation helpers retired; Qt owns the single process/session and existing credential APIs remain tested."
+    },
+    {
+      "legacy_name": "test_invalid_startup_payload_cannot_start_backend_or_hold_single_instance",
+      "disposition": "retired",
+      "replacement_checks": [
+        "tests/test_local_owner_credential.py",
+        "tests/test_first_run_setup.py",
+        "tests/test_qt_shell.py",
+        "tests/test_qt_window_restore.py"
+      ],
+      "reason": "Electron stdin sidecar, Next static bootstrap and Electron token-generation helpers retired; Qt owns the single process/session and existing credential APIs remain tested."
+    },
+    {
+      "legacy_name": "test_visualization_page_is_3d_first_with_accessible_alternatives_and_setup_links",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_visualization_page.py::test_advanced_map_starts_as_accessible_list_with_native_3d_help_and_setup_links"
+      ],
+      "reason": "Advanced browser rendering now starts as an accessible source-backed list; main native Brain owns projected 3D."
+    },
+    {
+      "legacy_name": "test_vendored_three_is_served_same_origin_as_javascript_with_license",
+      "disposition": "replaced",
+      "replacement_checks": [
+        "tests/test_visualization_page.py::test_advanced_map_has_no_vendored_webgl_and_keeps_same_origin_client"
+      ],
+      "reason": "Assert retired WebGL assets are absent and the surviving list client remains same-origin; renderer assertions are replaced by Qt coverage."
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import sys
 from PySide6.QtWidgets import QApplication, QInputDialog, QLineEdit, QMessageBox, QLabel
+from PySide6.QtCore import QSettings
 from .instance import Instance
 from .theme import apply_theme
 
@@ -17,6 +18,8 @@ def main():
     app = QApplication(sys.argv[:1]); app.setApplicationName('ERSELMETZ AI'); app.setOrganizationName('ERSELMETZ AI')
     apply_theme(app)
     instance = Instance(data); session = None; manager = None
+    from .failures import record_failure,ui_exception_handler
+    previous_hook=sys.excepthook;sys.excepthook=ui_exception_handler(data,lambda:manager)
     try:
         if not instance.acquire_or_notify(): return 0
         from app.local_owner_credential import LocalOwnerCredentialStore
@@ -37,13 +40,22 @@ def main():
         factory = lambda **kwargs: LocalApplicationController(**kwargs, lease_factory=OwnedLease)
         session = NativeSession(password, controller_factory=factory)
         from .shell import ShellManager
-        manager = ShellManager(app, session)
+        from .windows import WindowStore
+        preferences=QSettings(str(data/'native-preferences.ini'),QSettings.Format.IniFormat)
+        if not args.profile and not (data/'native-preferences.ini').exists():
+            previous=QSettings('ERSELMETZ AI','Native shell')
+            for key in ['lightTheme','reducedMotion']:
+                preferences.setValue(key,previous.value(key,False,type=bool))
+            preferences.sync()
+        manager = ShellManager(app, session,window_store=WindowStore(data/'windows.json'),preferences=preferences)
         instance.activated.connect(manager.new_window)
-        manager.new_window(); loading.close()
+        manager.restore_windows(); loading.close()
         return app.exec()
     except Exception as error:
+        record_failure(data,stage='startup',error=error)
         QMessageBox.critical(None, 'ERSELMETZ AI', str(error)[:400]); return 1
     finally:
+        sys.excepthook=previous_hook
         if manager: manager.shutdown()
         if session: session.close()
         instance.close()

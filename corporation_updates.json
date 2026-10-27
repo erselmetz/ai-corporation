@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-10-28",
+      "type": "development",
+      "title": "Task 227 native Python packaging and Node retirement",
+      "summary": "PySide6 shell, descriptor-only restart, Python browser/test/docs tooling, one-folder PyInstaller and isolated per-user Inno review installation. No Node/Electron/Next.js app or build. Full Python 2003 passed, 3 symlink-privilege skips; 76 native actions activated; 18 screenshot baselines; all 362 former Node cases mapped or explicitly retired. Real Ollama safety and scoped packaged Windows journeys verified. Real answers remain partial (9/10 named-fact checks; 7/10 expected-source citations); physical capture, live Gemini and signed public updates remain unverified. Local only; no push/deploy."
+    },
+    {
       "date": "2026-10-27",
       "type": "development",
       "title": "Task 226 native resources, Stop and truthful reviewed actions",

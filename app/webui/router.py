@@ -4,16 +4,14 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 router = APIRouter()
 
 
-def _navigation(active_path: str, *, desktop_settings_available: bool = True) -> str:
+def _navigation(active_path: str) -> str:
     """Render the same concise, route-accurate navigation on every app page."""
     system_links = [
-        ("Settings", "/desktop/settings/"), ("Software inventory", "/ui/inventory"),
+        ("Settings", "/ui/settings/capabilities"), ("Software inventory", "/ui/inventory"),
         ("Performance readiness", "/ui/readiness"), ("Backup &amp; restore", "/ui/backup"),
         ("Documentation", "/ui/documentation"), ("Updates", "/ui/updates"),
         ("Preferences", "/ui/preferences"), ("Owner sign-in", "/ui/login"),
     ]
-    if not desktop_settings_available:
-        system_links = system_links[1:]
     groups = (
         ("PRIMARY", (("Home", "/ui"), ("Chat", "/ui/chat"), ("Projects", "/ui/projects"))),
         ("AI", (("Agents", "/ui/agents"), ("Employees", "/ui/employees"), ("Positions", "/ui/positions"),
@@ -1495,8 +1493,8 @@ def visualization_page():
     approve work.</p>
     <p id="viz-status" role="status" tabindex="0" aria-label="Map loading and source status">Loading...</p>
     <div role="group" aria-label="View controls">
-    <button id="viz-mode-3d" type="button" aria-pressed="true">3D globe</button>
-    <button id="viz-mode-list" type="button" aria-pressed="false">List view</button>
+    <button id="viz-mode-3d" type="button" aria-pressed="false">Desktop 3D help</button>
+    <button id="viz-mode-list" type="button" aria-pressed="true">List view</button>
     <button id="viz-refresh" type="button">Refresh</button>
     <button id="viz-rotate-left" type="button">Rotate left</button>
     <button id="viz-rotate-right" type="button">Rotate right</button>
@@ -1521,8 +1519,8 @@ def visualization_page():
     <label for="viz-search">Find records by name, ID, type, or state</label>
     <input id="viz-search" type="search" maxlength="120" autocomplete="off">
     <p>The globe is a visual layout, not a geographic map or measured organizational position. Recorded links are drawn between their source-backed records only. Drag to orbit; hold Shift and drag to pan; use the labeled controls for keyboard access. Filter layers or search names and IDs to inspect records beyond the 60-node render cap. Current APIs expose no department records. Separate source snapshots may have different timestamps and are not atomic.</p>
-    <canvas id="viz-canvas" class="viz-canvas" tabindex="0" role="img" aria-label="3D organizational globe, not geographic"></canvas>
-    <section id="viz-list" aria-label="Accessible list view of the same records and relationships" hidden></section>
+    <canvas id="viz-canvas" class="viz-canvas" tabindex="0" role="img" aria-label="3D organizational globe, not geographic" hidden></canvas>
+    <section id="viz-list" aria-label="Accessible list view of the same records and relationships"></section>
     <p id="viz-cost" role="status"></p>
     <p id="viz-frame-metric" role="status">Frame pacing: not measured on this device.</p>
     <section aria-live="polite"><h2>Details</h2><div id="viz-detail">Select a node.</div></section>

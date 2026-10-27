@@ -1,12 +1,11 @@
 import { buildCorporationMapModel, changedNodeIds } from "./scene-model.mjs";
 
-const THREE_URL = "/ui/static/vendor/three/three.module.js";
 const SECTION_LABEL = { 401: "sign-in required", 403: "forbidden (permission not granted)" };
 
 export async function mountVisualization({
   documentRef = globalThis.document,
   fetchImpl = globalThis.fetch,
-  loadThree = () => import(THREE_URL),
+  loadThree = async () => ({}),
   createView = null,
   matchMedia = globalThis.matchMedia?.bind(globalThis),
   requestFrame = globalThis.requestAnimationFrame?.bind(globalThis),
@@ -28,11 +27,18 @@ export async function mountVisualization({
     .map(layer => [layer, el(`viz-layer-${layer}`)]));
   let reduced = Boolean(matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
   motionBox.checked = reduced;
-  let mode = reduced ? "list" : "3d";
+  let mode = reduced || !createView ? "list" : "3d";
   let model = null;
   let selectedId = null;
   let view = null;
   let notice = "";
+  if (!createView) {
+    notice = 'Native 3D is available from Open Brain in the desktop app; this Advanced map shows the authorized source records as a list.';
+    el('viz-mode-3d').textContent = 'Desktop 3D help';
+    for (const id of ['viz-rotate-left','viz-rotate-right','viz-zoom-in','viz-zoom-out','viz-pan-left','viz-pan-right','viz-pan-up','viz-pan-down','viz-frame-measure']) el(id).hidden = true;
+    effectsBox.disabled = true; motionBox.disabled = true;
+    costLine.hidden = true; frameMetric.hidden = true;
+  }
   let sectionNotes = [];
   let modelAssignments = [];
   let resourceCapacities = null;
@@ -158,9 +164,14 @@ export async function mountVisualization({
 
   async function ensureView() {
     if (view) return view;
+    if (!createView) {
+      notice = 'Use Open Brain in the desktop app for native 3D. This Advanced page keeps the source-backed list with its stated display limits.';
+      mode = 'list';
+      return null;
+    }
     try {
       const THREE = await loadThree();
-      const factory = createView ?? (await import("./three-scene.mjs")).createThreeView;
+      const factory = createView;
       view = factory({ THREE, canvas });
       return view;
     } catch {

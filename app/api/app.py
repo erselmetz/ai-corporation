@@ -111,7 +111,7 @@ def root() -> dict[str, str]:
 
 
 @api_router.get("/health")
-def health() -> dict[str, str]:
+def health() -> dict[str, str | bool]:
     return {"status": "ok", **BUILD_STAMP}
 
 

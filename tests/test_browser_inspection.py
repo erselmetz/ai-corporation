@@ -4,8 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import Error as PlaywrightError
-from playwright.sync_api import sync_playwright
+from app.integrations.offline_browser import BrowserError, sync_browser
 
 from app.integrations import (
     BrowserInspectionUnavailable,
@@ -124,7 +123,7 @@ def install_fake_browser(monkeypatch: pytest.MonkeyPatch) -> tuple[
     chromium = FakeChromium(browser)
     playwright = FakePlaywright(chromium)
     monkeypatch.setattr(
-        "app.integrations.browser_inspection.sync_playwright",
+        "app.integrations.browser_inspection.sync_browser",
         lambda: FakePlaywrightManager(playwright),
     )
     return context.page, context, browser, chromium
@@ -259,13 +258,13 @@ def test_browser_failure_does_not_expose_exception_details(
 
     class FailingPlaywrightManager:
         def __enter__(self) -> FakePlaywright:
-            raise PlaywrightError("token=secret C:\\private\\profile")
+            raise BrowserError("token=secret C:\\private\\profile")
 
         def __exit__(self, *_args: object) -> bool:
             return False
 
     monkeypatch.setattr(
-        "app.integrations.browser_inspection.sync_playwright",
+        "app.integrations.browser_inspection.sync_browser",
         FailingPlaywrightManager,
     )
 
@@ -279,9 +278,9 @@ def test_browser_failure_does_not_expose_exception_details(
 def test_inspection_with_installed_chromium(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    with sync_playwright() as playwright:
+    with sync_browser() as playwright:
         if not Path(playwright.chromium.executable_path).is_file():
-            pytest.skip("Playwright Chromium is not installed")
+            pytest.skip("A supported Chromium browser is not installed")
     source = WebResearchClient(frozenset({"docs.example.com"}))
     monkeypatch.setattr(
         source,

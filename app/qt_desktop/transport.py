@@ -21,6 +21,7 @@ class Chat:
     title: str = ''
     title_pending: bool = False
     reply_seconds: int = 30
+    read_only: bool = False
 
 
 class Transport:
@@ -30,7 +31,11 @@ class Transport:
 
     def catalog(self, window_id=''):
         if not window_id:raise ValueError('Register this window before loading models')
-        return {'window_id':window_id,'window_generation':None,'models': self.session.models(),
+        import httpx
+        offline=False
+        try:models=self.session.models()
+        except (httpx.HTTPError,RuntimeError,ValueError):models=[];offline=True
+        return {'window_id':window_id,'window_generation':None,'models':models,'model_offline':offline,
                 'agents': self.session.request('GET', '/api/agents')['items'],
                 'projects': self.session.request('GET', '/api/projects')['items']}
 
@@ -53,18 +58,26 @@ class Transport:
             self.rename(chat,chat.title,generation=generation);chat.title_pending=False
 
     def rename(self,chat,title,*,generation=0):
-        response=self.session.client.patch('/api/chat/conversations/'+chat.conversation+'/title',json={'title':title},
+        base='/api/chat/history/' if chat.read_only else '/api/chat/conversations/'
+        response=self.session.client.patch(base+chat.conversation+'/title',json={'title':title},
             headers={'X-Local-CSRF':self.session.credentials['csrf'],'X-Chat-Workspace':chat.workspace,
                      'X-Native-Window':chat.window_id,'X-Native-Generation':str(generation)})
         response.raise_for_status();return response.json()
 
     def delete(self,chat,*,generation=0):
-        response=self.session.client.request('DELETE','/api/chat/conversations/'+chat.conversation,json={},
+        base='/api/chat/history/' if chat.read_only else '/api/chat/conversations/'
+        response=self.session.client.request('DELETE',base+chat.conversation,json={},
             headers={'X-Local-CSRF':self.session.credentials['csrf'],'X-Chat-Workspace':chat.workspace,
                      'X-Native-Window':chat.window_id,'X-Native-Generation':str(generation)})
         response.raise_for_status();return response.json()
 
+    def history(self,chat,*,generation=0):
+        response=self.session.client.get('/api/chat/history/'+chat.conversation,headers={
+            'X-Chat-Workspace':chat.workspace,'X-Native-Window':chat.window_id,'X-Native-Generation':str(generation)})
+        response.raise_for_status();return response.json()
+
     def send(self, chat, text, stop, emit, *, generation=0,knowledge=None):
+        if chat.read_only:raise ValueError('Restored history is read-only. Open a new chat before sending.')
         if stop.is_set():raise RuntimeError('Request cancelled before submission')
         if not chat.conversation:
             self.start(chat,generation=generation)

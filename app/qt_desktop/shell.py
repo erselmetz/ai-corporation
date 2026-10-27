@@ -43,7 +43,7 @@ class Work(QObject):
 
 
 class ShellManager(QObject):
-    def __init__(self, app, session, *, browser_open=webbrowser.open):
+    def __init__(self, app, session, *, browser_open=webbrowser.open,window_store=None,preferences=None):
         super().__init__()
         self.app, self.session = app, session
         self.transport = Transport(session)
@@ -52,6 +52,7 @@ class ShellManager(QObject):
         self.graph=None; self.brain_loading=False; self.brain_dirty=False
         app.installEventFilter(self)
         self.shutting_down=False
+        self.quitting=False
         self.pending_global_stop=False
         self.work = Work(self); self.pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix='qt-api')
         self.model_pool=ThreadPoolExecutor(max_workers=16,thread_name_prefix='qt-model')
@@ -59,7 +60,10 @@ class ShellManager(QObject):
         self.queue_loading=False;self.queue_timer=QTimer(self);self.queue_timer.timeout.connect(self.poll_queue);self.queue_timer.start(750)
         self.work.finished.connect(self.finished)
         self.work.event.connect(self.handle_event)
-        self.preferences = QSettings('ERSELMETZ AI', 'Native shell')
+        self.preferences = preferences if preferences is not None else QSettings('ERSELMETZ AI', 'Native shell')
+        self.window_store=window_store
+        self.layout_timer=QTimer(self);self.layout_timer.timeout.connect(self.save_windows)
+        if window_store is not None:self.layout_timer.start(2000)
         self.reduced_motion = self.preferences.value('reducedMotion', False, type=bool)
         apply_theme(app, self.preferences.value('lightTheme', False, type=bool))
 
@@ -116,14 +120,48 @@ class ShellManager(QObject):
         if error is None: accepted(result)
         elif failed: failed(error)
 
-    def new_window(self):
+    def new_window(self):return self._new_window()
+
+    def _new_window(self,descriptor=None):
         if len(self.windows) >= 16:
             self.windows[-1].raise_(); self.windows[-1].activateWindow()
             self.windows[-1].status.setText('Sixteen chat windows are open. Close one before opening another.')
             return None
-        window = ChatWindow(self); self.windows.append(window)
+        window = ChatWindow(self,descriptor); self.windows.append(window)
         window.show(); window.raise_(); window.activateWindow(); window.composer.setFocus()
+        if descriptor is not None:
+            from PySide6.QtCore import QRect
+            rectangle=QRect(*descriptor['geometry'])
+            screens=self.app.screens();screen=next((s for s in screens if s.availableGeometry().intersects(rectangle)),self.app.primaryScreen())
+            area=screen.availableGeometry();width=min(max(800,rectangle.width()),area.width());height=min(max(580,rectangle.height()),area.height())
+            window.setGeometry(max(area.left(),min(rectangle.x(),area.right()-width+1)),
+                max(area.top(),min(rectangle.y(),area.bottom()-height+1)),width,height)
+            if not descriptor['sidebar']:window.toggle_sidebar()
+            if descriptor['maximized']:window.showMaximized()
         return window
+
+    def restore_windows(self):
+        records=self.window_store.load() if self.window_store is not None else []
+        for descriptor in records:self._new_window(descriptor)
+        if not records:
+            window=self.new_window()
+            if self.window_store is not None and self.window_store.notice:window.status.setText(self.window_store.notice)
+
+    def save_windows(self,windows=None):
+        if self.window_store is None:return
+        windows=self.windows if windows is None else windows
+        if not windows:return  # Preserve the final window when quitting via X.
+        try:self.window_store.save([window.descriptor() for window in windows])
+        except (OSError,ValueError):
+            for window in windows:
+                if not window.closed:window.status.setText('Window layout could not be saved. Your chat and permission settings were not changed.')
+
+    def quit(self):
+        if any(w.busy or w.feeding or w.capture_controls.lease is not None or w.desktop_controls.pending for w in self.windows):
+            self.stop_all()
+            for window in self.windows:window.status.setText('Stop requested. Wait for active work and capture release, then Quit again.')
+            return
+        self.save_windows();self.quitting=True;self.app.quit()
 
     def eventFilter(self, watched, event):
         kind=event.type()
@@ -178,12 +216,15 @@ class ShellManager(QObject):
         self.submit(lambda:self.session.request('GET','/api/memory/owner/native-graph'),loaded,failed)
 
     def remove(self, window):
+        if not self.quitting and len(self.windows)==1:self.save_windows([window])
         if window in self.windows: self.windows.remove(window)
+        if self.windows and not self.quitting:self.save_windows()
         if not self.windows:
             for dialog in self.dialogs.values(): dialog.close()
             self.app.quit()
 
     def shutdown(self):
+        self.layout_timer.stop();self.save_windows()
         self.queue_timer.stop()
         self.shutting_down=True; self.app.removeEventFilter(self)
         self.pool.shutdown(wait=True, cancel_futures=True)
@@ -209,6 +250,7 @@ class ShellManager(QObject):
                 self.reduced_motion = checked; self.preferences.setValue('reducedMotion', checked)
             reduced.toggled.connect(motion); layout.addWidget(reduced)
             layout.addWidget(label('Each chat window has its own model, agent and project. Provider and privacy changes keep their existing permission and consent checks.'))
+            layout.addWidget(button('Quit ERSELMETZ AI',self.quit,'Quit the app and save only window descriptors; never replay actions'))
             pages = ['Preferences', 'Providers', 'Online providers', 'Provider connections', 'Privacy and capabilities', 'Updates', 'Backup']
         else:
             layout.addWidget(label('Open the existing local pages in your browser. Sign-in is transferred once, on this computer only.'))
@@ -232,9 +274,10 @@ class ShellManager(QObject):
 
 
 class ChatWindow(QMainWindow):
-    def __init__(self, manager):
+    def __init__(self, manager,descriptor=None):
         super().__init__()
         self.manager = manager; self.closed = False; self.busy = False;self.response_error=False
+        self.pending_restore=descriptor
         self.native_id='';self.native_generation=0;self.window_stopped=False;self.global_stopped=False;self.pending_stop=False
         self.client_id=uuid.uuid4().hex;self.registering=False;self.refresh_version=0;self.available_models=set()
         self.feeding=False; self.checking_files=False; self.feed_stop=threading.Event(); self.full_brain=None; self.confirmation=None
@@ -268,7 +311,7 @@ class ChatWindow(QMainWindow):
         side.addWidget(button('Exact math', self.open_math))
         side.addWidget(button('Desktop click / type',self.desktop_controls.show,'Choose and approve one exact desktop action'))
         for caption,kind in [('Camera frame','camera'),('Screen frame','screen'),('Microphone draft','microphone')]:
-            side.addWidget(button(caption,lambda kind=kind:self.capture_controls.start(kind),'Request one '+kind+' capture after exact consent'))
+            side.addWidget(button(caption,lambda checked=False,kind=kind:self.capture_controls.start(kind),'Request one '+kind+' capture after exact consent'))
         self.release_capture_button=button('Release capture',self.capture_controls.retry_release,'Stop capture or retry its ownership release; does not capture data')
         self.release_capture_button.setEnabled(False);side.addWidget(self.release_capture_button)
         self.cancel_feed_button=button('Cancel feed',self.cancel_feed); self.cancel_feed_button.setEnabled(False); side.addWidget(self.cancel_feed_button)
@@ -326,7 +369,7 @@ class ChatWindow(QMainWindow):
         self.queue_status=label('Checking request and capture ownership…');layout.addWidget(self.queue_status)
         self.splitter.setSizes([230, 540, 540]); self.splitter.setStretchFactor(0, 0)
         self.splitter.setStretchFactor(1, 1); self.splitter.setStretchFactor(2, 1)
-        for shortcut, callback in [('Ctrl+N', manager.new_window), ('Ctrl+B', self.toggle_sidebar), ('Ctrl+Return', self.send),('F2',self.rename_tab)]:
+        for shortcut, callback in [('Ctrl+N', manager.new_window), ('Ctrl+Q',manager.quit), ('Ctrl+B', self.toggle_sidebar), ('Ctrl+Return', self.send),('F2',self.rename_tab)]:
             action = QAction(self); action.setShortcut(QKeySequence(shortcut)); action.triggered.connect(callback); self.addAction(action)
         self.new_tab(); self.refresh()
         if manager.graph is not None: self.brain.set_graph(manager.graph)
@@ -334,16 +377,57 @@ class ChatWindow(QMainWindow):
 
     def current(self): return self.chats.get(self.tabs.currentWidget())
 
-    def new_tab(self):
+    def new_tab(self,chat=None):
         if self.busy or self.feeding: return
+        from .windows import MAX_TABS
+        if self.tabs.count()>=MAX_TABS:self.status.setText('Close a chat tab before opening another; sixteen tabs fit in one window.');return
         box = QTextBrowser(); box.setOpenExternalLinks(False); box.setOpenLinks(False)
         box.setAccessibleName('Chat messages'); box.setPlainText('Start a conversation. Your selected local model will appear in the status below.')
-        chat = Chat(self.model.currentData() or '', self.agent.currentData() or 'local_worker', self.project.currentData() or '')
+        chat = chat or Chat(self.model.currentData() or '', self.agent.currentData() or 'local_worker', self.project.currentData() or '')
         chat.window_id=self.native_id
         chat.window_generation=self.native_generation
-        chat.title=f'Chat {self.tabs.count()+1}'
+        chat.title=chat.title or f'Chat {self.tabs.count()+1}'
         self.chats[box] = chat
-        self.tabs.setCurrentIndex(self.tabs.addTab(box, f'Chat {self.tabs.count()+1}'))
+        self.tabs.setCurrentIndex(self.tabs.addTab(box,chat.title.replace('&','&&')))
+        return box
+
+    def descriptor(self):
+        from .windows import window
+        if self.pending_restore is not None:return window(self.pending_restore)
+        rectangle=self.normalGeometry() if self.isMaximized() else self.geometry()
+        tabs=[{key:getattr(self.chats[self.tabs.widget(i)],key) for key in ('model','agent','project','workspace','conversation','title')}
+              for i in range(self.tabs.count())]
+        return window({'geometry':[rectangle.x(),rectangle.y(),rectangle.width(),rectangle.height()],
+            'maximized':self.isMaximized(),'sidebar':self.sidebar_visible,'selected':self.tabs.currentIndex(),'tabs':tabs})
+
+    def restore_tabs(self,descriptor):
+        if any(not item['model'] for item in descriptor['tabs']) and self.model.findData('')<0:
+            self.model.addItem('No model selected','')
+        self.tabs.blockSignals(True)
+        for box in list(self.chats):self.chats.pop(box);self.tabs.removeTab(self.tabs.indexOf(box));box.deleteLater()
+        for item in descriptor['tabs']:
+            chat=Chat(**item,read_only=bool(item['conversation']),title_pending=bool(item['title']) and not item['conversation'])
+            box=self.new_tab(chat)
+            if chat.conversation:
+                box.setPlainText('Checking retained history. Nothing will be replayed.')
+                def loaded(record,chat=chat,box=box):
+                    if self.closed or box not in self.chats:return
+                    selection=record.get('selection')
+                    if selection:
+                        chat.model=selection['model_id'];chat.agent=selection['agent_id'];chat.project=selection['project_id']
+                    elif record.get('agent_id'):chat.agent=record['agent_id']
+                    lines=['Restored history is read-only. Open a new chat to send a message; no action was replayed.']
+                    for message in record.get('messages',[])[-32:]:
+                        if message.get('role') in {'user','assistant'}:
+                            lines.extend(['\n'+('You' if message['role']=='user' else 'ERSELMETZ AI')+' ('+message['status']+')',message['content']])
+                    box.setPlainText('\n'.join(lines)[-65536:]);self.tab_changed()
+                def missing(error,chat=chat,box=box):
+                    if self.closed or box not in self.chats:return
+                    chat.conversation='';chat.workspace='';chat.read_only=False;chat.title_pending=True
+                    box.setPlainText('Previous chat was not retained, expired, removed or unavailable. This is a new empty chat. No model request, approval, capture or tool action was replayed.')
+                    self.tab_changed()
+                self.manager.submit(lambda chat=chat:self.manager.transport.history(chat,generation=self.native_generation),loaded,missing)
+        self.tabs.setCurrentIndex(descriptor['selected']);self.tabs.blockSignals(False);self.tab_changed()
 
     def rename_tab(self):
         if self.busy or self.feeding:return
@@ -424,8 +508,11 @@ class ChatWindow(QMainWindow):
     def tab_changed(self):
         chat = self.current()
         if chat is None: return
+        self.send_button.setEnabled(not self.busy and not chat.read_only);self.composer.setEnabled(not chat.read_only)
+        if chat.read_only:self.status.setText('Restored history · read-only · open a new chat to send. No action was replayed.')
         for widget, value in [(self.model, chat.model), (self.agent, chat.agent), (self.project, chat.project)]:
             widget.blockSignals(True); index = widget.findData(value)
+            if value and index<0:widget.addItem(value+' (unavailable)',value);index=widget.count()-1
             if index >= 0: widget.setCurrentIndex(index)
             widget.blockSignals(False)
 
@@ -459,6 +546,9 @@ class ChatWindow(QMainWindow):
         self.manager.catalog = data
         self.available_models={record['name'] for record in data['models']}
         current = self.current()
+        if self.pending_restore is not None:
+            selected=self.pending_restore['tabs'][self.pending_restore['selected']]
+            current.model,current.agent,current.project=(selected[key] for key in ('model','agent','project'))
         for widget, records, key, default in [(self.model, data['models'], 'name', current.model),
                 (self.agent, data['agents'], 'id', current.agent), (self.project, data['projects'], 'id', current.project)]:
             widget.blockSignals(True); widget.clear()
@@ -472,6 +562,9 @@ class ChatWindow(QMainWindow):
         self.selection_changed()
         self.selection_hint.setText('Selections apply to this conversation. Changing an existing conversation starts a new tab.')
         self.status.setText('Ready · local model' if data['models'] else 'No local chat model found. Install one in Ollama, then Refresh.')
+        if data.get('model_offline'):self.status.setText('Ollama is offline or its models could not be checked. Retained history is still available; Refresh models after recovery.')
+        if self.pending_restore is not None:
+            descriptor=self.pending_restore;self.pending_restore=None;self.restore_tabs(descriptor)
         if self.window_stopped:self.stop_window(force=True)
 
     def show_runtime(self,data):
@@ -568,6 +661,7 @@ class ChatWindow(QMainWindow):
             self.status.setText('Resume new work before sending. Cancelled requests will not replay.');return
         text = self.composer.toPlainText().strip() if math_tool is None else 'Exact math: '+', '.join(str(v) for k,v in math_tool.items() if k!='kind')
         chat = self.current()
+        if chat.read_only:self.status.setText('Restored history is read-only. Open a new chat to send.');return
         if not text: return
         chat.reply_seconds=self.reply_limit.currentData()
         if math_tool is None:

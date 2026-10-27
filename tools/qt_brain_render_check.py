@@ -11,7 +11,8 @@ sys.path.insert(0,str(ROOT))
 
 
 def main():
-    parser=argparse.ArgumentParser(); parser.add_argument('--nodes',type=int,choices=[300,2000],required=True); args=parser.parse_args()
+    parser=argparse.ArgumentParser(); parser.add_argument('--nodes',type=int,choices=[300,2000],required=True)
+    parser.add_argument('--output',type=Path,default=ROOT/'task224-review'/'render');args=parser.parse_args()
     from app.knowledge.native_brain import chunks
     nodes=[]; edges=[]; sources=[]
     tracked=subprocess.check_output(['git','ls-files','-z','--','app','docs','tests'],cwd=ROOT).decode('utf-8').split('\0')
@@ -42,7 +43,7 @@ def main():
     app=QApplication([]); view=Measured(); view.limit=args.nodes
     view.set_graph({'nodes':nodes,'edges':edges}); assert len(view.nodes)==args.nodes
     view.resize(880,680); view.setWindowTitle('Renderer benchmark · real source chunks'); view.show(); view.timer.setInterval(0)
-    output=ROOT/'task224-review'/'render'; output.mkdir(parents=True,exist_ok=True)
+    output=args.output.resolve(); output.mkdir(parents=True,exist_ok=True)
     def finish():
         view.timer.stop(); view.grab().save(str(output/f'{args.nodes}.png')); app.quit()
     QTimer.singleShot(4500,finish); app.exec()

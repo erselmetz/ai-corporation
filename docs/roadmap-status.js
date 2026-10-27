@@ -18,6 +18,7 @@ export function verificationLabels(task) {
 }
 
 export function renderTaskDirectory(list, taskRecords = tasks) {
+  list.textContent = "";
   const document = list.ownerDocument;
   for (const task of [...taskRecords].sort((a, b) => b.number - a.number)) {
     const item = document.createElement("li");
@@ -50,6 +51,7 @@ export function renderStatusSummary(element, taskRecords = tasks) {
 }
 
 export function renderRecommendedOrder(list, taskRecords = tasks, order = recommendedOrder) {
+  list.textContent = "";
   const document = list.ownerDocument;
   for (const entry of order) {
     const task = taskRecords.find(item => item.number === entry.number);
@@ -66,6 +68,7 @@ export function renderRecommendedOrder(list, taskRecords = tasks, order = recomm
 }
 
 export function renderLatestRoadmapRecords(container, taskRecords = tasks, limit = 2) {
+  container.textContent = "";
   const document = container.ownerDocument;
   const recent = [...taskRecords].sort((a, b) => b.number - a.number).slice(0, limit);
   for (const task of recent) {
