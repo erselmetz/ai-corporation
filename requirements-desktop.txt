@@ -1,2 +1,6 @@
-# QtCore/Gui/Widgets/Network only; no QtWebEngine dependency.
+# Widgets plus QtMultimedia for native one-shot devices. Packaging must exclude
+# unused Addons modules (including QtWebEngine); no web UI is embedded.
 PySide6-Essentials==6.12.0
+PySide6-Addons==6.12.0
+# Windows semantic controls; no global keyboard/mouse injection.
+pywinauto==0.6.9; sys_platform == "win32"

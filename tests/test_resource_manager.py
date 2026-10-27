@@ -18,6 +18,20 @@ def manager(global_slots=3, provider_slots=2, model_slots=1):
     return ResourceManager(limits, registry), registry
 
 
+def test_nested_model_keeps_parent_reservation_and_restores_without_deadlock():
+    resource,_=manager()
+    resource.allocate('parent',provider_id='p',model_id='a')
+    original=resource.retarget('parent',provider_id='p',model_id='b')
+    assert resource.snapshot().global_capacity.allocated==1
+    with pytest.raises(ResourceCapacityError):resource.allocate('cannot-steal-parent',provider_id='p',model_id='a')
+    resource.allocate('other',provider_id='q',model_id='a')
+    resource.retarget('parent',provider_id=original.provider_id,model_id=original.model_id,restore=True)
+    resource.allocate('nested-now-free',provider_id='p',model_id='b')
+    for key in ['parent','other','nested-now-free']:resource.release(key)
+    resource.allocate('new-parent',provider_id='p',model_id='a')
+    assert resource.snapshot().global_capacity.allocated==1
+
+
 def test_explicit_tracking_release_and_immutable_snapshots():
     resource, registry = manager()
     resource.allocate("one", provider_id="p", model_id="a")

@@ -24,10 +24,11 @@ class NativeSession:
         self.lock = threading.RLock()
         self.credentials = self.request("GET", "/api/local/session")
 
-    def request(self, method, path, body=None):
+    def request(self, method, path, body=None, *, window=None, generation=0):
         if not path.startswith("/api/") and path != "/openapi.json":
             raise ValueError("Only application API routes are allowed")
         headers = {}
+        if window:headers.update({'X-Native-Window':window,'X-Native-Generation':str(generation)})
         if method != "GET":
             headers["X-Local-CSRF"] = self.credentials["csrf"]
             headers["Content-Type"] = "application/json"
@@ -70,23 +71,27 @@ class NativeSession:
                                   "thinking": "thinking" in capabilities, "size": item.get("size", 0)})
             return sorted(found, key=lambda item: (not item["tools"], not item["thinking"], item["size"]))
 
-    def send(self, workspace, conversation, text, stop, emit):
+    def send(self, workspace, conversation, text, stop, emit, *, window=None, generation=0,knowledge=None,seconds=None):
         headers = {"X-Local-CSRF": self.credentials["csrf"], "X-Chat-Workspace": workspace}
+        if window:headers.update({'X-Native-Window':window,'X-Native-Generation':str(generation)})
+        if seconds is not None:headers['X-Native-Model-Seconds']=str(seconds)
         base=f"/api/chat/conversations/{conversation}"
+        body={"text":text,"shipped_pack_enabled":True}
+        if knowledge is not None:body.update(knowledge)
         current=self.client.get(base,headers=headers); current.raise_for_status()
         from app.knowledge.shipped_pack import shipped_pack
         if not current.json().get("streaming_supported") or shipped_pack().instant(text) is not None:
-            response=self.client.post(base+"/messages",json={"text":text,"shipped_pack_enabled":True},headers=headers)
+            response=self.client.post(base+"/messages",json=body,headers=headers)
             if not response.is_success: raise RuntimeError(str(response.json().get("detail","Chat unavailable"))[:1000])
             if not stop.is_set():
                 result=response.json()
                 messages=result.get("conversation",{}).get("messages",[])
                 answer=next((item.get("content","") for item in reversed(messages) if item.get("role")=="assistant"),"")
-                emit({"type":"chunk","text":answer}); emit({"type":"complete","shipped_guidance":result.get('shipped_guidance')})
+                emit({"type":"chunk","text":answer}); emit({"type":"complete","shipped_guidance":result.get('shipped_guidance'),'context_trace':result.get('context_trace')})
             return
         # Existing backend owns conversation history, context, model routing and permissions.
         with self.client.stream("POST", base+"/messages/stream",
-                                json={"text": text,"shipped_pack_enabled":True}, headers=headers) as response:
+                                json=body, headers=headers) as response:
             if not response.is_success:
                 response.read()
                 raise RuntimeError(str(response.json().get("detail", "Chat unavailable"))[:1000])

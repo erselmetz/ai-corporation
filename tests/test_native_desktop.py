@@ -55,6 +55,9 @@ def test_native_bridge_sends_real_messages_through_existing_backend(tmp_path,mon
     try:
         workspace,conversation=session.new_chat("installed-test")
         events=[]; session.send(workspace,conversation,"native bridge message",threading.Event(),events.append)
-        assert events==[{"type":"chunk","text":"Native backend reply"},{"type":"complete","shipped_guidance":{
-            'pack_hash':pack.digest,'mode':'semantic','ids':['core:'+pack.digest+':'+e['id'] for e in pack.entries[:3]]}}]
+        assert events[0]=={"type":"chunk","text":"Native backend reply"}
+        assert len(events)==2 and events[1]['type']=='complete'
+        assert events[1]['shipped_guidance']=={
+            'pack_hash':pack.digest,'mode':'semantic','ids':['core:'+pack.digest+':'+e['id'] for e in pack.entries[:3]]}
+        assert events[1]['context_trace']['retrieval']['enabled'] is False
     finally: session.close()

@@ -31,16 +31,24 @@ def create_emergency_stop_router():
     @router.post("/stop")
     def stop(request: Request,
              _principal: AuthenticatedPrincipal = Depends(require_permission("capability-emergency:manage"))):
+        request.app.state.emergency_stop_service.stop()
+        application=getattr(request.app.state,'application_service',None)
+        native=getattr(application,'native_runtime',None)
+        if callable(native):native().stop_all()
         output = getattr(request.app.state, "local_speech_output", None)
         if output is not None:
             output.stop()
-        return request.app.state.emergency_stop_service.stop()
+        return request.app.state.emergency_stop_service.snapshot()
 
     @router.post("/resume")
     def resume(body: ResumeRequest, request: Request,
                _principal: AuthenticatedPrincipal = Depends(require_permission("capability-emergency:manage"))):
         if request.app.state.emergency_stop_service.stopped and not body.confirmed:
             raise HTTPException(409, "Explicit owner confirmation is required to resume protected actions")
-        return request.app.state.emergency_stop_service.resume()
+        result=request.app.state.emergency_stop_service.resume()
+        application=getattr(request.app.state,'application_service',None)
+        native=getattr(application,'native_runtime',None)
+        if callable(native):native().resume_global()
+        return result
 
     return router

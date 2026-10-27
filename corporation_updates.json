@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-10-27",
+      "type": "development",
+      "title": "Task 226 native resources, Stop and truthful reviewed actions",
+      "summary": "Source runtime checkpoint: shared model queue/cancel, independent chat windows, exact capture consent/ownership, rename/delete, bounded Agent loop, SSRF/file guards and approved semantic desktop click/type. Action reports use actual receipts; Stop works inside child dialogs and Settings and never resumes on repeated keyboard Stop. Full Python 1646 passed, 3 skipped; real owned Windows UIA fixture confirmed text and one button action. Ten real Brain replies: 9 named-fact matches, 9 valid citation-marker replies, 7 expected-source citations; answer quality remains partial and an extra table probe still fails. No packaged/device-complete claim. Python packaging and Node retirement remain 227; no push/deploy."
+    },
+    {
       "date": "2026-10-25",
       "type": "development",
       "title": "Task 225 shipped Core Knowledge and exact local replies/math",

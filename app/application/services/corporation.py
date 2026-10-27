@@ -244,6 +244,8 @@ class CorporationApplicationService:
         self._resource_manager_lock = RLock()
         self._owned_chat_slot_condition = Condition(RLock())
         self._owned_chat_slot_waiters = 0
+        self._native_runtime_service = None
+        self._native_tool_service = None
         self._semantic_memory_index = None
         self._semantic_memory_lock = Lock()
         self._native_brain_index = None
@@ -1005,7 +1007,8 @@ class CorporationApplicationService:
                             raise RuntimeError("Stored resource limits failed validation") from None
                 if limits is None:
                     raise RuntimeError("Resource limits are not configured")
-                manager = ResourceManager(limits, self._orchestrator.providers)
+                from app.resources.providers import ResourceProviderRegistry
+                manager = ResourceManager(limits, ResourceProviderRegistry(self._orchestrator.providers))
                 if self._operator_state_store is not None:
                     self._operator_state_store.save_resource_limits({
                         "global_slots": limits.global_slots,
@@ -1060,62 +1063,12 @@ class CorporationApplicationService:
         provider_id, model_id = route or (agent.provider, agent.model)
         if route is not None and not self._orchestrator.providers.exists(provider_id):
             raise ChatConflict("Selected provider is unavailable")
-        manager = self._resource_manager or self.configure_agent_slots(global_slots=1)
         with self._orchestrator.agents.execution(agent_id):
-            allocation_id = f"chat_{uuid4().hex}"
             if not self._orchestrator.providers.exists(provider_id):
                 yield
                 return
-            manager.ensure_route(provider_id=provider_id, model_id=model_id)
-            deadline = monotonic() + 30.0
-            queued = False
-            try:
-                with self._owned_chat_slot_condition:
-                    while True:
-                        snapshot = manager.snapshot()
-                        history = snapshot.allocation_id_history_capacity
-                        provider_capacity = next((item for key, item in snapshot.providers
-                                                  if key == provider_id), None)
-                        model_capacity = next((item for candidate_provider, candidate_model, item in snapshot.models
-                                               if (candidate_provider, candidate_model) == (provider_id, model_id)), None)
-                        if history is None or history.remaining <= 0:
-                            from .owned_chat import ChatLimit
-                            raise ChatLimit("request-slot allocation history is exhausted")
-                        available = (snapshot.global_capacity.remaining > 0
-                                     and provider_capacity is not None and provider_capacity.remaining > 0
-                                     and model_capacity is not None and model_capacity.remaining > 0)
-                        if available:
-                            try:
-                                manager.allocate(allocation_id, provider_id=provider_id, model_id=model_id)
-                                break
-                            except ResourceCapacityError:
-                                # Another execution path may reserve capacity outside this condition.
-                                pass
-                        if not wait_for_slot:
-                            from .owned_chat import ChatLimit
-                            raise ChatLimit("request-slot capacity is exhausted")
-                        if not queued:
-                            if self._owned_chat_slot_waiters >= 16:
-                                from .owned_chat import ChatLimit
-                                raise ChatLimit("request-slot wait queue is full")
-                            self._owned_chat_slot_waiters += 1
-                            queued = True
-                        remaining = deadline - monotonic()
-                        if remaining <= 0:
-                            from .owned_chat import ChatLimit
-                            raise ChatLimit("request-slot wait timed out; no model request was admitted")
-                        self._owned_chat_slot_condition.wait(min(0.25, remaining))
-            finally:
-                if queued:
-                    with self._owned_chat_slot_condition:
-                        self._owned_chat_slot_waiters -= 1
-                        self._owned_chat_slot_condition.notify_all()
-            try:
+            with self.model_request(provider_id,model_id,wait_for_slot=wait_for_slot):
                 yield
-            finally:
-                manager.release(allocation_id)
-                with self._owned_chat_slot_condition:
-                    self._owned_chat_slot_condition.notify_all()
 
     def image_processing(self):
         """Return an optional image adapter without loading Pillow at startup."""
@@ -1193,6 +1146,93 @@ class CorporationApplicationService:
                 from app.knowledge.native_brain import NativeBrain
                 self._native_brain_index = NativeBrain(invalidator=self.invalidate_semantic_memory, stopper=stopper)
             return self._native_brain_index
+
+    def native_runtime(self):
+        with self._resource_manager_lock:
+            if self._native_runtime_service is None:
+                from .native_runtime import NativeRuntimeService
+                self._native_runtime_service=NativeRuntimeService()
+            return self._native_runtime_service
+
+    def native_tools(self):
+        with self._resource_manager_lock:
+            if self._native_tool_service is None:
+                from .native_tools import NativeToolService
+                self._native_tool_service=NativeToolService(self)
+            return self._native_tool_service
+
+    def native_agent(self):
+        with self._owned_chat_lock:
+            if getattr(self,'_native_agent_service',None) is None:
+                from .native_agent import NativeAgentService
+                self._native_agent_service=NativeAgentService(self)
+            return self._native_agent_service
+
+    def native_capture(self):
+        with self._owned_chat_lock:
+            if getattr(self,'_native_capture_service',None) is None:
+                from .native_capture import NativeCaptureService
+                self._native_capture_service=NativeCaptureService(self)
+            return self._native_capture_service
+
+    @contextmanager
+    def model_request(self,provider_id,model_id,*,wait_for_slot=True,nested_embedding=False):
+        """Shared admission for embeddings and chat; existing authority stays upstream."""
+        from time import monotonic
+        from app.resources.context import resource_lease,native_scope,check_native_stop,request_stop
+        from app.resources import ResourceCapacityError
+        from .owned_chat import ChatLimit
+        manager=self._resource_manager or self.configure_agent_slots(global_slots=1)
+        manager.ensure_route(provider_id=provider_id,model_id=model_id)
+        runtime=self.native_runtime();global_stop=request_stop.get() or runtime.global_stop
+        def check():
+            check_native_stop()
+            if global_stop.is_set():
+                from .native_runtime import NativeRuntimeStopped
+                raise NativeRuntimeStopped('Protected work was stopped; start a new request after Resume.')
+        parent=resource_lease.get()
+        if parent is not None and parent[0] is manager:
+            if not nested_embedding:raise ChatLimit('request-slot capacity is exhausted; independent Agent work cannot share an active allocation')
+            check()
+            previous=manager.retarget(parent[1],provider_id=provider_id,model_id=model_id)
+            if len(parent)>2:runtime.mark(parent[2],'running',provider=provider_id,model=model_id)
+            try:
+                check();yield
+                check()
+            finally:
+                manager.retarget(parent[1],provider_id=previous.provider_id,model_id=previous.model_id,restore=True)
+                if len(parent)>2:runtime.mark(parent[2],'running',provider=previous.provider_id,model=previous.model_id)
+            return
+        scope=native_scope.get()
+        operation=runtime.begin(scope,provider_id,model_id)
+        allocation='model_'+uuid4().hex;queued=False;admitted=False;deadline=monotonic()+30
+        try:
+            with self._owned_chat_slot_condition:
+                while True:
+                    check()
+                    if manager.snapshot().allocation_id_history_capacity.remaining<=0:raise ChatLimit('request-slot allocation history is exhausted')
+                    try:
+                        manager.allocate(allocation,provider_id=provider_id,model_id=model_id);admitted=True
+                        if queued:self._owned_chat_slot_waiters-=1;queued=False
+                        break
+                    except ResourceCapacityError:
+                        if not wait_for_slot:raise ChatLimit('request-slot capacity is exhausted') from None
+                        if not queued:
+                            if self._owned_chat_slot_waiters>=16:raise ChatLimit('request-slot wait queue is full')
+                            self._owned_chat_slot_waiters+=1;queued=True
+                        if monotonic()>=deadline:raise ChatLimit('request-slot wait timed out; no model request was admitted')
+                        self._owned_chat_slot_condition.wait(.1)
+            runtime.mark(operation,'running');previous=resource_lease.get();resource_lease.set((manager,allocation,operation))
+            try:
+                check();yield
+                check()
+            finally:resource_lease.set(previous)
+        finally:
+            with self._owned_chat_slot_condition:
+                if queued:self._owned_chat_slot_waiters-=1
+                if admitted:manager.release(allocation)
+                self._owned_chat_slot_condition.notify_all()
+            runtime.finish(operation)
 
     def semantic_memory(self):
         """Return the optional local semantic capability; it never downloads a model."""

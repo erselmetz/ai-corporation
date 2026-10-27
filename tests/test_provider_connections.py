@@ -416,7 +416,8 @@ def test_streaming_holds_provider_slot_until_stream_is_closed():
         runtime.providers.get(provider_id).generate(provider.model, "another request")
     stream.close()
     assert service._gate.capacity(provider_id)["active_requests"] == 0
-    assert chat.get("owner", identifier)["conversation"].messages[0].status.value == "pending"
+    assert chat.get("owner", identifier)["conversation"].messages[0].status.value == "failed"
+    assert chat.close('owner',identifier)['conversation'].status.value=='closed'
 
 
 def test_stale_and_empty_catalogs_are_truthful_and_cannot_be_assigned():

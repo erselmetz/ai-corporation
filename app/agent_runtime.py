@@ -79,7 +79,23 @@ def runtime_timeout_seconds(default: float = 120.0) -> float:
     return max(0.05, min(default, invocation.step_deadline - monotonic()))
 
 
+def _step_seconds(limits):
+    """Authorized native local-only override; total turn and token caps remain."""
+    from app.resources.context import native_model_seconds,native_scope,resource_lease,application_service
+    requested=native_model_seconds.get();parent=resource_lease.get();service=application_service.get()
+    if requested in {30,60,90} and native_scope.get() is not None and parent is not None and service is not None:
+        route=next((a for a in parent[0].snapshot().allocations if a.id==parent[1]),None)
+        if route is not None and route.provider_id=='ollama' and service.provider_is_local('ollama'):
+            return min(float(requested),limits.total_timeout_seconds)
+    return limits.step_timeout_seconds
+
+
 def check_runtime_step() -> None:
+    from app.resources.context import native_scope
+    scope=native_scope.get()
+    from app.resources.context import request_stop
+    stop=request_stop.get()
+    if (scope is not None and scope.cancelled) or (stop is not None and stop.is_set()):raise AgentRuntimeStopped('This request was stopped by the owner')
     invocation = current_invocation()
     if invocation is None:
         return
@@ -266,6 +282,11 @@ class AgentRuntime:
 
     def _stopped(self) -> bool:
         try:
+            from app.resources.context import native_scope
+            scope=native_scope.get()
+            from app.resources.context import request_stop
+            stop=request_stop.get()
+            if (scope is not None and scope.cancelled) or (stop is not None and stop.is_set()):return True
             return self._stop_check() is True
         except Exception:
             # A missing/broken stop service blocks new runtime work.
@@ -301,7 +322,7 @@ class AgentRuntime:
                 raise AgentRuntimeBudgetExceeded("Agent Runtime turn timed out")
             invocation = RuntimeInvocation(
                 deadline=deadline,
-                step_deadline=min(deadline, now + self.limits.step_timeout_seconds),
+                step_deadline=min(deadline, now + _step_seconds(self.limits)),
                 output_token_budget=min(self.limits.step_token_budget, self.limits.token_budget),
                 stop_check=self._stopped,
             )
@@ -312,7 +333,7 @@ class AgentRuntime:
             output_bytes = len(result.encode("utf-8")) if isinstance(result, str) else 0
             if output_bytes > self.limits.token_budget * 4:
                 raise AgentRuntimeBudgetExceeded("Agent Runtime output budget was reached")
-            _append_step(trace, kind, "completed", "configured Agent provider", elapsed,
+            _append_step(trace, kind, "completed", "reviewed tool" if kind=='tool' else "configured Agent provider", elapsed,
                          output_bytes=output_bytes)
             trace["outcome"] = "completed"
             trace["elapsed_ms"] = max(0, int((self._clock() - started) * 1000))
@@ -332,6 +353,10 @@ class AgentRuntime:
 
     def run_direct(self, agent_id: str, operation: Callable, *, progress=None):
         return self._run(agent_id, operation, kind="answer", progress=progress)
+
+    def run_tool_step(self,agent_id:str,operation:Callable,*,progress=None):
+        """Bound a trusted approval-guarded callback; this grants no tool authority."""
+        return self._run(agent_id,operation,kind='tool',progress=progress)
 
     def stream_direct(self, agent_id: str, operation: Callable, *, progress=None):
         """Run a provider stream under the same bounded context until it closes."""
@@ -358,7 +383,7 @@ class AgentRuntime:
                     progress("Answering...")
                 now = self._clock()
                 invocation = RuntimeInvocation(
-                    deadline, min(deadline, now + self.limits.step_timeout_seconds),
+                    deadline, min(deadline, now + _step_seconds(self.limits)),
                     min(self.limits.step_token_budget, self.limits.token_budget), self._stopped)
                 output_bytes = 0
                 iterator = iter(operation())

@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from app.integrations.speech import SpeechTranscript
 from app.local import create_local_app
+from app.runtime.factory import create_corporation_runtime
 
 
 PASSWORD = "local-speech-api-test-password"
@@ -61,7 +62,7 @@ def signed_in(client):
 
 def test_local_speech_status_selection_and_transcription_are_protected_and_ephemeral():
     provider = LocalSpeechFake()
-    app = create_local_app(password=PASSWORD, application_service=MagicMock(),
+    app = create_local_app(password=PASSWORD, application_service=create_corporation_runtime().application_service,
                            local_speech_provider=provider)
     with TestClient(app, base_url=ORIGIN, client=("127.0.0.1", 50151)) as client:
         assert client.get("/api/local/voice").status_code == 401

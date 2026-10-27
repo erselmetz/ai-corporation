@@ -39,7 +39,7 @@ class ShippedPack:
     def retrieve(self,query,limit=3):
         if not isinstance(query,str) or not 1<=len(query)<=8192 or limit not in (2,3):raise ValueError('Invalid pack retrieval request')
         try:
-            with self.index.lock:
+            with self.index.model_slot(),self.index.lock:
                 if self.matrix is None:self.matrix=self.index.vectors([entry['text'] for entry in self.entries])
                 query_vector=normalized(self.index.embedding.embed_one(self.index._key(query,query=True)))
                 if any(len(v)!=len(query_vector) for v in self.matrix):raise ValueError('Embedding dimensions changed')

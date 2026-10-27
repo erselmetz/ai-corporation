@@ -93,6 +93,14 @@ def _legacy_definitions() -> tuple[CapabilityDefinition, ...]:
             default_enabled=False,
             grant_modes=frozenset({"session"}) if risk == "low" else frozenset(),
         ))
+    # No new principal permissions are granted. These scoped capabilities also
+    # require an explicit owner/window folder selection in NativeFiles.
+    definitions.extend((
+        CapabilityDefinition('native-files:read','native-root',frozenset({'memory:manage'}),'low'),
+        CapabilityDefinition('native-files:write','native-root',frozenset({'desktop:act'}),'high'),
+        CapabilityDefinition('native-tool:review','principal',frozenset({'chat:send'}),'moderate'),
+        CapabilityDefinition('native-microphone:capture','principal',frozenset({'chat:send'}),'high'),
+    ))
     return tuple(definitions)
 
 

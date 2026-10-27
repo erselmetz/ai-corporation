@@ -288,6 +288,12 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
                 or (request.url.path.startswith("/api/capabilities/grants/")
                     and request.url.path.endswith("/revoke"))
                 or request.url.path.startswith("/api/memory/owner/native-cancel/")
+                or (request.url.path.startswith('/api/native/tools/') and request.url.path.endswith('/deny'))
+                or (request.url.path.startswith('/api/native/agent/') and request.url.path.endswith('/cancel'))
+                or (request.url.path.startswith('/api/native/capture/') and request.url.path.endswith('/finish'))
+                or (request.method=='DELETE' and request.url.path.startswith('/api/chat/conversations/') and '/images/' in request.url.path)
+                or (request.url.path.startswith('/api/native/windows/')
+                    and (request.url.path.endswith('/stop') or request.method=='DELETE'))
             )
             if stopped and not allowed_while_stopped:
                 return JSONResponse({"detail": "Emergency stop is active; new protected actions are blocked"},

@@ -291,19 +291,85 @@ class OllamaProvider(AIProvider):
         if not isinstance(model,str): raise ValueError("Invalid model identifier")
         if model.casefold().endswith((":cloud","-cloud")):
             raise ValueError("Ollama cloud models require a separately reviewed cloud-consent path")
-        if not self._is_loopback_endpoint(): return
+        from app.resources.context import native_scope
+        strict=native_scope.get() is not None
+        if not self._is_loopback_endpoint():
+            if strict:raise ValueError('Native local chat requires a verified loopback model')
+            return
         try:
             metadata=json.loads(self._bounded_request("POST","/api/show",{"model":model}))
-        except (httpx.HTTPError,ValueError,TypeError): return
-        if not isinstance(metadata,dict): return
+        except (httpx.HTTPError,ValueError,TypeError):
+            if strict:raise ValueError('Local model metadata could not be verified; no message was sent') from None
+            return
+        if not isinstance(metadata,dict):
+            if strict:raise ValueError('Local model metadata is invalid; no message was sent')
+            return
         if metadata.get("remote_host") or metadata.get("remote_model"):
             raise ValueError("A remote Ollama model cannot use the local-only chat path")
         thinking=metadata.get("thinking")
         values=thinking.get("values",[]) if isinstance(thinking,dict) else []
         permits_off=thinking is None or (isinstance(values,list) and any(value is False for value in values))
         capabilities=metadata.get("capabilities",[])
+        if strict and (not isinstance(capabilities,list) or 'completion' not in capabilities):
+            raise ValueError('The selected local model does not report chat capability')
+        if strict:
+            options=body.setdefault('options',{})
+            options.setdefault('num_ctx',8192)
+            options.setdefault('temperature',0)
         if isinstance(capabilities,list) and "thinking" in capabilities and permits_off:
             body["think"]=False
+        return metadata
+
+    def generate_native_step(self,model,messages,tools,*,num_ctx=8192,thinking=False):
+        """One bounded native Ollama tool-call step; results confer no authority."""
+        if type(num_ctx) is not int or not 2048<=num_ctx<=16384 or type(thinking) is not bool:
+            raise ValueError('Unsupported native context or thinking option')
+        if (not isinstance(messages,list) or not 2<=len(messages)<=34
+                or len(json.dumps(messages,ensure_ascii=False).encode())>32768
+                or any(not isinstance(m,dict) or m.get('role') not in {'system','user','assistant','tool'} for m in messages)):
+            raise ValueError('Native chat messages exceed the supported bounds')
+        if not isinstance(tools,list) or not 1<=len(tools)<=16:raise ValueError('Native tool catalog is invalid')
+        body={'model':model,'messages':messages,'tools':tools,'stream':False,
+              'options':{'num_ctx':num_ctx,'num_predict':min(512,runtime_output_token_budget(512))}}
+        metadata=self._prepare_answer_request(model,body)
+        if not isinstance(metadata,dict) or 'tools' not in metadata.get('capabilities',[]):
+            raise ValueError('This installed local model does not report tool capability')
+        if thinking:
+            if 'thinking' in metadata.get('capabilities',[]):
+                levels=metadata.get('thinking')
+                values=levels.get('values',[]) if isinstance(levels,dict) else []
+                default=levels.get('default') if isinstance(levels,dict) else None
+                if isinstance(default,str) and (not values or default in values):body['think']=default
+                elif isinstance(values,list) and values and all(isinstance(value,str) for value in values):body['think']=values[0]
+                else:body['think']=True
+        payload=self._bounded_request('POST','/api/chat',body,timeout=min(90,runtime_timeout_seconds(90)))
+        check_runtime_step();data=json.loads(payload)
+        if not isinstance(data,dict) or data.get('done') is not True or data.get('error'):
+            raise ValueError('The local model did not finish its tool step')
+        message=data.get('message')
+        if not isinstance(message,dict) or message.get('role')!='assistant':raise ValueError('The model returned an invalid assistant step')
+        content=message.get('content','');reasoning=message.get('thinking','');calls=message.get('tool_calls',[])
+        if (not isinstance(content,str) or len(content.encode())>8192 or not isinstance(reasoning,str)
+                or len(reasoning.encode())>8192 or not isinstance(calls,list) or len(calls)>1):
+            raise ValueError('The model exceeded the single-tool or output bound')
+        # Only a leading, balanced block actually returned by the model is
+        # tagged thinking. Never infer reasoning from answer prose or tool data.
+        if content.startswith('<think>'):
+            closing=content.find('</think>',7)
+            if closing<0:raise ValueError('The model returned an unfinished thinking block')
+            tagged=content[7:closing].strip();content=content[closing+8:].lstrip()
+            if not reasoning:reasoning=tagged
+        if calls:
+            call=calls[0];function=call.get('function') if isinstance(call,dict) else None
+            if (not isinstance(function,dict) or not isinstance(function.get('name'),str)
+                    or not isinstance(function.get('arguments'),dict)
+                    or len(json.dumps(function).encode())>12288):raise ValueError('The model returned an invalid tool call')
+            if function['name'] not in {tool['function']['name'] for tool in tools}:
+                raise ValueError('The model requested an unavailable tool')
+            return {'message':{'role':'assistant','content':content,'tool_calls':[{'function':function}]},
+                    'thinking':reasoning if thinking else ''}
+        if not content.strip():raise ValueError('The model returned no answer or tool request')
+        return {'message':{'role':'assistant','content':content},'thinking':reasoning if thinking else ''}
 
     def generate(self, model: str, prompt: str) -> str:
         request_body = {"model": model, "prompt": prompt, "stream": False}
@@ -327,7 +393,7 @@ class OllamaProvider(AIProvider):
         request_body = {"model": model, "messages": normalized, "stream": False}
         self._prepare_answer_request(model,request_body)
         if current_invocation() is not None:
-            request_body["options"] = {"num_predict": runtime_output_token_budget()}
+            request_body.setdefault('options',{})['num_predict']=runtime_output_token_budget()
         response_body = bytearray()
         with httpx.Client(timeout=runtime_timeout_seconds(), trust_env=False,
                           follow_redirects=False) as client:
@@ -361,7 +427,7 @@ class OllamaProvider(AIProvider):
             request_body = {"model": model, "messages": normalized, "stream": True}
             self._prepare_answer_request(model,request_body)
             if current_invocation() is not None:
-                request_body["options"] = {"num_predict": runtime_output_token_budget()}
+                request_body.setdefault('options',{})['num_predict']=runtime_output_token_budget()
             with httpx.Client(timeout=min(_STREAM_TIMEOUT, runtime_timeout_seconds(_STREAM_TIMEOUT)), trust_env=False,
                               follow_redirects=False) as client:
                 with client.stream("POST", f"{self.base_url}/api/chat", json=request_body) as response:

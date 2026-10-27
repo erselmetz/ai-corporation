@@ -140,6 +140,8 @@ class BrainPanel(QWidget):
     full_requested=Signal()
     refresh_requested=Signal()
     search_requested=Signal(str)
+    window_stop_requested=Signal()
+    global_stop_requested=Signal()
 
     def __init__(self, reduced_motion=lambda:False):
         super().__init__()
@@ -149,6 +151,10 @@ class BrainPanel(QWidget):
         tools=QHBoxLayout(); layout.addLayout(tools)
         self.full=QPushButton('Open Brain'); self.full.setAccessibleName('Open full-window Brain'); self.full.clicked.connect(self.full_requested)
         tools.addWidget(self.full)
+        self.window_stop=QPushButton('Stop');self.window_stop.setAccessibleName('Stop or resume this window from full Brain')
+        self.window_stop.clicked.connect(self.window_stop_requested);tools.addWidget(self.window_stop);self.window_stop.hide()
+        self.global_stop=QPushButton('Stop all');self.global_stop.setAccessibleName('Emergency stop all windows from full Brain')
+        self.global_stop.clicked.connect(self.global_stop_requested);tools.addWidget(self.global_stop);self.global_stop.hide()
         self.fallback=QPushButton('List'); self.fallback.setAccessibleName('Brain list fallback'); self.fallback.clicked.connect(self.toggle_list); tools.addWidget(self.fallback)
         self.cap=QSpinBox(); self.cap.setRange(50,2000); self.cap.setValue(300); self.cap.setSingleStep(50); self.cap.setPrefix('Dots: '); self.cap.setMaximumWidth(135); self.cap.setAccessibleName('Maximum visible Brain nodes'); self.cap.setToolTip('More nodes can reduce rendering speed. Groups retain their real members.')
         refresh=QPushButton('↻'); refresh.setAccessibleName('Refresh Brain'); refresh.clicked.connect(self.refresh_requested); tools.addWidget(refresh)

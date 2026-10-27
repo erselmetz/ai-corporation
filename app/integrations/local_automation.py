@@ -102,7 +102,7 @@ class LocalAutomationRegistry:
             policy = frozenset(self._processes)
             if self._desktop is None or self._desktop_policy != policy:
                 self._desktop = ScopedDesktopAutomation(
-                    DesktopAutomationPolicy(policy), self._approvals,
+                    DesktopAutomationPolicy(policy,allowed_actions=frozenset({'invoke_button','fill_text'})), self._approvals,
                     authorization=self._authorization, emergency_stop=self._stop,
                     trace_service=self._traces,
                 )

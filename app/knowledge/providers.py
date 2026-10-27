@@ -51,6 +51,14 @@ class SentenceTransformerEmbeddingProvider:
             return self._model
 
     def embed_batch(self, texts):
+        from app.resources.context import application_service,check_native_stop
+        service=application_service.get();check_native_stop()
+        if service is not None:
+            with service.model_request('local-embedding',self.identity,nested_embedding=True):
+                result=self._embed_batch(texts);check_native_stop();return result
+        return self._embed_batch(texts)
+
+    def _embed_batch(self,texts):
         if not 1 <= len(texts) <= self.MAX_BATCH:
             raise ValueError("Embedding batch must contain 1 to 32 texts")
         if any(not isinstance(text, str) or not text or len(text.encode("utf-8")) > 8192 for text in texts):
@@ -81,7 +89,8 @@ class OllamaEmbeddingProvider:
 
     def __init__(self, model: str):
         if (not isinstance(model, str) or not model.strip() or len(model) > 128
-                or any(ord(char) < 32 for char in model)):
+                or any(ord(char) < 32 for char in model)
+                or model.strip().casefold().endswith((':cloud','-cloud'))):
             raise ValueError("A bounded local Ollama embedding model name is required")
         self._model = model.strip()
         safe = hashlib.sha256(self._model.encode("utf-8")).hexdigest()[:12]
@@ -94,7 +103,18 @@ class OllamaEmbeddingProvider:
     def embed_one(self, text: str):
         return self.embed_batch((text,))[0]
 
-    def embed_batch(self, texts: Sequence[str]) -> Sequence[Sequence[float]]:
+    def embed_batch(self, texts):
+        from app.resources.context import application_service, check_native_stop
+        service=application_service.get()
+        check_native_stop()
+        if service is not None:
+            with service.model_request("ollama",self._model,nested_embedding=True):
+                result=self._embed_batch(texts)
+                check_native_stop()
+                return result
+        return self._embed_batch(texts)
+
+    def _embed_batch(self, texts: Sequence[str]) -> Sequence[Sequence[float]]:
         if not isinstance(texts, (tuple, list)) or not 1 <= len(texts) <= self.MAX_BATCH:
             raise ValueError("Embedding batch must contain 1 to 32 texts")
         if any(not isinstance(text, str) or not text.strip()
@@ -108,6 +128,20 @@ class OllamaEmbeddingProvider:
             method="POST")
         try:
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), self._NoRedirect())
+            # A loopback daemon can expose a remote-model alias. Verify before
+            # sending private text, on every batch, rather than trusting its name.
+            metadata_request=urllib.request.Request(
+                self.ENDPOINT.rsplit('/',1)[0]+'/show',
+                data=json.dumps({'model':self._model}).encode('utf-8'),
+                headers={'Content-Type':'application/json','Accept':'application/json'},method='POST')
+            with opener.open(metadata_request,timeout=5) as response:
+                metadata_payload=response.read(262145)
+            if len(metadata_payload)>262144:raise ValueError('model metadata exceeds limit')
+            metadata=json.loads(metadata_payload.decode('utf-8'))
+            if (not isinstance(metadata,dict) or metadata.get('remote_host') or metadata.get('remote_model')
+                    or not isinstance(metadata.get('capabilities'),list)
+                    or 'embedding' not in metadata['capabilities']):
+                raise ValueError('a verified local embedding model is required')
             with opener.open(request, timeout=self.TIMEOUT_SECONDS) as response:
                 payload = response.read(self.MAX_RESPONSE_BYTES + 1)
             if len(payload) > self.MAX_RESPONSE_BYTES:

@@ -100,6 +100,7 @@ class ResourceManager:
         self._limits = limits
         self._registry = provider_registry
         self._allocations = {}
+        self._reserved_routes = {}
         self._used_ids = set()
         self._lock = RLock()
 
@@ -134,8 +135,8 @@ class ResourceManager:
                 raise ValueError("Resource has no configured slot limit")
             active = tuple(self._allocations.values())
             if (len(active) >= self._limits.global_slots
-                    or sum(value.provider_id == provider_id for value in active) >= provider.slots
-                    or sum((value.provider_id, value.model_id) == (provider_id, model_id) for value in active) >= model.slots):
+                    or sum(any(p==provider_id for p,m in self._routes(value)) for value in active) >= provider.slots
+                    or sum((provider_id,model_id) in self._routes(value) for value in active) >= model.slots):
                 raise ResourceCapacityError("Configured slot capacity is exhausted")
             allocation = Allocation(allocation_id, provider_id, model_id)
             self._allocations[allocation_id] = allocation
@@ -147,14 +148,43 @@ class ResourceManager:
         with self._lock:
             if allocation_id not in self._allocations:
                 raise KeyError("No active allocation with this ID")
+            self._reserved_routes.pop(allocation_id,None)
             return self._allocations.pop(allocation_id)
+
+    def _routes(self,allocation):
+        return {(allocation.provider_id,allocation.model_id),*self._reserved_routes.get(allocation.id,[])}
+
+    def retarget(self,allocation_id,*,provider_id,model_id,restore=False):
+        """Account for a nested model call in its existing slot, without waiting.
+
+        A busy target fails closed instead of holding one model while waiting
+        for another, which could deadlock two concurrent nested calls.
+        """
+        with self._lock:
+            current=self._allocations[allocation_id]
+            if restore:
+                stack=self._reserved_routes.get(allocation_id,[])
+                if not stack or stack[-1]!=(provider_id,model_id):raise ValueError('Nested resource route restoration is invalid')
+                stack.pop()
+                self._allocations[allocation_id]=Allocation(allocation_id,provider_id,model_id)
+                return current
+            self.ensure_route(provider_id=provider_id,model_id=model_id)
+            provider=next(p for p in self._limits.providers if p.provider_id==provider_id)
+            model=next(m for m in self._limits.models if (m.provider_id,m.model_id)==(provider_id,model_id))
+            others=[a for a in self._allocations.values() if a.id!=allocation_id]
+            if (sum(any(p==provider_id for p,m in self._routes(a)) for a in others)>=provider.slots
+                    or sum((provider_id,model_id) in self._routes(a) for a in others)>=model.slots):
+                raise ResourceCapacityError('Nested model capacity is exhausted')
+            self._reserved_routes.setdefault(allocation_id,[]).append((current.provider_id,current.model_id))
+            self._allocations[allocation_id]=Allocation(allocation_id,provider_id,model_id)
+            return current
 
     def snapshot(self):
         with self._lock:
             active = tuple(sorted(self._allocations.values(), key=lambda item: item.id))
-            providers = tuple((value.provider_id, Capacity(value.slots, sum(item.provider_id == value.provider_id for item in active)))
+            providers = tuple((value.provider_id, Capacity(value.slots, sum(any(p==value.provider_id for p,m in self._routes(item)) for item in active)))
                               for value in sorted(self._limits.providers, key=lambda item: item.provider_id))
-            models = tuple((value.provider_id, value.model_id, Capacity(value.slots, sum((item.provider_id, item.model_id) == (value.provider_id, value.model_id) for item in active)))
+            models = tuple((value.provider_id, value.model_id, Capacity(value.slots, sum((value.provider_id,value.model_id) in self._routes(item) for item in active)))
                            for value in sorted(self._limits.models, key=lambda item: (item.provider_id, item.model_id)))
             registered = tuple(sorted(value.provider_id for value in self._limits.providers if self._registry.exists(value.provider_id)))
             return ResourceSnapshot(Capacity(self._limits.global_slots, len(active)), providers, models, active, registered,

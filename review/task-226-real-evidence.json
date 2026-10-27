@@ -1,0 +1,718 @@
+{
+  "kind": "Local source evidence, not packaged acceptance or perfect answer accuracy",
+  "dates": [
+    "2026-10-26",
+    "2026-10-27"
+  ],
+  "answer_measurement": {
+    "kind": "Real local owned API, frozen repository documents, not physical UI or held-out quality",
+    "models": {
+      "qwen3.5:4b": "d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04",
+      "nomic-embed-text:latest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+    },
+    "corpus": [
+      {
+        "path": "desktop\\requirements-build.txt",
+        "bytes": 21,
+        "sha256": "e4844211dcb381b52e184ae64c83008bf4e283eb580898333a22d41902e43ecd"
+      },
+      {
+        "path": "requirements-knowledge.txt",
+        "bytes": 139,
+        "sha256": "2b722aeaab96aaa618b9ff2abd23bc8d520f2952b30069c9b8be07fbaa06b421"
+      },
+      {
+        "path": "review\\task-223-native-python.md",
+        "bytes": 4230,
+        "sha256": "2e460fd0f3c922a8de2bdbfbfbc8be48d2cbe0a73487047876268bd337fe8c1f"
+      },
+      {
+        "path": "review\\task-214-window-review.md",
+        "bytes": 4347,
+        "sha256": "f415d4d76e47fa78eed797ee42d5cf01fd49bb4f0a8071c9d3e47f395ec59f25"
+      },
+      {
+        "path": "review\\task-223-prototype-shell.md",
+        "bytes": 7697,
+        "sha256": "5b2349fd8566dac7617110ad654578041c58665c2dc2dcf355ff0cbe4cf049e5"
+      },
+      {
+        "path": "frozen-folder/requirements-knowledge.txt",
+        "sha256": "96583a7f3162b06a14770ad3a9364e9e2381a902bc75e693469093d3b21ce18a",
+        "bytes": 136
+      },
+      {
+        "path": "frozen-folder/README.md",
+        "sha256": "0c0a23c9ef100ad14b9f8640afba06dba8eae738c72e8179df558adc0b4e49ac",
+        "bytes": 5786
+      }
+    ],
+    "cases": [
+      {
+        "question": "Which PyInstaller version is pinned?",
+        "expected": "requirements-build.txt",
+        "sources": [
+          "requirements-build.txt",
+          "task-223-native-python.md",
+          "task-223-native-python.md",
+          "task-223-native-python.md",
+          "readme.md"
+        ],
+        "ms": 9699.87,
+        "answer": "The pinned PyInstaller version is **6.22.3** [1].",
+        "completed": true,
+        "error": null,
+        "events": [],
+        "fact_match": true,
+        "has_valid_citation": true,
+        "cites_expected_source": true,
+        "raw_user_history_verified": true,
+        "baseline_retrieval": {
+          "rank": 1,
+          "mode": "semantic"
+        },
+        "retrieval_rank": 1,
+        "retrieval_mode": "not captured in this run; old rank/mode were Task 224 baseline metadata",
+        "preview_limitation": "Exact excerpts were approved by the API but not serialized in this first answer report; future runs record the full preview."
+      },
+      {
+        "question": "What is the build tool?",
+        "expected": "requirements-build.txt",
+        "sources": [
+          "readme.md",
+          "readme.md",
+          "task-223-native-python.md",
+          "task-223-native-python.md",
+          "task-223-prototype-shell.md"
+        ],
+        "ms": 14391.71,
+        "answer": "The build tool depends on the specific project version:\n\n*   **Native Python Shell (Task 223):** Uses `build-erselmetz-ai.cmd` with **Python/PyInstaller** only [3][4].\n*   **Electron/Web UI:** Uses `npm.cmd run ui:build` from the `desktop/` folder [1][2].\n\nNote: The native Python route is the current preferred direction, removing Node.js from the main startup [3][4].",
+        "completed": true,
+        "error": null,
+        "events": [],
+        "fact_match": true,
+        "has_valid_citation": true,
+        "cites_expected_source": false,
+        "raw_user_history_verified": true,
+        "baseline_retrieval": {
+          "rank": null,
+          "mode": "semantic"
+        },
+        "retrieval_rank": null,
+        "retrieval_mode": "not captured in this run; old rank/mode were Task 224 baseline metadata",
+        "preview_limitation": "Exact excerpts were approved by the API but not serialized in this first answer report; future runs record the full preview."
+      },
+      {
+        "question": "Which sentence embedding library is listed?",
+        "expected": "requirements-knowledge.txt",
+        "sources": [
+          "requirements-knowledge.txt",
+          "readme.md",
+          "task-214-window-review.md",
+          "task-223-native-python.md"
+        ],
+        "ms": 7967.68,
+        "answer": "The sentence embedding library listed is **sentence-transformers** (version >=5,<6) [1].",
+        "completed": true,
+        "error": null,
+        "events": [],
+        "fact_match": true,
+        "has_valid_citation": true,
+        "cites_expected_source": true,
+        "raw_user_history_verified": true,
+        "baseline_retrieval": {
+          "rank": 1,
+          "mode": "semantic"
+        },
+        "retrieval_rank": 1,
+        "retrieval_mode": "not captured in this run; old rank/mode were Task 224 baseline metadata",
+        "preview_limitation": "Exact excerpts were approved by the API but not serialized in this first answer report; future runs record the full preview."
+      },
+      {
+        "question": "Which vector database is listed?",
+        "expected": "requirements-knowledge.txt",
+        "sources": [
+          "task-223-prototype-shell.md",
+          "readme.md",
+          "task-214-window-review.md",
+          "task-214-window-review.md",
+          "task-223-native-python.md"
+        ],
+        "ms": 8751.11,
+        "answer": "No vector database was found in your Brain.",
+        "completed": true,
+        "error": null,
+        "events": [],
+        "fact_match": false,
+        "has_valid_citation": false,
+        "cites_expected_source": false,
+        "raw_user_history_verified": true,
+        "baseline_retrieval": {
+          "rank": 2,
+          "mode": "semantic"
+        },
+        "retrieval_rank": null,
+        "retrieval_mode": "not captured in this run; old rank/mode were Task 224 baseline metadata",
+        "preview_limitation": "Exact excerpts were approved by the API but not serialized in this first answer report; future runs record the full preview."
+      },
+      {
+        "question": "Which native toolkit was used in the historical native Python spike?",
+        "expected": "task-223-native-python.md",
+        "sources": [
+          "task-223-native-python.md",
+          "task-223-native-python.md",
+          "task-223-native-python.md",
+          "task-223-native-python.md",
+          "readme.md"
+        ],
+        "ms": 10349.29,
+        "answer": "The historical native Python spike used **Tk** (specifically referenced as \"native Tk shell\" and \"Tk experiment\"). [1][2]",
+        "completed": true,
+        "error": null,
+        "events": [],
+        "fact_match": true,
+        "has_valid_citation": true,
+        "cites_expected_source": true,
+        "raw_user_history_verified": true,
+        "baseline_retrieval": {
+          "rank": 1,
+          "mode": "semantic"
+        },
+        "retrieval_rank": 1,
+        "retrieval_mode": "not captured in this run; old rank/mode were Task 224 baseline metadata",
+        "preview_limitation": "Exact excerpts were approved by the API but not serialized in this first answer report; future runs record the full preview."
+      },
+      {
+        "question": "What forgery protection was retained with session cookies?",
+        "expected": "task-223-native-python.md",
+        "sources": [
+          "task-214-window-review.md",
+          "task-214-window-review.md",
+          "readme.md",
+          "readme.md",
+          "task-223-native-python.md"
+        ],
+        "ms": 12914.05,
+        "answer": "Session cookies were used alongside CSRF checks to maintain integrity, but the specific forgery protection mechanism is not explicitly detailed in the retrieved excerpts. The documents confirm that **loopback origin**, **backend authentication**, and **CSRF checks** remain intact [1][3], which collectively contribute to session security, yet no excerpt names a distinct \"forgery protection\" technique beyond these standard controls.",
+        "completed": true,
+        "error": null,
+        "events": [],
+        "fact_match": true,
+        "has_valid_citation": true,
+        "cites_expected_source": false,
+        "raw_user_history_verified": true,
+        "baseline_retrieval": {
+          "rank": null,
+          "mode": "semantic"
+        },
+        "retrieval_rank": 5,
+        "retrieval_mode": "not captured in this run; old rank/mode were Task 224 baseline metadata",
+        "preview_limitation": "Exact excerpts were approved by the API but not serialized in this first answer report; future runs record the full preview."
+      },
+      {
+        "question": "What is the maximum number of saved window descriptors?",
+        "expected": "task-214-window-review.md",
+        "sources": [
+          "task-214-window-review.md",
+          "task-214-window-review.md",
+          "task-214-window-review.md",
+          "task-223-prototype-shell.md",
+          "task-223-native-python.md"
+        ],
+        "ms": 10974.4,
+        "answer": "The maximum number of saved window descriptors is **ten**. This limit applies to the `desktop/workspaces.json` file in the app data directory, which stores geometry and conversation/agent/model/project identifiers for each window [2].",
+        "completed": true,
+        "error": null,
+        "events": [],
+        "fact_match": true,
+        "has_valid_citation": true,
+        "cites_expected_source": true,
+        "raw_user_history_verified": true,
+        "baseline_retrieval": {
+          "rank": 1,
+          "mode": "semantic"
+        },
+        "retrieval_rank": 1,
+        "retrieval_mode": "not captured in this run; old rank/mode were Task 224 baseline metadata",
+        "preview_limitation": "Exact excerpts were approved by the API but not serialized in this first answer report; future runs record the full preview."
+      },
+      {
+        "question": "Does restoring windows replay an action?",
+        "expected": "task-214-window-review.md",
+        "sources": [
+          "task-214-window-review.md",
+          "task-214-window-review.md",
+          "task-214-window-review.md",
+          "readme.md",
+          "readme.md"
+        ],
+        "ms": 9702.6,
+        "answer": "No, restoring windows does not replay an action [2]. The restore process validates identifiers and clamps geometry but does not send a model turn or replay an action [2].",
+        "completed": true,
+        "error": null,
+        "events": [],
+        "fact_match": true,
+        "has_valid_citation": true,
+        "cites_expected_source": true,
+        "raw_user_history_verified": true,
+        "baseline_retrieval": {
+          "rank": 1,
+          "mode": "semantic"
+        },
+        "retrieval_rank": 1,
+        "retrieval_mode": "not captured in this run; old rank/mode were Task 224 baseline metadata",
+        "preview_limitation": "Exact excerpts were approved by the API but not serialized in this first answer report; future runs record the full preview."
+      },
+      {
+        "question": "Which optional image library caused the failed full Python gate?",
+        "expected": "task-223-prototype-shell.md",
+        "sources": [
+          "task-223-prototype-shell.md",
+          "task-223-prototype-shell.md",
+          "task-223-prototype-shell.md",
+          "task-223-prototype-shell.md",
+          "task-223-native-python.md"
+        ],
+        "ms": 11145.37,
+        "answer": "The failed full Python gate was caused by the **Pillow** library (specifically `PIL.Image`), which could not be imported due to a missing module (`No module named 'PIL'`). This failure occurred during the test `test_resize_convert_and_redact_with_optional_pillow`. [3][4]",
+        "completed": true,
+        "error": null,
+        "events": [],
+        "fact_match": true,
+        "has_valid_citation": true,
+        "cites_expected_source": true,
+        "raw_user_history_verified": true,
+        "baseline_retrieval": {
+          "rank": 1,
+          "mode": "semantic"
+        },
+        "retrieval_rank": 1,
+        "retrieval_mode": "not captured in this run; old rank/mode were Task 224 baseline metadata",
+        "preview_limitation": "Exact excerpts were approved by the API but not serialized in this first answer report; future runs record the full preview."
+      },
+      {
+        "question": "Which phase was stopped at its verification gate?",
+        "expected": "task-223-prototype-shell.md",
+        "sources": [
+          "task-223-prototype-shell.md",
+          "task-223-prototype-shell.md",
+          "task-223-prototype-shell.md",
+          "task-223-prototype-shell.md",
+          "task-223-native-python.md"
+        ],
+        "ms": 37207.83,
+        "answer": "Phase 223 was stopped at its verification gate because it failed the full Python suite checks, leaving only six real source-mode Electron checks passed [1][2]. No completion checkpoint or tag was created for this phase [4].",
+        "completed": true,
+        "error": null,
+        "events": [],
+        "fact_match": true,
+        "has_valid_citation": true,
+        "cites_expected_source": true,
+        "raw_user_history_verified": true,
+        "baseline_retrieval": {
+          "rank": 1,
+          "mode": "semantic"
+        },
+        "retrieval_rank": 1,
+        "retrieval_mode": "not captured in this run; old rank/mode were Task 224 baseline metadata",
+        "preview_limitation": "Exact excerpts were approved by the API but not serialized in this first answer report; future runs record the full preview."
+      }
+    ],
+    "summary": {
+      "completed": 10,
+      "fact_match": 9,
+      "has_valid_citation": 9,
+      "cites_expected_source": 7,
+      "questions": 10,
+      "interpretation": "fact_match is a named-fact token check, not full semantic accuracy. Citation counts verify marker bounds and canonical expected source, not support for every claim."
+    },
+    "manual_content_review": {
+      "retrieval_miss": [
+        4
+      ],
+      "unnecessary_hedging": [
+        6
+      ],
+      "unsupported_root_cause_claim": [
+        9
+      ],
+      "notes": "1-based question numbers. The Pillow answer names the right library but overstates the historical failure cause; the source explicitly says that cause was not established. No perfect accuracy claim."
+    }
+  },
+  "retrieval_measurement": {
+    "measurement": "Expected-source retrieval, same frozen questions/corpus; not held out or answer accuracy. Current table-aware chunking in both arms.",
+    "model": "nomic-embed-text:latest",
+    "model_digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "threshold": 0.35,
+    "rrf_k": 60,
+    "lexical": "BM25 k1=1.2 b=0.75",
+    "corpus": [
+      {
+        "path": "desktop\\requirements-build.txt",
+        "bytes": 21,
+        "sha256": "e4844211dcb381b52e184ae64c83008bf4e283eb580898333a22d41902e43ecd"
+      },
+      {
+        "path": "requirements-knowledge.txt",
+        "bytes": 139,
+        "sha256": "2b722aeaab96aaa618b9ff2abd23bc8d520f2952b30069c9b8be07fbaa06b421"
+      },
+      {
+        "path": "review\\task-223-native-python.md",
+        "bytes": 4230,
+        "sha256": "2e460fd0f3c922a8de2bdbfbfbc8be48d2cbe0a73487047876268bd337fe8c1f"
+      },
+      {
+        "path": "review\\task-214-window-review.md",
+        "bytes": 4347,
+        "sha256": "f415d4d76e47fa78eed797ee42d5cf01fd49bb4f0a8071c9d3e47f395ec59f25"
+      },
+      {
+        "path": "review\\task-223-prototype-shell.md",
+        "bytes": 7697,
+        "sha256": "5b2349fd8566dac7617110ad654578041c58665c2dc2dcf355ff0cbe4cf049e5"
+      },
+      {
+        "path": "frozen-folder/requirements-knowledge.txt",
+        "sha256": "96583a7f3162b06a14770ad3a9364e9e2381a902bc75e693469093d3b21ce18a",
+        "bytes": 136
+      },
+      {
+        "path": "frozen-folder/README.md",
+        "sha256": "0c0a23c9ef100ad14b9f8640afba06dba8eae738c72e8179df558adc0b4e49ac",
+        "bytes": 5786
+      }
+    ],
+    "chunks": 39,
+    "results": [
+      {
+        "hybrid": false,
+        "recall_at_5": 0.7,
+        "mrr": 0.65,
+        "cases": [
+          {
+            "question": "Which PyInstaller version is pinned?",
+            "expected": "requirements-build.txt",
+            "sources": [
+              "requirements-build.txt",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "README.md [c0650b6821d6]"
+            ],
+            "rank": 1,
+            "mode": "semantic",
+            "ms": 270.2
+          },
+          {
+            "question": "What is the build tool?",
+            "expected": "requirements-build.txt",
+            "sources": [
+              "task-223-native-python.md",
+              "README.md [c0650b6821d6]",
+              "README.md [c0650b6821d6]",
+              "task-223-native-python.md",
+              "README.md [c0650b6821d6]"
+            ],
+            "rank": null,
+            "mode": "semantic",
+            "ms": 109.52
+          },
+          {
+            "question": "Which sentence embedding library is listed?",
+            "expected": "requirements-knowledge.txt",
+            "sources": [
+              "requirements-knowledge.txt [6bd4a64d1814]",
+              "requirements-knowledge.txt",
+              "task-214-window-review.md",
+              "README.md [c0650b6821d6]",
+              "task-223-native-python.md"
+            ],
+            "rank": 2,
+            "mode": "semantic",
+            "ms": 123.59
+          },
+          {
+            "question": "Which vector database is listed?",
+            "expected": "requirements-knowledge.txt",
+            "sources": [
+              "task-223-prototype-shell.md",
+              "README.md [c0650b6821d6]",
+              "task-214-window-review.md",
+              "task-214-window-review.md",
+              "task-223-native-python.md"
+            ],
+            "rank": null,
+            "mode": "semantic",
+            "ms": 116.87
+          },
+          {
+            "question": "Which native toolkit was used in the historical native Python spike?",
+            "expected": "task-223-native-python.md",
+            "sources": [
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-214-window-review.md"
+            ],
+            "rank": 1,
+            "mode": "semantic",
+            "ms": 108.07
+          },
+          {
+            "question": "What forgery protection was retained with session cookies?",
+            "expected": "task-223-native-python.md",
+            "sources": [
+              "README.md [c0650b6821d6]",
+              "task-214-window-review.md",
+              "README.md [c0650b6821d6]",
+              "task-214-window-review.md",
+              "task-214-window-review.md"
+            ],
+            "rank": null,
+            "mode": "semantic",
+            "ms": 112.29
+          },
+          {
+            "question": "What is the maximum number of saved window descriptors?",
+            "expected": "task-214-window-review.md",
+            "sources": [
+              "task-214-window-review.md",
+              "task-223-prototype-shell.md",
+              "README.md [c0650b6821d6]",
+              "task-214-window-review.md",
+              "requirements-knowledge.txt [6bd4a64d1814]"
+            ],
+            "rank": 1,
+            "mode": "semantic",
+            "ms": 107.14
+          },
+          {
+            "question": "Does restoring windows replay an action?",
+            "expected": "task-214-window-review.md",
+            "sources": [
+              "task-214-window-review.md",
+              "task-214-window-review.md",
+              "task-223-prototype-shell.md",
+              "README.md [c0650b6821d6]",
+              "README.md [c0650b6821d6]"
+            ],
+            "rank": 1,
+            "mode": "semantic",
+            "ms": 113.59
+          },
+          {
+            "question": "Which optional image library caused the failed full Python gate?",
+            "expected": "task-223-prototype-shell.md",
+            "sources": [
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-prototype-shell.md"
+            ],
+            "rank": 1,
+            "mode": "semantic",
+            "ms": 113.91
+          },
+          {
+            "question": "Which phase was stopped at its verification gate?",
+            "expected": "task-223-prototype-shell.md",
+            "sources": [
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-native-python.md"
+            ],
+            "rank": 1,
+            "mode": "semantic",
+            "ms": 107.82
+          }
+        ]
+      },
+      {
+        "hybrid": true,
+        "recall_at_5": 0.8,
+        "mrr": 0.675,
+        "cases": [
+          {
+            "question": "Which PyInstaller version is pinned?",
+            "expected": "requirements-build.txt",
+            "sources": [
+              "requirements-build.txt",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "README.md [c0650b6821d6]"
+            ],
+            "rank": 1,
+            "mode": "semantic",
+            "ms": 112.17
+          },
+          {
+            "question": "What is the build tool?",
+            "expected": "requirements-build.txt",
+            "sources": [
+              "README.md [c0650b6821d6]",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "README.md [c0650b6821d6]",
+              "task-223-prototype-shell.md"
+            ],
+            "rank": null,
+            "mode": "semantic",
+            "ms": 110.56
+          },
+          {
+            "question": "Which sentence embedding library is listed?",
+            "expected": "requirements-knowledge.txt",
+            "sources": [
+              "requirements-knowledge.txt [6bd4a64d1814]",
+              "requirements-knowledge.txt",
+              "README.md [c0650b6821d6]",
+              "task-214-window-review.md",
+              "task-223-native-python.md"
+            ],
+            "rank": 2,
+            "mode": "semantic",
+            "ms": 114.37
+          },
+          {
+            "question": "Which vector database is listed?",
+            "expected": "requirements-knowledge.txt",
+            "sources": [
+              "task-223-prototype-shell.md",
+              "README.md [c0650b6821d6]",
+              "task-214-window-review.md",
+              "task-214-window-review.md",
+              "task-223-native-python.md"
+            ],
+            "rank": null,
+            "mode": "semantic",
+            "ms": 123.07
+          },
+          {
+            "question": "Which native toolkit was used in the historical native Python spike?",
+            "expected": "task-223-native-python.md",
+            "sources": [
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "task-223-native-python.md",
+              "README.md [c0650b6821d6]"
+            ],
+            "rank": 1,
+            "mode": "semantic",
+            "ms": 114.3
+          },
+          {
+            "question": "What forgery protection was retained with session cookies?",
+            "expected": "task-223-native-python.md",
+            "sources": [
+              "task-214-window-review.md",
+              "README.md [c0650b6821d6]",
+              "task-214-window-review.md",
+              "task-223-native-python.md",
+              "README.md [c0650b6821d6]"
+            ],
+            "rank": 4,
+            "mode": "semantic",
+            "ms": 109.98
+          },
+          {
+            "question": "What is the maximum number of saved window descriptors?",
+            "expected": "task-214-window-review.md",
+            "sources": [
+              "task-214-window-review.md",
+              "task-223-prototype-shell.md",
+              "task-214-window-review.md",
+              "task-214-window-review.md",
+              "task-223-native-python.md"
+            ],
+            "rank": 1,
+            "mode": "semantic",
+            "ms": 122.16
+          },
+          {
+            "question": "Does restoring windows replay an action?",
+            "expected": "task-214-window-review.md",
+            "sources": [
+              "task-214-window-review.md",
+              "task-214-window-review.md",
+              "README.md [c0650b6821d6]",
+              "README.md [c0650b6821d6]",
+              "task-214-window-review.md"
+            ],
+            "rank": 1,
+            "mode": "semantic",
+            "ms": 134.22
+          },
+          {
+            "question": "Which optional image library caused the failed full Python gate?",
+            "expected": "task-223-prototype-shell.md",
+            "sources": [
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-native-python.md",
+              "task-223-prototype-shell.md"
+            ],
+            "rank": 1,
+            "mode": "semantic",
+            "ms": 116.9
+          },
+          {
+            "question": "Which phase was stopped at its verification gate?",
+            "expected": "task-223-prototype-shell.md",
+            "sources": [
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-prototype-shell.md",
+              "task-223-native-python.md"
+            ],
+            "rank": 1,
+            "mode": "semantic",
+            "ms": 110.62
+          }
+        ]
+      }
+    ]
+  },
+  "windows_desktop": {
+    "kind": "Source Python process, real Windows UI Automation, disposable owned controls only",
+    "fixture_button_after": "Invoked 1",
+    "fixture_text_after": "Reviewed local fixture — kumusta",
+    "native_broker_result": "unverified",
+    "native_broker_observed_text": "Native broker approved fixture text"
+  },
+  "additional_brain_table_probe": {
+    "state": "failed",
+    "document": "review/task-223-qt-shell.md",
+    "sha256": "7c5323144883f3137db7f9ccf96a7bd856950354b764d7ec6d18db733e073552",
+    "question": "Which UI toolkit won the comparison, and how many nodes were tested?",
+    "problem": "Reply omits 300 despite an approved complete table; this probe remains failed."
+  },
+  "prior_real_queue": {
+    "cancel_ms": 436.37,
+    "waiting_window_messages": 0,
+    "resume_generation": 1,
+    "replayed": false
+  },
+  "prior_real_agent": {
+    "model": "qwen3.5:4b",
+    "proposal_ms": 7173.38,
+    "total_ms": 11452.3,
+    "operations": 3,
+    "observed_math_result": "323"
+  },
+  "unverified": [
+    "Packaged Python artifact",
+    "Physical camera/microphone capture",
+    "Live Whisper transcription",
+    "Real clipboard modification",
+    "Assistive technology"
+  ]
+}

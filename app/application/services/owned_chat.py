@@ -43,6 +43,50 @@ class ChatLimit(ValueError):
     pass
 
 
+class NativeTurnLease:
+    """Internal bounded-turn reservation; never exposed as an API credential.
+
+    The existing conversation lock stays held while its owner reviews a tool.
+    No model allocation stays held during that review.
+    """
+    def __init__(self,service,owner,identifier,context,entry):
+        self.service=service;self.owner=owner;self.identifier=identifier
+        self.context=context;self.entry=entry;self.closed=False
+        self.check()
+        route=service._workspace_route(owner,identifier,entry)
+        self.route=route or (entry.coordinator.provider,entry.coordinator.model)
+        self.provider=service._get_provider(self.route[0]);self.agent_id=entry.coordinator.id
+        self.history=tuple({'role':m.role.value,'content':m.content} for m in service._chat.get(identifier).messages[-16:]
+                           if m.status.value=='completed' and m.role.value in {'user','assistant'})
+        self.project_context=service._workspaces.prompt_brief(identifier) if service._workspaces else None
+
+    def check(self):
+        from app.resources.context import check_native_stop
+        check_native_stop()
+        if self.closed:raise ChatConflict('This turn has already ended')
+        service=self.service;entry=self.entry
+        current,provider=service._coordinator(entry.coordinator.id)
+        if ((current.provider,current.model)!=(entry.coordinator.provider,entry.coordinator.model) or provider is not entry.provider):
+            raise ChatConflict('Coordinator assignment changed; start a new conversation')
+        service._workspace_route(self.owner,self.identifier,entry)
+        if service._chat.get_status(self.identifier) is not ConversationStatus.OPEN:
+            raise ChatConflict('This conversation is closed')
+
+    def model_call(self,operation):
+        self.check()
+        with self.service.agent_request(self.agent_id,route=self.route,wait_for_slot=True):
+            self.check();result=operation(self.provider,self.route[1]);self.check();return result
+
+    def finish(self,text,reply):
+        self.check()
+        try:return self.service._chat.complete_without_provider(self.identifier,text,reply)
+        finally:self.close()
+
+    def close(self):
+        if not self.closed:
+            self.closed=True;self.context.__exit__(None,None,None)
+
+
 @dataclass(frozen=True)
 class _OwnedConversation:
     owner: str
@@ -51,6 +95,7 @@ class _OwnedConversation:
     lock: Lock
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     workspace_provider: object | None = field(default=None, repr=False, compare=False)
+    title: str = 'New chat'
 
 
 class OwnedChatService:
@@ -169,7 +214,8 @@ class OwnedChatService:
                               "project_brief_digest": self._workspaces.brief_digest(self._workspaces.prompt_brief(identifier) or ""),
                               "brain_non_empty": self._workspaces.has_project_knowledge(owner, selection["project_id"])
                               if selection["project_id"] else None},
-                "streaming_supported": not override and result.get("streaming_supported", False),
+                "streaming_supported": (getattr(provider,'supports_streaming',False) is True and getattr(provider,'is_local',False) is True
+                                        and selection['provider_id']=='ollama') if override else result.get("streaming_supported", False),
                 "image_input_supported": not override and result.get("image_input_supported", False),
                 "local_model": getattr(provider, "is_local", False) is True}
 
@@ -197,6 +243,7 @@ class OwnedChatService:
         with self._access(owner, identifier) as entry:
             return self._workspace_response(owner, identifier, {
                 "conversation": self._chat.get(identifier),
+                "title":entry.title,
                 "coordinator": entry.coordinator,
                 "streaming_supported": getattr(entry.provider, "supports_streaming", False) is True,
                 "image_input_supported": getattr(entry.provider, "supports_image_input", False) is True,
@@ -218,6 +265,8 @@ class OwnedChatService:
     def complete_without_provider(self, owner, identifier, text, reply):
         """Complete an owner-scoped safe response without reserving a model slot."""
         with self._access(owner, identifier) as entry:
+            from app.resources.context import check_native_stop
+            check_native_stop()
             current,provider=self._coordinator(entry.coordinator.id)
             if ((current.provider,current.model)!=(entry.coordinator.provider,entry.coordinator.model)
                     or provider is not entry.provider):
@@ -250,8 +299,8 @@ class OwnedChatService:
                     or provider is not entry.provider):
                 raise ChatConflict("Coordinator assignment changed; start a new conversation")
             workspace_route = self._workspace_route(owner, identifier, entry)
-            if workspace_route and (image_ids or turn_route):
-                raise ChatConflict("Workspace model selection cannot combine with images or a second route override")
+            if workspace_route and turn_route:
+                raise ChatConflict("Workspace model selection cannot combine with a second route override")
             turn_route = turn_route or workspace_route
             with self.agent_request(entry.coordinator.id, route=turn_route,
                                     wait_for_slot=getattr(self._get_provider(turn_route[0]) if turn_route else provider, "is_local", False) is True):
@@ -261,6 +310,12 @@ class OwnedChatService:
                     current, provider = self._coordinator(entry.coordinator.id)
                     if (current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model) or provider is not entry.provider:
                         raise ChatConflict("Coordinator assignment changed; start a new conversation")
+                    image_route=workspace_route
+                    image_model=current.model
+                    if image_route:
+                        provider=self._get_provider(image_route[0]);image_model=image_route[1]
+                        if image_route[0]!='ollama' or getattr(provider,'is_local',False) is not True:
+                            raise ChatConflict('Workspace images require a verified local Ollama model')
                     if getattr(provider, "supports_image_input", False) is not True:
                         raise ChatUnavailable("The selected provider does not support image input")
                     images = self._image_store.selected_for(owner, identifier, tuple(image_ids))
@@ -270,14 +325,15 @@ class OwnedChatService:
                         record = self._chat.send_with_images(
                             identifier, text, images, ocr_evidence=tuple(ocr_evidence),
                             presentation_preferences=presentation_preferences,
+                            turn_route=image_route,
                         )
                         return self._workspace_response(owner, identifier, {
                             "conversation": record,
                             "coordinator": entry.coordinator,
                             "image_transfer": {
                                 "image_ids": [image.id for image in images],
-                                "provider_id": current.provider,
-                                "model_id": current.model,
+                                "provider_id": image_route[0] if image_route else current.provider,
+                                "model_id": image_model,
                                 "local": getattr(provider, "is_local", False) is True,
                                 "outcome": "completed",
                                 "ocr_regions_included": sum(len(item.regions) for item in ocr_evidence),
@@ -360,20 +416,23 @@ class OwnedChatService:
     def stream(self, owner, identifier, text, retrieved_context=None, presentation_preferences=None,
                *, brain_enabled=False, shipped_pack_enabled=False):
         with self._access(owner, identifier) as entry:
-            if self._workspace_route(owner, identifier, entry):
-                raise ChatUnavailable("This selected workspace model uses the non-streaming chat endpoint")
+            route=self._workspace_route(owner, identifier, entry)
             if self._chat.get_status(identifier) is not ConversationStatus.OPEN:
                 raise ValueError("Cannot send to a closed conversation")
             current, provider = self._coordinator(entry.coordinator.id)
             if ((current.provider, current.model) != (entry.coordinator.provider, entry.coordinator.model)
                     or provider is not entry.provider):
                 raise ChatConflict("Coordinator assignment changed; start a new conversation")
-            if getattr(entry.provider, "supports_streaming", False) is not True:
+            selected_provider=self._get_provider(route[0]) if route else entry.provider
+            if route and (route[0]!='ollama' or getattr(selected_provider,'is_local',False) is not True):
+                raise ChatUnavailable('Workspace streaming requires a supported local Ollama model')
+            if getattr(selected_provider, "supports_streaming", False) is not True:
                 raise ChatUnavailable("The selected provider does not support response streaming")
-            with self.agent_request(entry.coordinator.id,
-                                    wait_for_slot=getattr(entry.provider, "is_local", False) is True):
+            with self.agent_request(entry.coordinator.id,route=route,
+                                    wait_for_slot=getattr(selected_provider, "is_local", False) is True):
                 for event in self._chat.send_stream(identifier, text, retrieved_context,
-                                                    presentation_preferences, brain_enabled=brain_enabled, shipped_pack_enabled=shipped_pack_enabled):
+                                                    presentation_preferences, brain_enabled=brain_enabled, shipped_pack_enabled=shipped_pack_enabled,
+                                                    turn_route=route,expected_assignment=(entry.coordinator.provider,entry.coordinator.model)):
                     if event["type"] == "complete":
                         yield self._workspace_response(owner, identifier, {
                             **event,
@@ -406,6 +465,48 @@ class OwnedChatService:
         if turn_route is not None:
             result["turn_route"] = {"provider_id": turn_route[0], "model_id": turn_route[1]}
         return self._workspace_response(entry.owner, identifier, result)
+
+    def rename(self,owner,identifier,title):
+        from .chat_history import validate_title
+        title=validate_title(title)
+        with self._access(owner,identifier) as entry:
+            from app.resources.context import check_native_stop
+            check_native_stop()
+            if self._chat.history is not None and self._chat.history.is_active(identifier):
+                self._chat.history.rename(owner,identifier,title)
+            self._entries[identifier]=replace(entry,title=title)
+            return {'id':identifier,'title':title}
+
+    def complete_tool_turn(self,owner,identifier,text,operation):
+        """Keep lifecycle/ownership locked through one guarded tool and its reply."""
+        from app.resources.context import check_native_stop
+        with self._access(owner,identifier) as entry:
+            check_native_stop()
+            current,provider=self._coordinator(entry.coordinator.id)
+            if ((current.provider,current.model)!=(entry.coordinator.provider,entry.coordinator.model) or provider is not entry.provider):
+                raise ChatConflict('Coordinator assignment changed; start a new conversation')
+            self._workspace_route(owner,identifier,entry)
+            if self._chat.get_status(identifier) is not ConversationStatus.OPEN:raise ValueError('Cannot run a tool in a closed conversation')
+            if len(self._chat.get(identifier).messages)+2>self.MAX_MESSAGES:raise ChatLimit('Conversation message limit reached; start a new conversation')
+            result=operation()
+            try:
+                check_native_stop()
+                self._chat.complete_without_provider(identifier,text,result['message'])
+                return {**result,'history_recorded':True}
+            except Exception:
+                # A known IO receipt must not become a false "nothing happened"
+                # claim just because Stop or history persistence followed it.
+                return {**result,'history_recorded':False}
+
+    def begin_native_turn(self,owner,identifier):
+        """Reserve through the same ownership/workspace/lifecycle access gate."""
+        context=self._access(owner,identifier);entry=context.__enter__()
+        try:
+            if len(self._chat.get(identifier).messages)+2>self.MAX_MESSAGES:
+                raise ChatLimit('Conversation message limit reached; start a new conversation')
+            return NativeTurnLease(self,owner,identifier,context,entry)
+        except Exception:
+            context.__exit__(None,None,None);raise
 
     def close(self, owner, identifier):
         with self._access(owner, identifier) as entry:
@@ -445,9 +546,14 @@ class OwnedChatService:
         with self._access(owner, identifier) as entry:
             route = self._workspace_route(owner, identifier, entry)
             if route:
+                provider=self._get_provider(route[0]);local=getattr(provider,'is_local',False) is True
+                supported=False
+                if route[0]=='ollama' and local:
+                    probe=getattr(provider,'supports_model_image_input',None)
+                    supported=probe(route[1]) if callable(probe) else None
                 return {"provider_id": route[0], "model_id": route[1],
-                        "local": getattr(self._get_provider(route[0]), "is_local", False) is True,
-                        "state": "unsupported"}
+                        "local": local,
+                        "state": 'supported' if supported is True else 'unsupported' if supported is False else 'unknown'}
             probe = getattr(entry.provider, "supports_model_image_input", None)
             supported = probe(entry.coordinator.model) if callable(probe) else (
                 True if getattr(entry.provider, "supports_image_input", False) is True else False

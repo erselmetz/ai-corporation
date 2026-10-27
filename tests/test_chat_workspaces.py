@@ -149,6 +149,26 @@ def test_stream_keeps_workspace_context_until_the_final_event():
         assert completed["coordinator"]["model"] == "llama3.2:3b"
 
 
+def test_stream_uses_the_selected_local_workspace_model_without_reassigning_agent():
+    runtime,client=runtime_and_client();seen=[]
+    provider=runtime.providers.get('ollama')
+    def generate(model,messages):
+        seen.append((model,messages));yield 'actual selected stream'
+    provider.generate_chat_stream=generate
+    with client:
+        owner={'x-test-owner':'alice'}
+        assert client.post('/api/chat/workspaces',headers=owner,json={
+            'id':'different-model','agent_id':'local_worker','provider_id':'ollama','model_id':'other:7b'}).status_code==200
+        headers={**owner,'X-Chat-Workspace':'different-model'}
+        started=client.post('/api/chat/conversations',headers=headers,json={'agent_id':'local_worker'}).json()
+        assert started['streaming_supported'] is True
+        cid=started['conversation']['id']
+        response=client.post('/api/chat/conversations/'+cid+'/messages/stream',headers=headers,json={'text':'Stream this reply'})
+        assert response.status_code==200,response.text
+        assert 'actual selected stream' in response.text and seen[0][0]=='other:7b'
+        assert runtime.agents.get('local_worker').model=='llama3.2:3b'
+
+
 def test_wal_serializes_concurrent_workspace_writers():
     runtime, _ = runtime_and_client()
     service = runtime.application_service.chat_workspaces()

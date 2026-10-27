@@ -158,6 +158,19 @@ class Orchestrator:
                 raise RuntimeError("Selected provider does not support response streaming")
             yield from provider.generate_chat_stream(agent.model, messages)
 
+    def stream_agent_chat_for_turn(self,agent_id,messages,*,provider_id,model_id,expected_assignment):
+        messages=validate_chat_messages(messages)
+        def operation():
+            with self.agents.execution(agent_id):
+                agent=self.agents.get(agent_id)
+                if (agent.provider,agent.model)!=expected_assignment:
+                    raise RuntimeError('Agent assignment changed before streaming; no request was sent')
+                provider=self.providers.get(provider_id)
+                if provider_id!='ollama' or getattr(provider,'is_local',False) is not True or getattr(provider,'supports_streaming',False) is not True:
+                    raise RuntimeError('Workspace streaming requires a supported local Ollama provider')
+                yield from provider.generate_chat_stream(model_id,messages)
+        return self.agent_runtime.stream_direct(agent_id,operation)
+
     def run_agent_with_images(self, agent_id: str, prompt: str, images, *,
                               ocr_evidence=(), expected_assignment=None) -> str:
         return self.agent_runtime.run_direct(
@@ -182,26 +195,34 @@ class Orchestrator:
             return provider.generate_with_images(agent.model, prompt, images, ocr_evidence=ocr_evidence)
 
     def run_agent_chat_with_images(self, agent_id: str, messages: list[dict], images, *,
-                                   ocr_evidence=(), expected_assignment=None) -> str:
+                                   ocr_evidence=(), expected_assignment=None, turn_route=None) -> str:
         messages = validate_chat_messages(messages)
         return self.agent_runtime.run_direct(
             agent_id, lambda: self._run_agent_chat_with_images_direct(
                 agent_id, messages, images, ocr_evidence=ocr_evidence,
-                expected_assignment=expected_assignment))
+                expected_assignment=expected_assignment,turn_route=turn_route))
 
     def _run_agent_chat_with_images_direct(self, agent_id: str, messages: list[dict], images, *,
-                                           ocr_evidence=(), expected_assignment=None) -> str:
+                                           ocr_evidence=(), expected_assignment=None,turn_route=None) -> str:
         messages = validate_chat_messages(messages)
         with self.agents.execution(agent_id):
             agent = self.agents.get(agent_id)
             if expected_assignment is not None and (agent.provider, agent.model) != expected_assignment:
                 raise RuntimeError("Agent assignment changed before image execution; request was not sent")
             provider = agent.resolve_provider(self.providers)
+            model=agent.model
+            if turn_route is not None:
+                if (not isinstance(turn_route,tuple) or len(turn_route)!=2 or turn_route[0]!='ollama'
+                        or any(not isinstance(value,str) or not value.strip() or len(value)>256 for value in turn_route)):
+                    raise ProviderVisionUnsupported('Workspace images require an explicit local Ollama model')
+                provider=self.providers.get(turn_route[0]);model=turn_route[1]
+                if getattr(provider,'is_local',False) is not True:
+                    raise ProviderVisionUnsupported('Workspace images cannot use a remote provider')
             probe = getattr(provider, "supports_model_image_input", None)
-            supported = probe(agent.model) if callable(probe) else getattr(provider, "supports_image_input", False) is True
+            supported = probe(model) if callable(probe) else getattr(provider, "supports_image_input", False) is True
             if supported is not True:
                 raise ProviderVisionUnsupported("The selected provider does not support image input")
-            return provider.generate_chat_with_images(agent.model, messages, images, ocr_evidence=ocr_evidence)
+            return provider.generate_chat_with_images(model, messages, images, ocr_evidence=ocr_evidence)
 
     def run_employee(self, employee: "Employee", prompt: str) -> str:
         """

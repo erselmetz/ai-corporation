@@ -1,14 +1,20 @@
 import pytest
 from PySide6.QtCore import Qt, QSettings, QProcess, QThread
 import sys
-from PySide6.QtWidgets import QPushButton, QComboBox
+from PySide6.QtWidgets import QPushButton, QComboBox, QDialog, QVBoxLayout, QLineEdit
 from app.qt_desktop.shell import ShellManager
 from app.qt_desktop.instance import Instance
 
 
 class Session:
     def models(self): return [{'name':'test-local','tools':True}]
-    def request(self, method, path, body=None):
+    def request(self, method, path, body=None, **kwargs):
+        if path=='/api/native/windows':
+            if method=='POST':
+                import uuid
+                return {'id':uuid.uuid4().hex}
+            return {'windows':[],'operations':[],'capture':[],'global_stopped':False}
+        if path.startswith('/api/native/windows/'):return {'closed':True}
         if path == '/api/memory/owner/native-graph': return {'nodes':[],'edges':[],'total_chunks':0}
         if path == '/api/agents': return {'items':[{'id':'local_worker','name':'Coordinator'}]}
         if path == '/api/projects': return {'items':[{'id':'project-a','name':'Project A'}]}
@@ -75,3 +81,48 @@ def test_local_second_launch_only_signals_the_existing_process(qapp, qtbot, tmp_
         assert process.exitCode()==0, bytes(process.readAllStandardError()).decode()
         assert first.lock.isLocked()
     finally: first.close()
+
+
+def test_refresh_keeps_missing_model_and_conversation_until_owner_changes_it(manager, qtbot):
+    window=manager.new_window();qtbot.waitUntil(lambda:window.model.count()==1)
+    chat=window.current();chat.conversation='existing-conversation'
+    catalog=dict(manager.catalog);catalog['models']=[{'name':'different-model','tools':True}]
+    window.loaded(catalog)
+    assert window.current() is chat and window.tabs.count()==1
+    assert chat.model=='test-local' and window.model.currentData()=='test-local'
+    assert 'unavailable' in window.model.currentText().lower()
+    window.composer.setPlainText('Explain a binary tree')
+    window.send()
+    assert not window.busy and 'unavailable' in window.status.text().lower()
+    window.model.setCurrentIndex(window.model.findData('different-model'))
+    assert window.tabs.count()==2 and window.current().model=='different-model'
+
+
+def test_thinking_control_only_applies_to_explicit_agent_loop(manager, qtbot):
+    window=manager.new_window();qtbot.waitUntil(lambda:window.model.count()==1)
+    assert not window.thinking.isEnabled()
+    window.agent_loop.setChecked(True)
+    assert window.thinking.isEnabled()
+    window.thinking.setChecked(True);window.agent_loop.setChecked(False)
+    assert not window.thinking.isEnabled() and not window.thinking.isChecked()
+
+
+def test_stop_shortcut_reaches_child_dialog_and_repeated_stop_never_resumes(manager,qtbot,monkeypatch):
+    window=manager.new_window();qtbot.waitUntil(lambda:bool(window.native_id))
+    calls=[];original=manager.session.request
+    def request(method,path,body=None,**kwargs):calls.append(path);return original(method,path,body,**kwargs)
+    monkeypatch.setattr(manager.session,'request',request)
+    dialog=QDialog(window);layout=QVBoxLayout(dialog);entry=QLineEdit();layout.addWidget(entry);dialog.show()
+    qtbot.keyClick(entry,Qt.Key.Key_Period,Qt.KeyboardModifier.ControlModifier)
+    qtbot.waitUntil(lambda:window.window_stopped)
+    qtbot.keyClick(entry,Qt.Key.Key_Period,Qt.KeyboardModifier.ControlModifier)
+    qtbot.waitUntil(lambda:sum(path.endswith('/stop') for path in calls)>=2)
+    assert not any(path.endswith('/resume') for path in calls)
+    dialog.close()
+
+
+def test_global_stop_shortcut_works_from_singleton_settings(manager,qtbot,monkeypatch):
+    manager.new_window();settings=manager.show_dialog('Settings');calls=[]
+    monkeypatch.setattr(manager,'stop_all',lambda:calls.append('stop'))
+    qtbot.keyClick(settings,Qt.Key.Key_Period,Qt.KeyboardModifier.ControlModifier|Qt.KeyboardModifier.ShiftModifier)
+    assert calls==['stop']

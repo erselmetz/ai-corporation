@@ -1,7 +1,7 @@
 """One owner Brain: atomic source replacement in existing private knowledge storage."""
 from __future__ import annotations
 
-from contextlib import closing
+from contextlib import closing, nullcontext
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from io import BytesIO
@@ -10,12 +10,13 @@ from threading import RLock
 from uuid import uuid4
 import json
 import math
+import os
 import sqlite3
 
 from app.database.connection import get_connection, DATABASE_PATH
 from app.memory import MemoryRecord, MemoryScope, MemoryType, OwnerKnowledgeStore
 from .intake import source_name, _TEXT_SUFFIXES
-from .providers import OllamaEmbeddingProvider
+from .providers import OllamaEmbeddingProvider,SentenceTransformerEmbeddingProvider
 
 MAX_FILE_BYTES=5*1024*1024
 MAX_CHUNKS=2000
@@ -33,11 +34,46 @@ def secret_path(path):
 
 def chunks(text):
     if not isinstance(text,str) or not text.strip(): raise ValueError("Source contains no text")
-    pieces=[]
-    for start in range(0,len(text),700):
-        piece=text[start:start+800].strip()
-        if piece: pieces.append(piece)
-        if start+800>=len(text): break
+    if len(text)<=800:return (text.strip(),)
+    import re
+    def plain(value):
+        result=[]
+        for start in range(0,len(value),700):
+            piece=value[start:start+800].strip()
+            if piece:result.append(piece)
+            if start+800>=len(value):break
+        return result
+    # Preserve Markdown table headers/rows rather than turning values into
+    # disconnected fragments. Prose keeps the existing 800/100 recipe.
+    lines=text.splitlines(keepends=True);pieces=[];prose=[];position=0
+    separator=re.compile(r'^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$')
+    while position<len(lines):
+        if position+1<len(lines) and '|' in lines[position] and separator.fullmatch(lines[position+1].strip()):
+            pieces.extend(plain(''.join(prose)));prose=[]
+            header=lines[position]+lines[position+1];end=position+2
+            while end<len(lines) and '|' in lines[end] and lines[end].strip():end+=1
+            rows=lines[position+2:end]
+            if len(header)>400 or any(len(header)+len(row)>800 for row in rows):
+                pieces.extend(plain(''.join(lines[position:end])))
+            else:
+                current=header
+                for row in rows:
+                    if len(current)+len(row)>800:pieces.append(current.strip());current=header
+                    current+=row
+                if current.strip():
+                    # Keep nearby explanatory prose with the final table rows.
+                    # This is contiguous source text, never generated metadata.
+                    tail=''.join(lines[end:]).lstrip('\r\n')
+                    tail=tail.split('\n\n',1)[0].split('\r\n\r\n',1)[0]
+                    room=800-len(current)-2
+                    if room>40 and tail:
+                        excerpt=tail[:room]
+                        if len(tail)>room:excerpt=excerpt.rsplit(' ',1)[0]
+                        current+='\n'+excerpt
+                    pieces.append(current.strip())
+            position=end
+        else:prose.append(lines[position]);position+=1
+    pieces.extend(plain(''.join(prose)))
     result=tuple(pieces)
     if len(result)>MAX_CHUNKS: raise ValueError("Source exceeds the 2000-chunk safety limit")
     return result
@@ -109,6 +145,8 @@ class NativeBrain:
             if self.jobs.get(identifier)==(owner,"running"): self.jobs[identifier]=(owner,state)
 
     def check_job(self,owner,identifier):
+        from app.resources.context import check_native_stop
+        check_native_stop()
         if self.stopper(): raise RuntimeError("Protected activity is stopped")
         if identifier is None: return
         with self.jobs_lock:
@@ -161,7 +199,7 @@ class NativeBrain:
                     db.execute('DELETE FROM vectors')
 
     def feed(self,owner,stable_key,filename,data,*,consent,days=30,job_id=None):
-        with self.lock:
+        with self.model_slot(), self.lock:
             return self._feed(owner,stable_key,filename,data,consent=consent,days=days,job_id=job_id)
 
     def _feed(self,owner,stable_key,filename,data,*,consent,days,job_id):
@@ -173,6 +211,9 @@ class NativeBrain:
         check()
         if consent is not True: raise ValueError("Explicit local retention consent is required")
         if not isinstance(stable_key,str) or not 1<=len(stable_key)<=4096: raise ValueError("Invalid source key")
+        # Normalize source identity without opening or resolving an untrusted
+        # pathname. Windows UI intake and guarded file tools share this key.
+        if Path(stable_key).is_absolute():stable_key=os.path.normcase(os.path.normpath(stable_key))
         if type(days) is not int or not 1<=days<=30: raise ValueError("Retention must be 1 to 30 days")
         now=datetime.now(timezone.utc); digest=sha256(data).hexdigest()
         key=sha256((owner+"\0"+stable_key).encode()).hexdigest(); prefix="native:"+key+":"
@@ -265,11 +306,22 @@ class NativeBrain:
             if not deleted.rowcount: raise ValueError("Brain item changed; inspect it again")
             self.signature=None
 
-    def recall(self,owner,query,k=5,threshold=.35):
-        with self.lock:
-            return self._recall(owner,query,k,threshold)
+    def recall(self,owner,query,k=5,threshold=.35,*,hybrid=False,lexical_query=None):
+        with self.model_slot(), self.lock:
+            return self._recall(owner,query,k,threshold,hybrid=hybrid,lexical_query=lexical_query)
 
-    def _recall(self,owner,query,k,threshold):
+    def model_slot(self):
+        # Take model admission before the Brain lock. Inverting those locks can
+        # deadlock intake against a chat recall that already owns a model slot.
+        from app.resources.context import application_service
+        service=application_service.get()
+        if service is not None and isinstance(self.embedding,OllamaEmbeddingProvider):
+            return service.model_request('ollama',self.embedding._model,nested_embedding=True)
+        if service is not None and isinstance(self.embedding,SentenceTransformerEmbeddingProvider):
+            return service.model_request('local-embedding',self.embedding.identity,nested_embedding=True)
+        return nullcontext()
+
+    def _recall(self,owner,query,k,threshold,*,hybrid=False,lexical_query=None):
         rows=self.rows(owner); entries=[(row,i,text) for row in rows for i,text in enumerate(chunks(row["content"]))]
         if not entries: return {"mode":"empty","hits":[]}
         signature=(owner,self.prefixed,tuple((row["id"],row["content"],row["expires_at"]) for row in rows))
@@ -293,7 +345,7 @@ class NativeBrain:
                 matrix=self.matrix
             q=normalized(self.embedding.embed_one(self._key(query,query=True)))
             if self.faiss_index is not None and matrix and len(q)==len(matrix[0][1]):
-                distances,indices=self.faiss_index.search(self.numpy.asarray([q],dtype=self.numpy.float32),min(10,k,len(matrix)))
+                distances,indices=self.faiss_index.search(self.numpy.asarray([q],dtype=self.numpy.float32),min(40 if hybrid else min(10,k),len(matrix)))
                 scores=[(float(score),matrix[int(index)][0]) for score,index in zip(distances[0],indices[0]) if index>=0]
                 mode="semantic-faiss"
             else: scores=[(sum(a*b for a,b in zip(vector,q)),entry) for entry,vector in matrix if len(vector)==len(q)]
@@ -302,6 +354,38 @@ class NativeBrain:
             mode="lexical"; terms=set(re.findall(r"\w+",query.lower()))
             scores=[(len(terms & set(re.findall(r"\w+",text.lower())))/max(1,len(terms)),(row,i,text)) for row,i,text in entries]
         active={row['id']:row['content'] for row in self.rows(owner)}
+        if hybrid:
+            import re
+            from collections import Counter
+            terms=set(re.findall(r'[^\W_]+',(lexical_query or query).casefold()))
+            eligible=[entry for entry in entries if active.get(entry[0]['id'])==entry[0]['content']]
+            tokens=[Counter(re.findall(r'[^\W_]+',entry[2].casefold())) for entry in eligible]
+            average=sum(sum(counts.values()) for counts in tokens)/max(1,len(tokens))
+            frequencies={term:sum(term in counts for counts in tokens) for term in terms}
+            def bm25(counts):
+                length=sum(counts.values());score=0.
+                for term in terms:
+                    frequency=counts[term]
+                    if frequency:
+                        inverse=math.log(1+(len(tokens)-frequencies[term]+.5)/(frequencies[term]+.5))
+                        score+=inverse*frequency*2.2/(frequency+1.2*(.25+.75*length/max(1,average)))
+                return score
+            lexical=sorted([(bm25(counts),entry) for counts,entry in zip(tokens,eligible)],
+                           key=lambda item:(-item[0],item[1][0]['id'],item[1][1]))
+            lexical=[entry for score,entry in lexical if score>0][:40]
+            semantic=sorted([(score,entry) for score,entry in scores if score>=threshold and active.get(entry[0]['id'])==entry[0]['content']],
+                            key=lambda item:(-item[0],item[1][0]['id'],item[1][1]))[:40] if mode.startswith('semantic') else []
+            fused={};normalizer=2/(60+1)
+            for kind,ranked in [('lexical',lexical),('semantic',[entry for score,entry in semantic])]:
+                for rank,entry in enumerate(ranked,1):
+                    row,i,text=entry;item=fused.setdefault((row['id'],i),{'entry':entry,'lexical':0.,'semantic':0.})
+                    item[kind]=(1/(60+rank))/normalizer
+            ranked=sorted(fused.values(),key=lambda item:(-item['lexical']-item['semantic'],item['entry'][0]['id'],item['entry'][1]))[:min(10,k)]
+            return {'mode':'hybrid' if semantic else 'lexical','hits':[
+                {'id':item['entry'][0]['id']+'#'+str(item['entry'][1]),'source':item['entry'][0]['source_id'],
+                 'text':item['entry'][2],'score':item['lexical']+item['semantic'],
+                 'lexical_contribution':item['lexical'],'semantic_contribution':item['semantic'],'trust':'untrusted data'}
+                for item in ranked]}
         return {"mode":mode,"hits":[{"id":row["id"]+"#"+str(i),"source":row["source_id"],"text":text,"score":score,"trust":"untrusted data"}
                 for score,(row,i,text) in sorted(scores,key=lambda item:item[0],reverse=True)[:min(10,k)]
                 if score>=threshold and active.get(row['id'])==row['content']]}

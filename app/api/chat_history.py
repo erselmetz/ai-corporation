@@ -24,6 +24,11 @@ class ReviewRequest(BaseModel):
     acknowledge_uncertain: StrictBool
 
 
+class RenameRequest(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    title:str=Field(min_length=1,max_length=120)
+
+
 def get_history_now():
     return datetime.now(timezone.utc)
 
@@ -61,7 +66,8 @@ def enable_history(body: EnableRequest, principal=Depends(require_permission("ch
                     for m in record.messages]
         return service.chat_history().enable(
             principal.identity, body.conversation_id, record.coordinator_agent_id,
-            record.status.value, messages, expires_at=body.expires_at, opt_in=body.history_opt_in, now=now)
+            record.status.value, messages, expires_at=body.expires_at, opt_in=body.history_opt_in, now=now,
+            title=live.get('title','New chat'))
 
 
 @router.delete("")
@@ -93,3 +99,11 @@ def delete_history(identifier: str, principal=Depends(require_permission("chat-h
                    service=Depends(application)):
     with history_errors():
         return service.chat_history().delete(principal.identity, identifier)
+
+
+@router.patch('/{identifier}/title')
+def rename_history(identifier:str,body:RenameRequest,principal=Depends(require_permission('chat-history:manage')),
+                    service=Depends(application),now=Depends(get_history_now)):
+    with history_errors():
+        service.chat_history().get(principal.identity,identifier,now)
+        return service.chat_history().rename(principal.identity,identifier,body.title)

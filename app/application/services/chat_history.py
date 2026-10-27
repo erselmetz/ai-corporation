@@ -52,7 +52,18 @@ def _v2(connection):
     connection.execute("ALTER TABLE chat_history_messages ADD COLUMN review TEXT")
 
 
-MIGRATIONS = (_v1, _v2)
+def _v3(connection):
+    connection.execute("ALTER TABLE chat_history ADD COLUMN title TEXT NOT NULL DEFAULT 'New chat'")
+
+
+MIGRATIONS = (_v1, _v2, _v3)
+
+
+def validate_title(title):
+    if (not isinstance(title,str) or not 1<=len(title.strip())<=120
+            or any(ord(c)<32 or ord(c)==127 or '\u202a'<=c<='\u202e' or '\u2066'<=c<='\u2069' for c in title)):
+        raise ValueError('Use a chat name of 1–120 characters without control characters.')
+    return title.strip()
 
 
 def apply_migrations(connection, up_to=None):
@@ -105,7 +116,8 @@ class ChatHistoryService:
         except Exception:
             raise ChatHistoryError("Chat history could not be saved") from None
 
-    def enable(self, owner, conversation_id, agent_id, status, messages, *, expires_at, opt_in, now):
+    def enable(self, owner, conversation_id, agent_id, status, messages, *, expires_at, opt_in, now, title='New chat'):
+        title=validate_title(title)
         if opt_in is not True:
             raise ValueError("Explicit history opt-in is required")
         now, expires_at = _utc(now), _utc(expires_at)
@@ -126,9 +138,9 @@ class ChatHistoryService:
                         raise ValueError("Durable conversation limit reached; delete some history")
                     connection.execute(
                         "INSERT INTO chat_history (id, corporation_id, owner_id, agent_id, status, "
-                        "created_at, expires_at) VALUES (?,?,?,?,?,?,?)",
+                        "created_at, expires_at, title) VALUES (?,?,?,?,?,?,?,?)",
                         (conversation_id, self._corporation_id, owner, agent_id, status,
-                         now.isoformat(), expires_at.isoformat()))
+                         now.isoformat(), expires_at.isoformat(),title))
                     for seq, m in enumerate(messages):
                         connection.execute(
                             "INSERT INTO chat_history_messages (conversation_id, seq, id, role, content, "
@@ -178,6 +190,20 @@ class ChatHistoryService:
                 connection.close()
         self._guard(write)
 
+    def rename(self,owner,conversation_id,title):
+        title=validate_title(title)
+        with self._lock:
+            def write():
+                connection=self._connect()
+                try:
+                    with connection:
+                        self._owned(connection,owner,conversation_id)
+                        connection.execute('UPDATE chat_history SET title=? WHERE id=? AND owner_id=?',
+                                           (title,conversation_id,owner))
+                finally:connection.close()
+            self._guard(write)
+        return {'id':conversation_id,'title':title}
+
     def _purge(self, connection, now):
         with connection:
             expired = [r[0] for r in connection.execute(
@@ -203,7 +229,7 @@ class ChatHistoryService:
                         "SELECT COUNT(*) FROM chat_history_messages WHERE conversation_id = ? AND status = 'pending'",
                         (row["id"],)).fetchone()[0]
                     live = row["id"] in self._active
-                    items.append({"id": row["id"], "agent_id": row["agent_id"], "status": row["status"],
+                    items.append({"id": row["id"], "title":row['title'], "agent_id": row["agent_id"], "status": row["status"],
                                   "expires_at": row["expires_at"], "live": live,
                                   "needs_review": 0 if live else pending})
                 return {"items": items, "notice": STORAGE_NOTICE}
@@ -235,7 +261,7 @@ class ChatHistoryService:
                     messages.append({"id": m["id"], "role": m["role"], "content": m["content"],
                                      "status": "uncertain" if uncertain else m["status"],
                                      "needs_review": uncertain, "review": m["review"]})
-                return {"id": row["id"], "agent_id": row["agent_id"], "status": row["status"],
+                return {"id": row["id"], "title":row['title'], "agent_id": row["agent_id"], "status": row["status"],
                         "expires_at": row["expires_at"], "origin": row["origin"], "live": live,
                         "read_only": not live, "messages": messages,
                         "recovery_notice": None if live else RECOVERY_NOTICE}

@@ -257,7 +257,7 @@ class CorporationChatService:
         self._remember_status(conversation_id, user_id, MessageStatus.COMPLETED, strict=True)
         return self.get(conversation_id)
 
-    def send_with_images(self, conversation_id: str, text: str, images, *, ocr_evidence=(), presentation_preferences=None):
+    def send_with_images(self, conversation_id: str, text: str, images, *, ocr_evidence=(), presentation_preferences=None,turn_route=None):
         """One explicitly consented multimodal turn; image bytes never enter history."""
         record = self.get(conversation_id)
         if record.status is not ConversationStatus.OPEN:
@@ -304,6 +304,7 @@ class CorporationChatService:
             reply = self._orchestrator.run_agent_chat_with_images(
                 record.coordinator_agent_id, messages, images, ocr_evidence=ocr_evidence,
                 expected_assignment=(assigned.provider, assigned.model),
+                turn_route=turn_route,
             )
             if not isinstance(reply, str) or not reply.strip() or len(reply.encode("utf-8")) > 8192:
                 raise ValueError("Provider returned no bounded reply")
@@ -323,7 +324,7 @@ class CorporationChatService:
         return self.get(conversation_id)
 
     def send_stream(self, conversation_id: str, text: str, retrieved_context=None, presentation_preferences=None,
-                    *, brain_enabled: bool = False, shipped_pack_enabled: bool = False):
+                    *, brain_enabled: bool = False, shipped_pack_enabled: bool = False,turn_route=None,expected_assignment=None):
         pack_evidence=[]
         record = self.get(conversation_id)
         if record.status is not ConversationStatus.OPEN:
@@ -365,9 +366,11 @@ class CorporationChatService:
         output = []
         output_bytes = 0
         try:
-            for chunk in self._orchestrator.stream_agent_chat(
-                record.coordinator_agent_id, messages
-            ):
+            stream=(self._orchestrator.stream_agent_chat_for_turn(record.coordinator_agent_id,messages,
+                    provider_id=turn_route[0],model_id=turn_route[1],expected_assignment=expected_assignment)
+                    if turn_route else self._orchestrator.stream_agent_chat(record.coordinator_agent_id,messages,
+                    expected_assignment=expected_assignment))
+            for chunk in stream:
                 if not isinstance(chunk, str):
                     raise ValueError("Provider returned an invalid response chunk")
                 output_bytes += len(chunk.encode("utf-8"))
@@ -382,11 +385,16 @@ class CorporationChatService:
                 conversation_id, user_id, MessageStatus.FAILED, strict=False
             )
             raise
-        except Exception:
-            raise RuntimeError("Corporation chat response stream failed") from None
+        except BaseException as error:
+            self._chat.transition_message(conversation_id,user_id,MessageStatus.FAILED)
+            self._remember_status(conversation_id,user_id,MessageStatus.FAILED,strict=False)
+            if isinstance(error,Exception):raise RuntimeError("Corporation chat response stream failed") from None
+            raise
 
         reply = "".join(output)
         if not reply.strip():
+            self._chat.transition_message(conversation_id,user_id,MessageStatus.FAILED)
+            self._remember_status(conversation_id,user_id,MessageStatus.FAILED,strict=False)
             raise RuntimeError("Corporation chat response stream was empty")
         self._chat.transition_message(conversation_id, user_id, MessageStatus.COMPLETED)
         self._chat.add_message(conversation_id, reply_id, MessageRole.ASSISTANT, reply)

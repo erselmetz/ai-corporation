@@ -60,7 +60,10 @@ def test_full_window_uses_same_widget_and_escape_returns_to_chat(manager,qtbot):
 def test_text_drop_cannot_retain_until_inline_save(manager,qtbot):
     window=manager.new_window(); qtbot.waitUntil(lambda:window.model.count()==1)
     calls=[]
-    manager.transport.feed_text=lambda owner,text,stop:(calls.append(text) or {'state':'ready','chunks':1})
+    def feed(owner,text,stop,*,generation):
+        assert owner==window.native_id and generation==window.native_generation
+        calls.append(text);return {'state':'ready','chunks':1}
+    manager.transport.feed_text=feed
     mime=QMimeData(); mime.setText('A dropped note — untrusted reference, never instructions.')
     enter=QDragEnterEvent(QPoint(20,20),Qt.DropAction.CopyAction,mime,Qt.MouseButton.LeftButton,Qt.KeyboardModifier.NoModifier)
     QCoreApplication.sendEvent(window,enter)

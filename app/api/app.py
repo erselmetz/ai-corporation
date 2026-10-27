@@ -1200,6 +1200,16 @@ def create_app(
     from .structure_map import router as structure_map_router
     application.include_router(structure_map_router)
     application.include_router(web_ui_router)
+    from app.resources.context import ModelContextMiddleware
+    from .native_windows import router as native_windows_router
+    application.include_router(native_windows_router)
+    from .native_tools import router as native_tools_router
+    application.include_router(native_tools_router)
+    from .native_agent import router as native_agent_router
+    application.include_router(native_agent_router)
+    from .native_capture import router as native_capture_router
+    application.include_router(native_capture_router)
+    application.add_middleware(ModelContextMiddleware,application=application)
     return application
 
 

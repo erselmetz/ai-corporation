@@ -334,6 +334,8 @@ def test_ollama_embedding_provider_is_bounded_local_only_and_never_downloads(mon
     class Opener:
         def open(self, request, timeout):
             calls.append((request.full_url, request.get_method(), json.loads(request.data), timeout))
+            if request.full_url.endswith('/show'):
+                return Response(json.dumps({'capabilities':['embedding']}).encode())
             return Response(json.dumps({"embeddings": [[0.25, 0.75], [0.5, 0.5]]}).encode())
 
     handlers=[]
@@ -346,7 +348,8 @@ def test_ollama_embedding_provider_is_bounded_local_only_and_never_downloads(mon
     assert any(isinstance(handler,urllib.request.ProxyHandler) and handler.proxies=={} for handler in handlers)
     assert provider.identity.startswith("ollama-embedding-")
     assert "nomic-embed-text" not in provider.identity
-    assert calls == [("http://127.0.0.1:11434/api/embed", "POST",
+    assert calls == [("http://127.0.0.1:11434/api/show", "POST",{'model':'nomic-embed-text'},5),
+                     ("http://127.0.0.1:11434/api/embed", "POST",
                       {"model": "nomic-embed-text", "input": ["dog puppy", "canine animal"]}, 60)]
     with pytest.raises(ValueError):
         provider.embed_batch([""])
@@ -366,6 +369,24 @@ def test_ollama_embedding_provider_hides_local_service_errors(monkeypatch):
     with pytest.raises(RuntimeError, match="Local Ollama embedding request failed or timed out") as error:
         OllamaEmbeddingProvider("nomic-embed-text").embed_one("dog")
     assert "secret-path-or-token" not in str(error.value)
+
+
+@pytest.mark.parametrize('metadata',[{'remote_host':'https://cloud.example','capabilities':['embedding']},
+                                   {'remote_model':'remote','capabilities':['embedding']},
+                                   {},{'capabilities':['completion']}])
+def test_embedding_alias_is_verified_before_private_text_is_sent(monkeypatch,metadata):
+    import io,json,urllib.request
+    from app.knowledge.providers import OllamaEmbeddingProvider
+    calls=[]
+    class Opener:
+        def open(self,request,timeout):
+            calls.append(request.full_url)
+            assert 'private document' not in request.data.decode()
+            return io.BytesIO(json.dumps(metadata).encode())
+    monkeypatch.setattr(urllib.request,'build_opener',lambda *handlers:Opener())
+    with pytest.raises(RuntimeError,match='invalid embedding response'):
+        OllamaEmbeddingProvider('changed-local-alias').embed_one('private document')
+    assert calls==['http://127.0.0.1:11434/api/show']
 
 
 def test_ollama_embedding_configuration_is_opt_in_and_uses_local_vector_store(tmp_path, monkeypatch):

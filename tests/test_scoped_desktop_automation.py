@@ -84,11 +84,12 @@ class FakeBackend:
             raise RuntimeError("secret internal path must not be exposed")
 
 
-def make_service(*, timeout=1000, max_actions=2, backend=None, stop=None, processes=None):
+def make_service(*, timeout=1000, max_actions=2, backend=None, stop=None, processes=None,actions=frozenset({'invoke_button'})):
     policy = DesktopAutomationPolicy(
         allowed_process_names=frozenset({PROCESS} if processes is None else processes),
         max_actions_per_session=max_actions,
         timeout_milliseconds=timeout,
+        allowed_actions=actions,
     )
     authorization = CapabilityAuthorizationService()
     approvals = CapabilityApprovalService(authorization)
@@ -290,3 +291,43 @@ def test_backend_error_after_action_dispatch_is_unknown_and_redacted():
     assert result["retry"] == "forbidden"
     assert "secret internal path" not in result["message"]
     assert backend.invocations == 1
+
+
+def test_text_replacement_requires_exact_value_and_nonpassword_writable_target():
+    from dataclasses import replace
+    from hashlib import sha256
+    backend=FakeBackend();backend.state.update(control_type='Edit',password=False,read_only=False,
+        value_digest=sha256(b'original').hexdigest())
+    service,approvals,_,_=make_service(backend=backend,actions=frozenset({'fill_text'}))
+    action=replace(request(),action='fill_text',value='Reviewed Taglish text — kumusta')
+    action,record=approved_action(service,approvals,action)
+    with pytest.raises(ScopedDesktopError):execute(service,replace(action,value='Different text'),record['approval_id'])
+    result=execute(service,action,record['approval_id'])
+    assert result['status']=='action_dispatched' and backend.invocations==1
+    backend.state['password']=True
+    with pytest.raises(DesktopTargetUnavailable):preview(service,action)
+    backend.state['password']=False;backend.state['read_only']=True
+    with pytest.raises(DesktopTargetUnavailable):preview(service,action)
+    with pytest.raises(ValueError):preview(service,replace(action,value='first\nsecond'))
+
+
+def test_native_stop_reaches_desktop_worker_before_dispatch_and_other_window_cannot_use_approval():
+    from threading import Event
+    from app.resources.context import native_scope
+    from app.application.services.native_runtime import NativeScope
+    from dataclasses import replace
+    scope=NativeScope(OWNER,'window-a',0,Event(),Event());token=native_scope.set(scope)
+    service,approvals,backend,_=make_service()
+    try:
+        action,record=approved_action(service,approvals)
+        other=native_scope.set(replace(scope,window_id='window-b'))
+        try:
+            with pytest.raises(ScopedDesktopError):execute(service,action,record['approval_id'])
+        finally:native_scope.reset(other)
+        original=backend.inspect
+        def stop_during_inspection(*args,**kwargs):
+            state=original(*args,**kwargs);scope.stop.set();return state
+        backend.inspect=stop_during_inspection
+        with pytest.raises(DesktopActionUnavailable):execute(service,action,record['approval_id'])
+        assert backend.invocations==0
+    finally:native_scope.reset(token)

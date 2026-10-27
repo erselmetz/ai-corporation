@@ -26,8 +26,8 @@ test("shows all task contracts in descending order and identifies the next plann
   assert.equal(groups[0].id, "tasks-227-227");
   const items = groups.flatMap(group => group.children[1].children);
   assert.deepEqual(items.map(item => Number(item.children[0].textContent)), [227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 211, 210, 209, 208, 207, 206, 205, 204, ...Array.from({ length: 203 }, (_, index) => 203 - index)]);
-  assert.match(elements["roadmap-summary"].textContent, /226 roadmap tasks.*204 completed scoped checkpoints.*4 deferred and incomplete.*5 planned.*1 design only.*9 superseded.*3 not done/);
-  assert.match(elements["next-task"].textContent, /Task 226/);
+  assert.match(elements["roadmap-summary"].textContent, /226 roadmap tasks.*205 completed scoped checkpoints.*4 deferred and incomplete.*4 planned.*1 design only.*9 superseded.*3 not done/);
+  assert.match(elements["next-task"].textContent, /Task 227/);
   const newest = items[0];
   assert.equal(newest.id, "task-227");
   const latestCompleted = items.find(item => item.id === "task-215");
@@ -167,7 +167,7 @@ test("publishes completed milestones and remaining phases with their current sta
     [174, "completed"], [175, "completed"], [176, "completed"], [177, "completed"], [178, "completed"], [179, "completed"],
     [180, "completed"], [181, "completed"], [182, "completed"], [183, "completed"], [184, "completed"], [185, "completed"],
     [186, "completed"], [187, "completed"], [188, "completed"], [189, "completed"], [190, "design_only"], [191, "completed"], [192, "completed"], [193, "deferred"], [194, "deferred"], [195, "completed"],
-    [196, "completed"], [197, "completed"], [198, "completed"], [199, "completed"], [200, "completed"], [201, "completed"], [202, "completed"], [203, "completed"], [204, "not_done"], [205, "not_done"], [206, "not_done"], [207, "completed"], [208, "completed"], [209, "planned"], [210, "planned"], [211, "planned"], [213, "superseded"], [214, "superseded"], [215, "superseded"], [216, "superseded"], [217, "superseded"], [218, "superseded"], [219, "superseded"], [220, "superseded"], [221, "superseded"], [222, "completed"], [223, "completed"], [224, "completed"], [225, "completed"], [226, "planned"], [227, "planned"],
+    [196, "completed"], [197, "completed"], [198, "completed"], [199, "completed"], [200, "completed"], [201, "completed"], [202, "completed"], [203, "completed"], [204, "not_done"], [205, "not_done"], [206, "not_done"], [207, "completed"], [208, "completed"], [209, "planned"], [210, "planned"], [211, "planned"], [213, "superseded"], [214, "superseded"], [215, "superseded"], [216, "superseded"], [217, "superseded"], [218, "superseded"], [219, "superseded"], [220, "superseded"], [221, "superseded"], [222, "completed"], [223, "completed"], [224, "completed"], [225, "completed"], [226, "completed"], [227, "planned"],
   ]);
   assert.equal(tasks.find(task => task.number === 177).checkpoint, "task-177-auto-rag-trace");
   assert.equal(tasks.find(task => task.number === 178).checkpoint, "task-178-nav-fix");

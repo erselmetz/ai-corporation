@@ -47,6 +47,26 @@ def start(client, headers):
                        headers=headers).json()["conversation"]["id"]
 
 
+def test_rename_preserved_when_retained_and_after_restart_then_delete(replies):
+    title='Mahabang Taglish — usapan natin'
+    with process() as (client,headers,clock,app):
+        cid=start(client,headers)
+        response=client.patch(f'/api/chat/conversations/{cid}/title',headers=headers,json={'title':title})
+        assert response.status_code==200,response.text
+        assert client.get('/api/chat/conversations/'+cid).json()['title']==title
+        assert enable(client,headers,clock,cid).status_code==200
+        assert client.get('/api/chat/history/'+cid).json()['title']==title
+    with process() as (client,headers,clock,app):
+        saved=client.get('/api/chat/history/'+cid).json()
+        assert saved['read_only'] is True and saved['title']==title and saved['messages']==[]
+        renamed=client.patch('/api/chat/history/'+cid+'/title',headers=headers,json={'title':'Reviewed archive'})
+        assert renamed.status_code==200
+        assert client.get('/api/chat/history/'+cid).json()['title']=='Reviewed archive'
+        assert client.request('DELETE','/api/chat/history/'+cid,headers=headers,json={}).status_code==200
+        assert client.get('/api/chat/history/'+cid).status_code==404
+    assert replies==[]
+
+
 def say(client, headers, cid, text="remember this"):
     return client.post(f"/api/chat/conversations/{cid}/messages", json={"text": text}, headers=headers)
 
@@ -213,7 +233,8 @@ def test_migration_from_v1_preserves_rows_and_adds_provenance():
     row = connection.execute("SELECT * FROM chat_history").fetchone()
     assert (row["owner_id"], row["origin"]) == ("owner", "owned-chat")
     assert connection.execute("SELECT status, review FROM chat_history_messages").fetchone()[:] == ("pending", None)
-    assert connection.execute("SELECT version FROM chat_history_schema").fetchone()[0] == 2
+    assert row['title']=='New chat'
+    assert connection.execute("SELECT version FROM chat_history_schema").fetchone()[0] == 3
     history_module.apply_migrations(connection)
     connection.execute("UPDATE chat_history_schema SET version = 99")
     with pytest.raises(history_module.ChatHistoryError):

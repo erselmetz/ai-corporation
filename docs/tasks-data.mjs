@@ -6019,14 +6019,18 @@ export const post100Tasks = [
   {
     "number": 226,
     "title": "Resource coordination and truthful chat actions",
-    "description": "Resource coordination and truthful chat actions under the pure-Python owner addendum.",
+    "description": "Source-verified native resource/Stop/capture/tool coordination with measured partial local-model answer quality. Python packaging and Node retirement remain 227.",
     "category": "Phase 226 - Prototype Alignment",
-    "status": "planned",
+    "status": "completed",
     "dependsOn": [
       225,
       207
     ],
-    "decisions": [],
+    "decisions": [
+      "Retain authenticated loopback HTTP and all existing permission/approval/consent/spend boundaries.",
+      "Use exact Windows UI Automation controls for approved click/type; no global coordinate/key injection. Operator stays paused by default.",
+      "Source runtime acceptance does not certify model answer accuracy, physical media, packaging or Node removal. The separate table-answer probe remains failed."
+    ],
     "acceptance": [
       "All model calls pass through ResourceManager, with visible queue state and cancel; honestly warn when different models cause reloads.",
       "Only one window owns mic/camera/screen at a time, with an ownership indicator; implement global and per-window emergency stop.",
@@ -6046,34 +6050,59 @@ export const post100Tasks = [
       "UI simplification must preserve existing permission, privacy, provenance and stop boundaries."
     ],
     "area": "P67",
-    "checkpoint": null,
-    "validation": [],
+    "checkpoint": "task-226-native-runtime",
+    "validation": [
+      "Full Python: 1646 passed, 3 Windows symlink privilege skips, 4 warnings, 310.20 seconds. Final Stop/preview focused gate: 14 passed. Exact source manifest: review/task-226-source-manifest.json.",
+      "Real visible Qt/local Qwen: reviewed exact YouTube destination cancelled without launch; calculator 17*19 confirmed 323 in three bounded operations; 11452.30 ms including automated approval. Two-window queued cancellation 436.37 ms, no retained user message or replay.",
+      "Real Windows UI Automation against a disposable owned fixture: exact text replacement, one button invocation and native tool-broker delegation observed. Never targeted existing user applications.",
+      "Seven frozen real-document inputs, 39 current chunks, ten source-retrieval questions: prefixed semantic recall@5/MRR 0.70/0.650; BM25/RRF 0.80/0.675 at threshold 0.35.",
+      "Ten real owned Brain API replies: 10 completed, 9 named-fact token matches, 9 valid citation-marker replies, 7 canonical expected-source citations. These are not full semantic-grounding scores. Raw user history remained uninjected.",
+      "Source permissions, per-action approval, stale target rejection, queue/cancel, capture handoff, model metadata/privacy, rename/delete, fake TCP Ollama, raw role messages/history, authoritative side-effect reports and dialog Stop regressions passed."
+    ],
     "limitations": [
-      "Not complete under the revised PySide6 contract. Historical source experiments do not establish native parity."
+      "Packaged artifact, installer/update verification, session-descriptor restore and Node retirement are Task 227, not claimed here.",
+      "Real camera/microphone capture, live local Whisper, clipboard modification and assistive technology remain Unverified. Device adapter/consent tests use deterministic fakes.",
+      "Brain answer quality remains partial: a vector-database retrieval miss, hedged CSRF answer and unsupported historical Pillow cause. A separate table probe still omits 300 nodes despite a complete reviewed excerpt; the failed assertion is retained.",
+      "The actual-model checks are source-mode on this PC, not a clean Windows account or GPU acceleration benchmark. No push or deployment."
     ],
     "automatedVerification": [
-      "Run affected regression and source-mode UI checks; retain failures as failures."
+      "pytest/pytest-qt plus fake TCP provider contracts and source-mode Windows checks; exact source hashes in review/task-226-source-manifest.json. Model text is not approval or confirmation of side effects."
     ],
     "followUpValidation": [
-      "Record unavailable real-world checks as UNVERIFIED with their impact."
+      "Task 227 packaging/restore/screenshot/dead-control/coverage retirement and final on-PC measurements. Preserve the measured model-quality failures and physical-device limitations."
     ],
     "realWorldVerification": {
-      "status": "unverified"
+      "status": "partial",
+      "evidence": "Installed local Qwen/Nomic, real Windows source Qt and disposable UIA fixture; no packaged or physical media claim."
     },
     "releaseReadiness": [
       {
-        "capability": "Native PySide6 shell/multi-window/accessibility",
-        "source": "Unverified",
+        "capability": "Native resource queue, Stop, chat and Agent tool boundaries",
+        "source": "Source-verified",
         "packaged": "Unverified",
-        "realDevice": "Unverified",
-        "evidence": "Revised Tasks 223-227 pending"
+        "realDevice": "Real-device-verified",
+        "evidence": "Actual local-model/Windows source journeys plus deterministic authority/cancel regressions; review/task-226-native-runtime.md."
       },
       {
-        "capability": "RX 570 rendering and device ownership",
-        "source": "Unverified",
+        "capability": "Camera/microphone/screen consent and ownership adapters",
+        "source": "Source-verified",
         "packaged": "Unverified",
         "realDevice": "Unverified",
-        "evidence": "Qt/Tk spike and native ownership checks pending"
+        "evidence": "Exact approval, one-window ownership and actual-close release tested with fake adapters; physical media and Whisper unverified."
+      },
+      {
+        "capability": "Exact desktop click/type and side-effect reporting",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Real-device-verified",
+        "evidence": "Owned Win32 fixture observed; exact existing UIA approval consumed once. Application outcomes remain unverified in product receipts."
+      },
+      {
+        "capability": "Private Brain transport/history and answer quality",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Per-turn scope/digest/raw-history verified; model answer quality is partial and the table-answer quality probe remains failed. See measured counts, not a general accuracy claim."
       }
     ]
   },

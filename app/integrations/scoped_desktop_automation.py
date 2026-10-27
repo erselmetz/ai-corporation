@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from contextvars import copy_context
 from datetime import datetime, timezone
 from hashlib import sha256
 import json
@@ -9,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import threading
+from functools import wraps
 from typing import Literal, Protocol
 
 from app.application.services.automation_traces import AutomationTraceService
@@ -63,7 +65,7 @@ class DesktopAutomationPolicy:
                        or name != name.lower() for name in self.allowed_process_names)):
             raise ValueError("Desktop process policy must be a frozen list of canonical executable names")
         if (not isinstance(self.allowed_actions, frozenset)
-                or not self.allowed_actions.issubset({"invoke_button"})):
+                or not self.allowed_actions.issubset({"invoke_button","fill_text"})):
             raise ValueError("Desktop action policy contains an unsupported operation")
         if (type(self.max_actions_per_session) is not int
                 or not 1 <= self.max_actions_per_session <= MAX_ACTIONS_PER_SESSION):
@@ -75,13 +77,14 @@ class DesktopAutomationPolicy:
 
 @dataclass(frozen=True, slots=True)
 class DesktopActionRequest:
-    action: Literal["invoke_button"]
+    action: Literal["invoke_button","fill_text"]
     process_id: int
     window_handle: int
     process_name: str
     window_title: str
     automation_id: str
     control_name: str
+    value: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,13 +114,30 @@ class DesktopAutomationBackend(Protocol):
     def list_buttons(self, request: DesktopWindowRequest, *, timeout_milliseconds: int) -> list[dict]: ...
 
 
+def _com_call(method):
+    @wraps(method)
+    def invoke(*args,**kwargs):
+        if os.name!='nt':return method(*args,**kwargs)
+        import ctypes
+        ole=ctypes.WinDLL('ole32');initialize=ole.CoInitializeEx
+        initialize.argtypes=[ctypes.c_void_p,ctypes.c_ulong];initialize.restype=ctypes.c_long
+        result=initialize(None,0)
+        if result not in (0,1,-2147417850):raise DesktopActionUnavailable('Windows control inspection could not initialize')
+        try:return method(*args,**kwargs)
+        finally:
+            if result in (0,1):ole.CoUninitialize()
+    return invoke
+
+
 class WindowsUIAutomationBackend:
     """Resolve one direct child Button using UI Automation; never sends coordinates/keys."""
 
+    @_com_call
     def inspect(self, request: DesktopActionRequest, *, timeout_milliseconds: int) -> dict:
         _app, window, button = self._resolve(request, timeout_milliseconds)
         info = button.element_info
-        return {
+        rectangle=button.rectangle()
+        state = {
             "process_id": window.element_info.process_id,
             "window_handle": window.element_info.handle,
             "process_name": _process_basename(request.process_id),
@@ -127,14 +147,24 @@ class WindowsUIAutomationBackend:
             "control_name": info.name or "",
             "enabled": bool(button.is_enabled()),
             "visible": bool(button.is_visible()),
-            "rectangle": tuple(button.rectangle()),
+            "rectangle": (rectangle.left,rectangle.top,rectangle.right,rectangle.bottom),
         }
+        if request.action=='fill_text':
+            state.update(password=bool(info.element.CurrentIsPassword),
+                         read_only=bool(button.iface_value.CurrentIsReadOnly),
+                         value_digest=sha256(str(button.iface_value.CurrentValue).encode('utf-8')).hexdigest())
+        return state
 
+    @_com_call
     def invoke(self, request: DesktopActionRequest, *, timeout_milliseconds: int) -> None:
         _app, _window, button = self._resolve(request, timeout_milliseconds)
         if not button.is_enabled() or not button.is_visible():
             raise DesktopTargetUnavailable("The approved desktop button is no longer available")
-        button.invoke()
+        if request.action=='fill_text':
+            if button.element_info.element.CurrentIsPassword or button.iface_value.CurrentIsReadOnly:
+                raise DesktopTargetUnavailable('The approved text field is no longer editable')
+            button.iface_value.SetValue(request.value)
+        else:button.invoke()
 
     def list_windows(self, process_name: str, *, limit: int = 50) -> list[dict]:
         """Read-only list of visible top-level windows for one allowlisted process."""
@@ -180,6 +210,10 @@ class WindowsUIAutomationBackend:
         return found
 
     def list_buttons(self, request: DesktopWindowRequest, *, timeout_milliseconds: int) -> list[dict]:
+        return self.list_controls(request,timeout_milliseconds=timeout_milliseconds,buttons_only=True)
+
+    @_com_call
+    def list_controls(self, request: DesktopWindowRequest, *, timeout_milliseconds: int,buttons_only=False) -> list[dict]:
         if os.name != "nt":
             raise DesktopActionUnavailable("Windows UI Automation is available only on Windows")
         try:
@@ -197,10 +231,15 @@ class WindowsUIAutomationBackend:
             buttons = []
             for child in window.children():
                 info = child.element_info
-                if (info.control_type == "Button" and child.is_visible() and child.is_enabled()
+                if (info.control_type in ({'Button'} if buttons_only else {'Button','Edit'}) and child.is_visible() and child.is_enabled()
                         and info.automation_id and info.name and len(buttons) < 100):
-                    buttons.append({"automation_id": str(info.automation_id)[:256],
-                                    "control_name": str(info.name)[:160]})
+                    if info.control_type=='Edit':
+                        try:
+                            if info.element.CurrentIsPassword or child.iface_value.CurrentIsReadOnly:continue
+                        except Exception:continue
+                    record={"automation_id":str(info.automation_id)[:256],"control_name":str(info.name)[:160]}
+                    if not buttons_only:record['action']='invoke_button' if info.control_type=='Button' else 'fill_text'
+                    buttons.append(record)
             return buttons
         except (DesktopTargetUnavailable, DesktopActionUnavailable):
             raise
@@ -235,7 +274,7 @@ class WindowsUIAutomationBackend:
             matches = []
             for child in window.children():
                 child_info = child.element_info
-                if (child_info.control_type == "Button"
+                if (child_info.control_type == ('Edit' if request.action=='fill_text' else 'Button')
                         and child_info.automation_id == request.automation_id
                         and child_info.name == request.control_name):
                     matches.append(child)
@@ -354,6 +393,13 @@ class ScopedDesktopAutomation:
             raise DesktopActionUnavailable("Button discovery is unavailable in this UI Automation provider")
         return list_buttons(request, timeout_milliseconds=self._policy.timeout_milliseconds)
 
+    def list_controls(self,request,*,actor_id,permissions,session_grants,session_id):
+        _validate_session_id(session_id);self._validate_window_request(request)
+        self._authorize(actor_id,permissions,session_grants);self._require_running()
+        method=getattr(self._backend,'list_controls',None)
+        if not callable(method):raise DesktopActionUnavailable('Control discovery is unavailable')
+        return method(request,timeout_milliseconds=self._policy.timeout_milliseconds)
+
     def _validate_window_request(self, request: DesktopWindowRequest) -> None:
         if not isinstance(request, DesktopWindowRequest):
             raise ValueError("A selected desktop window is required")
@@ -376,8 +422,8 @@ class ScopedDesktopAutomation:
         )
         approval = self._approvals.request(
             actor_id=actor_id, permissions=permissions, session_grants=session_grants,
-            capability_id=CAPABILITY_ID, action_id="desktop.invoke_button",
-            action_summary=f"Invoke desktop button {request.control_name[:100]}",
+            capability_id=CAPABILITY_ID, action_id="desktop."+request.action,
+            action_summary=_action_summary(request),
             target_ref=f"desktop:{request.process_name}:{request.process_id}:{request.window_handle}",
             scope_type="principal", scope_id=actor_id,
             payload_digest=preview.payload_digest, target_digest=preview.target_digest,
@@ -399,7 +445,7 @@ class ScopedDesktopAutomation:
         approval = self._approvals.get(approval_id)
         if (self._approvals.snapshot(approval)["status"] != "approved"
                 or approval.actor_id != actor_id or approval.capability_id != CAPABILITY_ID
-                or approval.action_id != "desktop.invoke_button"
+                or approval.action_id != "desktop."+request.action
                 or approval.target_ref != target_ref or approval.scope_type != "principal"
                 or approval.scope_id != actor_id or approval.payload_digest != payload_digest
                 or approval.policy_version != POLICY_VERSION):
@@ -410,7 +456,7 @@ class ScopedDesktopAutomation:
             return self._trace_service.record_action(
                 actor_id=actor_id, capability_id=CAPABILITY_ID,
                 grant_id=approval_id, policy_version=POLICY_VERSION,
-                target_ref=target_ref, action_id="desktop.invoke_button",
+                target_ref=target_ref, action_id="desktop."+request.action,
                 before_digest=approval.target_digest, action_result=action_result,
                 remote_outcome=remote_outcome, started_at=trace_started_at,
             )
@@ -435,6 +481,15 @@ class ScopedDesktopAutomation:
         attempted = threading.Event()
         cancel_before_dispatch = threading.Event()
         dispatch_lock = threading.Lock()
+        from app.resources.context import application_service,native_scope
+        application=application_service.get();scope=native_scope.get()
+        runtime=application.native_runtime() if application is not None and scope is not None else None
+        operation=None
+        if runtime is not None:
+            try:operation=runtime.begin(scope,'desktop','Approved desktop '+request.action);runtime.mark(operation,'running')
+            except Exception:
+                with self._lock:self._active_sessions.discard(session_id)
+                raise
 
         def guarded_action() -> dict:
             def inspect_target() -> str:
@@ -465,8 +520,8 @@ class ScopedDesktopAutomation:
             return self._approvals.execute(
                 approval_id, actor_id=actor_id, permissions=permissions,
                 session_grants=session_grants, capability_id=CAPABILITY_ID,
-                action_id="desktop.invoke_button",
-                action_summary=f"Invoke desktop button {request.control_name[:100]}",
+                action_id="desktop."+request.action,
+                action_summary=_action_summary(request),
                 target_ref=target_ref, scope_type="principal", scope_id=actor_id,
                 payload_digest=payload_digest, current_policy_version=POLICY_VERSION,
                 read_current_target_digest=inspect_target, operation=invoke,
@@ -493,6 +548,7 @@ class ScopedDesktopAutomation:
                 outcome["error_type"] = "unknown" if attempted.is_set() else "safe"
             finally:
                 completed.set()
+                if runtime is not None:runtime.finish(operation)
                 with self._lock:
                     self._active_sessions.discard(session_id)
                     if generation == self._activity_generation:
@@ -515,8 +571,9 @@ class ScopedDesktopAutomation:
                                        else outcome.get("error_type", "failure")),
                         }
 
+        context=copy_context()
         worker = threading.Thread(
-            target=run_guarded_action, name="desktop-ui-automation", daemon=True,
+            target=lambda:context.run(run_guarded_action), name="desktop-ui-automation", daemon=True,
         )
         worker.start()
         worker.join(self._policy.timeout_milliseconds / 1000)
@@ -557,6 +614,11 @@ class ScopedDesktopAutomation:
             raise ValueError("A structured desktop action is required")
         if request.action not in self._policy.allowed_actions:
             raise DesktopPolicyDenied("The desktop action is not allowlisted")
+        if request.action=='fill_text':
+            if (not isinstance(request.value,str) or not 1<=len(request.value)<=2048
+                    or any(ord(char)<32 or ord(char)==127 for char in request.value)):
+                raise ValueError('Desktop text must be one nonempty line of at most 2048 characters')
+        elif request.value is not None:raise ValueError('A button invocation cannot contain typed text')
         if (type(request.process_id) is not int or request.process_id <= 0
                 or type(request.window_handle) is not int or request.window_handle <= 0):
             raise ValueError("A specific process and visible window are required")
@@ -581,13 +643,16 @@ class ScopedDesktopAutomation:
             "process_name": request.process_name,
             "window_title": request.window_title,
             "automation_id": request.automation_id,
-            "control_type": "Button",
+            "control_type": 'Edit' if request.action=='fill_text' else 'Button',
             "control_name": request.control_name,
             "enabled": True,
             "visible": True,
         }
         if any(state.get(key) != value for key, value in expected.items()):
             raise DesktopTargetUnavailable("The exact visible desktop button is unavailable")
+        if request.action=='fill_text' and (state.get('password') is not False or state.get('read_only') is not False
+                or not isinstance(state.get('value_digest'),str) or not re.fullmatch('[0-9a-f]{64}',state['value_digest'])):
+            raise DesktopTargetUnavailable('Only an inspected non-password, writable text field can be edited')
 
     def _authorize(self, actor_id, permissions, session_grants) -> None:
         self._authorization.require(
@@ -596,6 +661,10 @@ class ScopedDesktopAutomation:
         )
 
     def _require_running(self) -> None:
+        from app.resources.context import check_native_stop
+        from app.application.services.native_runtime import NativeRuntimeStopped
+        try:check_native_stop()
+        except NativeRuntimeStopped:raise DesktopActionUnavailable('This native window was stopped; the desktop action was not dispatched') from None
         if self._stop.stopped:
             raise ScopedDesktopError("Desktop actions are blocked while emergency stop is active")
 
@@ -638,12 +707,22 @@ def _process_basename(process_id: int) -> str:
 
 
 def _request_digest(request: DesktopActionRequest) -> str:
-    return _digest({
+    from app.resources.context import native_scope
+    window=native_scope.get()
+    payload={
         "action": request.action, "process_id": request.process_id,
         "window_handle": request.window_handle, "process_name": request.process_name,
         "window_title": request.window_title, "automation_id": request.automation_id,
         "control_name": request.control_name,
-    })
+    }
+    if request.value is not None:payload['value']=request.value
+    if window is not None:payload['native_window']={'owner':window.owner,'id':window.window_id,'generation':window.generation}
+    return _digest(payload)
+
+
+def _action_summary(request):
+    return (f'Replace text in {request.control_name[:100]}' if request.action=='fill_text'
+            else f'Invoke desktop button {request.control_name[:100]}')
 
 
 def _digest(value: dict) -> str:

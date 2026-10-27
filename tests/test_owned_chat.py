@@ -474,7 +474,7 @@ def test_unsupported_provider_streaming_is_rejected_before_recording_turn(setup)
     assert provider.calls == []
 
 
-def test_stream_failure_keeps_turn_pending_and_does_not_expose_provider_error():
+def test_stream_failure_marks_turn_failed_and_does_not_expose_provider_error():
     runtime = create_corporation_runtime()
     provider = StreamingProvider()
     provider.fail = True
@@ -495,10 +495,10 @@ def test_stream_failure_keeps_turn_pending_and_does_not_expose_provider_error():
         assert "secret-provider-credential" not in response.text
         messages = client.get(path, headers={"x-test-owner": "alice"}).json()["conversation"]["messages"]
         assert len(messages) == 1
-        assert messages[0]["status"] == "pending"
+        assert messages[0]["status"] == "failed"
 
 
-def test_closing_stream_releases_provider_and_keeps_interrupted_turn_pending(setup):
+def test_closing_stream_releases_provider_and_marks_interrupted_turn_failed(setup):
     runtime = create_corporation_runtime()
     provider = StreamingProvider()
     provider.block = True
@@ -510,7 +510,8 @@ def test_closing_stream_releases_provider_and_keeps_interrupted_turn_pending(set
     assert next(stream) == {"type": "chunk", "text": "partial "}
     stream.close()
     assert provider.stream_closed
-    assert chat.get("alice", identifier)["conversation"].messages[0].status.value == "pending"
+    assert chat.get("alice", identifier)["conversation"].messages[0].status.value == "failed"
+    assert chat.close('alice',identifier)['conversation'].status.value=='closed'
 
 
 def test_owner_isolation_permissions_and_default_rejecting(setup):

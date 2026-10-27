@@ -15,6 +15,8 @@ def main():
     class LayoutSession:
         def models(self): return [{'name':'Layout fixture (no inference)'}]
         def request(self, method, path, body=None):
+            if path=='/api/native/windows':return {'id':'layout-window','windows':[],'operations':[],'capture':[]}
+            if path.startswith('/api/native/windows/'):return {'closed':True}
             if path=='/api/agents': return {'items':[{'id':'local_worker','name':'Coordinator'}]}
             if path=='/api/projects': return {'items':[]}
             raise AssertionError('Layout fixture never executes actions')

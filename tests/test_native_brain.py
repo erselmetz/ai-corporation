@@ -15,6 +15,17 @@ class Embedding:
     def embed_one(self,text): self.queries.append(text); return [1.,0.]
 
 
+def test_markdown_tables_keep_headers_and_complete_rows_in_bounded_chunks():
+    header='| Renderer | Nodes | FPS |\n| --- | ---: | ---: |\n'
+    rows=''.join('| Engine '+str(i)+' | '+str(300+i)+' | 42 |\n' for i in range(40))
+    document='Introductory prose. '*80+'\n\n'+header+rows+'\nAfter-table prose. '*80
+    pieces=chunks(document)
+    assert all(len(piece)<=800 for piece in pieces)
+    for row in rows.splitlines():
+        matches=[piece for piece in pieces if row in piece]
+        assert matches and all('| Renderer | Nodes | FPS |' in piece for piece in matches)
+
+
 @pytest.fixture
 def brain(tmp_path,monkeypatch):
     monkeypatch.chdir(tmp_path); initialize_database(); return NativeBrain(Embedding())

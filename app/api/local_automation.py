@@ -72,6 +72,8 @@ class DesktopButtonsBody(BaseModel):
 
 class DesktopActionBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    action: Literal['invoke_button','fill_text']='invoke_button'
+    value: StrictStr | None=Field(default=None,min_length=1,max_length=2048,repr=False)
     process_id: StrictInt = Field(gt=0, le=2**31 - 1)
     window_handle: StrictInt = Field(gt=0, le=2**63 - 1)
     process_name: StrictStr = Field(min_length=5, max_length=132)
@@ -80,9 +82,9 @@ class DesktopActionBody(BaseModel):
     control_name: StrictStr = Field(min_length=1, max_length=160)
 
     def domain(self) -> DesktopActionRequest:
-        return DesktopActionRequest("invoke_button", self.process_id, self.window_handle,
+        return DesktopActionRequest(self.action, self.process_id, self.window_handle,
                                     self.process_name, self.window_title,
-                                    self.automation_id, self.control_name)
+                                    self.automation_id, self.control_name,self.value)
 
 
 class DesktopExecuteBody(DesktopActionBody):
@@ -275,6 +277,20 @@ def preview_desktop_action(body: DesktopActionBody,
                                           session_grants=grants, session_id=session))
     except (ValueError, ScopedDesktopError, PermissionError) as error:
         raise HTTPException(409, str(error)) from None
+
+
+@router.post('/desktop/controls')
+def list_desktop_controls(body:DesktopButtonsBody,
+                          principal:AuthenticatedPrincipal=Depends(require_permission('desktop:act')),
+                          registry:LocalAutomationRegistry=Depends(_registry)):
+    actor,permissions,grants,session=_owner_context(principal)
+    try:
+        _desktop_list_ready(registry)
+        with registry.desktop_operation() as desktop:
+            return {'items':desktop.list_controls(body.domain(),actor_id=actor,permissions=permissions,
+                                                  session_grants=grants,session_id=session)}
+    except (ValueError,ScopedDesktopError,PermissionError) as error:
+        raise HTTPException(409,str(error)) from None
 
 
 @router.post("/desktop/request-approval")

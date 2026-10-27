@@ -49,6 +49,7 @@ from app.integrations import (
 )
 from app.providers.base import ProviderCapacityError, ProviderCapacityUnknown
 from app.agent_runtime import AgentRuntimeBudgetExceeded, AgentRuntimeError, AgentRuntimeStopped
+from app.application.services.native_runtime import NativeRuntimeStopped,NativeRuntimeConflict
 from app.auto_routing import classify_chat_route_safely
 from .security import require_permission
 
@@ -570,6 +571,8 @@ def get_repository_study_service(request: Request) -> RepositoryStudyService:
 def chat_errors():
     try:
         yield
+    except (NativeRuntimeStopped,NativeRuntimeConflict) as error:
+        raise HTTPException(409,str(error)) from None
     except AgentRuntimeStopped as error:
         raise HTTPException(409, "Agent Runtime was stopped by the owner. Start a new turn when ready.") from None
     except AgentRuntimeBudgetExceeded:
@@ -637,6 +640,18 @@ def get_conversation(identifier: str, principal=Depends(require_permission("chat
     with chat_errors():
         record = service.owned_chat().get(principal.identity, identifier)
         return {**record, "context_traces": service.chat_knowledge().traces(principal.identity, identifier, now)}
+
+
+class RenameRequest(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    title:str=Field(min_length=1,max_length=120)
+
+
+@router.patch('/{identifier}/title')
+def rename_conversation(identifier:str,body:RenameRequest,
+                        principal=Depends(require_permission('chat-history:manage')),
+                        service=Depends(get_application_service)):
+    with chat_errors():return service.owned_chat().rename(principal.identity,identifier,body.title)
 
 
 @router.get("/{identifier}/images")

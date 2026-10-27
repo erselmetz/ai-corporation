@@ -183,19 +183,32 @@ def create_local_voice_router(connection_manager, budget: VoiceSpendBudget | Non
             audio[:] = b"\0" * len(audio)
             raise HTTPException(422, str(error)) from None
         cancelled = threading.Event()
-        task = asyncio.create_task(asyncio.to_thread(
-            local_speech.transcribe, speech_request, cancelled=cancelled))
+        from app.resources.context import native_scope,request_stop
+        window_scope=native_scope.get();stop_epoch=request_stop.get()
+        def stopped():
+            return (request.app.state.emergency_stop_service.stopped
+                    or (window_scope is not None and window_scope.cancelled)
+                    or (stop_epoch is not None and stop_epoch.is_set()))
+        def recognize():
+            application=getattr(request.app.state,'application_service',None)
+            admission=getattr(application,'model_request',None)
+            if not callable(admission):return local_speech.transcribe(speech_request,cancelled=cancelled)
+            status=local_speech.status()
+            model=getattr(status,'selected_model',None) or 'unconfigured-local-whisper'
+            with admission('local-speech',model):
+                return local_speech.transcribe(speech_request,cancelled=cancelled)
+        task = asyncio.create_task(asyncio.to_thread(recognize))
         disconnected = False
         try:
             while not task.done():
                 await asyncio.sleep(0.05)
-                if (request.app.state.emergency_stop_service.stopped
-                        or await request.is_disconnected()):
+                if (stopped() or await request.is_disconnected()):
                     disconnected = await request.is_disconnected()
                     cancelled.set()
-            if request.app.state.emergency_stop_service.stopped:
+            if stopped():
                 cancelled.set()
-                await task
+                try:await task
+                except Exception:pass
                 raise HTTPException(423, "Emergency stop is active; local transcription was cancelled")
             if disconnected:
                 cancelled.set()
