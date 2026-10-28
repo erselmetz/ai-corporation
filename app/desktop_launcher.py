@@ -11,7 +11,6 @@ import threading
 import time
 from urllib.error import URLError
 from urllib.request import urlopen
-import webbrowser
 
 from app.local import create_local_app
 from app.local_owner_credential import LocalOwnerCredentialStore, OwnerCredentialError
@@ -354,7 +353,7 @@ class DesktopLauncherWindow:
             else:
                 self.credentials.create(password, self.confirmation.get())
             origin = self.controller.start(password)
-            self.status.set(f"Running and healthy at {origin}. Owner sign-in is still required in the browser.")
+            self.status.set(f"Running and healthy at {origin}. Use the native desktop app.")
             self.open_button.configure(state="normal")
             self.health_button.configure(state="normal")
             self.restart_button.configure(state="normal")
@@ -371,7 +370,7 @@ class DesktopLauncherWindow:
         if self.controller.state != "running" or not self.controller.origin:
             self.status.set("The local application is not running.")
             return
-        webbrowser.open(f"{self.controller.origin}/ui/login", new=2)
+        self.status.set("Browser UI disabled. Start the native app with python -m app.qt_desktop.")
 
     def check_health(self):
         self.status.set("Backend health check passed." if self.controller.health()
@@ -385,7 +384,7 @@ class DesktopLauncherWindow:
                 self.status.set("Owner password did not match; the running app was left unchanged.")
                 return
             origin = self.controller.restart(password)
-            self.status.set(f"Restarted and healthy at {origin}. Browser sign-in is required again.")
+            self.status.set(f"Restarted and healthy at {origin}. Use the native desktop app.")
             self.open_button.configure(state="normal")
             self.open_ui()
         except (OwnerCredentialError, LifecycleError) as error:

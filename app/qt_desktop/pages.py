@@ -1,0 +1,2 @@
+"""Native navigation keys; never browser destinations."""
+PAGES = ['Employees', 'Positions', 'Workflows', 'Backup', 'Providers', 'Projects', 'Tasks', 'Agents', 'Software inventory', 'Brain settings', 'Privacy and capabilities', 'Online providers', 'Provider connections', 'Updates', 'Preferences', 'Readiness', 'Automation', 'Structure', 'Workflow map', 'Activity', 'Approvals', 'Documentation', 'Owner sign-in']

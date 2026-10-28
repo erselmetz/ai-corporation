@@ -96,9 +96,6 @@ class Transport:
             'X-Native-Window':chat.window_id,'X-Native-Generation':str(generation)})
         response.raise_for_status();return response.json()
 
-    def launch(self, page):
-        return self.session.request('POST', '/api/local/advanced-launch', {'page': page})['url']
-
     def tool_api(self,chat,method,suffix='',body=None,*,generation=0):
         for value in [chat.window_id,chat.workspace,chat.conversation]:
             if value and not re.fullmatch('[0-9a-f]{32}',value):raise ValueError('Invalid native conversation identity')

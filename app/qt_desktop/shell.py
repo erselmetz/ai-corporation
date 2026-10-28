@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QDialog, QVBoxLayout, QHBox
     QLineEdit, QTextEdit, QFormLayout, QSpinBox)
 from .brain import BrainPanel
 
-from app.api.advanced_launch import PAGES
+from .pages import PAGES
 from .transport import Transport, Chat
 from .theme import apply_theme, TOKENS
 
@@ -253,24 +253,32 @@ class ShellManager(QObject):
             layout.addWidget(button('Quit ERSELMETZ AI',self.quit,'Quit the app and save only window descriptors; never replay actions'))
             pages = ['Preferences', 'Providers', 'Online providers', 'Provider connections', 'Privacy and capabilities', 'Updates', 'Backup']
         else:
-            layout.addWidget(label('Open the existing local pages in your browser. Sign-in is transferred once, on this computer only.'))
+            layout.addWidget(label('Native management windows. Browser navigation is disabled.'))
             pages = list(PAGES)
         status = label(''); layout.addWidget(status)
         scroll = QScrollArea(); scroll.setWidgetResizable(True); content, links = column()
         for page in pages:
             links.addWidget(button(page, lambda checked=False, p=page: self.open_page(p, status)))
         links.addStretch(); scroll.setWidget(content); layout.addWidget(scroll)
+        layout.addWidget(button('Open online docs', self.open_online_docs))
         layout.addWidget(button('Close', dialog.close))
         self.dialogs[kind] = dialog; dialog.show()
         return dialog
 
     def open_page(self, page, status):
-        status.setText('Opening local page…')
-        def opened(url):
-            result = self.browser_open(url, new=0)
-            status.setText('Opened in your browser.' if result else 'The browser did not confirm opening. Try again.')
-        self.submit(lambda: self.transport.launch(page), opened,
-                    lambda error: status.setText('Could not open the page. Reopen the app if your session expired.'))
+        if page not in PAGES: raise ValueError('Unknown native page')
+        key='Page: '+page
+        if key not in self.dialogs:
+            dialog=QDialog();dialog.setWindowTitle(page+' · ERSELMETZ AI');dialog.resize(700,500)
+            layout=QVBoxLayout(dialog);layout.addWidget(label(page))
+            layout.addWidget(label('Native migration in progress. This control does not open a browser.'))
+            layout.addWidget(button('Close',dialog.close));self.dialogs[key]=dialog
+        dialog=self.dialogs[key];dialog.showNormal();dialog.raise_();dialog.activateWindow()
+        status.setText('Opened native window: '+page)
+        return dialog
+
+    def open_online_docs(self):
+        return self.browser_open('https://ai.erselmetz.com',new=2)
 
 
 class ChatWindow(QMainWindow):
