@@ -269,10 +269,11 @@ class ShellManager(QObject):
         if page not in PAGES: raise ValueError('Unknown native page')
         key='Page: '+page
         if key not in self.dialogs:
-            dialog=QDialog();dialog.setWindowTitle(page+' · ERSELMETZ AI');dialog.resize(700,500)
-            layout=QVBoxLayout(dialog);layout.addWidget(label(page))
-            layout.addWidget(label('Native migration in progress. This control does not open a browser.'))
-            layout.addWidget(button('Close',dialog.close));self.dialogs[key]=dialog
+            from .native_pages import RecordWindow,BackupWindow,OwnerWindow
+            if page=='Backup':dialog=BackupWindow(self)
+            elif page=='Owner sign-in':dialog=OwnerWindow(self)
+            else:dialog=RecordWindow(self,page)
+            self.dialogs[key]=dialog
         dialog=self.dialogs[key];dialog.showNormal();dialog.raise_();dialog.activateWindow()
         status.setText('Opened native window: '+page)
         return dialog

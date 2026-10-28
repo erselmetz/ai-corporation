@@ -10,4 +10,3 @@ def test_browser_launch_token_routes_removed(tmp_path,monkeypatch):
         csrf=client.get('/api/local/session').json()['csrf']
         assert client.post('/api/local/advanced-launch',json={'page':'Employees'},headers={'Origin':'http://127.0.0.1:8000','X-Local-CSRF':csrf}).status_code==404
         assert client.get('/local/advanced-launch?token=anything').status_code==404
-

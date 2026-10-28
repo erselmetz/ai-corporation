@@ -1,2 +1,3 @@
-"""Native navigation keys; never browser destinations."""
-PAGES = ['Employees', 'Positions', 'Workflows', 'Backup', 'Providers', 'Projects', 'Tasks', 'Agents', 'Software inventory', 'Brain settings', 'Privacy and capabilities', 'Online providers', 'Provider connections', 'Updates', 'Preferences', 'Readiness', 'Automation', 'Structure', 'Workflow map', 'Activity', 'Approvals', 'Documentation', 'Owner sign-in']
+"""Native navigation catalog, including dedicated owner/backup windows."""
+from .page_schema import PAGES as RECORD_PAGES
+PAGES = [*RECORD_PAGES, 'Backup', 'Owner sign-in']

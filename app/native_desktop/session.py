@@ -39,6 +39,19 @@ class NativeSession:
             raise RuntimeError(str(detail)[:1000])
         return response.json() if response.content else {}
 
+    def lock_owner(self):
+        # Synchronously stop before clearing authority, including direct client users.
+        self.request('POST','/api/local/emergency-stop/stop')
+        self._locked_cookie=self.client.cookies.get(COOKIE)
+        self.client.cookies.clear()
+
+    def unlock_owner(self,password):
+        from app.local_owner_credential import LocalOwnerCredentialStore
+        if not LocalOwnerCredentialStore().verify(password):raise ValueError('Owner password did not match')
+        if not getattr(self,'_locked_cookie',None):raise ValueError('No locked owner session')
+        self.client.cookies.set(COOKIE,self._locked_cookie);self._locked_cookie=None
+        self.credentials=self.request('GET','/api/local/session')
+
     def close(self):
         self.client.close()
         self.controller.stop()
