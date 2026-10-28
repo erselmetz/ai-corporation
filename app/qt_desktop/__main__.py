@@ -20,7 +20,12 @@ def main():
     instance = Instance(data); session = None; manager = None
     from .failures import record_failure,ui_exception_handler
     previous_hook=sys.excepthook;sys.excepthook=ui_exception_handler(data,lambda:manager)
+    stamp=None
+    from .events import record_event
     try:
+        from app.build_stamp import BUILD_STAMP
+        stamp=BUILD_STAMP
+        record_event(data,'startup',stamp)
         if not instance.acquire_or_notify(): return 0
         from app.local_owner_credential import LocalOwnerCredentialStore
         store = LocalOwnerCredentialStore(); password = None
@@ -43,6 +48,7 @@ def main():
         manager = ShellManager(app, session,window_store=WindowStore(data/'windows.json'),preferences=preferences)
         instance.activated.connect(manager.new_window)
         manager.restore_windows(); loading.close()
+        record_event(data,'ready',stamp)
         return app.exec()
     except Exception as error:
         record_failure(data,stage='startup',error=error)
@@ -52,6 +58,7 @@ def main():
         if manager: manager.shutdown()
         if session: session.close()
         instance.close()
+        if stamp:record_event(data,'shutdown',stamp)
 
 
 if __name__ == '__main__': raise SystemExit(main())

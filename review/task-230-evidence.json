@@ -1,0 +1,244 @@
+{
+  "date": "2026-10-29",
+  "python": "3.14.7",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "toolchain": "review/task-230-wheel-compatibility.json",
+  "pre_code_report": "review/task-230-toolchain-and-packs.md",
+  "pack_strategy": "Private exact ABI-matched/hash-verified wheels, owner preview/confirmation, no pip or extra interpreter",
+  "review_artifact": {
+    "exe": "dist\\native\\20261029-005209-15685a42\\ERSELMETZ-AI\\ERSELMETZ-AI.exe",
+    "stamp": {
+      "version": "0.1.0",
+      "commit": "67f07ec0669ac02c006f4ad4a1a5bd2b0c499ae6",
+      "source_sha256": "15685a425e4fe288e8adef3dae38b2361a9fbb11c716f31af62d04102992978d",
+      "review_build": true
+    },
+    "bytes": 161187419,
+    "installer": "dist\\installers\\task-230-review-final\\ERSELMETZ-AI-Setup-0.1.0-review-win-x64.exe",
+    "installer_bytes": 54449592,
+    "installer_sha256": "2961730cb32e259d3b5ba859030f5e0b6bc118be1b556f2e9056922b2440bd79",
+    "unsigned": true,
+    "webengine_binaries": []
+  },
+  "initial_fresh_process_smoke": {
+    "build_stamp": {
+      "version": "0.1.0",
+      "commit": "67f07ec0669ac02c006f4ad4a1a5bd2b0c499ae6",
+      "source_sha256": "6460cb1eabd4b6d96fe4d8ac0fa771a891be9434843f34fa38ec1d9c814d46d9",
+      "review_build": true
+    },
+    "visible_chat_window": true,
+    "startup_ms": 11858.59,
+    "pid": 6620,
+    "pe_subsystem": 2,
+    "stayed_alive_seconds": 2,
+    "netstat_command": "netstat -ano",
+    "listening_entries": [],
+    "working_set_mib": 176.86,
+    "child_process_names": [],
+    "package_bytes": 161186674,
+    "forbidden_node_entries": [],
+    "qa_profile": "isolated temporary current-user profile",
+    "no_action_sent": true
+  },
+  "basic_installed_journey": {
+    "kind": "Real frozen EXE controlled only through native UI Automation",
+    "mode": "basic",
+    "build_stamp": {
+      "version": "0.1.0",
+      "commit": "67f07ec0669ac02c006f4ad4a1a5bd2b0c499ae6",
+      "source_sha256": "6460cb1eabd4b6d96fe4d8ac0fa771a891be9434843f34fa38ec1d9c814d46d9",
+      "review_build": true
+    },
+    "new_windows_account": false,
+    "window_ms": 5610.91,
+    "pid": 19748,
+    "netstat": {
+      "command": "netstat -ano",
+      "pid": 19748,
+      "listening_entries": []
+    },
+    "automatic_model": "qwen3.5:4b",
+    "hello_reply_present": true,
+    "about_stamp_matches": true,
+    "open_url_approved_once": true,
+    "working_set_mib": 193.21,
+    "status": "passed",
+    "browser_handoff_confirmed": true,
+    "page_load_verified": false
+  },
+  "three_real_files": {
+    "kind": "Real frozen EXE controlled only through native UI Automation",
+    "mode": "feed",
+    "build_stamp": {
+      "version": "0.1.0",
+      "commit": "67f07ec0669ac02c006f4ad4a1a5bd2b0c499ae6",
+      "source_sha256": "6460cb1eabd4b6d96fe4d8ac0fa771a891be9434843f34fa38ec1d9c814d46d9",
+      "review_build": true
+    },
+    "new_windows_account": false,
+    "window_ms": 3028.49,
+    "pid": 20220,
+    "netstat": {
+      "command": "netstat -ano",
+      "pid": 20220,
+      "listening_entries": []
+    },
+    "files": [
+      {
+        "name": "README.md",
+        "sha256": "4294a0b75aa890442cb1a1349849cf401b8e73f806ad85bbd1d226bd36b5a1e4",
+        "bytes": 4590
+      },
+      {
+        "name": "README.md",
+        "sha256": "0fa4abab62caf22c93d1d4dea8f2d117ea58d2ce8e08f5c3ec46c4253d26cddf",
+        "bytes": 4618
+      },
+      {
+        "name": "requirements.txt",
+        "sha256": "e3200d6405dc9a01ce23e8b03d2c11d456df44d937a489c719efa6eba45b555f",
+        "bytes": 738
+      }
+    ],
+    "feed_receipts": [
+      "README.md: saved 7 chunks.",
+      "README.md: saved 7 chunks.",
+      "requirements.txt: saved 1 chunks."
+    ],
+    "three_real_files_fed": true,
+    "working_set_mib": 220.34,
+    "status": "passed"
+  },
+  "frozen_pack_self_test": {
+    "kind": "Real frozen EXE controlled only through native UI Automation",
+    "mode": "pack",
+    "build_stamp": {
+      "version": "0.1.0",
+      "commit": "67f07ec0669ac02c006f4ad4a1a5bd2b0c499ae6",
+      "source_sha256": "15685a425e4fe288e8adef3dae38b2361a9fbb11c716f31af62d04102992978d",
+      "review_build": true
+    },
+    "new_windows_account": false,
+    "window_ms": 3022.29,
+    "pid": 8324,
+    "netstat": {
+      "command": "netstat -ano",
+      "pid": 8324,
+      "listening_entries": []
+    },
+    "owner_preview_digest": "1ac7f211694df42df6cd788fece5c1d0515dce9d87cb52cd68bd7ca1b3988c2e",
+    "self_test_visible_detail": "Pack id: eyes\n\nState: installed\n\nDetail: Image libraries loaded. Install Tesseract and language data separately, then configure its executable path before OCR can be tested.",
+    "pack_self_test_invoked_inside_exe": true,
+    "working_set_mib": 212.7,
+    "status": "passed"
+  },
+  "recovered_native_ui": {
+    "kind": "Real frozen EXE controlled only through native UI Automation",
+    "mode": "recover",
+    "build_stamp": {
+      "version": "0.1.0",
+      "commit": "67f07ec0669ac02c006f4ad4a1a5bd2b0c499ae6",
+      "source_sha256": "15685a425e4fe288e8adef3dae38b2361a9fbb11c716f31af62d04102992978d",
+      "review_build": true
+    },
+    "new_windows_account": false,
+    "window_ms": 2972.66,
+    "pid": 20892,
+    "netstat": {
+      "command": "netstat -ano",
+      "pid": 20892,
+      "listening_entries": []
+    },
+    "automatic_model": "qwen3.5:4b",
+    "hello_reply_present": true,
+    "about_stamp_matches": true,
+    "recovered_brain_list_items_sampled": 15,
+    "working_set_mib": 185.43,
+    "status": "passed"
+  },
+  "recovery_proof": {
+    "brain_rows": 15,
+    "brain_content_hash_matches": true,
+    "uninstall_kept_windows_exact_bytes": true,
+    "reinstalled_native_ui_recovered_brain": true
+  },
+  "explicit_remove_data": {
+    "status": "passed",
+    "explicit_remove_data_selected": true,
+    "only_marked_disposable_review_profile": true,
+    "production_data_not_targeted": true,
+    "default_silent_retention_tested_separately": true,
+    "decisions": [
+      "explicit-remove-owned-review-data",
+      "confirm-owned-review-uninstall"
+    ]
+  },
+  "real_packaged_local_model": {
+    "kind": "Real frozen EXE controlled only through native UI Automation",
+    "mode": "inference",
+    "build_stamp": {
+      "version": "0.1.0",
+      "commit": "67f07ec0669ac02c006f4ad4a1a5bd2b0c499ae6",
+      "source_sha256": "15685a425e4fe288e8adef3dae38b2361a9fbb11c716f31af62d04102992978d",
+      "review_build": true
+    },
+    "new_windows_account": false,
+    "window_ms": 2900.89,
+    "pid": 4092,
+    "netstat": {
+      "command": "netstat -ano",
+      "pid": 4092,
+      "listening_entries": []
+    },
+    "real_local_generation": {
+      "milliseconds": 12394.92,
+      "answer_sha256": "38e1158666ae023c32a5e43b0fa33d8efa6c191889230a6ba28d33c05523817d"
+    },
+    "working_set_mib": 184.32,
+    "status": "passed"
+  },
+  "full_python": {
+    "passed": 1751,
+    "skipped": 3,
+    "warnings": 4,
+    "seconds": 495.21,
+    "log": "task230-review/full-python.log"
+  },
+  "final_focused": {
+    "passed": 24,
+    "warnings": 1,
+    "seconds": 21.43,
+    "log": "task230-review/final-focused.log"
+  },
+  "clean_account": {
+    "status": "Unverified",
+    "elevated": false,
+    "windows_sandbox_exe_present": false,
+    "isolated_current_user_profile_is_not_equivalent": true
+  },
+  "hardware": {
+    "microphone": "Unverified",
+    "camera": "Unverified",
+    "speakers": "Unverified",
+    "OCR": "Unverified; Tesseract not on PATH"
+  },
+  "paid_cloud_calls": 0,
+  "model_downloads": 0,
+  "certificate_purchase": false,
+  "fake_signing": false,
+  "pushed": false,
+  "deployed": false,
+  "final_clean_artifact_record": "task230-review/final-artifact.json (created after the exact source checkpoint, without changing that commit)",
+  "final_docs": {
+    "passed": 47,
+    "seconds": 22.68,
+    "log": "task230-review/final-docs.log"
+  },
+  "compiler": {
+    "version": "6.7.3",
+    "authenticode": "Valid",
+    "signer": "Pyrsys B.V.",
+    "sha256": "0a8757031b33777e4c9cbffee40f11a5062b36d25cbe144c1db73b6102b80ad7"
+  }
+}

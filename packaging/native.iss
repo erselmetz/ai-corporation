@@ -33,13 +33,15 @@ WizardStyle=modern
 UninstallDisplayIcon={app}\ERSELMETZ-AI.exe
 CloseApplications=yes
 RestartApplications=no
-SetupLogging=yes
+SetupLogging=no
 
 [Files]
 Source: "{#PackageRoot}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-#ifndef ReviewBuild
+#ifdef ReviewBuild
+Name: "{userprograms}\ERSELMETZ AI Review"; Filename: "{app}\ERSELMETZ-AI.exe"; Parameters: "--profile ""{localappdata}\ERSELMETZ AI Review"""; WorkingDir: "{app}"
+#else
 Name: "{userprograms}\ERSELMETZ AI"; Filename: "{app}\ERSELMETZ-AI.exe"; WorkingDir: "{app}"
 #endif
 
@@ -47,6 +49,64 @@ Name: "{userprograms}\ERSELMETZ AI"; Filename: "{app}\ERSELMETZ-AI.exe"; Working
 ; No network downloads, update checks, model installation or automatic launch.
 
 [Code]
+var RemoveOwnerData: Boolean;
+
+function OwnerDataDirectory(): String;
+begin
+#ifdef ReviewBuild
+  Result := ExpandConstant('{localappdata}\ERSELMETZ AI Review\ERSELMETZ AI');
+#else
+  Result := ExpandConstant('{localappdata}\ERSELMETZ AI');
+#endif
+end;
+
+function SafeDataTree(const Folder: String; Depth: Integer): Boolean;
+var Entry: TFindRec;
+begin
+  Result := False;
+  if Depth > 64 then Exit;
+  if not DirExists(Folder) then begin Result := True; Exit; end;
+  { Never follow a junction/symlink out of the known per-user data tree. }
+  if not FindFirst(Folder, Entry) then Exit;
+  try
+    if (Entry.Attributes and $400) <> 0 then Exit;
+  finally FindClose(Entry); end;
+  Result := True;
+  if FindFirst(Folder + '\*', Entry) then begin
+    try
+      repeat
+        if (Entry.Name <> '.') and (Entry.Name <> '..') then begin
+          if (Entry.Attributes and $400) <> 0 then begin Result := False; Exit; end;
+          if ((Entry.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0) and
+             not SafeDataTree(Folder + '\' + Entry.Name, Depth + 1) then begin Result := False; Exit; end;
+        end;
+      until not FindNext(Entry);
+    finally FindClose(Entry); end;
+  end;
+end;
+
+function InitializeUninstall(): Boolean;
+begin
+  Result := True;
+  RemoveOwnerData := False;
+  { Silent uninstall always keeps data. Destruction requires an explicit interactive choice. }
+  if not UninstallSilent then
+    RemoveOwnerData := MsgBox('Also permanently remove your local chats, Brain, preferences and owner credentials? Choose No to keep them for reinstall. This cannot be undone.', mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var Folder: String;
+begin
+  if (CurUninstallStep = usPostUninstall) and RemoveOwnerData then begin
+    Folder := OwnerDataDirectory();
+    if SafeDataTree(Folder, 0) then begin
+      if not DelTree(Folder, True, True, True) then
+        MsgBox('Some owner data could not be removed. No alternate folder was touched.', mbError, MB_OK);
+    end else
+      MsgBox('Owner data contains a linked or unsupported folder and was kept. No linked target was touched.', mbError, MB_OK);
+  end;
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   Result := '';

@@ -28,7 +28,8 @@ approval. The native “Ask the free pool?” action is one turn only and keeps 
 local model selection. No router is bundled or installed. See the
 [separate-install guide and limits](docs/free-pool.html). Connection settings and
 keys last for this process only; call/token allowances do not cap an external
-invoice. Real router quality and a new packaged Task 228 build remain unverified.
+invoice. Real router quality and the packaged cloud-endpoint workflow remain unverified.
+Task 230 local-installer checks do not certify cloud-provider behavior.
 
 The Brain shares one native projected-3D/list widget between its embedded and
 full-window views. File intake and private context use explicit previews. Local
@@ -52,6 +53,14 @@ Tasks 223–226 have local Python checkpoints. Task 227 covers restore, Python-o
 verification, packaging and legacy retirement; consult its evidence and canonical
 record for its actual completion state. No local checkpoint authorizes a push,
 deployment, release, signing action or change to runtime permissions.
+
+## Local packaged build
+
+Task 230 supplies a native one-folder PyInstaller build and per-user unsigned
+installer. About shows its checked version and exact commit. See the
+[packaged verification report](review/task-230-packaged-python-app.md) for artifact
+identities, real local checks, measurements and the unverified fresh-account gate.
+An isolated current-user profile is not a clean Windows-account test.
 
 ## Development and packaging
 

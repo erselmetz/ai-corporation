@@ -85,3 +85,21 @@ def test_backup_restore_requires_inspected_unchanged_bytes(manager,qtbot,monkeyp
         qtbot.waitUntil(lambda:'changed after inspection' in window.status.text())
         assert requests==['/api/local/backup/inspect']
     finally:manager.session.client.close()
+
+
+def test_action_failure_result_survives_inventory_refresh(manager,qtbot,monkeypatch):
+    def request(method,path,body=None,**kwargs):
+        if method=='GET':return {'items':[{'pack_id':'voice','title':'Voice','state':'installed'},{'pack_id':'eyes','title':'Eyes','state':'installed'}]}
+        assert path=='/api/capability-packs/eyes/self-test'
+        return {'pack_id':'eyes','state':'failed','detail':'The software self-test failed; inventory installation is not proof of working.'}
+    monkeypatch.setattr(manager.session,'request',request)
+    window=RecordWindow(manager,'Privacy and capabilities');qtbot.addWidget(window);window.show();qtbot.waitUntil(lambda:not window.loading)
+    window.table.selectRow(1)
+    action=next(a for a in window.page.actions if a.title=='Self-test pack');window.action(action)
+    dialog=window.action_dialog
+    next(w for w in dialog.findChildren(QCheckBox) if w.text().startswith('I reviewed')).click()
+    next(w for w in dialog.findChildren(QPushButton) if w.text()=='Confirm action').click()
+    qtbot.waitUntil(lambda:not dialog.isVisible() and not window.loading)
+    assert window.selected['id']=='eyes'
+    assert 'software self-test failed' in window.detail.toPlainText()
+    assert window.status.text()=='Result: failed'

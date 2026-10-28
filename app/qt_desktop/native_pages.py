@@ -78,14 +78,15 @@ class RecordWindow(QDialog):
         self.table.itemSelectionChanged.connect(self.inspect)
         self.status=QLabel('Loading…');self.status.setWordWrap(True);self.status.setTextFormat(Qt.TextFormat.PlainText);layout.addWidget(self.status)
         actions=QWidget();buttons=QVBoxLayout(actions)
-        buttons.addWidget(push('Refresh',self.refresh))
+        buttons.addWidget(push('Refresh',lambda:self.refresh()))
         self.action_buttons=[]
         for action in self.page.actions:
             b=push(action.title,lambda checked=False,a=action:self.action(a));buttons.addWidget(b);self.action_buttons.append(b)
         scroll=QScrollArea();scroll.setWidgetResizable(True);scroll.setMaximumHeight(190);scroll.setWidget(actions);layout.addWidget(scroll)
         layout.addWidget(push('Close',self.close));self.refresh()
-    def refresh(self):
+    def refresh(self,action_result=None):
         if self.loading:return
+        selected_id=(self.selected or {}).get('id')
         self.loading=True;self.status.setText('Loading protected records…')
         def done(data):
             self.loading=False;self.selected=None
@@ -97,7 +98,15 @@ class RecordWindow(QDialog):
             for i,row in enumerate(self.rows):
                 for j,value in enumerate([row.get('name',row.get('title',row.get('event','Record'))),row.get('state',row.get('status',row.get('kind',''))),row.get('id',row.get('agent_id',''))]):self.table.setItem(i,j,QTableWidgetItem(str(value)))
             self.table.resizeColumnsToContents();self.status.setText('No records yet.' if not self.rows else str(len(self.rows))+' records. Select one for details.');self.filter()
-            if self.rows:self.table.selectRow(0)
+            if self.rows:
+                index=next((i for i,row in enumerate(self.rows) if row.get('id')==selected_id),0)
+                if action_result is None:self.table.selectRow(index)
+                else:
+                    self.table.blockSignals(True);self.table.selectRow(index);self.table.blockSignals(False)
+                    self.selected=self.rows[index]
+            if action_result is not None:
+                self.show_detail(action_result)
+                self.status.setText('Result: '+str(action_result.get('state','returned; review the details')) if isinstance(action_result,dict) else 'Request returned; review the details.')
         self.manager.submit(lambda:self.manager.session.request('GET',self.page.endpoint),done,self.failed)
     def failed(self,error):
         self.loading=False;self.status.setText('Request not completed: '+str(error)[:600]);self.detail.setPlainText('No successful action is claimed. Check permission, provider state and Stop controls, then retry explicitly.')
@@ -136,7 +145,7 @@ class RecordWindow(QDialog):
             # Approval digest is never invented or silently substituted.
             self.manager.submit(lambda:self.manager.session.request(action.method,path,body if action.method!='GET' else None),done,fail)
         def done(result):
-            fields.erase();dialog.accept();self.detail.setPlainText(text(result));self.status.setText('Action confirmed by the service.');self.refresh()
+            fields.erase();dialog.accept();self.refresh(action_result=result)
         def fail(error):
             fields.erase();state.setText('Not completed: '+str(error)[:600]);fields.setEnabled(True);confirmed.setEnabled(True);confirmed.setChecked(False);submit.setEnabled(False)
         submit.clicked.connect(send);dialog.finished.connect(lambda _:fields.erase());dialog.open();self.action_dialog=dialog

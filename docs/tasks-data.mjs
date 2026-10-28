@@ -6696,6 +6696,78 @@ export const post100Tasks = [
         "evidence": "Not exercised by Task229; existing consent/permission controls remain."
       }
     ]
+  },
+  {
+    "number": 230,
+    "title": "Packaged native Python app and clean-install verification",
+    "description": "One-folder PyInstaller and per-user Inno installer for the native in-process Python shell; exact build identity, optional-pack frozen verification and honest clean-account limits.",
+    "category": "Phase 230 - Packaged Python verification",
+    "status": "completed",
+    "dependsOn": [
+      229
+    ],
+    "area": "P70",
+    "acceptance": [
+      "Report CPython/PySide/PyInstaller/native-wheel compatibility before coding; stop for owner choice if a required version is unsupported.",
+      "Compare private verified ABI-matched optional packs, bundling and embedded Python; preserve exact owner SHA-256 preview.",
+      "Windowed one-folder build, per-user installer/shortcut, default data retention and explicit removal option, build stamp/About and metadata-only logs.",
+      "Real installed-app smoke, local Ollama chat/Brain/approved URL/Settings/restart, optional-pack install and self-test, uninstall/reinstall recovery.",
+      "Report installer/installed size, first-process startup, idle memory and netstat app-PID proof; unavailable clean-account/hardware paths remain Unverified.",
+      "Full suites, truthful readiness and one local commit/tag task-230-packaged-python-app; never push/deploy."
+    ],
+    "checkpoint": "task-230-packaged-python-app",
+    "validation": [
+      "Pre-code report: review/task-230-toolchain-and-packs.md. Python3.14.7/PySide6 6.12.0/PyInstaller6.22.3 and pinned native wheels verified against official release metadata.",
+      "Initial real frozen smoke passed: GUI subsystem2, visible chat in11858.59 ms,176.86 MiB RSS, no child processes/listeners/Node artifacts.",
+      "Installed isolated Review identity auto-selected qwen3.5:4b, replied to hello, showed matching About identity, and accepted one exact approved browser handoff. Three real files fed with7/7/1 saved-chunk receipts.",
+      "Full Python suite: 1751 passed, 3 existing Windows symlink-privilege skips, 4 warnings in495.21s. Final affected native/build checks:24 passed in21.43s. See review/task-230-evidence.json.",
+      "Real installed frozen Eyes flow: owner-confirmed manifest1ac7f211694df42df6cd788fece5c1d0515dce9d87cb52cd68bd7ca1b3988c2e; required Pillow/mss/OpenCV/NumPy/pytesseract imports succeeded inside the EXE. OCR remains unverified because separate Tesseract is unavailable on PATH.",
+      "Silent uninstall kept15 real Brain rows and window descriptors. Reinstall recovered identical Brain content hashes and native list data. Explicit interactive removal then deleted only the marked disposable Review data.",
+      "Additional real frozen qwen3.5:4b reply through native controls completed in12394.92ms. Hello used the shipped exact-match reply and is not counted as a model inference.",
+      "Final clean-source build is made after the one Task230 commit so its embedded commit matches. Its exact artifact identities/post-commit smoke are recorded locally in task230-review/final-artifact.json; no source edit/push/deploy follows that checkpoint.",
+      "Final public docs/browser/integrity checks:47 passed in22.68s. Exact generator, UTF-8 and diff integrity checks passed."
+    ],
+    "limitations": [
+      "Current process is non-elevated and WindowsSandbox.exe is absent. An isolated current-user profile is not fresh-Windows-account proof.",
+      "Physical microphone/camera/speaker behavior, paid/cloud providers and SmartScreen reputation remain Unverified.",
+      "Unsigned local artifacts only; no certificate purchase, signing, publication or deployment.",
+      "Cold-process startup uses a fresh app profile; OS file caches were not flushed and cold-boot performance is not certified.",
+      "Ears/Voice/FAISS frozen execution is not promoted by their wheel availability or the Eyes result. Tesseract/model weights remain separate."
+    ],
+    "releaseReadiness": [
+      {
+        "capability": "Native one-folder/installer, About and default no-listener startup",
+        "source": "Source-verified",
+        "packaged": "Packaged-verified",
+        "realDevice": "Real-device-verified",
+        "evidence": "Actual Windows isolated current-user Review installer and visible frozen app, exact stamp, GUI subsystem2, no TCP LISTENING entries. Review identity recorded in review/task-230-evidence.json."
+      },
+      {
+        "capability": "Real local Ollama/Brain/approved URL/restart and data retention/removal",
+        "source": "Source-verified",
+        "packaged": "Packaged-verified",
+        "realDevice": "Real-device-verified",
+        "evidence": "Real frozen native UI journeys;15 retained chunks, immutable content hashes across uninstall/reinstall; explicit removal only against marked disposable Review data."
+      },
+      {
+        "capability": "Eyes frozen module imports and in-app self-test",
+        "source": "Source-verified",
+        "packaged": "Packaged-verified",
+        "realDevice": "Unverified",
+        "evidence": "Required software libraries loaded after owner-approved private-pack installation. Result remains installed, not OCR-working; no physical media claim."
+      },
+      {
+        "capability": "Fresh Windows account/Sandbox, audio/video hardware and signing/reputation",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Non-elevated current session, WindowsSandbox.exe absent; no fresh account, physical mic/camera/speaker or signed Internet-download test."
+      }
+    ],
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": "Real current-account Windows install and frozen app verified; fresh-account/Sandbox and physical media remain Unverified."
+    }
   }
 ];
 
@@ -7142,6 +7214,10 @@ const futureGroups = [
   {
     "name": "Phase 229 - Fully native desktop",
     "range": "229-229"
+  },
+  {
+    "name": "Phase 230 - Packaged Python verification",
+    "range": "230-230"
   }
 ];
 

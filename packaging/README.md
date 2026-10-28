@@ -1,6 +1,6 @@
 # Native Windows packaging and recovery
 
-The application is a PySide6 shell and an authenticated loopback backend in one
+The application is a PySide6 shell and an authenticated in-process policy facade in one
 Python process. It does not require Node, npm, Electron, Next.js, Playwright or
 an embedded browser. Advanced windows are native Qt. The default app starts no TCP
 listener and dispatches guarded application operations in-process.
@@ -36,7 +36,7 @@ the bundle. `THIRD_PARTY_NOTICES.md` states the LGPL and source obligations.
 
 Installation is per user under `%LOCALAPPDATA%\Programs\ERSELMETZ AI`.
 Application data remains separate under `%LOCALAPPDATA%\ERSELMETZ AI`; SQLite is
-in `projects\ai_corporation.db`. Uninstall keeps that data by default. A local
+in `projects\ai_corporation.db`. Uninstall keeps that data by default. Interactive uninstall offers an explicit, default-No remove-data choice; silent uninstall always keeps data. Linked/junction data trees are kept rather than followed. A local
 review installer uses a separate AppId and install directory.
 
 Owner locks remain enforced on launch. Native in-process sessions never transfer
@@ -77,5 +77,18 @@ The local `legacy-electron-ui` tag preserves the old source. Restoring that tag
 requires its old development dependencies and does not make its superseded
 packaged-startup blocker fixed. It is a recovery reference, not the current build.
 
-Task 229 source changes are not present in the older Task 227 packaged artifacts.
-Rebuild from the new source before claiming native management/no-listener packaging.
+Task 230 produces new local one-folder artifacts from the native Task 229 source.
+Older Task 227 artifacts retain their historical browser implementation; do not
+confuse them with the new build. See the Task 230 report for exact artifact identity.
+
+The native About window shows the checked version and source commit. Bounded
+`native-events.json` and `native-failures.json` in the app data folder contain only
+whitelisted timestamps, event/stage categories and build identity; no prompt,
+path, exception text or secret is accepted. Nothing is uploaded.
+
+Optional Eyes/Ears/Voice/FAISS packs use private per-user folders and exact
+CPython 3.14 Windows x64 wheels with the existing owner digest/SHA-256 preview.
+No pip invocation, dependency resolver, source build or embedded second Python
+is launched. They are excluded from the base build. Frozen imports/DLLs are
+verified per pack; successful Eyes loading does not certify audio hardware.
+See [unsigned builds and signing plan](SIGNING.md).

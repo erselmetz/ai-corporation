@@ -42,7 +42,7 @@ def main():
     args.extend(['--additional-hooks-dir',str(root/'packaging'/'hooks')])
     # Exclude unused SDK modules and large optional inference stacks. Ollama remains
     # an external local service; missing optional providers must report unavailable.
-    excluded=['playwright','PIL','tkinter','customtkinter','pytest','torch','tensorflow','sentence_transformers','transformers',
+    excluded=['playwright','PIL','cv2','numpy','ctranslate2','faster_whisper','onnxruntime','av','tokenizers','sounddevice','pyttsx3','pytesseract','mss','faiss','huggingface_hub','hf_xet','tkinter','customtkinter','pytest','torch','tensorflow','sentence_transformers','transformers',
               'matplotlib','IPython','jupyter','notebook','PySide6.QtWebEngineCore','PySide6.QtWebEngineWidgets',
               'PySide6.QtWebEngineQuick','PySide6.QtQml','PySide6.QtQuick','PySide6.QtQuickWidgets',
               'PySide6.Qt3DCore','PySide6.Qt3DRender','PySide6.QtCharts','PySide6.QtDataVisualization',

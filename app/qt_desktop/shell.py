@@ -236,6 +236,13 @@ class ShellManager(QObject):
             return dialog
         dialog = QDialog(); dialog.setWindowTitle(f'{kind} · ERSELMETZ AI'); dialog.resize(560, 620)
         layout = QVBoxLayout(dialog); layout.addWidget(label(kind))
+        if kind == 'About':
+            from app.build_stamp import BUILD_STAMP
+            layout.addWidget(label('Version: '+BUILD_STAMP['version']))
+            layout.addWidget(label('Commit: '+BUILD_STAMP['commit']))
+            layout.addWidget(label('Local review build' if BUILD_STAMP.get('review_build') else 'Local unsigned build'))
+            layout.addWidget(label('Native Python / Qt · no default TCP listener · no automatic uploads'))
+            layout.addWidget(button('Close',dialog.close));self.dialogs[kind]=dialog;dialog.show();return dialog
         if kind == 'Settings':
             resume_status=label('Resume allows new requests only; it never replays stopped work.')
             layout.addWidget(resume_status);layout.addWidget(button('Resume protected work',lambda:self.resume_all(resume_status)))
@@ -261,6 +268,7 @@ class ShellManager(QObject):
         for page in pages:
             links.addWidget(button(page, lambda checked=False, p=page: self.open_page(p, status)))
         links.addStretch(); scroll.setWidget(content); layout.addWidget(scroll)
+        layout.addWidget(button('About',lambda:self.show_dialog('About')))
         layout.addWidget(button('Open online docs', self.open_online_docs))
         layout.addWidget(button('Close', dialog.close))
         self.dialogs[kind] = dialog; dialog.show()

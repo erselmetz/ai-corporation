@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-10-29",
+      "type": "development",
+      "title": "Task 230 - local packaged native Python verification",
+      "summary": "Windowed one-folder build and per-user unsigned installer; About/build identity, metadata-only event log and explicit data-removal option. Actual isolated current-user install, local Ollama, Brain/URL/pack and retention/reinstall checks passed. Full suite1751 passed/3 skipped. Fresh Windows account/Sandbox, physical media and signing remain unverified. No push/deploy."
+    },
+    {
       "date": "2026-10-28",
       "type": "development",
       "title": "Task 229 - native management without browser app pages",

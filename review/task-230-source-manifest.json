@@ -1,0 +1,107 @@
+{
+  "task": 230,
+  "base_commit": "67f07ec0669ac02c006f4ad4a1a5bd2b0c499ae6",
+  "normalization": "UTF-8 text CRLF to LF; binary unchanged; this manifest excludes itself",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256_lf_normalized": "7d63c2ed326869de301265cdf050abb847caa991cad36df4061064e4c02ff60b"
+    },
+    {
+      "path": "app/qt_desktop/__main__.py",
+      "sha256_lf_normalized": "639cbf7f5153bab5f66ebaaba30d4a39c265e2ad79aa0c09e49e33d242a91533"
+    },
+    {
+      "path": "app/qt_desktop/events.py",
+      "sha256_lf_normalized": "307438d71e373e7aa41016f37fb38e7dc8558861eecaefd86b46ee98d3409a9c"
+    },
+    {
+      "path": "app/qt_desktop/native_pages.py",
+      "sha256_lf_normalized": "08060e05c58e529207da2e36e127fe66549d956c2db1fdce8574da94486d25a6"
+    },
+    {
+      "path": "app/qt_desktop/shell.py",
+      "sha256_lf_normalized": "c9ce93920f5ebcc904cc106980d8d21ad30b3f7ff8a44cf9f37b487f757f7ac6"
+    },
+    {
+      "path": "corporation_updates.json",
+      "sha256_lf_normalized": "9a9a244e230abfbbf85b5e56b30eb7d7cef44d85fb2cf5b08c76f633e06845a4"
+    },
+    {
+      "path": "docs/implementation-history.md",
+      "sha256_lf_normalized": "179a38d4931eb4937d274a670b457a124e453ce84d799b535e2b0f0d78294a29"
+    },
+    {
+      "path": "docs/tasks-data.json",
+      "sha256_lf_normalized": "c293c5f2db5ffe743978e4b00e64a7596592bfb2ec27dd0bb81076266919ed01"
+    },
+    {
+      "path": "docs/tasks-data.mjs",
+      "sha256_lf_normalized": "19e26c63f514fa18fd250ee07bb2050287d6c5885befd0d45ea7f6fa26e8c6d6"
+    },
+    {
+      "path": "packaging/README.md",
+      "sha256_lf_normalized": "781bddda04b743562ca7f6337d764ded4f9672bcb6b8cc59a75996c18cdf5590"
+    },
+    {
+      "path": "packaging/SIGNING.md",
+      "sha256_lf_normalized": "8d4726837ee05c82361a8f389bfeb9be855ccfaab6b845f655c1e7947bfeedb8"
+    },
+    {
+      "path": "packaging/native.iss",
+      "sha256_lf_normalized": "3766151090a9a839649d352c6880002b88fe59da4fc843d9b67ac1554e70d986"
+    },
+    {
+      "path": "review/task-230-evidence.json",
+      "sha256_lf_normalized": "dbd90d536ed49439a4629385f136e18e2ccff1374724cc29986137ca71fca7ea"
+    },
+    {
+      "path": "review/task-230-packaged-python-app.md",
+      "sha256_lf_normalized": "bae94880e735d3fd756c085aed9c985365b16f2cff3e1c3060e44043665452e5"
+    },
+    {
+      "path": "review/task-230-toolchain-and-packs.md",
+      "sha256_lf_normalized": "543f0c5cac74014c3df4210b689897823c02b591c9629e90ce3d6814d4b5b60b"
+    },
+    {
+      "path": "review/task-230-wheel-compatibility.json",
+      "sha256_lf_normalized": "e7fc33040b901a927f24c841271be2bc96701cc89f2532ca31bcfc99f5604fb0"
+    },
+    {
+      "path": "tests/test_native_pages.py",
+      "sha256_lf_normalized": "845e8df6c00857786e7e4341e4e3a1d2e0e8f92182a25f644d67cb7f5774c1f8"
+    },
+    {
+      "path": "tests/test_packaged_identity.py",
+      "sha256_lf_normalized": "c0c773b5792078a881986c4b68e757f4e5d52ff8190dff2843296803ad9ea6c5"
+    },
+    {
+      "path": "tests/test_public_docs_browser.py",
+      "sha256_lf_normalized": "e586958214a60a1b806c9b8fc74c5501d04c3023f30e6177ea6d11a549141b43"
+    },
+    {
+      "path": "tools/build_installer.py",
+      "sha256_lf_normalized": "f75660b83b3e799214f6edcccf7181e0754828c43012ebd0163c33f8c8697d5f"
+    },
+    {
+      "path": "tools/build_native.py",
+      "sha256_lf_normalized": "85439d5f3a4145085e59d94162300d746411cdfca9abb09cd225481eb2ad1138"
+    },
+    {
+      "path": "tools/packaged_python_journey.py",
+      "sha256_lf_normalized": "f574886d4f32c9ca400d3154378560c6a3e01890aa5bae98c755060843b8f280"
+    },
+    {
+      "path": "tools/python_installer_smoke.py",
+      "sha256_lf_normalized": "bbf2b236b380fe2a27e890aab10e9a308d1fa42eb0060ed7f9f631e5c93f969f"
+    },
+    {
+      "path": "tools/review_uninstall_data_check.py",
+      "sha256_lf_normalized": "d58dab7649d007e5c411c3e6f98a809c49adc1603ecbd420f9e7cab0218fe451"
+    },
+    {
+      "path": "tools/smoke_native.py",
+      "sha256_lf_normalized": "fd55f0d2f155cc75acbdebb9eba6e3570e14b300a6bcecbaf247a15ce1dc9833"
+    }
+  ]
+}

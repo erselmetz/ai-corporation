@@ -20,15 +20,16 @@ def validate(package,*,review=False):
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('package',type=Path);parser.add_argument('--compiler',type=Path,required=True)
-    parser.add_argument('--output',type=Path,required=True);parser.add_argument('--review',action='store_true');args=parser.parse_args()
+    parser.add_argument('--output',type=Path,required=True);parser.add_argument('--review',action='store_true')
+    parser.add_argument('--isolated',action='store_true',help='Separate QA install identity even for a clean-source binary');args=parser.parse_args()
     package,stamp=validate(args.package,review=args.review);compiler=args.compiler.resolve(strict=True)
     output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
-    version=stamp['version']+('-review' if stamp['review_build'] else '')
+    version=stamp['version']+('-review' if stamp['review_build'] else '-qa' if args.isolated else '')
     if any(character not in '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-' for character in version):raise ValueError('Invalid installer version')
     for path in [package,output]:
         if any(c in str(path) for c in ['"','\n','\r']):raise ValueError('Invalid compiler path')
     command=[str(compiler),'/Qp','/DPackageRoot='+str(package),'/DInstallerOutput='+str(output),'/DAppVersion='+version]
-    if stamp['review_build']:command.append('/DReviewBuild')
+    if stamp['review_build'] or args.isolated:command.append('/DReviewBuild')
     subprocess.run(command+[str(ROOT/'packaging'/'native.iss')],cwd=ROOT,check=True)
     print(output/f'ERSELMETZ-AI-Setup-{version}-win-x64.exe')
 
