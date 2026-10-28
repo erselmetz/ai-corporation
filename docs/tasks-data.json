@@ -6516,11 +6516,117 @@
           "evidence": "Local Python/static browser tests; no deployment or live-site modification"
         }
       ]
+    },
+    {
+      "number": 228,
+      "title": "Generic OpenAI-compatible provider and optional Free pool",
+      "description": "Optional text-only cloud endpoints through httpx, including a disabled-by-default experimental FreeLLMAPI loopback preset; no installation, bundling, Node dependency, push or deployment.",
+      "category": "Phase 228 - Optional cloud endpoints",
+      "status": "completed",
+      "dependsOn": [
+        227
+      ],
+      "decisions": [
+        "Reuse existing provider connections, owned chat/workspaces, ResourceManager, consent/preview, exact-action tool boundaries and How I answered traces. See review/task-228-provider-audit.md.",
+        "Credentials/settings remain in memory for this app run. A five-call allowance and bounded tokens are not an invoice cap; router/upstream costs and internal retries remain unknown.",
+        "No cloud Agent tool loop or media/embedding path is added. Tool proposals fail closed; reviewed local tools keep existing validation."
+      ],
+      "acceptance": [
+        "OpenAI-compatible /v1/models and bounded chat completions/stream transport, sync/async, friendly 401/429/5xx/timeout/no-model errors.",
+        "Cloud even on loopback; off by default, per-turn exact outbound preview approval; non-loopback requires explicit confirmation and HTTPS.",
+        "Default-off allow Brain context, existing knowledge/project revalidation, obvious-secret redaction, prompt cap; no cloud embeddings or media.",
+        "Record router-reported X-Routed-Via identity or unknown, latency and zero app retries in How I answered.",
+        "Explicit optional one-turn escalation; local remains default, no silent fallback, existing tool validation stays authoritative.",
+        "Providers Add Free pool, three-step separate-install guide and explicit /models plus fixed Hi one-token Test, truthful states.",
+        "Static documentation with official release/download verification guidance, experimentation-only/free-tier/variable-quality/no-SLA limits.",
+        "Fake TCP server and API/Qt/browser contracts for streaming, errors, tool proposal, header identity, consent, redaction and loopback rules; mark unavailable real router checks UNVERIFIED.",
+        "Full Python suites, exact reviewed local commit and task-228-openai-compatible-provider tag; never push/deploy."
+      ],
+      "outOfScope": [
+        "No router install/download/bundling, automatic provider fallback, cloud embeddings, media transfer or permission/approval/spend bypass.",
+        "No push, deployment, signing or new packaged-release claim."
+      ],
+      "risks": [
+        "An external router may choose an upstream with different data practices, terms, prices and quality. Its internal retries are not observable through this protocol."
+      ],
+      "area": "P68",
+      "checkpoint": "task-228-openai-compatible-provider",
+      "validation": [
+        "Audit/reuse decisions: review/task-228-provider-audit.md; implementation and verification: review/task-228-openai-compatible-provider.md.",
+        "Full canonical Python suite: 2051 passed, 3 existing Windows symlink-privilege skips, 4 deprecation warnings, 634.48 s. Includes Python-driven browser contracts, Qt and screenshot suites; no Node commands.",
+        "Deterministic fake TCP/HTTP provider, owner API and actual Qt/Chromium UI checks cover models, bounded text/SSE, sync/async, 401/429/5xx/timeouts, no models, tool-proposal denial, X-Routed-Via/unknown attribution, no retries, per-turn consent/digest/redaction, Brain toggle, URL/redirect rules, workspace isolation, ResourceManager admission and Stop. Final targeted results are recorded in review/task-228-evidence.json.",
+        "Existing 18 screenshot baselines passed without rebaselining. New browser setup/preview/expanded trace screenshots are local QA artifacts, not live-router evidence.",
+        "A default-discovery collision with archived QA test copies was fixed using canonical pytest testpaths; backups preserved. A real Windows Chromium startup-file sharing race was fixed with deadline-bounded readiness polling, without changing network/permission restrictions or skipping its tripwire.",
+        "Real preset-address probe: no listener at 127.0.0.1:3001; no router installation, credentialed real cloud generation, paid call or packaged Task 228 build attempted."
+      ],
+      "limitations": [
+        "Real FreeLLMAPI and upstream provider/model quality, data practices, costs/internal retries and availability remain UNVERIFIED; preset remains experimental.",
+        "Only source Coordinator Chat/native explicit one-turn escalation is enabled. No cloud Native Agent loop, Employee/workflow generation, media or embedding path; missing outbound approval fails closed.",
+        "Connection keys/settings last for this process only. Five generation attempts per connection include Tests; this is not a monetary ceiling. Existing local data is not erased by outbound sanitization.",
+        "SSE text is bounded and buffered before sanitized chunks are shown; no unbuffered token-display claim. A successful one-token probe establishes protocol reachability, not answer quality.",
+        "New packaged endpoint integration, signing, public release and live documentation deployment remain UNVERIFIED/not performed."
+      ],
+      "automatedVerification": [
+        "Source-verified with deterministic upstream fakes, native Qt widgets and an actual owned Chromium settings/chat journey.",
+        "Full Python suite plus final affected regressions and static source/generation/diff checks; exact counts in the evidence report."
+      ],
+      "followUpValidation": [
+        "Explicit owner-configured real router and upstream quality/terms/billing measurements before changing experimental status.",
+        "New packaged build and endpoint workflow if packaging is separately authorized."
+      ],
+      "realWorldVerification": {
+        "status": "unverified",
+        "evidence": "task228-review/real-router-probe.json: no TCP listener at preset address. No install or credentialed live generation attempted."
+      },
+      "releaseReadiness": [
+        {
+          "capability": "Compatible text/SSE protocol and friendly failures",
+          "source": "Source-verified",
+          "packaged": "Unverified",
+          "realDevice": "Unverified",
+          "evidence": "Fake loopback HTTP server and sync/async contracts; no real-router claim"
+        },
+        {
+          "capability": "Permission, consent, redaction and local-only data boundaries",
+          "source": "Source-verified",
+          "packaged": "Unverified",
+          "realDevice": "Unverified",
+          "evidence": "Owner/CSRF, digest, Brain switch, no media/embeddings, URL/redirect and stale-window tests"
+        },
+        {
+          "capability": "ResourceManager, bounded attempts, Stop and no fallback",
+          "source": "Source-verified",
+          "packaged": "Unverified",
+          "realDevice": "Unverified",
+          "evidence": "Actual software allocation observed during fixed one-token Test; exhausted capacity/Stop deny generation; app retry count zero"
+        },
+        {
+          "capability": "Native and Advanced owner journeys",
+          "source": "Source-verified",
+          "packaged": "Unverified",
+          "realDevice": "Unverified",
+          "evidence": "Actual Qt widgets and fresh Chromium profile with fake upstream; no packaged/real-cloud quality claim"
+        },
+        {
+          "capability": "Served identity and timing trace",
+          "source": "Source-verified",
+          "packaged": "Unverified",
+          "realDevice": "Unverified",
+          "evidence": "Sanitized router header or unknown, requested alias separate, HTTP elapsed time and zero app retries"
+        },
+        {
+          "capability": "Static installation/limits documentation",
+          "source": "Source-verified",
+          "packaged": "Unverified",
+          "realDevice": "Unverified",
+          "evidence": "Official GitHub links, separate verification guide; source checks only, no deployment"
+        }
+      ]
     }
   ],
   "roadmapRules": {
     "scope": "Publishing task contracts does not implement planned capabilities or grant runtime authority. Implement only the current authorized task after resolving its owner decision gates; credentials, installations, model calls and deployment actions require their own authorized scope.",
-    "source": "Read docs/tasks-data.json and the relevant code before implementing a task. JSON is the authoritative roadmap; tasks-data.mjs is generated for static public pages by Python. Completed, deferred, planned, superseded, not-done and design-only states remain distinct. Tasks 213-221 are superseded by 223-227; 222-226 are scoped source checkpoints. Task 227 remains planned until packaging, coverage accounting and Node retirement pass. Tasks 204-206 are explicitly not done; no Task 212 contract is inferred. Historical implementation notes do not certify current packaged or physical-device behavior.",
+    "source": "Read docs/tasks-data.json and the relevant code before implementing a task. JSON is the authoritative roadmap; tasks-data.mjs is generated for static public pages by Python. Completed, deferred, planned, superseded, not-done and design-only states remain distinct. Tasks 213-221 are superseded by 223-227; 222-226 are scoped source checkpoints. Task 227 records scoped packaging, coverage accounting and Node retirement evidence; do not infer physical/live-cloud completeness. Task 228 is a separate optional cloud endpoint contract. Tasks 204-206 are explicitly not done; no Task 212 contract is inferred. Historical implementation notes do not certify current packaged or physical-device behavior.",
     "sequence": "Resume preserved work; inspect git status and current checkpoint first. Use one reviewed task checkpoint at a time; do not start later behavior early or overwrite another AI's work.",
     "decisions": "Planned means proposed work. Record owner approval for unresolved product/architecture/authority decisions before dependent code. Do not infer approval from a status change or generated text.",
     "developmentAcceptance": "For Tasks 175-211 and 213-219, AI agents perform testing, debugging, UI checks and evidence review without required human QA sign-off. Complete the scoped development contract only after reproducible checks pass; deterministic/fake evidence is distinct from real hardware/live-provider evidence and does not establish it. Record unavailable provider, clean-account, hardware and user-study coverage as unverified with impact. Such coverage does not block development completion unless an essential security or functional invariant remains unproven. Do not mark tasks complete by policy change alone. Dependencies use this scoped development acceptance. Preserve runtime owner consent, credentials, spending, signing, publishing and authority decisions. Task 190 remains design-only.",
@@ -6532,6 +6638,10 @@
     "handoff": "Record task number, base/current checkpoint, exact reviewed scope, touched files, commands/results/skips, remaining limitations/decisions, uncommitted work and next task. Different implementations must satisfy the same contract; identical generated code is not guaranteed."
   },
   "recommendedOrder": [
+    {
+      "number": 228,
+      "reason": "Current owner-authorized optional cloud endpoint contract; local default and runtime boundaries remain intact."
+    },
     {
       "number": 222,
       "reason": "Owner-directed stabilization then pure-Python strangler order; preserve usability and security boundaries."
@@ -6941,6 +7051,10 @@
     {
       "name": "Phase 227 - Prototype Alignment",
       "range": "227-227"
+    },
+    {
+      "name": "Phase 228 - Optional cloud endpoints",
+      "range": "228-228"
     }
   ]
 }

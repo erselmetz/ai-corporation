@@ -6,7 +6,7 @@ import argparse
 
 ROOT=Path(__file__).resolve().parents[1]/'docs'
 PAGES=['index.html','documentation.html','architecture.html','organization.html','how-it-works.html',
-       'integrations.html','security.html','roadmap.html','tasks.html','updates.html','about.html']
+       'integrations.html','free-pool.html','security.html','roadmap.html','tasks.html','updates.html','about.html']
 FILES={**{name:'text/html; charset=utf-8' for name in PAGES},'site.css':'text/css; charset=utf-8',
        'tasks-data.mjs':'text/javascript; charset=utf-8','tasks-data.json':'application/json; charset=utf-8',
        'tasks-page.js':'text/javascript; charset=utf-8','roadmap-status.js':'text/javascript; charset=utf-8',

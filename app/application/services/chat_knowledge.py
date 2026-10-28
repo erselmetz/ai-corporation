@@ -384,6 +384,8 @@ class ChatKnowledgeService:
                           vision=None, provider_called=True, answer_source="provider", handoff=None,
                           runtime=None, auto_route=None):
         self._application.owned_chat().authorize_owner(owner, conversation_id)
+        from app.integrations.openai_compatible import last_receipt
+        endpoint_receipt=last_receipt()
         if type(provider_called) is not bool or answer_source not in {"provider", "brain-empty-abstention", "shipped-instant-reply", "reviewed-exact-math"}:
             raise ValueError("Answer provenance is invalid")
         if retrieval and "enabled" not in retrieval:
@@ -410,6 +412,7 @@ class ChatKnowledgeService:
                                  if turn_route else "Coordinator selected by owner when this conversation started."),
                       "responder_agent_id": _safe_text(handoff.get("agent", {}).get("id"), 128) if handoff else None,
                       "responder_agent": _safe_text(handoff.get("agent", {}).get("name"), 128) if handoff else None},
+            "endpoint": endpoint_receipt or None,
             "handoff": None,
             "retrieval": retrieval or {"enabled": False, "reason": "Use my knowledge was off."},
             "cloud": {"provider_used": _safe_text(cloud_provider, 128) if cloud_provider else None,
@@ -464,6 +467,11 @@ class ChatKnowledgeService:
                 trace["steps"][-1]["status"] = "failed"
                 trace["steps"][-1]["source"] = "The selected Agent response did not complete; no further handoff was attempted."
                 trace["steps"][-1]["duration_ms"] = safe_handoff["answer_ms"]
+        if endpoint_receipt:
+            trace['route']['requested_model']=trace['route']['model']
+            trace['route']['model']=endpoint_receipt.get('served_model')
+            trace['route']['served_provider']=endpoint_receipt.get('served_provider')
+            trace['route']['source']='Cloud endpoint; served identity is router-reported or unknown.'
         if retrieval:
             trace["sources"] = retrieval.get("returned_chunks", retrieval.get("sources", []))
         with self._lock:

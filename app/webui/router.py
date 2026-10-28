@@ -654,7 +654,7 @@ def provider_model_management_page() -> HTMLResponse:
                   <nav class="setup-shortcuts" aria-label="Additional provider setup pages">
                     <h3>More setup</h3>
                     <a href="/ui/local-models">Local models</a>
-                    <a href="/ui/provider-connections">Provider connections</a>
+                    <a href="/ui/provider-connections">Provider connections</a> <a href="/ui/provider-connections#free-pool">Add Free pool (experimental)</a>
                     <a href="/ui/online-provider">Gemini online setup</a>
                     <a href="/ui/assignment-policy">Assignment recommendations</a>
                   </nav>
@@ -1028,7 +1028,7 @@ def coordinator_chat_page():
       <div class="chat-examples"><button type="button" data-chat-example="Explain a topic simply">Explain a topic simply</button><button type="button" data-chat-example="Help me plan a project">Help me plan a project</button><button type="button" data-chat-example="Review a piece of code">Review a piece of code</button></div>
     </section>
     <section id="chat-history" aria-label="Conversation messages" aria-live="polite"></section>
-    <div id="cloud-consent-panel" class="chat-consent-inline" hidden><p id="workspace-cloud-brief" hidden></p><label><input id="cloud-consent" type="checkbox"> I consent to send this message and the selected context shown above to Google Gemini for this reply only.</label></div>
+    <div id="cloud-consent-panel" class="chat-consent-inline" hidden><p id="workspace-cloud-brief" hidden></p><label><input id="cloud-consent" type="checkbox"> I consent to send this message and selected context to the selected cloud provider for this reply only. With a router, my prompt may be sent to any enabled upstream provider.</label></div>
     <div class="chat-compose-row"><details id="chat-settings" class="chat-settings-popover"><summary aria-label="Add image, camera, screen capture, or knowledge">&#43;</summary><div class="chat-settings-content">
       <details id="workspace-brief-panel" hidden><summary>Project brief</summary><p>Saved locally for this project's chats. It is reference text, not permission to act. Cloud replies require a fresh review and consent.</p><label for="workspace-brief">Project instructions and context</label><textarea id="workspace-brief" maxlength="2000" rows="4"></textarea><button id="workspace-brief-save" type="button">Save project brief</button></details>
       <button id="chat-add-image-action" type="button">Add image <span>Attach an image for this reply.</span></button>
@@ -1403,7 +1403,7 @@ def local_online_provider_page():
     connection check; unsupported formats are rejected before any provider call. To rotate a
     connected key, disconnect and erase it first, then enter and explicitly reconnect the new key.
     Per-turn cloud consent and the request limits below remain in force.</p>
-    <label for="gemini-key">Restricted Gemini API key</label><input id="gemini-key" type="password" autocomplete="off" maxlength="4096">
+    <label for="gemini-key">Provider API key (kept in memory)</label><input id="gemini-key" type="password" autocomplete="off" maxlength="4096">
     <button id="gemini-discover" type="button">Verify key and list models</button>
     <p id="gemini-state" role="status" aria-live="polite"></p><p id="gemini-usage"></p>
     <label for="gemini-agent">Agent</label><select id="gemini-agent"></select>
@@ -1547,18 +1547,25 @@ def provider_connections_page():
     not a dollar ceiling. Set account billing limits outside this app. Hardware feasibility remains
     UNKNOWN; request slots limit software concurrency only.</p>
     <div class="ui-form"><label for="connection-type">Provider type</label>
-    <select id="connection-type"><option value="ollama">Local Ollama</option><option value="gemini">Google Gemini</option></select>
+    <select id="connection-type"><option value="ollama">Local Ollama</option><option value="gemini">Google Gemini</option><option value="openai-compatible">OpenAI-compatible endpoint</option><option value="free-pool">Free pool (FreeLLMAPI, experimental)</option></select>
     <label for="connection-id">Connection ID</label><input id="connection-id" maxlength="48" autocomplete="off">
     <label for="connection-name">Display name</label><input id="connection-name" maxlength="256" autocomplete="off">
-    <div id="connection-url-field"><label for="connection-url">Loopback Ollama URL</label>
+    <div id="connection-url-field"><label for="connection-url">Endpoint base URL (loopback by default)</label>
     <input id="connection-url" value="http://127.0.0.1:11434" maxlength="2048" autocomplete="off"></div>
-    <div id="connection-key-field" hidden><label for="connection-key">Restricted Gemini API key</label>
+    <div id="connection-key-field" hidden><label for="connection-key">Provider API key (kept in memory)</label>
     <input id="connection-key" type="password" maxlength="4096" autocomplete="off"></div>
     <label for="connection-slots">In-flight request slots</label>
     <input id="connection-slots" type="number" min="1" max="16" value="1">
-    <button id="connection-add" type="button">Add and verify connection</button></div>
+    <div id="endpoint-options" hidden><p>Cloud: your prompt may be sent to any provider enabled in that router. Optional and experimental; never the default.</p>
+<ol><li>Install FreeLLMAPI separately from its <a href="https://github.com/tashfeenahmed/freellmapi/releases" target="_blank" rel="noopener noreferrer">official GitHub release</a> and verify the download. This app installs nothing.</li><li>Start the router, configure its upstream providers, terms and billing limits, then enter its loopback /v1 URL and key.</li><li>Test sends only Hi with a one-token limit after confirmation. Enable turns only when ready; every turn needs its exact outbound preview approved.</li></ol>
+<label class="endpoint-privacy"><input id="endpoint-enabled" type="checkbox">Enable owner-approved cloud turns (off by default)</label>
+<label class="endpoint-privacy"><input id="endpoint-brain" type="checkbox">Allow Brain context (off by default; exact preview still required)</label>
+<p>Settings and keys last for this app run. Five generation calls per connection including Tests; 32 KB prompt cap, 1,024-token reply cap. Costs and router retries are unknown. Non-loopback URLs require explicit confirmation and HTTPS.</p></div>
+<button id="connection-add" type="button">Add and verify connection</button></div>
     <p id="connection-state" role="status" aria-live="polite"></p>
     <h2>Configured connections</h2><ul id="connection-list"></ul>
+<button id="endpoint-test" type="button" hidden>Test endpoint (one-token cloud request)</button>
+<button id="endpoint-save" type="button" hidden>Apply cloud privacy settings to selected endpoint</button>
     <div class="ui-form"><label for="assignment-provider">Connection</label><select id="assignment-provider"></select>
     <button id="connection-refresh" type="button">Refresh catalog and status</button>
     <button id="connection-remove" type="button">Remove connection</button>

@@ -1,3 +1,5 @@
+from app.integrations.openai_compatible import EndpointError
+from app.application.services.native_runtime import NativeRuntimeStopped
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
@@ -220,7 +222,7 @@ class CorporationChatService:
                 raise ValueError("Provider returned no reply")
             if len(reply.encode("utf-8")) > 8192:
                 raise ValueError("Provider reply exceeds byte limit")
-        except ProviderCapacityError:
+        except (ProviderCapacityError,EndpointError,NativeRuntimeStopped):
             self._chat.transition_message(conversation_id, user_id, MessageStatus.FAILED)
             self._remember_status(conversation_id, user_id, MessageStatus.FAILED, strict=False)
             raise
@@ -388,6 +390,8 @@ class CorporationChatService:
         except BaseException as error:
             self._chat.transition_message(conversation_id,user_id,MessageStatus.FAILED)
             self._remember_status(conversation_id,user_id,MessageStatus.FAILED,strict=False)
+            from app.integrations.openai_compatible import EndpointError
+            if isinstance(error,(EndpointError,NativeRuntimeStopped)):raise
             if isinstance(error,Exception):raise RuntimeError("Corporation chat response stream failed") from None
             raise
 

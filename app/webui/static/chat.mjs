@@ -18,7 +18,7 @@ export function voiceTranscriptSourceLabel(source) {
 
 function isGeminiProvider(providerId) {
   return typeof providerId === "string"
-    && (providerId === "gemini" || providerId.startsWith("gemini-"));
+    && (providerId === "gemini" || providerId.startsWith("gemini-") || providerId.startsWith("compatible-"));
 }
 
 export function mountChat({
@@ -282,13 +282,16 @@ export function mountChat({
     const response = await fetchImpl(path, options);
     const payload = await response.json();
     if (!response.ok) {
+      if(payload.detail?.kind==="outbound_preview") {
+        const error=new Error("Review this exact outbound cloud prompt first.");error.outboundPreview=payload.detail;throw error;
+      }
       if (response.status === 401) throw new Error("Sign in through Local sign-in to continue.");
       if (response.status === 403) throw new Error("This session does not have permission for that chat action.");
       if (response.status === 502) throw new Error("Reply failed. Check that the configured service and model are available. No automatic retry occurred.");
       if (response.status === 429 && String(payload.detail || "").includes("request-slot capacity")) {
         throw new Error("The shared model slot stayed busy and timed out before admission. No model request was sent; retry after the current Agent finishes.");
       }
-      throw new Error(typeof payload.detail === "string" ? payload.detail : "Chat request failed.");
+      throw new Error(typeof payload.detail === "string" ? payload.detail : payload.detail?.message || "Chat request failed.");
     }
     return payload;
   }
@@ -558,6 +561,7 @@ export function mountChat({
     const panel = documentRef.createElement("details");
     panel.className = "chat-answer-trace";
     const summary = documentRef.createElement("summary"); summary.textContent = "How I answered"; panel.append(summary);
+    if(trace.endpoint) { const serving=documentRef.createElement("p");serving.textContent=`Router-reported: ${trace.endpoint.served_provider || "unknown provider"} / ${trace.endpoint.served_model || "unknown model"}; ${trace.endpoint.latency_ms} ms; app retries: ${trace.endpoint.retries}. Upstream retries are unknown.`;panel.append(serving); }
     const route = trace.route || {};
     const routeText = documentRef.createElement("p");
     routeText.textContent = route.agent
@@ -680,7 +684,7 @@ export function mountChat({
     }
     if (requiresCloudConsent && result.items.length) {
       const cloud = documentRef.createElement("p");
-      cloud.textContent = "This exact excerpt will be sent to Google Gemini only if you also check the per-turn cloud consent and press Send.";
+      cloud.textContent = "These selected excerpts remain private until you approve the cloud transfer and all required provider/context previews. With a router, any enabled upstream provider may receive them.";
       knowledgePreviewResult.append(cloud);
     }
   }
@@ -869,7 +873,7 @@ export function mountChat({
       requiresCloudConsent = selectedRoute ? selectedRoute.kind === "cloud" : configuredCloudRoute;
       cloudPanel.hidden = !requiresCloudConsent;
       if (requiresCloudConsent) cloudPanel.hidden = false;
-    if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Check the separate per-turn Gemini cloud consent before continuing.");
+    if (requiresCloudConsent && !cloudConsent.checked) throw new Error("Check the separate per-turn cloud consent before continuing.");
       const imageIds = imageManager?.selectedIds() || [];
       const reviewedTools = [];
       if (calculatorEnabled.checked === true) {
@@ -963,7 +967,7 @@ export function mountChat({
           body.image_consent = true;
           body.include_local_ocr = imageManager.wantsLocalOcr();
         }
-        if (streamingSupported && !delegateForTurn && !selectedRoute && !imageIds.length && !capturePrompt && !reviewedTools.length) {
+        if (streamingSupported && !configuredCloudRoute && !delegateForTurn && !selectedRoute && !imageIds.length && !capturePrompt && !reviewedTools.length) {
           const outcome = await receiveStream(identifier, body, controller.signal);
           if (outcome.complete) {
             input.value = "";
@@ -992,7 +996,26 @@ export function mountChat({
           }
         } else {
           state.textContent = "Pending: waiting for the configured model. Closing this page does not cancel its request.";
-          const result = await request(`${base}/${encodeURIComponent(identifier)}/messages`, body, controller.signal);
+          let result;
+          try { result=await request(`${base}/${encodeURIComponent(identifier)}/messages`,body,controller.signal); }
+          catch(error) {
+            if(!error.outboundPreview)throw error;
+            const preview=error.outboundPreview;
+            state.textContent="Review the exact outbound preview. No cloud generation for this turn has been sent.";
+            typing.textContent="Waiting for your cloud approval; no cloud generation has been sent for this turn.";
+            const panel=documentRef.createElement("section");panel.setAttribute("role","region");panel.setAttribute("aria-label","Exact outbound cloud preview");
+            const title=documentRef.createElement("p");title.textContent=`${preview.warning} Destination: ${preview.destination}. Requested model: ${preview.requested_model}. This includes the selected history/context below; obvious tokens were redacted. Costs and upstream retries are unknown.`;
+            const text=documentRef.createElement("textarea");text.readOnly=true;text.value=preview.messages.map(item=>({system:"System instructions",user:"Owner message",assistant:"Previous assistant reply"}[item.role] || "Message")+":\n"+item.content).join("\n\n");text.setAttribute("aria-label","Redacted outbound messages");text.rows=12;
+            const approve=documentRef.createElement("button");approve.textContent="Approve this cloud turn";
+            const cancel=documentRef.createElement("button");cancel.textContent="Cancel cloud turn";
+            panel.append(title,text,approve,cancel);history.append(panel);
+            const allowed=await new Promise(resolve=>{approve.addEventListener("click",()=>resolve(true),{once:true});cancel.addEventListener("click",()=>resolve(false),{once:true});});
+            panel.remove();
+            if(!allowed){state.textContent="Cloud turn cancelled. Nothing was sent to the cloud for this turn.";return;}
+            state.textContent="Sending this one approved cloud turn; the local default is unchanged.";
+            typing.textContent="Waiting for the approved cloud reply…";
+            result=await request(`${base}/${encodeURIComponent(identifier)}/messages`,{...body,cloud_consent:true,outbound_digest:preview.digest},controller.signal);
+          }
           input.value = "";
           if (delegateForTurn) delegateOnce.checked = false;
           clearVoiceProvenance();
@@ -1168,7 +1191,7 @@ export function mountChat({
       const text = input.value;
       if (!text.trim() || new TextEncoder().encode(text).length > 8192) throw new Error("Enter a message of at most 8192 UTF-8 bytes first.");
       resetRouteAlternatives("Checking the current prompt; old suggestions were cleared.", true);
-      routeState.textContent = "Checking local installed-model evidence and configured Gemini catalog; no model will receive this prompt.";
+      routeState.textContent = "Checking local installed-model evidence and configured cloud catalogs; no model will receive this prompt.";
       const result = await request(`${base}/${encodeURIComponent(selected)}/route-suggestions`, { text });
       if (!["simple", "complex", "unknown"].includes(result.complexity) || !Array.isArray(result.candidates)) throw new Error("Invalid route-suggestion response.");
       routeAlternatives.clear();
@@ -1181,7 +1204,7 @@ export function mountChat({
         routeAlternatives.set(key, item);
         option(routeSelect, key, `${item.provider_id} / ${item.model_id} — ${item.destination}`);
       }
-      routeSelect.disabled = result.complexity !== "complex" || routeAlternatives.size === 0;
+      routeSelect.disabled = (result.complexity !== "complex" && !result.candidates.some(item => String(item.provider_id).startsWith("compatible-"))) || routeAlternatives.size === 0;
       routeSelect.value = "";
       requiresCloudConsent = configuredCloudRoute;
       cloudPanel.hidden = !requiresCloudConsent;

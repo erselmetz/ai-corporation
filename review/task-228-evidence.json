@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-28",
+  "base_commit": "4c240fdefe93c25b020976c646d7a7f3f12ce523",
+  "checkpoint_tag": "task-228-openai-compatible-provider",
+  "scope": "Local source/fake-server/Qt/owned-browser verification; not real FreeLLMAPI or packaged verification.",
+  "environment": {
+    "python": "3.14.7",
+    "platform": "Windows",
+    "pyside6": "6.12.0",
+    "httpx": "0.28.1"
+  },
+  "full_suite": {
+    "command": ".venv/Scripts/python.exe -m pytest",
+    "passed": 2051,
+    "skipped": 3,
+    "warnings": 4,
+    "seconds": 634.48,
+    "collected": 2054,
+    "log": "task228-review/full-python-release-check.log",
+    "skip_reason": "Existing Windows symbolic-link creation privilege unavailable in two documentation tests and one sandbox source test."
+  },
+  "final_affected_checks": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/test_openai_compatible.py tests/test_qt_cloud_review.py tests/test_openai_compatible_browser.py tests/test_chromium_startup.py tests/test_scoped_browser_cdp.py tests/test_offline_browser.py tests/test_browser_contracts.py tests/test_public_docs.py tests/test_public_docs_browser.py tests/test_docs_integrity.py -q",
+    "passed": 381,
+    "warnings": 1,
+    "seconds": 68.98,
+    "log": "task228-review/final-acceptance-ui-reviewed.log",
+    "scope": "Includes the final empty one-token probe case, generic selected-model Test and final privacy/destination wording/layout refinements. Counts overlap the full run; do not add them together."
+  },
+  "prior_runs": [
+    {
+      "log": "task228-review/full-python.log",
+      "outcome": "Stopped at collection: preserved historical QA test copies were discovered. Fixed canonical testpaths; backups preserved."
+    },
+    {
+      "log": "task228-review/full-python-canonical.log",
+      "passed": 2037,
+      "skipped": 3,
+      "warnings": 4,
+      "seconds": 590.29,
+      "scope": "Earlier source before final admission/Stop hardening."
+    },
+    {
+      "log": "task228-review/full-python-final.log",
+      "passed": 2038,
+      "failed": 1,
+      "skipped": 3,
+      "warnings": 4,
+      "seconds": 649.03,
+      "failure": "Transient Windows PermissionError while Chromium was writing DevToolsActivePort; fixed with bounded readiness polling, not a skip or timeout increase."
+    }
+  ],
+  "real_router": {
+    "address": "127.0.0.1:3001",
+    "real_checks": "UNVERIFIED",
+    "reason": "No TCP listener at the preset address; real router/upstream checks UNVERIFIED. No installation or model download attempted.",
+    "automatic_install": false,
+    "paid_calls": 0,
+    "tcp_listener": false
+  },
+  "source_coverage": {
+    "new_provider_cases": 40,
+    "new_qt_cases": 4,
+    "new_actual_browser_journey": 1,
+    "startup_race_regressions": 3,
+    "legacy_browser_contracts_preserved": 284,
+    "existing_qt_baseline_images": 18,
+    "baseline_replaced": false
+  },
+  "screenshots": [
+    {
+      "path": "task228-review/browser/endpoint-setup.png",
+      "sha256": "15d2aa450710aa58f73c18ba551d0fe55ef9bbe226d4f5c0c0a35f17b6f9f83e",
+      "bytes": 550339
+    },
+    {
+      "path": "task228-review/browser/endpoint-preview.png",
+      "sha256": "bb72cd4e873b5428fb54236b7ed6e2d5d62041e6cba2c39081b29974339e5c70",
+      "bytes": 182228
+    },
+    {
+      "path": "task228-review/browser/endpoint-answer.png",
+      "sha256": "3871a9d7708d3a2de4413df46d540a12d7c7f92c9e90c466a84a00a0e6aa3255",
+      "bytes": 274874
+    }
+  ],
+  "no_node_dependency_added": true,
+  "router_installed_or_bundled": false,
+  "real_cloud_generation_calls": 0,
+  "paid_calls": 0,
+  "packaged_task_228": "UNVERIFIED; no new build/installer produced",
+  "pushed": false,
+  "deployed": false,
+  "limitations": [
+    "Experimental preset; real router/upstream quality, costs, internal retries, terms and availability unverified.",
+    "SSE text is bounded and validated before sanitized display chunks, not unbuffered token display.",
+    "Five generation attempts including Tests per connection/run is not an invoice cap.",
+    "Connection keys/settings in memory only; outbound sanitization does not erase pre-existing local data.",
+    "No cloud native Agent loop, Employee/workflow generation, media or embedding capability added."
+  ]
+}

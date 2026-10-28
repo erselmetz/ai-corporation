@@ -19,6 +19,15 @@ its existing configuration and per-turn cloud consent. An existing owner passwor
 lock remains required. Settings and Advanced are separate singleton windows;
 Advanced opens the existing Python pages through a one-use local session handoff.
 
+Optional OpenAI-compatible text endpoints, including **Free pool (FreeLLMAPI)**,
+are configured in Provider connections. They are cloud destinations even on
+loopback, off by default, and require an exact redacted outbound preview and fresh
+approval. The native “Ask the free pool?” action is one turn only and keeps the
+local model selection. No router is bundled or installed. See the
+[separate-install guide and limits](docs/free-pool.html). Connection settings and
+keys last for this process only; call/token allowances do not cap an external
+invoice. Real router quality and a new packaged Task 228 build remain unverified.
+
 The Brain shares one native projected-3D/list widget between its embedded and
 full-window views. File intake and private context use explicit previews. Local
 chat and the bounded Agent loop keep backend permissions, exact-action approvals,

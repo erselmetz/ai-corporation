@@ -151,6 +151,13 @@ class ProviderRequestGate:
 
 
 class _ConnectionProvider(AIProvider):
+    @property
+    def requires_outbound_preview(self):
+        return getattr(self._provider,'requires_outbound_preview',False) is True
+
+    def preview_outbound(self,*args,**kwargs):
+        return self._provider.preview_outbound(*args,**kwargs)
+
     def __init__(self, provider_id: str, provider: AIProvider, gate: ProviderRequestGate):
         self._provider_id = provider_id
         self._provider = provider
@@ -379,6 +386,38 @@ class ProviderConnectionsService:
             )
         return self.get(provider_id)
 
+    def add_compatible(self,connection_id,name,base_url,api_key='',*,remote_confirmed=False,enabled=False,allow_brain_context=False,preset=False):
+        from app.integrations.openai_compatible import OpenAICompatibleProvider
+        self._validate_name(name)
+        provider_id=self._provider_id('compatible',connection_id)
+        with self._lock:
+            self._ensure_available_id(provider_id,1)
+            provider=OpenAICompatibleProvider(base_url,api_key,remote_confirmed=remote_confirmed,enabled=enabled,allow_brain_context=allow_brain_context,preset=preset)
+            self._register(provider_id,provider,1)
+            self._connections[provider_id]=_Connection(provider_id,name.strip(),'openai-compatible',provider,1)
+        return self.get(provider_id)
+
+    def test_compatible(self,provider_id,*,consent=False,model_id=None):
+        from app.integrations.openai_compatible import OpenAICompatibleProvider
+        with self._lock:
+            record=self._connections.get(provider_id)
+            if record is None or not isinstance(record.provider,OpenAICompatibleProvider):raise ValueError('Choose an OpenAI-compatible connection')
+        with self._gate.reserve(provider_id,'connection-test'):
+            result=record.provider.test_connection(consent=consent,model_id=model_id,reserve=lambda model:self._application.model_request(provider_id,model,wait_for_slot=False))
+        with self._lock:
+            if self._connections.get(provider_id) is not record:raise ProviderConnectionConflict('Connection changed during test')
+            models=record.provider.models+ (('auto',) if record.provider.preset and record.provider.models and 'auto' not in record.provider.models else ())
+            self._connections[provider_id]=replace(record,models=models,state='available' if result['chat_test'] else 'unavailable',checked_at=datetime.now(timezone.utc))
+        return {**self.get(provider_id),'test':result}
+
+    def configure_compatible(self,provider_id,*,enabled=False,allow_brain_context=False):
+        with self._lock:
+            record=self._connections.get(provider_id)
+            if record is None or record.provider_type!='openai-compatible':raise ValueError('Choose an OpenAI-compatible connection')
+            with self._gate.model_operation(provider_id,'privacy-settings'):
+                record.provider.configure(enabled,allow_brain_context)
+        return self.get(provider_id)
+
     def list(self) -> tuple[dict, ...]:
         with self._lock:
             return tuple(self._status(record) for record in self._connections.values())
@@ -440,6 +479,7 @@ class ProviderConnectionsService:
             "expires_in_seconds": expires_in_seconds,
             "request_capacity": self._gate.capacity(record.id),
             "hardware_feasibility": "unknown",
+            **({'endpoint':record.provider.settings()} if record.provider_type=='openai-compatible' else {}),
         }
 
     def refresh(self, provider_id: str) -> dict:
@@ -447,6 +487,8 @@ class ProviderConnectionsService:
             record = self._connections.get(provider_id)
             if record is None:
                 raise ProviderConnectionUnavailable("Provider connection is not configured")
+        if record.provider_type=='openai-compatible':
+            raise ProviderConnectionConflict('Use Test and approve its fixed one-token cloud request explicitly')
         if record.manager is not None:
             try:
                 connection = record.manager.refresh()
@@ -583,7 +625,10 @@ class ProviderConnectionsService:
         expected_provider_id: str,
         expected_model_id: str,
     ):
-        status = self.refresh(provider_id)
+        current=self.get(provider_id)
+        status = current if current['provider_type']=='openai-compatible' else self.refresh(provider_id)
+        if current['provider_type']=='openai-compatible' and not current['endpoint']['enabled']:
+            raise ProviderConnectionConflict('Enable this cloud endpoint explicitly before assignment')
         if status["state"] != "available":
             raise ProviderConnectionConflict(
                 "Provider catalog is not freshly available; refresh and confirm a supported model"
@@ -629,4 +674,5 @@ class ProviderConnectionsService:
                     self._gate.configure(provider_id, record.request_slots)
                     raise ProviderConnectionConflict(str(error)) from None
             self._application.remove_local_provider(provider_id)
+            if record.provider_type=='openai-compatible':record.provider.erase()
             del self._connections[provider_id]

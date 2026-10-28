@@ -1253,3 +1253,16 @@ body.has-shared-navigation .layout {
   overflow: auto;
   overflow-wrap: anywhere;
 }
+
+/* Keep cloud privacy choices aligned with their own labels. */
+.ui-form .endpoint-privacy { display: flex; align-items: center; gap: .5rem; }
+.ui-form .endpoint-privacy input { width: auto; flex: 0 0 auto; }
+
+[aria-label="Exact outbound cloud preview"] textarea {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-block-size: 16rem;
+  box-sizing: border-box;
+  resize: vertical;
+}

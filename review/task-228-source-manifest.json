@@ -1,0 +1,155 @@
+{
+  "task": 228,
+  "base_commit": "4c240fdefe93c25b020976c646d7a7f3f12ce523",
+  "normalization": "UTF-8 text CRLF to LF; binary unchanged; this manifest excludes itself",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256_lf_normalized": "5dceeeadd869994954fb14a57e6ada36c6d094a98a2ac7ef41f37a31aaee8713"
+    },
+    {
+      "path": "app/api/chat.py",
+      "sha256_lf_normalized": "8379bf147bdbe5e203b707aa68aa946bcf87dac31da7f6d08a92943540eeadb6"
+    },
+    {
+      "path": "app/api/provider_connections.py",
+      "sha256_lf_normalized": "ab63afac052afc09d6a759ac94a99f4f280f56bc7cdbf919579767d6a1caa6d4"
+    },
+    {
+      "path": "app/application/services/chat_knowledge.py",
+      "sha256_lf_normalized": "3bda9afb7bdd807f284107887dbac8d400fa8ad0224d23864bc47328d99faafe"
+    },
+    {
+      "path": "app/application/services/corporation.py",
+      "sha256_lf_normalized": "d2a7b8f7c967249e4ad3aacde17a732604dd739b99b683819c307a7b9b7a4f38"
+    },
+    {
+      "path": "app/application/services/corporation_chat.py",
+      "sha256_lf_normalized": "fa6dbb0dcaf95391beb746a6a6a78edec4ad6f31414dbe864081b63019968604"
+    },
+    {
+      "path": "app/application/services/owned_chat.py",
+      "sha256_lf_normalized": "5141cd90394f0501bea98e21512c72914a378dcba748fbb3f3a3f6c900a3a782"
+    },
+    {
+      "path": "app/application/services/provider_connections.py",
+      "sha256_lf_normalized": "84e99617131499cac855841ff7a8b3455630e096eb076ecaec5b18a110cbb7eb"
+    },
+    {
+      "path": "app/integrations/chromium_startup.py",
+      "sha256_lf_normalized": "3468bbb4575ea71181e200bd89ada97b1ade308a451377201e7f3cee18f704d0"
+    },
+    {
+      "path": "app/integrations/offline_chromium_transport.py",
+      "sha256_lf_normalized": "7352ecb67ba31a6767dc5a6246811db1b400cca181656872dc078ea82c3e173c"
+    },
+    {
+      "path": "app/integrations/openai_compatible.py",
+      "sha256_lf_normalized": "afc964b1a41f6bc32464cfa0c62163c2712b047dfc323c078d0c0997b8df389f"
+    },
+    {
+      "path": "app/integrations/scoped_chromium_transport.py",
+      "sha256_lf_normalized": "5ef727afc10c011aa873299f9cf493b6a55db00ea91017d46ec341823b7c0581"
+    },
+    {
+      "path": "app/qt_desktop/cloud_review.py",
+      "sha256_lf_normalized": "f29c8d1da8c3a639702b1a8d43b74b3c0b731c6fb4eb499c80af205b28771864"
+    },
+    {
+      "path": "app/qt_desktop/shell.py",
+      "sha256_lf_normalized": "92d83838f130b937581793b29f8f125cfbb4bdbef6fd09b6121bb8701d8346de"
+    },
+    {
+      "path": "app/qt_desktop/transport.py",
+      "sha256_lf_normalized": "611afc907814ebb22c04d1514bf53531d61c1c51cfe307ae290957248ca8da33"
+    },
+    {
+      "path": "app/webui/router.py",
+      "sha256_lf_normalized": "2035bbf5394c1dee681ab7cf4c2cb522103860c690fddd93eef8dc7e3ad98eaa"
+    },
+    {
+      "path": "app/webui/static/chat.mjs",
+      "sha256_lf_normalized": "5c362c76fbd27da67f7aa598ce6bbe2c4ac5c05e579d0d7c7f0e2403ad9acc84"
+    },
+    {
+      "path": "app/webui/static/provider-connections.mjs",
+      "sha256_lf_normalized": "11faada12da417557cdaa26ce15deffa95c8ad1435dcb03e0286dec8a3ae5218"
+    },
+    {
+      "path": "app/webui/static/style.css",
+      "sha256_lf_normalized": "827372643bdf32b8b69c8bba0a719a06d8d1edfb6f0ec3aeeeaa8dbe1c0c7968"
+    },
+    {
+      "path": "corporation_updates.json",
+      "sha256_lf_normalized": "c7b8af43f8909c0492e27a8a4254cfa0e14b998e04749eace0a9d720ee39d996"
+    },
+    {
+      "path": "docs/free-pool.html",
+      "sha256_lf_normalized": "134ad4ca475ce8fdf757a42a37043aa8fca28be4df5399dfb3215325a321edfc"
+    },
+    {
+      "path": "docs/implementation-history.md",
+      "sha256_lf_normalized": "a24f225ff610ed4a522a8c6678d8708f8c39963e36eaacfe78ef909dfab12f8d"
+    },
+    {
+      "path": "docs/integrations.html",
+      "sha256_lf_normalized": "07d5929cd73a5ca70e10df3e52eddeb2066d0417cbf6f6cb33552a50401cf17f"
+    },
+    {
+      "path": "docs/tasks-data.json",
+      "sha256_lf_normalized": "a2ffaa207c92f946380a120a17dc032368784d09fef6c9702074a2993651d453"
+    },
+    {
+      "path": "docs/tasks-data.mjs",
+      "sha256_lf_normalized": "262c246acc24e5788f605b64cac96d48d06c3c90d0cc5254a2173533cf4e64f1"
+    },
+    {
+      "path": "docs/vercel.json",
+      "sha256_lf_normalized": "fbe4bc4c5dbb6abce0a5e48cf199c48fb8772c4a5140d44dceca44c76245f350"
+    },
+    {
+      "path": "pytest.ini",
+      "sha256_lf_normalized": "c809c969ec7e11b9ff37784e9c6fcc0b7c5148d168e18b05aed797e03fbd6ead"
+    },
+    {
+      "path": "review/task-228-evidence.json",
+      "sha256_lf_normalized": "5b9ca5b361290bd3d37008045819c33c3fa7d394b41e1bf36c8bf8f683036060"
+    },
+    {
+      "path": "review/task-228-openai-compatible-provider.md",
+      "sha256_lf_normalized": "025f27dba5dddd016dabd61794bfae216d430f9ea1bbbc43bf7402ab7e6c3eb2"
+    },
+    {
+      "path": "review/task-228-provider-audit.md",
+      "sha256_lf_normalized": "631f886b26629506ca97d46784e0bc105660b5b86191e0cd325d479dad431651"
+    },
+    {
+      "path": "tests/test_chromium_startup.py",
+      "sha256_lf_normalized": "bec468e0d60953ad2e8feca037c704852acf72e16c20a26521349c7b29770652"
+    },
+    {
+      "path": "tests/test_openai_compatible.py",
+      "sha256_lf_normalized": "e781335c8ce71641e73a7c41cb1dfbb9fffeac6135a7883b968d584054c652ea"
+    },
+    {
+      "path": "tests/test_openai_compatible_browser.py",
+      "sha256_lf_normalized": "69e6f69ba8563961443a97a2eb4a35c7d498b204d74285065946d9c226e95fba"
+    },
+    {
+      "path": "tests/test_public_docs_browser.py",
+      "sha256_lf_normalized": "869aed06483513754e703e8aacd8639af45cdd4368af4a5dc6912efc19f6eaba"
+    },
+    {
+      "path": "tests/test_qt_cloud_review.py",
+      "sha256_lf_normalized": "fb26521254d4628619064e6b41fe4c148df68d245587445bf1d365e31fd38ffd"
+    },
+    {
+      "path": "tools/headless_browser.py",
+      "sha256_lf_normalized": "2ea8c774888bccd0ad12160680bca6396791d81d69f51a372d3aada6c129158e"
+    },
+    {
+      "path": "tools/serve_docs.py",
+      "sha256_lf_normalized": "20d0f61814607c1ee27f6fa330d54fdd697f0fede0806de8c05c74ad77438534"
+    }
+  ]
+}

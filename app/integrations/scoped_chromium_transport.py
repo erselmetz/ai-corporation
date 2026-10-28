@@ -6,6 +6,7 @@ Internal Python transport only; application services retain their own authorizat
 import json,os,subprocess,tempfile,time
 from pathlib import Path
 import httpx,websocket
+from .chromium_startup import wait_for_port
 
 
 def executable():
@@ -28,10 +29,7 @@ class Browser:
             stdout=self.log,stderr=self.log,creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
         try:
             end=self.operation_deadline;port_file=self.profile/'DevToolsActivePort'
-            while not port_file.exists():
-                if self.process.poll() is not None or time.monotonic()>end:raise RuntimeError('The isolated browser did not start its local test endpoint')
-                time.sleep(.05)
-            port=int(port_file.read_text().splitlines()[0]);assert 0<port<65536
+            port=wait_for_port(self.profile,self.process,end)
             with httpx.Client(base_url='http://127.0.0.1:'+str(port),trust_env=False,timeout=max(.01,end-time.monotonic())) as client:
                 response=client.put('/json/new?about:blank');response.raise_for_status();url=response.json()['webSocketDebuggerUrl']
             if not url.startswith('ws://127.0.0.1:'+str(port)+'/devtools/page/'):raise RuntimeError('Invalid renderer target')

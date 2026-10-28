@@ -1771,6 +1771,9 @@ class CorporationApplicationService:
     def provider_is_local(self, provider_id: str) -> bool:
         return getattr(self._orchestrator.providers.get(provider_id), "is_local", False) is True
 
+    def provider_requires_outbound_preview(self,provider_id: str) -> bool:
+        return getattr(self._orchestrator.providers.get(provider_id),'requires_outbound_preview',False) is True
+
     def provider_requires_explicit_cloud_consent(self, provider_id: str) -> bool:
         if provider_id == "gemini" or provider_id.startswith("gemini-"):
             return True

@@ -34,12 +34,19 @@ export function mountProviderConnections({
     const selected = connections.find(item => item.provider_id === connectionSelect.value);
     const slots = el("connection-slots");
     const gemini = kind.value === "gemini";
+    const compatible = ["openai-compatible", "free-pool"].includes(kind.value) || selected?.provider_type==="openai-compatible";
+    if(el("endpoint-options")) el("endpoint-options").hidden=!compatible;
+    for(const id of ["endpoint-test","endpoint-save"]) if(el(id)) {
+      el(id).hidden=selected?.provider_type!=="openai-compatible";
+      el(id).disabled=busy || !canManage;
+    }
     el("connection-url-field").hidden = gemini;
-    el("connection-key-field").hidden = !gemini;
-    slots.disabled = busy || gemini;
-    if (gemini) slots.value = "1";
+    el("connection-key-field").hidden = !gemini && !compatible;
+    slots.disabled = busy || gemini || compatible;
+    if (gemini || compatible) slots.value = "1";
+    el("connection-add").textContent=["openai-compatible","free-pool"].includes(kind.value) ? "Add cloud connection (Test separately)" : "Add and verify connection";
     el("connection-add").disabled = busy || !canManage;
-    el("connection-refresh").disabled = busy || !selected || !canManage;
+    el("connection-refresh").disabled = busy || !selected || !canManage || selected?.provider_type==="openai-compatible";
     el("connection-remove").disabled = busy || !selected || !canManage;
     connectionSelect.disabled = busy || !connections.length;
     modelSelect.disabled = busy || !selected || !selected.models.length;
@@ -73,7 +80,7 @@ export function mountProviderConnections({
     if (!response.ok) {
       if (response.status === 401) throw new Error("Sign in through local owner access first.");
       if (response.status === 403) throw new Error("This session lacks provider-connection permission.");
-      throw new Error(typeof data.detail === "string" ? data.detail : "Provider connection request failed.");
+      throw new Error(typeof data.detail === "string" ? data.detail : data.detail?.message || "Provider connection request failed.");
     }
     return data;
   }
@@ -102,6 +109,10 @@ export function mountProviderConnections({
 
   function renderModels() {
     const current = connections.find(item => item.provider_id === connectionSelect.value);
+    if(current?.endpoint) {
+      if(el("endpoint-enabled"))el("endpoint-enabled").checked=current.endpoint.enabled===true;
+      if(el("endpoint-brain"))el("endpoint-brain").checked=current.endpoint.allow_brain_context===true;
+    }
     runtimeEvidence = null;
     el("model-runtime-state").textContent = "";
     el("model-runtime-evidence").textContent = "";
@@ -114,6 +125,7 @@ export function mountProviderConnections({
       : connections.length
         ? "Choose a provider connection."
         : "No additional provider connections are configured.";
+    if(current?.endpoint)state.textContent=`${current.name}: ${current.endpoint.state_label}; cloud turns ${current.endpoint.enabled ? "enabled" : "off"}; Brain context ${current.endpoint.allow_brain_context ? "allowed with preview" : "off"}.`;
     controls();
   }
 
@@ -183,9 +195,17 @@ export function mountProviderConnections({
         name: el("connection-name").value,
         request_slots: Number(el("connection-slots").value),
       };
-      state.textContent = "Verifying the explicitly selected provider connection…";
+      state.textContent = ["openai-compatible","free-pool"].includes(kind.value) ? "Saving configuration in memory; no network call is made by Add." : "Verifying the explicitly selected provider connection…";
       try {
-        if (kind.value === "gemini") {
+        if (["openai-compatible","free-pool"].includes(kind.value)) {
+          const base=url.value;
+          let remote=false;
+          try { remote=!["127.0.0.1","localhost","[::1]"].includes(new URL(base).hostname); }
+          catch { throw new Error("Enter a valid endpoint URL ending in /v1."); }
+          if(remote && !confirmImpl(`Send future approved requests and this key to ${base}? Non-loopback URLs require HTTPS; HTTP can expose prompts and keys. Your prompt may be sent to any provider enabled in that router.`)) {state.textContent="Remote connection cancelled. No endpoint request was sent.";return;}
+          await request("/api/local/provider-connections/openai-compatible",{method:"POST",body:{id:common.id,name:common.name,base_url:base,api_key:key.value,
+            remote_confirmed:remote,preset:kind.value==="free-pool",enabled:el("endpoint-enabled")?.checked===true,allow_brain_context:el("endpoint-brain")?.checked===true}});
+        } else if (kind.value === "gemini") {
           await request("/api/local/provider-connections/gemini", {
             method: "POST",
             body: { ...common, api_key: key.value },
@@ -275,7 +295,9 @@ export function mountProviderConnections({
       const selected = connections.find(item => item.provider_id === connectionSelect.value);
       if (!agent || !selected || !modelSelect.value) return;
       const impact = await loadAgentAssignmentImpact(agent.id, fetchImpl);
-      const dataPrivacy = selected.provider_type === "gemini"
+      const dataPrivacy = selected.provider_type === "openai-compatible"
+        ? "Cloud: your prompt may be sent to any provider enabled in that router. Every turn requires an exact outbound preview and fresh approval."
+        : selected.provider_type === "gemini"
         ? "Future chat turns and recent history are sent to Google only after separate per-turn consent."
         : "Requests are sent only to the configured loopback Ollama service.";
       const preview = [
@@ -303,7 +325,28 @@ export function mountProviderConnections({
     });
   }
 
-  kind.addEventListener("change", controls);
+  kind.addEventListener("change", () => {
+    if(kind.value==="free-pool") {
+      url.value="http://127.0.0.1:3001/v1";
+      el("connection-name").value="Free pool (FreeLLMAPI)";
+      el("connection-id").value="free-pool";
+    }
+    controls();
+  });
+  el("endpoint-test")?.addEventListener("click",()=>run(async()=>{
+    const selected=connections.find(item=>item.provider_id===connectionSelect.value);
+    if(!selected || !confirmImpl("Test sends the fixed text Hi with a one-token limit. Your prompt may be sent to any provider enabled in that router. Its upstream costs and retries are unknown. Continue?"))return;
+    const body={consent:true};
+    if(!selected.endpoint.experimental && modelSelect.value)body.model_id=modelSelect.value;
+    const result=await request(`/api/local/provider-connections/${encodeURIComponent(selected.provider_id)}/test`,{method:"POST",body});
+    await refresh();state.textContent=result.test.state_label+". "+(result.test.message || "Test completed; served model is known only when the router reports it.");
+  }));
+  el("endpoint-save")?.addEventListener("click",()=>run(async()=>{
+    const selected=connections.find(item=>item.provider_id===connectionSelect.value);
+    if(!selected || !confirmImpl("Apply these cloud settings to "+selected.name+"? Every generation still requires exact preview approval."))return;
+    await request(`/api/local/provider-connections/${encodeURIComponent(selected.provider_id)}/privacy`,{method:"PATCH",body:{enabled:el("endpoint-enabled").checked,allow_brain_context:el("endpoint-brain").checked}});
+    await refresh();state.textContent="Cloud privacy settings saved for this app run.";
+  }));
   connectionSelect.addEventListener("change", renderModels);
   modelSelect.addEventListener("change", controls);
   agentSelect.addEventListener("change", controls);
@@ -315,6 +358,9 @@ export function mountProviderConnections({
   el("connection-remove").addEventListener("click", removeSelected);
   el("assignment-save").addEventListener("click", assign);
   controls();
+  if(globalThis.location?.hash==="#free-pool") {
+    kind.value="free-pool";url.value="http://127.0.0.1:3001/v1";el("connection-id").value="free-pool";el("connection-name").value="Free pool (FreeLLMAPI)";controls();
+  }
   return { initialLoad: run(refresh), add, assign, refresh, refreshSelected, refreshRuntime, manageModel, removeSelected };
 }
 

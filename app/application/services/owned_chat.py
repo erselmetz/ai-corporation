@@ -299,7 +299,9 @@ class OwnedChatService:
                     or provider is not entry.provider):
                 raise ChatConflict("Coordinator assignment changed; start a new conversation")
             workspace_route = self._workspace_route(owner, identifier, entry)
-            if workspace_route and turn_route:
+            if workspace_route and turn_route and not (
+                route_consent is True and getattr(self._get_provider(workspace_route[0]),'is_local',False) is True
+                and getattr(self._get_provider(turn_route[0]),'requires_outbound_preview',False) is True):
                 raise ChatConflict("Workspace model selection cannot combine with a second route override")
             turn_route = turn_route or workspace_route
             with self.agent_request(entry.coordinator.id, route=turn_route,
@@ -452,6 +454,15 @@ class OwnedChatService:
         if len(self._chat.get(identifier).messages) + 2 > self.MAX_MESSAGES:
             raise ChatLimit("Conversation message limit reached; start a new conversation")
         pack_evidence=[]
+        route_provider=self._get_provider(turn_route[0]) if turn_route else provider
+        if getattr(route_provider,'requires_outbound_preview',False) is True:
+            from app.integrations.openai_compatible import OutboundPreview,approval_matches
+            original_observer=prompt_observer
+            def prompt_observer(prompt):
+                import json
+                preview=route_provider.preview_outbound(turn_route[1] if turn_route else current.model,json.loads(prompt),brain=brain_enabled or bool(retrieved_context))
+                if not approval_matches(preview):raise OutboundPreview(preview)
+                if original_observer is not None:original_observer(prompt)
         record = self._chat.send(identifier, text, retrieved_context, presentation_preferences,
                                  tool_context=tool_context,
                                  prompt_observer=prompt_observer, turn_route=turn_route,

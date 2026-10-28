@@ -298,6 +298,9 @@ class ChatWindow(QMainWindow):
         top.addWidget(label('ERSELMETZ AI')); top.addStretch()
         top.addWidget(button('New window', manager.new_window)); top.addWidget(button('Settings', lambda: manager.show_dialog('Settings')))
         top.addWidget(button('Advanced', lambda: manager.show_dialog('Advanced')))
+        from .cloud_review import CloudReview
+        self.cloud_review=CloudReview(self)
+        top.addWidget(button('Ask the free pool?',self.cloud_review.prepare,'Ask an optional cloud endpoint after reviewing the exact outbound prompt'))
         self.stop_button=button('Stop',self.stop_window,'Stop or resume this chat window');top.addWidget(self.stop_button)
         top.addWidget(button('Stop all',manager.stop_all,'Emergency stop all windows'))
         self.splitter = QSplitter(Qt.Orientation.Horizontal); self.splitter.setAccessibleName('Resizable sidebar Brain and chat panes')
@@ -685,6 +688,7 @@ class ChatWindow(QMainWindow):
                 self.send_agent(chat,text,knowledge=knowledge);return
         self.busy = True; self.response_error = False; self.stop_event.clear()
         if math_tool is None:self.composer.clear()
+        if math_tool is None:chat.last_local_prompt=text
         for widget in [self.model, self.agent, self.project, self.tabs]: widget.setEnabled(False)
         self.send_button.setEnabled(False)
         self.append(f'\n\nYou\n{text}\n\nERSELMETZ AI\n')
@@ -806,6 +810,9 @@ class ChatWindow(QMainWindow):
             self.response_error = True
             self.append('\nThe provider could not finish this reply. Nothing was retried automatically.')
         if event.get('type')=='complete' and event.get('context_trace'):
+            endpoint=event['context_trace'].get('endpoint')
+            if endpoint:
+                self.steps.addItem('How I answered · Router-reported '+str(endpoint.get('served_provider') or 'unknown provider')+' / '+str(endpoint.get('served_model') or 'unknown model')+' · '+str(endpoint.get('latency_ms'))+' ms · app retries '+str(endpoint.get('retries',0))+'; upstream retries unknown.')
             retrieval=event['context_trace'].get('retrieval',{})
             if retrieval.get('enabled'):
                 ids={item['memory_id'] for item in retrieval.get('returned_chunks',[])}
@@ -829,6 +836,7 @@ class ChatWindow(QMainWindow):
 
     def failed(self, error):
         if self.closed: return
+        self.response_error=True
         if self.stop_event.is_set():
             self.done(cancelled=True);return
         self.done(); self.status.setText('Could not finish this reply. Check the model and try again. Nothing was retried automatically.')

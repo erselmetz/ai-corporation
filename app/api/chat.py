@@ -3,6 +3,7 @@ import base64
 import binascii
 import re
 from contextlib import contextmanager
+from app.integrations.openai_compatible import approved_turn, OutboundPreview, EndpointError
 from datetime import datetime, timezone
 import json
 import time
@@ -184,6 +185,8 @@ class SendRequest(BaseModel):
     shipped_pack_enabled: StrictBool = False
     exact_math_only: StrictBool = False
     cloud_consent: bool = False
+    outbound_preview: StrictBool = False
+    outbound_digest: str | None = Field(default=None,min_length=64,max_length=64)
     image_ids: list[str] = Field(default_factory=list, max_length=4)
     image_consent: StrictBool = False
     include_local_ocr: StrictBool = False
@@ -436,6 +439,12 @@ def route_suggestions(identifier: str, request: Request, body: RouteSuggestionRe
                                            "destination": "Google Gemini online service", "kind": "cloud"})
             except (KeyError, TypeError, ValueError):
                 pass
+    connections=getattr(request.app.state,'provider_connections_service',None)
+    if connections is not None:
+        for item in connections.list():
+            if item.get('provider_type')=='openai-compatible' and item.get('state')=='available' and item.get('endpoint',{}).get('enabled'):
+                model=item['endpoint'].get('default_model') or next(iter(item['models']),None)
+                if model:candidates.append({'provider_id':item['provider_id'],'model_id':model,'destination':'Your prompt may be sent to any provider enabled in that router.','kind':'cloud','label':'Ask the free pool?' if item['endpoint'].get('experimental') else 'Ask this cloud endpoint?','experimental':item['endpoint'].get('experimental',False)})
     candidates = candidates[:20]
     suggested = next((item for item in candidates if item["kind"] == "local"), None)
     if suggested is None:
@@ -459,27 +468,27 @@ def _validate_turn_route(request, service, current, body):
     if current.get("local_model") is not True:
         raise HTTPException(422, "Alternate suggestions require the configured local coordinator to remain the default.")
     route_classification = suggest_route(body.text, coordinator.model, ()).complexity
-    if route_classification != "complex":
+    if route_classification != "complex" and not (service.provider_exists(body.route_provider_id) and service.provider_requires_outbound_preview(body.route_provider_id)):
         raise HTTPException(422, "Only a prompt with a complex cue may use an alternate route; keep the configured model for simple or uncertain prompts.")
     if (body.route_provider_id, body.route_model_id) == (coordinator.provider, coordinator.model):
         raise HTTPException(422, "Choose an alternate model; the configured model is already the default.")
     if not service.provider_exists(body.route_provider_id):
         raise HTTPException(503, "Selected provider is unavailable; the configured route was not changed.")
     if service.provider_requires_explicit_cloud_consent(body.route_provider_id):
-        if body.cloud_consent is not True:
-            raise HTTPException(403, "Separate per-turn cloud consent is required for this Gemini transfer.")
+        if body.cloud_consent is not True and not body.outbound_preview:
+            raise HTTPException(403, "Separate per-turn cloud consent is required for this cloud transfer.")
         connections = getattr(request.app.state, "provider_connections_service", None)
         try:
             item = next((entry for entry in connections.list()
                          if entry["provider_id"] == body.route_provider_id), None) if connections else None
         except (KeyError, TypeError, ValueError):
             item = None
-        if item is None or item.get("provider_type") != "gemini" or item.get("state") != "available" \
+        if item is None or item.get("provider_type") not in {"gemini","openai-compatible"} or item.get("state") != "available" \
                 or body.route_model_id not in item.get("models", []):
-            raise HTTPException(503, "Selected Gemini model is unavailable; no alternate route was used.")
+            raise HTTPException(503, "Selected cloud model is unavailable; no alternate route was used.")
     else:
         if not service.provider_is_local(body.route_provider_id):
-            raise HTTPException(422, "Alternate routes are limited to installed local models or consented Gemini.")
+            raise HTTPException(422, "Alternate routes are limited to installed local models or explicitly consented supported cloud connections.")
         inventory = service.local_model_inventory(body.route_provider_id)
         if not inventory.supported or inventory.state != "available" or body.route_model_id not in inventory.models:
             raise HTTPException(503, "Selected local model is unavailable; no alternate route was used.")
@@ -571,6 +580,10 @@ def get_repository_study_service(request: Request) -> RepositoryStudyService:
 def chat_errors():
     try:
         yield
+    except OutboundPreview as error:
+        raise HTTPException(409,error.preview) from None
+    except EndpointError as error:
+        raise HTTPException(422,{"state":error.state,"message":str(error)}) from None
     except (NativeRuntimeStopped,NativeRuntimeConflict) as error:
         raise HTTPException(409,str(error)) from None
     except AgentRuntimeStopped as error:
@@ -776,13 +789,15 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
         raise HTTPException(422, "Exact prompt capture is unavailable for image or separate-context turns.")
     if body.reviewed_tools and body.image_ids:
         raise HTTPException(422, "Reviewed tools cannot be combined with image turns.")
-    with chat_errors():
+    with chat_errors(), approved_turn(body.cloud_consent and not body.outbound_preview,body.outbound_digest):
         started_at = time.perf_counter()
         _require_action_policy(request, principal.identity, body)
         presentation = _presentation_preferences(request, principal.identity)
         current = service.owned_chat().get(principal.identity, identifier)
         agent_profile = service.get_agent_profile(current["coordinator"].id)
-        instant=_instant_pack_reply(service,principal,identifier,body,current,started_at,now)
+        if body.outbound_preview and not service.provider_requires_outbound_preview(body.route_provider_id or current['coordinator'].provider):
+            raise HTTPException(422,'Outbound preview is available only for a configured OpenAI-compatible endpoint.')
+        instant=None if body.outbound_preview else _instant_pack_reply(service,principal,identifier,body,current,started_at,now)
         if instant is not None:return instant
         if body.delegate_once and not service.is_loopback_ollama_provider(current["coordinator"].provider):
             raise HTTPException(422, "One-step delegation is available only with a loopback Ollama Coordinator.")
@@ -863,13 +878,15 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                                                body.text, body.knowledge_scopes, now)
             if auto_context["digest"] != body.knowledge_preview_digest:
                 raise HTTPException(409, "Selected knowledge changed after preview. Preview it again before sending.")
-        empty_brain = _empty_brain_abstention(
+        if body.outbound_preview and auto_context is not None and not auto_context["preview"]:
+            raise HTTPException(422,"No relevant Brain excerpts; no preview or generation was sent.")
+        empty_brain = None if body.outbound_preview else _empty_brain_abstention(
             service, knowledge, principal, identifier, body, current, auto_context,
             started_at, max(0, int((time.perf_counter() - retrieval_started_at) * 1000)), now)
         if empty_brain is not None:
             return empty_brain
-        if cloud_requires_consent and body.cloud_consent is not True:
-            raise HTTPException(403, "Explicit consent is required before sending this turn, recent chat context, and any selected tool results to Gemini.")
+        if cloud_requires_consent and body.cloud_consent is not True and not body.outbound_preview:
+            raise HTTPException(403, "Explicit consent is required before sending this turn, recent chat context, and any selected tool results to the selected cloud provider.")
         retrieved = trace_request = None
         if body.context is not None:
             retrieved, trace_request = knowledge.retrieve(principal.identity, identifier, ContextRequest(
@@ -967,6 +984,8 @@ def send_message(identifier: str, request: Request, payload=Depends(bounded_body
                         tool_context=tool_context,
                         prompt_observer=captured_prompt.append if body.capture_local_prompt else None,
                         turn_route=turn_route, route_consent=body.route_consent)
+            except OutboundPreview:
+                raise
             except Exception:
                 _record_unverified_turn(
                     service, knowledge, principal.identity, identifier, current["coordinator"],
@@ -1006,6 +1025,8 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                    principal=Depends(require_permission("chat:send")),
                    service=Depends(get_application_service), now=Depends(get_chat_now)):
     body = parse(SendRequest, payload)
+    if body.outbound_preview:
+        raise HTTPException(422,"Use the bounded non-streaming endpoint to prepare a read-only cloud preview.")
     auto_route = _auto_route(body)
     if body.exact_math_only:
         raise HTTPException(422,'Exact math uses the reviewed non-streaming endpoint.')
@@ -1080,10 +1101,10 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
         if cloud_requires_consent and body.cloud_consent is not True:
             raise HTTPException(
                 403,
-                "Explicit consent is required before sending this turn and recent chat context to Gemini.",
+                "Explicit consent is required before sending this turn and recent chat context to the selected cloud provider.",
             )
 
-    def events():
+    def turn_events():
         try:
             answer_started_at = time.perf_counter()
             yield json.dumps({"type": "status", "message": "Answering..."},
@@ -1134,7 +1155,7 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                 "type": "error",
                 "message": "Configured provider request-slot capacity is exhausted; no provider request was admitted.",
             }) + "\n"
-        except Exception:
+        except Exception as error:
             _record_unverified_turn(
                 service, knowledge, principal.identity, identifier, current["coordinator"],
                 current["coordinator"].provider if cloud_requires_consent else None,
@@ -1144,11 +1165,22 @@ def stream_message(identifier: str, request: Request, payload=Depends(bounded_bo
                 auto_route=auto_route)
             yield json.dumps({
                 "type": "error",
-                "message": (
+                "message": str(error) if isinstance(error,(EndpointError,NativeRuntimeStopped)) else (
                     "The stream ended before a verified final response. The turn may have reached "
                     "the provider; inspect its pending status and do not resend it."
                 ),
             }) + "\n"
+
+    def events():
+        iterator=turn_events();metadata={}
+        try:
+            while True:
+                with approved_turn(body.cloud_consent,body.outbound_digest,metadata):
+                    try:event=next(iterator)
+                    except StopIteration:return
+                yield event
+        finally:
+            with approved_turn(body.cloud_consent,body.outbound_digest,metadata):iterator.close()
 
     return StreamingResponse(
         events(),

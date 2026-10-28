@@ -22,6 +22,7 @@ class Chat:
     title_pending: bool = False
     reply_seconds: int = 30
     read_only: bool = False
+    last_local_prompt: str = ''
 
 
 class Transport:
