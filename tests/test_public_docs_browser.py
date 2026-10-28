@@ -14,15 +14,19 @@ def browser_site():
 
 def test_generated_home_cards_and_full_roadmap_render_without_node_or_page_errors(browser_site):
     browser,origin=browser_site
-    browser.navigate(origin+'/index.html');browser.wait('document.querySelector("#latest-task-number").textContent === "Task 228"')
+    source=tool('generate_docs').source()
+    latest=max(row['number'] for row in source['post100Tasks'] if row['status']=='completed')
+    browser.navigate(origin+'/index.html');browser.wait('document.querySelector("#latest-task-number").textContent === '+json.dumps('Task '+str(latest)))
     assert browser.evaluate('document.querySelector("#next-task-number").textContent')=='Task 209'
-    assert browser.evaluate('document.querySelectorAll("#task-status-index > li").length')==227
+    assert browser.evaluate('document.querySelectorAll("#task-status-index > li").length')==228
     assert browser.errors()==[]
-    browser.navigate(origin+'/tasks.html');browser.wait('document.querySelectorAll(".task-item").length === 227')
-    assert browser.evaluate('document.querySelector(".task-item").id')=='task-228'
+    browser.navigate(origin+'/tasks.html');browser.wait('document.querySelectorAll(".task-item").length === 228')
+    assert browser.evaluate('document.querySelector(".task-item").id')=='task-229'
     assert 'Superseded' in browser.evaluate('document.querySelector("#task-213").textContent')
     assert 'Not done' in browser.evaluate('document.querySelector("#task-204").textContent')
     assert 'Source-verified' in browser.evaluate('document.querySelector("#task-226").textContent')
+    for number in range(223,228):
+        assert 'Task 229 supersedes' in browser.evaluate('document.querySelector("#task-'+str(number)+'").textContent')
     assert browser.errors()==[]
 
 
@@ -32,7 +36,7 @@ def test_every_static_page_initializes_and_keeps_mobile_content_inside_the_view(
     for page in tool('serve_docs').PAGES:
         browser.navigate(origin+'/'+page)
         if page in {'index.html','roadmap.html'}:browser.wait('!document.querySelector("#latest-task-number").textContent.includes("Loading")')
-        if page=='tasks.html':browser.wait('document.querySelectorAll(".task-item").length === 227')
+        if page=='tasks.html':browser.wait('document.querySelectorAll(".task-item").length === 228')
         assert browser.evaluate('!!document.querySelector("main#main")'),page
         assert browser.evaluate('document.documentElement.scrollWidth <= window.innerWidth + 1'),page
         assert browser.errors()==[],(page,browser.errors())

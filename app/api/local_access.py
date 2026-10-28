@@ -85,6 +85,7 @@ class LocalOwnerAuthentication:
                 or endpoint.query or endpoint.fragment or not endpoint.port
                 or origin != f"http://{endpoint.hostname}:{endpoint.port}"):
             raise ValueError("Local origin must be an explicit loopback HTTP origin with a port")
+        self.desktop_locked = False
         self.origin = origin
         self.authority = endpoint.netloc
         self.clock = clock
@@ -155,7 +156,7 @@ class LocalOwnerAuthentication:
             return token
 
     def session(self, request: Request) -> LocalSession | None:
-        if not self.request_allowed(request):
+        if self.desktop_locked or not self.request_allowed(request):
             return None
         with self._lock:
             self._prune()

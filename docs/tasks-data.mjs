@@ -6132,7 +6132,8 @@ export const post100Tasks = [
     ],
     "limitations": [
       "Source-mode shell only; Brain/intake 224 and pack/math 225 now have separate source checkpoints; agent/device/queue/Stop/rename-delete 226 and packaging/restore/Node retirement 227 remain outstanding.",
-      "Windows desktop settings at 125/150%, assistive technology, native artifact and final parity are unverified. Default-browser tab/window placement is controlled by the browser; Settings/Advanced Qt launchers are singleton."
+      "Windows desktop settings at 125/150%, assistive technology, native artifact and final parity are unverified. Default-browser tab/window placement is controlled by the browser; Settings/Advanced Qt launchers are singleton.",
+      "Task 229 supersedes only the prior allowance to open Advanced pages in a browser and its launch-token/TCP UI transport. Historical evidence remains as recorded; new source uses native windows and an in-process facade."
     ],
     "automatedVerification": [
       "Run affected regression and source-mode UI checks; retain failures as failures."
@@ -6171,7 +6172,8 @@ export const post100Tasks = [
         "realDevice": "Unverified",
         "evidence": "pytest-qt plus Qt scale-factor 1/1.25/1.5 layout grabs; actual Windows DPI changes and assistive technology unverified."
       }
-    ]
+    ],
+    "nativeMigrationNotice": "Task 229 supersedes only the prior allowance to open Advanced pages in a browser and its launch-token/TCP UI transport. Historical evidence remains as recorded; new source uses native windows and an in-process facade."
   },
   {
     "number": 224,
@@ -6210,7 +6212,8 @@ export const post100Tasks = [
     "limitations": [
       "Source-mode Qt widget and authenticated intake only. Packaged/assistive-technology/physical Explorer drag and actual changed Windows DPI remain Unverified.",
       "Default 300-marker budget; optional 2000 markers can be slow. Layout does not represent model understanding; graph visual sample bounded to 2000 real chunks.",
-      "Shipped knowledge/exact math has checkpoint 225; native agent context/queue/device/stop parity 226; screenshot baselines, packaging, safe restore and Node retirement 227."
+      "Shipped knowledge/exact math has checkpoint 225; native agent context/queue/device/stop parity 226; screenshot baselines, packaging, safe restore and Node retirement 227.",
+      "Task 229 supersedes only the prior allowance to open Advanced pages in a browser and its launch-token/TCP UI transport. Historical evidence remains as recorded; new source uses native windows and an in-process facade."
     ],
     "automatedVerification": [
       "Domain/Qt MIME/drop/card/grouping/return tests, actual SQLite cache erasure and accepted-cancellation rollback; visible installed-model intake and retrieval; shared-widget real-data render measurement."
@@ -6237,7 +6240,8 @@ export const post100Tasks = [
         "realDevice": "Unverified",
         "evidence": "Packaged and assistive-technology checks not performed."
       }
-    ]
+    ],
+    "nativeMigrationNotice": "Task 229 supersedes only the prior allowance to open Advanced pages in a browser and its launch-token/TCP UI transport. Historical evidence remains as recorded; new source uses native windows and an in-process facade."
   },
   {
     "number": 225,
@@ -6275,7 +6279,8 @@ export const post100Tasks = [
       "Source-mode checkpoint only. Native private-Brain answer/citation and hardened agent/device/resource controls remain 226; safe restore, packaging and Node retirement remain 227.",
       "Exact equations support one-variable real linear/quadratic polynomials; conversions use listed units. Complex roots, arbitrary unit grammar and generic code execution are unsupported.",
       "No-model replies still took seconds end to end in source mode; no instant-latency claim. Same-tag replacement of embedding weights requires rebuilding derived cache.",
-      "Packaged/assistive-technology/physical-device coverage remains Unverified."
+      "Packaged/assistive-technology/physical-device coverage remains Unverified.",
+      "Task 229 supersedes only the prior allowance to open Advanced pages in a browser and its launch-token/TCP UI transport. Historical evidence remains as recorded; new source uses native windows and an in-process facade."
     ],
     "automatedVerification": [
       "Exact rational AST arithmetic, bounded polynomial/unit guards, owned no-provider history/traces, CSRF/closed-state/stop denial, real read-only Core graph and all three Qt math review mappings; no coverage retired."
@@ -6302,7 +6307,8 @@ export const post100Tasks = [
         "realDevice": "Unverified",
         "evidence": "Packaging and complete native parity remain 226-227."
       }
-    ]
+    ],
+    "nativeMigrationNotice": "Task 229 supersedes only the prior allowance to open Advanced pages in a browser and its launch-token/TCP UI transport. Historical evidence remains as recorded; new source uses native windows and an in-process facade."
   },
   {
     "number": 226,
@@ -6351,7 +6357,8 @@ export const post100Tasks = [
       "Packaged artifact, installer/update verification, session-descriptor restore and Node retirement are Task 227, not claimed here.",
       "Real camera/microphone capture, live local Whisper, clipboard modification and assistive technology remain Unverified. Device adapter/consent tests use deterministic fakes.",
       "Brain answer quality remains partial: a vector-database retrieval miss, hedged CSRF answer and unsupported historical Pillow cause. A separate table probe still omits 300 nodes despite a complete reviewed excerpt; the failed assertion is retained.",
-      "The actual-model checks are source-mode on this PC, not a clean Windows account or GPU acceleration benchmark. No push or deployment."
+      "The actual-model checks are source-mode on this PC, not a clean Windows account or GPU acceleration benchmark. No push or deployment.",
+      "Task 229 supersedes only the prior allowance to open Advanced pages in a browser and its launch-token/TCP UI transport. Historical evidence remains as recorded; new source uses native windows and an in-process facade."
     ],
     "automatedVerification": [
       "pytest/pytest-qt plus fake TCP provider contracts and source-mode Windows checks; exact source hashes in review/task-226-source-manifest.json. Model text is not approval or confirmation of side effects."
@@ -6392,7 +6399,8 @@ export const post100Tasks = [
         "realDevice": "Unverified",
         "evidence": "Per-turn scope/digest/raw-history verified; model answer quality is partial and the table-answer quality probe remains failed. See measured counts, not a general accuracy claim."
       }
-    ]
+    ],
+    "nativeMigrationNotice": "Task 229 supersedes only the prior allowance to open Advanced pages in a browser and its launch-token/TCP UI transport. Historical evidence remains as recorded; new source uses native windows and an in-process facade."
   },
   {
     "number": 227,
@@ -6440,7 +6448,8 @@ export const post100Tasks = [
       "Physical mic/camera/speaker, live Gemini, clean separate Windows account, assistive technology and representative owner studies remain Unverified.",
       "Packaged optional Pillow editing is explicitly unavailable to preserve the isolated-decoder timeout; source editing and reviewed image attachments/captures are separate.",
       "Real answer quality remains partial: one vector-database answer missed the available fact; the earlier unchanged table probe also failed. Prefixes reduced source recall on this fixed corpus.",
-      "Local unsigned review installation is verified; no signed public update/distribution/source-offer completion, deployment or live-site change is claimed. Final clean-source build identity is recorded with local artifact evidence."
+      "Local unsigned review installation is verified; no signed public update/distribution/source-offer completion, deployment or live-site change is claimed. Final clean-source build identity is recorded with local artifact evidence.",
+      "Task 229 supersedes only the prior allowance to open Advanced pages in a browser and its launch-token/TCP UI transport. Historical evidence remains as recorded; new source uses native windows and an in-process facade."
     ],
     "automatedVerification": [
       "Source-verified: Python runtime, Qt widget/action/screenshot, fake-provider, permission, Stop, update and static-doc contracts.",
@@ -6517,7 +6526,8 @@ export const post100Tasks = [
         "realDevice": "Unverified",
         "evidence": "Local Python/static browser tests; no deployment or live-site modification"
       }
-    ]
+    ],
+    "nativeMigrationNotice": "Task 229 supersedes only the prior allowance to open Advanced pages in a browser and its launch-token/TCP UI transport. Historical evidence remains as recorded; new source uses native windows and an in-process facade."
   },
   {
     "number": 228,
@@ -6622,6 +6632,68 @@ export const post100Tasks = [
         "packaged": "Unverified",
         "realDevice": "Unverified",
         "evidence": "Official GitHub links, separate verification guide; source checks only, no deployment"
+      }
+    ]
+  },
+  {
+    "number": 229,
+    "title": "Native management windows and removal of browser app UI",
+    "description": "Replace app HTML and browser launch tickets with native Qt windows and a permission-checked in-process policy facade; no TCP listener in the desktop by default. Public docs and approved external open_url remain separate.",
+    "category": "Phase 229 - Fully native desktop",
+    "status": "completed",
+    "dependsOn": [
+      228
+    ],
+    "area": "P69",
+    "acceptance": [
+      "Audit browser paths, listener, authentication and every HTML page before changing code.",
+      "Native Tier1 management and owner access; declarative native Tier2 searchable table/detail/actions and offline Markdown; explicit Tier3 retirements.",
+      "No app-page browser/webview launch, no one-use browser tickets, no /ui/static or HTML app routes; no web engine dependency.",
+      "Same permission, ownership, approval, consent, spend/resource and Stop policy chain in-process; integration API off in desktop.",
+      "Native screenshots light/dark at 100/125/150 DPI; dead-control sweep, no-browser patches, netstat PID no-listener evidence, real local Ollama journey.",
+      "Explicit test retirement/port ledger, full suites and honest source/real/packaged readiness. Three local commits/tags task-229a/b/c; never push or deploy."
+    ],
+    "checkpoint": "task-229c",
+    "validation": [
+      "Pre-change audit: review/task-229-audit.md. Phase A: 99cb467 / task-229a. Phase B: 5709e49 / task-229b.",
+      "Phase B focused checks: 17 passed; 312 native fixture screenshots across two sizes/themes/DPI. Final expanded catalog checked again in phase C.",
+      "Windows source app PID 12224: netstat -ano returned no matching LISTENING entries. Actual local qwen3.5:4b chat 24288.79 ms and approved calculator 17805.41 ms; real Brain note feed and local-provider discovery passed.",
+      "Full Python suite: 1746 passed, 3 existing Windows symlink-privilege skips, 4 warnings in 766.70 s. Final affected native suite: 14 passed in 26.59 s, including the one Backup regression added after full collection. Final source collects 1750; see review/task-229-evidence.json and coverage ledger.",
+      "Final screenshot matrix: 396 native grabs, 33 windows, two sizes, light/dark and actual Qt DPI 100/125/150 in separate processes. Existing 18 shell baseline images retained; no rebaselining.",
+      "Actual app.qt_desktop.__main__.main startup, real QLockFile/local IPC, visible window and all three browser APIs patched to fail: PID 12732 had zero netstat -ano LISTENING entries. No app HTML/web engine/launch-ticket dependency remains.",
+      "Final combined native/docs acceptance after readable error-display refinement and visible supersession notices: 62 passed, 1 warning in 46.82 s."
+    ],
+    "limitations": [
+      "No new packaged executable/installer; older Task227 artifact still contains its historical browser handoff.",
+      "No paid/cloud provider, real FreeLLMAPI, physical media, assistive-technology or clean-Windows-account claim.",
+      "Maps use real-data table/detail fallbacks; source capabilities denied by existing permissions stay denied.",
+      "Old raw JSON assignment-policy editor, browser-only speech UI and legacy import HTML are retired rather than represented as fully ported management workflows. Existing safe native capture/Brain controls and guarded backend services remain; maps use table/detail fallbacks."
+    ],
+    "realWorldVerification": {
+      "status": "partial",
+      "evidence": "task229-review/live/evidence.json and netstat.txt; actual source Qt and installed local Ollama only."
+    },
+    "releaseReadiness": [
+      {
+        "capability": "Actual native startup, no-listener PID and local qwen chat/Brain/calculator",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Real-device-verified",
+        "evidence": "Actual Qt main PID12732 no LISTENING entry; isolated native local-Ollama journey PID12224. See review/task-229-evidence.json."
+      },
+      {
+        "capability": "Native management and in-process policy dispatch",
+        "source": "Source-verified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Windows source startup PID12732; live local qwen/Brain/tool/provider discovery PID12224; deterministic forms and policy regressions. Destructive file/online/device paths are not promoted by this label."
+      },
+      {
+        "capability": "Physical capture, paid/cloud endpoints, clean account and assistive technology",
+        "source": "Unverified",
+        "packaged": "Unverified",
+        "realDevice": "Unverified",
+        "evidence": "Not exercised by Task229; existing consent/permission controls remain."
       }
     ]
   }
@@ -7066,6 +7138,10 @@ const futureGroups = [
   {
     "name": "Phase 228 - Optional cloud endpoints",
     "range": "228-228"
+  },
+  {
+    "name": "Phase 229 - Fully native desktop",
+    "range": "229-229"
   }
 ];
 

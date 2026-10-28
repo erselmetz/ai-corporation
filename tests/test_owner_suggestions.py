@@ -78,7 +78,7 @@ def test_enabled_suggestions_use_only_bounded_current_workflow_state(isolated_db
     assert all(item["source"]["kind"] == "local workflow record" for item in result["suggestions"])
     assert all(item["observed_at"] == NOW.isoformat() for item in result["suggestions"])
     assert all(item["source"]["last_changed_at"] == NOW.isoformat() for item in result["suggestions"])
-    assert all(item["href"] == "/ui/workflow-map" for item in result["suggestions"])
+    assert all(item["href"] == "native:Workflow map" for item in result["suggestions"])
 
 
 def test_suggestion_results_are_bounded(isolated_db):

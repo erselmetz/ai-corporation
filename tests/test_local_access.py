@@ -146,8 +146,8 @@ def test_inventory_requires_local_owner_and_exposes_only_supported_records():
         }
         assert "api_key" not in response.text.lower()
         assert ".env" not in response.text
-        assert client.get("/ui/inventory").status_code == 200
-        assert client.get("/ui/static/inventory.mjs").status_code == 200
+        assert client.get("/ui/inventory").status_code == 404
+        assert client.get("/ui/static/inventory.mjs").status_code == 404
     with TestClient(create_app(application_service=service)) as default:
         assert default.get("/api/local/inventory").status_code == 404
         assert default.get("/api/status").status_code == 401
@@ -168,10 +168,10 @@ def test_invalid_login_payload_does_not_echo_password():
 def test_session_capacity_and_login_page_security():
     with client_for() as client:
         page = client.get("/ui/login")
-        assert page.status_code == 200
+        assert page.status_code == 404
         assert PASSWORD not in page.text
         assert "frame-ancestors 'none'" in page.headers["content-security-policy"]
-        assert client.get("/ui/static/local-login.mjs").status_code == 200
+        assert client.get("/ui/static/local-login.mjs").status_code == 404
         for _ in range(8):
             assert login(client).status_code == 200
         assert login(client).status_code == 429

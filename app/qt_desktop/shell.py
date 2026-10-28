@@ -249,6 +249,7 @@ class ShellManager(QObject):
             def motion(checked):
                 self.reduced_motion = checked; self.preferences.setValue('reducedMotion', checked)
             reduced.toggled.connect(motion); layout.addWidget(reduced)
+            layout.addWidget(label('Desktop integration API: off. No TCP listener. A standalone loopback token-protected API may be started explicitly from the command line.'))
             layout.addWidget(label('Each chat window has its own model, agent and project. Provider and privacy changes keep their existing permission and consent checks.'))
             layout.addWidget(button('Quit ERSELMETZ AI',self.quit,'Quit the app and save only window descriptors; never replay actions'))
             pages = ['Preferences', 'Providers', 'Online providers', 'Provider connections', 'Privacy and capabilities', 'Updates', 'Backup']

@@ -1,0 +1,254 @@
+{
+  "task": 229,
+  "phase_a": {
+    "commit": "99cb467",
+    "tag": "task-229a"
+  },
+  "phase_b": {
+    "commit": "5709e49",
+    "tag": "task-229b"
+  },
+  "phase_c_tag": "task-229c",
+  "environment": {
+    "python": "3.14.7",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "full_suite": {
+    "command": ".venv/Scripts/python.exe -m pytest -q",
+    "passed": 1746,
+    "skipped": 3,
+    "warnings": 4,
+    "seconds": 766.7,
+    "log": "task229-review/full-python.log",
+    "note": "Final Backup regression added after full collection; covered by final affected suite. Other final native refinements also covered there."
+  },
+  "final_native": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/test_native_pages.py tests/test_native_facade.py tests/test_local_voice.py tests/test_qt_advanced_controls.py -q",
+    "passed": 14,
+    "warnings": 1,
+    "seconds": 26.59,
+    "log": "task229-review/final-native-reviewed.log"
+  },
+  "coverage": {
+    "before_removal_collected": 2053,
+    "retired_html_client_cases": 308,
+    "new_facade_cases": 4,
+    "new_final_backup_case": 1,
+    "final_collected": 1750,
+    "ledger": "review/task-229-coverage-migration.json",
+    "existing_native_shell_baselines": 18,
+    "existing_baselines_replaced": false
+  },
+  "actual_entry": {
+    "entry": "app.qt_desktop.__main__.main",
+    "pid": 12732,
+    "window_visible": true,
+    "native_window_registered": true,
+    "command": "netstat -ano",
+    "listening_entries": [],
+    "output": "(no matching LISTENING entries)",
+    "browser_apis": "patched to fail",
+    "instance_lock": "actual main QLockFile and QLocalServer",
+    "status": "Verified real"
+  },
+  "live_source_journey": {
+    "kind": "Windows visible source Qt, in-process policy facade; no packaged claim",
+    "pid": 12224,
+    "model": {
+      "name": "qwen3.5:4b",
+      "digest": "d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04"
+    },
+    "pages": [
+      {
+        "title": "Employees",
+        "status": "6 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Positions",
+        "status": "No records yet.",
+        "native": true
+      },
+      {
+        "title": "Projects",
+        "status": "No records yet.",
+        "native": true
+      },
+      {
+        "title": "Tasks",
+        "status": "No records yet.",
+        "native": true
+      },
+      {
+        "title": "Workflows",
+        "status": "1 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Workflow map",
+        "status": "1 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Structure",
+        "status": "1 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Software inventory",
+        "status": "4 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Readiness",
+        "status": "1 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Preferences",
+        "status": "1 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Documentation",
+        "status": "3 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Agents",
+        "status": "6 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Activity",
+        "status": "No records yet.",
+        "native": true
+      },
+      {
+        "title": "Approvals",
+        "status": "No records yet.",
+        "native": true
+      },
+      {
+        "title": "Providers",
+        "status": "No records yet.",
+        "native": true
+      },
+      {
+        "title": "Online providers",
+        "status": "1 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Privacy and capabilities",
+        "status": "4 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Brain settings",
+        "status": "No records yet.",
+        "native": true
+      },
+      {
+        "title": "Automation",
+        "status": "1 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Updates",
+        "status": "165 records. Select one for details.",
+        "native": true
+      },
+      {
+        "title": "Employee chat",
+        "status": "No records yet.",
+        "native": true
+      },
+      {
+        "title": "Provider connections",
+        "status": "No records yet.",
+        "native": true
+      },
+      {
+        "title": "Backup",
+        "status": "Restore replaces application data and requires restart. No actions are replayed.",
+        "native": true
+      },
+      {
+        "title": "Owner sign-in",
+        "status": "",
+        "native": true
+      }
+    ],
+    "netstat": {
+      "command": "netstat -ano",
+      "pid_filter": "12224",
+      "listening_entries": [],
+      "filtered_output": "(no matching LISTENING entries)"
+    },
+    "providers_test": {
+      "state": "available",
+      "models": [
+        "qwen3.5:4b",
+        "nomic-embed-text:latest",
+        "gemma4:31b-cloud",
+        "glm-5.3-flash:cloud",
+        "llama3.2:3b"
+      ]
+    },
+    "brain_user_chunks": 1,
+    "chat": {
+      "ms": 24288.79,
+      "text": "Start a conversation. Your selected local model will appear in the status below.\n\nYou\nGive one short practical coding tip.\n\nERSELMETZ AI\nAlways check your tool output before claiming code works; a small fix might be needed if errors appear."
+    },
+    "agent": {
+      "ms": 17805.41,
+      "status": "Agent turn: completed \u00b7 3 bounded steps",
+      "text": "Start a conversation. Your selected local model will appear in the status below.\n\nYou\nUse the calculate tool exactly once to calculate 17 * 19, then state its returned result. Do not do mental arithmetic.\n\nERSELMETZ AI\nThe result of 17 * 19 is 323.\n\nObserved tool results:\n323"
+    },
+    "status": "Verified real"
+  },
+  "native_screenshots": {
+    "count": 396,
+    "windows": 33,
+    "themes": [
+      "dark",
+      "light"
+    ],
+    "dpi": [
+      100,
+      125,
+      150
+    ],
+    "sizes": [
+      [
+        960,
+        700
+      ],
+      [
+        700,
+        560
+      ]
+    ],
+    "index": "task229-review/screenshot-matrix.json",
+    "index_sha256": "04c5e317ead93c8b09b768a7e84e5ce9160c779ea81b64000799f5137754e710",
+    "fixture_status": "AI-verified only"
+  },
+  "new_web_engine_dependencies": 0,
+  "packaged_task_229": "Unverified; no new executable/installer built",
+  "paid_cloud_calls": 0,
+  "pushed": false,
+  "deployed": false,
+  "final_docs": {
+    "passed": 48,
+    "seconds": 28.06,
+    "log": "task229-review/final-docs.log"
+  },
+  "final_acceptance": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/test_native_pages.py tests/test_native_facade.py tests/test_local_voice.py tests/test_qt_advanced_controls.py tests/test_public_docs.py tests/test_public_docs_browser.py tests/test_docs_integrity.py tests/test_ui_coverage_migration.py -q",
+    "passed": 62,
+    "warnings": 1,
+    "seconds": 46.82,
+    "log": "task229-review/final-acceptance-corrected.log"
+  }
+}

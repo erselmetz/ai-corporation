@@ -156,7 +156,7 @@ class OwnerSuggestionService:
                                "work_item_id": item["id"],
                                "last_changed_at": item_events[-1] if item_events else None},
                     "observed_at": generated_at,
-                    "href": "/ui/workflow-map",
+                    "href": "native:Workflow map",
                 })
                 if len(result) >= MAX_SUGGESTIONS:
                     return result

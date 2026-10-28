@@ -1,0 +1,1319 @@
+{
+  "baseline_collected": 2053,
+  "baseline_log": "task229-review/before-removal-collection.log",
+  "retirements": [
+    {
+      "file": "tests/test_webui.py",
+      "disposition": "retired",
+      "reason": "App HTML/client implementation removed by Task 229; native journey and policy regression checks replace the surface, not a claim of identical per-case coverage.",
+      "replacement_checks": [
+        "tests/test_native_pages.py",
+        "tests/test_native_desktop.py",
+        "tests/test_openai_compatible.py",
+        "tests/test_qt_cloud_review.py"
+      ],
+      "collected_cases": [
+        "tests/test_webui.py::test_dashboard_shell_and_assets_are_served_without_runtime_execution",
+        "tests/test_webui.py::test_primary_pages_share_grouped_navigation_with_real_route_targets",
+        "tests/test_webui.py::test_chat_page_keeps_advanced_actions_collapsed_by_default",
+        "tests/test_webui.py::test_employee_management_page_and_script_keep_employee_api_protected",
+        "tests/test_webui.py::test_provider_model_management_page_uses_protected_apis_and_safe_assets",
+        "tests/test_webui.py::test_task_management_page_uses_existing_protected_task_contract",
+        "tests/test_webui.py::test_project_management_page_uses_existing_protected_project_contract",
+        "tests/test_webui.py::test_activity_page_uses_existing_protected_read_only_api",
+        "tests/test_webui.py::test_documentation_portal_uses_only_its_protected_markdown_api",
+        "tests/test_webui.py::test_updates_page_uses_only_the_protected_curated_updates_api",
+        "tests/test_webui.py::test_activity_progress_shell_and_asset_preserve_fail_closed_task_reads",
+        "tests/test_webui.py::test_employee_chat_page_and_assignment_preview_modules_are_served",
+        "tests/test_webui.py::test_agents_workspace_route_and_module_are_served_with_shared_navigation"
+      ]
+    },
+    {
+      "file": "tests/test_visualization_page.py",
+      "disposition": "retired",
+      "reason": "App HTML/client implementation removed by Task 229; native journey and policy regression checks replace the surface, not a claim of identical per-case coverage.",
+      "replacement_checks": [
+        "tests/test_native_pages.py",
+        "tests/test_native_desktop.py",
+        "tests/test_openai_compatible.py",
+        "tests/test_qt_cloud_review.py"
+      ],
+      "collected_cases": [
+        "tests/test_visualization_page.py::test_advanced_map_starts_as_accessible_list_with_native_3d_help_and_setup_links",
+        "tests/test_visualization_page.py::test_advanced_map_has_no_vendored_webgl_and_keeps_same_origin_client",
+        "tests/test_visualization_page.py::test_sage_core_page_is_a_read_only_agent_map_with_accessible_fallback"
+      ]
+    },
+    {
+      "file": "tests/test_product_audit.py",
+      "disposition": "retired",
+      "reason": "App HTML/client implementation removed by Task 229; native journey and policy regression checks replace the surface, not a claim of identical per-case coverage.",
+      "replacement_checks": [
+        "tests/test_native_pages.py",
+        "tests/test_native_desktop.py",
+        "tests/test_openai_compatible.py",
+        "tests/test_qt_cloud_review.py"
+      ],
+      "collected_cases": [
+        "tests/test_product_audit.py::test_all_ui_routes_local_links_and_assets_load",
+        "tests/test_product_audit.py::test_every_ui_page_browser_layout_and_script_health"
+      ]
+    },
+    {
+      "file": "tests/test_local_chat_browser.py",
+      "disposition": "retired",
+      "reason": "App HTML/client implementation removed by Task 229; native journey and policy regression checks replace the surface, not a claim of identical per-case coverage.",
+      "replacement_checks": [
+        "tests/test_native_pages.py",
+        "tests/test_native_desktop.py",
+        "tests/test_openai_compatible.py",
+        "tests/test_qt_cloud_review.py"
+      ],
+      "collected_cases": [
+        "tests/test_local_chat_browser.py::test_local_owner_signin_chat_safe_reply_close_and_logout"
+      ]
+    },
+    {
+      "file": "tests/test_openai_compatible_browser.py",
+      "disposition": "retired",
+      "reason": "App HTML/client implementation removed by Task 229; native journey and policy regression checks replace the surface, not a claim of identical per-case coverage.",
+      "replacement_checks": [
+        "tests/test_native_pages.py",
+        "tests/test_native_desktop.py",
+        "tests/test_openai_compatible.py",
+        "tests/test_qt_cloud_review.py"
+      ],
+      "collected_cases": [
+        "tests/test_openai_compatible_browser.py::test_free_pool_setup_test_and_explicit_chat_preview_in_real_browser"
+      ]
+    },
+    {
+      "file": "tests/test_browser_contracts.py",
+      "disposition": "retired",
+      "reason": "App HTML/client implementation removed by Task 229; native journey and policy regression checks replace the surface, not a claim of identical per-case coverage.",
+      "replacement_checks": [
+        "tests/test_native_pages.py",
+        "tests/test_native_desktop.py",
+        "tests/test_openai_compatible.py",
+        "tests/test_qt_cloud_review.py"
+      ],
+      "collected_cases": [
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[automation UI confirms the exact preview and executes only after digest approval]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[declining exact action approval never calls approve or execute]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[loads the bounded Activity API with same-origin credentials and displays its exact response fields]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[uses only the supported limit and optional task_id query parameters]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[does not send an unsupported limit value]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[renders a successful empty result differently from an API failure]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[distinguishes authentication, forbidden, invalid-query and general API failures]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[refresh uses the API again and prevents duplicate requests]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[failed refresh clears displayed records instead of leaving them as current]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[network and malformed-response failures are explicit, not successful empty lists]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[uses no Activity detail route, unsupported methods, secrets, or internal layers]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[failed refresh keeps a readable error panel and removes stale Agent actions]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Agents page filters by real runtime state and switches to existing organization tree]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[profile details remain safe for read-only sessions and link chat to the matching Employee]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[owner profile editor is collapsed by default and uses existing pause/reset APIs]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[New Agent clones an existing profile through the owner API with CSRF]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[owner enables, previews, and disables recommendations with same-origin CSRF]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[declined enable and read-only sessions cannot mutate the policy]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[backup UI starts without requests and private-data opt-in is off]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[preview, safe diagnostics, and export run only after explicit owner actions]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[restore requires the same inspected file, passphrase, typed confirmation, and final prompt]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Brain graph layout uses real groups and source edges, caps only the renderer]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[retrieval highlight persistence stores bounded chunk identifiers without content]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Brain page exposes a complete keyboard list and loads selected text only on selection]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[reduced motion and renderer failures preserve the complete list fallback]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[ingestion events create actual temporary graph nodes while the keyboard list stays visible]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[one owner-triggered camera frame requests video only, bounds pixels and stops the track]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[camera denial, unsupported input and emergency stop never retain a frame]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[camera UI requires both scoped permissions and attaches only one frame with CSRF]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[camera capture fails closed when the server reports emergency stop]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[pack UI renders observed status and exact reviewed wheel manifest]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[cancelled install makes no write request]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[confirmed install binds confirmation to the displayed manifest and CSRF session]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[self-test action runs only after pack status says installed]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[temporary images are unselected by default and require per-turn consent before exposing selected IDs]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[online image preview identifies the destination and requires distinct cloud consent]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[renders common Markdown with inert text nodes and no HTML execution surface]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[code copy uses the clipboard API and reports completion]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[local transcript is added after an unsent typed draft and never submits the chat]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[speech source labels distinguish local, local-model, and consented online transcripts]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[composer sends on Enter, keeps Shift+Enter for a newline, and stays keyboard operable]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[plus actions stay explicit and start only the chosen capture or knowledge control]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Brain defaults on when owner knowledge exists and previews selected chunks automatically before a turn]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[narrow sidebar uses the menu toggle and Escape closes it]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[dark theme is the default and the explicit toggle persists light and dark]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[stored light theme updates the Chat toggle label on first render]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[conversation sidebar groups by date, supports search, rename, and pin]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[answer trace is collapsed by default and remains available after a reply]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[approval inbox is permission-gated, previews exact scope, and deny uses CSRF without execution]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Coordinator delegation is explicit, plain-text only, and shows the bounded plan before sending]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[delete is visible only to an authorized owner and sends an explicit confirmed delete]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[emergency stop is hidden until protected activity is reported]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[emergency stop appears for each protected activity source and hides when it ends]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Send becomes Stop while a turn is pending and aborts local waiting without replay]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[start and send use same-origin, session CSRF and actual coordinator identity; text stays inert]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Electron direct launch opens a coordinator conversation and sends local chat without a setup confirmation]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[chat autonomy chip loads and persists the owner-scoped setting with CSRF]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[desktop restoration loads only the saved conversation and never replays a turn]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[a fresh desktop window does not adopt another window's latest conversation]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[an unretained desktop chat opens empty with an explanation and no replay]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[canceling the reviewed chat plan starts no retrieval, tools, or provider request]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[canceling a plan with a selected calculator does not submit the tool or chat turn]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[alternate route is opt-in per turn and displayed before confirmation]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[declining an alternate route confirmation performs no provider request]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[streaming chat renders provider chunks and verifies the completed response]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[knowledge requires an exact preview and displays returned citations in How I answered]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[reviewed tool calls are explicit, one-turn, and routed through non-streaming chat]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[local document choices load only after opening reviewed tools with documentation permission]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Stop display hides chunks but continues consuming the provider response]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[repository study sends explicit scope with CSRF and renders untrusted report as text]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[repository study is unavailable without the separate GitHub read permission]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Gemini requires per-turn cloud consent and sends only an explicit consent flag]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[pending send prevents duplicate turns and selection changes; provider failure is inspected without replay]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[blank and UTF-8 oversized messages never submit]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[recognized Gemini key paste is blocked with setup guidance before submission]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[authorization and empty data are distinct and failed refresh removes stale data]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[existing owner conversation can be selected after refresh and closed explicitly]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[coordinator proposal is shown before an explicit pending-Task confirmation]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[a failed send that discovers closure keeps input disabled and never replays]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[stopping a model wait aborts local waiting but records an unknown remote outcome without replay]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[exact assembled prompt is visible only after explicit local-model opt-in and is inert text]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[two window controllers keep model, project and request scope independent]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[selection change opens a new context without sending a model turn or changing another window]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[setup guidance distinguishes sign-in, missing configuration, and unchecked availability]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[setup read failure is unavailable, not an empty or healthy provider state]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[loads the existing protected read resources with same-origin credentials]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[preserves empty lists as successful data rather than converting failures to empty]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[distinguishes authentication, authorization, and other failures per resource]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[signed-out dashboard makes one identity request and clears and hides protected panels]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[renders empty collections explicitly]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[dashboard shows only pending work and active projects, with unknown source freshness where timestamps are absent]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[renders failed and partial responses without hiding successful panel data]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[shows distinct authentication and forbidden failures for combined panels]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[loads document summaries and content from the protected same-origin API]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[renders a successful empty response as an empty state]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[authentication, permission, invalid response, and server failures are not empty results]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[missing and failed document reads clear previously displayed content]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[failed refresh prevents duplicates and clears stale records and content]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[network failures are explicit and invalid document payloads are rejected]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[safety panel stops, revokes grants, reports activity, and confirms resume]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Agent Chat link preselects its linked Employee without starting a conversation]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Employee chat uses CSRF, inert rendering and explicit per-turn Gemini consent]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Employee chat streams only from an advertised provider and handles the final snapshot]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[retained Employee history requires opt-in and explicit confirmed deletion]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[lists employees and requests details using the existing response fields]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[creates only API-supported fields, prevents duplicate submits, refreshes and selects created employee]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[requires confirmation before DELETE and clears selected details after successful removal]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[distinguishes auth failures, stale details, conflicts, and validation failures]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[keeps failed list requests distinct from a successful empty collection]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[clears previously selected employee details when a refreshed list request fails]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[keeps removal failures visible and re-enables retry]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[inventory UI requires sign-in before requesting inventory data]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[inventory UI renders verified records as inert text and shows limitations]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[inventory UI denies sessions without inventory permission]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[software lifecycle requires exact preview and separate explicit confirmation]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[owner notes require explicit retention consent and send CSRF-bound local data]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[explicit note save persists content and expiry, and index diagnostics stay truthful]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Brain accepts a bounded multi-file batch and reports each file through chunking to lexical-ready]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[index inspection and deletion use the selected owner scope]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[optional FAISS pack is reviewed before install and cancellation downloads nothing]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[FAISS Test it action reports its self-test result]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[nomic embedding download requires a digest/size preview and owner confirmation]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[embedding Test it action reports only the local Ollama self-test]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[v3code Brain import previews counts and requires explicit retention plus a digest match]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[login clears password immediately, suppresses duplicate submits and navigates after success]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[login failure is visible, clears input and does not navigate]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[logout uses session CSRF and reports revoked session]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[sign-in returns to the same-origin app page and rejects external destinations]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[refresh is explicit and selection uses CSRF, same-origin and inert installed identifiers]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[model reassignment previews identity, privacy and affected work before confirmation]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[incomplete affected-work reads fail closed before local reassignment]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[read-only session cannot select and changing coordinator clears stale evidence]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[busy refresh suppresses duplicate calls and conflicts remove stale selection]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[unavailable and unknown observations show guidance without enabling selection]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[missing local login reports sign-in guidance]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[explicit scoped reads use session credentials and render text safely]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[correction sends explicit consent and revision without owner spoofing]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[read failure 401 clears previous records]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[read failure 403 clears previous records]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[read failure 500 clears previous records]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[stale correction conflict clears cached content]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[expired metadata never fetches content and requires confirmed owner deletion]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[named corporation reader cannot correct or withdraw]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[changed scope rejects in-flight content]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[pending correction cannot be submitted twice]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Gemini key is used only for the dedicated catalog request and is cleared immediately]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Gemini reassignment previews affected work and requires explicit confirmation]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[confirmed Gemini assignment carries the observed Agent identity and connection]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[staged credential erase uses same-origin CSRF protected local endpoint]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[quiet periods use browser local time, including windows across midnight]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[disabled suggestions do not read workflow signals and controls remain available]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[enabled suggestions disclose source, support owner dismissal, and refresh only on request]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[quiet-period settings suppress fetching and displaying suggestion cards]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[loads actual position and revision data as inert text]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[creates a position through same-origin API with CSRF and independent references]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[position readers without employee:read retain existing employee references]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[loads project list and details through the existing protected APIs]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[creates only name and description, then refreshes and loads returned project through API]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[prevents duplicate Project submissions while the first request is pending]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[rejects blank names locally while allowing an omitted description]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[clears selected details and stale list entry when a Project detail returns 404]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[clears cached Project list and selected details when a refresh fails]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[distinguishes authentication, authorization, conflict, validation, not-found and server errors]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[renders successful empty collections separately from failed responses]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[network failures are explicit and never rendered as an empty Project list]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Project UI exposes no unsupported deletion or lifecycle actions]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[browser Project module has no credentials or direct internal-layer access]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Gemini setup clears the key, displays truthful capacity, and confirms assignment]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[read-only owner session cannot add or assign provider connections]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[local runtime controls show provider evidence and confirm bounded load and unload]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[model lifecycle controls require their distinct permission]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[loads provider and model lists using the existing APIs and displays detail fields]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[creates Provider with only id and name and refreshes list/detail]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[prevents duplicate Provider creation while the first request is pending]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[requires confirmation before Provider DELETE and refreshes after success]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[loads model detail and replaces with exactly provider_id/model_id then refreshes]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[prevents duplicate model replacements while the first request is pending]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[keeps auth, permission, conflict, validation, missing, and general failures explicit]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[renders successful empty lists separately from failed requests]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[shows exact stopped Ollama recovery state and Retry when installation exists]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[offers the existing confirmed installer only when Ollama is not installed]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[shows registry-derived model size and keeps download behind explicit confirmation]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[readiness UI requests a bounded same-origin snapshot only after refresh]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[authorization failures clear stale readiness evidence]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[renders only verified release data and enables preparation for authorized owners]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[release page performs no network check until the owner explicitly selects the check button]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[prepares only an explicitly selected checked version and includes the session CSRF token]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[keeps preparation unavailable without manage permission or after invalid release data]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Sage Core only maps recorded Agents and current trace edges with stable positions]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[original canvas rendering draws only existing nodes and links without random decorations]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Agent details and equivalent keyboard-accessible list are available]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[reduced motion and missing canvas select the accessible list]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[hidden page stops animation and poll timer; visibility restores a fresh snapshot]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[repeated over-budget draws automatically switch to the accessible list]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[working-state animation respects the 24 FPS frame interval]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[failed and unauthorized snapshots clear stale Agent nodes]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[failed refresh clears the prior canvas snapshot instead of leaving stale Agent signals visible]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[captures one bounded frame with user-selected surface and no audio, then stops all tracks]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[unsupported surface types and oversized output fail closed and stop tracks]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[permission cancellation, emergency stop, and unsupported browsers do not retain frames]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[UI requires both chat permissions and sends only the bounded capture request fields with CSRF]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[only explicitly selected owner records can be indexed and results preserve exact scope]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[disabled capability and failed search clear stale results]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[scope changes discard pending results and never relabel a private search]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[shared navigation stays visible on wide screens and has a working narrow-window menu]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[Escape closes the compact navigation and wide resize restores the visible rail]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[renders a keyboard-reachable tree with explicit missing and forbidden labels]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[selecting shows current details and flags stale revision or vanished positions]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[separates Agent identity from protected provider/model assignment details]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[reports sign-in and permission failures without data]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[shows actual pending lifecycle and only allowed fields]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[shows actual running lifecycle and only allowed fields]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[shows actual completed lifecycle and only allowed fields]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[shows actual failed lifecycle and only allowed fields]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[clears previously rendered progress on 401]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[clears previously rendered progress on 403]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[clears previously rendered progress on 404]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[clears previously rendered progress on 500]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[does not fetch without a selected Task]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[rejects mismatched Task identities and unsupported status]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[a changed selection invalidates an in-flight response]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[loads Task records and displays the existing Task response fields]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[creates a Task with only supported non-empty fields and refreshes details]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[prevents duplicate Task submissions while the first request is pending]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[rejects blank and multiple routing selectors before submission]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[uses the existing non-mutating dry-run endpoint and renders its declared response]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[handles missing/deleted Task detail and refreshes the list]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[clears previously loaded Tasks and details when a list refresh fails]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[distinguishes authentication, permission, validation, conflict, missing and general errors]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[renders a successful empty Task list distinctly from a failed request]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[dispatch UI is hidden without permission and requires explicit confirmation with CSRF]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[interrupted queue resolution requires a human note and never dispatches again]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[does not implement unsupported Task deletion or lifecycle mutation]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[browser Task module contains no credentials or direct internal-layer access]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[provider reports unavailable when device-local speech is absent]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[only explicitly local voices are listed and selected for output]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[output validates language and bounded text rather than truncating the reply]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[voice disappearing is reported and stop cancels local playback and queued text]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[reply queue is sequential and bounded by item count and UTF-8 bytes]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[stored local theme applies to document and body]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[storage failure keeps the default dark theme]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[a browser refusing access to the storage property still gets dark theme]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[review details retain nested evidence and exact values without a JSON envelope]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[empty lists and plain strings have explicit readable output]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[loads the same-origin Updates API and displays explicit entry fields]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[shows an explicit loading state while the request is pending]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[distinguishes a successful empty manifest from authentication, permission, and API errors]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[failed refresh clears previously rendered updates instead of retaining stale data]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[renders document-supplied strings as text and rejects malformed response data]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[refresh reloads from the API and prevents duplicate requests]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[WAV encoder fixes the transcription input to mono 16 kHz PCM and 10 seconds]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[local mode requires processLocally and never falls back to cloud]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[local microphone capture ends after its ten-second limit]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[microphone activity exposes permission, capture duration, and transcription state]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[stopping during local capability detection cancels startup]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[clearing a chat cancels pending microphone startup before capture can begin]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[emergency stop aborts local capture and blocks a new voice start until resumed]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[sensitive local transcript is discarded before it enters chat]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[local voice denial and unsupported language fail closed without cloud fallback]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[browser-managed downloadable speech languages require a separate owner action]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[cloud audio requires one-use consent and places only the reviewed transcript in chat]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[optional local model is selected explicitly, processes audio locally, and inserts a reviewable draft]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[stopping a cloud transcription stops local waiting and records an unknown provider outcome]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[stopping at the capture-finalization boundary discards audio instead of making it ready to send]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[reply audio uses an installed local voice and can be stopped]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[a saved local voice is restored only when that device-local voice is still available]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[missing local speech output is visible and does not try an online fallback]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[keeps operational links and reporting links in separate lists]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[flags stale snapshots and distinguishes empty data]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[selection shows current evidence and reflects state changes]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[shows Agent assignment source, unrecorded reason, and truthful outcome evidence]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[labels missing Agent and uncertain provider outcomes without claiming a response]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[forbidden agents and reporting data are labelled]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[disconnect keeps the last snapshot marked stale; errors show no data]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[renders verified workflow state as text only]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[reports sign-in requirement without data]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[scene model contains only recorded nodes and edges, with a hard cap]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[only recorded state changes count as changes]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[corporation map includes only exact source-backed relationships and caps each selected layer view]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[interactive map uses separate authorized snapshots, source-backed layers and actionable selection]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[reduced-motion preference starts in list mode without loading graphics]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[WebGL failure falls back to the list with a notice]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[keyboard selection, effects toggle, forbidden and failed sections]",
+        "tests/test_browser_contracts.py::test_browser_contract_without_node[shows only recorded Agent associations, provenance metadata, and software slot budgets]"
+      ]
+    },
+    {
+      "file": "app/webui/__init__.py",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/router.py",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/activity.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/agents.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/assignment-policy.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/assignment-preview.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/backup.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/brain-graph.css",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/brain-graph.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/brain-view.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/camera-capture.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/capability-packs.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/chat-images.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/chat-markdown.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/chat-ui.css",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/chat-workspace.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/chat.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/dashboard.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/design-tokens.css",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/documentation.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/emergency-stop.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/employee-chat.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/employees.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/inventory.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/knowledge.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/local-automation.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/local-login.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/local-models.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/memory.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/navigation.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/online-provider.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/positions.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/preferences.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/projects.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/prototype-shell.css",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/prototype-shell.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/provider-connections.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/providers.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/quick-start.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/readiness.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/release-update.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/sage-core.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/scene-model.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/screen-capture.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/structure.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/style.css",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/suggestions.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/task-progress.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/tasks.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/text-to-speech.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/theme.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/ui-details.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/updates.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/visualization.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/voice.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/workflow-map.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "app/webui/static/workflows.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/harness.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/local-automation-ui.test.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/manifest.json",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_activity_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_agents_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_assignment_policy_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_backup_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_brain_visualization_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_camera_capture.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_camera_stop.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_capability_packs_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_chat_images_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_chat_markdown.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_chat_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_chat_workspace_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_dashboard_data.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_documentation_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_emergency_stop_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_employee_chat_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_employee_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_inventory_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_knowledge_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_local_login_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_local_models_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_memory_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_online_provider_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_owner_suggestions_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_position_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_project_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_provider_connections_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_provider_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_quick_start_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_readiness_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_release_update_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_sage_core.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_screen_capture.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_semantic_memory_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_shared_navigation.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_structure_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_task_progress.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_task_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_text_to_speech.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_theme_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_ui_details.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_updates_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_visualization_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_voice_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_workflow_map_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/test_workflows_ui.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tests/browser_contracts/worker.mjs",
+      "disposition": "retired",
+      "reason": "Unused app HTML/CSS/JavaScript and obsolete HTML test fixtures; public docs and browser tool integrations retained.",
+      "replacement_checks": [
+        "tests/test_native_pages.py"
+      ]
+    },
+    {
+      "file": "tools/qt_shell_check.py",
+      "disposition": "retired",
+      "reason": "QA depended on browser launch tickets which no longer exist; replace with native process checks and screenshot matrix.",
+      "replacement_checks": [
+        "tools/native_window_matrix.py",
+        "tests/test_native_desktop.py"
+      ]
+    },
+    {
+      "file": "tools/packaged_advanced_check.py",
+      "disposition": "retired",
+      "reason": "QA depended on browser launch tickets which no longer exist; replace with native process checks and screenshot matrix.",
+      "replacement_checks": [
+        "tools/native_window_matrix.py",
+        "tests/test_native_desktop.py"
+      ]
+    },
+    {
+      "file": "tests/test_capability_packs.py",
+      "case": "test_settings_exposes_optional_pack_status_and_actions_with_existing_safety_controls",
+      "disposition": "retired",
+      "reason": "HTML DOM structure assertions have no native UI meaning. Backend security tests in this file remain; native controls tested separately.",
+      "replacement_checks": [
+        "tests/test_native_pages.py",
+        "tests/test_qt_shell.py"
+      ]
+    },
+    {
+      "file": "tests/test_conversations.py",
+      "case": "test_chat_page_does_not_bypass_default_authentication_or_execute_domain_work",
+      "disposition": "retired",
+      "reason": "HTML DOM structure assertions have no native UI meaning. Backend security tests in this file remain; native controls tested separately.",
+      "replacement_checks": [
+        "tests/test_native_pages.py",
+        "tests/test_qt_shell.py"
+      ]
+    },
+    {
+      "file": "tests/test_emergency_stop.py",
+      "case": "test_capability_controls_are_in_settings_and_chat_stays_minimal",
+      "disposition": "retired",
+      "reason": "HTML DOM structure assertions have no native UI meaning. Backend security tests in this file remain; native controls tested separately.",
+      "replacement_checks": [
+        "tests/test_native_pages.py",
+        "tests/test_qt_shell.py"
+      ]
+    },
+    {
+      "file": "tests/test_owned_chat.py",
+      "case": "test_coordinator_chat_page_exposes_explicit_route_review_controls",
+      "disposition": "retired",
+      "reason": "HTML DOM structure assertions have no native UI meaning. Backend security tests in this file remain; native controls tested separately.",
+      "replacement_checks": [
+        "tests/test_native_pages.py",
+        "tests/test_qt_shell.py"
+      ]
+    }
+  ],
+  "retained": "Backend/domain/permissions/consent/spend/Stop tests, public static docs browser tests and intentional external browser-tool tests remain. Historical Task227 ledger preserved as history.",
+  "final_collected": 1750,
+  "full_run_collected": 1749,
+  "retired_collected_cases": 308,
+  "added_facade_cases": 4,
+  "added_final_backup_case": 1,
+  "count_equation": "2053 before removal - 308 explicit HTML/client cases + 4 facade cases + 1 final Backup regression = 1750 final collected. Full run collected 1749 before the last Backup regression; final affected run includes it.",
+  "final_checks": [
+    "tests/test_native_pages.py",
+    "tests/test_native_facade.py",
+    "tests/test_qt_advanced_controls.py",
+    "tests/test_native_desktop.py",
+    "tests/test_qt_cloud_review.py",
+    "tests/test_local_access.py",
+    "tests/test_data_portability.py",
+    "tests/test_local_voice.py"
+  ]
+}

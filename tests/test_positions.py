@@ -233,11 +233,10 @@ def test_local_owner_has_explicit_position_permissions_and_csrf_protection():
         )
         assert allowed.status_code == 201
         assert client.get("/api/positions").status_code == 200
-        assert client.get("/ui/positions").status_code == 200
-        assert 'src="/ui/static/positions.mjs"' in client.get("/ui/positions").text
+        assert client.get("/ui/positions").status_code == 404
 
     from app.api.app import create_app as create_default_app
 
     with TestClient(create_default_app(application_service=runtime.application_service)) as client:
         assert client.get("/api/positions").status_code == 401
-        assert client.get("/ui/positions").status_code == 200
+        assert client.get("/ui/positions").status_code == 404

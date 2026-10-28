@@ -25,12 +25,7 @@ def test_automation_surface_is_reachable_owner_gated_and_starts_deny_by_default(
     app.state.capability_approval_service = CapabilityApprovalService(app.state.capability_authorization_service)
     with TestClient(app, base_url=ORIGIN, client=("127.0.0.1", 51222)) as client:
         assert client.get("/api/local/automation").status_code == 401
-        page = client.get("/ui/automation")
-        assert page.status_code == 200
-        assert "Preview, approve and invoke once" in page.text
-        assert 'id="automation-stop"' in page.text
-        assert 'id="automation-stop" type="button" class="danger-action" hidden' not in page.text
-        assert 'src="/ui/static/local-automation.mjs"' in page.text
+        assert client.get("/ui/automation").status_code == 404
         assert client.post("/api/local/login", json={"password": PASSWORD},
                            headers={"Origin": ORIGIN}).status_code == 200
         result = client.get("/api/local/automation").json()

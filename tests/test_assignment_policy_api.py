@@ -110,11 +110,9 @@ def test_assignment_policy_routes_remain_default_deny():
         assert client.get("/api/local/assignment-policy").status_code == 404
         page = client.get("/ui/assignment-policy")
         script = client.get("/ui/static/assignment-policy.mjs")
-        assert page.status_code == 200
-        assert "Owner-approved policy JSON" in page.text
-        assert "The example is not evidence" in page.text
-        assert script.status_code == 200
-        assert script.headers["content-type"].startswith("text/javascript")
+        assert page.status_code == 404
+        assert script.status_code == 404
+        assert script.headers["content-type"].startswith("application/json")
 
 
 def test_policy_owner_limit_is_per_authenticated_identity():

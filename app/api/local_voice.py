@@ -45,7 +45,7 @@ def create_local_voice_router(connection_manager, budget: VoiceSpendBudget | Non
     @router.get("")
     def status(_principal=Depends(require_permission("chat:send"))):
         return {
-            "local_processing": "on_device_web_speech_only",
+            "local_processing": "native_local_speech_only",
             "cloud_provider": "gemini",
             "cloud_budget": budget.snapshot(),
             "audio_retention": "none_by_application",

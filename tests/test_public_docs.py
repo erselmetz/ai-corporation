@@ -77,7 +77,7 @@ def test_roadmap_records_dependencies_histories_and_verification_labels_are_trut
         assert all(1<=number<=100 or number in by_id for number in record['dependsOn'])
         assert record['number'] not in record['dependsOn'] and len(set(record['dependsOn']))==len(record['dependsOn'])
         if record['status'] in {'completed','design_only'}:
-            assert re.fullmatch(r'(?:[a-f0-9]{7,40}|task-[1-9][0-9]*-[a-z][a-z0-9-]*)',record['checkpoint'])
+            assert re.fullmatch(r'(?:[a-f0-9]{7,40}|task-[1-9][0-9]*(?:-[a-z][a-z0-9-]*|[abc]))',record['checkpoint'])
             assert record['validation'] and record['limitations']
         for readiness in record.get('releaseReadiness',[]):
             assert readiness['source'] in {'Source-verified','Unverified'}

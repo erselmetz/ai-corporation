@@ -2,7 +2,8 @@
 
 The application is a PySide6 shell and an authenticated loopback backend in one
 Python process. It does not require Node, npm, Electron, Next.js, Playwright or
-an embedded browser. Advanced pages remain Python-served browser pages.
+an embedded browser. Advanced windows are native Qt. The default app starts no TCP
+listener and dispatches guarded application operations in-process.
 
 ## Build locally
 
@@ -38,9 +39,8 @@ Application data remains separate under `%LOCALAPPDATA%\ERSELMETZ AI`; SQLite is
 in `projects\ai_corporation.db`. Uninstall keeps that data by default. A local
 review installer uses a separate AppId and install directory.
 
-Owner locks remain enforced on launch. Advanced pages use one-use, short-lived
-loopback launch tickets exchanged for session cookies. Never share these URLs or
-copy credentials into a report. Cloud consent, permissions, exact-action
+Owner locks remain enforced on launch. Native in-process sessions never transfer
+authority to a browser. No launch tickets or app HTML are bundled. Cloud consent, permissions, exact-action
 approvals, resource limits and emergency stops remain backend requirements.
 
 Saved windows contain selection identifiers, titles and geometry only. Restart
@@ -76,3 +76,6 @@ presented as verified when absent.
 The local `legacy-electron-ui` tag preserves the old source. Restoring that tag
 requires its old development dependencies and does not make its superseded
 packaged-startup blocker fixed. It is a recovery reference, not the current build.
+
+Task 229 source changes are not present in the older Task 227 packaged artifacts.
+Rebuild from the new source before claiming native management/no-listener packaging.

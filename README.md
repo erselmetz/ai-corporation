@@ -3,7 +3,7 @@
 ERSELMETZ AI is a local-first desktop workspace for coordinating AI Employees,
 technical Agents, local or online providers, models, projects, Tasks and scoped
 knowledge. The native three-pane shell uses **PySide6**, with one Python process
-and one authenticated loopback backend. Each chat window has independent model,
+and one authenticated in-process backend, with no TCP listener by default. Each chat window has independent model,
 Agent, Project and conversation selection.
 
 ## Run from source
@@ -17,7 +17,9 @@ Start Ollama separately and choose an already installed local model. Startup doe
 not download models or call a paid provider. Gemini remains optional and requires
 its existing configuration and per-turn cloud consent. An existing owner password
 lock remains required. Settings and Advanced are separate singleton windows;
-Advanced opens the existing Python pages through a one-use local session handoff.
+Advanced opens native Qt record/detail/action windows. Owner access is native;
+no browser session handoff or HTML app pages remain. The explicit Open online docs
+button opens https://ai.erselmetz.com only on click.
 
 Optional OpenAI-compatible text endpoints, including **Free pool (FreeLLMAPI)**,
 are configured in Provider connections. They are cloud destinations even on
@@ -64,7 +66,7 @@ deployment, release, signing action or change to runtime permissions.
 
 Browser verification uses Python/CDP and an installed Chrome or Edge with an
 isolated profile. It does not use Node or Playwright. Browser JavaScript remains
-necessary for the static public site and existing Advanced clients; it is not a
+necessary only for the static public site; it is not a
 Node runtime or build dependency. No deployment is performed by the Python docs
 preview/generation tools.
 

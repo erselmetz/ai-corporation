@@ -119,7 +119,9 @@ def test_managed_server_keeps_explicit_owner_sign_in():
     controller = LocalApplicationController(port=0, app_factory=make_local_app)
     origin = controller.start(PASSWORD)
     try:
-        assert urlopen(f"{origin}/ui/login", timeout=3).status == 200
+        with pytest.raises(HTTPError) as removed:
+            urlopen(f"{origin}/ui/login", timeout=3)
+        assert removed.value.code == 404
         with pytest.raises(HTTPError) as denied:
             urlopen(f"{origin}/api/local/session", timeout=3)
         assert denied.value.code == 401

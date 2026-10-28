@@ -1,5 +1,6 @@
 """Native searchable records, typed forms and guarded owner actions. No HTML UI."""
 import importlib
+import hashlib
 from pathlib import Path
 from urllib.parse import quote
 from PySide6.QtCore import Qt, QUrl
@@ -90,9 +91,9 @@ class RecordWindow(QDialog):
             self.loading=False;self.selected=None
             if isinstance(data,list):rows=data
             elif isinstance(data,dict):
-                rows=next((data[k] for k in ['items','nodes','packs','entries'] if isinstance(data.get(k),list)),[data])
+                rows=next((data[k] for k in ['items','nodes','packs','entries','workflows','positions'] if isinstance(data.get(k),list)),[data])
             else:rows=[{'value':data}]
-            self.rows=[dict(v,id=v.get('id',v.get('approval_id',v.get('pack_id',v.get('document_id',''))))) if isinstance(v,dict) else {'name':v} for v in rows[:1000]];self.table.setRowCount(len(self.rows))
+            self.rows=[dict(v,id=v.get('id',v.get('approval_id',v.get('pack_id',v.get('document_id',v.get('grant_id',v.get('capability_id',''))))))) if isinstance(v,dict) else {'name':v} for v in rows[:1000]];self.table.setRowCount(len(self.rows))
             for i,row in enumerate(self.rows):
                 for j,value in enumerate([row.get('name',row.get('title',row.get('event','Record'))),row.get('state',row.get('status',row.get('kind',''))),row.get('id',row.get('agent_id',''))]):self.table.setItem(i,j,QTableWidgetItem(str(value)))
             self.table.resizeColumnsToContents();self.status.setText('No records yet.' if not self.rows else str(len(self.rows))+' records. Select one for details.');self.filter()
@@ -106,11 +107,12 @@ class RecordWindow(QDialog):
     def inspect(self):
         index=self.table.currentRow()
         if not 0<=index<len(self.rows):return
-        self.selected=self.rows[index];self.show_detail(self.selected)
+        self.selected=self.rows[index];self.detail_data=self.selected;self.show_detail(self.selected)
         if self.page.detail and self.selected.get('id'):
             chosen=self.selected
             self.manager.submit(lambda:self.manager.session.request('GET',self.page.detail.format(id=quote(str(chosen['id']),safe=''))),lambda data:self.show_detail(data) if self.selected is chosen else None,self.failed)
     def show_detail(self,data):
+        self.detail_data=data
         if self.windowTitle().startswith('Documentation') and isinstance(data,dict):
             content=data.get('content')
             if isinstance(content,str):self.detail.setMarkdown(content);return
@@ -118,9 +120,9 @@ class RecordWindow(QDialog):
     def action(self,action):
         if '{id}' in action.path and not (self.selected or {}).get('id'):
             self.status.setText('Select a record first.');return
-        chosen=dict(self.selected or {});chosen['confirmed_digest']='';path=action.path.format(id=quote(str(chosen.get('id','')),safe=''))
+        chosen={**(self.selected or {}),**(self.detail_data if isinstance(getattr(self,'detail_data',None),dict) else {})};chosen['confirmed_digest']='';path=action.path.format(id=quote(str(chosen.get('id','')),safe=''))
         dialog=QDialog(self);dialog.setWindowTitle(action.title);dialog.resize(620,620);layout=QVBoxLayout(dialog)
-        notice=QLabel(action.notice+'\nNon-loopback endpoints require explicit confirmation and HTTPS. Never paste secrets into prompts.');notice.setWordWrap(True);notice.setTextFormat(Qt.TextFormat.PlainText);layout.addWidget(notice)
+        notice=QLabel(action.notice+'\nSelected record: '+str(chosen.get('name',chosen.get('title',chosen.get('id','New record'))))+'\n'+str(chosen.get('action_summary',''))+'\nNon-loopback endpoints require explicit confirmation and HTTPS. Never paste secrets into prompts.');notice.setWordWrap(True);notice.setTextFormat(Qt.TextFormat.PlainText);layout.addWidget(notice)
         if action.dto:
             module,name=action.dto.split('.');model=getattr(importlib.import_module('app.api.'+module),name)
             fields=Fields(model.model_json_schema(),values={**chosen,**dict(action.defaults)})
@@ -130,17 +132,18 @@ class RecordWindow(QDialog):
         state=QLabel('');state.setWordWrap(True);state.setTextFormat(Qt.TextFormat.PlainText);layout.addWidget(state)
         submit=push('Confirm action',lambda:None);submit.setEnabled(False);confirmed.toggled.connect(submit.setEnabled);layout.addWidget(submit);layout.addWidget(push('Cancel',dialog.reject))
         def send():
-            body=fields.values();submit.setEnabled(False)
+            body=fields.values();submit.setEnabled(False);confirmed.setEnabled(False);fields.setEnabled(False)
             # Approval digest is never invented or silently substituted.
             self.manager.submit(lambda:self.manager.session.request(action.method,path,body if action.method!='GET' else None),done,fail)
         def done(result):
             fields.erase();dialog.accept();self.detail.setPlainText(text(result));self.status.setText('Action confirmed by the service.');self.refresh()
-        def fail(error):fields.erase();state.setText('Not completed: '+str(error)[:600]);submit.setEnabled(confirmed.isChecked())
+        def fail(error):
+            fields.erase();state.setText('Not completed: '+str(error)[:600]);fields.setEnabled(True);confirmed.setEnabled(True);confirmed.setChecked(False);submit.setEnabled(False)
         submit.clicked.connect(send);dialog.finished.connect(lambda _:fields.erase());dialog.open();self.action_dialog=dialog
 
 class BackupWindow(QDialog):
     def __init__(self,manager):
-        super().__init__();self.manager=manager;self.setWindowTitle('Backup & restore · ERSELMETZ AI');self.resize(700,650);layout=QVBoxLayout(self)
+        super().__init__();self.manager=manager;self.inspected=None;self.setWindowTitle('Backup & restore · ERSELMETZ AI');self.resize(700,650);layout=QVBoxLayout(self)
         self.detail=OfflineText();self.detail.setAccessibleName('Backup preview');layout.addWidget(self.detail)
         self.private=QCheckBox('Include private data in encrypted backup');self.private.setAccessibleName(self.private.text());layout.addWidget(self.private)
         self.password=QLineEdit();self.password.setEchoMode(QLineEdit.EchoMode.Password);self.password.setAccessibleName('Backup passphrase');self.password.setPlaceholderText('Passphrase (12+ characters)');layout.addWidget(self.password)
@@ -157,19 +160,28 @@ class BackupWindow(QDialog):
             r=self.manager.session.client.post('/api/local/backup/export',json={'passphrase':secret,'include_private_data':private},headers={'X-Local-CSRF':self.manager.session.credentials['csrf']});r.raise_for_status();Path(path).write_bytes(r.content);return 'Encrypted backup saved.'
         self.manager.submit(work,self.status.setText,self.fail)
     def upload(self,restore):
-        if restore and self.confirm.text()!='RESTORE':self.status.setText('Inspect first; type RESTORE to confirm replacement.');return
-        path,_=QFileDialog.getOpenFileName(self,'Choose encrypted backup','','Encrypted backup (*.erselbackup)')
+        if restore and (self.confirm.text()!='RESTORE' or self.inspected is None):self.status.setText('Inspect a backup first, then type RESTORE to confirm replacing data.');return
+        if restore:path=self.inspected['path']
+        else:path,_=QFileDialog.getOpenFileName(self,'Choose encrypted backup','','Encrypted backup (*.erselbackup)')
         if not path:return
-        secret=self.password.text();self.password.clear()
+        secret=self.password.text();self.password.clear();snapshot=dict(self.inspected or {})
         def work():
             from app.portability.backups import MAX_BACKUP_BYTES
             with Path(path).open('rb') as stream:
                 data=stream.read(MAX_BACKUP_BYTES+1)
             if len(data)>MAX_BACKUP_BYTES:raise ValueError('Backup is too large')
+            digest=hashlib.sha256(data).hexdigest()
+            if restore and digest!=snapshot.get('digest'):raise ValueError('The backup changed after inspection. Inspect it again; nothing was restored.')
             values={'passphrase':secret}
             if restore:values['confirmation']='RESTORE'
-            r=self.manager.session.client.post('/api/local/backup/'+('restore' if restore else 'inspect'),files={'file':('backup.erselbackup',data)},data=values,headers={'X-Local-CSRF':self.manager.session.credentials['csrf']});r.raise_for_status();return r.json()
-        self.manager.submit(work,lambda r:self.detail.setPlainText(text(r)),self.fail)
+            r=self.manager.session.client.post('/api/local/backup/'+('restore' if restore else 'inspect'),files={'file':('backup.erselbackup',data)},data=values,headers={'X-Local-CSRF':self.manager.session.credentials['csrf']});r.raise_for_status();return {'result':r.json(),'path':path,'digest':digest}
+        def done(result):
+            self.detail.setPlainText(text(result['result']))
+            if restore:
+                self.inspected=None;self.confirm.clear();self.status.setText('Restore confirmed. Restart ERSELMETZ AI before using protected operations. No work will be replayed.')
+            else:
+                self.inspected={'path':result['path'],'digest':result['digest']};self.status.setText('Backup inspected. Review the details, re-enter its passphrase and type RESTORE only to replace data.')
+        self.manager.submit(work,done,self.fail)
 
 class OwnerWindow(QDialog):
     def __init__(self,manager):

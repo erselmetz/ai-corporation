@@ -67,8 +67,9 @@ inspect the exact diff. Do not start speculative later-task infrastructure.
 - `app/`: Python backend and domain/application services. Preserve domain lifecycle
   rules and application-service boundaries; avoid direct registry access in routes.
 - `app/qt_desktop/`: PySide6 shell, shared native widgets and theme.
-- `packaging/`: native installer and PyInstaller hooks. Advanced pages remain
-  Python-served; verify their authenticated routes when shared behavior changes.
+- `packaging/`: native installer and PyInstaller hooks. Task 229 supersedes browser Advanced pages: management is native Qt, with an
+  in-process policy facade and no desktop TCP listener. Verify guarded handlers
+  when shared behavior changes.
 - `docs/`: public documentation and authoritative roadmap. Keep it separate from
   the permission-protected, file-based, read-only `corporation_docs/` portal.
 - `tests/`: backend and supporting regressions; inspect relevant existing tests

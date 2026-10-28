@@ -3,6 +3,12 @@
     {
       "date": "2026-10-28",
       "type": "development",
+      "title": "Task 229 - native management without browser app pages",
+      "summary": "Native Qt Settings/Advanced/owner windows replace app HTML and browser handoffs. Default desktop has no TCP listener; same policy handlers run in-process. Full suite 1746 passed/3 skipped, plus final native checks; real Windows startup and local qwen journey verified. No new packaged build, push or deployment."
+    },
+    {
+      "date": "2026-10-28",
+      "type": "development",
       "title": "Task 228 optional OpenAI-compatible cloud endpoints",
       "summary": "Python/httpx source integration adds disabled-by-default generic text endpoints and experimental Free pool preset. Explicit one-turn native/web previews, redaction, Brain switch, shared model admission, bounded attempts, no silent fallback or tool execution. Router-reported serving identity or unknown appears in How I answered. Full Python 2051 passed, 3 symlink-privilege skips; final targeted counts in the Task 228 evidence. Real FreeLLMAPI, upstream quality/costs and packaged integration remain unverified; no router installed, no push/deploy."
     },

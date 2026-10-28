@@ -110,7 +110,7 @@ def readiness_snapshot(*, application_service, app_started_at: datetime,
             "process_memory": _memory_snapshot(memory_reader),
             "rendering": {
                 "state": "unknown",
-                "evidence_page": "/ui/visualization",
+                "evidence_page": "native:Brain",
                 "reason": "Rendering measurements are collected on the local browser device and are not sent to this backend report.",
             },
             "model_workload": {

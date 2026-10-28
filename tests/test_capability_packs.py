@@ -109,16 +109,6 @@ def test_local_speech_model_preview_is_protected_and_pull_requires_explicit_dige
             "confirmed": True, "manifest_digest": "0" * 64}, headers=headers).status_code == 409
 
 
-def test_settings_exposes_optional_pack_status_and_actions_with_existing_safety_controls():
-    origin = "http://127.0.0.1:8000"
-    app = create_local_app(password="settings-pack-test-password", application_service=MagicMock())
-    with TestClient(app, base_url=origin, client=("127.0.0.1", 50192)) as client:
-        client.post("/api/local/login", json={"password": "settings-pack-test-password"}, headers={"Origin": origin})
-        page = client.get("/ui/settings/capabilities").text
-    assert 'id="media-capability-packs"' in page
-    assert 'src="/ui/static/capability-packs.mjs"' in page
-    assert 'id="emergency-stop"' in page
-    assert "No speech model or Tesseract engine is included or downloaded" in page
 
 
 def test_optional_voice_output_test_is_owner_gated_and_emergency_stop_reaches_backend_output(

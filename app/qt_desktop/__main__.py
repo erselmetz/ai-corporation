@@ -30,15 +30,8 @@ def main():
             if not store.verify(password): raise ValueError('Owner password did not match.')
         os.chdir(data)
         loading = QLabel('Opening your local workspace…'); loading.setWindowTitle('Opening local workspace'); loading.resize(420, 100); loading.show(); app.processEvents()
-        from app.desktop_launcher import LocalApplicationController
         from app.native_desktop.session import NativeSession
-        class OwnedLease:
-            def acquire(self):
-                if not instance.lock.isLocked(): raise RuntimeError('The application lock is required.')
-            def release(self): pass
-        # The Qt lock is authoritative; do not acquire another application lock.
-        factory = lambda **kwargs: LocalApplicationController(**kwargs, lease_factory=OwnedLease)
-        session = NativeSession(password, controller_factory=factory)
+        session = NativeSession(password)
         from .shell import ShellManager
         from .windows import WindowStore
         preferences=QSettings(str(data/'native-preferences.ini'),QSettings.Format.IniFormat)

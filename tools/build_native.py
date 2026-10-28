@@ -33,7 +33,6 @@ def main():
     dist=root/'dist'/'native'/identity
     args=[sys.executable,"-m","PyInstaller","--noconfirm","--windowed","--onedir",
           "--name","ERSELMETZ-AI","--collect-submodules","app",
-          "--add-data",f"{root/'app'/'webui'/'static'};app/webui/static",
           "--add-data",f"{root/'app'/'knowledge'/'knowledge_pack.json'};app/knowledge",
           "--add-data",f"{metadata};app",
           "--add-data",f"{root/'corporation_docs'};corporation_docs",

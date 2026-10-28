@@ -101,8 +101,8 @@ def test_readiness_api_is_local_owner_only_and_never_runs_a_model():
                side_effect=AssertionError("readiness must not run a model")) as generate:
         with TestClient(local, base_url=ORIGIN, client=("127.0.0.1", 50100)) as client:
             assert client.get("/api/local/readiness").status_code == 401
-            assert client.get("/ui/readiness").status_code == 200
-            assert client.get("/ui/static/readiness.mjs").status_code == 200
+            assert client.get("/ui/readiness").status_code == 404
+            assert client.get("/ui/static/readiness.mjs").status_code == 404
             client.post("/api/local/login", json={"password": PASSWORD}, headers={"Origin": ORIGIN})
             result = client.get("/api/local/readiness")
             assert result.status_code == 200

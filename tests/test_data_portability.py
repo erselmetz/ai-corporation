@@ -123,9 +123,9 @@ def test_local_api_requires_owner_permission_csrf_and_keeps_default_api_closed(t
     local = create_local_app(password=PASSWORD, data_portability_service=service)
     with TestClient(local, base_url=ORIGIN, client=("127.0.0.1", 50100)) as client:
         assert client.get("/api/local/backup/preview").status_code == 401
-        assert client.get("/ui/login").status_code == 200
-        assert client.get("/ui/backup").status_code == 200
-        assert client.get("/ui/static/backup.mjs").status_code == 200
+        assert client.get("/ui/login").status_code == 404
+        assert client.get("/ui/backup").status_code == 404
+        assert client.get("/ui/static/backup.mjs").status_code == 404
         assert client.get("/api/local/backup/diagnostics").status_code == 401
         assert client.post("/api/local/login", json={"password": PASSWORD}, headers={"Origin": ORIGIN}).status_code == 200
         session = client.get("/api/local/session").json()
@@ -145,7 +145,7 @@ def test_local_api_requires_owner_permission_csrf_and_keeps_default_api_closed(t
         assert exported.content.startswith(MAGIC)
     with TestClient(create_app(), base_url=ORIGIN) as default:
         assert default.get("/api/local/backup/preview").status_code == 404
-        assert default.get("/ui/backup").status_code == 200
+        assert default.get("/ui/backup").status_code == 404
         assert default.get("/api/local/backup/diagnostics").status_code == 404
 
 
@@ -172,7 +172,7 @@ def test_restore_api_requires_inspection_and_gates_api_until_restart(tmp_path):
         assert restored.status_code == 200
         assert restored.json()["requires_restart"] == "true"
         assert client.get("/api/local/backup/preview").status_code == 503
-        assert client.get("/ui/backup").status_code == 200
+        assert client.get("/ui/backup").status_code == 404
 
 
 def test_restore_failure_after_verified_inspection_keeps_restart_gate_closed(tmp_path):

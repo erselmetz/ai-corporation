@@ -5,10 +5,10 @@ from app.local_owner_credential import OwnerCredentialError
 
 PASSWORD='desktop-test-owner-password'
 
-def test_local_web_runtime_keeps_original_routes_and_default_csp_without_desktop_ui():
+def test_local_runtime_has_no_app_pages_and_keeps_api_security_headers():
     app = create_local_app(password=PASSWORD)
     with TestClient(app, base_url="http://127.0.0.1:8000", client=("127.0.0.1", 50100)) as client:
-        assert client.get("/ui/login").status_code == 200
+        assert client.get("/ui/login").status_code == 404
         assert client.get("/desktop/").status_code == 404
         response = client.get("/ui/login")
         assert "script-src 'self'" in response.headers["content-security-policy"]

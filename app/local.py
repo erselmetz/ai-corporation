@@ -1,4 +1,4 @@
-"""Run the explicitly configured single-owner local Web UI."""
+"""Construct guarded local services; optional explicit loopback integration API."""
 import argparse
 import getpass
 import logging
@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 import time
 
 from fastapi import HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.app import create_app
@@ -27,19 +27,6 @@ class DesktopLockRequest(BaseModel):
     enabled: bool
     password: str = Field(min_length=12, max_length=1024, repr=False)
     confirmation: str | None = Field(default=None, max_length=1024, repr=False)
-
-
-LOGIN_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Owner sign-in — ERSELMETZ AI</title><link rel="stylesheet" href="/ui/static/style.css">
-</head><body><main class="content login-content"><p class="eyebrow">YOUR LOCAL WORKSPACE</p><h1>Sign in to ERSELMETZ AI</h1>
-<p>Use the owner password created when this app was first set up. Sign-in unlocks the pages and chat allowed for this local session.</p>
-<form id="local-login"><label for="password">Owner password</label>
-<input id="password" type="password" autocomplete="current-password" required maxlength="1024">
-<button type="submit">Sign in</button></form>
-<p id="login-state" role="status" aria-live="polite"></p>
-<p class="login-links"><a href="/ui">Home</a><a href="/ui/chat">Chat</a><button id="local-logout" type="button">Sign out</button></p>
-</main><script type="module" src="/ui/static/local-login.mjs"></script></body></html>"""
 
 
 def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:8000", desktop_session_token: str | None = None,
@@ -306,74 +293,9 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
             "img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
         return response
 
-    @application.middleware("http")
-    async def shared_local_navigation(request: Request, call_next):
-        response = await call_next(request)
-        path = request.url.path
-        if path != "/ui" and not path.startswith("/ui/"):
-            return response
-        if path == "/ui/chat":
-            return response
-        if not response.headers.get("content-type", "").lower().startswith("text/html"):
-            return response
-        body = getattr(response, "body", None)
-        if not isinstance(body, bytes):
-            body_parts = []
-            async for chunk in response.body_iterator:
-                body_parts.append(chunk)
-            body = b"".join(body_parts)
-
-        import re
-        from app.webui.router import _navigation
-
-        try:
-            html = body.decode("utf-8")
-        except UnicodeDecodeError:
-            return response
-        if re.search(r"<body\b[^>]*>", html, re.IGNORECASE) is None:
-            return response
-
-        # Replace page-local copies with one shared navigation shell so every
-        # Python UI route, including post-wizard chat, has the same navigation.
-        html = re.sub(
-            r'<nav class="navigation" aria-label="Main navigation">.*?</nav>',
-            "", html, count=1, flags=re.IGNORECASE | re.DOTALL,
-        )
-        navigation = _navigation(path).replace(
-            '<nav class="navigation"',
-            '<nav id="shared-navigation" class="navigation shared-navigation"', 1,
-        )
-        menu = ('<button id="shared-navigation-toggle" class="navigation-toggle" '
-                'type="button" aria-controls="shared-navigation" aria-expanded="false">Menu</button>')
-        module = ('<script type="module" src="/ui/static/theme.mjs"></script>'
-                  '<script type="module" src="/ui/static/navigation.mjs"></script>')
-        markup = menu + navigation + module
-
-        def add_body_class(match):
-            attributes = match.group(1)
-            class_match = re.search(r'\bclass\s*=\s*(["\'])(.*?)\1', attributes, re.IGNORECASE)
-            if class_match:
-                value = class_match.group(2)
-                attributes = (attributes[:class_match.start(2)] + value + " has-shared-navigation"
-                              + attributes[class_match.end(2):])
-            else:
-                attributes += ' class="has-shared-navigation"'
-            return "<body" + attributes + ">"
-
-        html = re.sub(r"<body\b([^>]*)>", add_body_class, html, count=1, flags=re.IGNORECASE)
-        html = re.sub(r"(<body\b[^>]*>)", lambda match: match.group(1) + markup,
-                      html, count=1, flags=re.IGNORECASE)
-        headers = {key: value for key, value in response.headers.items()
-                   if key.lower() not in {"content-length", "content-type"}}
-        return HTMLResponse(html, status_code=response.status_code, headers=headers)
-
     @application.exception_handler(422)
     async def sanitized_validation(_request, _error):
         return JSONResponse({"detail": "Invalid request fields"}, status_code=422)
-
-    @application.get("/ui/login", response_class=HTMLResponse)
-    def login_page():
-        return LOGIN_HTML
 
     @application.post("/api/local/login")
     async def login(request: Request):
@@ -448,7 +370,7 @@ def create_local_app(*, password: str | None, origin: str = "http://127.0.0.1:80
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Local ERSELMETZ AI owner Web UI")
+    parser = argparse.ArgumentParser(description="Optional token-protected loopback integration API (off in desktop)")
     parser.add_argument("--port", type=int, default=8000)
     options = parser.parse_args()
     if not 1 <= options.port <= 65535:
@@ -461,8 +383,8 @@ def main():
                                    origin=f"http://127.0.0.1:{options.port}")
     del password, confirmation
     import uvicorn
-    logging.getLogger("uvicorn").info("Local sign-in: http://127.0.0.1:%s/ui/login", options.port)
-    print(f"Open http://127.0.0.1:{options.port}/ui/login - Ctrl+C stops the local app")
+    logging.getLogger("uvicorn").info("Optional integration API explicitly enabled on loopback port %s", options.port)
+    print(f"Optional integration API: http://127.0.0.1:{options.port} - no app pages. Ctrl+C stops it.")
     uvicorn.run(application, host="127.0.0.1", port=options.port,
                 proxy_headers=False, workers=1)
 

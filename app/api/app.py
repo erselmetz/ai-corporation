@@ -12,7 +12,6 @@ from fastapi import (
     Response,
     status,
 )
-from fastapi.staticfiles import StaticFiles
 from starlette.types import Scope
 
 from app.application import (
@@ -40,7 +39,6 @@ from app.integrations import SandboxImagePolicy
 from app.runtime import create_corporation_runtime
 from app.build_stamp import BUILD_STAMP
 from app.chat_prompt import debug_chat_adapter_contract_self_check
-from app.webui import web_ui_router
 from app.positions import (
     POSITION_TEMPLATES,
     CorporationPosition,
@@ -95,14 +93,6 @@ from .security import (
 
 api_router = APIRouter()
 corporation_router = APIRouter(prefix="/api")
-
-
-class WebUIStaticFiles(StaticFiles):
-    async def get_response(self, path: str, scope: Scope) -> Response:
-        response = await super().get_response(path, scope)
-        if path.endswith(".mjs") and response.status_code == status.HTTP_200_OK:
-            response.headers["content-type"] = "text/javascript; charset=utf-8"
-        return response
 
 
 @api_router.get("/")
@@ -1099,6 +1089,7 @@ def create_app(
 
     application = FastAPI(
         title="ERSELMETZ AI API",
+        docs_url=None, redoc_url=None,
         version=BUILD_STAMP["version"],
         lifespan=lifespan,
     )
@@ -1158,13 +1149,6 @@ def create_app(
     application.state.semantic_memory_service = semantic_memory_service
     if semantic_memory_service is not None and hasattr(application_service, "configure_semantic_memory"):
         application_service.configure_semantic_memory(semantic_memory_service)
-    application.mount(
-        "/ui/static",
-        WebUIStaticFiles(
-            directory=str(Path(__file__).parent.parent / "webui" / "static")
-        ),
-        name="web-ui-static",
-    )
     application.include_router(api_router)
     application.include_router(corporation_router)
     from .memory import router as memory_router
@@ -1199,7 +1183,6 @@ def create_app(
     application.include_router(task_dispatch_router)
     from .structure_map import router as structure_map_router
     application.include_router(structure_map_router)
-    application.include_router(web_ui_router)
     from app.resources.context import ModelContextMiddleware
     from .native_windows import router as native_windows_router
     application.include_router(native_windows_router)

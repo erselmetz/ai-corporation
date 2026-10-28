@@ -61,3 +61,27 @@ def test_dedicated_backup_and_owner_windows(manager,qtbot):
         assert window is manager.open_page(title,QLabel())
         assert all(x.accessibleName() for x in window.findChildren(QPushButton)+window.findChildren(QLineEdit))
         window.close()
+
+
+def test_backup_restore_requires_inspected_unchanged_bytes(manager,qtbot,monkeypatch,tmp_path):
+    import httpx
+    from app.qt_desktop.native_pages import BackupWindow
+    from PySide6.QtWidgets import QFileDialog
+    requests=[]
+    def handle(request):
+        requests.append(request.url.path);return httpx.Response(200,json={'summary':'Inspected encrypted backup fixture'})
+    manager.session.client=httpx.Client(transport=httpx.MockTransport(handle),base_url='http://127.0.0.1:1')
+    manager.session.credentials={'csrf':'test-token'}
+    path=tmp_path/'sample.erselbackup';path.write_bytes(b'encrypted fixture')
+    monkeypatch.setattr(QFileDialog,'getOpenFileName',lambda *a,**k:(str(path),''))
+    window=BackupWindow(manager);qtbot.addWidget(window)
+    try:
+        window.confirm.setText('RESTORE');window.upload(True)
+        assert requests==[] and 'Inspect' in window.status.text()
+        window.password.setText('long fixture passphrase');window.upload(False)
+        qtbot.waitUntil(lambda:window.inspected is not None)
+        assert requests==['/api/local/backup/inspect'] and window.password.text()==''
+        path.write_bytes(b'changed encrypted fixture');window.password.setText('long fixture passphrase');window.upload(True)
+        qtbot.waitUntil(lambda:'changed after inspection' in window.status.text())
+        assert requests==['/api/local/backup/inspect']
+    finally:manager.session.client.close()

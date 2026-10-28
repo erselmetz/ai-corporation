@@ -4,16 +4,17 @@
 
 **ERSELMETZ AI is an actual software system implementing a virtual/simulated AI organization.** “Virtual/simulated organization” describes the domain being modeled; it does not mean that the software system itself is imaginary.
 
+Task 229 supersedes historical browser UI descriptions: current app navigation is native Qt, with offline Markdown and in-process dispatch through the same guarded handlers. Public docs remain static.
+
 This document separates the implemented Tasks 1–100 foundations from future architecture. Source code is authoritative if implementation and documentation disagree.
 
 ## Implemented system at a glance
 
 ```text
-Browser / API client
+Native PySide6 windows (Task 229; no browser UI or TCP listener)
   ↓
-FastAPI
-  ├── Public Web UI dashboard (/ui) + static assets
-  └── Protected API routes → Authentication → Authorization
+In-process policy facade
+  └── Guarded handlers → Authentication → Authorization
                                               ↓
                               CorporationApplicationService
                                               ↓

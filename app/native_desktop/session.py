@@ -1,4 +1,4 @@
-"""Native owner session over the existing authenticated loopback application."""
+"""Native owner session over an in-process policy facade; no listening socket."""
 from __future__ import annotations
 
 import secrets
@@ -6,13 +6,13 @@ import threading
 import uuid
 import httpx
 
-from app.desktop_launcher import LocalApplicationController
+from .facade import InProcessController
 from app.local import create_local_app
 from app.api.local_access import COOKIE
 
 
 class NativeSession:
-    def __init__(self, password=None, *, controller_factory=LocalApplicationController, application_service=None):
+    def __init__(self, password=None, *, controller_factory=InProcessController, application_service=None):
         token = secrets.token_urlsafe(48)
         self.controller = controller_factory(port=0, app_factory=lambda _password, origin: create_local_app(
             password=password, origin=origin, desktop_session_token=token, desktop_mode=True,
@@ -20,7 +20,8 @@ class NativeSession:
         # Owner lock is checked by the native launcher before this trusted session is constructed.
         self.origin = self.controller.start(password or secrets.token_urlsafe(32))
         self.client = httpx.Client(base_url=self.origin, timeout=180, trust_env=False,
-                                   headers={"Origin": self.origin}, cookies={COOKIE: token})
+                                   headers={"Origin": self.origin}, cookies={COOKIE: token},
+                                   transport=getattr(self.controller,"transport",None))
         self.lock = threading.RLock()
         self.credentials = self.request("GET", "/api/local/session")
 
@@ -36,19 +37,26 @@ class NativeSession:
         response = self.client.request(method, path, json=body, headers=headers)
         if not response.is_success:
             detail = response.json().get("detail", "Local request failed")
-            raise RuntimeError(str(detail)[:1000])
+            if isinstance(detail,dict):detail=detail.get('message','The protected request was not completed. Review its fields and permissions.')
+            if not isinstance(detail,str):detail='The protected request was not completed. Review its fields and permissions.'
+            raise RuntimeError(detail[:1000])
         return response.json() if response.content else {}
 
     def lock_owner(self):
         # Synchronously stop before clearing authority, including direct client users.
         self.request('POST','/api/local/emergency-stop/stop')
+        self.controller.application.state.authentication_backend.desktop_locked=True
         self._locked_cookie=self.client.cookies.get(COOKIE)
         self.client.cookies.clear()
 
     def unlock_owner(self,password):
         from app.local_owner_credential import LocalOwnerCredentialStore
-        if not LocalOwnerCredentialStore().verify(password):raise ValueError('Owner password did not match')
+        from app.local_owner_credential import OwnerCredentialError
+        try:verified=LocalOwnerCredentialStore().verify(password)
+        except OwnerCredentialError:verified=False
+        if not verified:raise ValueError('Owner password did not match')
         if not getattr(self,'_locked_cookie',None):raise ValueError('No locked owner session')
+        self.controller.application.state.authentication_backend.desktop_locked=False
         self.client.cookies.set(COOKIE,self._locked_cookie);self._locked_cookie=None
         self.credentials=self.request('GET','/api/local/session')
 

@@ -1,0 +1,698 @@
+{
+  "task": 229,
+  "phase": "C",
+  "base_commit": "5709e492e32045e6cd15518faa13e1340ddc3fdb",
+  "normalization": "UTF-8 text CRLF to LF; binary unchanged; this manifest excludes itself",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "state": "present",
+      "sha256_lf_normalized": "d539fa49e12a3db665101edc826d968030e47afe48110a2885607d8c0fc13917"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "state": "present",
+      "sha256_lf_normalized": "2c1098b5084e6000df041e01c22a94cb4fefcc1bda31ee80bd474f6584d7c5f0"
+    },
+    {
+      "path": "README.md",
+      "state": "present",
+      "sha256_lf_normalized": "34ae3a71205489681703da0f5a7253dd642adc1f4dc76a52a85936c301af3d64"
+    },
+    {
+      "path": "app/api/app.py",
+      "state": "present",
+      "sha256_lf_normalized": "8b9f5c98485afe07727b63d14208681288fef8205bd7cfade60621567dbd6955"
+    },
+    {
+      "path": "app/api/local_access.py",
+      "state": "present",
+      "sha256_lf_normalized": "f9c7d3b2e9f2c846ea4fb14fe815d234511dbe86eaa290cfc1d756a13b05b0b0"
+    },
+    {
+      "path": "app/api/local_voice.py",
+      "state": "present",
+      "sha256_lf_normalized": "8f9b2dcf28283f98e807870caff1028029c07d15ed6837392e5f514a3091ef5e"
+    },
+    {
+      "path": "app/application/services/owner_suggestions.py",
+      "state": "present",
+      "sha256_lf_normalized": "177a9e3babeea12a41a3a744f5b6ad1a13503d78bfc641061dc90148a658f3eb"
+    },
+    {
+      "path": "app/application/services/readiness_evidence.py",
+      "state": "present",
+      "sha256_lf_normalized": "ac56e985ecbfd674d821eacd1a5590a190dd3cb551b0d909dc6e7d8d464e54d7"
+    },
+    {
+      "path": "app/desktop_launcher.py",
+      "state": "present",
+      "sha256_lf_normalized": "5d1662e015bb264c66cc93e1bc3bd679278add8f5cbcd1bd8da41dc3267f3062"
+    },
+    {
+      "path": "app/local.py",
+      "state": "present",
+      "sha256_lf_normalized": "a9af055e69ac14386882a995df50b5eead49a83742079a2b4860fea407fd7f73"
+    },
+    {
+      "path": "app/native_desktop/facade.py",
+      "state": "present",
+      "sha256_lf_normalized": "b7ba59611dad63d24c9822ed215bca4de3b5322d684e1c2f5ff64dcf4f402f19"
+    },
+    {
+      "path": "app/native_desktop/session.py",
+      "state": "present",
+      "sha256_lf_normalized": "2588ff3e854160ab3b6a981688400a4270f237a5bb20c1808454f7b89b292cd3"
+    },
+    {
+      "path": "app/qt_desktop/__main__.py",
+      "state": "present",
+      "sha256_lf_normalized": "800c8ab0f624ea00b586fb15854e5d0715abe680174795038912c23633e073c7"
+    },
+    {
+      "path": "app/qt_desktop/native_pages.py",
+      "state": "present",
+      "sha256_lf_normalized": "374b0efb57ae03025b220719d4d4fc6791a6b13c7ef2fac7030b61e8d9976ccd"
+    },
+    {
+      "path": "app/qt_desktop/page_schema.py",
+      "state": "present",
+      "sha256_lf_normalized": "d7e9903f76f412b953dac89cb2de9525c4a98f13338eac0c6c0b7fcd8050ae0e"
+    },
+    {
+      "path": "app/qt_desktop/shell.py",
+      "state": "present",
+      "sha256_lf_normalized": "1b39c832d37e306c832d4617269462466af61f5af2dcc3eedb16bda8926ed9bf"
+    },
+    {
+      "path": "app/webui/__init__.py",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/router.py",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/activity.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/agents.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/assignment-policy.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/assignment-preview.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/backup.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/brain-graph.css",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/brain-graph.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/brain-view.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/camera-capture.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/capability-packs.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/chat-images.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/chat-markdown.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/chat-ui.css",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/chat-workspace.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/chat.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/dashboard.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/design-tokens.css",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/documentation.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/emergency-stop.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/employee-chat.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/employees.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/inventory.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/knowledge.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/local-automation.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/local-login.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/local-models.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/memory.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/navigation.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/online-provider.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/positions.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/preferences.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/projects.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/prototype-shell.css",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/prototype-shell.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/provider-connections.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/providers.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/quick-start.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/readiness.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/release-update.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/sage-core.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/scene-model.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/screen-capture.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/structure.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/style.css",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/suggestions.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/task-progress.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/tasks.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/text-to-speech.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/theme.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/ui-details.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/updates.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/visualization.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/voice.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/workflow-map.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "app/webui/static/workflows.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "corporation_updates.json",
+      "state": "present",
+      "sha256_lf_normalized": "8952d3231ba716539f6c8cb4a4b9296a12f86f3d116e8394e5f4dd3ba85edb60"
+    },
+    {
+      "path": "docs/implementation-history.md",
+      "state": "present",
+      "sha256_lf_normalized": "7d4b6aa2c5ef4967b5bbbb1a3ea9d834613157761cc90a3a088fbdb5a79d752d"
+    },
+    {
+      "path": "docs/tasks-data.json",
+      "state": "present",
+      "sha256_lf_normalized": "1945aba3fdf77c919cb3651775f09fe768fa6f0ef04af488781ff2121c57412c"
+    },
+    {
+      "path": "docs/tasks-data.mjs",
+      "state": "present",
+      "sha256_lf_normalized": "10802501a127678e1a44d7993d8112910855b05a1f2225fc788bdfe8a997a88f"
+    },
+    {
+      "path": "packaging/README.md",
+      "state": "present",
+      "sha256_lf_normalized": "5e0cbd2e3dd428779441b65d79ceefa9d67a5d6eeafbc164199d479d266efa3a"
+    },
+    {
+      "path": "review/task-229-coverage-migration.json",
+      "state": "present",
+      "sha256_lf_normalized": "7b31de18e74a5590779c46afb5e8ff6ed0a0fb780c9782dfd8f1d33de6e31d67"
+    },
+    {
+      "path": "review/task-229-evidence.json",
+      "state": "present",
+      "sha256_lf_normalized": "15eb59a95ba5d38294923a1ae893e98a2722e09e544e560b33b78f040ea30bf8"
+    },
+    {
+      "path": "review/task-229-native-app.md",
+      "state": "present",
+      "sha256_lf_normalized": "dbb95b526ac7a6a7a00b0bfeeb894b2bda424588962d733dd15c4f0d6a634a83"
+    },
+    {
+      "path": "tests/browser_contracts/harness.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/local-automation-ui.test.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/manifest.json",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_activity_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_agents_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_assignment_policy_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_backup_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_brain_visualization_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_camera_capture.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_camera_stop.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_capability_packs_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_chat_images_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_chat_markdown.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_chat_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_chat_workspace_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_dashboard_data.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_documentation_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_emergency_stop_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_employee_chat_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_employee_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_inventory_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_knowledge_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_local_login_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_local_models_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_memory_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_online_provider_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_owner_suggestions_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_position_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_project_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_provider_connections_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_provider_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_quick_start_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_readiness_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_release_update_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_sage_core.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_screen_capture.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_semantic_memory_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_shared_navigation.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_structure_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_task_progress.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_task_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_text_to_speech.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_theme_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_ui_details.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_updates_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_visualization_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_voice_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_workflow_map_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/test_workflows_ui.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/browser_contracts/worker.mjs",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_assignment_policy_api.py",
+      "state": "present",
+      "sha256_lf_normalized": "2923ab9d4d55ee8ecd49cb4b3659631a778702086dacfe19b0c481a622b6ab54"
+    },
+    {
+      "path": "tests/test_browser_contracts.py",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_capability_packs.py",
+      "state": "present",
+      "sha256_lf_normalized": "6fade852bbec9af24407e469a439eab54ae27f39ada74f87e53a25a7a752d56a"
+    },
+    {
+      "path": "tests/test_conversations.py",
+      "state": "present",
+      "sha256_lf_normalized": "75afd90b3e9fb9fd598ca778ed7b806a3c4f976333098e1c66d54e5761f37199"
+    },
+    {
+      "path": "tests/test_data_portability.py",
+      "state": "present",
+      "sha256_lf_normalized": "6c17a81ade306698eded2f27b47eed124e891ed0a8287be1033dca6cade9fd00"
+    },
+    {
+      "path": "tests/test_desktop_launcher.py",
+      "state": "present",
+      "sha256_lf_normalized": "7735609d94000c3800979a6004108a37327135d636ed834cb4b5d715c95b15c0"
+    },
+    {
+      "path": "tests/test_emergency_stop.py",
+      "state": "present",
+      "sha256_lf_normalized": "09279bd3084e3c374090f76623b1428275e72266eb77c1977d466d8c09c2c741"
+    },
+    {
+      "path": "tests/test_local_access.py",
+      "state": "present",
+      "sha256_lf_normalized": "7aeb40ff90f998aa19197c91194967e8fd0c35faf5dab1feba418b734e84ba96"
+    },
+    {
+      "path": "tests/test_local_automation_api.py",
+      "state": "present",
+      "sha256_lf_normalized": "5571a626b48f4747bc19adee0aa8c993b968d49719810b25e683e686eddce4a4"
+    },
+    {
+      "path": "tests/test_local_chat_browser.py",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_memory_management_api.py",
+      "state": "present",
+      "sha256_lf_normalized": "8fc14a77f3acf950a46fdc320d76216d1b90e0c39d8570490d2228bc0400baba"
+    },
+    {
+      "path": "tests/test_native_facade.py",
+      "state": "present",
+      "sha256_lf_normalized": "90b49f30faa495552ab5aa3ea9df721352b35bbad10a01bd46a15085d891b4d7"
+    },
+    {
+      "path": "tests/test_native_pages.py",
+      "state": "present",
+      "sha256_lf_normalized": "0d01062b538c8fa7cc198d7b7094f038ea1770ecf38c60829e32230e53a29325"
+    },
+    {
+      "path": "tests/test_native_session_security.py",
+      "state": "present",
+      "sha256_lf_normalized": "2d4f91689ae2f0fd52cbcbbfca68e9fcd37bacd1333c9970ae831191edc9e27a"
+    },
+    {
+      "path": "tests/test_openai_compatible_browser.py",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_owned_chat.py",
+      "state": "present",
+      "sha256_lf_normalized": "281967b167d7dedec8abad38b2a2b07a5beeb86167f018f20c8ed21e08b84804"
+    },
+    {
+      "path": "tests/test_owner_suggestions.py",
+      "state": "present",
+      "sha256_lf_normalized": "97fb188633592a73ba77d4256205f7068b5fd9fb3bbe212982e5c00b114cc558"
+    },
+    {
+      "path": "tests/test_positions.py",
+      "state": "present",
+      "sha256_lf_normalized": "41d2f84a854aa5a2bd2841bb744754cb259164756974e33084095d8a36185ea7"
+    },
+    {
+      "path": "tests/test_product_audit.py",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_public_docs.py",
+      "state": "present",
+      "sha256_lf_normalized": "f6903edb4a7a416d9484334b96a89ea46df1e7f142c315e8fad2233f1bc9ef85"
+    },
+    {
+      "path": "tests/test_public_docs_browser.py",
+      "state": "present",
+      "sha256_lf_normalized": "054425c48a6dba511e6b415a574dc87a55619f14558c876699f7ddd3c968884e"
+    },
+    {
+      "path": "tests/test_readiness_evidence.py",
+      "state": "present",
+      "sha256_lf_normalized": "f71d71fd27dbc45ae4f7629bc1de0a6b5417f13eda79c155d751b0e25a566dd4"
+    },
+    {
+      "path": "tests/test_ui_coverage_migration.py",
+      "state": "present",
+      "sha256_lf_normalized": "bb9458f8805018901a95518ce4fb406aa342a363f8715cbc50db0879d62e1f3c"
+    },
+    {
+      "path": "tests/test_visualization_page.py",
+      "state": "deleted"
+    },
+    {
+      "path": "tests/test_webui.py",
+      "state": "deleted"
+    },
+    {
+      "path": "tools/build_native.py",
+      "state": "present",
+      "sha256_lf_normalized": "9059ec0cbd51485211097682cd4061eef06625eb24f72dd68b050d8d1d9cad0b"
+    },
+    {
+      "path": "tools/native_app_check.py",
+      "state": "present",
+      "sha256_lf_normalized": "a5b803808e69e57346e2426a1ac6e7bd1ac3bfcf0c5136bc764b379f03b039eb"
+    },
+    {
+      "path": "tools/native_startup_check.py",
+      "state": "present",
+      "sha256_lf_normalized": "b37c372d4971b670c6de4441b73cd8042a45dce64e8cc323ac0adbb515bc3ecd"
+    },
+    {
+      "path": "tools/packaged_advanced_check.py",
+      "state": "deleted"
+    },
+    {
+      "path": "tools/qt_shell_check.py",
+      "state": "deleted"
+    }
+  ]
+}

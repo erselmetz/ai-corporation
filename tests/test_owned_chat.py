@@ -381,15 +381,6 @@ def test_route_suggestions_are_uncertain_local_hints_and_alternates_are_per_turn
         assert runtime.application_service.get_agent("local_worker") == original
 
 
-def test_coordinator_chat_page_exposes_explicit_route_review_controls():
-    runtime = create_corporation_runtime()
-    with client_for(runtime) as client:
-        page = client.get("/ui/chat")
-    assert page.status_code == 200
-    assert 'id="chat-route-check"' in page.text
-    assert 'id="chat-route-select"' in page.text
-    assert 'id="chat-route-state" role="status"' in page.text
-    assert "configured model remains the default" in page.text
 
 
 def test_owned_chat_service_requires_explicit_route_consent_before_alternate_dispatch(setup):
@@ -651,6 +642,6 @@ def test_trusted_cli_chat_is_separate_and_local_csrf_applies(setup):
         response = client.post("/api/chat/conversations", json={"agent_id": "local_worker"}, headers={"Origin": origin, "X-Local-CSRF": session["csrf"]})
         assert response.status_code == 200
         page = client.get("/ui/chat")
-        assert page.status_code == 200 and "chat-history" in page.text
-        assert client.get("/ui/static/chat.mjs").status_code == 200
+        assert page.status_code == 404
+        assert client.get("/ui/static/chat.mjs").status_code == 404
     assert provider.calls == []
