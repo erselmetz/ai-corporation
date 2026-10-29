@@ -134,7 +134,7 @@ def test_api_default_lifespan_uses_shared_runtime_factory(monkeypatch):
     with TestClient(create_app()) as client:
         health = client.get("/health").json()
         assert health["status"] == "ok"
-        assert health["version"] == "0.1.0"
+        assert health["version"] == "1.0.0-rc.1"
         assert health["commit"] == BUILD_STAMP["commit"]
         assert client.app.state.application_service is service
 

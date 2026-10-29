@@ -19,7 +19,8 @@ def test_inprocess_policy_keeps_auth_csrf_origin_default_deny_and_stop(session):
     response=transport.handle_request(request);response.read();assert response.status_code==401
     r=session.client.post('/api/projects',json={'name':'deny'});assert r.status_code==403
     assert session.client.get('/api/employees',headers={'Origin':'https://wrong.invalid'}).status_code==403
-    assert session.client.post('/api/projects',json={'name':'deny'},headers={'X-Local-CSRF':session.credentials['csrf']}).status_code==403
+    owner_project=session.client.post('/api/projects',json={'name':'owner workflow'},headers={'X-Local-CSRF':session.credentials['csrf']})
+    assert owner_project.status_code==201
     assert session.request('PUT','/api/local/preferences',{'detail_level':'brief'})['preferences']['detail_level']=='brief'
     original=session.client
     with httpx.Client(transport=httpx.MockTransport(lambda request:httpx.Response(422,json={'detail':{'state':'Key rejected','message':'The endpoint rejected the key.'}})),base_url=ORIGIN) as fake:
@@ -78,5 +79,10 @@ def test_real_native_record_readers_and_project_action(session):
         assert isinstance(session.request('GET',PAGES[title].endpoint),dict),title
     before=len(session.request('GET','/api/projects')['items'])
     response=session.client.post('/api/projects',json={'name':'Native owner created'},headers={'X-Local-CSRF':session.credentials['csrf']})
-    assert response.status_code==403  # Existing owner session deliberately lacks project:create.
-    assert len(session.request('GET','/api/projects')['items'])==before
+    assert response.status_code==201
+    assert len(session.request('GET','/api/projects')['items'])==before+1
+    created=response.json()
+    task=session.client.post('/api/tasks',json={'title':'Native owner task','description':'Release workflow check',
+        'project_id':created['id'],'agent_id':'local_worker'},headers={'X-Local-CSRF':session.credentials['csrf']})
+    assert task.status_code==201
+    assert task.json()['assigned_agent']=='local_worker'

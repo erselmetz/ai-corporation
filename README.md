@@ -1,5 +1,10 @@
 # ERSELMETZ AI
 
+Current release candidate: **1.0.0-rc.1**. This is an unsigned, local-first
+Windows release candidate, not a signed public-production release. See the
+[release notes](docs/V1_RELEASE_NOTES.md), [security boundary](SECURITY.md), and
+[API stability policy](docs/API_STABILITY.md).
+
 ERSELMETZ AI is a local-first desktop workspace for coordinating AI Employees,
 technical Agents, local or online providers, models, projects, Tasks and scoped
 knowledge. The native three-pane shell uses **PySide6**, with one Python process
@@ -48,11 +53,12 @@ answer probe; no perfect-RAG or general answer-accuracy claim is made. Live paid
 Gemini, physical microphone/camera behavior, assistive technology and a separate
 clean Windows account remain unverified unless an exact report says otherwise.
 
-Tasks 213–221 remain as superseded history. Task 222 records stabilization;
-Tasks 223–226 have local Python checkpoints. Task 227 covers restore, Python-only
-verification, packaging and legacy retirement; consult its evidence and canonical
-record for its actual completion state. No local checkpoint authorizes a push,
-deployment, release, signing action or change to runtime permissions.
+Tasks 213–221 remain as superseded history. Their V1-relevant UI, native-window,
+workspace-isolation and resource-control outcomes are carried by Tasks 223–230;
+the original Electron/multi-window acceptance wording is not claimed. Task 227
+covers restore, Python-only verification, packaging and legacy retirement;
+Tasks 229–230 cover the listener-free native shell and current-user packaged
+Windows evidence. Consult the canonical roadmap for exact evidence and limits.
 
 ## Local packaged build
 

@@ -11,9 +11,11 @@ import time
 
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--review',action='store_true',help='Allow uncommitted source with an explicit review stamp')
-    parser.add_argument('--version',default='0.1.0');args=parser.parse_args()
     root=Path(__file__).resolve().parents[1]
+    declared_version=(root/'VERSION').read_text(encoding='utf-8').strip()
+    parser=argparse.ArgumentParser();parser.add_argument('--review',action='store_true',help='Allow uncommitted source with an explicit review stamp')
+    parser.add_argument('--version',default=declared_version);args=parser.parse_args()
+    if args.version != declared_version:raise SystemExit('Build version must match the repository VERSION declaration.')
     if sys.platform!="win32": raise SystemExit("This artifact targets Windows.")
     if importlib.util.find_spec("PyInstaller") is None:
         raise SystemExit("Install requirements-build.txt first. No automatic downloads.")

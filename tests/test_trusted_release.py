@@ -18,6 +18,8 @@ from app.updates.trusted_release import (
     _compare_versions,
 )
 
+TEST_UPDATE_VERSION = "1.0.1"
+
 
 class UpdateAuth:
     def __init__(self, permissions):
@@ -37,15 +39,15 @@ class UpdateAuth:
 def signed_release(installer: bytes = b"test installer", *, config_from: int = 1, config_to: int = 1):
     private = Ed25519PrivateKey.generate()
     public = private.public_key().public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
-    name = "ERSELMETZ-AI-Setup-0.2.0-win-x64.exe"
+    name = f"ERSELMETZ-AI-Setup-{TEST_UPDATE_VERSION}-win-x64.exe"
     manifest = json.dumps({
-        "version": "0.2.0",
+        "version": TEST_UPDATE_VERSION,
         "releaseNotes": "Verified test release notes.",
         "artifact": {"name": name, "sha256": hashlib.sha256(installer).hexdigest()},
         "configuration": {"fromVersion": config_from, "toVersion": config_to, "preview": "Existing app records remain unchanged."},
     }, separators=(",", ":")).encode()
     signature = base64.b64encode(private.sign(manifest))
-    release = {"tag_name": "v0.2.0", "assets": [
+    release = {"tag_name": f"v{TEST_UPDATE_VERSION}", "assets": [
         {"name": "erselmetz-release.json", "url": "https://api.github.com/repos/erselmetz/ai-corporation/releases/assets/1"},
         {"name": "erselmetz-release.sig", "url": "https://api.github.com/repos/erselmetz/ai-corporation/releases/assets/2"},
         {"name": name, "url": "https://api.github.com/repos/erselmetz/ai-corporation/releases/assets/3"},
@@ -78,7 +80,7 @@ def test_release_check_verifies_pinned_key_and_returns_bounded_preview(tmp_path:
     result = service.check()
 
     assert result.available is True
-    assert result.version == "0.2.0"
+    assert result.version == TEST_UPDATE_VERSION
     assert result.release_notes == "Verified test release notes."
     assert result.from_configuration == result.to_configuration == 1
     assert len(result.response()["installer_sha256"]) == 64
@@ -104,7 +106,7 @@ def test_tampered_signature_wrong_origin_and_tag_mismatch_fail_closed(tmp_path: 
 
     def wrong_origin(request):
         if str(request.url) == RELEASES_API:
-            return httpx.Response(200, json={"tag_name": "v0.2.0", "assets": [{"name": "erselmetz-release.json", "url": "https://evil.example/manifest"}]}, request=request)
+            return httpx.Response(200, json={"tag_name": f"v{TEST_UPDATE_VERSION}", "assets": [{"name": "erselmetz-release.json", "url": "https://evil.example/manifest"}]}, request=request)
         return transport.handle_request(request)
 
     with pytest.raises(TrustedReleaseError, match="outside the trusted GitHub"):
@@ -118,7 +120,7 @@ def test_prepare_stages_only_matching_installer_and_sqlite_recovery_backup(tmp_p
     make_database(database)
     service = TrustedReleaseService(tmp_path / "profile", database_path=database, public_key_der=base64.b64encode(public).decode(), transport=transport)
 
-    prepared = service.prepare("0.2.0")
+    prepared = service.prepare(TEST_UPDATE_VERSION)
 
     assert Path(prepared["installer_path"]).read_bytes() == installer
     backup = Path(prepared["backup_path"])
@@ -139,7 +141,7 @@ def test_download_interruption_or_digest_mismatch_does_not_leave_installer_or_ba
 
     service = TrustedReleaseService(tmp_path / "profile", database_path=database, public_key_der=base64.b64encode(public).decode(), transport=httpx.MockTransport(interrupted))
     with pytest.raises(TrustedReleaseError, match="integrity"):
-        service.prepare("0.2.0")
+        service.prepare(TEST_UPDATE_VERSION)
     update_dir = tmp_path / "profile" / "updates"
     assert list(update_dir.glob("*.partial")) == []
     assert not list((update_dir / "backups").glob("*.sqlite3")) if (update_dir / "backups").exists() else True
@@ -151,7 +153,7 @@ def test_incompatible_configuration_version_is_rejected_before_download(tmp_path
     make_database(database, version=1)
     service = TrustedReleaseService(tmp_path / "profile", database_path=database, public_key_der=base64.b64encode(public).decode(), transport=transport)
     with pytest.raises(TrustedReleaseError, match="incompatible"):
-        service.prepare("0.2.0")
+        service.prepare(TEST_UPDATE_VERSION)
 
 
 def test_version_order_handles_equal_and_prerelease_versions():

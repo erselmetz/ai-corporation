@@ -1148,3 +1148,14 @@ Task229 supersedes browser Advanced allowances in Tasks223-227. Native Qt tables
 ## Task 230 - packaged native Python verification
 
 One-folder/windowed PyInstaller and per-user Inno installer for the native in-process shell, exact About/build identity, metadata-only event log, explicit default-keep data removal and private wheel-pack verification. Full suite1751 passed/3 skipped; affected checks24 passed. Real isolated current-user install/chat/Brain/URL/Eyes/restart/retention/reinstall/removal passed. Fresh Windows account/Sandbox, physical media, OCR, untested optional packs and signing remain Unverified. [Compatibility decision](../review/task-230-toolchain-and-packs.md), [packaged report](../review/task-230-packaged-python-app.md), [evidence](../review/task-230-evidence.json). Exact local checkpoint tag:task-230-packaged-python-app. No push/deploy.
+
+## V1.0 release candidate preparation
+
+Version identity is centralized in `VERSION` as `1.0.0-rc.1`. The authenticated
+native owner receives the existing narrowly scoped `project:create` and
+`task:create` permissions so Projects and pending Tasks are usable from the
+product; Task dispatch and all provider/tool side effects remain separately
+authorized. Tasks 213-217 retain their superseded status, with current-native V1
+evidence and limitations recorded in `V1_RELEASE_NOTES.md`. The final validation
+counts, exact commit and artifact identity belong to the release checkpoint and
+must not be inferred from this preparation note.

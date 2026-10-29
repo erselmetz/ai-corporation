@@ -45,7 +45,21 @@ def _source_commit() -> str:
     return value if value and all(ch in "0123456789abcdefABCDEF" for ch in value) else "unknown"
 
 
+def _source_version() -> str:
+    configured = os.environ.get("ERSELMETZ_APP_VERSION", "").strip()
+    if configured:
+        value = configured
+    else:
+        try:
+            value = (Path(__file__).resolve().parents[1] / "VERSION").read_text(encoding="utf-8").strip()
+        except OSError:
+            value = ""
+    if not 1 <= len(value) <= 32 or any(character not in "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-" for character in value):
+        raise RuntimeError("The application VERSION declaration is missing or invalid.")
+    return value
+
+
 BUILD_STAMP = _packaged_stamp() or {
-    "version": os.environ.get("ERSELMETZ_APP_VERSION", "0.1.0")[:32],
+    "version": _source_version(),
     "commit": _source_commit(),
 }

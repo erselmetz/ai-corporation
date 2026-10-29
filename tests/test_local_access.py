@@ -35,7 +35,7 @@ def test_login_session_cookie_and_logout_revocation():
         assert "maintenance:checkpoint" in record.json()["permissions"]
         assert "maintenance:activate" in record.json()["permissions"]
         assert "maintenance:experiment" in record.json()["permissions"]
-        assert "task:create" not in record.json()["permissions"]
+        assert {"project:create", "task:create"}.issubset(record.json()["permissions"])
         assert "chat-task:create" in record.json()["permissions"]
         assert "screen:capture" in record.json()["permissions"]
         assert "browser:act" in record.json()["permissions"]

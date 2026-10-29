@@ -91,8 +91,10 @@ def test_inventory_and_selection_preserve_history_and_other_authority():
         assert provider.calls == ["second:local"]
         assert client.put("/api/models/local_worker", headers=headers,
                           json={"provider_id": "ollama", "model_id": "other"}).status_code == 403
-        assert client.post("/api/tasks", headers=headers, json={"title": "x", "description": "y"}).status_code == 403
-    assert service.list_tasks() == tasks
+        created = client.post("/api/tasks", headers=headers, json={"title": "x", "description": "y"})
+        assert created.status_code == 201
+        assert created.json()["status"] == "pending"
+    assert len(service.list_tasks()) == len(tasks) + 1
     final = resource.snapshot()
     assert final.global_capacity == capacity.global_capacity
     assert final.providers == capacity.providers

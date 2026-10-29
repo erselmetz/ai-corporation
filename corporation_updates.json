@@ -2,6 +2,12 @@
   "items": [
     {
       "date": "2026-10-29",
+      "type": "release",
+      "title": "ERSELMETZ AI 1.0.0-rc.1 preparation",
+      "summary": "Centralized candidate version identity, enabled authenticated CSRF-bound owner creation of Projects and pending Tasks, and documented stable, internal and experimental boundaries. Dispatch and side effects remain separately authorized. Final validation and artifact evidence are recorded only after the release gate passes; signing, clean-account, physical-device and live-cloud coverage remain unverified."
+    },
+    {
+      "date": "2026-10-29",
       "type": "development",
       "title": "Task 230 - local packaged native Python verification",
       "summary": "Windowed one-folder build and per-user unsigned installer; About/build identity, metadata-only event log and explicit data-removal option. Actual isolated current-user install, local Ollama, Brain/URL/pack and retention/reinstall checks passed. Full suite1751 passed/3 skipped. Fresh Windows account/Sandbox, physical media and signing remain unverified. No push/deploy."

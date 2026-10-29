@@ -78,7 +78,7 @@ def test_reviewed_owner_proposal_creates_one_pending_task_without_provider_execu
     with TestClient(app, base_url=ORIGIN, client=("127.0.0.1", 50100)) as client:
         session, headers = _login(client)
         assert "chat-task:create" in session["permissions"]
-        assert "task:create" not in session["permissions"]
+        assert "task:create" in session["permissions"]
         conversation_id, message_id = _start_chat(client, headers)
 
         now = datetime.now(timezone.utc)
@@ -171,12 +171,13 @@ def test_reviewed_owner_proposal_creates_one_pending_task_without_provider_execu
         )
         assert duplicate.status_code == 409
         assert len(runtime.tasks.all()) == before + 1
-        generic_task_creation = client.post(
+        owner_task_creation = client.post(
             "/api/tasks",
             json={"title": "Unreviewed", "description": "No", "project_id": project.id},
             headers=headers,
         )
-        assert generic_task_creation.status_code == 403
+        assert owner_task_creation.status_code == 201
+        assert owner_task_creation.json()["status"] == "pending"
         assert len(provider_calls) == 1
 
 

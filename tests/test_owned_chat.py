@@ -638,7 +638,7 @@ def test_trusted_cli_chat_is_separate_and_local_csrf_applies(setup):
         assert client.post("/api/chat/conversations", json={"agent_id": "local_worker"}, headers={"Origin": origin}).status_code == 403
         session = client.get("/api/local/session").json()
         assert {"chat:read", "chat:start", "chat:send", "chat:close"} <= set(session["permissions"])
-        assert "task:create" not in session["permissions"]
+        assert "task:create" in session["permissions"]
         response = client.post("/api/chat/conversations", json={"agent_id": "local_worker"}, headers={"Origin": origin, "X-Local-CSRF": session["csrf"]})
         assert response.status_code == 200
         page = client.get("/ui/chat")
