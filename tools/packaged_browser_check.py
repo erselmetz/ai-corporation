@@ -26,9 +26,6 @@ def main():
         window=wait(lambda:next(iter(windows()),None),60)
         def control(name):return wait(lambda:next((item for item in window.descendants() if item.element_info.name==name),None),15)
         control('Optional text message').iface_value.SetValue('open youtube');control('Send').iface_invoke.Invoke()
-        approval=control('Approve once');assert 'https://www.youtube.com/' in text(control('Exact tool action for approval'))
-        assert not psutil.Process(process.pid).children(recursive=True),'No browser may launch before approval'
-        approval.iface_invoke.Invoke()
         wait(lambda:'The default browser accepted the approved link. Page loading was not verified.' in text(control('Chat messages')),20)
         def browser_started():
             nonlocal owned
@@ -36,11 +33,11 @@ def main():
             return [child for child in owned if '--user-data-dir='+profile.as_posix() in child.cmdline()]
         roots=wait(browser_started,15)
         assert any('https://www.youtube.com/' in child.cmdline() for child in roots)
-        report={'build_stamp':json.loads(exe.with_name('build-stamp.json').read_text()),'reviewed_exact_url':'https://www.youtube.com/',
-            'no_browser_before_approval':True,'browser_process_after_approval':True,'page_load_claimed':False,
+        report={'build_stamp':json.loads(exe.with_name('build-stamp.json').read_text()),'owner_typed_exact_url':'https://www.youtube.com/',
+            'browser_process_after_exact_request':True,'page_load_claimed':False,
             'browser_profile_isolated':True,'system_default_unchanged':True,'model_call_requested':False}
         args.output.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
-        print('Exact approved handoff launched the isolated browser; page loading remains unverified.')
+        print('Exact owner-typed handoff launched the isolated browser; page loading remains unverified.')
     finally:
         if process.poll() is None:
             try:owned=psutil.Process(process.pid).children(recursive=True)

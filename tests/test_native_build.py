@@ -44,3 +44,11 @@ def test_reinstall_smoke_discovers_the_current_numbered_uninstaller():
 
     assert "target.glob('unins*.exe')" in source
     assert "target/'unins000.exe'" not in source
+
+
+def test_packaged_chat_waits_for_async_model_discovery():
+    source = (Path(__file__).resolve().parents[1] / "tools" / "packaged_chat_check.py").read_text(encoding="utf-8")
+
+    assert "wait(lambda:model_picker.iface_value.CurrentValue or None,30)" in source
+    assert "safe_read_ran_without_approval" in source
+    assert "open_url_cancel" not in source
