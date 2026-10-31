@@ -1,7 +1,7 @@
 # Native Windows packaging and recovery
 
 The declared candidate version is read from the repository-root `VERSION` file.
-For this source it is `1.0.0-rc.1`; `tools/build_native.py --version` rejects a
+For this source it is `1.0.0-rc.2`; `tools/build_native.py --version` rejects a
 different value so the executable, installer and About identity cannot drift.
 
 The application is a PySide6 shell and an authenticated in-process policy facade in one

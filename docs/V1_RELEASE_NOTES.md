@@ -1,4 +1,20 @@
-# ERSELMETZ AI 1.0.0-rc.1 release notes
+# ERSELMETZ AI 1.0.0-rc.2 release notes
+
+## Changes since rc.1
+
+- Refined the native Aurora workspace so the Brain canvas has more room, the
+  observed-step area is compact, and the chat pane remains usable at supported
+  widths and Windows scaling factors.
+- Added voice-first controls with explicit capture state, offline speech output,
+  Stop controls and truthful unavailable states.
+- Added Brain zoom controls and bounded, owner-visible chat-learning candidates.
+- Detects every Ollama entry while allowing only local chat-capable models in
+  the local model picker. Embedding models and cloud stubs remain visibly
+  classified instead of being routed as ordinary local chat.
+- Added a simple provider setup window for Ollama discovery and optional Gemini
+  configuration. Cloud turns still require exact outbound review and consent.
+- Preserved default-deny permissions, in-process owner authentication, no silent
+  downloads, no automatic cloud fallback, and no default TCP listener.
 
 ## Candidate scope
 

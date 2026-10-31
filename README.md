@@ -1,6 +1,6 @@
 # ERSELMETZ AI
 
-Current release candidate: **1.0.0-rc.1**. This is an unsigned, local-first
+Current release candidate: **1.0.0-rc.2**. This is an unsigned, local-first
 Windows release candidate, not a signed public-production release. See the
 [release notes](docs/V1_RELEASE_NOTES.md), [security boundary](SECURITY.md), and
 [API stability policy](docs/API_STABILITY.md).
@@ -29,7 +29,7 @@ button opens https://ai.erselmetz.com only on click.
 Optional OpenAI-compatible text endpoints, including **Free pool (FreeLLMAPI)**,
 are configured in Provider connections. They are cloud destinations even on
 loopback, off by default, and require an exact redacted outbound preview and fresh
-approval. The native “Ask the free pool?” action is one turn only and keeps the
+approval. The native “Ask cloud?” action is one turn only and keeps the
 local model selection. No router is bundled or installed. See the
 [separate-install guide and limits](docs/free-pool.html). Connection settings and
 keys last for this process only; call/token allowances do not cap an external

@@ -82,3 +82,6 @@ desktop/task*-review-profile/
 /task226-review-*.log
 /task227-review-*.log
 /legacy-electron-artifacts/
+
+# Local visual-review evidence. Intentional regression baselines live under tests/.
+/review/
