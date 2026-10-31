@@ -30,7 +30,7 @@ def main():
         try:
             first=subprocess.Popen(command,cwd=exe.parent,stdout=log,stderr=log);processes.append(first)
             window=wait(lambda:next(iter(windows(first)),None),60)
-            control(window,'Message').iface_value.SetValue(draft)
+            control(window,'Optional text message').iface_value.SetValue(draft)
             advanced=singleton(first,window,'Advanced');control(advanced,'Close').iface_invoke.Invoke()
             second=subprocess.run(command,cwd=exe.parent,stdout=log,stderr=log,timeout=30)
             assert second.returncode==0;wait(lambda:len(windows(first))==2,20)
@@ -40,7 +40,7 @@ def main():
             restarted=subprocess.Popen(command,cwd=exe.parent,stdout=log,stderr=log);processes.append(restarted)
             wait(lambda:len(windows(restarted))==2,60);time.sleep(2)
             for window in windows(restarted):
-                assert text(control(window,'Message')).strip()==''
+                assert text(control(window,'Optional text message')).strip()==''
                 assert draft not in text(control(window,'Chat messages'))
             quit_app(restarted)
             report={'build_stamp':json.loads(exe.with_name('build-stamp.json').read_text()),

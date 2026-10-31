@@ -38,7 +38,7 @@ def main():
         def controls(name,kind=None):return [control for control in window.descendants() if control.element_info.name==name and (kind is None or control.element_info.control_type==kind)]
         def control(name,kind=None):return wait(lambda:next(iter(controls(name,kind)),None),15)
         def invoke(name):control(name).iface_invoke.Invoke()
-        composer=control('Message');send=control('Send')
+        composer=control('Optional text message');send=control('Send')
         selected=control('Model','ComboBox').iface_value.CurrentValue
         assert selected=='qwen3.5:4b','No unreviewed model selection or fallback is allowed: '+str(selected)
         conversation=lambda:text(control('Chat messages'))

@@ -54,7 +54,7 @@ def main():
         def ready():
             if process.poll() is not None:raise RuntimeError('Packaged app exited before chat')
             windows=desktop.windows(process=process.pid,title='ERSELMETZ AI',visible_only=True)
-            return next((w for w in windows if any(c.element_info.name=='Message' for c in w.descendants(control_type='Edit'))),None)
+            return next((w for w in windows if any(c.element_info.name=='Optional text message' for c in w.descendants(control_type='Edit'))),None)
         started=time.monotonic();window=wait(ready,60);report['window_ms']=round((time.monotonic()-started)*1000,2)
         report['pid']=process.pid
         net=subprocess.check_output(['netstat','-ano'],text=True);report['netstat']={'command':'netstat -ano','pid':process.pid,'listening_entries':[l for l in net.splitlines() if l.split() and l.split()[-1]==str(process.pid) and 'LISTENING' in l]};assert not report['netstat']['listening_entries']
@@ -67,7 +67,7 @@ def main():
             except Exception:selected=value(model)
             report['automatic_model']=selected
             assert 'qwen3.5:4b' in selected,'The installed local model was not selected automatically'
-            message=control(window,'Message','Edit');message.set_edit_text('hello');button(window,'Send')
+            message=control(window,'Optional text message','Edit');message.set_edit_text('hello');button(window,'Send')
             wait(lambda:control(window,'Send','Button').is_enabled() and 'hello' in value(control(window,'Chat messages')),90)
             transcript=value(control(window,'Chat messages'));assert len(transcript.split('hello',1)[-1].strip())>10
             report['hello_reply_present']=True
@@ -86,7 +86,7 @@ def main():
                 wait(lambda:control(window,'Send','Button').is_enabled(),30)
                 report['open_url_approved_once']=True;report['tool_result']=value(control(window,'Chat messages'))[-1200:]
         if args.mode=='inference':
-            message=control(window,'Message','Edit');message.set_edit_text('Give one short practical coding tip.');started=time.monotonic();button(window,'Send')
+            message=control(window,'Optional text message','Edit');message.set_edit_text('Give one short practical coding tip.');started=time.monotonic();button(window,'Send')
             wait(lambda:control(window,'Send','Button').is_enabled() and 'ERSELMETZ AI' in value(control(window,'Chat messages')),140)
             transcript=value(control(window,'Chat messages'));answer=transcript.rsplit('ERSELMETZ AI',1)[-1].strip()
             assert len(answer)>10 and 'unavailable' not in answer.lower()

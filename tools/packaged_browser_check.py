@@ -25,7 +25,7 @@ def main():
             if item.window_text()=='ERSELMETZ AI' and item.rectangle().width()>=800]
         window=wait(lambda:next(iter(windows()),None),60)
         def control(name):return wait(lambda:next((item for item in window.descendants() if item.element_info.name==name),None),15)
-        control('Message').iface_value.SetValue('open youtube');control('Send').iface_invoke.Invoke()
+        control('Optional text message').iface_value.SetValue('open youtube');control('Send').iface_invoke.Invoke()
         approval=control('Approve once');assert 'https://www.youtube.com/' in text(control('Exact tool action for approval'))
         assert not psutil.Process(process.pid).children(recursive=True),'No browser may launch before approval'
         approval.iface_invoke.Invoke()

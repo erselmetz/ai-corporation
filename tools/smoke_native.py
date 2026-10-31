@@ -29,7 +29,7 @@ def main():
         while time.perf_counter()-started<args.timeout:
             if process.poll() is not None:raise RuntimeError(f'Packaged executable exited early with code {process.returncode}')
             for candidate in Desktop(backend='uia').windows(process=process.pid,visible_only=True):
-                if candidate.window_text()=='ERSELMETZ AI' and any(control.element_info.name=='Message' for control in candidate.descendants(control_type='Edit')):
+                if candidate.window_text()=='ERSELMETZ AI' and any(control.element_info.name=='Optional text message' for control in candidate.descendants(control_type='Edit')):
                     window=candidate;break
             if window is not None:break
             time.sleep(.1)
