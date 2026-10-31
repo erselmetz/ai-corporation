@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-10-31",
+      "type": "release",
+      "title": "ERSELMETZ AI 1.0.0-rc.2",
+      "summary": "Refined the Aurora native workspace, voice-first controls, Brain zoom and owner-visible chat learning, complete Ollama entry detection, and simple optional Gemini setup. The clean stamped package passed visible startup, isolated current-user install/reinstall/uninstall with retained data, real qwen3.5:4b chat and safe calculator use, same-process windows, and an isolated exact browser handoff. llama3.2:3b also returned a real local adapter reply. The installer remains unsigned; clean Windows account, SmartScreen reputation, physical voice/media devices, live Gemini, and assistive-technology coverage remain unverified."
+    },
+    {
       "date": "2026-10-29",
       "type": "release",
       "title": "ERSELMETZ AI 1.0.0-rc.1 preparation",
