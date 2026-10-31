@@ -37,3 +37,10 @@ def test_packaged_ui_drivers_follow_the_voice_first_composer_accessible_name():
         source = (tools / name).read_text(encoding="utf-8")
         assert "Optional text message" in source, name
         assert "control('Message'" not in source, name
+
+
+def test_reinstall_smoke_discovers_the_current_numbered_uninstaller():
+    source = (Path(__file__).resolve().parents[1] / "tools" / "python_installer_smoke.py").read_text(encoding="utf-8")
+
+    assert "target.glob('unins*.exe')" in source
+    assert "target/'unins000.exe'" not in source

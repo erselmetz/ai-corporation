@@ -21,8 +21,11 @@ def main():
     report={'new_windows_account':False,'isolated_current_user_profile':True,'installer':str(installer),'target':str(target),'profile':str(profile)}
     def install():subprocess.run([str(installer),'/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/CURRENTUSER','/DIR='+str(target)],check=True,timeout=120)
     def uninstall():
-        exe=target/'unins000.exe'
-        if exe.is_file():subprocess.run([str(exe),'/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART'],check=True,timeout=120)
+        candidates=sorted(target.glob('unins*.exe'),key=lambda path:path.stat().st_mtime,reverse=True)
+        if candidates:
+            exe=candidates[0].resolve(strict=True)
+            if not exe.is_relative_to(target.resolve()):raise RuntimeError('Unsafe QA uninstaller path')
+            subprocess.run([str(exe),'/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART'],check=True,timeout=120)
         deadline=time.monotonic()+30
         while (target/'ERSELMETZ-AI.exe').exists() and time.monotonic()<deadline:time.sleep(.1)
         assert not (target/'ERSELMETZ-AI.exe').exists(),'Uninstall left the executable'
