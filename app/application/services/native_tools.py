@@ -33,6 +33,7 @@ SPECS={
     'list_folder':('List at most 200 entries in a user-permitted folder','read','native-files:read',{'root_id':string(32),'path':string(512)}),
     'read_text_file':('Read at most 8 KB from a permitted UTF-8 file','read','native-files:read',{'root_id':string(32),'path':string(512)}),
     'write_file':('Write at most 8 KB only after exact diff approval','write','native-files:write',{'root_id':string(32),'path':string(512),'content':string(8192)}),
+    'create_folder':('Create one empty folder inside an owner-selected local folder','write','native-files:write',{'root_id':string(32),'path':string(512)}),
     'remember':('Save an explicitly approved note to shared My Brain for 30 days','write','memory:manage',{'text':string(4000)}),
     'learn_from_path':('Learn one approved UTF-8 file from a permitted folder','write','memory:manage',{'root_id':string(32),'path':string(512)}),
     'clipboard_write':('Copy explicitly approved text to the local clipboard','control','desktop:act',{'text':string(4000)}),
@@ -125,6 +126,8 @@ class NativeToolService:
         args=action.args;owner=action.owner;window=action.scope.window_id
         if action.name=='write_file':
             return digest(self.files.preview_write(owner,window,args['root_id'],args['path'],args['content']))
+        if action.name=='create_folder':
+            return digest(self.files.preview_folder(owner,window,args['root_id'],args['path']))
         if action.name in {'read_text_file','learn_from_path'}:
             path=self.files.resolve(owner,window,args['root_id'],args['path']);stat=path.stat()
             return digest([str(path),stat.st_dev,stat.st_ino,stat.st_size,stat.st_mtime_ns])
@@ -154,6 +157,9 @@ class NativeToolService:
         elif name=='write_file':
             preview=self.files.preview_write(actor.identity,scope.window_id,args['root_id'],args['path'],args['content'])
             details='Write '+args['path']+'? Full proposed diff:\n'+preview['diff'];target_ref=clipped(args['path'],200)
+        elif name=='create_folder':
+            self.files.preview_folder(actor.identity,scope.window_id,args['root_id'],args['path'])
+            details='Create this empty folder:\n'+args['path'];target_ref=clipped(args['path'],200)
         elif name in {'read_text_file','list_folder','learn_from_path'}:
             details=('Read ' if name!='learn_from_path' else 'Save locally to shared My Brain for 30 days: ')+args['path']
             target_ref=clipped(args['path'] or 'Chosen folder',200)
@@ -295,6 +301,10 @@ class NativeToolService:
             preview=self.files.preview_write(owner,window,args['root_id'],args['path'],args['content'])
             if digest(preview)!=action.target_digest:raise NativeIOError('The file changed after approval; nothing was written.')
             data=self.files.write(owner,window,args['root_id'],preview);message='File write confirmed: '+args['path']
+        elif name=='create_folder':
+            preview=self.files.preview_folder(owner,window,args['root_id'],args['path'])
+            if digest(preview)!=action.target_digest:raise NativeIOError('The folder destination changed after approval; nothing was created.')
+            data=self.files.create_folder(owner,window,args['root_id'],preview);message='Folder creation confirmed: '+args['path']
         elif name in {'remember','learn_from_path'}:
             from app.knowledge.native_brain import NativeBrain
             brain=self.application.native_brain(stopper=lambda:self.application.native_runtime().global_stop.is_set())

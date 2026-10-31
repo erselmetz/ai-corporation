@@ -10,6 +10,24 @@ import os
 import time
 
 
+def controlled_build_environment() -> dict[str, str]:
+    """Keep unrelated developer tools from supplying packaged native DLLs."""
+    environment = dict(os.environ)
+    windows = Path(os.environ.get("SystemRoot", r"C:\Windows")).resolve()
+    python = Path(sys.executable).resolve().parent
+    base_python = Path(sys.base_prefix).resolve()
+    entries = [python, base_python, windows / "System32", windows]
+    # Preserve order while removing equivalent Windows paths.
+    seen: set[str] = set()
+    clean = []
+    for entry in entries:
+        key = str(entry).casefold()
+        if key not in seen:
+            seen.add(key); clean.append(str(entry))
+    environment["PATH"] = os.pathsep.join(clean)
+    return environment
+
+
 def main():
     root=Path(__file__).resolve().parents[1]
     declared_version=(root/'VERSION').read_text(encoding='utf-8').strip()
@@ -59,7 +77,7 @@ def main():
         hook.write_text("import os,sys,logging\np=os.environ.get('ERSELMETZ_QA_STARTUP_LOG')\nif p:\n f=open(p,'a',encoding='utf-8')\n sys.stderr=f\n logging.basicConfig(stream=f,level=logging.WARNING)\n",encoding='utf-8')
         args.extend(['--runtime-hook',str(hook)])
     args.append(str(root/'native_entry.py'))
-    subprocess.run(args,cwd=root,check=True)
+    subprocess.run(args,cwd=root,check=True,env=controlled_build_environment())
     artifact=dist/'ERSELMETZ-AI';(artifact/'build-stamp.json').write_text(json.dumps(stamp,indent=2)+'\n',encoding='utf-8')
     for notice in ['THIRD_PARTY_NOTICES.md','LICENSE']:
         if (root/notice).is_file():

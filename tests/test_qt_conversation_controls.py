@@ -1,4 +1,5 @@
 import pytest
+import threading
 from PySide6.QtCore import Qt,QTimer
 from PySide6.QtWidgets import QInputDialog,QLineEdit,QPushButton
 from test_qt_shell import manager
@@ -23,7 +24,7 @@ def test_f2_rename_and_confirmed_delete_of_unsent_chat(manager,qtbot):
     assert window.tabs.count()==1 and old not in window.chats.values()
 
 
-def test_exact_link_waits_for_inline_approval_and_preserves_unknown_handoff(manager,qtbot,monkeypatch):
+def test_exact_owner_typed_link_runs_without_redundant_approval_and_preserves_unknown_handoff(manager,qtbot,monkeypatch):
     window=manager.new_window();qtbot.waitUntil(lambda:bool(window.native_id) and window.model.count()==1)
     calls=[]
     def prepare(chat,text,name,args,**kwargs):
@@ -37,13 +38,10 @@ def test_exact_link_waits_for_inline_approval_and_preserves_unknown_handoff(mana
     monkeypatch.setattr(manager.transport,'tool_api',execute)
     window.current().model=''  # Opening an explicitly approved URL needs no model inference.
     window.composer.setPlainText('open youtube');window.send()
-    qtbot.waitUntil(lambda:window.pending_tool is not None)
-    assert calls==[('prepare','open youtube','open_url',{'url':'https://www.youtube.com/'})]
-    assert window.busy and not window.send_button.isEnabled()
-    assert window.tool_details.toPlainText()=='https://www.youtube.com/'
-    next(b for b in window.tool_frame.findChildren(QPushButton) if b.text()=='Approve once').click()
     qtbot.waitUntil(lambda:not window.busy)
+    assert calls[0]==('prepare','open youtube','open_url',{'url':'https://www.youtube.com/'})
     assert calls[-1]==('POST','/action/execute',{'confirmed_digest':'exact-digest'})
+    assert window.pending_tool is None
     assert 'page loading is unknown' in window.tabs.currentWidget().toPlainText()
     assert 'unverified' in window.status.text()
 
@@ -51,18 +49,19 @@ def test_exact_link_waits_for_inline_approval_and_preserves_unknown_handoff(mana
 def test_stop_denies_pending_link_without_browser_or_model_call(manager,qtbot,monkeypatch):
     window=manager.new_window();qtbot.waitUntil(lambda:bool(window.native_id) and window.model.count()==1)
     calls=[]
-    monkeypatch.setattr(manager.transport,'prepare_tool',lambda *args,**kwargs:{
-        'id':'action','summary':'Open link','details':'https://www.youtube.com/','approval_digest':'digest'})
+    entered=threading.Event();release=threading.Event()
+    def prepare(*args,**kwargs):
+        entered.set();assert release.wait(3)
+        return {'id':'action','summary':'Open link','details':'https://www.youtube.com/','approval_digest':'digest'}
+    monkeypatch.setattr(manager.transport,'prepare_tool',prepare)
     def deny(chat,method,path,body=None,**kwargs):
         calls.append(path)
         return {'state':'denied','result':{'message':'Cancelled before execution. No tool action was run.'}}
     monkeypatch.setattr(manager.transport,'tool_api',deny)
     window.composer.setPlainText('open youtube');window.send()
-    qtbot.waitUntil(lambda:window.pending_tool is not None)
-    window.stop_window();qtbot.waitUntil(lambda:not window.busy)
+    qtbot.waitUntil(entered.is_set);window.stop_window();release.set();qtbot.waitUntil(lambda:not window.busy)
     assert calls==['/action/deny'] and window.pending_tool is None
-    assert not window.tool_frame.isVisible()
-    assert 'No tool action was run' in window.tabs.currentWidget().toPlainText()
+    assert 'No tool action was run' not in window.tabs.currentWidget().toPlainText()
 
 
 def test_nonweb_open_command_is_rejected_before_any_submission(manager,qtbot,monkeypatch):

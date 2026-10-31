@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import threading
 import webbrowser
 import uuid
+import re
 
 from PySide6.QtCore import QObject, Signal, Slot, Qt, QSettings, QEvent, QTimer
 from PySide6.QtGui import QAction, QKeySequence, QTextCursor
@@ -256,6 +257,7 @@ class ShellManager(QObject):
             def motion(checked):
                 self.reduced_motion = checked; self.preferences.setValue('reducedMotion', checked)
             reduced.toggled.connect(motion); layout.addWidget(reduced)
+            layout.addWidget(button('Set up AI providers',self.show_provider_setup,'Detect Ollama or add an optional Gemini API key'))
             layout.addWidget(label('Desktop integration API: off. No TCP listener. A standalone loopback token-protected API may be started explicitly from the command line.'))
             layout.addWidget(label('Each chat window has its own model, agent and project. Provider and privacy changes keep their existing permission and consent checks.'))
             layout.addWidget(button('Quit ERSELMETZ AI',self.quit,'Quit the app and save only window descriptors; never replay actions'))
@@ -273,6 +275,13 @@ class ShellManager(QObject):
         layout.addWidget(button('Close', dialog.close))
         self.dialogs[kind] = dialog; dialog.show()
         return dialog
+
+    def show_provider_setup(self):
+        key='Quick provider setup'
+        if key not in self.dialogs:
+            from .native_pages import QuickProviderWindow
+            self.dialogs[key]=QuickProviderWindow(self)
+        dialog=self.dialogs[key];dialog.showNormal();dialog.raise_();dialog.activateWindow();return dialog
 
     def open_page(self, page, status):
         if page not in PAGES: raise ValueError('Unknown native page')
@@ -302,6 +311,7 @@ class ChatWindow(QMainWindow):
         self.feed_frame=None; self.pending_feed=None
         self.delete_frame=None;self.pending_delete=None
         self.tool_frame=None;self.pending_tool=None;self.pending_run=None
+        self.reply_voice_parts=[]
         self.stop_event = threading.Event(); self.chats = {}; self.sidebar_visible = True
         from .capture_controls import CaptureControls
         self.capture_controls=CaptureControls(self)
@@ -310,7 +320,7 @@ class ChatWindow(QMainWindow):
         from .knowledge_review import KnowledgeReview
         self.knowledge_review=KnowledgeReview(self)
         self.setWindowTitle('ERSELMETZ AI'); self.resize(1360, 820); self.setMinimumSize(800, 580)
-        root, layout = column(); self.setCentralWidget(root); root.setAcceptDrops(True); self.setAcceptDrops(True)
+        root, layout = column();root.setObjectName('auroraRoot'); self.setCentralWidget(root); root.setAcceptDrops(True); self.setAcceptDrops(True)
         top = QHBoxLayout(); layout.addLayout(top)
         top.addWidget(button('☰', self.toggle_sidebar, 'Toggle sidebar'))
         top.addWidget(label('ERSELMETZ AI')); top.addStretch()
@@ -318,13 +328,15 @@ class ChatWindow(QMainWindow):
         top.addWidget(button('Advanced', lambda: manager.show_dialog('Advanced')))
         from .cloud_review import CloudReview
         self.cloud_review=CloudReview(self)
-        top.addWidget(button('Ask the free pool?',self.cloud_review.prepare,'Ask an optional cloud endpoint after reviewing the exact outbound prompt'))
+        top.addWidget(button('Ask cloud?',self.cloud_review.prepare,'Ask the configured optional cloud provider after reviewing the exact outbound prompt'))
         self.stop_button=button('Stop',self.stop_window,'Stop or resume this chat window');top.addWidget(self.stop_button)
         top.addWidget(button('Stop all',manager.stop_all,'Emergency stop all windows'))
         self.splitter = QSplitter(Qt.Orientation.Horizontal); self.splitter.setAccessibleName('Resizable sidebar Brain and chat panes')
         layout.addWidget(self.splitter, 1)
-        sidebar_scroll = QScrollArea(); sidebar_scroll.setWidgetResizable(True); self.sidebar = sidebar_scroll
-        sidebar, side = column(); sidebar_scroll.setWidget(sidebar); self.splitter.addWidget(sidebar_scroll)
+        sidebar_scroll = QScrollArea();sidebar_scroll.setWidgetResizable(True);sidebar_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        sidebar_scroll.setMinimumWidth(258);self.sidebar = sidebar_scroll
+        sidebar, side = column();sidebar.setObjectName('auroraPane');sidebar.setMinimumWidth(246);side.setContentsMargins(14,14,14,14)
+        sidebar_scroll.setWidget(sidebar); self.splitter.addWidget(sidebar_scroll)
         side.addWidget(label('YOUR BRAIN'))
         side.addWidget(button('Feed file', self.choose_files))
         side.addWidget(button('Feed folder', self.choose_folder))
@@ -345,8 +357,12 @@ class ChatWindow(QMainWindow):
             widget.currentIndexChanged.connect(self.selection_changed)
         side.addWidget(button('Refresh models', self.refresh))
         self.agent_loop=QCheckBox('Bounded tool loop');self.agent_loop.setAccessibleName('Use bounded local Agent tool loop');side.addWidget(self.agent_loop)
-        self.use_brain=QCheckBox('Use My Brain for this message');self.use_brain.setAccessibleName('Review private Brain excerpts before sending this message');side.addWidget(self.use_brain)
-        self.ask_first=QCheckBox('Ask before every tool');self.ask_first.setChecked(True);self.ask_first.setAccessibleName('Ask before every tool');side.addWidget(self.ask_first)
+        self.use_brain=QCheckBox('Use My Brain');self.use_brain.setAccessibleName('Use relevant local Brain sources automatically for this message');side.addWidget(self.use_brain)
+        self.learn_chat=QCheckBox('Learn useful facts from my messages');self.learn_chat.setChecked(manager.preferences.value('learnFromChat',False,type=bool))
+        self.learn_chat.setAccessibleName('Keep explicit facts and preferences from my messages locally for 30 days')
+        self.learn_chat.setToolTip('Stores only explicit owner facts and preferences locally. Assistant replies and likely secrets are never saved.')
+        self.learn_chat.toggled.connect(lambda checked:manager.preferences.setValue('learnFromChat',checked));side.addWidget(self.learn_chat)
+        self.ask_first=QCheckBox('Ask before every tool');self.ask_first.setChecked(False);self.ask_first.setAccessibleName('Ask before every tool');side.addWidget(self.ask_first)
         self.thinking=QCheckBox('Show native thinking');self.thinking.setAccessibleName('Show actual native model thinking when supported');side.addWidget(self.thinking)
         self.thinking.setEnabled(False)
         self.agent_loop.toggled.connect(self.thinking_mode)
@@ -361,19 +377,20 @@ class ChatWindow(QMainWindow):
         side.addWidget(button('Permit tool folder',self.permit_tool_folder,'Choose a local file-tool root for this conversation'))
         self.selection_hint = label('Loading installed models…'); side.addWidget(self.selection_hint)
         side.addStretch(); side.addWidget(label('Local-first · no automatic model downloads'))
-        center, center_layout = column(); self.splitter.addWidget(center)
+        center, center_layout = column();center.setObjectName('auroraPane');center.setMinimumWidth(420); self.splitter.addWidget(center)
         self.brain_container = center_layout
-        self.brain=BrainPanel(lambda:manager.reduced_motion); center_layout.addWidget(self.brain,3)
+        self.brain=BrainPanel(lambda:manager.reduced_motion); center_layout.addWidget(self.brain,6)
         self.brain.full_requested.connect(self.toggle_full_brain); self.brain.refresh_requested.connect(manager.refresh_brain)
         self.brain.inspect_requested.connect(self.inspect_node); self.brain.forget_requested.connect(self.forget_node)
         self.brain.search_requested.connect(self.search_brain)
         self.brain.window_stop_requested.connect(self.stop_window);self.brain.global_stop_requested.connect(manager.stop_all)
         center_layout.addWidget(label('OBSERVED STEPS'))
         self.steps = QListWidget(); self.steps.setAccessibleName('Observed activity');self.steps.setWordWrap(True)
+        self.steps.setMaximumHeight(130)
         self.steps.model().rowsInserted.connect(self.trim_activity)
-        center_layout.addWidget(self.steps, 2)
+        center_layout.addWidget(self.steps, 1)
         self.steps.addItem('Ready. No action has run.')
-        right, chat_layout = column(); right.setMinimumWidth(274); self.splitter.addWidget(right); self.chat_layout=chat_layout
+        right, chat_layout = column();right.setObjectName('auroraPane'); right.setMinimumWidth(285); self.splitter.addWidget(right); self.chat_layout=chat_layout
         chat_top = QHBoxLayout(); chat_layout.addLayout(chat_top)
         chat_top.addWidget(label('CHAT')); chat_top.addStretch()
         chat_top.addWidget(button('Rename',self.rename_tab,'Rename current chat (F2)'))
@@ -383,13 +400,21 @@ class ChatWindow(QMainWindow):
         self.tabs.tabBarDoubleClicked.connect(lambda index:self.rename_tab() if index>=0 else None)
         self.tabs.tabBar().setElideMode(Qt.TextElideMode.ElideRight)
         chat_layout.addWidget(self.tabs, 1)
-        self.composer = QPlainTextEdit(); self.composer.setAccessibleName('Message'); self.composer.setPlaceholderText('Message your AI…'); self.composer.setMaximumHeight(130)
+        voice_row=QHBoxLayout();chat_layout.addLayout(voice_row)
+        self.voice_button=button('🎙 Speak',self.capture_controls.toggle_voice,'Speak a message; press again to finish and send')
+        self.voice_button.setObjectName('primaryAction');voice_row.addWidget(self.voice_button,1)
+        self.speak_replies=QCheckBox('Voice replies');self.speak_replies.setChecked(manager.preferences.value('speakReplies',True,type=bool))
+        self.speak_replies.setAccessibleName('Read assistant replies aloud using the offline Windows voice')
+        self.speak_replies.toggled.connect(lambda checked:manager.preferences.setValue('speakReplies',checked));voice_row.addWidget(self.speak_replies)
+        self.stop_voice_button=button('Stop voice',self.stop_speech,'Stop offline spoken reply')
+        self.stop_voice_button.hide();voice_row.addWidget(self.stop_voice_button)
+        self.composer = QPlainTextEdit(); self.composer.setAccessibleName('Optional text message'); self.composer.setPlaceholderText('Type instead (optional)…'); self.composer.setMaximumHeight(76)
         chat_layout.addWidget(self.composer)
         self.send_button = button('Send', self.send); chat_layout.addWidget(self.send_button)
         self.status = label('Starting local workspace…'); layout.addWidget(self.status)
         self.queue_status=label('Checking request and capture ownership…');layout.addWidget(self.queue_status)
-        self.splitter.setSizes([230, 540, 540]); self.splitter.setStretchFactor(0, 0)
-        self.splitter.setStretchFactor(1, 1); self.splitter.setStretchFactor(2, 1)
+        self.splitter.setSizes([260, 800, 290]); self.splitter.setStretchFactor(0, 0)
+        self.splitter.setStretchFactor(1, 3); self.splitter.setStretchFactor(2, 1)
         for shortcut, callback in [('Ctrl+N', manager.new_window), ('Ctrl+Q',manager.quit), ('Ctrl+B', self.toggle_sidebar), ('Ctrl+Return', self.send),('F2',self.rename_tab)]:
             action = QAction(self); action.setShortcut(QKeySequence(shortcut)); action.triggered.connect(callback); self.addAction(action)
         self.new_tab(); self.refresh()
@@ -565,7 +590,7 @@ class ChatWindow(QMainWindow):
         if data.get('window_generation') is not None:self.native_generation=data['window_generation']
         for chat in self.chats.values():chat.window_id=self.native_id;chat.window_generation=self.native_generation
         self.manager.catalog = data
-        self.available_models={record['name'] for record in data['models']}
+        self.available_models={record['name'] for record in data['models'] if record.get('available',True)}
         current = self.current()
         if self.pending_restore is not None:
             selected=self.pending_restore['tabs'][self.pending_restore['selected']]
@@ -574,15 +599,21 @@ class ChatWindow(QMainWindow):
                 (self.agent, data['agents'], 'id', current.agent), (self.project, data['projects'], 'id', current.project)]:
             widget.blockSignals(True); widget.clear()
             if widget is self.project: widget.addItem('No project', '')
-            for record in records: widget.addItem(record.get('name', record[key]), record[key])
+            for record in records:
+                display=record.get('name',record[key])
+                if widget is self.model and not record.get('available',True):display+=' — '+record.get('reason','Unavailable')
+                widget.addItem(display,record[key])
+                if widget is self.model and not record.get('available',True):widget.model().item(widget.count()-1).setEnabled(False)
             index = widget.findData(default)
             if default and index<0:
                 widget.addItem(default+' (unavailable)',default);index=widget.count()-1
+            if index < 0 and widget is self.model:
+                index=next((i for i in range(widget.count()) if widget.model().item(i).isEnabled()),-1)
             if index >= 0: widget.setCurrentIndex(index)
             widget.blockSignals(False)
         self.selection_changed()
         self.selection_hint.setText('Selections apply to this conversation. Changing an existing conversation starts a new tab.')
-        self.status.setText('Ready · local model' if data['models'] else 'No local chat model found. Install one in Ollama, then Refresh.')
+        self.status.setText('Ready · '+str(len(self.available_models))+' local chat models · '+str(len(data['models']))+' Ollama entries detected' if self.available_models else 'No local chat model found. Non-chat Ollama entries remain listed with their reason.')
         if data.get('model_offline'):self.status.setText('Ollama is offline or its models could not be checked. Retained history is still available; Refresh models after recovery.')
         if self.pending_restore is not None:
             descriptor=self.pending_restore;self.pending_restore=None;self.restore_tabs(descriptor)
@@ -645,8 +676,8 @@ class ChatWindow(QMainWindow):
 
     def toggle_sidebar(self):
         self.sidebar_visible = not self.sidebar_visible; self.sidebar.setVisible(self.sidebar_visible)
-        if not self.sidebar_visible: self.splitter.setSizes([0, 500, 500])
-        else: self.splitter.setSizes([230, 500, 500])
+        if not self.sidebar_visible:self.splitter.setSizes([0,800,290])
+        else:self.splitter.setSizes([260,800,290])
 
     def append(self, text):
         box = self.tabs.currentWidget(); cursor = box.textCursor(); cursor.movePosition(QTextCursor.MoveOperation.End)
@@ -686,12 +717,15 @@ class ChatWindow(QMainWindow):
         if not text: return
         chat.reply_seconds=self.reply_limit.currentData()
         if math_tool is None:
-            from app.native_io import url_intent,NativeIOError
+            from app.native_io import url_intent,folder_intent,NativeIOError
             try:destination=url_intent(text)
             except NativeIOError:
                 self.status.setText('Only an exact http or https destination can be opened. Nothing was sent.');return
             if destination:
                 self.send_url(chat,text,destination);return
+            folder=folder_intent(text)
+            if folder:
+                self.send_desktop_folder(chat,text,folder);return
         if not chat.model:
             self.status.setText('Choose an installed local model first.'); return
         if chat.model not in self.available_models:
@@ -705,6 +739,7 @@ class ChatWindow(QMainWindow):
             if knowledge is not None or shipped_pack().instant(text) is None:
                 self.send_agent(chat,text,knowledge=knowledge);return
         self.busy = True; self.response_error = False; self.stop_event.clear()
+        self.reply_voice_parts=[]
         if math_tool is None:self.composer.clear()
         if math_tool is None:chat.last_local_prompt=text
         for widget in [self.model, self.agent, self.project, self.tabs]: widget.setEnabled(False)
@@ -717,18 +752,97 @@ class ChatWindow(QMainWindow):
         self.steps.addItem('Reviewed local math or exact-match reply; no model call.' if local_reply else 'Sending this message to the selected local model with shipped general guidance.')
         emit = lambda event: self.manager.work.event.emit(self, event)
         self.manager.submit(lambda generation=self.native_generation: self.manager.transport.send_math(chat,text,math_tool,emit,generation=generation) if math_tool is not None else self.manager.transport.send(chat, text, self.stop_event, emit,generation=generation,knowledge=knowledge),
-                            lambda result: self.done(cancelled=self.stop_event.is_set()), self.failed,model=True)
+                            lambda result:self.finish_reply(text,allow_learning=math_tool is None), self.failed,model=True)
+
+    def finish_reply(self,text,*,allow_learning=True):
+        cancelled=self.stop_event.is_set();failed=self.response_error
+        self.done(cancelled=cancelled)
+        if not cancelled and not failed:self.speak_reply(''.join(self.reply_voice_parts))
+        if allow_learning and not cancelled and not failed:self.learn_from_message(text)
+
+    def speak_reply(self,text):
+        if not self.speak_replies.isChecked() or not text.strip():return
+        # Offline voices should read the answer, not Markdown punctuation or raw links.
+        plain=re.sub(r'```.*?```',' code sample omitted ',text,flags=re.S)
+        plain=re.sub(r'`([^`]*)`',r'\1',plain)
+        plain=re.sub(r'!?(\[([^]]+)\])\([^)]*\)',r'\2',plain)
+        plain=re.sub(r'(?m)^\s{0,3}#{1,6}\s*','',plain)
+        plain=re.sub(r'[*_~>#]+',' ',plain)
+        plain=re.sub(r'\s+',' ',plain).strip()[:4000]
+        if not plain:return
+        self.stop_voice_button.show();self.stop_voice_button.setEnabled(True)
+        def started(state):
+            if self.closed:return
+            if state.get('active'):self.status.setText('Speaking reply locally · Stop voice is available')
+            else:self.stop_voice_button.hide()
+        def failed(_error):
+            if self.closed:return
+            self.stop_voice_button.hide()
+            self.steps.addItem('Spoken reply is unavailable. Install the local Voice pack in Advanced; the text reply is unchanged.')
+        self.manager.submit(lambda:self.manager.transport.speak_local(plain),started,failed)
+
+    def stop_speech(self):
+        self.stop_voice_button.hide()
+        self.manager.submit(self.manager.transport.stop_speech,
+            lambda state:self.status.setText('Offline voice stopped.'),
+            lambda error:self.status.setText('Offline voice stop could not be confirmed.'),control=True)
+
+    def learn_from_message(self,text):
+        if not self.learn_chat.isChecked():return
+        from app.knowledge.chat_learning import retention_candidate
+        candidate=retention_candidate(text)
+        if candidate is None:return
+        def remembered(_result):
+            if self.closed:return
+            self.steps.addItem('Saved one owner-authored fact or preference locally in My Brain for 30 days.')
+            self.manager.refresh_brain()
+        def failed(_error):
+            if not self.closed:self.steps.addItem('Could not save that fact to My Brain; the chat reply is unchanged.')
+        self.manager.submit(lambda:self.manager.transport.remember_owner_fact(candidate),remembered,failed)
 
     def send_url(self,chat,text,url):
         if not self.native_id:
             self.status.setText('Wait for the local workspace before opening a link.');return
         generation=self.native_generation;self.stop_event.clear();self.busy=True;self.response_error=False
-        self.composer.clear()
+        self.composer.clear();chat.last_local_prompt=text
         for widget in [self.model,self.agent,self.project,self.tabs,self.send_button]:widget.setEnabled(False)
         self.append('\n\nYou\n'+text+'\n\nERSELMETZ AI\n')
         self.status.setText('Preparing the exact browser destination · no model call')
         self.manager.submit(lambda:self.manager.transport.prepare_tool(chat,text,'open_url',{'url':url},generation=generation),
-            lambda action:self.show_tool_review(chat,generation,action),self.failed)
+            lambda action:self.execute_direct_tool(chat,generation,action),self.failed)
+
+    def send_desktop_folder(self,chat,text,name):
+        if not self.native_id:
+            self.status.setText('Wait for the local workspace before creating a folder.');return
+        from app.native_io import desktop_directory,NativeIOError
+        try:desktop=desktop_directory()
+        except NativeIOError as error:self.status.setText(str(error));return
+        generation=self.native_generation;self.stop_event.clear();self.busy=True;self.response_error=False
+        self.composer.clear()
+        for widget in [self.model,self.agent,self.project,self.tabs,self.send_button]:widget.setEnabled(False)
+        self.append('\n\nYou\n'+text+'\n\nERSELMETZ AI\n')
+        self.status.setText('Preparing the exact Desktop folder action · no model claim')
+        def prepare():
+            root=self.manager.transport.grant_root(chat,str(desktop),generation=generation)
+            return self.manager.transport.prepare_tool(chat,text,'create_folder',{'root_id':root['id'],'path':name},generation=generation)
+        self.manager.submit(prepare,lambda action:self.execute_direct_tool(chat,generation,action),self.failed)
+
+    def execute_direct_tool(self,chat,generation,action):
+        """Execute an exact owner-typed deterministic action without a second prompt."""
+        if self.closed:return
+        if self.stop_event.is_set() or self.window_stopped or self.global_stopped or generation!=self.native_generation:
+            self.manager.submit(lambda:self.manager.transport.tool_api(chat,'POST','/'+action['id']+'/deny',generation=self.native_generation),
+                                lambda result:self.done(cancelled=True),self.failed,control=True)
+            return
+        self.status.setText('Running the exact action you requested…')
+        self.steps.addItem('Running the exact browser or Desktop-folder action typed by the owner.')
+        def finished(result):
+            if self.closed:return
+            outcome=result.get('result') or {};message=outcome.get('message','The requested action was not confirmed.')
+            self.append(message);self.steps.addItem(message)
+            self.done(cancelled=self.stop_event.is_set());self.status.setText('Requested action: '+result['state'])
+        self.manager.submit(lambda:self.manager.transport.tool_api(chat,'POST','/'+action['id']+'/execute',
+                            {'confirmed_digest':action['approval_digest']},generation=generation),finished,self.failed,model=True)
 
     def permit_tool_folder(self):
         if self.busy or self.feeding or self.window_stopped or self.global_stopped:return
@@ -745,7 +859,7 @@ class ChatWindow(QMainWindow):
     def send_agent(self,chat,text,*,knowledge=None):
         if not self.native_id:return
         generation=self.native_generation;self.stop_event.clear();self.busy=True;self.response_error=False
-        self.composer.clear()
+        self.composer.clear();chat.last_local_prompt=text
         for widget in [self.model,self.agent,self.project,self.tabs,self.send_button]:widget.setEnabled(False)
         self.append('\n\nYou\n'+text+'\n\nERSELMETZ AI\n')
         body={'text':text,'max_steps':self.step_limit.value(),'num_ctx':int(self.context_size.currentText()),
@@ -767,11 +881,14 @@ class ChatWindow(QMainWindow):
         if result['state']=='review' and result.get('action'):
             self.pending_run=(chat,generation,result['id']);self.show_tool_review(chat,generation,result['action']);return
         self.pending_run=None
-        self.append(result.get('answer','No final answer was confirmed.'))
+        answer=result.get('answer','No final answer was confirmed.');self.append(answer)
         if result.get('receipts') and result['state']!='completed':
             self.append('\nObserved tool results:\n'+'\n'.join(receipt['message'] for receipt in result['receipts']))
         if any(receipt.get('brain_changed') for receipt in result.get('receipts',[])):self.manager.refresh_brain()
-        self.done(cancelled=self.stop_event.is_set());self.status.setText('Agent turn: '+result['state']+' · '+str(result['steps'])+' bounded steps')
+        cancelled=self.stop_event.is_set();self.done(cancelled=cancelled)
+        if not cancelled and result['state']=='completed':self.speak_reply(answer)
+        if not cancelled and result['state']=='completed':self.learn_from_message(chat.last_local_prompt)
+        self.status.setText('Agent turn: '+result['state']+' · '+str(result['steps'])+' bounded steps')
 
     def show_tool_review(self,chat,generation,action):
         if self.closed:return
@@ -818,7 +935,8 @@ class ChatWindow(QMainWindow):
         self.manager.submit(lambda:self.manager.transport.tool_api(chat,'POST',suffix,body,generation=current_generation),finished,self.failed,control=not approved,model=approved)
 
     def receive(self, event):
-        if event.get('type') == 'chunk': self.append(event.get('text', ''))
+        if event.get('type') == 'chunk':
+            text=event.get('text','');self.reply_voice_parts.append(text);self.append(text)
         elif event.get('type')=='complete' and event.get('shipped_guidance'):
             guidance=event['shipped_guidance'];self.brain.scene.highlights=set(guidance['ids']);self.brain.scene.update()
             self.steps.addItem(f"Used {len(guidance['ids'])} actual shipped Core entries ({guidance['mode']}).")
@@ -857,7 +975,9 @@ class ChatWindow(QMainWindow):
         self.response_error=True
         if self.stop_event.is_set():
             self.done(cancelled=True);return
-        self.done(); self.status.setText('Could not finish this reply. Check the model and try again. Nothing was retried automatically.')
+        self.busy = False
+        for widget in [self.model, self.agent, self.project, self.tabs, self.send_button]: widget.setEnabled(True)
+        self.status.setText('Could not finish this reply. Check the model and try again. Nothing was retried automatically.')
         if str(error).startswith('Selected knowledge changed after preview'):
             self.status.setText('A selected source changed after review. Review your Brain again before sending; nothing was retried.')
         self.steps.addItem('The response failed. No success was assumed.')

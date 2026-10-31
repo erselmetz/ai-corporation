@@ -4,7 +4,7 @@ import pytest
 from app.native_desktop.session import NativeSession
 
 
-def test_native_catalog_rejects_cloud_stubs_and_prefers_reported_tools_and_thinking(monkeypatch):
+def test_native_catalog_detects_every_ollama_entry_but_enables_only_local_chat_models(monkeypatch):
     original=httpx.Client
     seen=[]
     def handle(request):
@@ -19,7 +19,11 @@ def test_native_catalog_rejects_cloud_stubs_and_prefers_reported_tools_and_think
         return httpx.Response(200,json=body)
     monkeypatch.setattr(httpx,"Client",lambda **kw:original(**kw,transport=httpx.MockTransport(handle)))
     session=NativeSession.__new__(NativeSession)
-    assert [item["name"] for item in session.models()]==["reasoner","small"]
+    models=session.models()
+    assert [item["name"] for item in models]==["reasoner","small","hidden-remote","remote:cloud","embed"]
+    assert [item["name"] for item in models if item["available"]]==["reasoner","small"]
+    assert next(item for item in models if item["name"]=="embed")["category"]=="embedding"
+    assert all(not item["available"] for item in models if item["name"] in {"remote:cloud","hidden-remote"})
     assert all(path in {"/api/tags","/api/show"} for path in seen)
 
 

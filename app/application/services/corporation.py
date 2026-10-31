@@ -300,6 +300,12 @@ class CorporationApplicationService:
                     allowed_tools=record["allowed_tools"], builtin_key=record["builtin_key"],
                     paused=record["paused"], model_route_preference=record["model_route_preference"],
                 )
+                upgraded_default = False
+                if candidate.builtin_key is not None:
+                    from app.agents.builtins import profile_for, upgrade_unchanged_builtin_default
+                    upgraded_default = upgrade_unchanged_builtin_default(
+                        candidate, profile_for(candidate.builtin_key),
+                    )
                 current = self._orchestrator.agents.get(candidate.id) if self._orchestrator.agents.exists(candidate.id) else None
                 # Generic runtimes intentionally preserve the legacy one-Agent
                 # baseline. Keep persisted built-in profiles dormant until the
@@ -334,6 +340,8 @@ class CorporationApplicationService:
                         raise ValueError("Unknown Employee identity")
                     employees.register(Employee(employee_id, candidate.name, candidate.role,
                                                 [candidate.system_prompt or candidate.role], candidate))
+                if upgraded_default:
+                    self._save_agent_profile(candidate, employee_id)
             except (TypeError, ValueError, KeyError):
                 raise RuntimeError("Stored Agent profile failed validation") from None
 

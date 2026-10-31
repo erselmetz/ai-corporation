@@ -29,7 +29,7 @@ def wire(manager,qtbot,fail_message=None):
 
 def test_cloud_preview_cancel_then_approve_is_one_turn_without_route_mutation(manager,qtbot):
     window,calls=wire(manager,qtbot);chat=window.current();original=(chat.model,chat.agent,chat.project,chat.workspace)
-    button=next(b for b in window.findChildren(QPushButton) if b.text()=='Ask the free pool?')
+    button=next(b for b in window.findChildren(QPushButton) if b.text()=='Ask cloud?')
     assert calls==[]
     button.click();qtbot.waitUntil(lambda:window.cloud_review.dialog is not None)
     dialog=window.cloud_review.dialog
@@ -48,6 +48,18 @@ def test_cloud_preview_cancel_then_approve_is_one_turn_without_route_mutation(ma
     assert window.composer.toPlainText()==''
     assert any('Router-reported fake / served' in window.steps.item(i).text() for i in range(window.steps.count()))
     manager.session.client.close()
+
+
+def test_reviewed_cloud_turn_accepts_configured_gemini_and_owner_model_choice(manager,qtbot):
+    window,calls=wire(manager,qtbot);manager.preferences.setValue('cloudModel','gemini-2.5-flash')
+    original=manager.session.request
+    def request(method,path,body=None,**kwargs):
+        if path=='/api/local/provider-connections':return {'items':[{'provider_id':'gemini-personal','provider_type':'gemini','state':'available','models':['gemini-2.5-pro','gemini-2.5-flash']}]}
+        return original(method,path,body,**kwargs)
+    manager.session.request=request
+    window.cloud_review.prepare();qtbot.waitUntil(lambda:window.cloud_review.dialog is not None)
+    assert calls[0]['route_provider_id']=='gemini-personal' and calls[0]['route_model_id']=='gemini-2.5-flash'
+    window.cloud_review.dialog.reject();manager.session.client.close()
 
 
 def test_stop_or_generation_change_invalidates_pending_cloud_approval(manager,qtbot):

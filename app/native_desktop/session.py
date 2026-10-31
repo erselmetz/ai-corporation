@@ -74,23 +74,25 @@ class NativeSession:
         return identifier, response.json()["conversation"]["id"]
 
     def models(self):
-        # Read only local model metadata. Cloud stubs must never be treated as local inference.
+        # Detect every Ollama catalog entry, while only enabling verified local chat models.
         with httpx.Client(base_url="http://127.0.0.1:11434", timeout=5, trust_env=False) as client:
             response = client.get("/api/tags"); response.raise_for_status()
             found = []
             for item in response.json().get("models", [])[:100]:
                 name = item["name"]
-                if "cloud" in name.lower():
-                    continue
                 detail = client.post("/api/show", json={"model": name})
                 detail.raise_for_status(); info = detail.json()
-                if info.get("remote_host") or info.get("remote_model"):
-                    continue
                 capabilities = info.get("capabilities", [])
-                if "completion" in capabilities:
-                    found.append({"name": name, "tools": "tools" in capabilities,
-                                  "thinking": "thinking" in capabilities, "size": item.get("size", 0)})
-            return sorted(found, key=lambda item: (not item["tools"], not item["thinking"], item["size"]))
+                remote=bool(info.get("remote_host") or info.get("remote_model") or name.casefold().endswith((":cloud","-cloud")))
+                chat="completion" in capabilities
+                category=("cloud" if remote else "local-chat" if chat else
+                          "embedding" if "embedding" in capabilities else "unsupported")
+                found.append({"name":name,"tools":"tools" in capabilities,"thinking":"thinking" in capabilities,
+                              "size":item.get("size",0),"available":chat and not remote,"category":category,
+                              "reason":("Cloud via Ollama · connect and approve each cloud turn" if remote else
+                                        "Embedding model · used by My Brain, not chat" if category=="embedding" else
+                                        "Not reported as a chat model by Ollama" if not chat else "")})
+            return sorted(found,key=lambda item:(not item["available"],item["category"],not item["tools"],not item["thinking"],item["size"],item["name"]))
 
     def send(self, workspace, conversation, text, stop, emit, *, window=None, generation=0,knowledge=None,seconds=None):
         headers = {"X-Local-CSRF": self.credentials["csrf"], "X-Chat-Workspace": workspace}

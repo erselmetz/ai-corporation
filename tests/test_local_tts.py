@@ -34,6 +34,24 @@ def test_local_voice_self_test_speaks_only_fixed_local_text_and_reports_completi
     assert result["text_retained"] is False
 
 
+def test_local_voice_can_speak_one_bounded_assistant_reply_without_retaining_it():
+    engine = FakeEngine()
+    output = LocalPyttsx3Output(engine_factory=lambda: engine)
+    assert output.start_text("Hello from your local assistant.")["active"] is True
+    for _ in range(50):
+        if output.snapshot()["state"] == "working": break
+        time.sleep(0.005)
+    assert engine.spoken == ["Hello from your local assistant."]
+    assert output.snapshot()["text_retained"] is False
+
+
+def test_local_voice_rejects_empty_and_oversized_reply_text():
+    output = LocalPyttsx3Output(engine_factory=FakeEngine)
+    import pytest
+    with pytest.raises(ValueError): output.start_text("  ")
+    with pytest.raises(ValueError): output.start_text("x" * 4001)
+
+
 def test_one_click_stop_cancels_inflight_local_playback():
     engine = FakeEngine(finishes=False)
     output = LocalPyttsx3Output(engine_factory=lambda: engine, sleeper=lambda _seconds: time.sleep(0.002))

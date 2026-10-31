@@ -17,12 +17,14 @@ def vector(identifier):
 
 class BrainScene(QWidget):
     picked=Signal(object,object)
+    zoom_changed=Signal(float)
 
     def __init__(self, reduced_motion=lambda:False):
         super().__init__()
         self.setAccessibleName('Brain source and chunk visualization')
-        self.setAccessibleDescription('Positions group real chunks by source. Distance is a layout, not model understanding. Use List for keyboard access.')
+        self.setAccessibleDescription('Positions group real chunks by source. Distance is a layout, not model understanding. Zoom with the mouse wheel or labeled controls. Use List for keyboard access.')
         self.nodes=[]; self.edges=[]; self.raw=[]; self.limit=300; self.angle=0; self.locations={}; self.points=[]
+        self.zoom=1.0
         self.highlights=set(); self.glows={}; self.selected=None; self.reduced_motion=reduced_motion
         self.timer=QTimer(self); self.timer.timeout.connect(self.tick); self.timer.start(33)
         self.setMinimumSize(100,100)
@@ -87,7 +89,7 @@ class BrainScene(QWidget):
         painter.fillRect(self.rect(),QColor(TOKENS.background))
         if not self.nodes:
             painter.setPen(QColor(TOKENS.muted)); painter.drawText(self.rect(),Qt.AlignmentFlag.AlignCenter,'No chunks yet'); return
-        scale=min(self.width(),self.height())*.53; cx=self.width()/2; cy=self.height()/2
+        scale=min(self.width(),self.height())*.53*self.zoom; cx=self.width()/2; cy=self.height()/2
         projected={}
         for node in self.nodes:
             x,y,z=self.locations[node['id']]; x,z=x*math.cos(self.angle)+z*math.sin(self.angle),z*math.cos(self.angle)-x*math.sin(self.angle)
@@ -133,6 +135,23 @@ class BrainScene(QWidget):
                 self.selected=node['id']; self.picked.emit(node,point); return
         self.selected=None; self.picked.emit(None,pos)
 
+    def set_zoom(self,value):
+        value=max(.5,min(2.5,float(value)))
+        if value==self.zoom:return
+        self.zoom=value;self.zoom_changed.emit(value);self.update()
+
+    def zoom_by(self,steps):
+        self.set_zoom(self.zoom*(1.15**steps))
+
+    def reset_zoom(self):
+        self.set_zoom(1.0)
+
+    def wheelEvent(self,event):
+        delta=event.angleDelta().y()
+        if delta:
+            self.zoom_by(1 if delta>0 else -1);event.accept();return
+        super().wheelEvent(event)
+
 
 class BrainPanel(QWidget):
     inspect_requested=Signal(str)
@@ -156,6 +175,9 @@ class BrainPanel(QWidget):
         self.global_stop=QPushButton('Stop all');self.global_stop.setAccessibleName('Emergency stop all windows from full Brain')
         self.global_stop.clicked.connect(self.global_stop_requested);tools.addWidget(self.global_stop);self.global_stop.hide()
         self.fallback=QPushButton('List'); self.fallback.setAccessibleName('Brain list fallback'); self.fallback.clicked.connect(self.toggle_list); tools.addWidget(self.fallback)
+        self.zoom_out=QPushButton('−');self.zoom_out.setAccessibleName('Zoom out Neural Workspace');self.zoom_out.setToolTip('Zoom out the Neural Workspace');self.zoom_out.clicked.connect(lambda:self.zoom_changed(-1));tools.addWidget(self.zoom_out)
+        self.zoom_reset=QPushButton('100%');self.zoom_reset.setAccessibleName('Reset Neural Workspace zoom');self.zoom_reset.setToolTip('Reset Neural Workspace zoom to 100%');self.zoom_reset.clicked.connect(self.reset_zoom);tools.addWidget(self.zoom_reset)
+        self.zoom_in=QPushButton('+');self.zoom_in.setAccessibleName('Zoom in Neural Workspace');self.zoom_in.setToolTip('Zoom in the Neural Workspace');self.zoom_in.clicked.connect(lambda:self.zoom_changed(1));tools.addWidget(self.zoom_in)
         self.cap=QSpinBox(); self.cap.setRange(50,2000); self.cap.setValue(300); self.cap.setSingleStep(50); self.cap.setPrefix('Dots: '); self.cap.setMaximumWidth(135); self.cap.setAccessibleName('Maximum visible Brain nodes'); self.cap.setToolTip('More nodes can reduce rendering speed. Groups retain their real members.')
         refresh=QPushButton('↻'); refresh.setAccessibleName('Refresh Brain'); refresh.clicked.connect(self.refresh_requested); tools.addWidget(refresh)
         tools.addStretch()
@@ -165,11 +187,11 @@ class BrainPanel(QWidget):
         search_row=QHBoxLayout(); search_row.addWidget(self.search,1); search_row.addWidget(self.cap); layout.addLayout(search_row)
         self.coverage=QLabel('Loading your Brain…'); self.coverage.setWordWrap(True); self.coverage.setTextFormat(Qt.TextFormat.PlainText); self.coverage.setAccessibleName('Brain coverage and search result count'); layout.addWidget(self.coverage)
         self.stack=QStackedWidget(); layout.addWidget(self.stack,1)
-        self.scene=BrainScene(reduced_motion); self.stack.addWidget(self.scene)
+        self.scene=BrainScene(reduced_motion); self.stack.addWidget(self.scene);self.scene.zoom_changed.connect(lambda _value:self.update_zoom_label())
         self.list=QListWidget(); self.list.setAccessibleName('Retained Brain chunks'); self.stack.addWidget(self.list)
         self.scene.picked.connect(self.picked); self.list.itemActivated.connect(lambda item:self.picked(item.data(Qt.ItemDataRole.UserRole),QPointF(20,60)))
         self.cap.valueChanged.connect(self.set_cap)
-        self.card=QFrame(self); self.card.setObjectName('panel'); self.card.setStyleSheet('QFrame#panel { border: 1px solid #edb94e; border-radius: 8px; }')
+        self.card=QFrame(self); self.card.setObjectName('panel'); self.card.setStyleSheet(f'QFrame#panel {{ border: 1px solid {TOKENS.aurora_cyan}; border-radius: {TOKENS.radius}px; }}')
         card=QVBoxLayout(self.card); self.title=QLabel(); self.title.setWordWrap(True); self.title.setTextFormat(Qt.TextFormat.PlainText); card.addWidget(self.title)
         self.snippet=QPlainTextEdit(); self.snippet.setReadOnly(True); self.snippet.setAccessibleName('Selected chunk reference'); self.snippet.setMaximumHeight(130); card.addWidget(self.snippet)
         row=QHBoxLayout(); card.addLayout(row)
@@ -177,6 +199,15 @@ class BrainPanel(QWidget):
         close=QPushButton('Close'); close.setAccessibleName('Close Brain node card'); close.clicked.connect(self.close_card); row.addWidget(close)
         self.card.hide(); self.pending_forget=False
         self.search.textChanged.connect(self.clear_search)
+
+    def reset_zoom(self):
+        self.scene.reset_zoom();self.update_zoom_label()
+
+    def update_zoom_label(self):
+        self.zoom_reset.setText(str(round(self.scene.zoom*100))+'%')
+
+    def zoom_changed(self,steps):
+        self.scene.zoom_by(steps);self.update_zoom_label()
 
     def clear_search(self):
         self.search_hits=None; self.scene.highlights.clear(); self.scene.update(); self.fill_list(); self.update_coverage()

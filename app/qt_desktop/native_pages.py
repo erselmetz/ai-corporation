@@ -150,6 +150,59 @@ class RecordWindow(QDialog):
             fields.erase();state.setText('Not completed: '+str(error)[:600]);fields.setEnabled(True);confirmed.setEnabled(True);confirmed.setChecked(False);submit.setEnabled(False)
         submit.clicked.connect(send);dialog.finished.connect(lambda _:fields.erase());dialog.open();self.action_dialog=dialog
 
+
+class QuickProviderWindow(QDialog):
+    """Simple owner setup for auto-detected Ollama and one optional Gemini key."""
+    def __init__(self,manager):
+        super().__init__();self.manager=manager;self.setWindowTitle('AI providers · ERSELMETZ AI');self.resize(620,540)
+        layout=QVBoxLayout(self)
+        heading=QLabel('AI providers');heading.setTextFormat(Qt.TextFormat.PlainText);layout.addWidget(heading)
+        intro=QLabel('Ollama models are detected automatically. Add Gemini only when you choose; its key stays in memory and cloud turns still require consent.')
+        intro.setWordWrap(True);intro.setTextFormat(Qt.TextFormat.PlainText);layout.addWidget(intro)
+        self.local=QPlainTextEdit();self.local.setReadOnly(True);self.local.setAccessibleName('Detected Ollama models');self.local.setMaximumHeight(150);layout.addWidget(self.local)
+        layout.addWidget(push('Detect Ollama models',self.refresh))
+        layout.addWidget(QLabel('Optional Gemini'))
+        self.key=QLineEdit();self.key.setEchoMode(QLineEdit.EchoMode.Password);self.key.setPlaceholderText('Paste Gemini API key');self.key.setAccessibleName('Gemini API key');layout.addWidget(self.key)
+        layout.addWidget(push('Connect Gemini',self.connect_gemini))
+        self.gemini_model=QComboBox();self.gemini_model.setAccessibleName('Preferred Gemini model for reviewed cloud turns');self.gemini_model.setEnabled(False)
+        self.gemini_model.currentTextChanged.connect(lambda model:self.manager.preferences.setValue('cloudModel',model) if model else None)
+        layout.addWidget(self.gemini_model)
+        self.status=QLabel('Nothing has been sent to a cloud provider.');self.status.setWordWrap(True);self.status.setTextFormat(Qt.TextFormat.PlainText);layout.addWidget(self.status)
+        layout.addWidget(push('Other provider options',lambda:manager.open_page('Providers',self.status)))
+        layout.addWidget(push('Close',self.close));self.refresh()
+
+    def refresh(self):
+        self.status.setText('Checking local Ollama and saved provider records…')
+        def work():return self.manager.session.models(),self.manager.session.request('GET','/api/local/provider-connections')
+        def done(result):
+            models,connections=result;lines=[]
+            for item in models:
+                state='Ready for local chat' if item.get('available') else item.get('reason','Detected; unavailable for chat')
+                lines.append(item['name']+' · '+state)
+            self.local.setPlainText('\n'.join(lines) if lines else 'No Ollama models detected. Start Ollama, then retry.')
+            gemini=next((item for item in connections.get('items',[]) if item.get('provider_type')=='gemini'),None)
+            models=gemini.get('models',[]) if gemini else [];saved=self.manager.preferences.value('cloudModel','',type=str)
+            self.gemini_model.blockSignals(True);self.gemini_model.clear();self.gemini_model.addItems(models)
+            if saved in models:self.gemini_model.setCurrentText(saved)
+            self.gemini_model.setEnabled(bool(models));self.gemini_model.blockSignals(False)
+            if models:self.manager.preferences.setValue('cloudModel',self.gemini_model.currentText())
+            self.status.setText(('Gemini connected · '+str(len(gemini.get('models',[])))+' models found.' if gemini else
+                                 'Ollama detection complete. Gemini is optional and not connected.'))
+        self.manager.submit(work,done,lambda error:self.status.setText('Could not refresh providers. Start Ollama or check the existing provider record, then retry.'))
+
+    def connect_gemini(self):
+        key=self.key.text().strip();self.key.clear()
+        if not key:self.status.setText('Paste a Gemini API key first. Nothing was sent.');return
+        self.status.setText('Contacting Gemini once to validate the key and discover its model catalog…')
+        body={'id':'personal','name':'Gemini','api_key':key,'request_slots':1}
+        def work():
+            try:return self.manager.session.request('POST','/api/local/provider-connections/gemini',body)
+            finally:body['api_key']='';key_bytes=bytearray(key.encode());key_bytes[:]=b'\0'*len(key_bytes)
+        def done(result):
+            self.status.setText('Gemini connected · '+str(len(result.get('models',[])))+' models found. Cloud use still asks consent per turn.')
+            self.refresh()
+        self.manager.submit(work,done,lambda error:self.status.setText('Gemini was not connected. Check the key or remove an old Gemini record in Other provider options, then retry.'))
+
 class BackupWindow(QDialog):
     def __init__(self,manager):
         super().__init__();self.manager=manager;self.inspected=None;self.setWindowTitle('Backup & restore · ERSELMETZ AI');self.resize(700,650);layout=QVBoxLayout(self)

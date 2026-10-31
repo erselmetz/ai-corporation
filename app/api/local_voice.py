@@ -35,6 +35,11 @@ class LocalSpeechModelInstall(BaseModel):
     manifest_digest: StrictStr = Field(min_length=64, max_length=64)
 
 
+class LocalSpeechOutputRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: StrictStr = Field(min_length=1, max_length=4000)
+
+
 def create_local_voice_router(connection_manager, budget: VoiceSpendBudget | None = None,
                               local_speech=None, speech_model_catalog=None,
                               media_packs=None, local_output=None):
@@ -63,6 +68,20 @@ def create_local_voice_router(connection_manager, budget: VoiceSpendBudget | Non
         if request.app.state.emergency_stop_service.stopped:
             raise HTTPException(423, "Emergency stop is active; local speech output cannot start")
         return local_output.start_test()
+
+    @router.post("/speak")
+    async def speak_local_reply(request: Request,
+                                _principal=Depends(require_permission("chat:send"))):
+        if local_output is None or media_packs is None or media_packs.preview("voice")["state"] == "not-installed":
+            raise HTTPException(409, "Install the reviewed local Voice pack before enabling spoken replies")
+        if request.app.state.emergency_stop_service.stopped:
+            raise HTTPException(423, "Emergency stop is active; local speech output cannot start")
+        from app.api.chat import bounded_body
+        try:
+            body = LocalSpeechOutputRequest.model_validate_json(await bounded_body(request))
+            return local_output.start_text(body.text)
+        except ValueError as error:
+            raise HTTPException(422, str(error)) from None
 
     @router.get("/output-status")
     def local_output_status(_principal=Depends(require_permission("capability-pack:manage"))):

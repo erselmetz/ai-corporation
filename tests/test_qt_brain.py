@@ -25,6 +25,18 @@ def test_grouping_keeps_exact_real_members_and_empty_view_stays_empty(qtbot):
     panel.set_graph({'nodes':[],'edges':[]}); assert panel.scene.nodes==[]
 
 
+def test_neural_workspace_zoom_controls_are_bounded_and_resettable(qtbot):
+    panel=BrainPanel(lambda:True);qtbot.addWidget(panel);panel.resize(800,600);panel.show();panel.set_graph(graph())
+    assert panel.scene.zoom==1.0 and panel.zoom_reset.text()=='100%'
+    panel.zoom_in.click();assert panel.scene.zoom>1 and panel.zoom_reset.text()=='115%'
+    panel.zoom_out.click();assert abs(panel.scene.zoom-1)<.001
+    for _ in range(20):panel.zoom_in.click()
+    assert panel.scene.zoom==2.5 and panel.zoom_reset.text()=='250%'
+    panel.zoom_reset.click();assert panel.scene.zoom==1 and panel.zoom_reset.text()=='100%'
+    for _ in range(20):panel.zoom_out.click()
+    assert panel.scene.zoom==.5 and panel.zoom_reset.text()=='50%'
+
+
 def test_anchored_card_requires_exact_second_confirmation_before_forget(qtbot):
     panel=BrainPanel(lambda:True); qtbot.addWidget(panel); panel.resize(800,600); panel.show(); panel.set_graph(graph())
     inspect=QSignalSpy(panel.inspect_requested); forget=QSignalSpy(panel.forget_requested)

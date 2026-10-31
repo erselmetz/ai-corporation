@@ -6,6 +6,7 @@ import hashlib
 import os
 import stat
 import re
+from datetime import datetime,timezone,timedelta
 from pathlib import Path
 
 
@@ -96,6 +97,13 @@ class Transport:
             'X-Native-Window':chat.window_id,'X-Native-Generation':str(generation)})
         response.raise_for_status();return response.json()
 
+    def remember_owner_fact(self,text):
+        response=self.session.client.post('/api/memory/owner',json={
+            'content':text,'source_name':'Learned from owner chat',
+            'expires_at':(datetime.now(timezone.utc)+timedelta(days=30)).isoformat(),
+            'retention_opt_in':True},headers={'X-Local-CSRF':self.session.credentials['csrf']})
+        response.raise_for_status();return response.json()
+
     def tool_api(self,chat,method,suffix='',body=None,*,generation=0):
         for value in [chat.window_id,chat.workspace,chat.conversation]:
             if value and not re.fullmatch('[0-9a-f]{32}',value):raise ValueError('Invalid native conversation identity')
@@ -158,6 +166,17 @@ class Transport:
             'Content-Type':'audio/wav','X-Local-CSRF':self.session.credentials['csrf'],
             'X-Native-Window':chat.window_id,'X-Native-Generation':str(generation)})
         response.raise_for_status();return response.json()['transcript']
+
+    def speak_local(self,text):
+        response=self.session.client.post('/api/local/voice/speak',json={'text':text},headers={
+            'X-Local-CSRF':self.session.credentials['csrf']})
+        if not response.is_success:raise RuntimeError(str(response.json().get('detail','Local speech could not start'))[:300])
+        return response.json()
+
+    def stop_speech(self):
+        response=self.session.client.post('/api/local/voice/stop-output',json={},headers={
+            'X-Local-CSRF':self.session.credentials['csrf']})
+        response.raise_for_status();return response.json()
 
     def send_math(self,chat,text,tool,emit,*,generation=0):
         if not chat.conversation:self.start(chat,generation=generation)

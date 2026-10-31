@@ -1,7 +1,10 @@
 import pytest
 
 from app.agents import Agent
-from app.agents.builtins import BUILTIN_AGENT_PROFILES, provision_builtin_agent_team
+from app.agents.builtins import (
+    BUILTIN_AGENT_PROFILES, profile_for, provision_builtin_agent_team,
+    upgrade_unchanged_builtin_default,
+)
 from app.application.services.owned_chat import ChatConflict, ChatLimit
 from app.runtime import create_corporation_runtime
 
@@ -38,6 +41,28 @@ def test_developer_prefers_an_already_installed_coder_model_only():
     assert developer.model == "qwen2.5-coder:3b"
     assert developer.provider == "ollama"
     assert developer.model_route_preference == "installed-coder"
+
+
+def test_legacy_coordinator_default_gains_new_tools_but_owner_edit_is_preserved():
+    runtime = create_corporation_runtime(with_builtin_agent_team=True)
+    coordinator = runtime.agents.get("local_worker")
+    coordinator.allowed_tools = ["brain.search", "reviewed.calculator", "reviewed.local-document-lookup"]
+    coordinator.capabilities = ["chat", *coordinator.allowed_tools]
+
+    assert upgrade_unchanged_builtin_default(coordinator, profile_for("coordinator")) is True
+    assert "native.open_url" in coordinator.allowed_tools
+    assert "native.create_folder" in coordinator.allowed_tools
+
+    coordinator.allowed_tools.remove("native.open_url")
+    assert upgrade_unchanged_builtin_default(coordinator, profile_for("coordinator")) is False
+    assert "native.open_url" not in coordinator.allowed_tools
+
+    coordinator.allowed_tools = [
+        "brain.search", "reviewed.calculator", "reviewed.local-document-lookup", "native.open_url",
+    ]
+    coordinator.capabilities = ["chat", *coordinator.allowed_tools]
+    assert upgrade_unchanged_builtin_default(coordinator, profile_for("coordinator")) is True
+    assert coordinator.allowed_tools[-1] == "native.create_folder"
 
 
 def test_owned_agent_chat_uses_one_shared_resource_manager_slot():
@@ -83,3 +108,22 @@ def test_profile_persists_for_existing_agent_without_employee_link():
     restarted = create_corporation_runtime(with_builtin_agent_team=True)
     assert restarted.agents.get(agent.id).system_prompt == "Use the approved scope."
     assert restarted.application_service.get_agent_profile(agent.id).brain_scopes == ("owner",)
+
+
+def test_restart_upgrades_and_persists_exact_legacy_coordinator_default():
+    runtime = create_corporation_runtime(with_builtin_agent_team=True)
+    coordinator = runtime.agents.get("local_worker")
+    legacy = ["brain.search", "reviewed.calculator", "reviewed.local-document-lookup"]
+    coordinator.capabilities = ["chat", *legacy]
+    runtime.application_service.update_agent_profile(
+        coordinator.id, name=coordinator.name, role=coordinator.role,
+        system_prompt=coordinator.system_prompt, brain_scopes=["owner"],
+        allowed_tools=legacy, permissions=list(coordinator.permissions),
+    )
+
+    restarted = create_corporation_runtime(with_builtin_agent_team=True)
+    restored = restarted.agents.get("local_worker")
+    assert restored.allowed_tools[-2:] == ["native.open_url", "native.create_folder"]
+
+    restarted_again = create_corporation_runtime(with_builtin_agent_team=True)
+    assert restarted_again.agents.get("local_worker").allowed_tools == restored.allowed_tools

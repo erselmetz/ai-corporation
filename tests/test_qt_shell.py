@@ -18,6 +18,7 @@ class Session:
         if path == '/api/memory/owner/native-graph': return {'nodes':[],'edges':[],'total_chunks':0}
         if path == '/api/agents': return {'items':[{'id':'local_worker','name':'Coordinator'}]}
         if path == '/api/projects': return {'items':[{'id':'project-a','name':'Project A'}]}
+        if path == '/api/local/provider-connections': return {'items':[]}
         raise AssertionError((method,path,body))
 
 
@@ -31,7 +32,7 @@ def manager(qapp, qtbot, tmp_path):
     manager.shutdown()
 
 
-def test_ctrl_n_creates_isolated_windows_and_ctrl_b_keeps_equal_panes(manager, qtbot):
+def test_ctrl_n_creates_isolated_windows_and_ctrl_b_keeps_neural_workspace_dominant(manager, qtbot):
     first = manager.new_window(); qtbot.waitUntil(lambda:first.model.count()==1)
     qtbot.keyClick(first, Qt.Key.Key_N, Qt.KeyboardModifier.ControlModifier)
     qtbot.waitUntil(lambda:len(manager.windows)==2)
@@ -45,7 +46,7 @@ def test_ctrl_n_creates_isolated_windows_and_ctrl_b_keeps_equal_panes(manager, q
     qtbot.wait(100)  # Allow Windows' native focus handoff after Ctrl+N to settle.
     qtbot.keyClick(first.composer, Qt.Key.Key_B, Qt.KeyboardModifier.ControlModifier)
     qtbot.waitUntil(lambda:not first.sidebar.isVisible())
-    sizes=first.splitter.sizes(); assert abs(sizes[1]-sizes[2]) <= 2
+    sizes=first.splitter.sizes();assert sizes[1]>sizes[2] and sizes[2]>=320
     assert all(c.accessibleName() for c in first.findChildren(QPushButton)+first.findChildren(QComboBox))
 
 
@@ -67,6 +68,42 @@ def test_settings_and_advanced_are_separate_singleton_windows(manager, qtbot):
     manager.pool.submit(lambda:manager.work.event.emit(window,{'type':'chunk','text':'Queued on the UI thread'}))
     qtbot.waitUntil(lambda:len(threads)==1)
     assert threads==[True]
+
+
+def test_model_picker_lists_all_detected_ollama_entries_but_disables_non_chat_models(manager,qtbot):
+    window=manager.new_window();qtbot.waitUntil(lambda:window.model.count()==1)
+    data=dict(manager.catalog);data['models']=[
+        {'name':'llama3.2:3b','available':True,'category':'local-chat'},
+        {'name':'nomic-embed-text:latest','available':False,'category':'embedding','reason':'Embedding model · used by My Brain, not chat'},
+        {'name':'gemma3:31b-cloud','available':False,'category':'cloud','reason':'Cloud via Ollama · connect and approve each cloud turn'}]
+    window.current().model='llama3.2:3b'
+    window.loaded(data)
+    assert window.model.count()==3 and window.available_models=={'llama3.2:3b'}
+    assert window.model.model().item(0).isEnabled()
+    assert not window.model.model().item(1).isEnabled() and 'Embedding model' in window.model.itemText(1)
+    assert not window.model.model().item(2).isEnabled() and 'Cloud via Ollama' in window.model.itemText(2)
+    assert '3 Ollama entries detected' in window.status.text()
+
+
+def test_settings_opens_simple_provider_setup_with_no_cloud_call(manager,qtbot):
+    manager.new_window();settings=manager.show_dialog('Settings')
+    setup=manager.show_provider_setup();qtbot.waitUntil(lambda:'Ollama detection complete' in setup.status.text())
+    assert setup is manager.show_provider_setup() and setup.key.echoMode()==QLineEdit.EchoMode.Password
+    assert 'test-local' in setup.local.toPlainText() and 'optional' in setup.status.text().lower()
+    setup.close();settings.close()
+
+
+def test_failed_request_adds_one_fail_closed_trace_line(manager, qtbot):
+    window=manager.new_window();qtbot.waitUntil(lambda:window.model.count()==1)
+    before=sum(window.steps.item(i).text()=='The response failed. No success was assumed.'
+               for i in range(window.steps.count()))
+    window.busy=True;window.send_button.setEnabled(False)
+    window.failed(RuntimeError('private provider detail'))
+    after=sum(window.steps.item(i).text()=='The response failed. No success was assumed.'
+              for i in range(window.steps.count()))
+    assert after == before + 1
+    assert window.send_button.isEnabled() and not window.busy
+    assert 'private provider detail' not in window.status.text()
 
 
 def test_local_second_launch_only_signals_the_existing_process(qapp, qtbot, tmp_path):
@@ -100,11 +137,45 @@ def test_refresh_keeps_missing_model_and_conversation_until_owner_changes_it(man
 
 def test_thinking_control_only_applies_to_explicit_agent_loop(manager, qtbot):
     window=manager.new_window();qtbot.waitUntil(lambda:window.model.count()==1)
-    assert not window.thinking.isEnabled()
-    window.agent_loop.setChecked(True)
-    assert window.thinking.isEnabled()
+    assert not window.agent_loop.isChecked() and not window.thinking.isEnabled()
+    assert not window.ask_first.isChecked()
+    window.agent_loop.setChecked(True);assert window.thinking.isEnabled()
     window.thinking.setChecked(True);window.agent_loop.setChecked(False)
     assert not window.thinking.isEnabled() and not window.thinking.isChecked()
+
+
+def test_desktop_folder_request_executes_exact_owner_command_without_second_prompt(manager,qtbot,tmp_path,monkeypatch):
+    window=manager.new_window();qtbot.waitUntil(lambda:window.model.count()==1 and bool(window.native_id))
+    calls=[]
+    monkeypatch.setattr('app.native_io.desktop_directory',lambda:tmp_path)
+    monkeypatch.setattr(manager.transport,'grant_root',lambda chat,path,**kwargs:calls.append(('root',path)) or {'id':'a'*32})
+    monkeypatch.setattr(manager.transport,'prepare_tool',lambda chat,text,name,args,**kwargs:
+        calls.append((name,args)) or {'id':'b'*32,'tool':name,'state':'pending','summary':'Create folder',
+            'details':'Create this empty folder:\nNew folder','approval_required':True,'approval_digest':'c'*64,'result':None})
+    monkeypatch.setattr(manager.transport,'tool_api',lambda chat,method,suffix,body=None,**kwargs:
+        calls.append((method,suffix,body)) or {'state':'completed','result':{'message':'Folder creation confirmed: New folder'}})
+    window.composer.setPlainText('create folder in desktop');window.send()
+    qtbot.waitUntil(lambda:not window.busy)
+    assert calls==[('root',str(tmp_path)),('create_folder',{'root_id':'a'*32,'path':'New folder'}),
+                   ('POST','/'+'b'*32+'/execute',{'confirmed_digest':'c'*64})]
+    assert 'Folder creation confirmed' in window.tabs.currentWidget().toPlainText()
+
+
+@pytest.mark.parametrize('prompt',["can you open youtube", "open youtube in chrome"])
+def test_natural_youtube_request_executes_exact_owner_command_without_second_prompt(manager,qtbot,monkeypatch,prompt):
+    window=manager.new_window();qtbot.waitUntil(lambda:window.model.count()==1 and bool(window.native_id))
+    calls=[]
+    monkeypatch.setattr(manager.transport,'prepare_tool',lambda chat,text,name,args,**kwargs:
+        calls.append((text,name,args)) or {'id':'b'*32,'tool':name,'state':'pending','summary':'Open site',
+            'details':'Exact destination:\n'+args['url'],'approval_required':True,
+            'approval_digest':'c'*64,'result':None})
+    monkeypatch.setattr(manager.transport,'tool_api',lambda chat,method,suffix,body=None,**kwargs:
+        calls.append((method,suffix,body)) or {'state':'submitted','result':{'message':'Browser handoff confirmed'}})
+    window.composer.setPlainText(prompt);window.send()
+    qtbot.waitUntil(lambda:not window.busy)
+    assert calls==[(prompt,'open_url',{'url':'https://www.youtube.com/'}),
+                   ('POST','/'+'b'*32+'/execute',{'confirmed_digest':'c'*64})]
+    assert 'cannot directly open' not in window.tabs.currentWidget().toPlainText().casefold()
 
 
 def test_stop_shortcut_reaches_child_dialog_and_repeated_stop_never_resumes(manager,qtbot,monkeypatch):

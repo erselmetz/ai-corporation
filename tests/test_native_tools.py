@@ -61,6 +61,16 @@ def test_write_requires_root_read_and_os_action_permissions_and_fresh_diff(tools
     assert result['state']=='completed' and path.read_bytes()==b'Reviewed\n'
 
 
+def test_create_folder_requires_exact_approval_and_returns_os_receipt(tools,tmp_path):
+    service,app,actor,scope,policy,approvals,_=tools
+    root=service.files.register(actor.identity,scope.window_id,tmp_path,consent=True)['id']
+    action=service.prepare(actor,scope,'local_worker','create_folder',{'root_id':root,'path':'Reports'},policy=policy,approvals=approvals,ask_first=False)
+    assert action['approval_required'] is True and not (tmp_path/'Reports').exists()
+    result=service.execute(actor,scope,action['id'],policy=policy,approvals=approvals,confirmed_digest=action['approval_digest'])
+    assert result['state']=='completed' and result['result']['message']=='Folder creation confirmed: Reports'
+    assert (tmp_path/'Reports').is_dir()
+
+
 def test_permissions_and_current_agent_allowlist_are_rechecked_before_execution(tools,monkeypatch):
     service,app,actor,scope,policy,approvals,opened=tools
     denied=AuthenticatedPrincipal(actor.identity,frozenset({'chat:send'}),session_id=actor.session_id)

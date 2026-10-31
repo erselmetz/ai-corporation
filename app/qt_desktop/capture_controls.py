@@ -12,12 +12,19 @@ def wipe(value):
 class CaptureControls(QObject):
     def __init__(self,window):
         super().__init__(window);self.window=window;self.adapter=None;self.lease=None;self.chat=None;self.preview=None;self.preparing=False
+        self.direct_voice=False
 
     def api(self,method,suffix='',body=None):
         w=self.window
         return w.manager.transport.capture_api(self.chat,method,suffix,body,generation=w.native_generation)
 
-    def start(self,kind):
+    def toggle_voice(self):
+        if self.adapter is not None and not self.adapter.ended and self.direct_voice:
+            self.window.status.setText('Finishing your voice message locally…')
+            self.adapter.finish_microphone();return
+        self.start('microphone',direct=True)
+
+    def start(self,kind,direct=False):
         w=self.window
         if w.busy or w.feeding or w.window_stopped or w.global_stopped or not w.native_id:return
         if w.current().read_only:w.status.setText('Open a new chat before capturing; restored history is read-only.');return
@@ -27,9 +34,13 @@ class CaptureControls(QObject):
         except ImportError:w.status.setText('Qt Multimedia is unavailable. Install the Python desktop requirements before using devices.');return
         if not devices:w.status.setText('No supported '+kind+' device is available.');return
         labels=[str(i+1)+'. '+text.split('|',2)[-1] for i,(text,_) in enumerate(devices)]
-        selected,accepted=QInputDialog.getItem(w,'Choose one '+kind,'Capture once from:',labels,0,False)
-        if not accepted:return
-        target=devices[labels.index(selected)][0];self.chat=w.current();w.stop_event.clear();w.busy=True;self.preparing=True
+        if direct:
+            selected=labels[0]
+        else:
+            selected,accepted=QInputDialog.getItem(w,'Choose one '+kind,'Capture once from:',labels,0,False)
+            if not accepted:return
+        target=devices[labels.index(selected)][0];self.chat=w.current();self.direct_voice=bool(direct);w.stop_event.clear();w.busy=True;self.preparing=True
+        if direct and hasattr(w,'voice_button'):w.voice_button.setText('Preparing mic…')
         w.release_capture_button.setEnabled(True)
         for widget in [w.tabs,w.model,w.agent,w.project,w.send_button]:widget.setEnabled(False)
         def prepare():
@@ -41,8 +52,8 @@ class CaptureControls(QObject):
             if w.stop_event.is_set() or w.window_stopped or w.global_stopped:self.release(None);return
             description=('Record at most ten seconds and transcribe on this PC. You review the draft before using it.' if kind=='microphone'
                          else 'Capture one frame locally. You preview it before any model transfer.')
-            answer=QMessageBox.question(w,'Approve one '+kind+' capture',selected+'\n\n'+description,
-                QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,QMessageBox.StandardButton.No)
+            answer=(QMessageBox.StandardButton.Yes if direct else QMessageBox.question(w,'Approve one '+kind+' capture',selected+'\n\n'+description,
+                QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No,QMessageBox.StandardButton.No))
             if answer!=QMessageBox.StandardButton.Yes or w.stop_event.is_set() or w.window_stopped or w.global_stopped:
                 self.release(None);return
             def begun(state):
@@ -50,7 +61,9 @@ class CaptureControls(QObject):
                     self.release(None);return
                 self.adapter=QtDeviceCapture(w);self.adapter.completed.connect(self.release)
                 self.adapter.failed.connect(self.device_failed)
-                w.status.setText('Using '+kind+' here · Stop ends this capture · nothing has been sent to a model.')
+                w.status.setText(('Listening locally · press Stop & send when finished.' if direct else
+                                  'Using '+kind+' here · Stop ends this capture · nothing has been sent to a model.'))
+                if direct and hasattr(w,'voice_button'):w.voice_button.setText('■ Stop & send')
                 try:self.adapter.start(kind,target)
                 except Exception:self.device_failed('The approved device could not start. No substitute was used.')
             w.manager.submit(lambda:self.api('POST','/'+self.lease+'/begin',{'confirmed_digest':result['approval_digest']}),begun,self.begin_failed,control=True)
@@ -59,6 +72,8 @@ class CaptureControls(QObject):
 
     def initial_failed(self,message):
         self.preparing=False
+        self.direct_voice=False
+        if hasattr(self.window,'voice_button'):self.window.voice_button.setText('🎙 Speak')
         self.window.release_capture_button.setEnabled(False)
         self.window.done();self.window.status.setText(message[:300])
 
@@ -67,6 +82,8 @@ class CaptureControls(QObject):
         self.release(None)
 
     def device_failed(self,message):
+        self.direct_voice=False
+        if hasattr(self.window,'voice_button'):self.window.voice_button.setText('🎙 Speak')
         self.window.status.setText(message);self.release(None)
 
     def release(self,result=None):
@@ -79,14 +96,19 @@ class CaptureControls(QObject):
             self.lease=None
             w.release_capture_button.setEnabled(False)
             if self.adapter:self.adapter.deleteLater();self.adapter=None
+            if hasattr(w,'voice_button'):w.voice_button.setText('🎙 Speak')
             w.done(cancelled=w.stop_event.is_set())
-            if result is None:return
+            if result is None:
+                self.direct_voice=False;return
             if state.get('cancelled_before_finish') or w.stop_event.is_set() or w.global_stopped or w.window_stopped:
                 wipe(result.get('data'));w.status.setText('Capture ended after Stop; no data was transferred.');return
-            if result['kind']=='microphone':self.transcribe(result)
+            if result['kind']=='microphone':self.transcribe(result,direct=self.direct_voice)
             else:self.show_image(result)
+            self.direct_voice=False
         def failed(error):
             if result:wipe(result.get('data'))
+            self.direct_voice=False
+            if hasattr(w,'voice_button'):w.voice_button.setText('🎙 Speak')
             w.done();w.status.setText('Device capture ended; backend release was not confirmed. Use Release capture before another capture.')
         w.manager.submit(lambda:self.api('POST','/'+identifier+'/finish'),released,failed,control=True)
 
@@ -130,13 +152,19 @@ class CaptureControls(QObject):
             if not submitted[0]:wipe(result['data'])
         dialog.finished.connect(closed);dialog.resize(680,650);dialog.show()
 
-    def transcribe(self,result):
+    def transcribe(self,result,direct=False):
         w=self.window;w.busy=True;generation=w.native_generation
         for widget in [w.tabs,w.model,w.agent,w.project,w.send_button]:widget.setEnabled(False)
         w.status.setText('Transcribing on this PC; no cloud service is used.')
         def finished(text):
             wipe(result['data']);w.done(cancelled=w.stop_event.is_set())
             if w.stop_event.is_set() or w.global_stopped or w.window_stopped:return
+            if direct:
+                if w.current() is not self.chat:
+                    w.status.setText('The originating chat changed. The local transcript was discarded.');return
+                text=text.strip()
+                if not text:w.status.setText('No speech was recognized. Press Speak and try again.');return
+                w.composer.setPlainText(text);w.send();return
             dialog=QDialog(w);self.preview=dialog;dialog.setWindowTitle('Review local transcript · not sent');layout=QVBoxLayout(dialog)
             draft=QPlainTextEdit();draft.setAccessibleName('Review local speech transcript');draft.setPlainText(text);layout.addWidget(draft)
             use=QPushButton('Use as draft');use.setAccessibleName('Use reviewed transcript as an unsent draft');layout.addWidget(use)

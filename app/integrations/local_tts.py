@@ -1,4 +1,4 @@
-"""Explicit, bounded pyttsx3 test playback with a process-local Stop latch."""
+"""Bounded offline pyttsx3 playback with a process-local Stop latch."""
 from __future__ import annotations
 
 import threading
@@ -8,6 +8,8 @@ import time
 class LocalPyttsx3Output:
     TEST_LINE = "ERSELMETZ AI local voice test. Press Stop at any time."
     MAX_TEST_SECONDS = 12
+    MAX_OUTPUT_SECONDS = 120
+    MAX_TEXT_CHARS = 4000
 
     def __init__(self, *, engine_factory=None, clock=time.monotonic, sleeper=time.sleep, on_success=None):
         self._engine_factory = engine_factory or self._default_engine
@@ -31,15 +33,23 @@ class LocalPyttsx3Output:
                     "detail": self._detail, "destination": "local Windows speech engine", "text_retained": False}
 
     def start_test(self) -> dict:
+        return self.start_text(self.TEST_LINE, test=True)
+
+    def start_text(self, text: str, *, test: bool = False) -> dict:
+        if not isinstance(text, str):
+            raise ValueError("Local speech text must be plain text")
+        text = text.strip()
+        if not text or len(text) > self.MAX_TEXT_CHARS:
+            raise ValueError("Local speech text must contain 1 to 4000 characters")
         with self._lock:
             if self._thread is not None and self._thread.is_alive():
                 return self.snapshot()
             cancel = threading.Event()
             self._cancel = cancel
             self._state = "starting"
-            self._detail = "Starting an explicit local speech self-test."
-            self._thread = threading.Thread(target=self._run, args=(cancel,),
-                                            name="local-pyttsx3-test", daemon=True)
+            self._detail = "Starting offline speech playback."
+            self._thread = threading.Thread(target=self._run, args=(cancel, text, test),
+                                            name="local-pyttsx3-output", daemon=True)
             self._thread.start()
             return self.snapshot()
 
@@ -54,21 +64,22 @@ class LocalPyttsx3Output:
                 self._detail = "Stop requested; local speech playback is stopping."
             return self.snapshot()
 
-    def _run(self, cancel: threading.Event) -> None:
+    def _run(self, cancel: threading.Event, text: str, test: bool) -> None:
         engine = None
         started = self._clock()
+        deadline = self.MAX_TEST_SECONDS if test else self.MAX_OUTPUT_SECONDS
         try:
             engine = self._engine_factory()
             with self._lock:
                 if cancel.is_set():
                     self._state = "stopped"
-                    self._detail = "Local speech test stopped before playback."
+                    self._detail = "Local speech stopped before playback."
                     return
                 self._state = "speaking"
-                self._detail = "Speaking a fixed local test sentence. The Stop control is active."
-            engine.say(self.TEST_LINE)
+                self._detail = "Speaking locally. The Stop control is active."
+            engine.say(text)
             engine.startLoop(False)
-            while not cancel.is_set() and engine.isBusy() and self._clock() - started < self.MAX_TEST_SECONDS:
+            while not cancel.is_set() and engine.isBusy() and self._clock() - started < deadline:
                 engine.iterate()
                 self._sleeper(0.02)
             if cancel.is_set() or engine.isBusy():
@@ -79,13 +90,14 @@ class LocalPyttsx3Output:
             with self._lock:
                 if cancel.is_set():
                     self._state = "stopped"
-                    self._detail = "Local speech test was stopped."
-                elif self._clock() - started >= self.MAX_TEST_SECONDS and engine.isBusy():
+                    self._detail = "Local speech was stopped."
+                elif self._clock() - started >= deadline and engine.isBusy():
                     self._state = "failed"
-                    self._detail = "Local speech test exceeded its time limit."
+                    self._detail = "Local speech exceeded its time limit."
                 else:
                     self._state = "working"
-                    self._detail = "The local Windows speech engine completed its test sentence."
+                    self._detail = ("The local Windows speech engine completed its test sentence."
+                                    if test else "The local Windows speech engine completed the reply.")
                     if callable(self._on_success):
                         self._on_success()
         except Exception:

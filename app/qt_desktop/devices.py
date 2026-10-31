@@ -95,6 +95,11 @@ class QtDeviceCapture(QObject):
 
     def timeout(self):
         if self.kind!='microphone':self.stop('The camera did not return a frame before its deadline.');return
+        self.finish_microphone()
+
+    def finish_microphone(self):
+        """Finish the current recording now and retain its bounded PCM as one WAV."""
+        if self.ended or self.kind!='microphone':return
         if not self.pcm:self.stop('No microphone audio was received.');return
         self.audio.stop()
         stream=BytesIO()

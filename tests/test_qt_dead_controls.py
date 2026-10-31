@@ -53,6 +53,7 @@ def test_shell_static_actions_are_connected_and_operate_without_external_effects
     assert device_checks==['camera','microphone','screen']
     def send(chat,text,stop,emit,**kwargs):emit({'type':'chunk','text':'Fake local reply'});emit({'type':'complete'})
     monkeypatch.setattr(manager.transport,'send',send)
+    window.agent_loop.setChecked(False)
     window.composer.setPlainText('A harmless UI fixture question');click('Send');qtbot.waitUntil(lambda:not window.busy)
     assert 'Fake local reply' in window.tabs.currentWidget().toPlainText()
     window.composer.setPlainText('Another harmless UI fixture question')
@@ -98,10 +99,12 @@ def test_stateful_cancel_release_and_draft_buttons_do_not_run_unapproved_work(ma
     assert releases==[('POST','/'+'a'*32+'/finish')]
     frame={'kind':'screen','data':bytearray(base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='))}
     capture.show_image(frame);click(capture.preview,'Discard local capture');assert frame['data']==bytearray()
+    sent=[]
     monkeypatch.setattr(manager.transport,'preview_knowledge',lambda *a,**k:{'items':[],'digest':'d'*64})
+    monkeypatch.setattr(manager.transport,'send',lambda chat,text,stop,emit,**kwargs:sent.append(kwargs))
     window.use_brain.setChecked(True);window.composer.setPlainText('Review private fixture context')
-    click(window,'Send');qtbot.waitUntil(lambda:window.knowledge_review.dialog is not None)
-    click(window.knowledge_review.dialog,'Cancel Brain preview without sending');assert not window.busy
+    click(window,'Send');qtbot.waitUntil(lambda:not window.busy)
+    assert sent[0]['knowledge']['knowledge_preview_digest']=='d'*64
     window.use_brain.setChecked(False)
     calls=[]
     monkeypatch.setattr(manager.transport,'tool_api',lambda chat,method,suffix,body=None,**kwargs:calls.append((method,suffix)) or {'state':'denied','result':{'message':'No tool action was run.'}})
@@ -115,6 +118,24 @@ def test_stateful_cancel_release_and_draft_buttons_do_not_run_unapproved_work(ma
         capture.transcribe(audio);qtbot.waitUntil(lambda:capture.preview is not None)
         click(capture.preview,button);assert not audio['data']
         assert window.composer.toPlainText()=='Harmless local transcript'
+
+
+def test_voice_first_transcript_sends_directly_and_text_stays_optional(manager,qtbot,monkeypatch):
+    window=manager.new_window();qtbot.waitUntil(lambda:bool(window.native_id) and window.model.count()==1)
+    assert window.voice_button.text()=='🎙 Speak'
+    assert window.voice_button.accessibleName()=='Speak a message; press again to finish and send'
+    assert 'optional' in window.composer.placeholderText().lower() and window.speak_replies.isChecked()
+    sent=[]
+    def send(chat,text,stop,emit,**kwargs):
+        sent.append(text);emit({'type':'chunk','text':'Short spoken answer.'});emit({'type':'complete'})
+    monkeypatch.setattr(manager.transport,'send',send)
+    spoken=[];monkeypatch.setattr(manager.transport,'speak_local',lambda text:spoken.append(text) or {'active':True})
+    monkeypatch.setattr(manager.transport,'transcribe_local',lambda *a,**k:'Voice-first question')
+    audio={'data':bytearray(b'fixture audio')};window.capture_controls.chat=window.current()
+    window.capture_controls.transcribe(audio,direct=True)
+    qtbot.waitUntil(lambda:not window.busy and sent==['Voice-first question'])
+    qtbot.waitUntil(lambda:spoken==['Short spoken answer.'])
+    assert window.capture_controls.preview is None and not audio['data']
 
 
 def test_quit_button_and_shortcut_request_the_same_saved_shutdown(manager,qtbot,monkeypatch):
@@ -134,8 +155,9 @@ def test_chat_option_checkboxes_change_only_the_next_request_options(manager,qtb
     window=manager.new_window();qtbot.waitUntil(lambda:window.model.count()==1)
     count=window.tabs.count();window.agent_loop.click();assert window.agent_loop.isChecked() and window.thinking.isEnabled()
     window.thinking.click();assert window.thinking.isChecked()
-    window.ask_first.click();assert not window.ask_first.isChecked()
+    assert not window.ask_first.isChecked()
     window.ask_first.click();assert window.ask_first.isChecked()
+    window.ask_first.click();assert not window.ask_first.isChecked()
     window.use_brain.click();assert window.use_brain.isChecked()
     window.use_brain.click();assert not window.use_brain.isChecked()
     window.agent_loop.click();assert not window.agent_loop.isChecked() and not window.thinking.isChecked()

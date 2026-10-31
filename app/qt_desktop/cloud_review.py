@@ -23,13 +23,17 @@ class CloudReview:
         w.busy=True;w.send_button.setEnabled(False);w.status.setText('Preparing a cloud preview locally; no cloud request is authorized yet.')
         def work():
             items=w.manager.session.request('GET','/api/local/provider-connections')['items']
-            eligible=[item for item in items if item.get('provider_type')=='openai-compatible' and item.get('state')=='available' and item.get('endpoint',{}).get('enabled')]
+            eligible=[item for item in items if item.get('state')=='available' and (
+                item.get('provider_type')=='gemini' or
+                (item.get('provider_type')=='openai-compatible' and item.get('endpoint',{}).get('enabled')))]
             # No automatic selection between destinations with different privacy
             # properties: an ambiguous configuration must be resolved in Settings.
-            if len(eligible)!=1:raise ValueError('Enable and Test exactly one cloud endpoint in Settings > Provider connections before using this action.')
+            if len(eligible)!=1:raise ValueError('Connect exactly one reviewed cloud provider in Settings before using this action.')
             item=eligible[0]
             if not chat.conversation:w.manager.transport.start(chat,generation=generation)
-            model=item['endpoint'].get('default_model') or next(iter(item['models']),None)
+            preferred=w.manager.preferences.value('cloudModel','',type=str)
+            model=(preferred if preferred in item.get('models',[]) else
+                   item.get('endpoint',{}).get('default_model') or next(iter(item.get('models',[])),None))
             body={'text':text,'route_provider_id':item['provider_id'],'route_model_id':model,'route_consent':True,'outbound_preview':True}
             current=self.request(chat,None,'GET',generation=generation);current.raise_for_status()
             brief=current.json().get('workspace',{}).get('project_brief_digest')

@@ -17,7 +17,7 @@ import re
 import socket
 import ssl
 import stat
-from urllib.parse import urlsplit,urlunsplit,urljoin,unquote,quote
+from urllib.parse import urlsplit,urlunsplit,urljoin,unquote,quote,urlencode
 
 from app.knowledge.native_brain import secret_path,SKIP_DIRS
 
@@ -76,9 +76,106 @@ def http_url(value):
 def url_intent(text):
     if not isinstance(text,str):return None
     normalized=' '.join(text.strip().casefold().split()).rstrip('!.?')
-    if normalized in {'open youtube','open youtube.com','buksan ang youtube','buksan youtube'}:return 'https://www.youtube.com/'
+    polite=r'(?:(?:can|could|would)\s+you\s+|please\s+|pwede\s+mo\s+bang\s+)?(?:please\s+)?'
+    sites={
+        'youtube':'https://www.youtube.com/','facebook':'https://www.facebook.com/',
+        'tiktok':'https://www.tiktok.com/','instagram':'https://www.instagram.com/',
+        'twitter':'https://x.com/','x':'https://x.com/','reddit':'https://www.reddit.com/',
+        'github':'https://github.com/','gmail':'https://mail.google.com/','google':'https://www.google.com/',
+        'linkedin':'https://www.linkedin.com/','messenger':'https://www.messenger.com/',
+        'spotify':'https://open.spotify.com/','netflix':'https://www.netflix.com/',
+        'amazon':'https://www.amazon.com/','shopee':'https://shopee.ph/','lazada':'https://www.lazada.com.ph/',
+        'discord':'https://discord.com/app','twitch':'https://www.twitch.tv/',
+    }
+    site_pattern='|'.join(sorted((re.escape(site) for site in sites),key=len,reverse=True))
+    known=re.fullmatch(
+        polite+r'(?:open|launch|buksan(?:\s+ang)?)\s+'
+        r'('+site_pattern+r')(?:\.com)?'
+        r'(?:\s+(?:in|using|on)\s+(?:google\s+)?chrome)?',
+        normalized,
+    )
+    if known:return sites[known.group(1)]
+    fixed_sites={
+        'open facebook':'https://www.facebook.com/', 'open facebook in chrome':'https://www.facebook.com/',
+        'open facebook site':'https://www.facebook.com/', 'buksan ang facebook':'https://www.facebook.com/',
+        'open tiktok':'https://www.tiktok.com/', 'open tiktok site':'https://www.tiktok.com/',
+        'or tiktok site':'https://www.tiktok.com/', 'buksan ang tiktok':'https://www.tiktok.com/',
+    }
+    if normalized in fixed_sites:return fixed_sites[normalized]
+    def media_search(platform,query):
+        query=query.strip(' ,.-')
+        if not 1<=len(query.encode('utf-8'))<=200:return None
+        encoded=urlencode({'q':query})
+        destinations={
+            'youtube':'https://www.youtube.com/results?'+urlencode({'search_query':query}),
+            'spotify':'https://open.spotify.com/search/'+quote(query,safe=''),
+            'tiktok':'https://www.tiktok.com/search?'+encoded,
+            'soundcloud':'https://soundcloud.com/search?'+encoded,
+            'facebook':'https://www.facebook.com/search/top/?'+encoded,
+            'instagram':'https://www.instagram.com/explore/search/keyword/?'+encoded,
+            'twitter':'https://x.com/search?'+encoded,'x':'https://x.com/search?'+encoded,
+            'reddit':'https://www.reddit.com/search/?'+encoded,
+            'twitch':'https://www.twitch.tv/search?'+encoded,
+        }
+        return destinations.get(platform)
+    media_platforms=r'youtube|spotify|tiktok|soundcloud|facebook|instagram|twitter|x|reddit|twitch'
+    explicit_prefix=re.fullmatch(
+        r'(?:i\s+mean\s+)?(?:in|on)\s+('+media_platforms+r')\s+(?:please\s+)?'
+        r'(?:play|search(?:\s+for)?|hanapin|patugtog(?:in)?)\s+(.+)',normalized)
+    if explicit_prefix:return media_search(explicit_prefix.group(1),explicit_prefix.group(2))
+    explicit_suffix=re.fullmatch(
+        r"(?:let'?s\s+|can\s+you\s+|please\s+)?(?:play|search(?:\s+for)?|hanapin|patugtog(?:in)?)\s+(.+?)"
+        r'\s+(?:in|on)\s+('+media_platforms+r')',normalized)
+    if explicit_suffix:return media_search(explicit_suffix.group(2),explicit_suffix.group(1))
+    natural_music=re.fullmatch(
+        r"(?:let'?s\s+|can\s+you\s+|please\s+)?(?:play|patugtog(?:in)?)\s+(?:some\s+)?"
+        r'(.+\b(?:song|songs|music|playlist|mix|album|artist))',normalized)
+    if natural_music:return media_search('youtube',natural_music.group(1))
+    music=re.fullmatch(r'(?:play|search(?:\s+for)?)\s+(?:some\s+)?(.+?)\s+(?:music|songs?)',normalized)
+    if music:
+        query=(music.group(1)+' music').strip()
+        if 1<=len(query.encode('utf-8'))<=200:return 'https://www.youtube.com/results?'+urlencode({'search_query':query})
+    youtube=re.fullmatch(r'(?:open|buksan(?:\s+ang)?)\s+youtube\s+(?:and|at)\s+(?:play|search(?:\s+for)?|hanapin)\s+(.+)',normalized)
+    if youtube:
+        query=youtube.group(1).strip()
+        if 1<=len(query.encode('utf-8'))<=200:
+            return 'https://www.youtube.com/results?'+urlencode({'search_query':query})
     match=re.fullmatch(r'(?:open|buksan)\s+([a-z][a-z0-9+.-]*:\S+)',text.strip(),flags=re.IGNORECASE)
-    return http_url(match.group(1)) if match else None
+    if match:return http_url(match.group(1))
+    domain=re.fullmatch(polite+r'(?:open|launch|buksan(?:\s+ang)?)\s+((?:[a-z0-9-]+\.)+[a-z]{2,}(?:/\S*)?)'
+                        r'(?:\s+(?:in|using|on)\s+(?:google\s+)?chrome)?',normalized)
+    return http_url('https://'+domain.group(1)) if domain else None
+
+
+def folder_intent(text):
+    """Return one explicitly requested Desktop folder name, never a pathname."""
+    if not isinstance(text,str):return None
+    value=' '.join(text.strip().split()).rstrip('!.?')
+    patterns=(
+        r'(?:create|make)\s+(?:a\s+)?folder(?:\s+(?:called|named)\s+(.+?))?\s+(?:in|on)\s+(?:the\s+)?de(?:s)?ktop',
+        r'(?:create|make)\s+(?:a\s+)?folder\s+(?:in|on)\s+(?:the\s+)?de(?:s)?ktop\s+(?:called|named?|with\s+name)\s+(.+)',
+        r'gumawa\s+(?:ng\s+)?folder(?:\s+(?:na\s+)?(?:pangalan(?:g)?|named)\s+(.+?))?\s+sa\s+de(?:s)?ktop',
+    )
+    for pattern in patterns:
+        match=re.fullmatch(pattern,value,flags=re.IGNORECASE)
+        if match:
+            name=(match.group(1) or 'New folder').strip(' \"\'')
+            return name if 1<=len(name.encode('utf-8'))<=160 else None
+    return None
+
+
+def desktop_directory():
+    """Resolve the current Windows user's real Desktop known folder."""
+    if os.name!='nt':raise NativeIOError('Desktop folder actions are available on Windows only.')
+    import ctypes
+    buffer=ctypes.create_unicode_buffer(32768)
+    if ctypes.windll.shell32.SHGetFolderPathW(None,0x10,None,0,buffer)!=0:
+        raise NativeIOError('The current Windows Desktop folder could not be resolved.')
+    raw=buffer.value
+    if not raw or raw.startswith(('\\\\','//')):raise NativeIOError('Only a local Windows Desktop folder is supported.')
+    path=Path(raw).resolve(strict=True)
+    if not path.is_dir() or linked(path):raise NativeIOError('The current Windows Desktop folder is unavailable or linked.')
+    return path
 
 
 def public_addresses(url,resolver=socket.getaddrinfo):
@@ -331,6 +428,22 @@ class NativeFiles:
         existing=path.exists();old=self.read(owner,window,root_id,relative) if existing else {'text':'','digest':None}
         diff=''.join(difflib.unified_diff(old['text'].splitlines(keepends=True),content.splitlines(keepends=True),fromfile=relative+' (current)',tofile=relative+' (proposed)'))
         return {'path':relative,'exists':existing,'before_digest':old['digest'],'after_digest':sha256(content.encode()).hexdigest(),'diff':diff,'content':content}
+
+    def preview_folder(self,owner,window,root_id,relative):
+        path=self.resolve(owner,window,root_id,relative)
+        if path.parent!=self.root_path(owner,window,root_id):raise NativeIOError('Create one folder directly inside the permitted folder.')
+        if path.exists():raise NativeIOError('That folder already exists. Choose a different name.')
+        if not path.parent.is_dir():raise NativeIOError('The destination folder is unavailable.')
+        return {'path':relative,'exists':False}
+
+    def create_folder(self,owner,window,root_id,preview):
+        from app.resources.context import check_native_stop
+        path=self.resolve(owner,window,root_id,preview['path']);root=self.root_path(owner,window,root_id)
+        with self.lock,pin_directories(root,path.parent):
+            check_native_stop();current=self.preview_folder(owner,window,root_id,preview['path'])
+            if current!=preview:raise NativeIOError('The folder destination changed after approval; nothing was created.')
+            path.mkdir(mode=0o700)
+        return {'path':preview['path'],'created':True}
 
     def write(self,owner,window,root_id,preview):
         from app.resources.context import check_native_stop

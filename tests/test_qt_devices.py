@@ -38,6 +38,16 @@ def test_microphone_result_is_pcm_wav_and_owned_pcm_is_cleared(qapp):
         assert (audio.getframerate(),audio.getnchannels(),audio.getsampwidth(),audio.getnframes())==(16000,1,2,16000)
 
 
+def test_microphone_can_finish_immediately_when_owner_presses_stop_and_send(qapp):
+    class Audio:
+        stopped=False
+        def stop(self):self.stopped=True
+    capture=QtDeviceCapture();capture.kind='microphone';capture.audio=Audio();capture.pcm=bytearray(b'\0'*16000)
+    results=[];capture.completed.connect(results.append);capture.finish_microphone()
+    assert capture.ended and capture.audio.stopped and len(results)==1
+    with wave.open(BytesIO(results[0]['data']),'rb') as audio:assert audio.getnframes()==8000
+
+
 def test_camera_stop_waits_for_actual_inactive_state_before_completion(qapp):
     class Camera:
         active=True

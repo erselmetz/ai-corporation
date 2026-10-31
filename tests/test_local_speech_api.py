@@ -97,3 +97,17 @@ def test_emergency_stop_rejects_new_local_transcription():
                                headers={**headers, "Content-Type": "audio/wav"}, content=wav())
         assert response.status_code == 423
         assert provider.transcriptions == 0
+
+
+def test_spoken_reply_endpoint_is_local_protected_and_bounded(monkeypatch):
+    app = create_local_app(password=PASSWORD, application_service=create_corporation_runtime().application_service)
+    spoken=[]
+    monkeypatch.setattr(app.state.media_capability_packs, "preview", lambda pack: {"state": "installed"})
+    monkeypatch.setattr(app.state.local_speech_output, "start_text",
+                        lambda text: spoken.append(text) or {"state": "starting", "active": True})
+    with TestClient(app, base_url=ORIGIN, client=("127.0.0.1", 50153)) as client:
+        assert client.post("/api/local/voice/speak", json={"text": "private"}).status_code in {401,403}
+        headers=signed_in(client)
+        response=client.post("/api/local/voice/speak",headers=headers,json={"text":"Hello owner"})
+        assert response.status_code == 200 and spoken == ["Hello owner"]
+        assert client.post("/api/local/voice/speak",headers=headers,json={"text":"x"*4001}).status_code == 422
